@@ -43,7 +43,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `keytest.py` | Retired. `assets/keytest` is gone; source plates live under `_src`. Not in the batch gate. | BD | `--help` | N |
 | `keytest_expect.json` | Old expected numbers for `assets/keytest`. Kept beside the retired checker. | D | - | N |
 | `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
-| `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live). Summary: `rekey-all-stills`. | D | `--help` | N |
+| `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: approved rows reproduce live). Summary: `rekey-all-stills`. | D | `--help` | N |
 | `rekey_check.py` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
 | `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |

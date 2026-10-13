@@ -25,12 +25,14 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 4, 40, 127, 88]
     },
     {
       "live": "assets/fx/crack.png",
       "source": "sources/assets/fx/crack.jpg",
-      "origin": "_src/sources/assets/fx/crack.jpg"
+      "origin": "_src/sources/assets/fx/crack.jpg",
+      "fit": [128, 128, 7, 1, 126, 127]
     },
     {
       "live": "assets/fx/dummy.png",
@@ -44,12 +46,14 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 79,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 1, 95, 127]
     },
     {
       "live": "assets/fx/lightning.png",
       "source": "sources/assets/fx/lightning.jpg",
-      "origin": "_src/sources/assets/fx/lightning.jpg"
+      "origin": "_src/sources/assets/fx/lightning.jpg",
+      "fit": [128, 128, 25, 1, 102, 126]
     },
     {
       "live": "assets/tiles/dungeon_floor.png",
@@ -236,7 +240,8 @@
     {
       "live": "assets/ui/splash_shamelessly.png",
       "source": "sources/assets/ui/splash_shamelessly.jpg",
-      "origin": "_src/sources/assets/ui/splash_shamelessly.jpg"
+      "origin": "_src/sources/assets/ui/splash_shamelessly.jpg",
+      "fit": [860, 418, 0, 0, 860, 418]
     },
     {
       "live": "assets/sprites/buildings/guild.png",
@@ -250,7 +255,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 288,
-      "cell": ""
+      "cell": "",
+      "fit": [320, 180, 0, 0, 320, 180]
     },
     {
       "live": "assets/sprites/buildings/guild_reception.png",
@@ -264,7 +270,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 288,
-      "cell": ""
+      "cell": "",
+      "fit": [360, 270, 0, 0, 360, 270]
     },
     {
       "live": "assets/sprites/buildings/stall.png",
@@ -278,7 +285,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 256,
-      "cell": ""
+      "cell": "",
+      "fit": [320, 160, 0, 0, 320, 160]
     },
     {
       "live": "assets/sprites/npcs/receptionist.png",
@@ -292,12 +300,15 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 65,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 48, 2, 111, 158]
     },
     {
       "live": "assets/sprites/npcs/shopkeep.png",
       "source": "sources/assets/sprites/npcs/shopkeep.jpg",
-      "origin": "_src/sources/assets/sprites/npcs/shopkeep.jpg"
+      "origin": "_src/sources/assets/sprites/npcs/shopkeep.jpg",
+      "fit": [128, 128, 33, 6, 93, 123],
+      "approved": true
     },
     {
       "live": "assets/sprites/npcs/vendor.png",
@@ -311,7 +322,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 93,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 34, 2, 125, 158]
     },
     {
       "live": "assets/sprites/props/anvil.png",
@@ -325,7 +337,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 123,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 2, 127, 125]
     },
     {
       "live": "assets/sprites/props/barrel.png",
@@ -339,7 +352,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 13, 2, 115, 126]
     },
     {
       "live": "assets/sprites/props/boss_door.png",
@@ -353,7 +367,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 103,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 28, 1, 131, 159]
     },
     {
       "live": "assets/sprites/props/campfire.png",
@@ -367,7 +382,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/props/chest.png",
@@ -381,12 +397,14 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 94,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 31, 127, 125]
     },
     {
       "live": "assets/sprites/props/coins.png",
       "source": "sources/assets/sprites/props/coins.jpg",
-      "origin": "_src/sources/assets/sprites/props/coins.jpg"
+      "origin": "_src/sources/assets/sprites/props/coins.jpg",
+      "fit": [128, 128, 2, 18, 126, 124]
     },
     {
       "live": "assets/sprites/props/crack_wall.png",
@@ -400,7 +418,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 132,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 2, 24, 158, 156]
     },
     {
       "live": "assets/sprites/props/crystal.png",
@@ -414,7 +433,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 68,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 1, 98, 127]
     },
     {
       "live": "assets/sprites/props/dumpster.png",
@@ -428,7 +448,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 2, 5, 126, 124]
     },
     {
       "live": "assets/sprites/props/extract_gate_off.png",
@@ -442,12 +463,15 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 277,
-      "cell": ""
+      "cell": "",
+      "fit": [384, 277, 0, 0, 384, 277]
     },
     {
       "live": "assets/sprites/props/extract_gate_on.png",
       "source": "sources/assets/sprites/props/extract_gate_on.jpg",
-      "origin": "_src/sources/assets/sprites/props/extract_gate_on.jpg"
+      "origin": "_src/sources/assets/sprites/props/extract_gate_on.jpg",
+      "fit": [384, 244, 0, 0, 384, 244],
+      "approved": true
     },
     {
       "live": "assets/sprites/props/fence.png",
@@ -461,7 +485,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 79,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 46, 127, 125]
     },
     {
       "live": "assets/sprites/props/gate.png",
@@ -475,12 +500,15 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 144,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 8, 2, 152, 158]
     },
     {
       "live": "assets/sprites/props/hp_orb.png",
       "source": "sources/assets/sprites/props/hp_orb.jpg",
-      "origin": "_src/sources/assets/sprites/props/hp_orb.jpg"
+      "origin": "_src/sources/assets/sprites/props/hp_orb.jpg",
+      "fit": [128, 128, 8, 11, 120, 124],
+      "approved": true
     },
     {
       "live": "assets/sprites/props/lever.png",
@@ -494,12 +522,14 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 76,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 1, 102, 127]
     },
     {
       "live": "assets/sprites/props/mana_orb.png",
       "source": "sources/assets/sprites/props/mana_orb.jpg",
-      "origin": "_src/sources/assets/sprites/props/mana_orb.jpg"
+      "origin": "_src/sources/assets/sprites/props/mana_orb.jpg",
+      "fit": [128, 128, 11, 2, 116, 126]
     },
     {
       "live": "assets/sprites/props/notice_board.png",
@@ -513,7 +543,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 1, 121, 127]
     },
     {
       "live": "assets/sprites/props/ore.png",
@@ -527,7 +558,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 100,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 14, 1, 114, 127]
     },
     {
       "live": "assets/sprites/props/plate.png",
@@ -541,7 +573,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 79,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 46, 127, 125]
     },
     {
       "live": "assets/sprites/props/pot.png",
@@ -555,7 +588,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 104,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 12, 2, 116, 126]
     },
     {
       "live": "assets/sprites/props/shrine.png",
@@ -569,7 +603,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 106,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 2, 18, 126, 124]
     },
     {
       "live": "assets/sprites/props/sign.png",
@@ -583,7 +618,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 20, 1, 139, 159]
     },
     {
       "live": "assets/sprites/props/stairs.png",
@@ -597,12 +633,14 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 148,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 2, 8, 158, 156]
     },
     {
       "live": "assets/sprites/props/torch_bracket_bible.png",
       "source": "sources/assets/sprites/props/torch_bracket_bible.png",
-      "origin": "_src/sources/assets/sprites/props/torch_bracket_bible.png"
+      "origin": "_src/sources/assets/sprites/props/torch_bracket_bible.png",
+      "fit": [1024, 1024, 121, 27, 908, 992]
     },
     {
       "live": "assets/sprites/props/tree.png",
@@ -616,7 +654,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 149,
-      "cell": ""
+      "cell": "",
+      "fit": [160, 160, 5, 2, 154, 158]
     },
     {
       "live": "assets/sprites/props/welcome_banner.png",
@@ -630,7 +669,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 368,
-      "cell": ""
+      "cell": "",
+      "fit": [512, 368, 0, 0, 512, 368]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_down.png",
@@ -644,7 +684,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_down_left.png",
@@ -658,7 +699,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_down_right.png",
@@ -672,7 +714,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_left.png",
@@ -686,7 +729,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_right.png",
@@ -700,7 +744,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_up.png",
@@ -714,7 +759,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_up_left.png",
@@ -728,7 +774,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/archer/idle_up_right.png",
@@ -742,7 +789,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 120,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 5, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_down.png",
@@ -756,7 +804,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_down_left.png",
@@ -770,7 +819,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_down_right.png",
@@ -784,7 +834,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_left.png",
@@ -798,7 +849,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_right.png",
@@ -812,7 +864,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_up.png",
@@ -826,7 +879,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_up_left.png",
@@ -840,7 +894,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/bat/idle_up_right.png",
@@ -854,7 +909,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 97,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 28, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_down.png",
@@ -868,7 +924,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_down_left.png",
@@ -882,7 +939,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_down_right.png",
@@ -896,7 +954,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_left.png",
@@ -910,7 +969,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_right.png",
@@ -924,7 +984,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_up.png",
@@ -938,7 +999,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_up_left.png",
@@ -952,7 +1014,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/beetle/idle_up_right.png",
@@ -966,7 +1029,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 102,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 23, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_down.png",
@@ -980,7 +1044,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 4, 1, 123, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_down_left.png",
@@ -994,7 +1059,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 5, 1, 124, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_down_right.png",
@@ -1008,7 +1074,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 4, 1, 123, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_left.png",
@@ -1022,7 +1089,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 5, 1, 124, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_right.png",
@@ -1036,7 +1104,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 4, 1, 123, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_up.png",
@@ -1050,7 +1119,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 4, 1, 123, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_up_left.png",
@@ -1064,7 +1134,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 5, 1, 124, 127]
     },
     {
       "live": "assets/sprites/enemies/gate_master/idle_up_right.png",
@@ -1078,7 +1149,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 119,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 4, 1, 123, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_down.png",
@@ -1092,7 +1164,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 8, 1, 119, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_down_left.png",
@@ -1106,7 +1179,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 9, 1, 120, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_down_right.png",
@@ -1120,7 +1194,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 8, 1, 119, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_left.png",
@@ -1134,7 +1209,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 9, 1, 120, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_right.png",
@@ -1148,7 +1224,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 8, 1, 119, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_up.png",
@@ -1162,7 +1239,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 8, 1, 119, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_up_left.png",
@@ -1176,7 +1254,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 9, 1, 120, 127]
     },
     {
       "live": "assets/sprites/enemies/goblin/idle_up_right.png",
@@ -1190,7 +1269,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 111,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 8, 1, 119, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_down.png",
@@ -1204,7 +1284,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_down_left.png",
@@ -1218,7 +1299,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_down_right.png",
@@ -1232,7 +1314,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_left.png",
@@ -1246,7 +1329,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_right.png",
@@ -1260,7 +1344,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_up.png",
@@ -1274,7 +1359,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_up_left.png",
@@ -1288,7 +1374,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/guardian/idle_up_right.png",
@@ -1302,7 +1389,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_down.png",
@@ -1316,7 +1404,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_down_left.png",
@@ -1330,7 +1419,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_down_right.png",
@@ -1344,7 +1434,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_left.png",
@@ -1358,7 +1449,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_right.png",
@@ -1372,7 +1464,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_up.png",
@@ -1386,7 +1479,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_up_left.png",
@@ -1400,7 +1494,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/imp/idle_up_right.png",
@@ -1414,7 +1509,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 109,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 16, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_down.png",
@@ -1428,7 +1524,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_down_left.png",
@@ -1442,7 +1539,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_down_right.png",
@@ -1456,7 +1554,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_left.png",
@@ -1470,7 +1569,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_right.png",
@@ -1484,7 +1584,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_up.png",
@@ -1498,7 +1599,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_up_left.png",
@@ -1512,7 +1614,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/orc/idle_up_right.png",
@@ -1526,7 +1629,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 126,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_down.png",
@@ -1540,7 +1644,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 126, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_down_left.png",
@@ -1554,7 +1659,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 2, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_down_right.png",
@@ -1568,7 +1674,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 126, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_left.png",
@@ -1582,7 +1689,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 2, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_right.png",
@@ -1596,7 +1704,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 126, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_up.png",
@@ -1610,7 +1719,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 126, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_up_left.png",
@@ -1624,7 +1734,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 2, 1, 127, 127]
     },
     {
       "live": "assets/sprites/enemies/shaman/idle_up_right.png",
@@ -1638,7 +1749,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 125,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 1, 126, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_down.png",
@@ -1652,7 +1764,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_down_left.png",
@@ -1666,7 +1779,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 122, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_down_right.png",
@@ -1680,7 +1794,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_left.png",
@@ -1694,7 +1809,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 122, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_right.png",
@@ -1708,7 +1824,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_up.png",
@@ -1722,7 +1839,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_up_left.png",
@@ -1736,7 +1854,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 122, 127]
     },
     {
       "live": "assets/sprites/enemies/skeleton/idle_up_right.png",
@@ -1750,7 +1869,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 115,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_down.png",
@@ -1764,7 +1884,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_down_left.png",
@@ -1778,7 +1899,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_down_right.png",
@@ -1792,7 +1914,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_left.png",
@@ -1806,7 +1929,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_right.png",
@@ -1820,7 +1944,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_up.png",
@@ -1834,7 +1959,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_up_left.png",
@@ -1848,7 +1974,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/slime/idle_up_right.png",
@@ -1862,7 +1989,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 108,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 17, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_down.png",
@@ -1876,7 +2004,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_down_left.png",
@@ -1890,7 +2019,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_down_right.png",
@@ -1904,7 +2034,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_left.png",
@@ -1918,7 +2049,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_right.png",
@@ -1932,7 +2064,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_up.png",
@@ -1946,7 +2079,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_up_left.png",
@@ -1960,7 +2094,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/spider/idle_up_right.png",
@@ -1974,7 +2109,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 99,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 1, 26, 127, 125]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down.png",
@@ -1988,7 +2124,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_left.png",
@@ -2002,7 +2140,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_right.png",
@@ -2016,7 +2156,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_left.png",
@@ -2030,7 +2172,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_right.png",
@@ -2044,7 +2188,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up.png",
@@ -2058,7 +2204,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_left.png",
@@ -2072,7 +2220,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_right.png",
@@ -2086,7 +2236,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 86,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 100, 119],
+      "approved": true
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_down.png",
@@ -2100,7 +2252,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_down_left.png",
@@ -2114,7 +2267,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_down_right.png",
@@ -2128,7 +2282,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_left.png",
@@ -2142,7 +2297,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_right.png",
@@ -2156,7 +2312,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_up.png",
@@ -2170,7 +2327,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_up_left.png",
@@ -2184,7 +2342,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_up_right.png",
@@ -2198,7 +2357,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 114,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 7, 1, 121, 127]
     },
     {
       "live": "assets/sprites/player/female/atk_great_axe_down_0.png",
@@ -2212,7 +2372,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 4, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_great_axe_down_1.png",
@@ -2226,7 +2387,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 44,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 2, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_great_axe_down_2.png",
@@ -2240,7 +2402,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_great_axe_down_3.png",
@@ -2254,7 +2417,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 80,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 23, 2, 104, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_great_axe_down_4.png",
@@ -2268,7 +2432,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 4, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_great_axe_down_5.png",
@@ -2282,7 +2447,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_longbow_down_0.png",
@@ -2296,7 +2462,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 44,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_longbow_down_1.png",
@@ -2310,7 +2477,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 88, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_longbow_down_2.png",
@@ -2324,7 +2492,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 2, 100, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_longbow_down_3.png",
@@ -2338,7 +2507,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 62,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_longbow_down_4.png",
@@ -2352,7 +2522,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 69,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 2, 99, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_longbow_down_5.png",
@@ -2366,7 +2537,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/atk_staff_down_0.png",
@@ -2380,7 +2552,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_staff_down_1.png",
@@ -2394,7 +2567,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 2, 90, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_staff_down_2.png",
@@ -2408,7 +2582,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_staff_down_3.png",
@@ -2422,7 +2597,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_staff_down_4.png",
@@ -2436,7 +2612,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/atk_staff_down_5.png",
@@ -2450,7 +2627,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_down.png",
@@ -2464,7 +2642,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 5, 85, 123],
+      "approved": true
     },
     {
       "live": "assets/sprites/player/female/idle_down_left.png",
@@ -2478,7 +2658,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 40,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 1, 85, 127]
     },
     {
       "live": "assets/sprites/player/female/idle_down_right.png",
@@ -2492,7 +2673,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 39,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 2, 84, 126]
     },
     {
       "live": "assets/sprites/player/female/idle_left.png",
@@ -2506,7 +2688,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 47, 1, 81, 127]
     },
     {
       "live": "assets/sprites/player/female/idle_right.png",
@@ -2520,7 +2703,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 46, 1, 81, 127]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_0.png",
@@ -2534,7 +2718,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 88, 126]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_1.png",
@@ -2548,7 +2733,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_2.png",
@@ -2562,7 +2748,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 88, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_left_0.png",
@@ -2576,7 +2763,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 48, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_left_1.png",
@@ -2590,7 +2778,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_left_2.png",
@@ -2604,7 +2793,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 80,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 22, 3, 102, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_right_0.png",
@@ -2618,7 +2808,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_right_1.png",
@@ -2632,7 +2823,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 83, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_down_right_2.png",
@@ -2646,7 +2838,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_left_0.png",
@@ -2660,7 +2853,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 4, 100, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_left_1.png",
@@ -2674,7 +2868,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 3, 87, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_left_2.png",
@@ -2688,7 +2883,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 35,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 3, 80, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_right_0.png",
@@ -2702,7 +2898,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 3, 100, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_right_1.png",
@@ -2716,7 +2913,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 3, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_right_2.png",
@@ -2730,7 +2928,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 49, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_0.png",
@@ -2744,7 +2943,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_1.png",
@@ -2758,7 +2958,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 50,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_2.png",
@@ -2772,7 +2973,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 87, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_left_0.png",
@@ -2786,7 +2988,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 97, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_left_1.png",
@@ -2800,7 +3003,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 3, 91, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_left_2.png",
@@ -2814,7 +3018,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_right_0.png",
@@ -2828,7 +3033,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 78,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 24, 2, 103, 126]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_right_1.png",
@@ -2842,7 +3048,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_to_walk_up_right_2.png",
@@ -2856,7 +3063,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 36,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 46, 3, 82, 125]
     },
     {
       "live": "assets/sprites/player/female/idle_up.png",
@@ -2870,7 +3078,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 1, 88, 127]
     },
     {
       "live": "assets/sprites/player/female/idle_up_left.png",
@@ -2884,7 +3093,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 40,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 1, 85, 127]
     },
     {
       "live": "assets/sprites/player/female/idle_up_right.png",
@@ -2898,7 +3108,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 39,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 1, 85, 127]
     },
     {
       "live": "assets/sprites/player/female/spc_great_axe_down_0.png",
@@ -2912,7 +3123,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 4, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/spc_great_axe_down_1.png",
@@ -2926,7 +3138,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 44,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 4, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/spc_great_axe_down_2.png",
@@ -2940,7 +3153,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/female/spc_great_axe_down_3.png",
@@ -2954,7 +3168,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 80,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 19, 4, 99, 126]
     },
     {
       "live": "assets/sprites/player/female/spc_great_axe_down_4.png",
@@ -2968,7 +3183,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 4, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/spc_great_axe_down_5.png",
@@ -2982,7 +3198,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 4, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/spc_longbow_down_0.png",
@@ -2996,7 +3213,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 44,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_longbow_down_1.png",
@@ -3010,7 +3228,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_longbow_down_2.png",
@@ -3024,7 +3243,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 23, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_longbow_down_3.png",
@@ -3038,7 +3258,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 62,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_longbow_down_4.png",
@@ -3052,7 +3273,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 69,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 3, 96, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_longbow_down_5.png",
@@ -3066,7 +3288,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_staff_down_0.png",
@@ -3080,7 +3303,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 3, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_staff_down_1.png",
@@ -3094,7 +3318,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_staff_down_2.png",
@@ -3108,7 +3333,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_staff_down_3.png",
@@ -3122,7 +3348,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_staff_down_4.png",
@@ -3136,7 +3363,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 3, 87, 125]
     },
     {
       "live": "assets/sprites/player/female/spc_staff_down_5.png",
@@ -3150,7 +3378,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_down_0.png",
@@ -3164,7 +3393,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 88, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_1.png",
@@ -3178,7 +3408,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_down_2.png",
@@ -3192,7 +3423,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 88, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_3.png",
@@ -3206,7 +3438,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_down_4.png",
@@ -3220,7 +3453,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 88, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_down_5.png",
@@ -3234,7 +3468,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_6.png",
@@ -3248,7 +3483,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_7.png",
@@ -3262,7 +3498,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_0.png",
@@ -3276,7 +3513,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 80,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 23, 2, 104, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_1.png",
@@ -3290,7 +3528,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_2.png",
@@ -3304,7 +3543,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_3.png",
@@ -3318,7 +3558,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_4.png",
@@ -3332,7 +3573,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_5.png",
@@ -3346,7 +3588,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_6.png",
@@ -3360,7 +3603,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 84, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_left_7.png",
@@ -3374,7 +3618,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 2, 96, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_0.png",
@@ -3388,7 +3633,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_1.png",
@@ -3402,7 +3648,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_2.png",
@@ -3416,7 +3663,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_3.png",
@@ -3430,7 +3678,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_4.png",
@@ -3444,7 +3693,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_5.png",
@@ -3458,7 +3708,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_6.png",
@@ -3472,7 +3723,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_down_right_7.png",
@@ -3486,7 +3738,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_0.png",
@@ -3500,7 +3753,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 35,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 2, 82, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_1.png",
@@ -3514,7 +3768,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_2.png",
@@ -3528,7 +3783,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 77,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_3.png",
@@ -3542,7 +3798,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_4.png",
@@ -3556,7 +3813,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 31,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 47, 2, 80, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_5.png",
@@ -3570,7 +3828,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 66,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 96, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_6.png",
@@ -3584,7 +3843,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 2, 99, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_left_7.png",
@@ -3598,7 +3858,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_0.png",
@@ -3612,7 +3873,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_1.png",
@@ -3626,7 +3888,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 65,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 2, 96, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_2.png",
@@ -3640,7 +3903,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 73,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_3.png",
@@ -3654,7 +3918,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_4.png",
@@ -3668,7 +3933,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 33,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 46, 2, 82, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_5.png",
@@ -3682,7 +3948,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 66,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_6.png",
@@ -3696,7 +3963,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 2, 101, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_right_7.png",
@@ -3710,7 +3978,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_0.png",
@@ -3724,7 +3993,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_1.png",
@@ -3738,7 +4008,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_2.png",
@@ -3752,7 +4023,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 5, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_left_0.png",
@@ -3766,7 +4038,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 48, 3, 89, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_left_1.png",
@@ -3780,7 +4053,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_left_2.png",
@@ -3794,7 +4068,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 40,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 44, 5, 84, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_right_0.png",
@@ -3808,7 +4083,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 86, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_right_1.png",
@@ -3822,7 +4098,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_down_right_2.png",
@@ -3836,7 +4113,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 39,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 44, 5, 83, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_left_0.png",
@@ -3850,7 +4128,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 47, 2, 80, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_left_1.png",
@@ -3864,7 +4143,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_left_2.png",
@@ -3878,7 +4158,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 48, 5, 80, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_right_0.png",
@@ -3892,7 +4173,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_right_1.png",
@@ -3906,7 +4188,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_right_2.png",
@@ -3920,7 +4203,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 48, 5, 80, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_0.png",
@@ -3934,7 +4218,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_1.png",
@@ -3948,7 +4233,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_2.png",
@@ -3962,7 +4248,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 41, 5, 87, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_left_0.png",
@@ -3976,7 +4263,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 68,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 3, 96, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_left_1.png",
@@ -3990,7 +4278,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_left_2.png",
@@ -4004,7 +4293,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 40,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 44, 5, 84, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_right_0.png",
@@ -4018,7 +4308,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 42,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 2, 85, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_right_1.png",
@@ -4032,7 +4323,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 99, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_to_idle_up_right_2.png",
@@ -4046,7 +4338,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 39,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 44, 5, 83, 125]
     },
     {
       "live": "assets/sprites/player/female/walk_up_0.png",
@@ -4060,7 +4353,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_1.png",
@@ -4074,7 +4368,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_2.png",
@@ -4088,7 +4383,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_3.png",
@@ -4102,7 +4398,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_4.png",
@@ -4116,7 +4413,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_5.png",
@@ -4130,7 +4428,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_6.png",
@@ -4144,7 +4443,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_7.png",
@@ -4158,7 +4458,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 50,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_0.png",
@@ -4172,7 +4473,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_1.png",
@@ -4186,7 +4488,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 68,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_2.png",
@@ -4200,7 +4503,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_3.png",
@@ -4214,7 +4518,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_4.png",
@@ -4228,7 +4533,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 44, 2, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_5.png",
@@ -4242,7 +4548,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 2, 90, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_6.png",
@@ -4256,7 +4563,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_left_7.png",
@@ -4270,7 +4578,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 49,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_0.png",
@@ -4284,7 +4593,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 36,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 2, 82, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_1.png",
@@ -4298,7 +4608,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_2.png",
@@ -4312,7 +4623,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 90, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_3.png",
@@ -4326,7 +4638,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 40,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 2, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_4.png",
@@ -4340,7 +4653,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 56,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_5.png",
@@ -4354,7 +4668,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 43, 2, 85, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_6.png",
@@ -4368,7 +4683,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 76,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 2, 101, 126]
     },
     {
       "live": "assets/sprites/player/female/walk_up_right_7.png",
@@ -4382,7 +4698,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_great_axe_down_0.png",
@@ -4396,7 +4713,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/atk_great_axe_down_1.png",
@@ -4410,7 +4728,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_great_axe_down_2.png",
@@ -4424,7 +4743,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 2, 96, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_great_axe_down_3.png",
@@ -4438,7 +4758,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 94,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 16, 2, 112, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_great_axe_down_4.png",
@@ -4452,7 +4773,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_great_axe_down_5.png",
@@ -4466,7 +4788,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/atk_longbow_down_0.png",
@@ -4480,7 +4803,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/atk_longbow_down_1.png",
@@ -4494,7 +4818,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 81,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 22, 2, 105, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_longbow_down_2.png",
@@ -4508,7 +4833,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 25, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_longbow_down_3.png",
@@ -4522,7 +4848,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 90,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 18, 2, 110, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_longbow_down_4.png",
@@ -4536,7 +4863,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 80,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 22, 2, 105, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_longbow_down_5.png",
@@ -4550,7 +4878,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/atk_staff_down_0.png",
@@ -4564,7 +4893,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/atk_staff_down_1.png",
@@ -4578,7 +4908,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_staff_down_2.png",
@@ -4592,7 +4923,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_staff_down_3.png",
@@ -4606,7 +4938,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/atk_staff_down_4.png",
@@ -4620,7 +4953,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/atk_staff_down_5.png",
@@ -4634,7 +4968,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_down.png",
@@ -4648,7 +4983,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 1, 94, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_down_left.png",
@@ -4662,7 +4998,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 1, 91, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_down_right.png",
@@ -4676,7 +5013,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 1, 91, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_left.png",
@@ -4690,7 +5028,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 46, 1, 81, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_right.png",
@@ -4704,7 +5043,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 33,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 46, 2, 81, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_0.png",
@@ -4718,7 +5058,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_1.png",
@@ -4732,7 +5073,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_2.png",
@@ -4746,7 +5088,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_left_0.png",
@@ -4760,7 +5103,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 25, 3, 100, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_left_1.png",
@@ -4774,7 +5118,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 3, 101, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_left_2.png",
@@ -4788,7 +5133,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 28, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_right_0.png",
@@ -4802,7 +5148,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 97, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_right_1.png",
@@ -4816,7 +5163,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_down_right_2.png",
@@ -4830,7 +5178,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 64,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 97, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_left_0.png",
@@ -4844,7 +5193,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 69,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_left_1.png",
@@ -4858,7 +5208,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_left_2.png",
@@ -4872,7 +5223,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 36,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 3, 81, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_right_0.png",
@@ -4886,7 +5238,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 107, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_right_1.png",
@@ -4900,7 +5253,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 56,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_right_2.png",
@@ -4914,7 +5268,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 35,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 47, 3, 82, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_0.png",
@@ -4928,7 +5283,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_1.png",
@@ -4942,7 +5298,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_2.png",
@@ -4956,7 +5313,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_left_0.png",
@@ -4970,7 +5328,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_left_1.png",
@@ -4984,7 +5343,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 62,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_left_2.png",
@@ -4998,7 +5358,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_right_0.png",
@@ -5012,7 +5373,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 76,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 25, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_right_1.png",
@@ -5026,7 +5388,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 64,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 3, 97, 126]
     },
     {
       "live": "assets/sprites/player/male/idle_to_walk_up_right_2.png",
@@ -5040,7 +5403,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 42, 3, 88, 125]
     },
     {
       "live": "assets/sprites/player/male/idle_up.png",
@@ -5054,7 +5418,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 1, 96, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_up_left.png",
@@ -5068,7 +5433,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 1, 93, 127]
     },
     {
       "live": "assets/sprites/player/male/idle_up_right.png",
@@ -5082,7 +5448,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 1, 93, 127]
     },
     {
       "live": "assets/sprites/player/male/spc_great_axe_down_0.png",
@@ -5096,7 +5463,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_great_axe_down_1.png",
@@ -5110,7 +5478,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_great_axe_down_2.png",
@@ -5124,7 +5493,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 96, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_great_axe_down_3.png",
@@ -5138,7 +5508,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 94,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 6, 3, 100, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_great_axe_down_4.png",
@@ -5152,7 +5523,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_great_axe_down_5.png",
@@ -5166,7 +5538,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_longbow_down_0.png",
@@ -5180,7 +5553,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_longbow_down_1.png",
@@ -5194,7 +5568,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 81,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 115, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_longbow_down_2.png",
@@ -5208,7 +5583,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 3, 102, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_longbow_down_3.png",
@@ -5222,7 +5598,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 90,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 3, 116, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_longbow_down_4.png",
@@ -5236,7 +5613,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 80,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 25, 3, 105, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_longbow_down_5.png",
@@ -5250,7 +5628,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_staff_down_0.png",
@@ -5264,7 +5643,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_staff_down_1.png",
@@ -5278,7 +5658,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_staff_down_2.png",
@@ -5292,7 +5673,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_staff_down_3.png",
@@ -5306,7 +5688,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_staff_down_4.png",
@@ -5320,7 +5703,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/spc_staff_down_5.png",
@@ -5334,7 +5718,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_down_0.png",
@@ -5348,7 +5733,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_1.png",
@@ -5362,7 +5748,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_2.png",
@@ -5376,7 +5763,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_3.png",
@@ -5390,7 +5778,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_4.png",
@@ -5404,7 +5793,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_5.png",
@@ -5418,7 +5808,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_6.png",
@@ -5432,7 +5823,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_7.png",
@@ -5446,7 +5838,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_0.png",
@@ -5460,7 +5853,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 97, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_1.png",
@@ -5474,7 +5868,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_2.png",
@@ -5488,7 +5883,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 64,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 2, 96, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_3.png",
@@ -5502,7 +5898,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 68,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 3, 99, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_4.png",
@@ -5516,7 +5913,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 50,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_5.png",
@@ -5530,7 +5928,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_6.png",
@@ -5544,7 +5943,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_left_7.png",
@@ -5558,7 +5958,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 25, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_0.png",
@@ -5572,7 +5973,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 64,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 2, 97, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_1.png",
@@ -5586,7 +5988,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 68,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 2, 99, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_2.png",
@@ -5600,7 +6003,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 97, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_3.png",
@@ -5614,7 +6018,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_4.png",
@@ -5628,7 +6033,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 50,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 89, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_5.png",
@@ -5642,7 +6048,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 96, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_6.png",
@@ -5656,7 +6063,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_down_right_7.png",
@@ -5670,7 +6078,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_0.png",
@@ -5684,7 +6093,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 36,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 2, 83, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_1.png",
@@ -5698,7 +6108,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 54,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_2.png",
@@ -5712,7 +6123,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 67,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_3.png",
@@ -5726,7 +6138,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 87, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_4.png",
@@ -5740,7 +6153,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 37,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 2, 83, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_5.png",
@@ -5754,7 +6168,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_6.png",
@@ -5768,7 +6183,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 69,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 99, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_left_7.png",
@@ -5782,7 +6198,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 2, 90, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_0.png",
@@ -5796,7 +6213,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 35,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 2, 81, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_1.png",
@@ -5810,7 +6228,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 50,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 2, 90, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_2.png",
@@ -5824,7 +6243,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 2, 100, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_3.png",
@@ -5838,7 +6258,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_4.png",
@@ -5852,7 +6273,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 37,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 45, 2, 83, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_5.png",
@@ -5866,7 +6288,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 3, 88, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_6.png",
@@ -5880,7 +6303,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 2, 100, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_right_7.png",
@@ -5894,7 +6318,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 56,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_0.png",
@@ -5908,7 +6333,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_1.png",
@@ -5922,7 +6348,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 95, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_2.png",
@@ -5936,7 +6363,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 5, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_left_0.png",
@@ -5950,7 +6378,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_left_1.png",
@@ -5964,7 +6393,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 26, 3, 101, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_left_2.png",
@@ -5978,7 +6408,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 5, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_right_0.png",
@@ -5992,7 +6423,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 3, 96, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_right_1.png",
@@ -6006,7 +6438,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 3, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_down_right_2.png",
@@ -6020,7 +6453,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 38, 5, 90, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_left_0.png",
@@ -6034,7 +6468,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 29, 3, 86, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_left_1.png",
@@ -6048,7 +6483,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 66,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_left_2.png",
@@ -6062,7 +6498,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 32,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 48, 5, 80, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_right_0.png",
@@ -6076,7 +6513,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 71,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 2, 100, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_right_1.png",
@@ -6090,7 +6528,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_right_2.png",
@@ -6104,7 +6543,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 33,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 47, 5, 80, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_0.png",
@@ -6118,7 +6558,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_1.png",
@@ -6132,7 +6573,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_2.png",
@@ -6146,7 +6588,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 6, 94, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_left_0.png",
@@ -6160,7 +6603,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 64,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 3, 96, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_left_1.png",
@@ -6174,7 +6618,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 62,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 3, 94, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_left_2.png",
@@ -6188,7 +6633,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 36, 5, 91, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_right_0.png",
@@ -6202,7 +6648,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 37, 2, 91, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_right_1.png",
@@ -6216,7 +6663,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_to_idle_up_right_2.png",
@@ -6230,7 +6678,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 5, 92, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_up_0.png",
@@ -6244,7 +6693,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_1.png",
@@ -6258,7 +6708,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_2.png",
@@ -6272,7 +6723,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_3.png",
@@ -6286,7 +6738,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_4.png",
@@ -6300,7 +6753,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_5.png",
@@ -6314,7 +6768,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_6.png",
@@ -6328,7 +6783,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 59,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 93, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_up_7.png",
@@ -6342,7 +6798,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 60,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_0.png",
@@ -6356,7 +6813,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 2, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_1.png",
@@ -6370,7 +6828,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 64,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 31, 3, 97, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_2.png",
@@ -6384,7 +6843,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 66,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 2, 98, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_3.png",
@@ -6398,7 +6858,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 65,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 30, 3, 97, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_4.png",
@@ -6412,7 +6873,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 61,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 32, 3, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_5.png",
@@ -6426,7 +6888,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 35, 2, 92, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_6.png",
@@ -6440,7 +6903,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 63,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 93, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_left_7.png",
@@ -6454,7 +6918,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 62,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 33, 3, 95, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_0.png",
@@ -6468,7 +6933,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 46,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 40, 2, 88, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_1.png",
@@ -6482,7 +6948,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 66,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 3, 100, 125]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_2.png",
@@ -6496,7 +6963,8 @@
       "kind": "figure",
       "loose": true,
       "opaque_side": 82,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 24, 2, 104, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_3.png",
@@ -6510,7 +6978,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 72,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 27, 2, 101, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_4.png",
@@ -6524,7 +6993,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 48,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 39, 2, 88, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_5.png",
@@ -6538,7 +7008,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 58,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 94, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_6.png",
@@ -6552,7 +7023,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 75,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 25, 2, 102, 126]
     },
     {
       "live": "assets/sprites/player/male/walk_up_right_7.png",
@@ -6566,7 +7038,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 57,
-      "cell": ""
+      "cell": "",
+      "fit": [128, 128, 34, 2, 93, 126]
     },
     {
       "live": "assets/ui/gear/body.png",
@@ -6580,7 +7053,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 53,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 5, 0, 58, 64]
     },
     {
       "live": "assets/ui/gear/great_axe.png",
@@ -6594,7 +7068,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 33,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 15, 0, 48, 64]
     },
     {
       "live": "assets/ui/gear/hatchet.png",
@@ -6608,7 +7083,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 56,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 5, 1, 57, 64],
+      "approved": true
     },
     {
       "live": "assets/ui/gear/head.png",
@@ -6622,7 +7099,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 52,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 7, 2, 57, 62],
+      "approved": true
     },
     {
       "live": "assets/ui/gear/legs.png",
@@ -6636,17 +7115,21 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 9, 0, 54, 64]
     },
     {
       "live": "assets/ui/gear/longbow.png",
       "source": "sources/assets/ui/gear/longbow.jpg",
-      "origin": "_src/sources/assets/ui/gear/longbow.jpg"
+      "origin": "_src/sources/assets/ui/gear/longbow.jpg",
+      "fit": [64, 64, 21, 4, 43, 59],
+      "approved": true
     },
     {
       "live": "assets/ui/gear/moldy_bread.png",
       "source": "sources/assets/ui/gear/moldy_bread.jpg",
-      "origin": "_src/sources/assets/ui/gear/moldy_bread.jpg"
+      "origin": "_src/sources/assets/ui/gear/moldy_bread.jpg",
+      "fit": [64, 64, 0, 15, 64, 50]
     },
     {
       "live": "assets/ui/gear/pickaxe.png",
@@ -6660,7 +7143,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 11, 0, 52, 64]
     },
     {
       "live": "assets/ui/gear/potion.png",
@@ -6674,7 +7158,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 10, 0, 53, 64]
     },
     {
       "live": "assets/ui/gear/ration.png",
@@ -6688,7 +7173,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 11, 0, 52, 64]
     },
     {
       "live": "assets/ui/gear/slot_body.png",
@@ -6702,7 +7188,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 11, 0, 52, 64]
     },
     {
       "live": "assets/ui/gear/slot_food.png",
@@ -6716,7 +7203,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 55,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 0, 4, 64, 59]
     },
     {
       "live": "assets/ui/gear/slot_head.png",
@@ -6730,7 +7218,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 43,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 10, 0, 53, 64]
     },
     {
       "live": "assets/ui/gear/slot_legs.png",
@@ -6744,7 +7233,9 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 41,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 4, 1, 60, 63],
+      "approved": true
     },
     {
       "live": "assets/ui/gear/slot_potion.png",
@@ -6758,7 +7249,8 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 45,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 9, 0, 54, 64]
     },
     {
       "live": "assets/ui/gear/staff.png",
@@ -6772,12 +7264,14 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 17,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 23, 0, 40, 64]
     },
     {
       "live": "assets/ui/gear/stew.png",
       "source": "sources/assets/ui/gear/stew.jpg",
-      "origin": "_src/sources/assets/ui/gear/stew.jpg"
+      "origin": "_src/sources/assets/ui/gear/stew.jpg",
+      "fit": [64, 64, 1, 1, 62, 64]
     },
     {
       "live": "assets/ui/gear/trail_bread.png",
@@ -6791,17 +7285,20 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 47,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 0, 8, 64, 55]
     },
     {
       "live": "assets/ui/vendor/crate_icon.png",
       "source": "sources/assets/ui/vendor/crate_icon.jpg",
-      "origin": "_src/sources/assets/ui/vendor/crate_icon.jpg"
+      "origin": "_src/sources/assets/ui/vendor/crate_icon.jpg",
+      "fit": [64, 64, 0, 1, 64, 63]
     },
     {
       "live": "assets/ui/vendor/jar_icon.png",
       "source": "sources/assets/ui/vendor/jar_icon.jpg",
-      "origin": "_src/sources/assets/ui/vendor/jar_icon.jpg"
+      "origin": "_src/sources/assets/ui/vendor/jar_icon.jpg",
+      "fit": [64, 64, 2, 1, 62, 64]
     },
     {
       "live": "assets/ui/gear/snack.png",
@@ -6811,7 +7308,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 4, 11, 60, 52]
     },
     {
       "live": "assets/ui/gear/cinder_ember.png",
@@ -6821,7 +7319,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 13, 6, 59, 57]
     },
     {
       "live": "assets/ui/gear/cinder_coil.png",
@@ -6831,7 +7330,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 1, 2, 63, 61]
     },
     {
       "live": "assets/ui/gear/tide_pearl.png",
@@ -6841,7 +7341,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 6, 12, 47, 52]
     },
     {
       "live": "assets/ui/gear/tide_scale.png",
@@ -6851,7 +7352,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 5, 6, 59, 58]
     },
     {
       "live": "assets/ui/gear/root_knot.png",
@@ -6861,7 +7363,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 4, 5, 60, 59]
     },
     {
       "live": "assets/ui/gear/root_charm.png",
@@ -6871,7 +7374,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 13, 9, 62, 62]
     },
     {
       "live": "assets/ui/gear/root_seed.png",
@@ -6881,7 +7385,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 1, 9, 63, 55]
     },
     {
       "live": "assets/ui/gear/ash_mask.png",
@@ -6891,7 +7396,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 1, 23, 60, 57]
     },
     {
       "live": "assets/ui/gear/ash_bell.png",
@@ -6901,7 +7407,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 9, 7, 55, 57]
     },
     {
       "live": "assets/ui/gear/ash_cloak.png",
@@ -6911,7 +7418,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 4, 6, 60, 59]
     },
     {
       "live": "assets/ui/gear/spark_lens.png",
@@ -6921,7 +7429,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 12, 8, 59, 56]
     },
     {
       "live": "assets/ui/gear/spark_wire.png",
@@ -6931,7 +7440,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 4, 1, 60, 63]
     },
     {
       "live": "assets/ui/gear/bone_ring.png",
@@ -6941,7 +7451,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 5, 9, 50, 55]
     },
     {
       "live": "assets/ui/gear/bone_splint.png",
@@ -6951,7 +7462,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 6, 6, 59, 58]
     },
     {
       "live": "assets/ui/gear/bone_tooth.png",
@@ -6961,7 +7473,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 14, 9, 51, 55]
     },
     {
       "live": "assets/ui/gear/veil_shard.png",
@@ -6971,7 +7484,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 15, 1, 60, 56]
     },
     {
       "live": "assets/ui/gear/veil_thread.png",
@@ -6981,7 +7495,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 1, 3, 63, 62]
     },
     {
       "live": "assets/ui/gear/veil_coin.png",
@@ -6991,7 +7506,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 5, 8, 52, 56]
     },
     {
       "live": "assets/ui/gear/veil_hush.png",
@@ -7001,7 +7517,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 17, 16, 49, 48]
     },
     {
       "live": "assets/ui/gear/iron_seal.png",
@@ -7011,7 +7528,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 9, 9, 55, 56]
     },
     {
       "live": "assets/ui/gear/iron_nail.png",
@@ -7021,7 +7539,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 13, 7, 59, 57]
     },
     {
       "live": "assets/ui/gear/iron_link.png",
@@ -7031,7 +7550,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 6, 1, 58, 63]
     },
     {
       "live": "assets/ui/gear/iron_plate.png",
@@ -7041,7 +7561,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 4, 6, 55, 59]
     },
     {
       "live": "assets/ui/gear/iron_heart.png",
@@ -7051,7 +7572,8 @@
       "window": "full",
       "kind": "figure",
       "loose": false,
-      "cell": ""
+      "cell": "",
+      "fit": [64, 64, 8, 10, 58, 55]
     }
   ],
   "videos": [

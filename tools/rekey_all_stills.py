@@ -6,10 +6,15 @@
     python tools/rekey_all_stills.py --only assets/fx/arrow.png,assets/ui/gear/hatchet.png
 
     python tools/rekey_all_stills.py --out DIR --jobs 8      (review copy; live assets untouched)
+    python tools/rekey_all_stills.py --check --jobs 8        (approved rows only: each must reproduce live byte for byte)
+    python tools/rekey_all_stills.py --record-fit REV        (store each still's fit geometry from live at REV)
 
 Reads the manifest, resolves each source under _src/sources, keys it (imglib.matte), mirrors manifest flip rows, and
 places it exactly like the live still it replaces (geom.fit_like: canvas, body size, bottom edge, centre x). Live
 art with no alpha (tiles, finished pictures) and the out-of-bounds stills are kept; a stale source is reported.
+The placement reference is the manifest `fit` field ([W, H, x0, y0, x1, y1]: canvas and solid body box of the live
+still before any rekey), never the current live file, so a re-run reproduces its own output. Rows marked
+`approved` are stills Vira accepted; --check fails if any of them would change.
 Check the result with python tools/rekey_check.py --new DIR.
 """
 from __future__ import annotations
@@ -51,7 +56,14 @@ def frozen(rel: str) -> bool:
     return any(rel == f or (f.endswith("/") and rel.startswith(f)) for f in FROZEN)
 
 
-def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, include_frozen: bool = False) -> str:
+def _fit_ref(fit, flip: bool):
+    """Recorded geometry -> ((W, H), box); a flip row places against the mirrored box."""
+    W, H, x0, y0, x1, y1 = fit
+    return ((W, H), (W - x1, y0, W - x0, y1) if flip else (x0, y0, x1, y1))
+
+
+def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, include_frozen: bool = False,
+         fit=None) -> str:
     """Key one still from its plate and place it like the live still (geom.fit_like): same canvas, body size,
     bottom edge and centre. Live art with no alpha (tiles, finished pictures) has nothing to key: it is kept as is,
     and a source that no longer matches it is reported STALE (the live file is the truth). Out-of-bounds stills
@@ -80,7 +92,9 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
         raw = imgio.load(src).convert("RGBA")
         keyed = key.key_to_alpha(raw)
         # a left-facing still is placed like the mirrored live still, then mirrored: exactly its right sibling's mirror
-        if ref is not None:
+        if fit:
+            fitted = geom.fit_like(keyed, _fit_ref(fit, flip))
+        elif ref is not None:
             fitted = geom.fit_like(keyed, geom.flip(ref) if flip else ref)
         else:
             fitted = geom.fit_box(keyed, 128, 8)
@@ -111,11 +125,37 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
         return f"FAIL {live_rel} ({exc})"
 
 
+def _record_fit(root, args, data) -> int:
+    import io
+    import subprocess
+    from PIL import Image
+    n = 0
+    for e in data.get("entries", []):
+        r = subprocess.run(["git", "show", f"{args.record_fit}:{e.get('live', '')}"], cwd=ROOT, capture_output=True)
+        if r.returncode:
+            continue
+        im = Image.open(io.BytesIO(r.stdout))
+        box = geom.core_box(im.convert("RGBA"), 128)
+        if im.mode == "RGB" or not box:
+            continue
+        e["fit"] = [im.width, im.height, *box]
+        n += 1
+    if not args.dry_run:
+        import re
+        text = json.dumps(data, indent=2) + "\n"
+        text = re.sub(r'"fit": \[\s*([^\]]*?)\s*\]', lambda m: '"fit": [' + ", ".join(x.strip() for x in m.group(1).split(",")) + "]", text)
+        MANIFEST.write_text(text, encoding="utf-8")
+    return agent_log.finish("rekey-all-stills", root, f"recorded fit for {n} rows from {args.record_fit}", "PASS",
+                            args=args, recorded=n)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bulk rekey stills from the manifest. Overwrites live PNGs.", writes=True)
     ap.add_argument("--out", default="", help="Write under this folder (same relative paths) instead of live assets/.")
     ap.add_argument("--jobs", type=int, default=1, help="Worker processes.")
     ap.add_argument("--include-frozen", action="store_true", help="Also rekey the out-of-bounds stills (FROZEN).")
+    ap.add_argument("--check", action="store_true", help="Run into a temp folder; fail if an approved still differs from live.")
+    ap.add_argument("--record-fit", default="", metavar="REV", help="Record each row's fit geometry from live at git REV into the manifest, then stop.")
     ap.add_argument("--only", default="", help="Comma-separated live paths to limit the run.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -123,20 +163,30 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail(f"no manifest at {MANIFEST}")
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     entries = data.get("entries", [])
+    if args.record_fit:
+        return _record_fit(root, args, data)
     wanted = {p.strip() for p in args.only.split(",") if p.strip()}
     lines = ["Bulk rekey from manifest. Live PNGs are overwritten unless --dry-run."]
     wrote = skipped = failed = 0
     rows = [e for e in entries if e.get("live") and (not wanted or e["live"] in wanted)]
+    if args.check and not wanted:
+        rows = [e for e in rows if e.get("approved")]
     todo = [e["live"] for e in rows]
     flips = [bool(e.get("flip")) for e in rows]
     incl = [bool(args.include_frozen)] * len(todo)
+    fits = [e.get("fit") for e in rows]
+    tmp = None
+    if args.check:
+        import tempfile
+        tmp = tempfile.TemporaryDirectory()
+        args.out = tmp.name
     out = Path(args.out).resolve() if args.out else None
     if args.jobs > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(args.jobs) as ex:
-            results = list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, incl, chunksize=4))
+            results = list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, incl, fits, chunksize=4))
     else:
-        results = [_one(t, args.dry_run, out, f, i) for t, f, i in zip(todo, flips, incl)]
+        results = [_one(t, args.dry_run, out, f, i, g) for t, f, i, g in zip(todo, flips, incl, fits)]
     kept = {}
     for line in results:
         lines.append(line)
@@ -152,6 +202,17 @@ def main(argv: list[str] | None = None) -> int:
     if out and not args.dry_run:
         out.mkdir(parents=True, exist_ok=True)
         (out / "_kept.json").write_text(json.dumps(kept, indent=1), encoding="utf-8")
+    drift = 0
+    if args.check:
+        appr = [e["live"] for e in rows if e.get("approved")]
+        for rel in appr:
+            a, b = out / rel, ROOT / rel
+            if not (a.is_file() and b.is_file() and a.read_bytes() == b.read_bytes()):
+                drift += 1
+                lines.append(f"DRIFT {rel} (a re-run would change this approved still)")
+        lines.append(f"check approved={len(appr)} drift={drift}")
+        failed += drift
+        tmp.cleanup()
     lines.append(f"done wrote={wrote} skipped={skipped} failed={failed}")
     status = "FAIL" if failed else "PASS"
     return agent_log.finish("rekey-all-stills", root, "\n".join(lines), status, args=args, wrote=wrote, skipped=skipped, failed=failed)

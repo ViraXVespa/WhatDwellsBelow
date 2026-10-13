@@ -300,14 +300,18 @@ def core_box(im: Image.Image, alpha_min: int = 128):
     return bbox(im, alpha_min) or im.convert("RGBA").getbbox()
 
 
-def fit_like(im: Image.Image, ref: Image.Image, alpha_min: int = 128) -> Image.Image:
+def fit_like(im: Image.Image, ref, alpha_min: int = 128) -> Image.Image:
     """Place a keyed still on a canvas exactly like `ref` (the live still it replaces): same canvas size, the solid
     body scaled to the size of ref's body and lined up on ref's bottom edge and centre x. No recentring and no
     padding of its own, so a sprite anchored low, a building face cropped tight, or an off-centre prop keeps that
-    framing. The glow around the body comes along at the same scale."""
+    framing. The glow around the body comes along at the same scale.
+    ref may also be a recorded geometry ((W, H), body box), so a re-run does not fit against its own output."""
     im = im.convert("RGBA")
-    rb, sb = core_box(ref, alpha_min), core_box(im, alpha_min)
-    W, H = ref.size
+    if isinstance(ref, Image.Image):
+        (W, H), rb = ref.size, core_box(ref, alpha_min)
+    else:
+        (W, H), rb = ref
+    sb = core_box(im, alpha_min)
     out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     if not rb or not sb:
         return out
