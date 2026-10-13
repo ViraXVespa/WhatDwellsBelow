@@ -29,7 +29,7 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 - Findings: full relevant body has been read and the behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, or an unintuitive flow (judged from the code and surrounding context). Consult design docs and open tasks when they exist; exclude anything that matches an open task or an explicit intentional note. Cite the function or pattern.
 - Needs investigation when the body or surrounding context has not yet been fully read, or the defect is not yet clear. Do not promote these to findings.
 - Meets requirements when the body has been read and the behavior is correct under the system’s intent.
-- Stop and ask for another turn whenever the next body needs to be opened. Do not declare the review complete until the User says so or every named area is closed.
+- Stop and request another turn as long as any code-map row still has an unchecked checklist item. Do not declare the sweep complete, and do not move a system to Meets, while any checklist item remains open. On each continuation the next action is the next unchecked file from `code_map.py sweep`, not a new system.
 - No code changes during the sweep itself. Findings can later become a task (Bot opt, Build slice, or web park).
 - When working out of a grok-build branch, do not add changelog files unless the User named changelog as the specific goal of the session.
 
@@ -65,3 +65,23 @@ Use the mandatory Findings / Needs investigation / Meets requirements format.
 - **Meets requirements**: Body has been read and the behavior is correct under the system’s intent.
 
 If an item cannot be definitively concluded, list it under Findings and add a short “Needs more information” note at the end of the report.
+
+### Coverage checklist (mandatory per code-map row)
+
+Before a system may be moved to Meets requirements or dropped from the open set, every item below must be body-read or explicitly marked “no such file”:
+
+- [ ] Facade (`*.gd` named in the code-map row)
+- [ ] Setup / ready / boot / spawn builders
+- [ ] Present / tick / physics / process
+- [ ] Phase / job / multi-step state machines (forge, extract, loadout, restock, stream jobs, etc.)
+- [ ] Prop / mesh / collision / banner / spot builders (any file that constructs `StaticBody3D`, `CollisionShape3D`, `MeshInstance3D`, or places a named layout spot)
+- [ ] Interact / open / close / hide / free pairs
+- [ ] Owning design doc (if one exists for the system)
+
+Source of the list: `python tools/code_map.py sweep --system <Name>` (or with no `--system` for all). A one-line summary or a comment is not a body read. The agent must open the file.
+
+The report must include the current open checklist (system → remaining unchecked items). A system stays under Needs investigation until its checklist is empty. “Continue” means open the next unchecked item on the oldest open system, not sample another facade.
+
+The collision and multi-step items on the checklist exist because those are the paths that previously produced player-visible defects when left unread.
+
+
