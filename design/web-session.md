@@ -32,7 +32,7 @@ Naming a goal is memory, not a mode switch. Several goals may sit in memory. Dir
 | parked | User names a parked task | `design/tasks/README.md` (owner web) |
 | perf | User drops hitch / load-timing output | measure first; one hitch class per emit |
 | build-week | User names it | process recommendations; gather first |
-| sweep | User names it and a goal | three-section report; body-read every system row via `code_map.py sweep` checklist (facade + setup/present/phase/prop/collision/banner); mismatch and unpaired free/hide are Findings; stop only when every checklist item is read or marked “no such file” |
+| sweep | User names it and a goal | three-section report; Findings as soon as a body shows a player-visible defect; body-read as many remaining checklist items as the turn allows; request another turn only when no further files can be opened this turn |
 
 Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path unless the User named that path.
 

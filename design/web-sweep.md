@@ -12,13 +12,13 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 ## Output format (mandatory)
 
 **Findings**  
-(Full relevant body has been read. The behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, an unintuitive flow, a collision/visual mismatch, an interact-group node that is never removed on the open/spent/hidden path, a multi-step flow that can leave phase/item/resource fields inconsistent, or an unpaired free/hide, judged from the code and surrounding context. Design docs and open tasks are consulted when they exist; anything that matches an open task or an explicit “intentional” note is excluded. Cite the function or pattern.)
+(Full relevant body has been read. The code produces a wrong, incomplete, leaky, mismatched, or unintuitive player-visible result on a path the design contemplates. Design docs and open tasks are consulted when they exist; exclude only an explicit intentional note or an open task that already covers the exact behavior. Design silence is not a reason to withhold. Cite the function or pattern. Note “checklist remaining” if the rest of the system is unread.)
 
 **Needs investigation**  
 (Body or surrounding context not yet fully read, or the defect is not yet clear.)
 
 **Meets requirements**  
-(Body has been read and the behavior is correct under the system’s intent.)
+(Full checklist body-read and no player-visible defect observed on those paths.)
 
 ## Rules
 
@@ -26,10 +26,10 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 - A function or system is closed only after its relevant body (or the bodies that implement the goal) has been read. A code-map row, a comment, or a one-line summary is not enough.
 - Coverage obligation: for every system row in `design/code-map.md` (or the areas the User named), body-read the facade plus every helper it calls on the player-visible path, including setup, present, interact, open/close, and phase/job scripts. Also body-read every prop, mesh, collision, and banner/spot builder in the hub and dungeon. “Hot-path” does not exclude setup, present, or phase files. Any file that creates a `StaticBody3D`, `CollisionShape3D`, `MeshInstance3D`, or writes a phase/timer field is in scope.
 - A system may not be listed under Meets requirements until its setup, present, phase, and prop-builder files have been body-read. Needs investigation stays until those files are opened. The final report must list any system whose prop or flow scripts remain unread.
-- Findings: full relevant body has been read and the behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, or an unintuitive flow (judged from the code and surrounding context). Consult design docs and open tasks when they exist; exclude anything that matches an open task or an explicit intentional note. Cite the function or pattern.
+- Findings: full relevant body has been read and the code produces a wrong, incomplete, leaky, mismatched, or unintuitive player-visible result on a path the design contemplates (judged from the code and surrounding context). Consult design docs and open tasks when they exist; exclude only an explicit intentional note or an open task that already covers the exact behavior. Cite the function or pattern. List under Findings as soon as the body shows the defect; note “checklist remaining” if the rest of the system is unread.
 - Needs investigation when the body or surrounding context has not yet been fully read, or the defect is not yet clear. Do not promote these to findings.
-- Meets requirements when the body has been read and the behavior is correct under the system’s intent.
-- Stop and request another turn as long as any code-map row still has an unchecked checklist item. Do not declare the sweep complete, and do not move a system to Meets, while any checklist item remains open. On each continuation the next action is the next unchecked file from `code_map.py sweep`, not a new system.
+- Meets requirements only for systems whose full checklist has been body-read and no player-visible defect was observed on those paths.
+- On every turn, body-read as many remaining checklist items as the turn can hold (open in parallel). Request another turn only when no further files can be opened this turn. The requesting message must still list every Finding discovered so far plus the current open checklist. Do not end a turn with only “no new Findings” (or a closed system) while unread checklist items exist and more files could still have been opened.
 - No code changes during the sweep itself. Findings can later become a task (Bot opt, Build slice, or web park).
 - When working out of a grok-build branch, do not add changelog files unless the User named changelog as the specific goal of the session.
 
@@ -38,7 +38,7 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 A bug sweep is a focused sub-flow of the web sweep. Use it when the goal is to flag defects for a later task rather than implement changes.
 
 ### Definition of a bug
-A bug is any behavior that produces wrong player-visible results or fails to meet the intent of the system under conditions the design contemplates. Design docs are concept overviews, not exhaustive requirement lists. This includes:
+A bug is any behavior that produces wrong player-visible results or fails to meet the intent of the system under conditions the design contemplates. Design docs are concept overviews, not exhaustive requirement lists. When the design is silent or high-level, judge from the code’s player-visible result and common-edge completeness. This includes:
 - Incorrect calculations, fallbacks, or state transitions (even if non-crashing)
 - Incomplete implementations of the happy path (common edges fail)
 - Feel and presentation defects (wrong vertical motion, missing feedback, incorrect facing, visual leaks)
@@ -60,9 +60,9 @@ Do **not** treat the following as bugs:
 ### Reporting
 Use the mandatory Findings / Needs investigation / Meets requirements format.
 
-- **Findings**: Full relevant body has been read. The behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, or an unintuitive flow, judged from the code and surrounding context. Design docs and open tasks are consulted when they exist; anything that matches an open task or an explicit “intentional” note is excluded. Cite the function or pattern.
+- **Findings**: Full relevant body has been read. The code produces a wrong, incomplete, leaky, mismatched, or unintuitive player-visible result on a path the design contemplates, judged from the code and surrounding context. Design docs and open tasks are consulted when they exist; exclude only an explicit intentional note or an open task that already covers the exact behavior. Cite the function or pattern. List as soon as the body shows the defect; note “checklist remaining” if the rest of the system is unread.
 - **Needs investigation**: Body or surrounding context not yet fully read, or the defect is not yet clear.
-- **Meets requirements**: Body has been read and the behavior is correct under the system’s intent.
+- **Meets requirements**: Full checklist body-read and no player-visible defect observed on those paths.
 
 If an item cannot be definitively concluded, list it under Findings and add a short “Needs more information” note at the end of the report.
 
@@ -80,8 +80,6 @@ Before a system may be moved to Meets requirements or dropped from the open set,
 
 Source of the list: `python tools/code_map.py sweep --system <Name>` (or with no `--system` for all). A one-line summary or a comment is not a body read. The agent must open the file.
 
-The report must include the current open checklist (system → remaining unchecked items). A system stays under Needs investigation until its checklist is empty. “Continue” means open the next unchecked item on the oldest open system, not sample another facade.
+The report must include the current open checklist (system → remaining unchecked items). A system stays under Needs investigation until its checklist is empty. On each turn body-read as many remaining items as the turn can hold; request another turn only when no further files can be opened. “Continue” means open the next unchecked items, not sample another facade.
 
 The collision and multi-step items on the checklist exist because those are the paths that previously produced player-visible defects when left unread.
-
-
