@@ -12,21 +12,21 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 ## Output format (mandatory)
 
 **Findings**  
-(Only items where the owning requirement was read and is unmet. Cite the function or doc.)
+(Full relevant body has been read. The behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, or an unintuitive flow, judged from the code and surrounding context. Design docs and open tasks are consulted when they exist; anything that matches an open task or an explicit “intentional” note is excluded. Cite the function or pattern.)
 
 **Needs investigation**  
-(Patterns whose owning requirement, control flow, or constraint has not yet been fully read. Do not turn these into findings.)
+(Body or surrounding context not yet fully read, or the defect is not yet clear.)
 
 **Meets requirements**  
-(Items where the owning requirement was read and is met.)
+(Body has been read and the behavior is correct under the system’s intent.)
 
 ## Rules
 
 - The User-named goal is the lens for the whole sweep. Read owning docs and open tasks that touch the named areas before treating a pattern as a finding.
 - A function or system is closed only after its relevant body (or the bodies that implement the goal) has been read. A code-map row, a comment, or a one-line summary is not enough.
-- Findings only when the owning requirement was read and is unmet under conditions the design contemplates. Cite the function, pattern, or doc.
-- Needs investigation when the owning requirement, control flow, or constraint has not yet been fully established. Do not promote these to findings.
-- Meets requirements only when the owning requirement was read and the examined behavior satisfies it.
+- Findings: full relevant body has been read and the behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, or an unintuitive flow (judged from the code and surrounding context). Consult design docs and open tasks when they exist; exclude anything that matches an open task or an explicit intentional note. Cite the function or pattern.
+- Needs investigation when the body or surrounding context has not yet been fully read, or the defect is not yet clear. Do not promote these to findings.
+- Meets requirements when the body has been read and the behavior is correct under the system’s intent.
 - Stop and ask for another turn whenever the next body needs to be opened. Do not declare the review complete until the User says so or every named area is closed.
 - No code changes during the sweep itself. Findings can later become a task (Bot opt, Build slice, or web park).
 - When working out of a grok-build branch, do not add changelog files unless the User named changelog as the specific goal of the session.
