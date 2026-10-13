@@ -3,7 +3,7 @@
 id: bug-sweep-w7
 owner: build
 status: open
-done-when: All listed issues are fixed or explicitly deferred with design confirmation; second-pass findings (if any) are incorporated
+done-when: All listed issues are fixed or explicitly deferred with design confirmation
 resume: python tools/task.py show bug-sweep-w7
 
 ## Confirmed issues (first pass)
@@ -32,9 +32,6 @@ resume: python tools/task.py show bug-sweep-w7
 - Progress UI flow leaves stale focus/status on mode change (`ui_flow.gd`).
 - Shop/inventory minor type and lifetime issues.
 - Camp spot placement assumes every named spot exists.
-
-## Second pass
-A follow-up sweep focused on incorrect non-crashing behavior, feel/presentation, progression edges, and resource lifetime may append additional items. Do not mark this task done until that pass is complete or explicitly skipped.
 
 ## Notes
 Open tasks (ui-quest-board-posters, inventory-consumables, metal-hud-mana, ui-recap-skills-style, rekey-assets, etc.) already cover some visual and content incompleteness; those are not re-listed here.
