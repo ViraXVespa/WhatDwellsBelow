@@ -46,6 +46,7 @@ Inspect the live tree from **one system row** in `design/code-map.md` when editi
 
 - Browse-page summaries are frequently truncated and can end on a clean-looking but incomplete thought. Always read the full file from the session artifact saved under `/home/workdir/artifacts/browsed_files/` when the body matters. Use the summary only as an index of what the file contains so you know which artifact to open.
 - A raw URL or open_page result for a path is not proof the file still exists on the branch. Before treating a fetched body as current (especially any path that might have been moved into `notes/` or deleted), confirm the path appears in the branch tree or the contents API. If the tree does not list it, discard the body.
+- Branch-tip raw URLs (`raw.githubusercontent.com/.../<branch>/...`) are CDN-cached for roughly five minutes. After a push, a fetch can still return the previous blob. When the session must see the latest commit (protocol edits, post-push verification, or any body-read that must not be stale), first obtain the current SHA for the branch (GitHub API or the commits page), then fetch with that SHA in the URL instead of the branch name. SHA URLs are immutable and bypass the branch-tip cache.
 
 ## Phases
 

@@ -30,6 +30,7 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 - Needs investigation when the body or surrounding context has not yet been fully read, or the defect is not yet clear. Do not promote these to findings.
 - Meets requirements only for systems whose full checklist has been body-read and no player-visible defect was observed on those paths.
 - On every turn, body-read as many remaining checklist items as the turn can hold (open in parallel). Request another turn only when no further files can be opened this turn. The requesting message must still list every Finding discovered so far plus the current open checklist. Do not end a turn with only “no new Findings” (or a closed system) while unread checklist items exist and more files could still have been opened.
+- Body-reads use the current commit SHA in raw URLs (see web-session.md GitHub Read Notes) so a just-pushed protocol or code change is not masked by the branch-tip CDN cache.
 - No code changes during the sweep itself. Findings can later become a task (Bot opt, Build slice, or web park).
 - When working out of a grok-build branch, do not add changelog files unless the User named changelog as the specific goal of the session.
 
