@@ -20,18 +20,13 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 **Meets requirements**  
 (Items where the owning requirement was read and is met.)
 
-A progress bar may appear in the header once the sweep is underway (rough % of identified hot-path bodies opened at the required depth).
-
 ## Rules
 
-- A frame or physics-tick function is closed only after its body has been read for repeated lookups, full-list walks, and unconditional work. “No while/for,” “delegates,” or “code-map row exists” is not enough.
-- Two-question test for any hot-path body already opened:
-  1. Does the owning requirement force this exact work (the full list walk, the per-action event scan, the repeated lookup)?
-  2. If not, is there repeated or unconditional work that could be cached or narrowed without violating the requirement?
-- Findings only when (1) is no and (2) is yes. Cite the line or pattern.
-- Leave under Needs investigation if you cannot yet tell whether the requirement forces the work.
-- Meets requirements only when the work that remains is required by the owning constraint.
-- Owning docs are read before a pattern is moved from Needs to Findings or Meets.
+- The User-named goal is the lens for the whole sweep. Read owning docs and open tasks that touch the named areas before treating a pattern as a finding.
+- A function or system is closed only after its relevant body (or the bodies that implement the goal) has been read. A code-map row, a comment, or a one-line summary is not enough.
+- Findings only when the owning requirement was read and is unmet under conditions the design contemplates. Cite the function, pattern, or doc.
+- Needs investigation when the owning requirement, control flow, or constraint has not yet been fully established. Do not promote these to findings.
+- Meets requirements only when the owning requirement was read and the examined behavior satisfies it.
 - Stop and ask for another turn whenever the next body needs to be opened. Do not declare the review complete until the User says so or every named area is closed.
 - No code changes during the sweep itself. Findings can later become a task (Bot opt, Build slice, or web park).
 - When working out of a grok-build branch, do not add changelog files unless the User named changelog as the specific goal of the session.
@@ -63,8 +58,4 @@ Do **not** treat the following as bugs:
 - Construction and lifetime paths that establish invariants
 
 ### Reporting
-Use Findings / Needs investigation / Meets requirements. Only keep an item in Findings when the owning requirement is unmet **and** a realistic path to the bad state exists under normal play. Mark items that need design confirmation as Needs investigation. Drop or move to Meets when the full read shows the behavior is intended or covered by an open task.
-
-### Session artifacts
-Accumulate findings across turns. On completion, write a task that lists confirmed issues and notes that a second-pass sweep (broader categories above) may append more. Do not treat the first pass as exhaustive.
-
+Use the mandatory Findings / Needs investigation / Meets requirements format. If an item cannot be definitively concluded and needs design confirmation, list it under Findings and also call it out in a short “Needs more information” note at the end of the report. Drop or move to Meets when the full read shows the behavior is intended or covered by an open task.
