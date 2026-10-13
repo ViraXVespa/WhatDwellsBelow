@@ -58,6 +58,8 @@ Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 - `job.md` orders one media call, copy the Imagine output into scratch as the dest filename, then stop. Do not tell the child to open skill files, 2×2 composite, or retry. After a cache hit, tell it the references are already in the conversation.
 - Results copied to `--out` exclude staged inputs (`job.md`, Bibles, `--copy`, seed, prompt file).
 
+Durable source assets produced by the runner (or by Build) are then placed under `_src/` using the same relative path they will occupy under `assets/`. Any generator script written for the job is saved under `tools/` (extend an existing tool when one owns the output).
+
 `--kind i2v` requires `--seed` and `--prompt-file` already produced in the parent by `tools/i2v_seeds.py`.
 
 ## Parent still owns

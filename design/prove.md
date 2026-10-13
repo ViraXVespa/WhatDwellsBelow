@@ -66,3 +66,5 @@ Each says when it is enough. Image checks use `python tools/img_inspect.py CMD .
 **Looks the same as main (one image).** Enough for a sprite, icon or panel: `img_inspect.py diff MAIN_PNG NEW_PNG --max-ratio 0.001 --png OUT` (changed px, regions, heatmap; `--mask` ignores live animation); `montage A B --png OUT` for a side-by-side.
 
 **Moves as intended.** `img_inspect.py motion F1 F2 F3 ...` gives the changed share per step; `find SHOT TEMPLATE` locates an icon or glyph.
+
+Build end-of-session: update docs/tasks/sources/tools, commit and push to the week branch, *then* ask for verification (see `grok-build.md`).
