@@ -72,6 +72,7 @@ The eight classic failure modes are a floor, not a ceiling. Before a system may 
 7. Interact-group lifetime and prompt resolution (`interact`, `gates`, `boss_door`). Show remove-or-free on open/spent/hidden/used and that the prompt string is a correct spent/used string.
 8. Presentation and feel (facing, vertical motion, feedback, focus/status clear on mode change). Show the actual result path.
 9. Incomplete happy-path edges the design contemplates. Show the common failure cases are handled or explicitly deferred.
+10. Collision/visual bounds (any file that emits both a visual node and a collision shape). Compute the visual’s world-space bounds (for a `Sprite3D`: `pixel_size * texture size` plus position/centering; for a mesh: its AABB) and the collision’s world-space bounds (shape size + any position offset). Cite both calculations. A mismatch of feet, height, or lateral span is a Finding unless an explicit design note justifies the offset.
 
 ### High-signal re-validation (mandatory every sweep)
 
@@ -114,10 +115,10 @@ Before a system may be moved to Meets requirements or dropped from the open set,
 - [ ] Prop / mesh / collision / banner / spot builders (any file that constructs `StaticBody3D`, `CollisionShape3D`, `MeshInstance3D`, or places a named layout spot)
 - [ ] Interact / open / close / hide / free pairs
 - [ ] Owning design doc (if one exists for the system)
-- [ ] Failure-mode scan (static caches, UID/silent-drop, overwrite-vs-top-up, mesh/texture assignment, Y-pin, bounds, empty-clip, interact-group lifetime)
+- [ ] Failure-mode scan (static caches, UID/silent-drop, overwrite-vs-top-up, mesh/texture assignment, Y-pin, bounds, empty-clip, interact-group lifetime, collision/visual bounds)
 
 Source of the list: `python tools/code_map.py sweep --system <Name>` (or with no `--system` for all). A one-line summary or a comment is not a body read. The agent must open the file.
 
-The report must include the current open checklist (system → remaining unchecked items). A system stays under Needs investigation until its checklist is empty. On each turn body-read as many remaining items as the turn can hold; request another turn only when no further files can be opened. “Continue” means open the next unchecked items, not sample another facade.
+The report must include the current open checklist (only the active system → remaining unchecked items). A system stays under Needs investigation until its checklist is empty. On each turn body-read as many remaining items of the active system as the turn can hold; request another turn only when no further files of that system can be opened. “Continue” means open the next unchecked items of the current system, not sample another system’s facade.
 
 The collision and multi-step items on the checklist exist because those are the paths that previously produced player-visible defects when left unread.
