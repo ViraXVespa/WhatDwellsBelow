@@ -104,3 +104,11 @@ Next session, in order:
 3. All eight wisp idles are the one `idle_up.jpg` plate. Do not rekey dummy, guild, guild reception, stall, anvil, fence, pickaxe, or the male frames.
 4. Do not edit `_src`.
 5. Commit only when she says so. Gate is `python tools/run_build_gate.py --batch` with no `--visual`.
+
+## Notes (2026-10-13)
+
+- Enemy flipping is not correct. Left-facing frames are not mirroring properly from the right-facing plates.
+- Vertical centering is being applied to stills that were not previously vertically centered. Fit/align is shifting them.
+- Building faces (guild, stall, etc.) are getting extra padding they do not need. They should stay tight to their original framing.
+- Some tiles under `_src/sources/assets/tiles/` were never updated by Build. Live tiles and `_src` plates have diverged; Build was supposed to keep the source plates current and failed at that.
+- Keyer detail loss is still open: non-plate assets (tiles, finished UI) and hard-edged pixel art are being filtered and blurred. Early exit in `matte.key` is not firing reliably.
