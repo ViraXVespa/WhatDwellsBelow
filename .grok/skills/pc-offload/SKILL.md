@@ -59,7 +59,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
    runner yourself when it would help future tasks (design/tools.md rule 5)
    and tell the User afterward.
 5. Build slices: the first command is python tools/start_build_slice.py,
-   before any memory topic; it prints the slice rules (session facts, Q0,
+   before any file read or memory topic. Pass --job <door.job> or --door <name>, then run python tools/task.py show <id> and read that task file whole. It prints the slice rules (session facts, Q0,
    ledger, "Did not work:" from start_build_slice.py --failed, show_png.py for
    pictures she should see, handoff, commit_slice.py, merge-back) and the docs
    to read, the single source. A later
@@ -68,7 +68,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
    next unit's card, no new survey. A committed task resumes with
    start_build_slice.py --door D --from-task ID (task.py list). Only the User launches grok.
 
-Two compacts on the same slice: write the handoff (start_build_slice.py --handoff)
+Two compacts on the same slice: write the notes into the task file, commit, and push the branch, including live stills, so the next session can continue. She opens the next session. Then write the handoff (start_build_slice.py --handoff)
 and start a fresh session.
 
 Imagine-isolated and i2v-isolated must stay skipped.
