@@ -20,6 +20,8 @@ entry. Failure classes (each is counted):
   soft      softness lost: the plate keys to a soft subject (partial alpha wider than half an output pixel on >= 3%
             of its pixels, DIR/_soft.json share) and the output keeps under half of that share. Old live is not a
             reference here: its softness was often blur from the old shrink
+  notch     notches cut into the silhouette: 2+ output pixels clear where the exact source at output scale
+            (premultiplied area average, same placement) is mostly paint (alpha >= 160); shrinks of 1.5x or more (DIR/_soft.json notch)
   lost      the key lost the subject (paint on the plate's hue); the pipeline kept live (DIR/_kept.json)
 Rows that are out of bounds for the open-set pass (dummy, guild, guild_reception, stall, anvil, fence, pickaxe,
 male frames) are checked too and tagged frozen. Writes _logs/rekey-check/<stamp>.json.
@@ -42,7 +44,7 @@ FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/s
           "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
 # replaced art: slot_legs (new art from her jpg), extract_gate_on (live was wrong; the plate wins)
 NEW_ART = ("assets/ui/gear/slot_legs.png", "assets/sprites/props/extract_gate_on.png")
-CLASSES = ("canvas", "quality", "hard", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost", "soft")
+CLASSES = ("canvas", "quality", "hard", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost", "soft", "notch")
 
 
 def frozen(rel: str) -> bool:
@@ -226,6 +228,9 @@ def main(argv=None) -> int:
             rs = r.get("rim_soft")
             if "hard" in r["fail"] and rs and rs[1] <= max(rs[0], sv.get("rim", 0.0)) + 0.20:
                 r["fail"].remove("hard")
+            if sv.get("notch", 0) >= 2:
+                r["fail"].append("notch")
+            r["notch"] = [sv.get("notch"), sv.get("bump")]
             soft_lost(r, sv.get("share"), ROOT / r["live"], Path(args.new) / r["live"])
     mirror_pairs([e for e in man["entries"] if e.get("live")], Path(args.new), {r["live"]: r for r in rows})
     counts = {c: 0 for c in CLASSES + ("missing",)}

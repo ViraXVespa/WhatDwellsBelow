@@ -163,7 +163,11 @@ def cell_reduce(im: Image.Image, size: tuple[int, int]):
     # stay hard. A window of partial alpha (glow, translucent shading) keeps its median.
     # (a glow changes slowly across one footprint centre; an edge jumps by more than ALPHA_JUMP inside it)
     edge = _hard_jump(a)
-    med_a = np.where(edge, np.where(a.mean(axis=2) >= 128.0, 255.0, 0.0), med_a)
+    cov = _coverage(arr, size)
+    # a hard edge takes the side its exact footprint is mostly on; anything else (a glow, translucent hair or
+    # shading) takes the footprint's exact average alpha: a centre median under-reads a soft rim (alpha 100 where
+    # the footprint averages 180) and cuts nicks into it
+    med_a = np.where(edge, np.where(cov >= 128.0, 255.0, 0.0), cov)
     keep = a >= np.maximum(1.0, med_a[..., None] * 0.5)
     rgb = np.where(keep[..., None], win[..., :3], np.nan)
     import warnings
@@ -174,6 +178,13 @@ def cell_reduce(im: Image.Image, size: tuple[int, int]):
     out = np.dstack([col, med_a])
     out[med_a < 1.0] = 0
     return Image.fromarray(np.clip(np.rint(out), 0, 255).astype(np.uint8), "RGBA")
+
+
+def _coverage(arr: np.ndarray, size: tuple[int, int]) -> np.ndarray:
+    """Alpha averaged over each output pixel's exact (fractional) footprint: which side of a hard edge the pixel is
+    mostly on. The integer sample windows drift against the footprint when the scale is not whole (3.2 source px per
+    output px), so their mean can say clear where the footprint is two-thirds paint: a notch cut into the outline."""
+    return np.asarray(Image.fromarray(np.ascontiguousarray(arr[..., 3])).resize(size, Image.Resampling.BOX), np.float32)
 
 
 def _hard_jump(a: np.ndarray) -> np.ndarray:
@@ -198,6 +209,16 @@ def _line_through(win: np.ndarray, ky: int, kx: int) -> np.ndarray:
     return (n > 0) & (np.abs(np.nan_to_num(cy, nan=1.0)) <= 0.2) & (np.abs(np.nan_to_num(cx, nan=1.0)) <= 0.2)
 
 
+def _thin(cov: np.ndarray, clear: float = 64.0) -> np.ndarray:
+    """Output pixels with mostly clear footprints on two opposite sides (left and right, up and down, or a
+    diagonal pair): a line thinner than a pixel. The rim of a solid body has solid next to it on one side and is
+    not a line, so it is not thickened into a bump."""
+    c = np.pad(cov < clear, 1, constant_values=True)
+    def at(dy, dx):
+        return c[1 + dy:c.shape[0] - 1 + dy, 1 + dx:c.shape[1] - 1 + dx]
+    return (at(0, -1) & at(0, 1)) | (at(-1, 0) & at(1, 0)) | (at(-1, -1) & at(1, 1)) | (at(-1, 1) & at(1, -1))
+
+
 def snap_edges(src: Image.Image, out: Image.Image) -> Image.Image:
     """Hard edges stay hard after a shrink: an output pixel whose footprint jumps from clear to paint (alpha range
     over ALPHA_JUMP) takes the side it is mostly on, and a thin line through the footprint (a bowstring, an
@@ -213,7 +234,9 @@ def snap_edges(src: Image.Image, out: Image.Image) -> Image.Image:
     edge = _hard_jump(win)
     line = edge & _line_through(win, ky, kx)
     o = np.array(out)
-    side = np.where((win.mean(axis=2) >= 128.0) | line, 255, 0).astype(np.uint8)
+    cov = _coverage(arr, out.size)
+    line &= _thin(cov)
+    side = np.where((cov >= 128.0) | line, 255, 0).astype(np.uint8)
     o[..., 3] = np.where(edge, side, o[..., 3])
     # a snapped edge or line pixel takes the colour of the paint in its footprint (an outline on the rim, the line
     # itself), not an average with the clear around it or the fill behind it
@@ -246,6 +269,10 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     if cells is not None:
         return _keep_light_run(source, snap_edges(im, cells))
     cell = _subject_cell(im)
+    # reduce by whole cells only while that stays at or above the target: halving a 0.99 shrink and blowing it back
+    # up with nearest puts a 2-px grid on every edge (notches and steps on a near-1:1 still)
+    while cell > 1 and (im.size[0] // cell < size[0] or im.size[1] // cell < size[1]):
+        cell //= 2
     if cell > 1:
         im = _box_reduce(im, cell)
         if im.size == size:
@@ -310,7 +337,19 @@ def core_box(im: Image.Image, alpha_min: int = 128):
     return bbox(im, alpha_min) or im.convert("RGBA").getbbox()
 
 
-def fit_like(im: Image.Image, ref, alpha_min: int = 128) -> Image.Image:
+def box_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Premultiplied area average: the exact source at output scale (a reference, not an output)."""
+    if size[0] >= im.size[0] and size[1] >= im.size[1]:
+        return resize_rgba(im, size)  # sizing up is nearest: nothing to average
+    a = np.asarray(im.convert("RGBA"), np.float32)
+    a[..., :3] *= a[..., 3:] / 255.0
+    r = np.asarray(Image.fromarray(np.clip(np.rint(a), 0, 255).astype(np.uint8)).resize(size, Image.Resampling.BOX), np.float32)
+    al = r[..., 3:]
+    r[..., :3] = np.where(al > 0, r[..., :3] * 255.0 / np.maximum(al, 1.0), 0)
+    return Image.fromarray(np.clip(np.rint(r), 0, 255).astype(np.uint8), "RGBA")
+
+
+def fit_like(im: Image.Image, ref, alpha_min: int = 128, resize=None) -> Image.Image:
     """Place a keyed still on a canvas exactly like `ref` (the live still it replaces): same canvas size, the solid
     body scaled to the size of ref's body and lined up on ref's bottom edge and centre x. No recentring and no
     padding of its own, so a sprite anchored low, a building face cropped tight, or an off-centre prop keeps that
@@ -331,7 +370,7 @@ def fit_like(im: Image.Image, ref, alpha_min: int = 128) -> Image.Image:
     full = im.getbbox()
     crop = im.crop(full)
     nw, nh = max(1, round(crop.width * scale)), max(1, round(crop.height * scale))
-    small = resize_rgba(crop, (nw, nh))
+    small = (resize or resize_rgba)(crop, (nw, nh))
     # line up the body: bottom edge and centre x of the scaled body on ref's
     bx0 = (sb[0] - full[0]) * scale
     bx1 = (sb[2] - full[0]) * scale

@@ -91,6 +91,16 @@ def _rim_band_soft(keyed, k: float) -> float:
     return float(((av > 8) & (av < 247) & band).sum()) / max(1, int(band.sum()))
 
 
+def _notches(out, exact) -> tuple[int, int]:
+    """Silhouette faults against the exact source at output scale (premultiplied area average, same placement):
+    notch = output clear (< 128) where the source footprint is mostly paint (>= 160); bump = output solid where the
+    footprint is mostly clear (< 96)."""
+    import numpy as np
+    o = np.asarray(out.convert("RGBA"))[..., 3].astype(np.int32)
+    e = np.asarray(exact.convert("RGBA"))[..., 3].astype(np.int32)
+    return int(((e >= 160) & (o < 128)).sum()), int(((e < 96) & (o >= 128)).sum())
+
+
 def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, include_frozen: bool = False,
          fit=None, approved: bool = False, rekey_approved: bool = False) -> str:
     """Key one still from its plate and place it like the live still (geom.fit_like): same canvas, body size,
@@ -126,14 +136,15 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
         raw = imgio.load(src).convert("RGBA")
         keyed = key.key_to_alpha(raw)
         # a left-facing still is placed like the mirrored live still, then mirrored: exactly its right sibling's mirror
-        if fit:
-            fitted = geom.fit_like(keyed, _fit_ref(fit, flip))
-        elif ref is not None:
-            fitted = geom.fit_like(keyed, geom.flip(ref) if flip else ref)
+        place = _fit_ref(fit, flip) if fit else (geom.flip(ref) if flip else ref) if ref is not None else None
+        if place is not None:
+            fitted = geom.fit_like(keyed, place)
+            exact = geom.fit_like(keyed, place, resize=geom.box_rgba)
         else:
             fitted = geom.fit_box(keyed, 128, 8)
+            exact = fitted
         if flip:
-            fitted = geom.flip(fitted)
+            fitted, exact = geom.flip(fitted), geom.flip(exact)
         # never trade live art for a key that lost the subject (paint on the plate's own hue, such as pink lettering
         # on a pink plate): keep live and report it
         if ref is not None:
@@ -155,10 +166,12 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
         k = (kb[3] - kb[1]) / max(1, fb[3] - fb[1]) if kb and fb else 1.0
         rim = _rim_band_soft(keyed, k)
         soft = _partial_share(keyed, k)
+        # only a real shrink can cut a notch; near 1:1 the area average just copies a dithered or noisy alpha
+        notch, bump = _notches(fitted, exact) if k >= 1.5 else (0, 0)
         if not dry:
             dest.parent.mkdir(parents=True, exist_ok=True)
             fitted.save(dest)
-        return f"WROTE {live_rel} {fitted.size[0]}x{fitted.size[1]} from {src.relative_to(SRC_ROOT).as_posix()}{' flipped' if flip else ''} soft={soft:.2f} rim={rim:.3f}"
+        return f"WROTE {live_rel} {fitted.size[0]}x{fitted.size[1]} from {src.relative_to(SRC_ROOT).as_posix()}{' flipped' if flip else ''} soft={soft:.2f} rim={rim:.3f} notch={notch} bump={bump}"
     except Exception as exc:
         return f"FAIL {live_rel} ({exc})"
 
@@ -231,8 +244,9 @@ def main(argv: list[str] | None = None) -> int:
     kept, soft = {}, {}
     for line in results:
         if line.startswith("WROTE") and " soft=" in line:
-            tail = line.rsplit(" soft=", 1)[1].split(" rim=")
-            soft[line.split()[1]] = {"share": float(tail[0]), "rim": float(tail[1])}
+            kv = dict(t.split("=", 1) for t in line.split() if "=" in t)
+            soft[line.split()[1]] = {"share": float(kv["soft"]), "rim": float(kv["rim"]),
+                                     "notch": int(kv["notch"]), "bump": int(kv["bump"])}
         lines.append(line)
         if line.startswith("KEPT "):
             rel, why = line[5:].split(" (", 1)
