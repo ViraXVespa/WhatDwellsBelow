@@ -1,114 +1,51 @@
 {
-	"series": "0.6",
+	"series": "0.7",
 	"generated_from": "design/changelog",
 	"entries": [
 		{
-			"label": "0.6.6",
+			"label": "0.7.0",
 			"points": [
 				{
-					"text": "Pause journal loads paper and leather with load() so the web pack ships the imported textures. A missing page texture errors instead of drawing an empty ImageTexture."
+					"text": "Metal HUD strip with a mana bar under HP and a threat gem on the right. A special does not start when mana is short. Orbs, potions, and food restore mana. Settings can hide the gem."
 				},
 				{
-					"text": "Ink type is the shipped FontFile assets/ui/journal/ink.ttf (Patrick Hand, OFL) instead of SystemFont Ink Free / Segoe Script, which the web export does not implement."
+					"text": "Hold potions and food between dives. The stall sells three different potions each visit and food you can stack or buy as a new kind. Placeholdia keeps up to three potions and six kinds of food. One potion and one food stack go Below with you. The dumpster has moldy bread on a fresh save (and another if you took the last one). Vendor rows are pale price tags; the stall has a wooden crate and red jar; moldy bread and root stew have their own icons."
+				},
+				{
+					"text": "Ghost shop uses a pale cloth counter. Snack, artifact, and pawn rows are light shelves with an icon on the right."
+				},
+				{
+					"text": "Enemy drops retuned. Keyed HP orbs, mana orbs, and coin pickups roll per kill."
+				},
+				{
+					"text": "Mid-run quit or crash stores the run as lost: worn run loot and the run root do not survive."
+				},
+				{
+					"text": "Loading bars fill smoothly with weighted milestones, creep, and per-frame sub-progress. 100% only at finish. Loader weights are per-platform and learned."
+				},
+				{
+					"text": "Dungeon shadows fixed (cast and enemy grids were empty)."
+				},
+				{
+					"text": "UI restyle passes: crystal buttons match transport pages, tooltips/slot/anvil pickers/confirms/scroll bars follow the host skin, dark text has no outline, crystal focus ring brighter."
+				},
+				{
+					"text": "Web music streams and plays off the frame loop (HTMLAudio \u2192 Web Audio)."
+				},
+				{
+					"text": "Torches: hall cadence fills only dark stretches; light cap raised so the ring lights every torch. Dungeon arrival builds the full light plan under the cover."
+				},
+				{
+					"text": "Texture import: Detect 3D off so .import files stop rewriting; hub ground and wall sheets Lossless with nearest-mipmap sampling."
+				},
+				{
+					"text": "Asset rekey pipeline overhauled: cell-median shrink with hard-edge snap, idempotent fit against pre-rekey geometry, soft/notch fixes, approved stills written, stale tile plates replaced with lossless copies."
+				},
+				{
+					"text": "Warnings swept to zero. Various protocol, sweep, and build-docs cleanups."
 				}
 			],
-			"summary": "Web pause keeps the paper shell and the ink face."
-		},
-		{
-			"label": "0.6.5",
-			"points": [
-				{
-					"text": "Every menu can now be closed by tapping or clicking its Back hint, and the other button hints in menus work the same way. Hints light up under the pointer and flash when pressed."
-				},
-				{
-					"text": "Back no longer gets ignored for a moment after closing a gear pick in the inventory, loadout or anvil."
-				},
-				{
-					"text": "Clicking, tapping or pressing a button to close a menu no longer makes your character attack or interact the moment it closes."
-				},
-				{
-					"text": "Esc closes town menus again in a fullscreen browser."
-				}
-			],
-			"summary": "Menus close reliably by tap, click, pad and key."
-		},
-		{
-			"label": "0.6.4",
-			"points": [
-				{
-					"text": "Asset fix sessions can now reach the original source art safely, and brainstorm chats can end by saving their plan for later."
-				}
-			],
-			"summary": "Task follow-ups for art and planning sessions."
-		},
-		{
-			"label": "0.6.3",
-			"points": [
-				{
-					"text": "Work that spans sessions now lives in one task list, so unfinished plans, asset fixes and saved dialog carry over cleanly."
-				}
-			],
-			"summary": "One shared task list for ongoing work."
-		},
-		{
-			"label": "0.6.2",
-			"points": [
-				{
-					"text": "Added dialog notes for the guild receptionist."
-				}
-			],
-			"summary": "Guild receptionist update prep."
-		},
-		{
-			"label": "0.6.1",
-			"points": [
-				{
-					"text": "Extraction gates default to 12; separation shrinks from 28 until that many can place."
-				},
-				{
-					"text": "Hall torches keep a seeded cadence so long corridors read as distinct paths."
-				},
-				{
-					"text": "Hall travelers spawn on corridor runs, separate from room packs and ambushes."
-				}
-			],
-			"summary": "Twelve gates, hall torches, hall travelers."
-		},
-		{
-			"label": "0.6.0",
-			"points": [
-				{
-					"text": "Pause opens as a field journal: leather cover, separate paper sheets, no center crease. Settings is a short list and a wider page. Inventory is two even sheets. Skills sits right of center. Confirms are a slip on top."
-				},
-				{
-					"text": "The vendor menu has its own stall front: wood posts, an olive awning, a name board, and a counter. The camp stall sprite stays on the building."
-				},
-				{
-					"text": "The dumpster menu is its own bin: a blue-grey rusted bin, lid open, bags in the mouth, Leave on a galvanized flap. The camp dumpster sprite stays on the prop."
-				},
-				{
-					"text": "The controls billboard is its own sign: wood frame, iron corners, a dark board, chalk title and bindings, Leave on a wood plank. The camp sign sprite stays on the prop."
-				},
-				{
-					"text": "The anvil menu is an iron anvil on a stump. The world sprite stays the prop, and the gear board stays."
-				},
-				{
-					"text": "The loadout menu is a cyan crystal on a dark stone pedestal, with pink stones at the front corners. The world sprite stays the prop."
-				},
-				{
-					"text": "The extraction gate is one page on the inventory board: stone, iron, and a cyan mouth, with worn slots, the bag, resources, and Send All."
-				},
-				{
-					"text": "Menus share one palette and one set of builders. An object frame skins that panel only; the other cream plates stay as they are."
-				},
-				{
-					"text": "A Build slice starts in a fresh worktree on the week branch. After gather it checkpoints, and a retry forks from that worktree."
-				},
-				{
-					"text": "Chroma key peels the magenta plate and the pink rim, and no longer treats a black or white border as plate."
-				}
-			],
-			"summary": "Week 6 Grok Build snapshot. Pause is a field journal, camp menus wear their own fronts, and the extraction gate is one page on the inventory board."
+			"summary": "Week 7 Grok Build snapshot. Metal HUD with mana and a danger gem, potions and food persist between dives, ghost shop and vendor got their own fronts and icons, loading and lighting cleaned up, and the rekey pipeline hardened."
 		}
 	]
 }
