@@ -73,18 +73,18 @@ static func tab_delta(event: InputEvent) -> int:
 	return 0
 
 static func is_page_prev(event: InputEvent) -> bool:
-	if not pressed(event):
-		return false
-	if event is InputEventKey:
-		return event.is_action_pressed("target_lock") and not event.is_action_pressed("ui_accept")
-	return event.is_action_pressed("special")
+	return _is_page(event, "target_lock", "special")
 
 static func is_page_next(event: InputEvent) -> bool:
+	return _is_page(event, "interact", "attack")
+
+## Page turn: the keyboard action (when it is not also Accept) or the pad action.
+static func _is_page(event: InputEvent, key_action: String, pad_action: String) -> bool:
 	if not pressed(event):
 		return false
 	if event is InputEventKey:
-		return event.is_action_pressed("interact") and not event.is_action_pressed("ui_accept")
-	return event.is_action_pressed("attack")
+		return event.is_action_pressed(key_action) and not event.is_action_pressed("ui_accept")
+	return event.is_action_pressed(pad_action)
 
 static func page_delta(event: InputEvent) -> int:
 	if is_page_prev(event):

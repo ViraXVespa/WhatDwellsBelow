@@ -2,19 +2,19 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
+const CARD_TEX := "res://assets/ui/hud/card.png"
+const BAR_TEX := "res://assets/ui/hud/bar.png"
+const GEM_TEX := "res://assets/ui/hud/gem.png"
+const BAR_INSET := 3.0
+const STRIP_INK := Color(0.93, 0.88, 0.76)
+
 ## HUD chrome. Host is the CanvasLayer at scripts/ui/hud.gd.
 
 static func build(host: CanvasLayer) -> void:
 	host.strip = Control.new()
 	host.add_child(host.strip)
-	var bg := ColorRect.new()
-	bg.color = ThemeS.PAPER
-	bg.size = Vector2(host.STRIP_W, host.STRIP_H)
-	host.strip.add_child(bg)
-	var edge := ColorRect.new()
-	edge.color = ThemeS.RULE
-	edge.size = Vector2(host.STRIP_W, 3)
-	host.strip.add_child(edge)
+	var card := _patch(CARD_TEX, Vector2.ZERO, Vector2(host.STRIP_W, host.STRIP_H), 16, 16, 14, 16)
+	host.strip.add_child(card)
 	host.portrait = TextureRect.new()
 	host.portrait.position = Vector2(10, 14)
 	host.portrait.size = Vector2(90, 90)
@@ -22,10 +22,12 @@ static func build(host: CanvasLayer) -> void:
 	host.portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	host.portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	host.strip.add_child(host.portrait)
-	host.hp_fill = meter(host.strip, Vector2(112, 18), Vector2(280, 22), Color(0.72, 0.18, 0.16))
-	host.hp_lab = lab(host.strip, Vector2(112, 16), Vector2(280, 26), 18)
+	host.hp_fill = meter(host.strip, Vector2(112, 14), Vector2(host.HP_W, 18), Color(0.72, 0.18, 0.16))
+	host.hp_lab = lab(host.strip, Vector2(112, 12), Vector2(host.HP_W, 22), 16)
+	host.mana_fill = meter(host.strip, Vector2(112, 34), Vector2(host.MANA_W, 14), Color(0.42, 0.68, 0.95))
+	host.mana_lab = lab(host.strip, Vector2(112, 32), Vector2(host.MANA_W, 18), 13)
 	host.pot_icon = TextureRect.new()
-	host.pot_icon.position = Vector2(112, 44)
+	host.pot_icon.position = Vector2(112, 54)
 	host.pot_icon.size = Vector2(22, 22)
 	host.pot_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	host.pot_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -33,17 +35,17 @@ static func build(host: CanvasLayer) -> void:
 	if ResourceLoader.exists("res://assets/ui/icon_potion.png"):
 		host.pot_icon.texture = load("res://assets/ui/icon_potion.png")
 	host.strip.add_child(host.pot_icon)
-	host.pot_fill = meter(host.strip, Vector2(136, 48), Vector2(120, 16), Color(0.45, 0.2, 0.7))
-	host.pot_lab = lab(host.strip, Vector2(136, 44), Vector2(160, 22), 14)
-	host.dash_fill = meter(host.strip, Vector2(280, 48), Vector2(112, 16), Color(0.3, 0.7, 0.85))
-	host.spec_fill = meter(host.strip, Vector2(400, 48), Vector2(112, 16), Color(0.9, 0.55, 0.2))
-	lab(host.strip, Vector2(280, 64), Vector2(112, 18), 13).text = App.tr("hud_view.dash")
-	lab(host.strip, Vector2(400, 64), Vector2(112, 18), 13).text = App.tr("hud_view.special")
-	host.lvl = lab(host.strip, Vector2(112, 86), Vector2(280, 28), 22)
-	host.floor_lab = lab(host.strip, Vector2(400, 86), Vector2(120, 28), 28)
-	host.res = lab(host.strip, Vector2(112, 114), Vector2(410, 24), 18)
+	host.pot_fill = meter(host.strip, Vector2(136, 56), Vector2(host.POT_W, 16), Color(0.45, 0.2, 0.7))
+	host.pot_lab = lab(host.strip, Vector2(136, 52), Vector2(160, 22), 14)
+	host.dash_fill = meter(host.strip, Vector2(268, 56), Vector2(host.DASH_W, 16), Color(0.3, 0.7, 0.85))
+	host.spec_fill = meter(host.strip, Vector2(388, 56), Vector2(host.SPEC_W, 16), Color(0.9, 0.55, 0.2))
+	lab(host.strip, Vector2(268, 72), Vector2(112, 18), 13).text = App.tr("hud_view.dash")
+	lab(host.strip, Vector2(388, 72), Vector2(112, 18), 13).text = App.tr("hud_view.special")
+	host.lvl = lab(host.strip, Vector2(112, 94), Vector2(280, 26), 22)
+	host.floor_lab = lab(host.strip, Vector2(400, 94), Vector2(120, 26), 26)
+	host.res = lab(host.strip, Vector2(112, 122), Vector2(410, 22), 18)
 	host.shrine_icon = TextureRect.new()
-	host.shrine_icon.position = Vector2(10, 140)
+	host.shrine_icon.position = Vector2(10, 150)
 	host.shrine_icon.size = Vector2(28, 28)
 	host.shrine_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	host.shrine_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -52,10 +54,10 @@ static func build(host: CanvasLayer) -> void:
 		host.shrine_icon.texture = load("res://assets/sprites/props/shrine.png")
 	host.shrine_icon.visible = false
 	host.strip.add_child(host.shrine_icon)
-	host.shrine_lab = lab(host.strip, Vector2(42, 142), Vector2(220, 28), 18)
-	host.shrine_lab.add_theme_color_override("font_color", Color(0.55, 0.28, 0.08))
+	host.shrine_lab = lab(host.strip, Vector2(42, 150), Vector2(220, 28), 18)
+	host.shrine_lab.add_theme_color_override("font_color", Color(0.95, 0.72, 0.40))
 	host.food_icon = TextureRect.new()
-	host.food_icon.position = Vector2(270, 140)
+	host.food_icon.position = Vector2(270, 150)
 	host.food_icon.size = Vector2(28, 28)
 	host.food_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	host.food_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -64,10 +66,19 @@ static func build(host: CanvasLayer) -> void:
 		host.food_icon.texture = load("res://assets/sprites/props/hp_orb.png")
 	host.food_icon.visible = false
 	host.strip.add_child(host.food_icon)
-	host.food_lab = lab(host.strip, Vector2(302, 142), Vector2(220, 28), 18)
-	host.food_lab.add_theme_color_override("font_color", Color(0.18, 0.40, 0.14))
+	host.food_lab = lab(host.strip, Vector2(302, 150), Vector2(220, 28), 18)
+	host.food_lab.add_theme_color_override("font_color", Color(0.64, 0.88, 0.48))
+	host.gem = TextureRect.new()
+	host.gem.texture = _tex(GEM_TEX)
+	host.gem.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	host.gem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	host.gem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	host.gem.position = Vector2(548, 62)
+	host.gem.size = Vector2(76, 76)
+	host.gem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.strip.add_child(host.gem)
 	host.prompt_row = HBoxContainer.new()
-	host.prompt_row.position = Vector2(10, 168)
+	host.prompt_row.position = Vector2(10, 180)
 	host.prompt_row.size = Vector2(520, 24)
 	host.prompt_row.add_theme_constant_override("separation", 8)
 	host.prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -77,7 +88,7 @@ static func build(host: CanvasLayer) -> void:
 	host.boss_wrap = Control.new()
 	host.boss_wrap.size = Vector2(520, 50)
 	host.add_child(host.boss_wrap)
-	host.boss_fill = meter(host.boss_wrap, Vector2(0, 18), Vector2(360, 18), Color(0.75, 0.15, 0.2))
+	host.boss_fill = meter(host.boss_wrap, Vector2(0, 18), Vector2(360, 18), Color(0.75, 0.15, 0.2), false)
 	host.boss_lab = lab(host.boss_wrap, Vector2(0, 0), Vector2(360, 20), 16, true)
 	host.mini_wrap = Control.new()
 	host.add_child(host.mini_wrap)
@@ -127,16 +138,22 @@ static func load_portrait(host: CanvasLayer) -> void:
 	if ResourceLoader.exists(p):
 		host.portrait.texture = load(p)
 
-static func meter(owner: Control, pos: Vector2, sz: Vector2, col: Color) -> ColorRect:
-	var back := ColorRect.new()
-	back.color = Color(0.55, 0.42, 0.30, 1)
-	back.position = pos
-	back.size = sz
-	owner.add_child(back)
+static func meter(owner: Control, pos: Vector2, sz: Vector2, col: Color, metal := true) -> ColorRect:
+	if metal:
+		var frame := _patch(BAR_TEX, pos, sz, 10, 4, 10, 4)
+		owner.add_child(frame)
+	else:
+		var back := ColorRect.new()
+		back.color = Color(0.55, 0.42, 0.30, 1)
+		back.position = pos
+		back.size = sz
+		owner.add_child(back)
 	var fill := ColorRect.new()
 	fill.color = col
-	fill.position = pos
-	fill.size = sz
+	var inset: float = BAR_INSET if metal else 0.0
+	fill.position = pos + Vector2(inset, inset)
+	fill.size = sz - Vector2(inset * 2.0, inset * 2.0)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	owner.add_child(fill)
 	return fill
 
@@ -145,10 +162,34 @@ static func lab(owner: Node, pos: Vector2, sz: Vector2, fs: int, over_world: boo
 	l.position = pos
 	l.size = sz
 	l.add_theme_font_size_override("font_size", fs)
-	var col: Color = Color(0.95, 0.90, 0.78) if over_world else ThemeS.INK
+	var col: Color = Color(0.95, 0.90, 0.78) if over_world else STRIP_INK
 	l.add_theme_color_override("font_color", col)
+	if not over_world:
+		l.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03, 0.85))
+		l.add_theme_constant_override("outline_size", 2)
 	if over_world:
 		l.add_theme_color_override("font_outline_color", ThemeS.PROMPT_OUTLINE)
 		l.add_theme_constant_override("outline_size", ThemeS.PROMPT_OUTLINE_SIZE)
 	owner.add_child(l)
 	return l
+
+static func _tex(path: String) -> Texture2D:
+	if not ResourceLoader.exists(path):
+		push_error("HUD art missing: %s" % path)
+		return null
+	var tex: Texture2D = load(path) as Texture2D
+	if tex == null:
+		push_error("HUD art failed to load: %s" % path)
+	return tex
+
+static func _patch(path: String, pos: Vector2, sz: Vector2, left: int, top: int, right: int, bottom: int) -> NinePatchRect:
+	var patch := NinePatchRect.new()
+	patch.texture = _tex(path)
+	patch.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	patch.patch_margin_left = left
+	patch.patch_margin_top = top
+	patch.patch_margin_right = right
+	patch.patch_margin_bottom = bottom
+	patch.position = pos
+	patch.size = sz
+	return patch

@@ -5,8 +5,11 @@ extends Object
 ## The cream plate stays for every other progress panel and only anchors this menu's prompt.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/crystal_art.gd")
 
+## Buttons and gear slots in this frame wear the crystal control skin (ui_tokens SKIN_CRYSTAL).
+const BTN_SKIN := "crystal"
 const SCALE: float = 3.0
 const FRAME_POS: Vector2 = Vector2(300, 12)
 const FRAME_SIZE: Vector2 = Vector2(Art.ART_W * SCALE, Art.ART_H * SCALE)
@@ -19,12 +22,7 @@ static func spec() -> Dictionary:
 	var top: float = float(Art.PALE.position.y) * SCALE + 12.0
 	var left: float = float(Art.PALE.position.x) * SCALE + 16.0
 	var width: float = float(Art.PALE.size.x) * SCALE - 32.0
-	return {
-		"mode": "loadout", "chrome": "crystal_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"plate_inset": PLATE_INSET,
-		"rows_pos": FRAME_POS + Vector2(left, top), "rows_size": Vector2(width, 574.0),
-		"sep": 8, "blank_rows": true,
-	}
+	return FrameBase.make_spec("loadout", "crystal_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, FRAME_POS + Vector2(left, top), Vector2(width, 574.0), {"plate_inset": PLATE_INSET})
 
 ## Skin hook: make the pieces once.
 static func build(chrome: Control) -> void:

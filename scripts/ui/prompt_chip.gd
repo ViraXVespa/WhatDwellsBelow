@@ -47,11 +47,14 @@ static func _tint(chip: Control, over: bool) -> void:
 static func _flash(chip: Control) -> void:
 	chip.set_meta("prompt_flash", true)
 	chip.modulate = Tok.CHIP_PRESS
+	# Weak: a tap that closes the menu frees the chip before the timer ends.
+	var held: WeakRef = weakref(chip)
 	chip.get_tree().create_timer(FLASH_SEC, true, false, true).timeout.connect(func():
-		if not is_instance_valid(chip):
+		var c: Control = held.get_ref() as Control
+		if c == null:
 			return
-		chip.remove_meta("prompt_flash")
-		_tint(chip, bool(chip.get_meta("prompt_over", false))))
+		c.remove_meta("prompt_flash")
+		_tint(c, bool(c.get_meta("prompt_over", false))))
 
 ## A press that closed the menu never sees its own pointer-up, so hiding the chip lets the action go.
 static func _on_shown(chip: Control) -> void:

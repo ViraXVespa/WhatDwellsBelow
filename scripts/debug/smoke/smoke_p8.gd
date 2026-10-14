@@ -104,7 +104,7 @@ static func p8(host: Node) -> void:
 			dump_txt = str(n3.interact(player))
 			break
 	printerr("P8: dumpster=" + dump_txt)
-	printerr("P8: dumpster_ok=" + str(dump_txt.find("Career upgrade pending") >= 0))
+	printerr("P8: dumpster_ok=" + str(dump_txt.find("moldy bread") >= 0))
 	printerr("P8: save_ok=" + str(how == "backup"))
 	printerr("P8: archives_ok=" + str(CatS.ok()))
 	tree(host).create_timer(1.6, true, false, true).timeout.connect(func():

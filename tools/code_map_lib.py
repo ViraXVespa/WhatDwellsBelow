@@ -246,18 +246,26 @@ def file_is_mapped(rel: str, rows: list[Row]) -> bool:
 
 
 def listed_file_paths(rows: list[Row]) -> list[str]:
-    """Full-path ticks only. Basename ticks inherit last_dir and are not checked."""
+    """Resolved file paths (full ticks and bare basenames that inherit last_dir)."""
     seen: set[str] = set()
     out: list[str] = []
     for row in rows:
+        last_dir = ""
         for raw in TICK_RE.findall(row.live):
-            p = posix(raw.strip())
-            if not p or p.endswith("/") or "/" not in p:
+            token = posix(raw.strip())
+            if not token or token.endswith("/"):
                 continue
-            if not any(p.endswith(suf) for suf in FILE_SUFFIXES):
+            if "/" in token:
+                last_dir = token.rsplit("/", 1)[0]
+                resolved = token
+            elif last_dir:
+                resolved = f"{last_dir}/{token}"
+            else:
                 continue
-            if p in seen:
+            if not any(resolved.endswith(suf) for suf in FILE_SUFFIXES):
                 continue
-            seen.add(p)
-            out.append(p)
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            out.append(resolved)
     return out

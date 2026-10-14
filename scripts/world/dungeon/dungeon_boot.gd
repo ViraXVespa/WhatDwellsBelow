@@ -9,6 +9,7 @@ const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
 
 static var _first_tick: bool = true
 
@@ -24,6 +25,7 @@ static func ready_floor(host: Node) -> void:
 	host.visited = PackedByteArray()
 	host.visited.resize(int(host.data.w) * int(host.data.h))
 	host.visited.fill(0)
+	DungeonMinimap.forget()
 	HitchLog.mark("dungeon_gen")
 	LoadTiming.dmark("gen")
 	LoadTiming.dnote("gen_ok", str(host.data.get("ok", false)))
@@ -60,6 +62,7 @@ static func ready_floor(host: Node) -> void:
 	LightRtS.reset_floor()
 	LightRtS.maintain(host)
 	LightRtS.maintain(host)
+	(load("res://scripts/graphics/torch_bill.gd") as GDScript).warm(host)
 	HitchLog.mark("dungeon_light")
 	LoadTiming.dmark("light")
 	if App:

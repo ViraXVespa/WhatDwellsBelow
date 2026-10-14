@@ -12,9 +12,13 @@ static func to_meta(p: Object) -> Dictionary:
 	var h: Dictionary = {}
 	for s: String in p.SLOTS:
 		h[s] = p.holds[s]
+	## Mid-run saves (equip from the bag, settings, crash, tab close) store the run as already lost: worn pieces and run
+	## root are unextracted and must not survive a quit (design/inventory-gear.md). Empty slots refill from the holds
+	## on load (ensure_required_slots), exactly like recap lose_unextracted.
+	var lost: bool = run_live()
 	var sl: Dictionary = {}
 	for s2: String in p.SLOTS:
-		sl[s2] = p.slots[s2]
+		sl[s2] = {} if lost else p.slots[s2]
 	return {
 		"holds": h,
 		"slots": sl,
@@ -23,7 +27,7 @@ static func to_meta(p: Object) -> Dictionary:
 		"start_floor": p.start_floor,
 		"tool_type": p.tool_type,
 		"pick_weapon": p.pick_weapon,
-		"root": p.root,
+		"root": 0 if lost else p.root,
 		"next_uid": p.next_uid,
 		"bank_items": p.bank_items.duplicate(true),
 		"quest_active": p.quest_active.duplicate(true),
@@ -32,6 +36,9 @@ static func to_meta(p: Object) -> Dictionary:
 		"hold_pick": p.hold_pick.duplicate(),
 		"starters": starters_of(p),
 	}
+
+static func run_live() -> bool:
+	return App != null and bool(App.in_dungeon)
 
 static func from_meta(p: Object, d: Dictionary) -> void:
 	p.reset_meta()

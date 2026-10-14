@@ -97,3 +97,29 @@ def checker(size: tuple[int, int], sq: int = 8) -> Image.Image:
     yy, xx = np.mgrid[0:h, 0:w]
     v = np.where(((xx // sq) + (yy // sq)) % 2 == 0, 90, 130).astype(np.uint8)
     return Image.fromarray(np.dstack([v, v, v]), "RGB")
+
+def grid_shape(n: int, cell_w: int, cell_h: int) -> tuple[int, int]:
+    """Columns, rows. Two frames: side by side if taller than wide, else stacked.
+    More than two: wide cells get fewer columns, tall cells get more."""
+    import math
+
+    if n <= 1:
+        return 1, 1
+    if n == 2:
+        return (2, 1) if cell_h >= cell_w else (1, 2)
+    aspect = cell_w / max(1, cell_h)
+    cols = max(1, min(n, round(math.sqrt(n / aspect))))
+    return cols, -(-n // cols)
+
+
+def compose_group(images: list, labels: list | None = None, max_side: int = 1920):
+    """One sheet for one area. Scales so the long side stays within max_side."""
+    if not images:
+        raise ValueError("compose_group needs at least one image")
+    cols, _rows = grid_shape(len(images), max(im.width for im in images), max(im.height for im in images))
+    sheet = montage([im.copy() for im in images], labels, cols=cols)
+    long_side = max(sheet.size)
+    if long_side > max_side:
+        scale = max_side / long_side
+        sheet = sheet.resize((max(1, round(sheet.width * scale)), max(1, round(sheet.height * scale))), Image.Resampling.NEAREST)
+    return sheet

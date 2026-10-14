@@ -4,7 +4,7 @@
   "scene": "camp",
   "hud": 1,
   "settle_ms": 1500,
-  "covers": ["interact:receptionist", "ui:quest"],
+  "covers": ["interact:receptionist", "ui:receptionist"],
   "smoke": true,
   "steps": [
     {"op": "device", "kind": "pad"},
@@ -15,7 +15,7 @@
     ]},
     {"op": "interact", "kind": "receptionist", "near": true},
     {"op": "assert", "target": "App.ui_open", "equals": true},
-    {"op": "assert", "target": "host.ui.mode", "equals": "quest"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "receptionist"},
     {"op": "wait", "ms": 400},
     {"op": "shot", "name": "menu-open", "texts": true},
     {"op": "assert_texts", "min_font": 14, "must_contain": ["Guild"]},

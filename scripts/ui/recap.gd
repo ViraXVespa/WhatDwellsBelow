@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const RecapBars := preload("res://scripts/ui/recap/bars.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const Ui := preload("res://scripts/ui/recap/recap_ui.gd")
 const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")
 const Flow := preload("res://scripts/ui/recap/recap_flow.gd")
@@ -30,6 +31,7 @@ var tip_kind := ""
 var tip_from: Control = null
 
 func _ready() -> void:
+	set_meta("btn_skin", "neutral")
 	Ui.build(self)
 
 func play(cond: String) -> void:
@@ -39,7 +41,7 @@ func _rebuild(cond: String) -> void:
 	Rebuild.rebuild(self, cond)
 
 func _blur_tip() -> void:
-	RecapBars.blur_tip(self)
+	TipHover.blur(self, "skill_id")
 
 func _focus() -> void:
 	if focus_btn:

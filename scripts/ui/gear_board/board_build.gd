@@ -105,6 +105,8 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 		ui.set_meta("journal_stat_rows", rows)
 	ui.gear_stats_title = mid
 	ui.gear_stats = body
+	if not ui.has_meta("journal_sheet"):
+		ThemeS.BtnSkin.watch(panel, "card", [mid, body])
 	ui.gear_page_left = left
 	ui.gear_page_right = right
 	sync_chrome(ui)

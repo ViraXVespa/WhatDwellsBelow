@@ -7,6 +7,17 @@ var vel := Vector3(0.0, 1.05, 0.0)
 var life := HOLD + FADE
 var fade_mul := 1.0
 
+## Spawn one number above `host` (lift in world units) under host's parent (or host when it has none).
+static func spawn(host: Node3D, amount: int, crit: bool, glance: bool, lift: float) -> void:
+	var n: Label3D = (load("res://scripts/combat/float_num.gd") as GDScript).new()
+	n.setup(amount, crit, glance)
+	n.position = host.global_position + Vector3(0.0, lift, 0.0)
+	var world := host.get_parent()
+	if world:
+		world.add_child(n)
+	else:
+		host.add_child(n)
+
 func setup(amount: int, crit: bool, glance := false) -> void:
 	text = str(amount)
 	billboard = BaseMaterial3D.BILLBOARD_ENABLED

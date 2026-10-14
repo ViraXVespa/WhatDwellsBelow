@@ -5,6 +5,9 @@ extends Object
 
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+## Its glass face takes the crystal control skin (teal buttons, pale slots).
+const BTN_SKIN := "crystal"
 const Art: GDScript = preload("res://scripts/ui/progress_ui/extract_art.gd")
 
 const SCALE: float = 3.0
@@ -20,12 +23,7 @@ static func spec() -> Dictionary:
 	var pad := 18.0
 	var rows_pos := FRAME_POS + Vector2(float(page.position.x) * SCALE + pad, float(page.position.y) * SCALE + pad)
 	var rows_size := Vector2(float(page.size.x) * SCALE - pad * 2.0, float(page.size.y) * SCALE - pad * 2.0 - 36.0)
-	return {
-		"mode": "extract", "chrome": "extract_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"plate_inset": PLATE_INSET,
-		"rows_pos": rows_pos, "rows_size": rows_size,
-		"sep": 8, "blank_rows": true,
-	}
+	return FrameBase.make_spec("extract", "extract_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, rows_pos, rows_size, {"plate_inset": PLATE_INSET})
 
 static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "gate_body", Art.body())

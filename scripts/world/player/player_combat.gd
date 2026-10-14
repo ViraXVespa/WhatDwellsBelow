@@ -40,6 +40,8 @@ static func try_special(p: CharacterBody3D) -> void:
 		return
 	if p.atk_state != p.ATK_NONE or p.dash_t > 0.0:
 		return
+	if float(App.prog.mana) < float(App.bal.special_mana):
+		return
 	p.atk_state = p.ATK_WIND
 	p.atk_t = 0.0
 	p.hit_done = false
@@ -82,6 +84,12 @@ static func advance_attack(p: CharacterBody3D, delta: float) -> void:
 	if p.atk_state == p.ATK_WIND:
 		p._draw_special_tele(false)
 		if p.atk_t >= App.bal.special_windup:
+			if not App.prog.spend_mana(float(App.bal.special_mana)):
+				p.atk_state = p.ATK_NONE
+				p.atk_t = 0.0
+				if p.telegraph:
+					p.telegraph.hide_now()
+				return
 			p.atk_state = p.ATK_ACT
 			p.atk_t = 0.0
 			p._draw_special_tele(true)

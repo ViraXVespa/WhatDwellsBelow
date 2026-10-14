@@ -57,7 +57,18 @@ var gear_hint: Control
 var gear_page_left: Control
 var gear_page_right: Control
 
+var _skin_mode: String = "<unset>"
+var _skin_name: String = ""
+
+## Control skin for buttons built in this panel: the active frame's (FrameBase.btn_skin), else neutral.
+func btn_skin() -> String:
+	if _skin_mode != mode:
+		_skin_mode = mode
+		_skin_name = FrameSet.btn_skin(self)
+	return _skin_name
+
 func _ready() -> void:
+	set_meta("prompt_ink", true)
 	Flow._ready(self)
 
 func _drop_sub() -> void:
@@ -134,6 +145,9 @@ func open_shop(spot: Node) -> void:
 	_rebuild_shop()
 	_show()
 
+func open_stocked_shop() -> void:
+	Shop.open_stocked(self)
+
 func open_anvil() -> void:
 	Flow.open_anvil(self)
 
@@ -143,6 +157,10 @@ func open_loadout() -> void:
 func open_vendor() -> void:
 	mode = "vendor"
 	_drop_sub()
+	if has_meta("vendor_visit"):
+		remove_meta("vendor_visit")
+	if has_meta("vendor_toss"):
+		remove_meta("vendor_toss")
 	_rebuild_vendor()
 	_show()
 
@@ -161,6 +179,15 @@ func open_quest() -> void:
 	if App.prog.quests_offered.is_empty():
 		App.prog.roll_quests(true)
 	_rebuild_quest()
+	_show()
+
+## Guild receptionist: its own mode and entry (ui-receptionist-tutorial replaces the body; today it is the quest list).
+func open_receptionist() -> void:
+	mode = "receptionist"
+	_drop_sub()
+	if App.prog.quests_offered.is_empty():
+		App.prog.roll_quests(true)
+	Hub.rebuild_receptionist(self)
 	_show()
 
 func _rebuild_inv() -> void:

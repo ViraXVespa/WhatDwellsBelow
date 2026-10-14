@@ -67,42 +67,13 @@ static func roof_mat(
 			tile_px = 0.62
 		mat.set_shader_parameter("uv_scale", Vector2(dim.x / tile_px, dim.y / tile_px))
 	return mat
+
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
-
-	return wrap_mat(
-
-		"res://assets/tiles/plaza_tarp.png",
-
-		dim,
-
-		world_min,
-
-		Color(0.40, 0.46, 0.28),
-
-		Color.WHITE,
-
-		true,
-
-		false
-
-	)
+	return _cloth("res://assets/tiles/plaza_tarp.png", dim, world_min, Color(0.40, 0.46, 0.28))
 
 static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
+	return _cloth("res://assets/tiles/plaza_awning.png", dim, world_min, Color(0.62, 0.22, 0.16))
 
-	return wrap_mat(
-
-		"res://assets/tiles/plaza_awning.png",
-
-		dim,
-
-		world_min,
-
-		Color(0.62, 0.22, 0.16),
-
-		Color.WHITE,
-
-		true,
-
-		false
-
-	)
+## Cloth (tarp, awning): wrap_mat with a white second tint, flags true, false.
+static func _cloth(png: String, dim: Vector2, world_min: Vector3, tint: Color) -> Material:
+	return wrap_mat(png, dim, world_min, tint, Color.WHITE, true, false)

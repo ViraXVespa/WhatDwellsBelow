@@ -164,12 +164,10 @@ def key_flat(arr: np.ndarray) -> np.ndarray:
 
 def key_pipeline(path: Path) -> np.ndarray:
     sys.path.insert(0, str(ROOT / "tools"))
-    import plate_remap as pr  # noqa: E402
     import sprite_pipeline as sp  # noqa: E402
 
     im = imgio.load(path)
-    remapped, _vis, _info = pr.remap(im)
-    keyed = sp.key_to_alpha(remapped, spill_flood=False)
+    keyed = sp.key_to_alpha(im)
     w, h = keyed.size
     m = max(w, h)
     if m > MAX_SIDE:
@@ -1169,6 +1167,86 @@ def self_test() -> None:
     print("self-test ok")
 
 
+def _mirrored_source(live_rel: str) -> Path | None:
+    """Return the path-mirrored plate under _src/sources if it exists."""
+    base = Path("sources") / Path(live_rel)
+    for ext in (".jpg", ".jpeg", ".png", ".webp"):
+        candidate = SRC_ROOT / base.with_suffix(ext)
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def update_manifest() -> None:
+    """Light refresh that prefers path-mirrored plates.
+    Drops deleted lives and missing sources. For every remaining live, uses
+    the mirrored plate under _src/sources if present. Only scores lives that
+    have no mirrored plate.
+    """
+    manifest_path = SRC_ROOT / "manifest.json"
+    if not manifest_path.is_file():
+        raise SystemExit("no manifest; use --organize first")
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    old_by_live = {e["live"]: e for e in data.get("entries", []) if "live" in e}
+    live_paths = collect_lives()
+
+    kept = []
+    dropped = 0
+    mirrored = 0
+    for p in live_paths:
+        live_rel = _posix(p)
+        src_path = _mirrored_source(live_rel)
+        if src_path is not None:
+            entry = old_by_live.get(live_rel, {})
+            entry = dict(entry)
+            entry["live"] = live_rel
+            entry["source"] = src_path.relative_to(SRC_ROOT).as_posix()
+            entry["origin"] = _posix(src_path)
+            kept.append(entry)
+            mirrored += 1
+            continue
+        # No mirrored plate: keep old entry only if source still exists
+        old = old_by_live.get(live_rel)
+        if old and old.get("source"):
+            src = SRC_ROOT / old["source"]
+            if src.is_file():
+                kept.append(old)
+                continue
+        dropped += 1
+
+    kept_lives = {e["live"] for e in kept}
+    new_lives = [p for p in live_paths if _posix(p) not in kept_lives]
+    added = 0
+    if new_lives:
+        # Only score lives that still have no source
+        placed = []
+        src_root = SRC_ROOT / "sources"
+        if src_root.is_dir():
+            for sp in src_root.rglob("*"):
+                if sp.is_file() and sp.suffix.lower() in IMAGE_EXT:
+                    placed.append(sp)
+        if placed:
+            lives = prepare_lives(new_lives)
+            best, _near = scan_with_near(placed, lives)
+            plan = build_plan(lives, best, _near, [])
+            for item in plan.get("sources", []):
+                live = item.get("live")
+                if live and live not in kept_lives:
+                    kept.append(item)
+                    added += 1
+
+    data["entries"] = kept
+    unmatched = []
+    kept_set = {e["live"] for e in kept}
+    for p in live_paths:
+        rel = _posix(p)
+        if rel not in kept_set:
+            unmatched.append({"live": rel, "best_mad": None, "best_agree": None, "best_origin": None})
+    data["unmatched_live"] = unmatched
+    manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    print(f"updated kept={len(kept)} mirrored={mirrored} dropped={dropped} added={added} unmatched={len(unmatched)}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments). Session store: $WDB_GROK_SESSIONS (default C:\\Users\\Vira\\.grok\\sessions).", description="Match keyed source regions to live assets.")
     parser.add_argument("live", nargs="?", type=Path, help="Live sprite PNG to patch.")
@@ -1177,6 +1255,7 @@ def main() -> None:
     parser.add_argument("--report", action="store_true", help="Scan and print a summary. Do not move files.")
     parser.add_argument("--organize", action="store_true", help="Put matching sources in _src and the rest in _old.")
     parser.add_argument("--fill-missing", action="store_true", help="Copy _old and placed sources onto unmatched lives.")
+    parser.add_argument("--update", action="store_true", help="Rebuild manifest from current lives and _src/sources. Keeps valid mappings, adds new, drops deleted lives.")
     parser.add_argument("--dry-run", "--what-if", dest="what_if", action="store_true", help="With --fill-missing, print copies and do not write.")
     parser.add_argument("--self-test", action="store_true", help="Run the built-in synthetic self test and exit.")
     args = parser.parse_args()
@@ -1190,6 +1269,9 @@ def main() -> None:
         return
     if args.fill_missing:
         fill_missing(args.what_if)
+        return
+    if args.update:
+        update_manifest()
         return
     if not args.report and not args.organize:
         parser.error("pass LIVE SRC, --report, --organize, or --fill-missing")

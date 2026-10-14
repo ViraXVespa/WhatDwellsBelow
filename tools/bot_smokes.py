@@ -90,7 +90,7 @@ def setup(pin: Path) -> Path:
     return pin
 
 
-def smoke_args(root: Path, phase: int, verbose: bool) -> list[str]:
+def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = None) -> list[str]:
     args = [
         "--headless",
         "--display-driver", "headless",
@@ -99,16 +99,27 @@ def smoke_args(root: Path, phase: int, verbose: bool) -> list[str]:
     ]
     if verbose:
         args.append("--verbose")
-    args.extend(["--", f"--wdb-phase{phase}-smoke"])
+    args.extend(["--", *(flags or [f"--wdb-phase{phase}-smoke"])])
     return args
 
 
-def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) -> int:
+# Godot stderr lines that fail a phase. "SMOKE FAIL" is what a smoke check prints on a miss (e.g. smoke/marks_check.gd). A lambda whose captured node was freed runs with null (stale UI callback).
+FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index", "SMOKE FAIL")
+
+# Phase 6 also runs the hub menu open timing (scripts/debug/open_timing.gd): real title -> hub load, then every
+# menu's first and second open; fails when a first open stalls.
+OPEN_TIMING = ["--wdb-load-timing-smoke", "--wdb-open-timing"]
+# ...and the baked frame-art check (art_bake.gd): every committed assets/ui/frames PNG matches what the art code draws.
+FRAME_ART = ["--wdb-frame-art-check"]
+
+
+def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, tag: str = "", flags: list[str] | None = None) -> int:
     log_dir = root / "_logs" / "smokes"
     log_dir.mkdir(parents=True, exist_ok=True)
-    out = log_dir / f"phase{phase}.out.txt"
-    err = log_dir / f"phase{phase}.err.txt"
-    cmd = [str(exe), *smoke_args(root, phase, verbose)]
+    name = tag or f"phase{phase}"
+    out = log_dir / f"{name}.out.txt"
+    err = log_dir / f"{name}.err.txt"
+    cmd = [str(exe), *smoke_args(root, phase, verbose, flags)]
     print("run\t" + " ".join(cmd))
     try:
         with out.open("w", encoding="utf-8") as so, err.open("w", encoding="utf-8") as se:
@@ -116,11 +127,17 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
                 cmd, stdout=so, stderr=se, timeout=timeout, check=False,
             )
     except subprocess.TimeoutExpired:
-        print(f"P{phase}=TIMEOUT")
+        print(f"{tag or f'P{phase}'}=TIMEOUT")
         return 1
     text = err.read_text(encoding="utf-8", errors="replace")
-    bad = "SCRIPT ERROR" in text or proc.returncode != 0
-    print(f"P{phase}={'FAIL' if bad else 'PASS'}\texit={proc.returncode}")
+    bad = any(sig in text for sig in FATAL_ERR) or proc.returncode != 0
+    print(f"{tag or f'P{phase}'}={'FAIL' if bad else 'PASS'}\texit={proc.returncode}")
+    if bad and tag:
+        print("\n".join(ln for ln in text.splitlines() if ln.startswith("OPEN:")))
+    if phase == 6 and not tag:
+        timing = run_phase(exe, root, 6, timeout, verbose, "open_timing", OPEN_TIMING)
+        art = run_phase(exe, root, 6, timeout, verbose, "frame_art", FRAME_ART)
+        return max(1 if bad else 0, timing, art)
     return 1 if bad else 0
 
 

@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
-"""Advisory performance run of the EXPORTED web build in headless Chrome. Never a gate.
+"""Advisory performance run of the EXPORTED web build in headless Chrome. Not a gate, except a flow `assert` breach (FAIL).
 
   python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
 Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
-frames per phase, JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
+frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
 page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
 a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
---mbps throttles the network. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
+--mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
 compare runs on the same machine only. Not a numbered smoke.
 """
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import os
 import shutil
 import statistics
 import sys
-import threading
+import time
 from pathlib import Path
 
 _TOOLS = Path(__file__).resolve().parent
@@ -29,6 +27,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import hitch_sink
 import web_perf_lib
 
 JOB = "web-perf"
@@ -38,17 +37,7 @@ UP = {"load_ms": (40, 1500), "init_ms": (50, 1000), "avg_frame_ms": (30, 5), "p9
       "heap_mb": (60, 40), "wasm_mem_mb": (10, 16), "transfer_mb": (5, 0.5), "page_errors": (0, 1)}
 DOWN = {"avg_fps": (30, 3)}
 SCALAR = ("load_ms", "wall_ms", "wasm_dl_ms", "wasm_compile_ms", "pck_end_ms", "init_ms", "frames", "avg_fps", "avg_frame_ms",
-          "p95_frame_ms", "max_frame_ms", "long_frames", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
-
-
-def serve(site: Path):
-    class Quiet(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, *a):
-            pass
-
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(site)))
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv
+          "p95_frame_ms", "max_frame_ms", "long_frames", "shot_excluded", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
 
 
 def median(runs: list[dict]) -> dict:
@@ -56,6 +45,7 @@ def median(runs: list[dict]) -> dict:
     for k in SCALAR:
         rep[k] = round(statistics.median(r[k] for r in runs), 2)
     rep["runs"] = len(runs)
+    rep["hitch_runs"] = [r.get("hitch", []) for r in runs]  # game hitch-log rows per run (hitch_sink.py)
     if len({len(r.get("load_marks", [])) for r in runs}) == 1:  # engine load marks: median of each mark across the runs
         rep["load_marks"] = [[m[0]] + [int(statistics.median(r["load_marks"][i][j] for r in runs)) for j in range(1, 5)]
                              for i, m in enumerate(runs[0].get("load_marks", []))]
@@ -113,6 +103,41 @@ def stuck(flow: dict, shots: dict) -> list[str]:
     return out
 
 
+def check(flow: dict, rep: dict) -> list[str]:
+    """Flow "assert": {"audio_gaps": max, "p95_frame_ms": max (phase "music" or the measured frames), ...}; a breach is ASSERT (exit 1)."""
+    out, want = [], flow.get("assert") or {}
+    vals = dict(rep.get("audio") or {})
+    ph = rep["phases"].get(flow.get("assert_phase", ""), rep)
+    vals.update({k: ph.get(k) for k in ("p95_frame_ms", "avg_frame_ms", "max_frame_ms")})
+    if want and not vals.get("audio_on", 1):
+        out.append("ASSERT no sound reached the speakers (audio_on=0)")
+    for k, lim in sorted(want.items()):
+        v = vals.get(k)
+        if not isinstance(v, (int, float)) or v > lim:
+            out.append("ASSERT %s=%s over %s" % (k, v, lim))
+    return out
+
+
+def selftest() -> list[str]:
+    """Offline checks of the report logic (no browser): flow asserts, baseline diff, uncapped launch flags."""
+    bad = []
+    rep = {"audio": {"audio_on": 1, "audio_gaps": 0}, "phases": {"music": {"p95_frame_ms": 70.0}}}
+    flow = {"assert_phase": "music", "assert": {"audio_gaps": 0, "p95_frame_ms": 150}}
+    if check(flow, rep):
+        bad.append("clean run flagged")
+    rep["audio"]["audio_gaps"] = 3
+    if not any("audio_gaps" in x for x in check(flow, rep)):
+        bad.append("music gap not flagged")
+    rep["audio"] = {"audio_on": 0, "audio_gaps": 0}
+    if not any("no sound" in x for x in check(flow, rep)):
+        bad.append("silent run not flagged")
+    if not diff({"p95_frame_ms": 100.0}, {"p95_frame_ms": 40.0}, None):
+        bad.append("worse p95 not flagged")
+    if "--disable-frame-rate-limit" not in web_perf_lib.UNCAP:
+        bad.append("frame pacing not uncapped")
+    return bad
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Chrome.", json_out=True)
     ap.add_argument("--site", default="docs", help="Exported site dir (default docs; may be stale, export with export_web.py --out).")
@@ -124,13 +149,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--width", type=int, default=1280, help="Viewport width in px (default 1280).")
     ap.add_argument("--height", type=int, default=720, help="Viewport height in px (default 720).")
     ap.add_argument("--mbps", type=float, default=0.0, help="Throttle the network to this many Mbit/s (default off).")
+    ap.add_argument("--vsync", action="store_true", help="Keep Chrome's 60 Hz frame pacing (default off: frame times are the game's cost, not vsync steps).")
     ap.add_argument("--repeat", type=int, default=1, help="Runs per flow; the report holds the median (default 1).")
     ap.add_argument("--baseline", default="", help="Saved report (e.g. tools/web-perf-baseline.json) to diff against.")
     ap.add_argument("--save-baseline", default="", help="Write this run's report here (merges flows into an existing file).")
     ap.add_argument("--max-worse-pct", type=float, default=None, help="One percent for every metric (default: per-metric table).")
     ap.add_argument("--strict", action="store_true", help="Exit 1 when a metric is WORSE or a flow is STUCK (default advisory).")
+    ap.add_argument("--selftest", action="store_true", help="Offline checks of the report logic; no browser.")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
+    if args.selftest:
+        bad = selftest()
+        return agent_log.finish(JOB, root, "\n".join(bad) or "selftest ok", "FAIL" if bad else "PASS", args=args, selftest=1)
     flows = json.loads((root / FLOWS).read_text(encoding="utf-8"))
     boot = flows.pop("_boot")
     names = sorted(flows) if args.flow == "all" else [n for n in args.flow.split(",") if n]
@@ -148,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
     if not url:
         if not (site / "index.html").is_file():
             agent_log.fail("no exported site at %s (python tools/export_web.py --out DIR)" % args.site)
-        srv = serve(site)
+        srv = hitch_sink.serve(site, root)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
     shots = root / "_logs" / JOB
     shots.mkdir(parents=True, exist_ok=True)
@@ -156,8 +186,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         for n in names:
             steps = (boot if flows[n].get("boot") else []) + flows[n]["steps"]
-            runs = [web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
-                                         n, args.mbps, flows[n].get("query", "")) for _ in range(max(args.repeat, 1))]
+            runs = []
+            for i in range(max(args.repeat, 1)):
+                hitch_sink.STATE["run"] = "%s-%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), n, i)
+                r = web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
+                                         n, flows[n].get("mbps", args.mbps), flows[n].get("query", ""), bool(flows[n].get("audio")),
+                                         args.vsync)
+                r["hitch"] = [h for h in hitch_sink.rows(root, hitch_sink.STATE["run"]) if h.get("ev") == "hitch"]
+                runs.append(r)
             for r in runs:
                 r["invalid"] = health(r) if flows[n].get("playtest") else []
             reps[n] = median(runs)
@@ -177,10 +213,11 @@ def main(argv: list[str] | None = None) -> int:
         bp = root / args.save_baseline
         old = json.loads(bp.read_text(encoding="utf-8")) if bp.is_file() else {"flows": {}}
         old.update({k: v for k, v in full.items() if k != "flows"})
-        old["flows"].update({n: {k: v for k, v in r.items() if k != "assets"} for n, r in reps.items() if not r["invalid"]})
+        old["flows"].update({n: {k: v for k, v in r.items() if k not in ("assets", "hitch", "hitch_runs")} for n, r in reps.items() if not r["invalid"]})
         bp.parent.mkdir(parents=True, exist_ok=True)
         bp.write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
+    hard = 0
     lines, flags = ["build_id=%s chrome=%s viewport=%s report=%s" % (label, full["chrome"], full["viewport"], agent_log.rel(root, out))], 0
     for n, r in reps.items():
         lines.append("flow %s" % n)
@@ -189,8 +226,12 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["  load %s t=%d dt=%d vram=%d wasm=%d" % tuple(m) for m in r.get("load_marks", [])]
         lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
+        lines += ["  audio %s" % " ".join("%s=%s" % kv for kv in sorted(r["audio"].items()))] if r.get("audio") else []
+        for i, rr in enumerate(r.get("hitch_runs", [])):
+            lines += ["  hitch run%d t=%s dt_ms=%s where=%s nodes=%s draw=%s proc_ms=%s why=%s" % (i, h.get("t"), h.get("dt_ms"), h.get("where"),
+                      h.get("nodes"), h.get("draw"), h.get("proc_ms"), h.get("why", "")) for h in rr if h.get("where") != "boot"]
         lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
-        notes = stuck(flows[n], r["shots"]) + r["invalid"]
+        notes = stuck(flows[n], r["shots"]) + r["invalid"] + check(flows[n], r)
         if args.save_baseline and r["invalid"]:
             notes.append("NOTE flow %s NOT saved to the baseline (INVALID run)" % n)
         if args.baseline:
@@ -199,8 +240,9 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 notes += diff(r, base["flows"][n], args.max_worse_pct) if n in base["flows"] else ["NOTE no baseline for flow %s" % n]
         lines += ["  " + x for x in notes]
-        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID")))
-    status = "FAIL" if flags and args.strict else ("INFO" if flags else "PASS")
+        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID", "ASSERT")))
+        hard += sum(1 for x in notes if x.startswith("ASSERT"))
+    status = "FAIL" if (flags and args.strict) or hard else ("INFO" if flags else "PASS")
     first = next(iter(reps.values()))
     return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flows=",".join(names), load_ms=first["load_ms"],
                             avg_fps=first["avg_fps"], heap_mb=first["heap_mb"], wasm_mb=first["wasm_mem_mb"], flagged=flags)

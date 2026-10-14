@@ -1,5 +1,6 @@
 extends Object
 const TipPlace := preload("res://scripts/ui/tip_place.gd")
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
@@ -43,23 +44,10 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 	ui.gear_tip_host = panel
 	ui.gear_tip = lab
 
-static func _as_int(v: Variant, fallback: int) -> int:
-	if v is int:
-		return v
-	if v is float:
-		return int(v)
-	if v is String and str(v).is_valid_int():
-		return int(str(v))
-	return fallback
-
 static func _tip_anchor(ui: CanvasLayer) -> Control:
-	var inv_tab: int = 1
-	if ui.get("TAB_INV") != null:
-		inv_tab = _as_int(ui.TAB_INV, 1)
-	var tab_v: Variant = ui.get("tab")
-	if tab_v is int or tab_v is float or (tab_v is String and str(tab_v).is_valid_int()):
-		if _as_int(tab_v, inv_tab) != inv_tab:
-			return null
+	# Pause menu: tips only on its inventory tab (tab ids). The progress panel has no tabs.
+	if ui.get("TAB_INV") != null and str(ui.get("tab")) != str(ui.TAB_INV):
+		return null
 	if str(ui.inv_sel) == "stats" or str(ui.inv_sel) == "" or str(ui.inv_sel) == "back":
 		return null
 	if on(ui, "gear_hover"):
@@ -135,6 +123,10 @@ static func _place_now(ui: CanvasLayer) -> void:
 		hide_tip(ui)
 		return
 	lab.text = txt
+	var skin: String = BtnSkin.skin_of(host)
+	if str(host.get_meta("skin_now", "")) != skin:
+		host.set_meta("skin_now", skin)
+		BtnSkin.restyle(host)
 	host.visible = true
 	host.reset_size()
 	var view := ui.get_viewport().get_visible_rect().size

@@ -2,7 +2,7 @@ extends Object
 
 ## Player physics tick.
 
-const Depth := preload("res://scripts/world/depth.gd")
+const Ground := preload("res://scripts/world/player/ground.gd")
 const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
 
 static var _gd_at: Dictionary = {}
@@ -32,17 +32,14 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 		host.atk_state = host.ATK_NONE
 		host.dash_t = 0.0
 		host.special_held = PlayerLock.ai_held(host, "special") or App.pad_held("special")
-		host.velocity = Vector3.ZERO
-		host.move_and_slide()
-		host.global_position.y = 0.0
-		if host.body:
-			Depth.apply(host.body, host.global_position)
+		Ground.ground(host, Vector3.ZERO)
 		PlayerAnim.apply_facing(host, delta)
 		if host.telegraph:
 			host.telegraph.hide_now()
-		if host.rig and host.rig.has_method("follow"):
-			host.rig.follow(host.global_position)
+		Ground.follow(host)
 		return
+	if host.hp > 0.0:
+		App.prog.tick_mana(delta)
 	var close_block := false
 	if host.ui_latch:
 		host.ui_latch = false
@@ -55,40 +52,29 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 	if host.gathering != null:
 		PlayerAct.tick_gather(host, delta, move)
 		if host.gathering != null:
-			host.velocity = Vector3.ZERO
-			host.move_and_slide()
-			host.global_position.y = 0.0
-			if host.body:
-				Depth.apply(host.body, host.global_position)
-			PlayerAnim.apply_facing(host, delta)
-			if host.rig and host.rig.has_method("follow"):
-				host.rig.follow(host.global_position)
+			Ground.settle(host, Vector3.ZERO, delta)
 			return
-	if host.rig and host.rig.has_method("follow"):
-		host.rig.follow(host.global_position)
+	Ground.follow(host)
 	PlayerLock.lock_and_aim(host, move, delta)
 	if not close_block:
 		PlayerCombat.try_special(host)
 		PlayerCombat.try_basic(host)
 		PlayerCombat.try_dash(host, move)
-	var spd: float = App.bal.move_speed * (1.0 + App.gear("move_spd"))
+	var spd: float = App.bal.move_speed * (1.0 + _move_gear())
 	if App.adrenaline:
 		spd *= App.bal.adrenaline_speed
 	if host.atk_state == host.ATK_BASIC:
 		spd *= App.bal.attack_move_mult
 	if host.atk_state == host.ATK_WIND or host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_REC:
 		spd *= 0.2
+	var vel: Vector3 = Vector3(move.x, 0.0, move.y) * spd
 	if host.dash_t > 0.0:
 		var d: Vector2 = host.dash_dir if host.dash_dir.length_squared() > 0.0001 else (host.aim_dir if host.aim_dir.length_squared() > 0.0001 else Vector2.DOWN)
-		host.velocity = Vector3(d.x, 0.0, d.y) * App.bal.move_speed * App.bal.dash_speed_mult
+		vel = Vector3(d.x, 0.0, d.y) * App.bal.move_speed * App.bal.dash_speed_mult
+		host.velocity = vel
 		if host.is_inside_tree():
 			PlayerHit.trail(host, delta)
-	else:
-		host.velocity = Vector3(move.x, 0.0, move.y) * spd
-	host.move_and_slide()
-	host.global_position.y = 0.0
-	if host.body:
-		Depth.apply(host.body, host.global_position)
+	Ground.ground(host, vel)
 	PlayerCombat.advance_attack(host, delta)
 	if host.hurt_flash > 0.0:
 		host.hurt_flash -= delta
@@ -97,8 +83,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 	PlayerAnim.apply_facing(host, delta)
 	PlayerCombat.update_aim_line(host)
 	PlayerCombat.update_aura(host, delta)
-	if host.rig and host.rig.has_method("follow"):
-		host.rig.follow(host.global_position)
+	Ground.follow(host)
 	PlayerAct.refresh_prompt(host)
 	if not close_block:
 		if PlayerLock.ai_just(host, "interact") or App.pad_just("interact") or Input.is_action_just_pressed("interact"):
@@ -112,12 +97,19 @@ static func _loco(host: CharacterBody3D, delta: float) -> void:
 	var move: Vector2 = Vector2.ZERO
 	if App.has_method("pad_move"):
 		move = App.pad_move()
-	var spd: float = App.bal.move_speed
-	host.velocity = Vector3(move.x, 0.0, move.y) * spd
-	host.move_and_slide()
-	host.global_position.y = 0.0
-	if host.body:
-		Depth.apply(host.body, host.global_position)
-	PlayerAnim.apply_facing(host, delta)
-	if host.rig and host.rig.has_method("follow"):
-		host.rig.follow(host.global_position)
+	Ground.settle(host, Vector3(move.x, 0.0, move.y) * App.bal.move_speed, delta)
+
+## Gear move speed, recomputed only when the equipped slots change (App.gear walks every slot and set).
+static var _gear_key: int = 0
+static var _gear_prog: Object = null
+static var _gear_val: float = 0.0
+
+static func _move_gear() -> float:
+	if App.prog == null:
+		return App.gear("move_spd")
+	var key: int = App.prog.slots.hash()
+	if key != _gear_key or _gear_prog != App.prog:
+		_gear_key = key
+		_gear_prog = App.prog
+		_gear_val = App.gear("move_spd")
+	return _gear_val

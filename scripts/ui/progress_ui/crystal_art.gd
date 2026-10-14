@@ -5,6 +5,7 @@ extends Object
 ## ART_W x ART_H is the source. The frame shows it at 3x, nearest, so the pale rect stays under the gear board.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const ArtFill: GDScript = preload("res://scripts/ui/progress_ui/art_fill.gd")
 
 const ART_W: int = 440
 const ART_H: int = 352
@@ -26,22 +27,25 @@ const CORE: Color = Color(0.82, 1.0, 1.0, 1)
 const CORE_HOT: Color = Color(0.97, 1.0, 1.0, 1)
 const EDGE: Color = Color(0.04, 0.07, 0.09, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "crystal"
 static var _images: Dictionary = {}
 
 static func body() -> Texture2D:
-	if _images.has("body"):
+	if ArtBake.hit(_images, ART, "body"):
 		return _images["body"]
 	var img: Image = Image.create(ART_W, ART_H, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	var gem: Array[Vector2i] = [
 		Vector2i(220, 4), Vector2i(14, 50), Vector2i(26, 288), Vector2i(414, 288), Vector2i(426, 50),
 	]
-	_fill(img, gem, GEM)
+	ArtFill.poly(img, gem, GEM)
 	_shade_gem(img)
 	_line(img, 220, 8, 18, 150, GEM_DARK)
 	_line(img, 220, 8, 422, 150, GEM_DARK)
 	_line(img, 30, 52, 410, 52, GEM_DARK)
-	_fill(img, [Vector2i(220, 34), Vector2i(PALE.position.x, PALE.position.y), Vector2i(PALE.position.x, PALE.end.y), Vector2i(PALE.end.x, PALE.end.y), Vector2i(PALE.end.x, PALE.position.y)], FACE)
+	ArtFill.poly(img, [Vector2i(220, 34), Vector2i(PALE.position.x, PALE.position.y), Vector2i(PALE.position.x, PALE.end.y), Vector2i(PALE.end.x, PALE.end.y), Vector2i(PALE.end.x, PALE.position.y)], FACE)
 	_wash_face(img)
 	_plinth(img)
 	_spark(img, 36, 332, 8)
@@ -88,6 +92,7 @@ static func _plinth(img: Image) -> void:
 
 static func _slab(img: Image, x0: int, y0: int, x1: int, y1: int, col: Color, stones: int) -> void:
 	var cuts: Array[int] = [x0]
+	@warning_ignore("integer_division")
 	var step: int = maxi(1, (x1 - x0) / stones)
 	for i: int in range(1, stones):
 		cuts.append(clampi(x0 + i * step + (i * 13) % 9 - 4, x0 + 12, x1 - 12))
@@ -115,7 +120,9 @@ static func _spark(img: Image, cx: int, cy: int, r: int) -> void:
 		var half: int = r - dy
 		for x: int in range(cx - half, cx + half + 1):
 			var d: int = absi(x - cx) + dy
+			@warning_ignore("integer_division")
 			var col: Color = PINK_LIT if d < maxi(2, r / 3) else PINK
+			@warning_ignore("integer_division")
 			if x >= cx and y >= cy and d > r / 2:
 				col = PINK.lerp(EDGE, 0.35)
 			_px(img, x, y, col)
@@ -130,39 +137,6 @@ static func _core(img: Image, cx: int, cy: int) -> void:
 			if d > 12:
 				col = GEM_LIT
 			_px(img, x, y, col)
-
-static func _fill(img: Image, pts: Array[Vector2i], col: Color) -> void:
-	var n: int = pts.size()
-	var miny: int = pts[0].y
-	var maxy: int = pts[0].y
-	for p: Vector2i in pts:
-		miny = mini(miny, p.y)
-		maxy = maxi(maxy, p.y)
-	for y: int in range(miny, maxy + 1):
-		var xs: Array[int] = []
-		for i: int in n:
-			var a: Vector2i = pts[i]
-			var b: Vector2i = pts[(i + 1) % n]
-			if a.y > b.y:
-				var swap: Vector2i = a
-				a = b
-				b = swap
-			if a.y == b.y or y < a.y or y >= b.y:
-				continue
-			var t: float = float(y - a.y) / float(b.y - a.y)
-			xs.append(int(round(float(a.x) + t * float(b.x - a.x))))
-		xs.sort()
-		var j: int = 0
-		while j + 1 < xs.size():
-			var x0: int = xs[j]
-			var x1: int = xs[j + 1]
-			if x0 > x1:
-				var tmp: int = x0
-				x0 = x1
-				x1 = tmp
-			for x: int in range(x0, x1):
-				_px(img, x, y, col)
-			j += 2
 
 static func _line(img: Image, x0: int, y0: int, x1: int, y1: int, col: Color) -> void:
 	var steps: int = maxi(absi(x1 - x0), absi(y1 - y0))

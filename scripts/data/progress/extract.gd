@@ -223,23 +223,15 @@ static func withdraw_bank_consumables(p: Object) -> void:
 	for it: Variant in p.bank_items:
 		var k: String = str(it.get("kind", ""))
 		if k == "food":
-			var cur: Dictionary = p.slots.get("food", {})
-			if cur.is_empty():
-				p.slots["food"] = it
-			elif str(cur.get("food", "")) == str(it.get("food", "")):
-				cur.stack = int(cur.get("stack", 0)) + int(it.get("stack", 1))
-				p.slots["food"] = cur
-			else:
+			if not load("res://scripts/data/progress_gear/consumable.gd").add_food_item(p, it):
 				keep.append(it)
 		elif k == "potion":
-			if p.slots.get("potion", {}).is_empty():
-				it.stack = 1
-				if int(it.get("charge_max", 0)) <= 0:
-					it.charge_max = maxi(2, int(it.get("charges", 2)))
-				if int(it.get("charges", 0)) <= 0:
-					it.charges = int(it.charge_max)
-				p.slots["potion"] = it
-			else:
+			it.stack = 1
+			if int(it.get("charge_max", 0)) <= 0:
+				it.charge_max = maxi(2, int(it.get("charges", 2)))
+			if int(it.get("charges", 0)) <= 0:
+				it.charges = int(it.charge_max)
+			if not load("res://scripts/data/progress_gear/consumable.gd").hold_potion(p, it):
 				keep.append(it)
 		else:
 			keep.append(it)

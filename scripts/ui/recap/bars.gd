@@ -4,6 +4,7 @@ const CombatP := preload("res://scripts/data/progress_combat.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
 
 const COL_PERM := Color(0.72, 0.56, 0.28)
 const COL_GAIN := Color(0.46, 0.78, 0.42)
@@ -49,37 +50,8 @@ static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	shell.add_child(inner)
 	shell.set_meta("skill_id", id)
 	shell.set_meta("skill_kind", kind)
-	shell.focus_entered.connect(func(): on_skill_focus(host, id, kind, shell))
-	shell.mouse_entered.connect(func(): on_skill_focus(host, id, kind, shell))
-	shell.focus_exited.connect(func(): on_skill_blur(host, shell))
-	shell.mouse_exited.connect(func(): on_skill_blur(host, shell))
+	TipHover.attach(shell, host, id, kind, paint_tip, SkillRow.hl)
 	return {"wrap": shell, "lab": lab, "base": base, "gain": gain}
-
-static func on_skill_focus(host: Node, id: String, kind: String, from: Control) -> void:
-	if from is PanelContainer:
-		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(true))
-	host.tip_id = id
-	host.tip_kind = kind
-	host.tip_from = from
-	paint_tip(host)
-
-static func on_skill_blur(host: Node, from: Control) -> void:
-	if from is PanelContainer and not from.has_focus():
-		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(false))
-	host.call_deferred("_blur_tip")
-
-static func blur_tip(host: Node) -> void:
-	var f := host.get_viewport().gui_get_focus_owner()
-	if f != null and f.has_meta("skill_id"):
-		return
-	hide_tip(host)
-
-static func hide_tip(host: Node) -> void:
-	host.tip_id = ""
-	host.tip_kind = ""
-	host.tip_from = null
-	if host.tip_host:
-		host.tip_host.visible = false
 
 static func tip_lv(host: Node, id: String, kind: String) -> int:
 	var start := float(host.perm0.get(id, 0.0))
@@ -90,25 +62,12 @@ static func tip_lv(host: Node, id: String, kind: String) -> int:
 	return CombatP.level_from_xp(App.prog, start + float(host.gain_now.get(id, 0.0)))
 
 static func paint_tip(host: Node) -> void:
-	if host.tip_id == "" or host.tip_from == null or not is_instance_valid(host.tip_from):
-		if host.tip_host:
-			host.tip_host.visible = false
+	if not TipHover.live(host):
 		return
 	host.tip_lab.text = ThemeS.skill_tip(host.tip_id, tip_lv(host, host.tip_id, host.tip_kind))
 	var w := 404.0
 	host.tip_lab.custom_minimum_size = Vector2(w - 24.0, 0.0)
-	var h := maxf(80.0, host.tip_lab.get_minimum_size().y + 20.0)
-	host.tip_host.size = Vector2(w, h)
-	var r: Rect2 = host.tip_from.get_global_rect()
-	var pos := Vector2(r.position.x, r.position.y + r.size.y + 8.0)
-	if pos.y + h > 1060.0:
-		pos.y = r.position.y - h - 8.0
-	if pos.x + w > 1900.0:
-		pos.x = 1900.0 - w
-	if pos.x < 20.0:
-		pos.x = 20.0
-	host.tip_host.position = pos
-	host.tip_host.visible = true
+	TipHover.place_below(host, host.tip_from, w, maxf(80.0, host.tip_lab.get_minimum_size().y + 20.0))
 
 static func set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
 	fill.anchor_left = clampf(left_r, 0.0, 1.0)

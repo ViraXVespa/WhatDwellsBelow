@@ -22,6 +22,6 @@ In this repo first:
 2. Stop if the User has not approved that seed / prompt yet.
 3. Run `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>`. Same seed hash reuses the ingest session (fork); a new seed ingests again.
 
-The child follows bundled `imagine`, `game-asset-core`, and `game-animation-frames`. Motion text is the staged prompt, not cinematic 6s/10s shot language. The child does not harvest or pack.
+The child follows bundled `imagine` and `game-assets`, and reads `animation.md` for the clip. Motion text is the staged prompt, not cinematic 6s/10s shot language. The child does not harvest or pack.
 
 One unit, then stop for the User. Pack or review only when the User names that unit.

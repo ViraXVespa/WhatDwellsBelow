@@ -1,9 +1,11 @@
 extends Object
 
+const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
 const Hub := preload("res://scripts/app/flow_hub.gd")
+const Leg := preload("res://scripts/app/flow_leg.gd")
 static func enter_dungeon(host: Node) -> void:
 	if host.present and str(host.present.get("_mode")) == "enter":
 		return
@@ -58,8 +60,7 @@ static func go_title(host: Node) -> void:
 		host.music.stop_music()
 	host.get_tree().paused = false
 	Engine.time_scale = 1.0
-	host.get_tree().call_deferred("change_scene_to_file", host.TITLE_SCENE)
-	host.call_deferred("wake_web_pad")
+	Leg.change_scene(host, null, host.TITLE_SCENE)
 
 static func go_foundation(host: Node) -> void:
 	host.in_dungeon = true
@@ -76,12 +77,7 @@ static func go_camp(host: Node) -> void:
 	Engine.time_scale = 1.0
 	if host.music and host.music.has_method("play_hub"):
 		host.music.play_hub()
-	var packed: Resource = ResourceLoader.load(host.CAMP_SCENE)
-	if packed is PackedScene:
-		host.get_tree().call_deferred("change_scene_to_packed", packed)
-	else:
-		host.get_tree().call_deferred("change_scene_to_file", host.CAMP_SCENE)
-	host.call_deferred("wake_web_pad")
+	Leg.change_scene(host, ResourceLoader.load(host.CAMP_SCENE) as PackedScene, host.CAMP_SCENE)
 
 static func play_from_menu(host: Node) -> void:
 	if host._menu_loading:
@@ -96,32 +92,33 @@ static func play_from_menu_async(host: Node) -> void:
 	LoadTiming.mark("play_begin")
 	if host.loader:
 		host.loader.begin("Placeholdia", App.tr("common.gathering_the_square"))
-		host.loader.set_progress(0.08)
+	Hub.LoadW.begin()
+	if host.loader:
+		host.loader.stage(0.0, Hub.LoadW.after(&"preload"))
 	await host.get_tree().process_frame
 	LoadTiming.mark("loader_paint")
+	UiWarm.start()
 	preload_hub(host)
 	if host.loader:
 		host.loader.set_status(App.tr("app_flow.raising_placeholdia"))
-		host.loader.set_progress(0.90)
+	Hub.LoadW.done(&"preload")
+	if host.loader:
+		host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp"))
 	await host.get_tree().process_frame
 	LoadTiming.mark("camp_change")
 	host.go_camp()
 	host.ui_open = true
-	var guard := 0
-	while guard < 240:
-		guard += 1
-		var s := host.get_tree().current_scene
-		if s and s.is_node_ready() and (str(s.scene_file_path).find("camp") >= 0 or str(s.name) == "Camp"):
-			break
+	var guard: int = await Leg.wait_scene(host, "camp", "Camp", func():
 		if host.loader:
-			host.loader.set_progress(0.91)
-		await host.get_tree().process_frame
+			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp")))
 	LoadTiming.mark("camp_ready")
+	Hub.LoadW.done(&"camp")
 	LoadTiming.note("camp_wait_frames", str(guard))
 	await Hub._warmup_hub(host)
 	var scene: Node = host.get_tree().current_scene
 	if host.loader:
 		host.loader.finish()
+	Hub.LoadW.save()
 	host._menu_loading = false
 	if scene and ("player" in scene) and scene.player:
 		scene.player.set_physics_process(true)
@@ -133,13 +130,7 @@ static func play_from_menu_async(host: Node) -> void:
 
 static func dungeon_load_timing_async(host: Node) -> void:
 	host.go_camp()
-	var hub_guard: int = 0
-	while hub_guard < 240:
-		hub_guard += 1
-		var hub: Node = host.get_tree().current_scene
-		if hub and hub.is_node_ready() and (str(hub.scene_file_path).find("camp") >= 0 or str(hub.name) == "Camp"):
-			break
-		await host.get_tree().process_frame
+	var hub_guard: int = await Leg.wait_scene(host, "camp", "Camp")
 	LoadTiming.dnote("hub_wait_frames", str(hub_guard))
 	LoadTiming.dmark("hub_ready")
 	AppRunS.ensure_dungeon_packed(host)
@@ -155,13 +146,7 @@ static func dungeon_load_timing_async(host: Node) -> void:
 	host.run_seed = 42
 	LoadTiming.dnote("seed", str(host.run_seed))
 	LoadTiming.dnote("floor", str(host.floor_n))
-	var dun_guard: int = 0
-	while dun_guard < 240:
-		dun_guard += 1
-		var dun: Node = host.get_tree().current_scene
-		if dun and dun.is_node_ready() and (str(dun.scene_file_path).find("dungeon") >= 0 or str(dun.name) == "Dungeon"):
-			break
-		await host.get_tree().process_frame
+	var dun_guard: int = await Leg.wait_scene(host, "dungeon", "Dungeon")
 	LoadTiming.dmark("dungeon_scene")
 	LoadTiming.dnote("dungeon_wait_frames", str(dun_guard))
 	await pump_fps(host, false)

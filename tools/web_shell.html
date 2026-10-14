@@ -90,15 +90,17 @@ body {
 }
 
 #wdb-fill {
-    width: 4%;
+    width: 100%;
+    transform-origin: 0 50%;
+    transform: scaleX(0.02);
     height: 100%;
     background: linear-gradient(180deg, #f6d36a 0%, #f2c759 46%, #c48a2e 100%);
     box-shadow: inset 0 1px 0 rgba(255, 236, 180, 0.45);
-    transition: width 160ms linear;
 }
 
 #wdb-fill.is-wait {
     width: 28%;
+    transform: none;
     background: linear-gradient(90deg, #5a4220 0%, #f2c759 50%, #5a4220 100%);
     background-size: 220% 100%;
     animation: wdb-wait 1.15s linear infinite;
@@ -182,7 +184,7 @@ body {
                 <div id="wdb-status">Checking the descent…</div>
                 <div id="wdb-edge">
                     <div id="wdb-track">
-                        <div id="wdb-fill" class="is-wait"></div>
+                        <div id="wdb-fill"></div>
                     </div>
                 </div>
                 <div id="wdb-pct"></div>
@@ -238,20 +240,83 @@ const engine = new Engine(GODOT_CONFIG);
         }
     }
 
-    function setBar(ratio) {
-        const clamped = Math.max(0, Math.min(1, ratio));
-        fill.style.width = Math.max(clamped * 100, 2) + "%";
-        pctLine.textContent = Math.round(clamped * 100) + "%";
+    // One shown value draws both the fill and the % label (and the % in the status line). It eases up to the last
+    // real milestone (target), then creeps toward the end of the running step (ceil) so it never sits frozen while
+    // work is going on, never goes back, and reads 100% only once the engine has started (done).
+    // Download bytes fill 0..DL_SHARE; wasm compile, engine init and pck mount after the last byte creep to 0.99.
+    const DL_SHARE = 0.85;
+    const CREEP = 0.9;
+    const CREEP_GAP = 0.012;
+    const bar = { target: 0, ceil: 0.02, shown: 0, done: false, starting: false, last: 0, status: "", withPct: false };
+
+    // The fill is drawn as scaleX so the compositor can keep moving it while the main thread is blocked.
+    function drawBar() {
+        const shown = bar.shown;
+        const pct = bar.done ? 100 : Math.min(99, Math.floor(shown * 100));
+        fill.style.transition = "none";
+        fill.style.transform = "scaleX(" + Math.max(shown, 0.02) + ")";
+        pctLine.textContent = bar.starting && !bar.done ? "" : pct + "%";
+        statusLine.textContent = bar.withPct ? bar.status + " " + pct + "%" : bar.status;
     }
 
-    function setStatus(text) {
-        statusLine.textContent = text;
+    // Last phase: every byte is in; wasm compile, engine init and the pck mount block the page's main thread for a few
+    // seconds, so no script can redraw. The % label steps aside and the compositor eases the fill toward 0.97 instead
+    // (STARTING_S ~ measured: 2.7 s cached, 3.2 s cold on the box). It only reads full once the engine has started.
+    const STARTING_S = 3.0;
+    function enterStarting() {
+        if (bar.starting) {
+            return;
+        }
+        bar.starting = true;
+
+        drawBar();
+        void fill.offsetWidth;
+        fill.style.transition = "transform " + STARTING_S + "s cubic-bezier(0.2, 0.6, 0.35, 1)";
+        fill.style.transform = "scaleX(0.97)";
     }
+
+    function tickBar(now) {
+        if (!initializing) {
+            return;
+        }
+        const d = Math.min(0.1, bar.last ? (now - bar.last) / 1000 : 0);
+        bar.last = now;
+        if (!fill.classList.contains("is-wait") && !bar.starting) {
+            if (bar.shown < bar.target) {
+                const gap = bar.target - bar.shown;
+                bar.shown = Math.min(bar.target, bar.shown + Math.max(0.6 * d, gap * 6.0 * d));
+            } else if (bar.shown < bar.ceil - CREEP_GAP) {
+                bar.shown = Math.min(bar.ceil - CREEP_GAP, bar.shown + (bar.ceil - CREEP_GAP - bar.shown) * CREEP * d);
+            }
+            drawBar();
+        }
+        requestAnimationFrame(tickBar);
+    }
+
+    // A real milestone (0..1 below done) and the end of the step that now runs.
+    function setBar(reached, upTo) {
+        bar.target = Math.max(bar.target, Math.max(0, Math.min(0.99, reached)));
+        bar.ceil = Math.max(bar.ceil, bar.target, Math.min(0.99, upTo === undefined ? reached : upTo));
+    }
+
+    function setStatus(text, withPct) {
+        bar.status = text;
+        bar.withPct = !!withPct;
+        if (fill.classList.contains("is-wait")) {
+            statusLine.textContent = text;
+        }
+    }
+
+    requestAnimationFrame(tickBar);
 
     function hideBoot() {
         if (!initializing) {
             return;
         }
+        bar.done = true;
+        bar.starting = false;
+        bar.shown = 1;
+        drawBar();
         initializing = false;
         boot.classList.add("is-gone");
         boot.remove();
@@ -284,23 +349,22 @@ const engine = new Engine(GODOT_CONFIG);
 
     function applyProgress(current, total) {
         if (!(current > 0 && total > 0)) {
-            setWait(true);
             setStatus("Raising the spirits...");
             return;
         }
-        setWait(false);
-        setBar(current / total);
-        const pct = Math.round((current / total) * 100);
         if (current >= total) {
+            setBar(DL_SHARE, 0.99);
             setStatus("Raising the spirits...");
+            enterStarting();
             return;
         }
+        setBar(DL_SHARE * current / total);  // known bytes: no creep past them
         const wasmBytes = sizeOf("wasm");
         if (wasmBytes > 0 && current <= wasmBytes) {
-            setStatus("Drawing the engine… " + pct + "%");
+            setStatus("Drawing the engine…", true);
             return;
         }
-        setStatus("Unpacking the darkness... " + pct + "%");
+        setStatus("Unpacking the darkness...", true);
     }
 
     function wipeAndReload(remoteId) {
@@ -339,7 +403,6 @@ const engine = new Engine(GODOT_CONFIG);
     }
 
     function checkRemoteBuild() {
-        setWait(true);
         setStatus("Checking the descent…");
         const localId = String(window.__wdbBuildId || "").trim();
         return fetch("build_id.txt?t=" + Date.now(), { cache: "no-store" }).then(function (res) {
@@ -358,7 +421,6 @@ const engine = new Engine(GODOT_CONFIG);
     }
 
     function startGame() {
-        setWait(true);
         setStatus("Drawing the engine…");
         return engine.startGame({
             onProgress: function (current, total) {

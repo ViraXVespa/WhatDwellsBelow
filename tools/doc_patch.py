@@ -351,10 +351,12 @@ def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
     return text + "\n" + line + "\n", True
 
 
-def write_changelog(root: Path, bullets: list[str], label: str | None = None, summary: str | None = None) -> Path:
+def write_changelog(root: Path, bullets: str | list[str], label: str | None = None, summary: str | None = None) -> Path:
     root = repo_root(root)
     label = label or next_label(root)
     path = root / "design/changelog" / f"{label}.md"
+    if isinstance(bullets, str):
+        bullets = [bullets]
     incoming = [b.rstrip() for b in bullets if b.strip()]
     if path.is_file():
         text = read_text(path)

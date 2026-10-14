@@ -72,6 +72,10 @@ static func add_item(p: Object, it: Dictionary) -> bool:
 	if str(it.get("rarity", "white")) == "white" and _has_white_copy(p, it):
 		Kit.grant_smith(p, it)
 		return true
+	if str(it.kind) == "food" and not App.in_dungeon:
+		return load("res://scripts/data/progress_gear/consumable.gd").add_food_item(p, it)
+	if str(it.kind) == "potion" and not App.in_dungeon:
+		return load("res://scripts/data/progress_gear/consumable.gd").hold_potion(p, it)
 	if str(it.kind) == "food":
 		var slot_it: Dictionary = p.slots.get("food", {})
 		if not slot_it.is_empty() and str(slot_it.get("food", "")) == str(it.get("food", "")):
@@ -176,6 +180,10 @@ static func unequip_slot(p: Object, slot: String) -> String:
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
 		return App.tr("common.empty")
+	if slot == "potion" or slot == "food":
+		load("res://scripts/data/progress_gear/consumable.gd").sync_slots(p)
+		p.slots[slot] = {}
+		return App.tr("gear_bag.unequipped_name").format({"name": str(it.name)})
 	if not bag_can_accept(p, it):
 		App.toast(App.tr("common.bag_full"))
 		return App.tr("common.bag_full")

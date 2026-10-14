@@ -1,9 +1,7 @@
-"""Chroma-plate keying: plate mask, wand/pocket fill, despill, plate remap to #FF00FF, colour-to-alpha.
+"""Chroma-plate helpers: plate mask, plate remap to #FF00FF, rim strip, and the key entry points.
 
-The plate is found by Lab distance to several references sampled from the image border (a plate drifts in
-shade across one picture) plus a hue band, closed against JPEG speckle, then connected components: whatever
-touches the border is plate, and enclosed islands are plate when small or tight. Exact-#FF00FF plates give
-the same mask as the older single-colour wand (the new accept set is a superset of the old one).
+The keyer itself is imglib.matte (staged: denoise, plate, trimap, unmix, despill). key_to_alpha and punch
+call it. remap_plate and plate_mask stay for plate_remap.py and match_keyed_region.py.
 """
 from __future__ import annotations
 
@@ -13,7 +11,7 @@ import numpy as np
 from PIL import Image
 
 from . import HAVE_CV2, cv2
-from .color import background_refs, delta_e, hsv, hue_gap
+from .color import background_refs, border_samples, delta_e, hsv, hue_gap
 from .imgio import MAGENTA, hex_of
 
 KEY_RGB = MAGENTA
@@ -21,12 +19,6 @@ WAND_DIST = 77.0
 TIGHT_DIST = 18.0
 POCKET_FRAC = 0.07
 LAB_TOL = 20.0
-SPILL_GREEN_EXCESS = 36
-SPILL_HUE = 300.0
-SPILL_HUE_WIDTH = 26.0
-SPILL_SAT_MIN = 0.20
-ALPHA_SNAP_LOW = 10
-ALPHA_SNAP_HIGH = 242
 MATTE_CUT = 128
 PLATE_HUE = 310.0
 RIM_HUE_WIDTH = 40.0
@@ -189,24 +181,62 @@ def plate_amount(rgb: np.ndarray, refs) -> tuple[np.ndarray, np.ndarray]:
     return np.clip(1.0 - alpha, 0.0, 1.0), pick
 
 
+def plate_border_refs(rgb: np.ndarray):
+    """Magenta-plate colours from the border, or None when that border is not a plate.
+
+    Wood, black, and an already-cut sprite stay as drawn. background_refs would
+    otherwise take the border colour itself as the plate and eat the picture.
+    """
+    samples = border_samples(rgb)
+    h, sat, v = hsv(samples.reshape(-1, 1, 3))
+    ok = (hue_gap(h, PLATE_HUE) <= 36.0) & (sat >= 0.40) & (v >= 0.28)
+    hit = int(np.asarray(ok).sum())
+    # A real plate covers the margin. A handful of red roof pixels must not count.
+    if hit < 16 or hit / float(max(1, samples.shape[0])) < 0.05:
+        return None
+    return background_refs(rgb, hue=PLATE_HUE, hue_tol=36.0, sat_min=0.40, val_min=0.28)
+
+
 def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, min_amount: float = 0.72, edge: int = 4,
                 edge_min: float = 0.04, pocket_frac: float = POCKET_FRAC):
-    """Repaint the plate as exact #FF00FF (opaque), shifting edge bleed by its plate mix. Returns (image, debug image, info).
+    """Repaint solid plate as exact #FF00FF (opaque). A farther mix keeps its drawn RGB.
 
-    Every plate pixel ends exactly (255, 0, 255); the edge band (within `edge` px of the plate) is shifted
-    by amount x (key - nearest reference) when the pixel holds at least edge_min of the plate colour.
+    Returns (image, debug image, info). Solid plate near a border reference ends exactly (255, 0, 255).
+    Shifting a farther mix onto the key drew lines along hard pixel edges. Colour-to-alpha keeps that mix
+    as partial alpha without a recolour. The debug image still marks the mix band.
     """
     src = im.convert("RGBA")
     arr = np.array(src, dtype=np.uint8, copy=True)
     h, w = arr.shape[:2]
     rgb = arr[:, :, :3].copy()
-    plate, refs, _d = plate_mask(rgb, alpha=arr[:, :, 3], tol=tol, rgb_wand=wand_dist, pocket_frac=pocket_frac)
-    amt, pick = plate_amount(rgb, refs)
+    found = plate_border_refs(rgb)
+    if found is None:
+        vis = np.zeros((h, w, 4), dtype=np.uint8)
+        vis[:, :, 3] = 255
+        info = {
+            "start_chroma": "#FF00FF",
+            "refs": [],
+            "target": "#FF00FF",
+            "size": [w, h],
+            "plate_pixels": 0,
+            "bleed_pixels": 0,
+            "lab_tol": tol,
+            "wand_dist": wand_dist,
+            "min_amount": min_amount,
+            "edge": edge,
+            "edge_min": edge_min,
+            "pocket_frac": pocket_frac,
+        }
+        return src, Image.fromarray(vis, "RGBA"), info
+    plate, refs, dist = plate_mask(rgb, refs=found, alpha=arr[:, :, 3], tol=tol, rgb_wand=wand_dist, pocket_frac=pocket_frac)
+    amt, _pick = plate_amount(rgb, refs)
+    # Flat plate (near a border ref) becomes exact #FF00FF. A farther plate-coloured mix
+    # keeps its drawn RGB. Shifting that mix onto the key drew lines on the arrow.
+    solid = plate & (dist <= float(tol) * 1.25)
+    mix = plate & ~solid
     band = dilate(plate, edge) & ~plate
-    hit = band & (amt >= edge_min)
-    shifted = np.clip(np.rint(rgb.astype(np.float32) + amt[..., None] * (np.array(KEY_RGB, np.float32) - pick)), 0, 255).astype(np.uint8)
-    arr[hit, :3] = shifted[hit]
-    arr[plate, :3] = KEY_RGB
+    hit = (band | mix) & (amt >= edge_min)
+    arr[solid, :3] = KEY_RGB
     arr[:, :, 3] = 255
     vis = np.zeros((h, w, 4), dtype=np.uint8)
     vis[:, :, 3] = 255
@@ -228,89 +258,6 @@ def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, 
         "pocket_frac": pocket_frac,
     }
     return Image.fromarray(arr, "RGBA"), Image.fromarray(vis, "RGBA"), info
-
-
-def chroma_alpha(p: np.ndarray, k) -> np.ndarray:
-    """Colour-to-alpha amount: p is float RGB (0-1, H x W x 3), k the key (0-1, len 3). Returns H x W float."""
-    alpha = np.zeros(p.shape[:2], dtype=np.float32)
-    for i in range(3):
-        pv = p[..., i]
-        kv = float(k[i])
-        ch = np.zeros_like(pv)
-        if kv < 0.999:
-            hi = pv > kv
-            ch[hi] = (pv[hi] - kv) / (1.0 - kv)
-        if kv > 0.001:
-            lo = pv < kv
-            ch[lo] = (kv - pv[lo]) / kv
-        alpha = np.maximum(alpha, ch)
-    return alpha
-
-
-def c2a(rgb: np.ndarray, a: np.ndarray, key) -> tuple[np.ndarray, np.ndarray]:
-    """GIMP colour-to-alpha of every pixel against one key colour. Returns (rgb uint8, alpha uint8)."""
-    p = rgb.astype(np.float32) / 255.0
-    k = np.array(key, dtype=np.float32) / 255.0
-    alpha = chroma_alpha(p, k)
-    empty = alpha < 0.01
-    safe = np.maximum(alpha, 1e-6)[..., None]
-    recon = np.clip(np.rint(((p - k) / safe + k) * 255.0), 0, 255).astype(np.uint8)
-    new_a = np.rint(a.astype(np.float32) * alpha).astype(np.int32)
-    kill = empty | (new_a < ALPHA_SNAP_LOW)
-    new_a = np.where(new_a > ALPHA_SNAP_HIGH, 255, new_a).astype(np.uint8)
-    recon[kill] = 0
-    new_a[kill] = 0
-    return recon, new_a
-
-
-def ref_hue(rgb) -> float:
-    """Hue in degrees of one RGB colour."""
-    h, _s, _v = hsv(np.array(rgb, dtype=np.uint8).reshape(1, 1, 3))
-    return float(h[0, 0])
-
-
-def spill_map(arr: np.ndarray, refs) -> np.ndarray:
-    """Bright plate (Euclidean to key or a reference) or dark plate-hued rim (invert-to-green excess / hue of the
-    key and of every reference: a plate drifts toward red or violet, so one fixed hue misses it)."""
-    rgb = arr[:, :, :3]
-    d = rgb_dist(rgb, [KEY_RGB, *refs])
-    inv = 255 - rgb.astype(np.int16)
-    excess = inv[:, :, 1] - np.maximum(inv[:, :, 0], inv[:, :, 2])
-    h, s, v = hsv(rgb)
-    near_hue = np.zeros(h.shape, dtype=bool)
-    for r in [KEY_RGB, *refs]:
-        near_hue |= hue_gap(h, ref_hue(r)) <= SPILL_HUE_WIDTH
-    hue_hit = (s >= SPILL_SAT_MIN) & (v >= 0.06) & near_hue
-    return (d <= WAND_DIST) | (excess >= SPILL_GREEN_EXCESS) | hue_hit
-
-
-def eat_spill(arr: np.ndarray, refs) -> np.ndarray:
-    """Walk inward from clear pixels through dark magenta / inverted-green spill (in place)."""
-    h, w = arr.shape[:2]
-    steps = max(3, min(10, min(w, h) // 80))
-    for _ in range(steps):
-        rgb = arr[:, :, :3]
-        a = arr[:, :, 3]
-        clear = a == 0
-        hits = spill_map(arr, refs) & ~clear & dilate(clear, 1)
-        if not hits.any():
-            break
-        d = rgb_dist(rgb, [KEY_RGB, *refs])
-        inv = 255 - rgb.astype(np.int16)
-        excess = inv[:, :, 1] - np.maximum(inv[:, :, 0], inv[:, :, 2])
-        hard = hits & ((d <= TIGHT_DIST) | (excess >= SPILL_GREEN_EXCESS + 12))
-        soft = hits & ~hard
-        arr[hard] = 0
-        if soft.any():
-            recon, na = c2a(255 - rgb, a, (0, 255, 0))
-            recon = 255 - recon
-            still = spill_map(np.dstack((recon, na)), refs)
-            drop = soft & ((na == 0) | still)
-            keep = soft & ~drop
-            arr[drop] = 0
-            arr[keep, :3] = recon[keep]
-            arr[keep, 3] = na[keep]
-    return arr
 
 
 def looks_like_plate(rgb) -> bool:
@@ -343,7 +290,7 @@ def strip_rim(arr: np.ndarray, hue_width: float = RIM_HUE_WIDTH, passes: int = 1
         spill = np.maximum(0, np.minimum(r, b) - g)
         h, s, v = hsv(rgb)
         near = hue_gap(h, 300.0) <= width
-        lip = rim & near & (v >= 0.12) & (spill >= RIM_SPILL_MIN) & ((s >= 0.08) | (spill >= 18))
+        lip = rim & near & (v >= 0.45) & (spill >= RIM_SPILL_MIN) & ((s >= 0.08) | (spill >= 18))
         bright = rim & (hue_gap(h, PLATE_HUE) <= 30.0) & (s >= 0.55) & (v >= 0.55)
         hit = lip | bright
         if not hit.any():
@@ -352,32 +299,12 @@ def strip_rim(arr: np.ndarray, hue_width: float = RIM_HUE_WIDTH, passes: int = 1
     return arr
 
 
-def punch(im: Image.Image, spill_flood: bool = False) -> Image.Image:
-    """Remap a chroma plate to exact #FF00FF, then key it and strip the pink lip."""
-    remapped, _vis, _info = remap_plate(im)
-    return key_to_alpha(remapped, spill_flood=spill_flood)
+def key_to_alpha(im: Image.Image, plate=None) -> Image.Image:
+    """Key an opaque magenta-plate picture with the staged keyer (imglib.matte). `plate` pins the plate RGB."""
+    from . import matte
+    return matte.key(im, plate=plate)[0]
 
 
-def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL, refs=None) -> Image.Image:
-    """Outside wand deletes the plate; spill walk + invert-C2A eat the pink lip; binary matte.
-
-    `refs` pins the plate colours (e.g. to clean the rim of an already keyed picture: transparent pixels count as
-    plate). Stills with a chroma plate keep spill_flood on. Video extracts should plate-remap first, then pass
-    spill_flood=False so compressed maroon / hair is not treated as plate.
-    """
-    arr = np.array(im.convert("RGBA"), dtype=np.uint8, copy=True)
-    rgb = arr[:, :, :3].copy()
-    refs = list(refs) if refs else background_refs(rgb, hue=PLATE_HUE, hue_tol=45.0)
-    near = rgb_dist(rgb, [KEY_RGB, *refs])
-    extra = (near <= WAND_DIST) | (arr[:, :, 3] == 0)
-    if spill_flood:
-        extra |= spill_map(arr, refs)
-    mask, refs, d = plate_mask(rgb, refs=refs, alpha=arr[:, :, 3], tol=tol, extra=extra)
-    mask |= near <= TIGHT_DIST
-    arr[mask] = 0
-    arr = eat_spill(arr, refs)
-    keep = arr[:, :, 3] >= MATTE_CUT
-    arr[~keep] = 0
-    arr[keep, 3] = 255
-    arr = strip_rim(arr)
-    return Image.fromarray(arr, "RGBA")
+def punch(im: Image.Image) -> Image.Image:
+    """Same as key_to_alpha (kept for the pack tools)."""
+    return key_to_alpha(im)

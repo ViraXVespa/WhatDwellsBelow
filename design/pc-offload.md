@@ -19,7 +19,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 5. ASCII hyphens only in tool output and PowerShell double-quoted strings (no em dashes).
 6. Housekeeping: every run writes its own stamped summary and `index.txt` (newest first, last 20 kept; `tools.md` rule 4). Raw Godot `*.log` under `_logs/` are disposable: `tools/clean_agent_logs.py` (or the smoke runner drops orphan phase logs).
 7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `python tools/doc_patch.py write FILE` (or `--b64` in a single-quoted string), then run the file. A double-quoted pipe or `python -c` is a failed lookup, not a fallback.
-8. **Ephemeral agent Python:** put throwaway scripts under `_logs/agent-py/` and run them with `python tools/run_agent_py.py --script _logs/agent-py/....`. That runner deletes the script after exit by default. Do not `--cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths - they are not cleaned up.
+8. **Ephemeral agent Python:** a script you will not run again may live under `_logs/agent-py/` and run with `python tools/run_agent_py.py --script _logs/agent-py/....`. That runner deletes the script after exit by default. `--keep-script` still leaves it gitignored, so the next session cannot see it. A script this session or the next one will run again is a file under `tools/` with a catalog row (`tools.md` rule 7). Do not `--cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths.
 9. **New runner:** (catalog rule 5) if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-measure files, stop. Use a catalog row when one exists. If none exists, write the runner yourself when it would help future tasks (name, command, summary, what tokens it saves) and tell the User afterward.
 10. **Tree search / git / one-liners:** built-in grep is only for a file already in this slice's edit set. Repo search is `list_xref.py`. Git inventory is `list_changed.py` (optional `--head`); do not paste porcelain or `git log` into the thread. No `python -c`.
 11. **Cursor skills:** `.cursor/skills/` is a symlink to `.grok/skills/`.
@@ -29,6 +29,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 - Skill + catalog intercept before opening many untouched siblings. Tool choice: `design/tools.md` (Run when). Do not open `design/code-map.md` or a list of task files for row/task jobs; use the catalog tools (`task.py list`).
 - While editing: prefer `file_stat.py` and Length summaries over reading untouched siblings.
 - After a slice that touched `.gd`: `run_build_gate.py` unless the User says skip.
+- After an edit of a design doc, the agents file, or `BOT.md`: `check_load_graph.py`. RESULT PASS is required before the change is reported done. It is not deferred to ship.
 - Dedicated PC-offload CLI: see **Dedicated Grok Build session** below. Other Grok Build roles use this catalog; they do not rewrite those habits.
 
 ## Dedicated catalog session

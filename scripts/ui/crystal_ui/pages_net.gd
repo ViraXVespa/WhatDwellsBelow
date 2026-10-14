@@ -61,12 +61,10 @@ static func cycle_net(host, dir: int) -> void:
 		go_local(host)
 
 static func page_root(host) -> void:
-	Util.panel(host, Vector2(520, 220), Vector2(880, 620))
-	var box := VBoxContainer.new()
-	box.position = Vector2(552, 252)
-	box.size = Vector2(816, 556)
-	box.add_theme_constant_override("separation", 10)
-	host.add_child(box)
+	var face: Rect2 = Util.crystal_panel(host)
+	var box: VBoxContainer = Util.column(host, Rect2(face.position.x + (face.size.x - 816.0) * 0.5, face.position.y, 816.0, face.size.y), 10)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.custom_minimum_size.y = face.size.y
 	box.add_child(ThemeS.lab(App.tr("pages_net.floor_crystal"), 30, ThemeS.INK))
 	var cl := 1
 	if host.spot:

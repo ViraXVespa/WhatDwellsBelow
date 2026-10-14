@@ -1,5 +1,24 @@
-# Normalize EOL for all files that Git considers text files.
-* text=auto eol=crlf
+# Normalize EOL for all text files (LF in the repo, consistent everywhere)
+* text=auto eol=lf
+
+# Godot text files — force LF
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.cfg text eol=lf
+*.import text eol=lf
+*.uid text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Windows-only scripts (if you have any)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
 
 # Keep Godot / web binaries untouched (Pages wasm/pck, sprites).
 *.wasm binary

@@ -3,6 +3,7 @@
 const ScrollBox := preload("res://scripts/ui/scroll_box.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Journal: GDScript = preload("res://scripts/ui/pause_menu/journal_page.gd")
+const JournalSpread := preload("res://scripts/ui/journal_spread.gd")
 
 static func build(host: CanvasLayer) -> void:
 	host.layer = 55
@@ -19,10 +20,7 @@ static func build(host: CanvasLayer) -> void:
 	panel.position = Vector2(32, 16)
 	panel.size = Vector2(1856, 1048)
 	host.add_child(panel)
-	var page: Control = Journal.new()
-	page.name = "journal_page"
-	host.add_child(page)
-	Journal.place(page, panel.position, panel.size)
+	JournalSpread.add(host, panel.position, panel.size)
 	var edge: ColorRect = ColorRect.new()
 	edge.name = "menu_edge"
 	edge.visible = false

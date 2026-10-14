@@ -37,11 +37,11 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 		if subtitle != "":
 			ui.box.add_child(ThemeS.lab(subtitle, 16, ThemeS.INK_SOFT))
 		ui.box.add_child(ui.status)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	if not journal:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 16)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		ui.box.add_child(row)
 		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["weapon", "potion"], true))
 		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, Array(Affix.ARMOR_SLOTS), false))

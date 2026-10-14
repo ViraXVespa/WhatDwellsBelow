@@ -15,4 +15,4 @@ Stop using a framed medallion as the only dungeon albedo. Sheets: grass field, p
 
 Unshaded StandardMaterial3D on those surfaces goes away. Invented variant counts and UV scales go in tunables and debug.
 
-Live: `scripts/graphics/ground_shader.gd` samples `scripts/graphics/light_rt.gd` (world xz). Sheets: `assets/tiles/grass_field.png`, `packed_dirt.png`, `dungeon_floor.png`. The yard path keeps `plaza_path.png` on that same shader. Wall faces stay on the volume job.
+Live: `scripts/graphics/ground_shader.gd` samples `scripts/graphics/light_rt.gd` (world xz). Sheets: `assets/tiles/grass_field.png`, `packed_dirt.png`, `dungeon_floor.png`. The yard path keeps `plaza_path.png` on that same shader. Tile sheets import Lossless with mipmaps and Detect 3D off (VRAM compression put block grain on the pixel art); ground, wall and wrap shaders sample `filter_nearest_mipmap` without `fract`, so close zoom stays crisp and zoom 1.0 does not alias. Wall faces stay on the volume job.

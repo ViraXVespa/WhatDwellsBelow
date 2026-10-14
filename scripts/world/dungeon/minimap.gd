@@ -19,7 +19,23 @@ static func paint_cell(host: Node, x: int, y: int) -> void:
 		return
 	host.map_img.set_pixel(x, y, cell_color(host, x, y))
 
+## Last full reveal: same host, cell, radius and visited buffer means every cell in the disk is already set
+## (visited bits are only ever set; dungeon_boot calls forget() when it makes a new buffer), so the walk is skipped.
+static var _last_host: int = 0
+static var _last_c: Vector2i = Vector2i(-99999, -99999)
+static var _last_rad: int = -1
+
+static func forget() -> void:
+	_last_host = 0
+	_last_rad = -1
+
 static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
+	var hid: int = host.get_instance_id()
+	if hid == _last_host and c == _last_c and rad == _last_rad:
+		return false
+	_last_host = hid
+	_last_c = c
+	_last_rad = rad
 	var w: int = host.data.w
 	var h: int = host.data.h
 	var r2 := rad * rad

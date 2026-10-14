@@ -16,6 +16,9 @@ Web / chat may generate non-tile images. It does not spawn the isolated media ru
 
 If the next write would be an assumption, ask, as many questions as needed, and wait (not a phase change); do not answer it yourself.
 
+If a request needs multiple turns to investigate fully, say so instead of assuming.
+
+
 ## Flows
 
 After Phase 1, default to **brainstorm**. Directed-goal is opt-in.
@@ -29,6 +32,7 @@ Naming a goal is memory, not a mode switch. Several goals may sit in memory. Dir
 | parked | User names a parked task | `design/tasks/README.md` (owner web) |
 | perf | User drops hitch / load-timing output | measure first; one hitch class per emit |
 | build-week | User names it | process recommendations; gather first |
+| sweep | User names it and a goal | three-section report; Findings as soon as a body shows a player-visible defect; body-read as many remaining checklist items as the turn allows; request another turn only when no further files can be opened this turn |
 
 Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path unless the User named that path.
 
@@ -37,6 +41,12 @@ Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path 
 When the User is present: picture-read is uncapped inside `design/` and the live tree the thread is on. Load-graph, topic index and extra code-map rows are allowed on a docs or routing pass.
 Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
 Inspect the live tree from **one system row** in `design/code-map.md` when editing live files.
+
+## GitHub Read Notes
+
+- Browse-page summaries are frequently truncated and can end on a clean-looking but incomplete thought. Always read the full file from the session artifact saved under `/home/workdir/artifacts/browsed_files/` when the body matters. Use the summary only as an index of what the file contains so you know which artifact to open.
+- A raw URL or open_page result for a path is not proof the file still exists on the branch. Before treating a fetched body as current (especially any path that might have been moved into `notes/` or deleted), confirm the path appears in the branch tree or the contents API. If the tree does not list it, discard the body.
+- Branch-tip raw URLs (`raw.githubusercontent.com/.../<branch>/...`) are CDN-cached for roughly five minutes. After a push, a fetch can still return the previous blob. When the session must see the latest commit (protocol edits, post-push verification, or any body-read that must not be stale), first obtain the current SHA for the branch (GitHub API or the commits page), then fetch with that SHA in the URL instead of the branch name. SHA URLs are immutable and bypass the branch-tip cache.
 
 ## Phases
 
@@ -75,3 +85,4 @@ Session end (any phase): the task offer in `web-discuss.md` (End of session).
 - Do not emit `_logs/`, `scripts/data/changelog.json`, or a hand-edit of `scripts/data/version.json`.
 - Do not write the label into `design/versioning.md`.
 - Do not start a second emit pass until Phase 3 runs again.
+- Do not add changelog files when working out of a grok-build branch unless the User named changelog as the specific goal of the session.

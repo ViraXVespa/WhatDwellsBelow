@@ -1,0 +1,88 @@
+{
+  "name": "dungeon-gate-popups",
+  "about": "Dungeon: stocked extract kit, open the extraction gate, show the item tooltip (move focus onto a slot) and the slot picker (A), shoot each, back out with B. Checks gate popups wear the gate's crystal skin. The world animates behind (bat, torches): mask/tol as dungeon-gate-shop.",
+  "scene": "dungeon",
+  "seed": 1,
+  "mask": [
+    [
+      1040,
+      20,
+      260,
+      100
+    ]
+  ],
+  "tol": 3,
+  "floor": 1,
+  "settle_ms": 1500,
+  "covers": [
+    "ui:extract"
+  ],
+  "smoke": false,
+  "steps": [
+    {
+      "op": "device",
+      "kind": "pad"
+    },
+    {
+      "op": "call",
+      "target": "App.prog",
+      "method": "stock_extract_shot",
+      "args": []
+    },
+    {
+      "op": "interact",
+      "kind": "extract_gate",
+      "near": true
+    },
+    {
+      "op": "assert",
+      "target": "host.ui.mode",
+      "equals": "extract"
+    },
+    {
+      "op": "press",
+      "pad": "DOWN"
+    },
+    {
+      "op": "wait",
+      "ms": 150
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "gate-tip"
+    },
+    {
+      "op": "press",
+      "pad": "A"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "gate-pick"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "assert",
+      "target": "App.ui_open",
+      "equals": false
+    }
+  ]
+}

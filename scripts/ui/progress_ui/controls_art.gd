@@ -13,11 +13,14 @@ const BOARD_RIM: Color = Color(0.16, 0.13, 0.10, 1)
 const IRON: Color = Color(0.24, 0.22, 0.20, 1)
 const IRON_LIT: Color = Color(0.46, 0.43, 0.38, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "controls"
 static var _images: Dictionary = {}
 
 static func grain(horizontal: bool) -> Texture2D:
 	var key: String = "grain-h" if horizontal else "grain-v"
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var w: int = 64 if horizontal else 16
 	var h: int = 16 if horizontal else 64
@@ -42,7 +45,7 @@ static func grain(horizontal: bool) -> Texture2D:
 	return UiBuild.keep(_images, key, img)
 
 static func face() -> Texture2D:
-	if _images.has("face"):
+	if ArtBake.hit(_images, ART, "face"):
 		return _images["face"]
 	var w: int = 32
 	var h: int = 32
@@ -58,7 +61,7 @@ static func face() -> Texture2D:
 	return UiBuild.keep(_images, "face", img)
 
 static func post() -> Texture2D:
-	if _images.has("post"):
+	if ArtBake.hit(_images, ART, "post"):
 		return _images["post"]
 	var w: int = 16
 	var h: int = 48
@@ -82,7 +85,7 @@ static func post() -> Texture2D:
 
 ## Top-left iron corner. The frame flips it for the other three corners.
 static func bracket() -> Texture2D:
-	if _images.has("bracket"):
+	if ArtBake.hit(_images, ART, "bracket"):
 		return _images["bracket"]
 	var s: int = 32
 	var arm: int = 11
@@ -105,7 +108,7 @@ static func bracket() -> Texture2D:
 
 static func plank(lift: float, foot: int) -> Texture2D:
 	var key: String = "plank-%d-%d" % [int(round(lift * 100.0)), foot]
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var w: int = 96
 	var h: int = 24

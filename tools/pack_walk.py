@@ -11,7 +11,6 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 from imglib import geom, imgio  # noqa: E402
 
@@ -64,8 +63,7 @@ def extract(src: Path, dest_dir: Path, fps: int = 8) -> list[Path]:
 
 
 def fit(im: Image.Image, canvas: int = CANVAS) -> Image.Image:
-    remapped, _vis, _info = pr.remap(im.convert("RGBA"))
-    keyed = sp.key_to_alpha(remapped, spill_flood=False)
+    keyed = sp.key_to_alpha(im.convert("RGBA"))
     return sp.fit_canvas(geom.shrink(keyed, KEYED_CAP), canvas, key=False)
 
 

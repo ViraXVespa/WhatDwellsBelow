@@ -1,5 +1,6 @@
 ﻿extends Object
 
+const SepGrid := preload("res://scripts/combat/enemy/sep_grid.gd")
 const Combat := preload("res://scripts/combat/combat.gd")
 const Atk := preload("res://scripts/combat/enemy/enemy_atk.gd")
 
@@ -159,7 +160,10 @@ static func sep(host: Node) -> Vector3:
 	var lim: float = App.bal.enemy_sep
 	var cap: int = maxi(1, int(App.bal.sep_max))
 	var n: int = 0
-	for e: Variant in Combat.enemies():
+	var idx: PackedInt32Array = SepGrid.near((host as Node3D).global_position, lim)
+	var list: Array = SepGrid.near_list()
+	for i in idx:
+		var e: Variant = list[i]
 		if e == host or e == null or not is_instance_valid(e):
 			continue
 		var d: Vector3 = host.global_position - (e as Node3D).global_position

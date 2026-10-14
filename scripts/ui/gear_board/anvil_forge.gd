@@ -80,9 +80,10 @@ static func _keep(ui: CanvasLayer, ctl: Control) -> Control:
 		return ctl
 	var tree := ui.get_tree()
 	if tree:
-		var keep: Control = ctl
+		var held: WeakRef = weakref(ctl)
 		tree.process_frame.connect(func():
-			if is_instance_valid(keep) and keep.is_inside_tree() and keep.focus_mode != Control.FOCUS_NONE:
+			var keep: Control = held.get_ref() as Control
+			if keep != null and keep.is_inside_tree() and keep.focus_mode != Control.FOCUS_NONE:
 				keep.grab_focus()
 		, CONNECT_ONE_SHOT)
 	return ctl

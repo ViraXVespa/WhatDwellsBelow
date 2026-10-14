@@ -37,15 +37,9 @@ static func apply_stagger(host: CharacterBody3D, sec: float) -> void:
 		host.stagger = maxf(host.stagger, sec)
 
 static func float_num(host: CharacterBody3D, amount: int, crit: bool) -> void:
-	var n: Label3D = FloatS.new()
-	n.setup(amount, crit, host.last_glance and not crit)
+	var glance: bool = host.last_glance and not crit
 	host.last_glance = false
-	n.position = host.global_position + Vector3(0.0, host.size_u * 0.7, 0.0)
-	var parent := host.get_parent()
-	if parent:
-		parent.add_child(n)
-	else:
-		host.add_child(n)
+	FloatS.spawn(host, amount, crit, glance, host.size_u * 0.7)
 
 static func die(host: CharacterBody3D) -> void:
 	if host.dead:
@@ -71,13 +65,12 @@ static func drop_loot(host: CharacterBody3D) -> void:
 	var parent := host.get_parent()
 	if parent == null:
 		return
-	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
-	if host.is_boss:
-		gold_n += int(App.bal.boss_gold_extra)
+	var gold_n := gold_amount(host.is_boss)
 	var PickupS := load("res://scripts/world/pickup.gd")
-	var g: Node3D = PickupS.new()
-	parent.add_child(g)
-	g.setup("gold", host.global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
+	for k: String in roll_drops(host.is_boss):
+		var g: Node3D = PickupS.new()
+		parent.add_child(g)
+		g.setup(k, host.global_position + Vector3(randf_range(-0.3, 0.3), 0.0, randf_range(-0.3, 0.3)), gold_n if k == "gold" else 0)
 	if host.is_boss:
 		return
 	if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
@@ -90,6 +83,25 @@ static func drop_loot(host: CharacterBody3D) -> void:
 		else:
 			App.toast(str(item.name))
 			App.sfx("pickup")
+
+## Coins in one gold drop. Normal kills scale the old roll by 1 / enemy_gold_chance so expected gold per kill matches
+## the old always-drop; bosses (always drop) keep the old roll plus boss_gold_extra.
+static func gold_amount(boss: bool) -> int:
+	var n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
+	if boss:
+		return n + int(App.bal.boss_gold_extra)
+	return maxi(1, roundi(float(n) / maxf(0.01, App.bal.enemy_gold_chance)))
+
+## Walk-over pickups for one kill: "gold" / "hp" / "mana", each its own roll (any mix, or nothing).
+static func roll_drops(boss: bool) -> PackedStringArray:
+	var out := PackedStringArray()
+	if boss or randf() < App.bal.enemy_gold_chance:
+		out.append("gold")
+	if randf() < App.bal.enemy_orb_chance:
+		out.append("hp")
+	if randf() < App.bal.enemy_mana_chance:
+		out.append("mana")
+	return out
 
 static func mark_post(host: CharacterBody3D) -> void:
 	host.post = host.global_position

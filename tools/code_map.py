@@ -138,10 +138,67 @@ def cmd_patch(root: Path, args) -> int:
                renamed=renamed, skipped=skipped, failed=failed, dry_run=args.dry_run)
 
 
+
+def cmd_sweep(root: Path, args) -> int:
+    path = root / "design" / "code-map.md"
+    lines = _head("sweep", f"system={args.system or '*'}")
+    if not path.is_file():
+        return agent_log.finish("code-map-sweep", root, "\n".join(lines), "FAIL", args=args, error="missing-code-map")
+    rows = cm.parse_rows(md.read_text(path))
+    targets = [r for r in rows if not args.system or cm.find_system([r], args.system)]
+    if args.system and not targets:
+        lines.append("systems=" + ", ".join(cm.system_choices(rows, args.system)))
+        return agent_log.finish("code-map-sweep", root, "\n".join(lines), "FAIL", args=args, error="unknown-system")
+    missing_total = 0
+    for r in targets:
+        lines.append(f"system={r.system}")
+        resolved = []
+        last_dir = ""
+        for raw in cm.TICK_RE.findall(r.live):
+            token = cm.posix(raw.strip())
+            if not token:
+                continue
+            if "/" in token:
+                last_dir = token.rsplit("/", 1)[0]
+                resolved.append(token)
+            elif last_dir:
+                resolved.append(f"{last_dir}/{token}")
+        # unique preserve order
+        seen = set()
+        uniq = []
+        for p in resolved:
+            if p not in seen:
+                seen.add(p)
+                uniq.append(p)
+        for p in uniq:
+            exists = (root / p).is_file()
+            lines.append(f"  path={p} exists={'yes' if exists else 'NO'}")
+            if not exists:
+                missing_total += 1
+        # cluster helpers via list_facade_cluster style
+        for p in uniq:
+            if p.endswith(".gd"):
+                stem = Path(p).stem
+                folder = root / Path(p).parent / stem
+                if folder.is_dir():
+                    for h in sorted(folder.glob("*.gd")):
+                        rel = h.relative_to(root).as_posix()
+                        lines.append(f"  cluster={rel}")
+        design = root / "design" / f"{r.system.lower().replace(' ', '-')}.md"
+        if design.is_file():
+            lines.append(f"  design={design.relative_to(root).as_posix()}")
+        lines.append("")
+    status = "FAIL" if missing_total else "PASS"
+    echo = f"systems={len(targets)} missing={missing_total}"
+    return agent_log.finish("code-map-sweep", root, "\n".join(lines), status, args=args, echo=echo, missing=missing_total)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check, query, or patch design/code-map.md.", writes=True, json_out=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check", help="Diff live .gd files against code-map ticks.")
+    s = sub.add_parser("sweep", help="Print coverage checklist for one system or all.")
+    s.add_argument("--system", default="", help="System row name (exact or unique prefix); empty = all")
     s = sub.add_parser("row", help="Print the system row matching a path.")
     s.add_argument("path_pos", nargs="?", default="", metavar="PATH", help="Live script or scene path (same as --path)")
     s.add_argument("--path", default="", help="Live script or scene path")
@@ -151,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--remove", action="append", default=[], help="Live path to remove (repeatable)")
     s.add_argument("--rename", action="append", default=[], help="old=new (repeatable)")
     # accept the shared flags after the subcommand too (old tools took --root last)
-    for name in ("check", "row", "patch"):
+    for name in ("check", "row", "patch", "sweep"):
         sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
         sub.choices[name].add_argument("--json", dest="json_sub", action="store_true", help="Print one JSON object instead of text.")
     sub.choices["patch"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
@@ -164,7 +221,7 @@ def main(argv: list[str] | None = None) -> int:
     args.json = args.json or getattr(args, "json_sub", False)
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)
     root = agent_log.resolve_root(args)
-    return {"check": cmd_check, "row": cmd_row, "patch": cmd_patch}[args.cmd](root, args)
+    return {"check": cmd_check, "row": cmd_row, "patch": cmd_patch, "sweep": cmd_sweep}[args.cmd](root, args)
 
 
 if __name__ == "__main__":

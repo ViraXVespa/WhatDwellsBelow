@@ -87,6 +87,7 @@ No lingering corpses required.
 
 - XP and gold amounts scale with floor and role.
 - Gear drop chance and rarity (white / green / blue) are tunable.
+- Walk-over pickups (gold coins, HP orb, mana orb) each roll their own chance per kill, so a kill can drop nothing (`enemy_hit.gd` `roll_drops`, tunables.md Enemy drops). Bosses always drop gold. `scripts/debug/drop_stage.gd` stages them (flow `dungeon-pickups`) and the P3 smoke prints a 1000-kill `drop_sim`.
 - Floor Guardians and Gate Master always drop the special chest (guaranteed equipment that may include blue rarity + one Artifact) in addition to normal drops.
 
 ## Live snapshot — roster (`roster.gd`)

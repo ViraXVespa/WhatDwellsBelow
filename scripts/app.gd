@@ -47,6 +47,7 @@ var display_fs_kind: String = Def.display_fs_kind
 var web_fullscreen: bool = Def.web_fullscreen
 var render_scale: float = Def.render_scale
 var target_lock_pref: bool = Def.target_lock_pref
+var danger_gem: bool = Def.danger_gem
 var salvage_dupes: bool = Def.salvage_dupes
 var salvage_finish: float = Def.salvage_finish
 var salvage_fortune: float = Def.salvage_fortune
@@ -168,6 +169,11 @@ func _pump_enter_async() -> void:
 		return
 	set("_enter_pumped", true)
 	await AppFlow.pump_fps(self, false)
+	var scene: Node = get_tree().current_scene
+	if scene != null and scene.get("data") != null:
+		(load("res://scripts/graphics/light_rt.gd") as GDScript).finish_plan(scene)
+		await get_tree().process_frame
+		await get_tree().process_frame
 	if present and present.has_method("release_enter"):
 		present.release_enter()
 

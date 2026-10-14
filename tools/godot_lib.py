@@ -30,7 +30,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 COMPILE_RE = re.compile(r"Parse Error|Compile Error|Failed to compile|Failed to load script")
-HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed")
+HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|Lambda capture at index")
 
 
 class GodotBusy(RuntimeError):
@@ -248,6 +248,19 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
             "display": (dkind if gui else "n/a")}
 
 
+def modified_imports(root: Path) -> list[str]:
+    """Tracked `*.import` files modified in the working tree."""
+    out = subprocess.run(["git", "ls-files", "-m", "-z", "--", "*.import"], cwd=root, capture_output=True).stdout
+    return [p for p in out.decode("utf-8", "replace").split("\0") if p]
+
+
+def restore_imports(root: Path, paths: list[str]) -> None:
+    """git checkout these tracked sidecars (paths on stdin)."""
+    if paths:
+        subprocess.run(["git", "checkout", "--pathspec-from-file=-", "--pathspec-file-nul"], cwd=root,
+                       input="\0".join(paths).encode("utf-8") + b"\0", capture_output=True)
+
+
 def restore_import_churn(root: Path) -> tuple[int, int]:
     """Undo what a Godot import writes into tracked sidecars: restore every modified tracked `*.import` (assets/, docs/, icon.svg.import)
     and delete untracked `*.import` whose source file is tracked. Paths go to git on stdin, so the Windows command-line length never applies.
@@ -294,7 +307,7 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
     print(running)
     r = run_godot(root, root, headless_args(root, flag, *(extra or [])), out_log, err_log, args.timeout_sec)
     loads = grep_logs([err_log, out_log], r"^LOAD:")
-    errs = grep_logs([err_log, out_log], r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to")
+    errs = grep_logs([err_log, out_log], r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to|Lambda capture at index")
     total, has_ok = "", False
     for h in loads:
         m = re.search(r"total_ms=(\d+)", h)

@@ -1,372 +1,412 @@
 {
  "flows": {
   "camp-idle": {
-   "load_ms": 2582,
-   "wall_ms": 2587,
-   "wasm_dl_ms": 301,
-   "wasm_compile_ms": 346,
-   "pck_end_ms": 670,
-   "init_ms": 1839,
-   "frames": 98,
-   "avg_fps": 20.7,
-   "avg_frame_ms": 48.3,
-   "p95_frame_ms": 66.7,
-   "max_frame_ms": 66.8,
-   "long_frames": 20,
-   "heap_mb": 77.9,
-   "wasm_mem_mb": 79.8,
-   "dom_nodes": 93,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 2686.5,
+   "wall_ms": 2691.0,
+   "wasm_dl_ms": 239.5,
+   "wasm_compile_ms": 287.0,
+   "pck_end_ms": 773.5,
+   "init_ms": 1913.0,
+   "frames": 111.0,
+   "avg_fps": 23.8,
+   "avg_frame_ms": 42.2,
+   "p95_frame_ms": 53.65,
+   "max_frame_ms": 73.25,
+   "long_frames": 19.5,
+   "shot_excluded": 2.0,
+   "heap_mb": 103.45,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
-     "frames": 364,
-     "avg_fps": 21.7,
-     "avg_frame_ms": 46.1,
-     "p95_frame_ms": 66.7,
-     "max_frame_ms": 1766.7,
-     "long_frames": 27
+     "frames": 412,
+     "avg_fps": 24.1,
+     "avg_frame_ms": 41.5,
+     "p95_frame_ms": 53.7,
+     "max_frame_ms": 1870.9,
+     "long_frames": 26,
+     "shot_excluded": 1
     },
     "idle": {
-     "frames": 99,
-     "avg_fps": 21.1,
-     "avg_frame_ms": 47.3,
-     "p95_frame_ms": 50.1,
-     "max_frame_ms": 83.3,
-     "long_frames": 15
+     "frames": 116,
+     "avg_fps": 25.2,
+     "avg_frame_ms": 39.7,
+     "p95_frame_ms": 53,
+     "max_frame_ms": 62.7,
+     "long_frames": 18,
+     "shot_excluded": 2
     }
    },
    "marks": {
-    "camp_load_ms": 5200
+    "camp_load_ms": 4810
    },
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {},
    "play": {},
    "shots": {
-    "title": 55.7,
-    "camp": 115.9,
-    "camp-idle": 115.9
+    "title": -1.0,
+    "camp": -1.0,
+    "camp-idle": -1.0
    },
    "invalid": [],
-   "runs": 3
+   "runs": 2
   },
   "camp-pause": {
-   "load_ms": 2616,
-   "wall_ms": 2620,
-   "wasm_dl_ms": 265,
-   "wasm_compile_ms": 305,
-   "pck_end_ms": 774,
-   "init_ms": 1842,
-   "frames": 93,
-   "avg_fps": 17.4,
-   "avg_frame_ms": 57.3,
-   "p95_frame_ms": 66.7,
-   "max_frame_ms": 83.3,
-   "long_frames": 50,
-   "heap_mb": 78.1,
-   "wasm_mem_mb": 79.8,
-   "dom_nodes": 93,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 2629.0,
+   "wall_ms": 2634.0,
+   "wasm_dl_ms": 187.0,
+   "wasm_compile_ms": 299.0,
+   "pck_end_ms": 630.0,
+   "init_ms": 1876.0,
+   "frames": 94.0,
+   "avg_fps": 17.05,
+   "avg_frame_ms": 58.8,
+   "p95_frame_ms": 76.65,
+   "max_frame_ms": 99.95,
+   "long_frames": 76.0,
+   "shot_excluded": 2.0,
+   "heap_mb": 128.9,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
-     "frames": 345,
-     "avg_fps": 20.4,
-     "avg_frame_ms": 49.1,
-     "p95_frame_ms": 66.7,
-     "max_frame_ms": 1766.5,
-     "long_frames": 32
+     "frames": 410,
+     "avg_fps": 23.6,
+     "avg_frame_ms": 42.4,
+     "p95_frame_ms": 69.4,
+     "max_frame_ms": 1809.2,
+     "long_frames": 41,
+     "shot_excluded": 1
     },
     "pause": {
-     "frames": 93,
-     "avg_fps": 17.3,
-     "avg_frame_ms": 57.9,
-     "p95_frame_ms": 66.7,
-     "max_frame_ms": 83.3,
-     "long_frames": 50
+     "frames": 88,
+     "avg_fps": 16.0,
+     "avg_frame_ms": 62.5,
+     "p95_frame_ms": 82.8,
+     "max_frame_ms": 109.5,
+     "long_frames": 79,
+     "shot_excluded": 2
     }
    },
    "marks": {
-    "camp_load_ms": 5221
+    "camp_load_ms": 5193
    },
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {},
    "play": {},
    "shots": {
-    "title": 55.7,
-    "camp": 115.9,
-    "pause": 32.8
+    "title": -1.0,
+    "camp": -1.0,
+    "pause": -1.0
    },
    "invalid": [],
-   "runs": 3
+   "runs": 2
   },
   "camp-shop": {
-   "load_ms": 2551,
-   "wall_ms": 2555,
-   "wasm_dl_ms": 321,
-   "wasm_compile_ms": 366,
-   "pck_end_ms": 716,
-   "init_ms": 1780,
-   "frames": 104,
-   "avg_fps": 18.4,
-   "avg_frame_ms": 54.5,
-   "p95_frame_ms": 66.7,
-   "max_frame_ms": 400,
-   "long_frames": 31,
-   "heap_mb": 77.5,
-   "wasm_mem_mb": 79.8,
-   "dom_nodes": 93,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 2634.0,
+   "wall_ms": 2638.5,
+   "wasm_dl_ms": 204.0,
+   "wasm_compile_ms": 246.5,
+   "pck_end_ms": 742.0,
+   "init_ms": 1892.5,
+   "frames": 128.5,
+   "avg_fps": 24.15,
+   "avg_frame_ms": 41.5,
+   "p95_frame_ms": 54.7,
+   "max_frame_ms": 91.45,
+   "long_frames": 13.5,
+   "shot_excluded": 1.0,
+   "heap_mb": 104.8,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
-     "frames": 444,
-     "avg_fps": 21.3,
-     "avg_frame_ms": 46.8,
-     "p95_frame_ms": 66.7,
-     "max_frame_ms": 1716.5,
-     "long_frames": 43
+     "frames": 503,
+     "avg_fps": 24.9,
+     "avg_frame_ms": 40.1,
+     "p95_frame_ms": 55.3,
+     "max_frame_ms": 1822.3,
+     "long_frames": 44,
+     "shot_excluded": 2
     },
     "shop": {
-     "frames": 104,
-     "avg_fps": 18.4,
-     "avg_frame_ms": 54.5,
-     "p95_frame_ms": 66.7,
-     "max_frame_ms": 400,
-     "long_frames": 31
+     "frames": 129,
+     "avg_fps": 24.2,
+     "avg_frame_ms": 41.4,
+     "p95_frame_ms": 54.9,
+     "max_frame_ms": 76.4,
+     "long_frames": 14,
+     "shot_excluded": 1
     }
    },
    "marks": {
-    "camp_load_ms": 5438
+    "camp_load_ms": 4733
    },
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {},
    "play": {},
    "shots": {
-    "title": 55.7,
-    "camp": 115.9,
-    "shop": 35.8
+    "title": -1.0,
+    "camp": -1.0,
+    "shop": -1.0
    },
    "invalid": [],
-   "runs": 3
+   "runs": 2
   },
   "camp-walk": {
-   "load_ms": 2672,
-   "wall_ms": 2677,
-   "wasm_dl_ms": 250,
-   "wasm_compile_ms": 310,
-   "pck_end_ms": 777,
-   "init_ms": 1859,
-   "frames": 334,
-   "avg_fps": 25.8,
-   "avg_frame_ms": 38.7,
-   "p95_frame_ms": 50.1,
-   "max_frame_ms": 66.7,
-   "long_frames": 25,
-   "heap_mb": 136.3,
-   "wasm_mem_mb": 79.8,
-   "dom_nodes": 93,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 2616.5,
+   "wall_ms": 2621.0,
+   "wasm_dl_ms": 228.0,
+   "wasm_compile_ms": 270.5,
+   "pck_end_ms": 748.0,
+   "init_ms": 1868.5,
+   "frames": 397.5,
+   "avg_fps": 31.0,
+   "avg_frame_ms": 32.25,
+   "p95_frame_ms": 51.25,
+   "max_frame_ms": 99.95,
+   "long_frames": 24.0,
+   "shot_excluded": 2.0,
+   "heap_mb": 103.55,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
-     "frames": 366,
-     "avg_fps": 21.4,
-     "avg_frame_ms": 46.8,
-     "p95_frame_ms": 66.7,
-     "max_frame_ms": 1816.6,
-     "long_frames": 26
+     "frames": 465,
+     "avg_fps": 28.8,
+     "avg_frame_ms": 34.7,
+     "p95_frame_ms": 48.7,
+     "max_frame_ms": 1816.4,
+     "long_frames": 22,
+     "shot_excluded": 1
     },
     "walk": {
-     "frames": 333,
-     "avg_fps": 25.7,
-     "avg_frame_ms": 38.9,
-     "p95_frame_ms": 50.1,
-     "max_frame_ms": 66.7,
-     "long_frames": 26
+     "frames": 390,
+     "avg_fps": 30.4,
+     "avg_frame_ms": 32.9,
+     "p95_frame_ms": 50.7,
+     "max_frame_ms": 106.4,
+     "long_frames": 23,
+     "shot_excluded": 2
     }
    },
    "marks": {
-    "camp_load_ms": 5312
+    "camp_load_ms": 4370
    },
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {},
    "play": {},
    "shots": {
-    "title": 55.7,
-    "camp-start": 115.9,
-    "camp-end": 115.9
+    "title": -1.0,
+    "camp-start": -1.0,
+    "camp-end": -1.0
    },
    "invalid": [],
-   "runs": 3
+   "runs": 2
   },
   "dungeon-fight": {
-   "load_ms": 2677,
-   "wall_ms": 2683,
-   "wasm_dl_ms": 277,
-   "wasm_compile_ms": 336,
-   "pck_end_ms": 829,
-   "init_ms": 1824,
-   "frames": 895,
-   "avg_fps": 31.0,
-   "avg_frame_ms": 32.2,
-   "p95_frame_ms": 50,
-   "max_frame_ms": 150,
-   "long_frames": 21,
-   "heap_mb": 278.2,
-   "wasm_mem_mb": 264.1,
-   "dom_nodes": 93,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 2853.0,
+   "wall_ms": 2859.5,
+   "wasm_dl_ms": 438.0,
+   "wasm_compile_ms": 512.0,
+   "pck_end_ms": 892.5,
+   "init_ms": 1907.0,
+   "frames": 1031.5,
+   "avg_fps": 35.0,
+   "avg_frame_ms": 28.65,
+   "p95_frame_ms": 40.8,
+   "max_frame_ms": 105.4,
+   "long_frames": 20.0,
+   "shot_excluded": 0.0,
+   "heap_mb": 122.2,
+   "wasm_mem_mb": 115.0,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.5,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
-     "frames": 378,
-     "avg_fps": 22.3,
-     "avg_frame_ms": 44.8,
-     "p95_frame_ms": 66.8,
-     "max_frame_ms": 1749.9,
-     "long_frames": 29
+     "frames": 471,
+     "avg_fps": 28.8,
+     "avg_frame_ms": 34.7,
+     "p95_frame_ms": 41.2,
+     "max_frame_ms": 1871.7,
+     "long_frames": 16,
+     "shot_excluded": 1
     },
     "_enter": {
-     "frames": 23,
-     "avg_fps": 4.8,
-     "avg_frame_ms": 209.4,
-     "p95_frame_ms": 300.1,
-     "max_frame_ms": 2733.2,
-     "long_frames": 11
+     "frames": 17,
+     "avg_fps": 6.4,
+     "avg_frame_ms": 155.8,
+     "p95_frame_ms": 413.4,
+     "max_frame_ms": 1322.6,
+     "long_frames": 6,
+     "shot_excluded": 1
     },
     "fight": {
-     "frames": 864,
-     "avg_fps": 30.0,
-     "avg_frame_ms": 33.3,
-     "p95_frame_ms": 50,
-     "max_frame_ms": 149.9,
-     "long_frames": 27
+     "frames": 1083,
+     "avg_fps": 36.6,
+     "avg_frame_ms": 27.3,
+     "p95_frame_ms": 35.9,
+     "max_frame_ms": 92.7,
+     "long_frames": 11,
+     "shot_excluded": 0
     },
     "_after": {
-     "frames": 203,
-     "avg_fps": 33.7,
-     "avg_frame_ms": 29.6,
-     "p95_frame_ms": 33.4,
-     "max_frame_ms": 66.7,
-     "long_frames": 1
+     "frames": 225,
+     "avg_fps": 37.6,
+     "avg_frame_ms": 26.6,
+     "p95_frame_ms": 33.9,
+     "max_frame_ms": 51,
+     "long_frames": 1,
+     "shot_excluded": 1
     },
     "_end": {
      "frames": 2,
-     "avg_fps": 30.0,
-     "avg_frame_ms": 33.3,
-     "p95_frame_ms": 33.3,
-     "max_frame_ms": 33.3,
-     "long_frames": 0
+     "avg_fps": 39.4,
+     "avg_frame_ms": 25.4,
+     "p95_frame_ms": 24.5,
+     "max_frame_ms": 26.2,
+     "long_frames": 0,
+     "shot_excluded": 0
     }
    },
    "marks": {
-    "camp_load_ms": 5217,
-    "dungeon_load_ms": 2917
+    "camp_load_ms": 4610,
+    "dungeon_load_ms": 2042
    },
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {},
    "play": {
     "stuck_t": 0,
     "seed": 42,
     "floor": 1,
     "end_cond": "interrupted playtest",
-    "duration": 29.9927333333334,
-    "kills": 7,
-    "dmg_dealt": 409.267447288903,
-    "dmg_taken": 53.0575516794494,
-    "crits": 2,
-    "combat_t": 19.8213454545455,
-    "near_death": 0
+    "duration": 30.1126,
+    "kills": 6,
+    "dmg_dealt": 376.676860368517,
+    "dmg_taken": 52.106786984183,
+    "crits": 1,
+    "combat_t": 24.2461022126022,
+    "near_death": 0,
+    "think_ms": 0.899,
+    "think_max_ms": 6.1,
+    "think_n": 225,
+    "phys_ms": 0.164,
+    "gate_s": 0.133,
+    "gate_over": 0,
+    "unstick_n": 0,
+    "stuck_max": 0,
+    "time_scale": 1
    },
    "shots": {
-    "title": 55.7,
-    "camp": 115.9,
-    "fight": 23.8
+    "title": -1.0,
+    "camp": -1.0,
+    "fight": -1.0
    },
    "invalid": [],
-   "runs": 3,
+   "runs": 2,
    "play_runs": [
     {
      "stuck_t": 0,
      "seed": 42,
      "floor": 1,
      "end_cond": "interrupted playtest",
-     "duration": 29.9875666666668,
-     "kills": 7,
-     "dmg_dealt": 406.408577903562,
-     "dmg_taken": 59.5887069157289,
-     "crits": 2,
-     "combat_t": 20.4537111111111,
-     "near_death": 0
+     "duration": 30.1333333333334,
+     "kills": 4,
+     "dmg_dealt": 377.521680017128,
+     "dmg_taken": 55.0200934225968,
+     "crits": 3,
+     "combat_t": 25.5055333333334,
+     "near_death": 0,
+     "think_ms": 0.947,
+     "think_max_ms": 6.3,
+     "think_n": 225,
+     "phys_ms": 0.175,
+     "gate_s": 0.133,
+     "gate_over": 0,
+     "unstick_n": 0,
+     "stuck_max": 0,
+     "time_scale": 1
     },
     {
      "stuck_t": 0,
      "seed": 42,
      "floor": 1,
      "end_cond": "interrupted playtest",
-     "duration": 29.9927333333334,
-     "kills": 7,
-     "dmg_dealt": 409.267447288903,
-     "dmg_taken": 53.0575516794494,
-     "crits": 2,
-     "combat_t": 19.8213454545455,
-     "near_death": 0
-    },
-    {
-     "stuck_t": 0,
-     "seed": 42,
-     "floor": 1,
-     "end_cond": "interrupted playtest",
-     "duration": 30.0150333333335,
-     "kills": 7,
-     "dmg_dealt": 439.667166761471,
-     "dmg_taken": 53.979260190778,
-     "crits": 2,
-     "combat_t": 18.4156666666667,
-     "near_death": 0
+     "duration": 30.1126,
+     "kills": 6,
+     "dmg_dealt": 376.676860368517,
+     "dmg_taken": 52.106786984183,
+     "crits": 1,
+     "combat_t": 24.2461022126022,
+     "near_death": 0,
+     "think_ms": 0.899,
+     "think_max_ms": 6.1,
+     "think_n": 225,
+     "phys_ms": 0.164,
+     "gate_s": 0.133,
+     "gate_over": 0,
+     "unstick_n": 0,
+     "stuck_max": 0,
+     "time_scale": 1
     }
    ]
   },
   "dungeon-load": {
-   "load_ms": 3812,
-   "wall_ms": 3818,
-   "wasm_dl_ms": 288,
-   "wasm_compile_ms": 366,
-   "pck_end_ms": 725,
-   "init_ms": 3087,
-   "frames": 753,
-   "avg_fps": 51.6,
-   "avg_frame_ms": 19.4,
-   "p95_frame_ms": 16.8,
-   "max_frame_ms": 566.7,
-   "long_frames": 11,
-   "heap_mb": 312.6,
-   "wasm_mem_mb": 261.8,
-   "dom_nodes": 92,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 3203.0,
+   "wall_ms": 3208.0,
+   "wasm_dl_ms": 219.5,
+   "wasm_compile_ms": 277.0,
+   "pck_end_ms": 763.5,
+   "init_ms": 2439.5,
+   "frames": 748.0,
+   "avg_fps": 50.3,
+   "avg_frame_ms": 19.85,
+   "p95_frame_ms": 17.7,
+   "max_frame_ms": 831.05,
+   "long_frames": 10.0,
+   "shot_excluded": 0.0,
+   "heap_mb": 113.65,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 95.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
      "frames": 2,
-     "avg_fps": 0.4,
-     "avg_frame_ms": 2491.6,
-     "p95_frame_ms": 16.7,
-     "max_frame_ms": 4966.5,
-     "long_frames": 1
+     "avg_fps": 0.5,
+     "avg_frame_ms": 1926.2,
+     "p95_frame_ms": 0.5,
+     "max_frame_ms": 3851.9,
+     "long_frames": 1,
+     "shot_excluded": 0
     },
     "load": {
-     "frames": 753,
-     "avg_fps": 51.6,
-     "avg_frame_ms": 19.4,
-     "p95_frame_ms": 16.8,
-     "max_frame_ms": 566.7,
-     "long_frames": 11
+     "frames": 751,
+     "avg_fps": 50.4,
+     "avg_frame_ms": 19.8,
+     "p95_frame_ms": 17.7,
+     "max_frame_ms": 874.1,
+     "long_frames": 9,
+     "shot_excluded": 0
     }
    },
    "marks": {},
@@ -375,407 +415,493 @@
      "hub_ready",
      0,
      0,
-     20,
-     67
+     19,
+     80
     ],
     [
      "dungeon_pack",
-     286,
-     286,
-     20,
-     67
+     348,
+     348,
+     19,
+     80
     ],
     [
      "enter_begin",
-     286,
+     348,
      0,
-     20,
-     67
+     19,
+     80
     ],
     [
      "save",
-     292,
-     6,
-     20,
-     67
+     353,
+     5,
+     19,
+     80
     ],
     [
      "begin_run",
-     292,
+     353,
      0,
-     20,
-     67
+     19,
+     80
     ],
     [
      "go_dungeon",
-     295,
-     4,
-     20,
-     67
-    ],
-    [
-     "music_load",
-     339,
-     44,
-     20,
-     96
+     356,
+     3,
+     19,
+     80
     ],
     [
      "music_play",
-     1273,
-     934,
-     20,
-     262
+     357,
+     1,
+     19,
+     80
     ],
     [
      "dungeon_music",
-     1273,
+     357,
      0,
-     20,
-     262
+     19,
+     80
     ],
     [
      "dungeon_packed",
-     1273,
+     357,
      0,
-     20,
-     262
+     19,
+     80
     ],
     [
      "dungeon_enter",
-     1282,
-     9,
+     365,
+     7,
      15,
-     262
+     80
     ],
     [
      "gen_place",
-     1282,
+     365,
      0,
      15,
-     262
+     80
     ],
     [
      "gen_tree",
-     1290,
-     7,
+     370,
+     5,
      15,
-     262
+     80
     ],
     [
      "gen_loops",
-     1423,
-     113,
+     475,
+     105,
      15,
-     262
+     80
     ],
     [
      "gen_spurs",
-     1426,
-     3,
+     478,
+     2,
      15,
-     262
+     80
     ],
     [
      "gen_kinds",
-     1427,
-     1,
+     478,
+     0,
      15,
-     262
+     80
     ],
     [
      "gen_carve",
-     1498,
-     71,
+     552,
+     74,
      15,
-     262
+     80
     ],
     [
      "gen_outline_up",
-     1498,
+     552,
      0,
      15,
-     262
+     80
     ],
     [
      "gen_outline_jag",
-     1498,
+     552,
      0,
      15,
-     262
+     80
     ],
     [
      "gen_outline_spans",
-     1532,
-     28,
+     576,
+     24,
      15,
-     262
+     80
     ],
     [
      "gen_outline",
-     1532,
+     576,
      0,
      15,
-     262
+     80
     ],
     [
      "gen",
-     1532,
-     0,
+     577,
+     1,
      15,
-     262
+     80
     ],
     [
      "travel",
-     1567,
-     35,
+     609,
+     31,
      15,
-     262
+     80
     ],
     [
      "world",
-     1567,
+     609,
      0,
      15,
-     262
+     80
     ],
     [
      "collision",
-     1568,
+     609,
      0,
      15,
-     262
+     80
     ],
     [
      "visuals",
-     1606,
-     38,
+     647,
+     37,
      23,
-     262
+     96
     ],
     [
      "spawn_player",
-     1635,
-     29,
-     24,
-     262
+     666,
+     19,
+     23,
+     96
     ],
     [
      "spawn_doors",
-     1638,
-     4,
+     669,
+     3,
      24,
-     262
+     96
     ],
     [
      "spawn_stairs",
-     1641,
+     672,
      3,
      24,
-     262
+     96
     ],
     [
      "spawn_crystals",
-     1681,
-     40,
+     708,
+     36,
      24,
-     262
+     96
     ],
     [
      "spawn_jobs",
-     1681,
+     708,
      0,
      24,
-     262
+     96
     ],
     [
      "spawn_boss",
-     1681,
+     709,
      0,
      24,
-     262
+     96
     ],
     [
      "spawn_props",
-     1712,
-     32,
-     25,
-     262
+     739,
+     30,
+     24,
+     96
     ],
     [
      "spawn_ambushes",
-     1713,
+     740,
      0,
-     25,
-     262
+     24,
+     96
     ],
     [
      "spawn_ui",
-     1713,
+     740,
      0,
-     25,
-     262
+     24,
+     96
     ],
     [
      "spawns",
-     1713,
+     740,
      0,
-     25,
-     262
+     24,
+     96
     ],
     [
      "hud",
-     1721,
-     8,
-     25,
-     262
+     747,
+     6,
+     24,
+     96
     ],
     [
      "map",
-     1721,
+     748,
      1,
-     26,
-     262
+     25,
+     96
     ],
     [
      "reveal",
-     1722,
+     749,
      1,
-     26,
-     262
+     25,
+     96
     ],
     [
      "stream",
-     1746,
-     24,
-     26,
-     262
+     769,
+     20,
+     25,
+     96
     ],
     [
      "light",
-     1803,
-     57,
-     21,
-     262
+     842,
+     73,
+     25,
+     96
     ],
     [
      "dungeon_scene",
-     2167,
-     369,
-     22,
-     262
+     1588,
+     746,
+     32,
+     96
     ],
     [
      "dungeon_ready",
-     4168,
-     1989,
+     3018,
+     1430,
      29,
-     262
+     96
     ]
    ],
-   "console_msgs": [],
-   "console_errors": {},
+   "console_msgs": [
+    "load: ERROR: Pages in use exist at exit in PagedAllocator: N16WorkerThreadPool5GroupE",
+    "load:    at: ~PagedAllocator (./core/templates/paged_allocator.h:170)"
+   ],
+   "console_errors": {
+    "load": 2
+   },
+   "audio": {},
    "play": {},
    "shots": {},
    "invalid": [],
-   "runs": 3
+   "runs": 2
   },
-  "dungeon-walk": {
-   "load_ms": 2773,
-   "wall_ms": 2778,
-   "wasm_dl_ms": 318,
-   "wasm_compile_ms": 363,
-   "pck_end_ms": 710,
-   "init_ms": 1958,
-   "frames": 250,
-   "avg_fps": 29.1,
-   "avg_frame_ms": 34.4,
-   "p95_frame_ms": 50,
-   "max_frame_ms": 150,
-   "long_frames": 8,
-   "heap_mb": 317.6,
-   "wasm_mem_mb": 270.6,
-   "dom_nodes": 93,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+  "dungeon-music-cold": {
+   "load_ms": 89641.0,
+   "wall_ms": 89648.5,
+   "wasm_dl_ms": 79063.5,
+   "wasm_compile_ms": 79105.5,
+   "pck_end_ms": 87851.0,
+   "init_ms": 1790.0,
+   "frames": 684.5,
+   "avg_fps": 28.1,
+   "avg_frame_ms": 35.55,
+   "p95_frame_ms": 65.75,
+   "max_frame_ms": 137.1,
+   "long_frames": 108.5,
+   "shot_excluded": 0.0,
+   "heap_mb": 101.7,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.5,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
-     "frames": 446,
-     "avg_fps": 20.0,
-     "avg_frame_ms": 50.0,
-     "p95_frame_ms": 66.8,
-     "max_frame_ms": 1883.2,
-     "long_frames": 74
+     "frames": 566,
+     "avg_fps": 27.9,
+     "avg_frame_ms": 35.9,
+     "p95_frame_ms": 65.2,
+     "max_frame_ms": 1752.5,
+     "long_frames": 65,
+     "shot_excluded": 2
     },
     "_enter": {
-     "frames": 41,
-     "avg_fps": 8.2,
-     "avg_frame_ms": 121.9,
-     "p95_frame_ms": 250,
-     "max_frame_ms": 1666.6,
-     "long_frames": 19
+     "frames": 138,
+     "avg_fps": 22.5,
+     "avg_frame_ms": 44.4,
+     "p95_frame_ms": 65.2,
+     "max_frame_ms": 823.2,
+     "long_frames": 15,
+     "shot_excluded": 0
     },
-    "walk": {
-     "frames": 252,
-     "avg_fps": 29.2,
-     "avg_frame_ms": 34.2,
-     "p95_frame_ms": 50,
-     "max_frame_ms": 150,
-     "long_frames": 7
+    "music": {
+     "frames": 680,
+     "avg_fps": 27.9,
+     "avg_frame_ms": 35.8,
+     "p95_frame_ms": 66.1,
+     "max_frame_ms": 143,
+     "long_frames": 112,
+     "shot_excluded": 0
+    },
+    "_end": {
+     "frames": 2,
+     "avg_fps": 18.0,
+     "avg_frame_ms": 55.7,
+     "p95_frame_ms": 41.4,
+     "max_frame_ms": 70,
+     "long_frames": 1,
+     "shot_excluded": 0
     }
    },
    "marks": {
-    "camp_load_ms": 5229,
-    "dungeon_load_ms": 4030
+    "camp_load_ms": 4306,
+    "dungeon_load_ms": 2906
    },
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {
+    "audio_on": 1,
+    "audio_gaps": 0,
+    "audio_gap_ms": 0,
+    "audio_silent_ms": 0,
+    "audio_ms": 24535
+   },
    "play": {},
    "shots": {
-    "title": 55.7,
-    "camp": 115.9,
-    "loadout": 34.9,
-    "dungeon-start": 60.9,
-    "dungeon-end": 28.5
+    "title": -1.0,
+    "camp": -1.0
    },
    "invalid": [],
-   "runs": 3
+   "runs": 2
+  },
+  "dungeon-walk": {
+   "load_ms": 2909.5,
+   "wall_ms": 2916.5,
+   "wasm_dl_ms": 392.5,
+   "wasm_compile_ms": 452.5,
+   "pck_end_ms": 909.0,
+   "init_ms": 2000.5,
+   "frames": 259.5,
+   "avg_fps": 25.25,
+   "avg_frame_ms": 40.85,
+   "p95_frame_ms": 50.9,
+   "max_frame_ms": 2153.2,
+   "long_frames": 20.5,
+   "shot_excluded": 2.0,
+   "heap_mb": 139.15,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.5,
+   "page_errors": 0.0,
+   "phases": {
+    "_boot": {
+     "frames": 491,
+     "avg_fps": 22.1,
+     "avg_frame_ms": 45.3,
+     "p95_frame_ms": 70.8,
+     "max_frame_ms": 2184.5,
+     "long_frames": 90,
+     "shot_excluded": 3
+    },
+    "_enter": {
+     "frames": 49,
+     "avg_fps": 11.0,
+     "avg_frame_ms": 91.0,
+     "p95_frame_ms": 317.4,
+     "max_frame_ms": 931,
+     "long_frames": 21,
+     "shot_excluded": 0
+    },
+    "walk": {
+     "frames": 256,
+     "avg_fps": 29.6,
+     "avg_frame_ms": 33.8,
+     "p95_frame_ms": 51.8,
+     "max_frame_ms": 61.6,
+     "long_frames": 27,
+     "shot_excluded": 2
+    }
+   },
+   "marks": {
+    "camp_load_ms": 4929,
+    "dungeon_load_ms": 3325
+   },
+   "load_marks": [],
+   "console_msgs": [],
+   "console_errors": {},
+   "audio": {},
+   "play": {},
+   "shots": {
+    "title": -1.0,
+    "camp": -1.0,
+    "loadout": -1.0,
+    "dungeon-start": -1.0,
+    "dungeon-end": -1.0
+   },
+   "invalid": [],
+   "runs": 2
   },
   "hub-load": {
-   "load_ms": 2624,
-   "wall_ms": 2629,
-   "wasm_dl_ms": 263,
-   "wasm_compile_ms": 300,
-   "pck_end_ms": 713,
-   "init_ms": 1915,
-   "frames": 755,
-   "avg_fps": 48.1,
-   "avg_frame_ms": 20.8,
-   "p95_frame_ms": 16.8,
-   "max_frame_ms": 1716.6,
-   "long_frames": 15,
-   "heap_mb": 91.0,
-   "wasm_mem_mb": 66.5,
-   "dom_nodes": 92,
-   "transfer_mb": 70.41,
-   "page_errors": 2,
+   "load_ms": 3014.0,
+   "wall_ms": 3020.0,
+   "wasm_dl_ms": 339.0,
+   "wasm_compile_ms": 393.5,
+   "pck_end_ms": 921.0,
+   "init_ms": 2093.0,
+   "frames": 687.5,
+   "avg_fps": 45.9,
+   "avg_frame_ms": 21.85,
+   "p95_frame_ms": 17.8,
+   "max_frame_ms": 1116.75,
+   "long_frames": 13.5,
+   "shot_excluded": 0.0,
+   "heap_mb": 148.1,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 96.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
      "frames": 2,
-     "avg_fps": 0.6,
-     "avg_frame_ms": 1616.6,
-     "p95_frame_ms": 16.7,
-     "max_frame_ms": 3216.5,
-     "long_frames": 1
+     "avg_fps": 0.7,
+     "avg_frame_ms": 1470.8,
+     "p95_frame_ms": 1.5,
+     "max_frame_ms": 2940.1,
+     "long_frames": 1,
+     "shot_excluded": 0
     },
     "load": {
-     "frames": 755,
-     "avg_fps": 48.2,
-     "avg_frame_ms": 20.7,
-     "p95_frame_ms": 16.8,
-     "max_frame_ms": 1649.9,
-     "long_frames": 15
+     "frames": 687,
+     "avg_fps": 44.1,
+     "avg_frame_ms": 22.7,
+     "p95_frame_ms": 17.8,
+     "max_frame_ms": 1538.6,
+     "long_frames": 13,
+     "shot_excluded": 0
     }
    },
    "marks": {},
@@ -785,192 +911,290 @@
      0,
      0,
      7,
-     55
+     67
     ],
     [
      "loader_paint",
-     16,
-     16,
+     11,
+     11,
      7,
-     55
+     67
     ],
     [
      "preload_begin",
-     16,
-     0,
+     73,
+     62,
      7,
-     55
+     67
     ],
     [
      "preload_end",
-     48,
-     32,
+     105,
+     31,
      7,
      67
     ],
     [
      "camp_change",
-     95,
-     47,
+     150,
+     45,
      7,
      67
     ],
     [
      "camp_enter",
-     245,
-     144,
+     281,
+     131,
      7,
      67
     ],
     [
      "camp_world",
-     247,
-     2,
+     284,
+     3,
      7,
      67
     ],
     [
      "camp_light",
-     902,
-     4,
+     403,
+     119,
      13,
-     67
+     80
     ],
     [
      "camp_ground",
-     920,
-     15,
+     420,
+     16,
      14,
-     67
+     80
     ],
     [
      "camp_buildings",
-     959,
+     457,
      37,
-     16,
-     67
+     15,
+     80
     ],
     [
      "camp_fence",
-     965,
-     7,
-     16,
-     67
+     463,
+     6,
+     15,
+     80
     ],
     [
      "camp_player",
-     1045,
-     80,
-     17,
-     67
+     494,
+     31,
+     16,
+     80
     ],
     [
      "camp_spots",
-     1094,
-     48,
-     19,
-     67
+     585,
+     91,
+     18,
+     80
     ],
     [
      "camp_ready",
-     1890,
-     796,
-     20,
-     67
+     1326,
+     740,
+     19,
+     80
     ],
     [
      "warmup_begin",
-     1890,
+     1326,
      0,
-     20,
-     67
+     19,
+     80
     ],
     [
      "warmup_frame",
-     2644,
-     754,
-     20,
-     67
+     2218,
+     891,
+     19,
+     80
     ],
     [
      "warmup_gpu",
-     2666,
-     22,
-     20,
-     67
+     2237,
+     19,
+     19,
+     80
+    ],
+    [
+     "camp_ui_begin",
+     2238,
+     1,
+     19,
+     80
+    ],
+    [
+     "camp_ui",
+     2306,
+     67,
+     21,
+     80
+    ],
+    [
+     "warmup_ui",
+     3190,
+     884,
+     32,
+     96
     ],
     [
      "warmup_end",
-     4488,
-     1822,
-     20,
-     67
+     4750,
+     1560,
+     32,
+     96
     ],
     [
      "loader_finish",
-     4489,
+     4751,
      0,
-     20,
-     67
+     32,
+     96
     ]
    ],
-   "console_msgs": [],
-   "console_errors": {},
+   "console_msgs": [
+    "load: WARNING: 1 RID of type \"CanvasItem\" was leaked.",
+    "load:    at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2733)",
+    "load: ERROR: Pages in use exist at exit in PagedAllocator: N16WorkerThreadPool5GroupE",
+    "load:    at: ~PagedAllocator (./core/templates/paged_allocator.h:170)"
+   ],
+   "console_errors": {
+    "load": 6
+   },
+   "audio": {},
    "play": {},
    "shots": {},
    "invalid": [],
-   "runs": 3
+   "runs": 2
   },
   "title-idle": {
-   "load_ms": 2627,
-   "wall_ms": 2632,
-   "wasm_dl_ms": 326,
-   "wasm_compile_ms": 372,
-   "pck_end_ms": 748,
-   "init_ms": 1824,
-   "frames": 253,
-   "avg_fps": 39.7,
-   "avg_frame_ms": 25.2,
-   "p95_frame_ms": 33.4,
-   "max_frame_ms": 116.7,
-   "long_frames": 1,
-   "heap_mb": 77.3,
+   "load_ms": 2642.0,
+   "wall_ms": 2648.0,
+   "wasm_dl_ms": 162.5,
+   "wasm_compile_ms": 244.5,
+   "pck_end_ms": 749.0,
+   "init_ms": 1893.5,
+   "frames": 307.0,
+   "avg_fps": 48.3,
+   "avg_frame_ms": 20.7,
+   "p95_frame_ms": 35.25,
+   "max_frame_ms": 110.1,
+   "long_frames": 1.0,
+   "shot_excluded": 1.0,
+   "heap_mb": 122.35,
    "wasm_mem_mb": 66.5,
-   "dom_nodes": 92,
-   "transfer_mb": 70.41,
-   "page_errors": 0,
+   "dom_nodes": 92.0,
+   "transfer_mb": 83.32,
+   "page_errors": 0.0,
    "phases": {
     "_boot": {
      "frames": 2,
-     "avg_fps": 1.1,
-     "avg_frame_ms": 900.0,
-     "p95_frame_ms": 16.7,
-     "max_frame_ms": 1783.3,
-     "long_frames": 1
+     "avg_fps": 1.0,
+     "avg_frame_ms": 958.2,
+     "p95_frame_ms": 68.4,
+     "max_frame_ms": 1848,
+     "long_frames": 2,
+     "shot_excluded": 0
     },
     "splash": {
-     "frames": 252,
-     "avg_fps": 39.7,
-     "avg_frame_ms": 25.2,
-     "p95_frame_ms": 33.4,
-     "max_frame_ms": 116.7,
-     "long_frames": 1
+     "frames": 312,
+     "avg_fps": 48.8,
+     "avg_frame_ms": 20.5,
+     "p95_frame_ms": 35.2,
+     "max_frame_ms": 104.1,
+     "long_frames": 1,
+     "shot_excluded": 1
     }
    },
    "marks": {},
    "load_marks": [],
    "console_msgs": [],
    "console_errors": {},
+   "audio": {},
    "play": {},
    "shots": {
-    "splash": 16.8
+    "splash": -1.0
    },
    "invalid": [],
-   "runs": 3
+   "runs": 2
+  },
+  "dungeon-arrive": {
+   "load_ms": 2597.0,
+   "wall_ms": 2604.0,
+   "wasm_dl_ms": 312.0,
+   "wasm_compile_ms": 347.5,
+   "pck_end_ms": 570.0,
+   "init_ms": 1907.0,
+   "frames": 127.0,
+   "avg_fps": 28.5,
+   "avg_frame_ms": 35.35,
+   "p95_frame_ms": 52.0,
+   "max_frame_ms": 64.45,
+   "long_frames": 14.0,
+   "shot_excluded": 1.0,
+   "heap_mb": 124.15,
+   "wasm_mem_mb": 95.8,
+   "dom_nodes": 97.0,
+   "transfer_mb": 83.49,
+   "page_errors": 0.0,
+   "phases": {
+    "_boot": {
+     "frames": 438,
+     "avg_fps": 26.3,
+     "avg_frame_ms": 38.1,
+     "p95_frame_ms": 52,
+     "max_frame_ms": 1960.8,
+     "long_frames": 26,
+     "shot_excluded": 1
+    },
+    "_enter": {
+     "frames": 25,
+     "avg_fps": 8.1,
+     "avg_frame_ms": 124.0,
+     "p95_frame_ms": 385.8,
+     "max_frame_ms": 782.3,
+     "long_frames": 13,
+     "shot_excluded": 1
+    },
+    "arrive": {
+     "frames": 118,
+     "avg_fps": 26.2,
+     "avg_frame_ms": 38.2,
+     "p95_frame_ms": 53.1,
+     "max_frame_ms": 59.9,
+     "long_frames": 19,
+     "shot_excluded": 1
+    }
+   },
+   "marks": {
+    "camp_load_ms": 4654,
+    "dungeon_load_ms": 3046
+   },
+   "load_marks": [],
+   "console_msgs": [],
+   "console_errors": {},
+   "audio": {},
+   "play": {},
+   "shots": {
+    "title": -1.0,
+    "camp": -1.0,
+    "arrive": -1.0
+   },
+   "invalid": [],
+   "runs": 2
   }
  },
- "build_id": "06b72674b60935f0",
- "site": "/workspace/site-after",
+ "build_id": "52f50eb125790f66",
+ "site": "../../tmp/web_base",
  "chrome": "google-chrome",
  "viewport": "1280x720"
 }

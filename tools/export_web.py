@@ -2,7 +2,9 @@
 """Export the GitHub Pages build (Godot Web, no threads). Windows/Steam Godot or $GODOT_BIN.
 
     python tools/export_web.py [--archives] [--out DIR] [--godot PATH]
-Live-only writes docs/. --archives writes a combined site to _pages/ (gitignored); archive pins are
+Live-only writes docs/. The mip flip (enable_texture_mips.py) and the import only touch the export workspace: tracked
+.import files that were clean before the export are restored after it (any you were already editing are left alone).
+--archives writes a combined site to _pages/ (gitignored); archive pins are
 best-effort, cached under .archive_export_cache/. Logs: _logs/export-web/.
 """
 from __future__ import annotations
@@ -47,6 +49,7 @@ def main(argv: list[str] | None = None) -> int:
         body.append(f"{name} status={r['status']} ms={r['ms']}")
         return not r["timed_out"] and r["exit_code"] == 0
 
+    dirty = set(godot_lib.modified_imports(root))
     print("Enabling 3D texture mipmaps on import...")
     steps = [lambda: step("texture_mips", py(str(TOOLS / "enable_texture_mips.py"), "--root", str(root))),
              lambda: godot("godot-import", "--headless", "--path", str(root), "--import"),
@@ -57,6 +60,9 @@ def main(argv: list[str] | None = None) -> int:
         if not s():
             ok, fail = False, ["texture_mips", "godot-import", "godot-export", "postexport"][i]
             break
+    put_back = [p for p in godot_lib.modified_imports(root) if p not in dirty]
+    godot_lib.restore_imports(root, put_back)
+    body.append(f"import sidecars restored={len(put_back)} kept_dirty={len(dirty)}")
     if ok:
         (out_dir / ".nojekyll").touch()
         if args.archives:

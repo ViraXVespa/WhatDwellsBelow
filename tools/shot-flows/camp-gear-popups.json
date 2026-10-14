@@ -1,0 +1,208 @@
+{
+  "name": "camp-gear-popups",
+  "about": "Placeholdia: gear-board popups in each hub frame. Loadout crystal, anvil (Analyze and Forge tabs) and inventory: show the item tooltip (move focus onto a slot), open the slot picker (A), shoot each, back out with B. Checks tooltips and pickers wear the host frame's skin (design/ui-style.md Control skins).",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "covers": [
+    "ui:loadout",
+    "ui:anvil",
+    "ui:inv"
+  ],
+  "smoke": false,
+  "steps": [
+    {
+      "op": "device",
+      "kind": "pad"
+    },
+    {
+      "op": "call",
+      "target": "host.ui",
+      "method": "open_loadout"
+    },
+    {
+      "op": "assert",
+      "target": "host.ui.mode",
+      "equals": "loadout"
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 150
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "loadout-tip"
+    },
+    {
+      "op": "press",
+      "pad": "A"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "loadout-pick"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "assert",
+      "target": "App.ui_open",
+      "equals": false
+    },
+    {
+      "op": "call",
+      "target": "host.ui",
+      "method": "open_anvil"
+    },
+    {
+      "op": "assert",
+      "target": "host.ui.mode",
+      "equals": "anvil"
+    },
+    {
+      "op": "press",
+      "pad": "DOWN"
+    },
+    {
+      "op": "wait",
+      "ms": 150
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "anvil-tip"
+    },
+    {
+      "op": "press",
+      "pad": "A"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "anvil-analyze-pick"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "press",
+      "pad": "RB"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "press",
+      "pad": "A"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "anvil-forge-pick"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "assert",
+      "target": "App.ui_open",
+      "equals": false
+    },
+    {
+      "op": "call",
+      "target": "host.ui",
+      "method": "open_inventory"
+    },
+    {
+      "op": "assert",
+      "target": "host.ui.mode",
+      "equals": "inv"
+    },
+    {
+      "op": "press",
+      "pad": "DOWN"
+    },
+    {
+      "op": "wait",
+      "ms": 150
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "inventory-tip"
+    },
+    {
+      "op": "press",
+      "pad": "A"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "inventory-pick"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "assert",
+      "target": "App.ui_open",
+      "equals": false
+    }
+  ]
+}

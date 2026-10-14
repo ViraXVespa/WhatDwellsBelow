@@ -24,10 +24,13 @@ const PORTAL: Color = Color(0.05, 0.42, 0.50, 1)
 const PORTAL_LT: Color = Color(0.48, 0.92, 0.90, 1)
 const PAGE_COL: Color = Color(0.74, 0.93, 0.91, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "extract"
 static var _images: Dictionary = {}
 
 static func body() -> Texture2D:
-	if _images.has("body"):
+	if ArtBake.hit(_images, ART, "body"):
 		return _images["body"]
 	var img := Image.create(ART_W, ART_H, false, Image.FORMAT_RGBA8)
 	_bricks(img)
@@ -42,7 +45,7 @@ static func body() -> Texture2D:
 ## Iron bar for a send button. `warm` is the Send All plate.
 static func bar(warm: bool) -> Texture2D:
 	var key := "bar_warm" if warm else "bar_iron"
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var w := 96
 	var h := 28
@@ -59,7 +62,9 @@ static func _bricks(img: Image) -> void:
 	var bh := 10
 	for y: int in ART_H:
 		for x: int in ART_W:
+			@warning_ignore("integer_division")
 			var row: int = int(y / bh)
+			@warning_ignore("integer_division")
 			var shift: int = bw / 2 if row % 2 == 1 else 0
 			var lx: int = (x + shift) % bw
 			var ly: int = y % bh

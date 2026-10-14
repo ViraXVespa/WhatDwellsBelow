@@ -24,10 +24,15 @@ static func interact(host: Node3D, who: Node) -> String:
 		if ui and ui.has_method("open_anvil"):
 			ui.open_anvil()
 		return App.tr("interact_act.the_anvil_waits")
-	if host.kind == "quest_board" or host.kind == "receptionist":
+	if host.kind == "quest_board":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_quest"):
 			ui.open_quest()
+		return App.tr("interact_act.the_guild_has_work")
+	if host.kind == "receptionist":
+		var ui := ui_node(host)
+		if ui and ui.has_method("open_receptionist"):
+			ui.open_receptionist()
 		return App.tr("interact_act.the_guild_has_work")
 	if host.kind == "vendor":
 		var ui := ui_node(host)
@@ -36,11 +41,14 @@ static func interact(host: Node3D, who: Node) -> String:
 		return App.tr("interact_act.wares_in_the_sun")
 	if host.kind == "dumpster":
 		var ui := ui_node(host)
+		var key: String = load("res://scripts/data/progress_gear/consumable.gd").scavenge(App.prog)
+		var line: String = App.tr(key)
 		if ui and ui.has_method("open_flavor"):
-			ui.open_flavor(App.tr("interact_act.dumpster"), App.tr("common.you_used_to_eat_from"))
+			ui.open_flavor(App.tr("interact_act.dumpster"), line)
 		else:
-			App.toast(App.tr("common.you_used_to_eat_from"))
-		return App.tr("common.you_used_to_eat_from")
+			App.toast(line)
+		App.save_now()
+		return line
 	if host.kind == "billboard":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_controls"):

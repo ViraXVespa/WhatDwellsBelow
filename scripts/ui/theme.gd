@@ -2,6 +2,7 @@ extends Object
 
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 
 const INK: Color = Tok.INK
 const INK_SOFT: Color = Tok.INK_SOFT
@@ -72,8 +73,9 @@ static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "s
 	b.add_theme_font_size_override("font_size", font_px(20))
 	_apply(b, role, false)
 	b.disabled = not enabled
-	if enabled:
+	if enabled and not cb.is_null():
 		b.pressed.connect(cb)
+	BtnSkin.watch(b, "btn", [role])
 	return b
 
 static func paint_tab(b: Button, on: bool, role: String = "secondary") -> void:
@@ -95,6 +97,7 @@ static func paint_tab(b: Button, on: bool, role: String = "secondary") -> void:
 	b.add_theme_stylebox_override("pressed", _ink_box(PAPER_DEEP, edge, 1, 3))
 	b.add_theme_stylebox_override("focus", _ink_box(PAPER_DEEP, edge, 1, 3))
 	b.add_theme_stylebox_override("disabled", _ink_box(paper, RULE_QUIET, 1, 1))
+	BtnSkin.watch(b, "tab", [on, role])
 
 static func paint_bookmark(b: Button, on: bool) -> void:
 	var word: Color = INK if on else INK_SOFT
@@ -129,10 +132,10 @@ static func _bookmark_box(bg: Color, edge: Color, underline: int) -> StyleBoxFla
 	s.content_margin_bottom = 8
 	return s
 
-static func paint_plate(b: Button, fill: Color, border: Color, on: bool = false) -> void:
+static func paint_plate(b: Button, face: Color, border: Color, on: bool = false) -> void:
 	var wash: Color = Color(0, 0, 0, 0)
-	if _wash(fill):
-		wash = Color(fill.r, fill.g, fill.b, 0.22)
+	if _wash(face):
+		wash = Color(face.r, face.g, face.b, 0.22)
 	var edge: Color = border if _signal(border) else Color(INK.r, INK.g, INK.b, 0.55)
 	var shown: Color = wash
 	var rim: Color = INK if on else edge
@@ -142,6 +145,7 @@ static func paint_plate(b: Button, fill: Color, border: Color, on: bool = false)
 	b.add_theme_stylebox_override("pressed", _ink_box(Color(INK.r, INK.g, INK.b, 0.1), INK, 1, 3))
 	b.add_theme_stylebox_override("focus", _ink_box(Color(PAPER_DEEP.r, PAPER_DEEP.g, PAPER_DEEP.b, 0.72), INK, 1, 3))
 	b.add_theme_stylebox_override("disabled", _ink_box(Color(0, 0, 0, 0), Color(INK.r, INK.g, INK.b, 0.22), 1, 1))
+	BtnSkin.watch(b, "plate", [face, border, on])
 
 static func _ink_box(bg: Color, border: Color, width: int, foot: int) -> StyleBoxFlat:
 	var s: StyleBoxFlat = StyleBoxFlat.new()
@@ -279,14 +283,14 @@ static func skill_tip(id: String, lv: int) -> String:
 	return App.tr("theme.level") % [n, lv, now, per]
 
 static func sb(bg: Color, border: Color) -> StyleBoxFlat:
-	var fill := PAPER
+	var face := PAPER
 	if _wash(bg):
-		fill = PAPER.lerp(Color(bg.r, bg.g, bg.b, 1.0), 0.4)
-		fill.a = 0.98
+		face = PAPER.lerp(Color(bg.r, bg.g, bg.b, 1.0), 0.4)
+		face.a = 0.98
 	elif bg.a < 0.45:
-		fill.a = maxf(bg.a, 0.22)
+		face.a = maxf(bg.a, 0.22)
 	var edge: Color = border if _signal(border) else RULE
-	return _box(fill, edge, 1, 1)
+	return _box(face, edge, 1, 1)
 
 static func skin_slider(slider: HSlider) -> void:
 	slider.add_theme_stylebox_override("slider", _box(PAPER_DEEP, RULE, 1, 1))
@@ -313,12 +317,12 @@ static func skin_check(box: CheckBox) -> void:
 	box.add_theme_stylebox_override("focus", _box(Color(0, 0, 0, 0), INK, 0, 3))
 
 static func _apply(b: Button, role: String, lit: bool) -> void:
-	var fill := PAPER
+	var face := PAPER
 	var edge := RULE
 	var word := INK_SOFT
 	var width := 1
 	if role == "primary":
-		fill = PAPER_DEEP
+		face = PAPER_DEEP
 		word = INK
 		width = 2
 	elif role == "danger":
@@ -326,11 +330,11 @@ static func _apply(b: Button, role: String, lit: bool) -> void:
 		word = DANGER
 		width = 2
 	if lit and role == "danger":
-		fill = PAPER_DEEP
+		face = PAPER_DEEP
 		word = DANGER
 		edge = DANGER
 	elif lit:
-		fill = PAPER_DEEP
+		face = PAPER_DEEP
 		word = INK
 		edge = INK
 		width = 1
@@ -342,7 +346,7 @@ static func _apply(b: Button, role: String, lit: bool) -> void:
 	b.add_theme_color_override("font_focus_color", focus_edge)
 	b.add_theme_color_override("font_pressed_color", word)
 	b.add_theme_color_override("font_disabled_color", INK_FAINT)
-	b.add_theme_stylebox_override("normal", _box(fill, edge, width, foot))
+	b.add_theme_stylebox_override("normal", _box(face, edge, width, foot))
 	b.add_theme_stylebox_override("hover", _box(hover, edge, width, 4))
 	b.add_theme_stylebox_override("pressed", _box(PAPER_DEEP, edge, width, 4))
 	b.add_theme_stylebox_override("focus", _box(hover, focus_edge, 1, 4))

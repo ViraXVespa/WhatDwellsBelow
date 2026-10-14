@@ -16,11 +16,37 @@ const TAPE: Color = Color(0.55, 0.48, 0.32, 1)
 const RUBBER: Color = Color(0.10, 0.10, 0.11, 1)
 const HUB: Color = Color(0.55, 0.58, 0.60, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "dumpster"
 static var _images: Dictionary = {}
+
+static func sticker(pressed: bool) -> Texture2D:
+	var key: String = "sticker-press" if pressed else "sticker-rest"
+	if ArtBake.hit(_images, ART, key):
+		return _images[key]
+	var w: int = 96
+	var h: int = 32
+	var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var face: Color = Color(0.93, 0.88, 0.74, 1)
+	if pressed:
+		face = Color(0.72, 0.64, 0.48, 1)
+	var edge: Color = Color(0.28, 0.24, 0.18, 1)
+	var tape: Color = Color(0.78, 0.70, 0.42, 1)
+	for y: int in h:
+		for x: int in w:
+			var px: Color = face
+			var corner: bool = (x < 8 and y < 8) or (x >= w - 8 and y < 8) or (x < 8 and y >= h - 8) or (x >= w - 8 and y >= h - 8)
+			if corner:
+				px = tape
+			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
+				px = edge
+			img.set_pixel(x, y, px)
+	return UiBuild.keep(_images, key, img)
 
 static func flap(lift: float, foot: int) -> Texture2D:
 	var key: String = "flap-%d-%d" % [int(round(lift * 100.0)), foot]
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var w: int = 96
 	var h: int = 28
@@ -42,7 +68,7 @@ static func flap(lift: float, foot: int) -> Texture2D:
 	return UiBuild.keep(_images, key, img)
 
 static func lid() -> Texture2D:
-	if _images.has("lid"):
+	if ArtBake.hit(_images, ART, "lid"):
 		return _images["lid"]
 	var w: int = 120
 	var h: int = 48
@@ -72,7 +98,7 @@ static func lid() -> Texture2D:
 	return UiBuild.keep(_images, "lid", img)
 
 static func mouth() -> Texture2D:
-	if _images.has("mouth"):
+	if ArtBake.hit(_images, ART, "mouth"):
 		return _images["mouth"]
 	var img: Image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
 	for y: int in 32:
@@ -86,7 +112,7 @@ static func mouth() -> Texture2D:
 	return UiBuild.keep(_images, "mouth", img)
 
 static func body() -> Texture2D:
-	if _images.has("body"):
+	if ArtBake.hit(_images, ART, "body"):
 		return _images["body"]
 	var w: int = 96
 	var h: int = 72
@@ -116,7 +142,7 @@ static func body() -> Texture2D:
 	return UiBuild.keep(_images, "body", img)
 
 static func rim() -> Texture2D:
-	if _images.has("rim"):
+	if ArtBake.hit(_images, ART, "rim"):
 		return _images["rim"]
 	var w: int = 96
 	var h: int = 16
@@ -134,7 +160,7 @@ static func rim() -> Texture2D:
 	return UiBuild.keep(_images, "rim", img)
 
 static func label() -> Texture2D:
-	if _images.has("label"):
+	if ArtBake.hit(_images, ART, "label"):
 		return _images["label"]
 	var w: int = 80
 	var h: int = 36
@@ -157,7 +183,7 @@ static func label() -> Texture2D:
 
 static func bag(kind: int) -> Texture2D:
 	var key: String = "bag-%d" % kind
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var img: Image = Image.create(48, 56, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -189,7 +215,7 @@ static func bag(kind: int) -> Texture2D:
 	return UiBuild.keep(_images, key, img)
 
 static func slat() -> Texture2D:
-	if _images.has("slat"):
+	if ArtBake.hit(_images, ART, "slat"):
 		return _images["slat"]
 	var img: Image = Image.create(10, 36, false, Image.FORMAT_RGBA8)
 	var wood: Color = Color(0.62, 0.52, 0.36, 1)
@@ -202,7 +228,7 @@ static func slat() -> Texture2D:
 	return UiBuild.keep(_images, "slat", img)
 
 static func wheel() -> Texture2D:
-	if _images.has("wheel"):
+	if ArtBake.hit(_images, ART, "wheel"):
 		return _images["wheel"]
 	var img: Image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))

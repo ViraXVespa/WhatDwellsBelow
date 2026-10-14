@@ -1,8 +1,10 @@
 extends Control
 
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const News := preload("res://scripts/title/news.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 
 var _busy := false
 var _archives_open := false
@@ -12,6 +14,9 @@ var _news_scroll: ScrollContainer = null
 var _title_btns: Array = []
 
 func _ready() -> void:
+	set_meta("btn_skin", "title")
+	BtnSkin.follow(self)
+	UiWarm.start()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var fall := ColorRect.new()
@@ -31,7 +36,7 @@ func _ready() -> void:
 	var plate := Panel.new()
 	plate.set_anchors_preset(Control.PRESET_CENTER)
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	plate.add_theme_stylebox_override("panel", ThemeS.sb(ThemeS.PAPER, ThemeS.RULE))
+	plate.add_theme_stylebox_override("panel", BtnSkin.panel_box("title"))
 	add_child(plate)
 	var card := VBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_CENTER)

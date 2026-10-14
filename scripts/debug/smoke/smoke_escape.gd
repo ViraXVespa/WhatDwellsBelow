@@ -21,6 +21,7 @@ static func run(host: Node) -> void:
 		["controls", func(): ui.open_controls()],
 		["flavor", func(): ui.open_flavor("Dumpster", "x")],
 		["quest", func(): ui.open_quest()],
+		["receptionist", func(): ui.open_receptionist()],
 		["anvil", func(): ui.open_anvil()],
 		["loadout", func(): ui.open_loadout()],
 		["pause", func(): App.pause_menu.show_menu()],

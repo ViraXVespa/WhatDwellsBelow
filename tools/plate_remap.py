@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Remap a generated chroma plate to exact #FF00FF, including edge bleed.
+"""Remap a generated chroma plate to exact #FF00FF.
 
 Keeps the plate opaque. Does not punch alpha. Feed the result to I2V or to
 sprite_pipeline key/matte after you accept the still.
 
 The plate is found by imglib.key.plate_mask: Lab distance to several colours sampled from the border
-(a generated plate drifts in shade and carries JPEG noise), a hue band, then connected components. Every
-plate pixel ends exactly (255, 0, 255); the edge band is shifted by its plate mix.
+(a generated plate drifts in shade and carries JPEG noise), a hue band, then connected components. Solid
+plate near a border reference ends exactly (255, 0, 255). A farther mix keeps its drawn RGB.
 
   python tools/plate_remap.py SRC DEST
   python tools/plate_remap.py SRC DEST --wand 48 --edge 5 --mask DEST.mask.png

@@ -1,6 +1,6 @@
 ﻿extends Object
 
-## Local / localhost hitch JSONL. Append on miss. Tail 256.
+## Local / localhost hitch JSONL. Append on miss. Tail 256. Localhost web also POSTs rows to tools/hitch_sink.py.
 
 const BUDGET_SEC := 1.0 / 60.0
 const MULT := 4.0
@@ -185,8 +185,16 @@ static func _where(host: Node) -> String:
 static func _write_row(row: Dictionary) -> void:
 	if _fh == null:
 		return
-	_fh.store_line(JSON.stringify(row))
+	var line: String = JSON.stringify(row)
+	_fh.store_line(line)
 	_fh.flush()
+	_post(line)
+
+## Localhost web only (enabled() gates it): fire-and-forget POST to tools/hitch_sink.py; never awaited, errors dropped.
+static func _post(line: String) -> void:
+	if not OS.has_feature("web"):
+		return
+	JavaScriptBridge.eval("fetch('/_wdb/hitch',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:%s}).catch(function(){})" % JSON.stringify(line), false)
 
 static func _trim_file() -> void:
 	if file_path == "" or not FileAccess.file_exists(file_path):

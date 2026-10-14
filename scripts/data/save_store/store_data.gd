@@ -5,6 +5,7 @@ extends RefCounted
 const LocS := preload("res://scripts/app/app_loc.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
+const Talk := preload("res://scripts/data/talk_lines.gd")
 
 ## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
 const DEF := {
@@ -26,6 +27,7 @@ const DEF := {
 	"aim_line_on": true,
 	"aim_line_opacity": 0.85,
 	"target_lock_pref": false,
+	"danger_gem": true,
 	"salvage_dupes": false,
 	"salvage_finish": 0.8,
 	"salvage_fortune": 1.0,
@@ -55,6 +57,7 @@ static func apply(data: Dictionary) -> bool:
 	App.bal.aim_line_on = bool(data.get("aim_line_on", DEF.aim_line_on))
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", DEF.aim_line_opacity))
 	App.target_lock_pref = bool(data.get("target_lock_pref", DEF.target_lock_pref))
+	App.danger_gem = bool(data.get("danger_gem", DEF.danger_gem))
 	App.salvage_dupes = bool(data.get("salvage_dupes", DEF.salvage_dupes))
 	App.salvage_finish = clampf(float(data.get("salvage_finish", DEF.salvage_finish)), 0.5, 1.0)
 	App.salvage_fortune = clampf(float(data.get("salvage_fortune", DEF.salvage_fortune)), 0.75, 1.25)
@@ -75,6 +78,7 @@ static func apply(data: Dictionary) -> bool:
 	if p is Dictionary:
 		App.prog.from_meta(p)
 	Norm.normalize_prog(App.prog)
+	Talk.from_save(data.get("talk"))
 	if not App.character_chosen and (App.bank_gold > 0 or App.bank_ore > 0 or App.prog.deepest > 1):
 		App.character_chosen = true
 	var binds: Variant = data.get("binds", [])
@@ -99,6 +103,7 @@ static func fs_kind(raw: String) -> String:
 
 static func fresh_delver() -> void:
 	App.prog.reset_meta()
+	Talk.reset()
 	Norm.normalize_prog(App.prog)
 	App.bank_gold = DEF.bank_gold
 	App.bank_ore = DEF.bank_ore
@@ -121,6 +126,7 @@ static func fresh_delver() -> void:
 	App.display_fs_kind = DEF.display_fs_kind
 	App.web_fullscreen = DEF.web_fullscreen
 	App.target_lock_pref = DEF.target_lock_pref
+	App.danger_gem = DEF.danger_gem
 	App.salvage_dupes = DEF.salvage_dupes
 	App.salvage_finish = DEF.salvage_finish
 	App.salvage_fortune = DEF.salvage_fortune

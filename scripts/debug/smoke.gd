@@ -7,6 +7,7 @@ extends RefCounted
 ## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
 
+const ArtBake := preload("res://scripts/ui/progress_ui/art_bake.gd")
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
@@ -46,6 +47,9 @@ static func hold_player() -> bool:
 	return phase(3) or phase(4) or phase(5) or phase(7)
 
 static func route_boot() -> bool:
+	if ArtBake.active():
+		ArtBake.run_and_quit.call_deferred(App.get_tree())
+		return true
 	if "--wdb-bake-camp" in args():
 		App.call_deferred("_bake_camp")
 		return true

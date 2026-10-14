@@ -19,7 +19,7 @@ Read when: pause panels, fullscreen drape, play-menu
 | pawn counter, snack prices | `design/ui-unit-ghost-shop.md` |
 | tally sequence, finale bars | `design/ui-unit-recap.md` |
 | pinned parchment, offer cutouts | `design/ui-unit-quest-board.md` |
-| greeting line, hello bubble | `design/ui-unit-receptionist.md` |
+| talk cycle, ask topics | `design/ui-unit-receptionist.md` |
 
 Remaining screens are units, worked in her order: `python tools/start_build_slice.py --door ui`, then `--next` after each is committed. Each unit job prints its own flow, docs and files.
 

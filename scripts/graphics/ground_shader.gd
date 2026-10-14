@@ -32,7 +32,7 @@ static func shader() -> Shader:
 	sh.code = """
 shader_type spatial;
 render_mode unshaded;
-uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_enable;
+uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
@@ -66,7 +66,7 @@ void fragment() {
 		float pick = h;
 		quilt_tint = mix(vec3(0.98), vec3(1.02), pick);
 	}
-	vec2 uv = fract(xz * uv_scale + uv_off);
+	vec2 uv = xz * uv_scale + uv_off;
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
 """ + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * quilt_tint * worn * lit;

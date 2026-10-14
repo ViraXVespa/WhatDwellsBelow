@@ -46,6 +46,8 @@ static func add_resource_row(ui) -> void:
 	if any:
 		ui.box.add_child(ThemeS.lab(App.tr("extract.resources"), 20, ThemeS.INK))
 		ui.box.add_child(row)
+	else:
+		row.free()
 
 static func add_send_all(ui) -> void:
 	var b := ThemeS.btn(App.tr("common.send_all"), func(): Confirm.open(ui, App.tr("common.send_all"), App.tr("inv.mail_all_extractable_goods_to"), func(): ui._do_send_all()), true, "primary")

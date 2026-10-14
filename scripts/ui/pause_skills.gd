@@ -4,6 +4,8 @@ const CombatP := preload("res://scripts/data/progress_combat.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
+const JournalSpread := preload("res://scripts/ui/journal_spread.gd")
 const Journal := preload("res://scripts/ui/pause_menu/journal_page.gd")
 
 static func skill_title(_ui: CanvasLayer, id: String) -> String:
@@ -33,10 +35,7 @@ static func skill_block(ui: CanvasLayer, id: String, kind: String, text: String,
 	var shell: PanelContainer = SkillRow.row_single(text, ratio, fill_col)
 	shell.set_meta("skill_id", id)
 	shell.set_meta("skill_kind", kind)
-	shell.focus_entered.connect(ui._on_skill_focus.bind(id, kind, shell))
-	shell.mouse_entered.connect(ui._on_skill_focus.bind(id, kind, shell))
-	shell.focus_exited.connect(ui._on_skill_blur.bind(shell))
-	shell.mouse_exited.connect(ui._on_skill_blur.bind(shell))
+	TipHover.attach(shell, ui, id, kind, func(h): h.Util.paint_tip(h), SkillRow.hl)
 	return shell
 
 static func tip_lv(_ui: CanvasLayer, id: String, kind: String) -> int:
@@ -47,10 +46,7 @@ static func tip_lv(_ui: CanvasLayer, id: String, kind: String) -> int:
 	return CombatP.level_from_xp(App.prog, perm)
 
 static func _pair(ui: CanvasLayer) -> Array:
-	var span: float = 1752.0
-	if ui.scroll and ui.scroll.size.x > 10.0:
-		span = ui.scroll.size.x
-	return Journal.pair(span, Journal.SKILLS_LEFT)
+	return JournalSpread.cols(ui, Journal.SKILLS_LEFT)
 
 static func _page_w(ui: CanvasLayer) -> float:
 	var cols: Array = _pair(ui)
@@ -87,10 +83,7 @@ static func paint_tip(ui: CanvasLayer) -> void:
 
 static func _show_first(ui: CanvasLayer, row: PanelContainer) -> void:
 	ui.focus_btn = row
-	ui.tip_from = row
-	ui.tip_id = str(row.get_meta("skill_id"))
-	ui.tip_kind = str(row.get_meta("skill_kind"))
-	paint_tip(ui)
+	TipHover.show(ui, str(row.get_meta("skill_id")), str(row.get_meta("skill_kind")), row, paint_tip)
 
 static func build(ui: CanvasLayer) -> void:
 	var left: VBoxContainer = _left_col(ui)

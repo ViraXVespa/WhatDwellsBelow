@@ -7,6 +7,7 @@ extends Object
 const FLAG := "--wdb-load-timing-smoke"
 const DUNGEON_FLAG := "--wdb-dungeon-load-timing-smoke"
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const OpenTiming := preload("res://scripts/debug/open_timing.gd")
 
 static var _hub := -1
 static var _dungeon := -1
@@ -57,6 +58,9 @@ static func finish() -> void:
 		total = Time.get_ticks_msec() - t0
 	printerr("LOAD: total_ms=%d" % total)
 	printerr("LOAD: ok=true")
+	if App and hub_active() and OpenTiming.active():
+		OpenTiming.run_and_quit.call_deferred(App.get_tree())
+		return
 	if App:
 		App.get_tree().create_timer(0.2).timeout.connect(func(): App.get_tree().quit())
 

@@ -9,8 +9,8 @@ const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 static var _empty: StyleBoxEmpty
 
 ## A label for a frame's chrome: named, never takes the mouse.
-static func chrome_label(node_name: String, size_px: int, col: Color, wrap: bool, text: String = "") -> Label:
-	var lab: Label = ThemeS.lab(text, size_px, col, HORIZONTAL_ALIGNMENT_CENTER, wrap)
+static func chrome_label(node_name: String, size_px: int, col: Color, wrap_on: bool, text: String = "") -> Label:
+	var lab: Label = ThemeS.lab(text, size_px, col, HORIZONTAL_ALIGNMENT_CENTER, wrap_on)
 	lab.name = node_name
 	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return lab
@@ -72,6 +72,7 @@ static func tex_box(tex: Texture2D, edge: int, top: int, foot: int, tile: bool, 
 
 ## Centered text, nearest filter, fills its row: the base of every frame's button.
 static func button_base(button: Button) -> void:
+	button.set_meta("frame_dressed", true)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -96,6 +97,7 @@ static func states(button: Button, normal: StyleBox, hover: StyleBox, pressed: S
 static func bars(scroll: ScrollContainer, shown: bool) -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if shown else ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if shown else ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	ThemeS.BtnSkin.watch(scroll, "scroll")
 
 ## Tooltip shell: the dark panel every tooltip uses.
 static func tip_panel(z: int) -> PanelContainer:
@@ -104,7 +106,15 @@ static func tip_panel(z: int) -> PanelContainer:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.z_index = z
 	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
+	panel.set_meta("skin_static", true)
+	ThemeS.BtnSkin.watch(panel, "panel")
 	return panel
+
+## Outline only behind light text. A dark outline around dark ink thickens every stroke into a smudge (the
+## loadout "Floor" row); light words keep it for contrast on busy art. Same rule as prompt_view's ink labels.
+static func halo(l: Control, col: Color, size: int = Tok.OUTLINE_SIZE) -> void:
+	l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
+	l.add_theme_constant_override("outline_size", size if col.get_luminance() >= 0.5 else 0)
 
 ## Tooltip text: ink with the shared outline.
 static func tip_text(lab: Label, font_px: int) -> void:

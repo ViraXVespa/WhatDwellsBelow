@@ -39,6 +39,17 @@ static func tune_scroll(sc: ScrollContainer) -> void:
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	sc.follow_focus = true
+	ThemeS.BtnSkin.watch(sc, "scroll")
+
+## Next-frame tune holds the host weakly: a page wiped in the same frame (pause tab switch) is skipped instead of
+## calling a lambda whose captured host was freed.
+static func _tune_next_frame(host: Node) -> void:
+	var held: WeakRef = weakref(host)
+	host.get_tree().process_frame.connect(func() -> void:
+		var h: Node = held.get_ref() as Node
+		if h != null:
+			tune_host(h)
+	, CONNECT_ONE_SHOT)
 
 static func tune_host(host: Node) -> void:
 	if not _live(host):
@@ -79,10 +90,7 @@ static func rebuild_list(host: Node) -> void:
 		chain.append(host.back_btn)
 	wire_vert(chain)
 	if host.get_tree():
-		host.get_tree().process_frame.connect(func() -> void:
-			if _live(host):
-				tune_host(host)
-		, CONNECT_ONE_SHOT)
+		_tune_next_frame(host)
 
 static func clear_page(host: Node) -> void:
 	if not _live(host) or host.info_box == null:
@@ -92,10 +100,7 @@ static func clear_page(host: Node) -> void:
 	host.info_btns.clear()
 	path_text(host)
 	if host.get_tree():
-		host.get_tree().process_frame.connect(func() -> void:
-			if _live(host):
-				tune_host(host)
-		, CONNECT_ONE_SHOT)
+		_tune_next_frame(host)
 
 static func add_page_btn(host: Node, b: Button) -> void:
 	if not _live(host) or host.info_box == null:

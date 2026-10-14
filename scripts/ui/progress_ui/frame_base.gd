@@ -16,6 +16,16 @@ const PLATE_SIZE: Vector2 = Vector2(1200, 920)
 const SCROLL_POS: Vector2 = Vector2(384, 104)
 const SCROLL_SIZE: Vector2 = Vector2(1152, 832)
 
+## The spec() dictionary of a skin: the keys every frame shares, rows separation 8 and blank rows unless opts
+## overrides them (opts also carries plate_inset).
+static func make_spec(mode: String, chrome: String, pos: Vector2, span: Vector2, footer: float, rows_pos: Vector2, rows_size: Vector2, opts: Dictionary = {}) -> Dictionary:
+	var spec: Dictionary = {
+		"mode": mode, "chrome": chrome, "pos": pos, "size": span, "footer": footer,
+		"rows_pos": rows_pos, "rows_size": rows_size, "sep": 8, "blank_rows": true,
+	}
+	spec.merge(opts, true)
+	return spec
+
 static func mount(host: CanvasLayer, skin: GDScript) -> void:
 	var spec: Dictionary = skin.spec()
 	var chrome: Control = Control.new()
@@ -25,6 +35,14 @@ static func mount(host: CanvasLayer, skin: GDScript) -> void:
 	host.add_child(chrome)
 	host.move_child(chrome, 1)
 	skin.build(chrome)
+
+## Skin hook BTN_SKIN (optional const): the control skin (ui_tokens SKINS) for buttons and gear slots while that
+## frame is open. Other modes use "neutral".
+static func btn_skin(host: CanvasLayer, skins: Array) -> String:
+	for skin: GDScript in skins:
+		if str(skin.spec()["mode"]) == str(host.get("mode")) and skin.get("BTN_SKIN") != null:
+			return str(skin.get("BTN_SKIN"))
+	return "neutral"
 
 ## Cream plate for every mode, then the one skin whose mode is active takes the plate over.
 static func apply(host: CanvasLayer, skins: Array) -> void:

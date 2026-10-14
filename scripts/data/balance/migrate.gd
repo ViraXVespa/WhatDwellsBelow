@@ -113,4 +113,7 @@ static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
 		b.affix_white_luck = 0.75
 	if old_rev < 14:
 		b.potion_cooldown = 8.0
+	if old_rev < 15:
+		b.special_recovery = 1.0
+		b.orb_mana = 25.0
 	return true

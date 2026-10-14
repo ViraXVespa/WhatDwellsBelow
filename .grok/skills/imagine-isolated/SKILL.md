@@ -26,6 +26,6 @@ Pick `--kind`:
 
 Run `tools/run_isolated_grok.py` with that kind. Pass `--bible-style` when the locked Bibles should travel as style or identity sheets. Pass `--copy` for any other staged reference (one clean body frame for an overlay). Pass `--brief` for the User’s material / subject. The runner caches an ingest session per reference-file hash and forks later gens from it. Stop after the runner prints `results=` / `keep=`.
 
-The child follows bundled `imagine` + `game-asset-core` + the one specialist named for that kind. Do not load `game-animation-frames` on a still job.
+The child follows bundled `imagine` and `game-assets`. On a still job, read the one `game-assets` reference for that kind, not `animation.md`.
 
 Review the output with the User before replacing any file under `assets/`.

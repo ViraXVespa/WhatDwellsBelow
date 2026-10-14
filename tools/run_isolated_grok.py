@@ -14,11 +14,11 @@ fork-from-ingest is the same token win). `--no-reuse` keeps the old one-shot tem
 
 Kinds (bundled specialist + Imagine tool):
 
-  tile       game-asset-core + game-tilesets + imagine     image_gen / style-only image_edit
-  character  game-asset-core + game-character-consistency  image_gen (new Bible) / image_edit (after lock)
-  i2v        game-asset-core + game-animation-frames       image_to_video from staged seed
-  ui         game-asset-core + game-ui-icons + imagine     image_gen / image_edit
-  still      game-asset-core + imagine                     image_gen fallback
+  tile       imagine + game-assets (tilesets.md)          image_gen / style-only image_edit
+  character  imagine + game-assets (characters.md)         image_gen (new Bible) / image_edit (after lock)
+  i2v        imagine + game-assets (animation.md)          image_to_video from staged seed
+  ui         imagine + game-assets (ui-icons.md)           image_gen / image_edit
+  still      imagine + game-assets (assets.md)             image_gen fallback; do not read animation.md
 
   python tools/run_isolated_grok.py --kind tile --dry-run --bible-style --keep
   python tools/run_isolated_grok.py --kind tile --bible-style --out /path/out
@@ -60,27 +60,35 @@ DEFAULT_DEST = {
     "still": "still.png",
 }
 
+REFERENCE = {
+    "tile": "tilesets.md",
+    "character": "characters.md",
+    "i2v": "animation.md",
+    "ui": "ui-icons.md",
+    "still": "assets.md",
+}
+SKILLS = "`imagine` and `game-assets`"
 STACK = {
     "tile": (
-        "`imagine`, `game-asset-core`, and `game-tilesets`",
+        SKILLS,
         "One tileable world texture. One `image_gen` call, then copy the file into this directory.",
     ),
     "character": (
-        "`imagine`, `game-asset-core`, and `game-character-consistency`",
+        SKILLS,
         "One character / overlay still. New Bible: one `image_gen`. After lock: one `image_edit` from the staged base. "
         "Then copy the file into this directory.",
     ),
     "i2v": (
-        "`imagine`, `game-asset-core`, and `game-animation-frames`",
+        SKILLS,
         "One Image-to-Video unit from the staged seed and prompt. Then copy the clip into this directory. "
         "Do not harvest or pack frames.",
     ),
     "ui": (
-        "`imagine`, `game-asset-core`, and `game-ui-icons`",
+        SKILLS,
         "One UI / HUD / icon still. No text in the art. One media call, then copy the file into this directory.",
     ),
     "still": (
-        "`imagine` and `game-asset-core`",
+        SKILLS,
         "One still. One media call, then copy the file into this directory.",
     ),
 }
@@ -129,13 +137,42 @@ def _style_lines(*, use_bibles: bool, kind: str) -> str:
     )
 
 
-def _tool_lines(kind: str) -> str:
+def _parse_keyframe(spec: str) -> tuple[Path, float]:
+    if "@" not in spec:
+        _die("--keyframe must be path@seconds (Windows paths contain a colon)")
+    raw, _, seconds = spec.rpartition("@")
+    try:
+        stamp = float(seconds)
+    except ValueError:
+        _die(f"--keyframe seconds are not a number: {spec}")
+    if stamp <= 0:
+        _die(f"--keyframe timestamp must be inside the clip: {spec}")
+    return Path(raw), stamp
+
+
+def _walk_prompt(path: Path) -> bool:
+    return WALK_MARK in path.read_text(encoding="utf-8")
+
+
+def _tool_lines(kind: str, *, pinned: bool = False) -> str:
+    if kind == "i2v" and pinned:
+        return (
+            "Tools:\n"
+            "- Call `reference_to_video` once. Do not call `image_to_video`.\n"
+            "- Pass `first_frame` and `last_frame` as the absolute paths named below. "
+            "Those stills are literal pins. Do not key them.\n"
+            "- Pass staged `--ref` files as `images` only. They are references, not pins.\n"
+            "- Pass staged `--keyframe` files as `keyframes` entries `{image, timestamp_s}`. "
+            "Timestamps stay exactly as written.\n"
+            "- Do not pass `duration`. Do not call `image_gen` or `image_edit`.\n"
+        )
     if kind == "i2v":
         return (
             "Tools:\n"
             "- `image_to_video` from the staged first frame.\n"
             "- Do not call `image_gen` unless that seed is missing.\n"
             "- Do not call `image_edit` unless the brief says to repair the seed first.\n"
+            "- Do not call `reference_to_video` unless this job names a last frame.\n"
         )
     if kind == "character":
         return (
@@ -149,7 +186,7 @@ def _tool_lines(kind: str) -> str:
             "Tools:\n"
             "- `image_gen` once.\n"
             "- Do not call `image_edit` or `image_to_video`.\n"
-            "- Do not open skill files, list the directory, or run a 2x2 / 4x4 composite. The parent does that.\n"
+            "- Do not open any other `game-assets` reference, list the directory, or run a 2x2 / 4x4 composite. The parent does that.\n"
         )
     return (
         "Tools:\n"
@@ -178,19 +215,34 @@ def build_job(
     dest_name: str,
     seed_name: str = "",
     prompt_name: str = "",
+    last_name: str = "",
+    ref_names: list[str] | None = None,
+    keyframes: list[tuple[str, float]] | None = None,
     ingested: bool = False,
 ) -> str:
     skills, specialist = STACK[kind]
+    ref = REFERENCE[kind]
+    still_note = " Do not read `animation.md`." if kind == "still" else ""
     body = brief.strip() if brief.strip() else DEFAULT_BRIEF[kind]
     brief_block = f"Brief:\n{body}\n\n" if body else ""
     i2v_block = ""
     if kind == "i2v":
+        pin_lines = ""
+        if last_name:
+            refs = ", ".join(f"`{n}`" for n in (ref_names or [])) or "(none)"
+            frames = ", ".join(f"`{n}` at {stamp:g}s" for n, stamp in (keyframes or [])) or "(none)"
+            pin_lines = (
+                f"Last frame: `{last_name}` (same idle still as the first frame when the names match).\n"
+                f"Reference images: {refs}\n"
+                f"Mid-clip pins: {frames}\n"
+            )
         i2v_block = (
             f"First frame: `{seed_name}` (opaque chroma plate — do not key it).\n"
+            f"{pin_lines}"
             f"Prompt (use verbatim): `{prompt_name}`\n\n"
         )
     already = (
-        "Reference files are already in this conversation. Do not read them again.\n\n"
+        "Staged images are already in this conversation. Do not read those images again.\n\n"
         if ingested
         else ""
     )
@@ -198,10 +250,10 @@ def build_job(
         f"# Isolated {kind} job\n\n"
         "You are in a scratch directory on purpose. There is no game `AGENTS.md` here.\n\n"
         f"{already}"
-        f"Bundled skills that may auto-apply: {skills}. Do not open those skill files. "
-        "Do not load any other game-asset specialist.\n\n"
+        f"Bundled skills for this job: {skills}. Read `{ref}` only.{still_note} "
+        "Do not open the other `game-assets` references.\n\n"
         f"{specialist}\n\n"
-        f"{_tool_lines(kind)}\n"
+        f"{_tool_lines(kind, pinned=bool(last_name))}\n"
         f"{_style_lines(use_bibles=use_bibles, kind=kind)}\n\n"
         f"{i2v_block}"
         f"{brief_block}"
@@ -390,6 +442,8 @@ def inspect_instruction_count(text: str) -> int | None:
     if j < 0 or j - i > 6:
         return None
     raw = text[i:j].strip()
+    if raw.lower() == "none":
+        return 0
     if not raw.isdigit():
         return None
     return int(raw)
@@ -463,6 +517,11 @@ def main() -> None:
     p.add_argument("--bible-style", action="store_true", help="Copy locked player Bibles as style / identity sheets")
     p.add_argument("--seed", type=Path, default=None, help="I2V first-frame PNG (required for --kind i2v)")
     p.add_argument("--prompt-file", type=Path, default=None, help="I2V prompt text (required for --kind i2v)")
+    p.add_argument("--last-frame", type=Path, default=None, help="I2V last-frame pin. Walk defaults this to the idle seed.")
+    p.add_argument("--ref", type=Path, action="append", default=[], help="I2V reference image (repeatable). Not a pinned frame.")
+    p.add_argument("--keyframe", action="append", default=[], help="I2V mid-clip pin as path@seconds (repeatable, up to 4).")
+    p.add_argument("--pin-ends", action="store_true", help="Pin last_frame to the seed even if the prompt is not the walk wrapper.")
+    p.add_argument("--no-pin-ends", action="store_true", help="Do not auto-pin a walk. One-shots stay on image_to_video.")
     p.add_argument("--skip-inspect", action="store_true", help="Skip the `grok inspect` isolation check.")
     p.add_argument(
         "--no-reuse",
@@ -473,9 +532,28 @@ def main() -> None:
 
     if args.max_turns < 1:
         _die("--max-turns must be >= 1")
+    keyframes: list[tuple[Path, float]] = []
     if args.kind == "i2v":
         if args.seed is None or args.prompt_file is None:
             _die("--kind i2v requires --seed and --prompt-file")
+        if args.pin_ends and args.no_pin_ends:
+            _die("pass only one of --pin-ends and --no-pin-ends")
+        if len(args.keyframe) > 4:
+            _die("--keyframe accepts at most 4 mid-clip pins")
+        for spec in args.keyframe:
+            keyframes.append(_parse_keyframe(spec))
+        if args.no_pin_ends:
+            pin_last = args.last_frame
+        elif args.last_frame is not None:
+            pin_last = args.last_frame
+        elif args.pin_ends or _walk_prompt(args.prompt_file):
+            pin_last = args.seed
+        else:
+            pin_last = None
+    else:
+        pin_last = None
+        if args.last_frame or args.ref or args.keyframe or args.pin_ends:
+            _die("--last-frame, --ref, --keyframe, and --pin-ends are i2v only")
     if args.job_file is not None and not args.job_file.is_file():
         _die(f"--job-file not found: {args.job_file}")
     if args.out is not None:
@@ -492,6 +570,10 @@ def main() -> None:
     if args.kind == "i2v":
         assert args.seed is not None and args.prompt_file is not None
         sources.append(args.seed)
+        if pin_last is not None and pin_last.resolve() != args.seed.resolve():
+            sources.append(pin_last)
+        sources.extend(args.ref)
+        sources.extend(path for path, _stamp in keyframes)
 
     ref_sources = [s for s in sources if s.suffix.lower() in RESULT_SUFFIXES]
     use_reuse = (not args.no_reuse) and bool(ref_sources)
@@ -542,6 +624,9 @@ def main() -> None:
         else:
             seed_name = args.seed.name if args.seed is not None else ""
             prompt_name = args.prompt_file.name if args.prompt_file is not None else ""
+            last_name = pin_last.name if pin_last is not None else ""
+            ref_names = [path.name for path in args.ref]
+            keyframe_names = [(path.name, stamp) for path, stamp in keyframes]
             write_job(
                 job_path,
                 build_job(
@@ -551,6 +636,9 @@ def main() -> None:
                     dest_name=dest_name,
                     seed_name=seed_name,
                     prompt_name=prompt_name,
+                    last_name=last_name,
+                    ref_names=ref_names,
+                    keyframes=keyframe_names,
                     ingested=ingested,
                 ),
             )

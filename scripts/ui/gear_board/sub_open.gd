@@ -20,6 +20,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.focus_mode = Control.FOCUS_NONE
 	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.08, 0.06, 0.05, 0.98), Color(0.9, 0.72, 0.32)))
+	ThemeS.BtnSkin.watch(panel, "panel")
 	ui.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
@@ -88,6 +89,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	back.custom_minimum_size = Vector2(0, 40)
 	back.focus_mode = Control.FOCUS_ALL
 	back.add_theme_font_size_override("font_size", 18)
+	ThemeS.BtnSkin.watch(back, "btn", ["secondary"])
 	back.pressed.connect(func(): load("res://scripts/ui/gear_board/board_sub.gd").close_sub(ui))
 	back.focus_entered.connect(func():
 		ui.inv_sel = "back"

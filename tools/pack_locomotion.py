@@ -14,7 +14,6 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import i2v_seeds  # noqa: E402
-import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 from imglib import geom, imgio, key as plate_key  # noqa: E402
 import agent_log  # noqa: E402
@@ -449,8 +448,7 @@ def finish_matte(im: Image.Image, rim: int, hue_width: float) -> Image.Image:
 
 
 def key_fit(im: Image.Image, rim: int = 2, rim_hue: float = 26.0) -> Image.Image:
-    remapped, _vis, _info = pr.remap(im.convert("RGBA"))
-    keyed = sp.key_to_alpha(remapped, spill_flood=False)
+    keyed = sp.key_to_alpha(im.convert("RGBA"))
     fitted = sp.fit_canvas(geom.shrink(keyed, KEYED_CAP), key=False)
     return finish_matte(fitted, rim, rim_hue)
 

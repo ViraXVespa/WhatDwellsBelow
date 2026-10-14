@@ -15,7 +15,6 @@ docs/archives/
 _logs/
 
 # Local scratch from asset processing
-_src
 _old/
 _atk_*.jpg
 _inspect_*.jpg
@@ -34,6 +33,7 @@ tools/__pycache__/
 Thumbs.db
 .DS_Store
 *.tmp
+*.bak
 godot-*.log
 godot-*.err
 _godot_*.log
@@ -46,3 +46,4 @@ tools/_scratch.py
 
 # Shot tooling hand-over folder (run_shot_flow.py --publish); Grok Build places files into assets/ when needed
 _out/
+tools/__scratch.py

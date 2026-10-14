@@ -6,6 +6,7 @@ extends Object
 
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/vendor_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(390, 110)
@@ -22,11 +23,7 @@ const NAME_H: float = 92.0
 static func spec() -> Dictionary:
 	var inner_x: float = POST_W + 108.0
 	var inner_w: float = FRAME_SIZE.x - POST_W * 2.0 - 216.0
-	return {
-		"mode": "vendor", "chrome": "stall_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"rows_pos": FRAME_POS + Vector2(inner_x, FRAME_SIZE.y - COUNTER_H + 36.0), "rows_size": Vector2(inner_w, COUNTER_H - 56.0),
-		"sep": 8, "blank_rows": false,
-	}
+	return FrameBase.make_spec("vendor", "stall_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, FRAME_POS + Vector2(inner_x, FRAME_SIZE.y - COUNTER_H + 36.0), Vector2(inner_w, COUNTER_H - 56.0), {"blank_rows": false})
 
 ## Skin hook: make the pieces and labels once.
 static func build(chrome: Control) -> void:
@@ -38,6 +35,10 @@ static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "stall_counter", Art.grain(160, 48, 0.12, 0))
 	UiBuild.piece(chrome, "stall_crate", Art.crate())
 	UiBuild.piece(chrome, "stall_pot", Art.pot())
+	Art.shelf(0.92, 2)
+	Art.shelf(0.98, 2)
+	Art.shelf(0.62, 4)
+	Art.shelf(0.5, 2)
 	for i: int in 7:
 		var kind: int = i % 3
 		var tex: Texture2D = Art.herb()
@@ -85,6 +86,12 @@ static func prepare(host: CanvasLayer) -> void:
 	host.status = chrome.get_node("stall_status") as Label
 	host.status.text = ""
 
+static func dress_shelf(button: Button) -> void:
+	UiBuild.button_base(button)
+	UiBuild.ink_text(button)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	UiBuild.states(button, _shelf(0.92, 2), _shelf(0.98, 2), _shelf(0.62, 4), _shelf(0.98, 2), _shelf(0.5, 2))
+
 static func dress(button: Button, primary: bool) -> void:
 	UiBuild.button_base(button)
 	var lift: float = 0.7 if primary else 0.86
@@ -101,3 +108,6 @@ static func refresh_bank(host: CanvasLayer) -> void:
 
 static func _plank(lift: float, foot: int) -> StyleBoxTexture:
 	return UiBuild.tex_box(Art.grain(96, 28, lift, foot), 8, 6, foot, true, 16, 8)
+
+static func _shelf(lift: float, foot: int) -> StyleBoxTexture:
+	return UiBuild.tex_box(Art.shelf(lift, foot), 8, 6, foot, false, 12, 6)

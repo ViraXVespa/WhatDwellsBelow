@@ -43,18 +43,41 @@ var _nx: float = 0.0
 var _nz: float = 1.0
 var _half: float = 512.0
 
+static var _sites_ref: Array = []
+
+## Only chunks whose torches are missing or stale get rebuilt; a new site plan rebuilds every live chunk.
 static func refill(host: Node, sites: Array, chunk: int) -> void:
 	if host.geo_root == null:
 		return
+	var fresh: bool = not is_same(sites, _sites_ref)
+	_sites_ref = sites
 	for job in host.geo_jobs:
 		if str(job.state) != "live":
 			continue
 		var root: Node = job.node
 		if root == null or not is_instance_valid(root):
 			continue
+		if not fresh and root.has_meta("torch_done"):
+			continue
 		var origin: Vector2i = Vector2i(job.origin)
 		_clear(root)
 		add_chunk(root, origin.x, origin.y, sites, chunk)
+		root.set_meta("torch_done", true)
+
+## Dungeon load: one torch near the player for two frames, under the loader, so the flame shader and bracket compile there.
+static func warm(host: Node) -> void:
+	var parent: Node3D = host.player as Node3D if host.get("player") != null else null
+	if parent == null:
+		return
+	var script: GDScript = load("res://scripts/graphics/torch_bill.gd") as GDScript
+	var node: Node3D = script.new() as Node3D
+	node.position = Vector3(0.0, 0.0, 0.6)
+	parent.add_child(node)
+	var tree: SceneTree = host.get_tree()
+	await tree.process_frame
+	await tree.process_frame
+	if is_instance_valid(node):
+		node.queue_free()
 
 static func add_chunk(root: Node, ox: int, oy: int, sites: Array, chunk: int) -> void:
 	var script: GDScript = load("res://scripts/graphics/torch_bill.gd") as GDScript

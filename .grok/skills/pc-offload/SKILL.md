@@ -39,13 +39,15 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
   single-quoted here-string piped to tools/doc_patch.py write FILE, then
-  tools/run_agent_py.py
+  tools/run_agent_py.py. A script this session or the next one will run again
+  is FILE under tools/ with a catalog row. run_agent_py.py deletes FILE when
+  it is under _logs/agent-py/
 - open tools/*.py to learn flags -> catalog row only
 - read the same job summary again this slice -> stop;
   one read via tools/read_summary.py --job <name> (index first, newest run;
   every run has its own stamped file, never open _logs files directly)
-- check_load_graph.py after every markdown edit -> only at ship,
-  or when routes or docs moved
+- a design doc, the agents file, or BOT.md edit -> python tools/check_load_graph.py
+  before the change is reported done. RESULT PASS is required. Do not defer it to ship
 - door or job routing by opening README / load-graph / memory topics ->
   tools/list_route.py --door <name> or --job door.job
 
@@ -57,7 +59,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
    runner yourself when it would help future tasks (design/tools.md rule 5)
    and tell the User afterward.
 5. Build slices: the first command is python tools/start_build_slice.py,
-   before any memory topic; it prints the slice rules (session facts, Q0,
+   before any file read or memory topic. Pass --job <door.job> or --door <name>, then run python tools/task.py show <id> and read that task file whole. It prints the slice rules (session facts, Q0,
    ledger, "Did not work:" from start_build_slice.py --failed, show_png.py for
    pictures she should see, handoff, commit_slice.py, merge-back) and the docs
    to read, the single source. A later
@@ -66,7 +68,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
    next unit's card, no new survey. A committed task resumes with
    start_build_slice.py --door D --from-task ID (task.py list). Only the User launches grok.
 
-Two compacts on the same slice: write the handoff (start_build_slice.py --handoff)
+Two compacts on the same slice: write the notes into the task file, commit, and push the branch, including live stills, so the next session can continue. She opens the next session. Then write the handoff (start_build_slice.py --handoff)
 and start a fresh session.
 
 Imagine-isolated and i2v-isolated must stay skipped.

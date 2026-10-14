@@ -6,6 +6,7 @@ extends Object
 
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/dumpster_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(460, 64)
@@ -38,10 +39,7 @@ const SLAT_POS: Vector2 = Vector2(548, 196)
 
 ## Skin hook: where the frame sits, which mode shows it, where the button row goes.
 static func spec() -> Dictionary:
-	return {
-		"mode": "flavor", "chrome": "dump_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"rows_pos": FRAME_POS + LEAVE_POS, "rows_size": LEAVE_SIZE, "sep": 0, "blank_rows": true,
-	}
+	return FrameBase.make_spec("flavor", "dump_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, FRAME_POS + LEAVE_POS, LEAVE_SIZE, {"sep": 0})
 
 ## Skin hook: make the pieces and labels once.
 static func build(chrome: Control) -> void:
@@ -56,6 +54,8 @@ static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "dump_body", Art.body())
 	UiBuild.piece(chrome, "dump_rim", Art.rim())
 	UiBuild.piece(chrome, "dump_label", Art.label())
+	Art.sticker(false)
+	Art.sticker(true)
 	chrome.add_child(UiBuild.chrome_label("dump_title", 28, ThemeS.INK, false))
 	chrome.add_child(UiBuild.chrome_label("dump_line", 22, ThemeS.INK_SOFT, true))
 
@@ -90,7 +90,7 @@ static func prepare(host: CanvasLayer, title: String, body: String) -> void:
 static func dress(button: Button) -> void:
 	UiBuild.button_base(button)
 	UiBuild.ink_text(button)
-	UiBuild.states(button, _flap(0.55, 2), _flap(0.72, 3), _flap(0.34, 4), _flap(0.64, 8), _flap(0.4, 1))
+	UiBuild.states(button, _sticker(false), _sticker(false), _sticker(true), _sticker(false), _sticker(false))
 
-static func _flap(lift: float, foot: int) -> StyleBoxTexture:
-	return UiBuild.tex_box(Art.flap(lift, foot), 16, 6, foot, false, 18, 6)
+static func _sticker(pressed: bool) -> StyleBoxTexture:
+	return UiBuild.tex_box(Art.sticker(pressed), 8, 6, 2, false, 16, 6)

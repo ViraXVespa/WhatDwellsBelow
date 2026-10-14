@@ -26,6 +26,8 @@ const ITEM_PATHS := {
 	"potion": DIR + "potion.png",
 	"food:ration": DIR + "ration.png",
 	"food:trail_bread": DIR + "trail_bread.png",
+	"food:stew": DIR + "stew.png",
+	"food:moldy_bread": DIR + "moldy_bread.png",
 }
 
 static var _cache: Dictionary = {}
@@ -40,6 +42,9 @@ static func tex_for_slot(slot: String, it: Dictionary) -> Texture2D:
 
 static func tex_for_item(it: Dictionary) -> Texture2D:
 	return _load_path(_item_path(it))
+
+static func tex_snack() -> Texture2D:
+	return _load_path(DIR + "snack.png")
 
 ## Button shows `tex` centered and scaled to the button.
 static func fit_btn(b: Button, tex: Texture2D) -> void:
@@ -106,6 +111,11 @@ static func _item_path(it: Dictionary) -> String:
 		return str(ITEM_PATHS.get("body", ""))
 	if slot == "legs" or kind == "legs":
 		return str(ITEM_PATHS.get("legs", ""))
+	if slot == "artifact" or kind == "artifact":
+		var art_id: String = str(it.get("id", ""))
+		if art_id == "":
+			return ""
+		return DIR + art_id + ".png"
 	return ""
 
 static func _weapon_key(it: Dictionary) -> String:
@@ -136,10 +146,20 @@ static func _food_key(it: Dictionary) -> String:
 		return "ration"
 	if f == "trail_bread" or f == "bread":
 		return "trail_bread"
+	if f == "stew":
+		return "stew"
+	if f == "moldy_bread" or f == "moldy":
+		return "moldy_bread"
 	var n: String = str(it.get("name", "")).to_lower()
+	if n.find("mold") >= 0:
+		return "moldy_bread"
+	if n.find("stew") >= 0:
+		return "stew"
 	if n.find("ration") >= 0:
 		return "ration"
-	return "trail_bread"
+	if n.find("bread") >= 0:
+		return "trail_bread"
+	return ""
 
 static func _load_path(path: String) -> Texture2D:
 	if path == "":

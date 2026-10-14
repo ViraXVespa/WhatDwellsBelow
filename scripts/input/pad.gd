@@ -69,9 +69,22 @@ static func wake_web(release_gui: bool = true) -> void:
 		})();
 	""", true)
 
+## First pad id and pad_down answers are cached for the current process + physics frame (pad state cannot change inside one).
+static var _id_key: Vector2i = Vector2i(-1, -1)
+static var _id_val: int = -1
+static var _down_key: Vector2i = Vector2i(-1, -1)
+static var _down: Dictionary = {}
+
+static func _frame_key() -> Vector2i:
+	return Vector2i(Engine.get_process_frames(), Engine.get_physics_frames())
+
 static func id() -> int:
-	var pads := Input.get_connected_joypads()
-	return pads[0] if not pads.is_empty() else -1
+	var k := _frame_key()
+	if k != _id_key:
+		_id_key = k
+		var pads := Input.get_connected_joypads()
+		_id_val = pads[0] if not pads.is_empty() else -1
+	return _id_val
 
 static func stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
 	var pid := id()
@@ -118,6 +131,17 @@ static func _raw_held(action: String) -> bool:
 
 ## True while any pad button or trigger bound to `action` (in the live InputMap) is down on the first pad.
 static func pad_down(action: String) -> bool:
+	var k := _frame_key()
+	if k != _down_key:
+		_down_key = k
+		_down.clear()
+	if _down.has(action):
+		return bool(_down[action])
+	var v := _pad_down(action)
+	_down[action] = v
+	return v
+
+static func _pad_down(action: String) -> bool:
 	var pid := id()
 	if pid < 0 or not InputMap.has_action(action):
 		return false

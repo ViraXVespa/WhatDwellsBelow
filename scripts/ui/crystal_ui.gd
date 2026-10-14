@@ -37,6 +37,7 @@ func begin(from: Node) -> void:
 	spot = from
 	host = from.get_tree().current_scene
 	add_to_group("crystal_ui")
+	set_meta("btn_skin", "crystal")
 	layer = 46
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	UiSession.open(self)

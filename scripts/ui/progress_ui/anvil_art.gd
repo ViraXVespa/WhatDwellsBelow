@@ -5,6 +5,7 @@ extends Object
 
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const ArtFill: GDScript = preload("res://scripts/ui/progress_ui/art_fill.gd")
 
 const IRON: Color = Color(0.50, 0.53, 0.58, 1)
 const IRON_DARK: Color = Color(0.22, 0.24, 0.28, 1)
@@ -13,10 +14,13 @@ const BARK: Color = Color(0.34, 0.20, 0.11, 1)
 const FACE: Color = Color(0.90, 0.80, 0.64, 1)
 const RING: Color = Color(0.78, 0.66, 0.48, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "anvil"
 static var _images: Dictionary = {}
 
 static func stump() -> Texture2D:
-	if _images.has("stump"):
+	if ArtBake.hit(_images, ART, "stump"):
 		return _images["stump"]
 	var w: int = 240
 	var h: int = 160
@@ -43,7 +47,7 @@ static func stump() -> Texture2D:
 	return UiBuild.keep(_images, "stump", img)
 
 static func shadow() -> Texture2D:
-	if _images.has("shadow"):
+	if ArtBake.hit(_images, ART, "shadow"):
 		return _images["shadow"]
 	var w: int = 64
 	var h: int = 16
@@ -60,7 +64,7 @@ static func shadow() -> Texture2D:
 
 ## Side-view anvil, matching the hub prop: horn to the right, flat face, hardy hole, waist, two feet. One mass.
 static func anvil() -> Texture2D:
-	if _images.has("anvil"):
+	if ArtBake.hit(_images, ART, "anvil"):
 		return _images["anvil"]
 	var w: int = 180
 	var h: int = 110
@@ -73,7 +77,7 @@ static func anvil() -> Texture2D:
 		Vector2i(92, 100), Vector2i(92, 86), Vector2i(56, 86), Vector2i(56, 100),
 		Vector2i(16, 100), Vector2i(16, 80), Vector2i(34, 74), Vector2i(46, 66), Vector2i(30, 56), Vector2i(14, 48),
 	]
-	_fill(img, pts, IRON)
+	ArtFill.poly(img, pts, IRON)
 	_lit_top(img)
 	for y: int in range(24, 31):
 		for x: int in range(34, 52):
@@ -85,41 +89,6 @@ static func anvil() -> Texture2D:
 				img.set_pixel(x, y, IRON_DARK)
 	_edge(img)
 	return UiBuild.keep(_images, "anvil", img)
-
-static func _fill(img: Image, pts: Array[Vector2i], col: Color) -> void:
-	var n: int = pts.size()
-	var miny: int = pts[0].y
-	var maxy: int = pts[0].y
-	for p: Vector2i in pts:
-		miny = mini(miny, p.y)
-		maxy = maxi(maxy, p.y)
-	var w: int = img.get_width()
-	for y: int in range(miny, maxy + 1):
-		var xs: Array[int] = []
-		for i: int in n:
-			var a: Vector2i = pts[i]
-			var b: Vector2i = pts[(i + 1) % n]
-			if a.y > b.y:
-				var swap: Vector2i = a
-				a = b
-				b = swap
-			if y < a.y or y >= b.y:
-				continue
-			var t: float = float(y - a.y) / float(b.y - a.y)
-			xs.append(int(round(float(a.x) + t * float(b.x - a.x))))
-		xs.sort()
-		var j: int = 0
-		while j + 1 < xs.size():
-			var x0: int = xs[j]
-			var x1: int = xs[j + 1]
-			if x0 > x1:
-				var tmp: int = x0
-				x0 = x1
-				x1 = tmp
-			for x: int in range(x0, x1):
-				if x >= 0 and x < w:
-					img.set_pixel(x, y, col)
-			j += 2
 
 static func _lit_top(img: Image) -> void:
 	var w: int = img.get_width()

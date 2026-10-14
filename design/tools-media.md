@@ -31,14 +31,20 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `pack_p4_enemies.py` | Pack Phase 4 enemy stills: magenta key, 128 canvas, 8-dir copies | D | `--help` | N |
 | `pack_turntable.py` | Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin | D | `--help` | N |
 | `pack_walk.py` | Extract, key, and pack walk-cycle frames from Imagine videos | D | `--help` | N |
-| `plate_remap.py` | Remap a generated chroma plate to exact #FF00FF, including edge bleed (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
+| `plate_remap.py` | Remap a generated chroma plate to exact #FF00FF. Solid plate near a border reference only; a farther mix keeps its drawn RGB (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
 | `process_enemies.py` | process_enemies.py | D | `--help` | N |
-| `process_gear_icons.py` | process_gear_icons.py | D | `--help` | N |
+| `process_gear_icons.py` | Key `_src/sources/assets/ui/gear` plates into `assets/ui/gear`. `--check` fails if an expected icon has no plate or live png. The batch gate runs `--check`. | D | `--help` | N |
+| `slice_shop_icons.py` | Slice the ghost-shop Imagine sheet into gear source plates and keyed 64px icons. Sheet: `_src/sources/assets/ui/shop-icons/shop_icons.png`. | D | `--help` | N |
 | `process_gloam.py` | Key Imagine stills into assets/3d for the Gloam 3D view | D | `--help` | N |
 | `process_session_sprites.py` | Key whatever-magenta Imagine stills and fit them into engine sprites | D | `--help` | N |
 | `process_sprites.py` | process_sprites.py | D | `--help` | N |
 | `process_world.py` | process_world.py | D | `--help` | N |
 | `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
+| `keytest.py` | Retired. `assets/keytest` is gone; source plates live under `_src`. Not in the batch gate. | BD | `--help` | N |
+| `keytest_expect.json` | Old expected numbers for `assets/keytest`. Kept beside the retired checker. | D | - | N |
+| `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
+| `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: approved rows reproduce live). Summary: `rekey-all-stills`. | D | `--help` | N |
+| `rekey_check.py` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
 | `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |
 | `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
@@ -46,11 +52,11 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 
 ### Image library `tools/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)
 
-Install: `pip install -r tools/requirements.txt` (Pillow, numpy; OpenCV optional, `IMGLIB_NO_CV2=1` forces the pure-python path). New image logic goes in the library and the tools import it; per-asset key rules, banner and glyph drawing and the one-off `process_*` passes stay in their tools. The pack_* / process_* passes import these helpers (`imgio.load`, `geom.flip`, `scale_nearest`, `shrink`, `fit_box`, `fit_axis`); an adopted helper ships with a before/after pixel diff of 0. Proof recipes: `prove.md`.
+Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all required). New image logic goes in the library and the tools import it; per-asset key rules, banner and glyph drawing and the one-off `process_*` passes stay in their tools. The pack_* / process_* passes import these helpers (`imgio.load`, `geom.flip`, `scale_nearest`, `shrink`, `fit_box`, `fit_axis`); an adopted helper ships with a before/after pixel diff of 0. Proof recipes: `prove.md`.
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `img_inspect.py` | Programmatic eyes, text facts plus optional PNG: `describe`, `layout` (off-screen, clipped, overlap, safe area, alignment, gaps; `--box` for node rects), `contrast` (WCAG per `--box`), `grid`, `zoom`, `diff` (heatmap, regions, `--mask`, `--max-ratio`), `montage`, `find` (template), `halo` (rim tint, leftover plate), `rimclean` (re-key a rim with `--refs`), `motion` (frame to frame), `selftest` | BWD | `--help` | Y |
+| `img_inspect.py` | Programmatic eyes, text facts plus optional PNG: `describe`, `layout` (off-screen, clipped, overlap, safe area, alignment, gaps; `--box` for node rects), `contrast` (WCAG per `--box`), `grid`, `zoom`, `diff` (heatmap, regions, `--mask`, `--max-ratio`), `montage`, `find` (template), `halo` (rim tint, leftover plate), `rimclean` (re-key a rim with `--refs`), `motion` (frame to frame), `selftest` | BWD | `--help` | N |
 | `requirements.txt` | Pip deps for the image tools | BWD | - | Y |
 
 | Module | Owns |
@@ -58,6 +64,7 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy; OpenCV optional
 | `imglib/imgio.py` | `load` / `save`, numpy round trip, `MAGENTA`, `hex_of` (named `imgio`, not `io`, to keep stdlib names free) |
 | `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis` (crop, then scale to a width or height) |
 | `imglib/color.py` | Lab distance, hue, `background_refs`, `palette`, WCAG `contrast_ratio` |
-| `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `chroma_alpha`, spill (hue band follows the key and the plate refs), `key_to_alpha` |
+| `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `strip_rim`; `key_to_alpha` / `punch` call `matte` |
+| `imglib/matte.py` | the staged keyer: chroma denoise, per-image plate, trimap (background / ring / glow / solid), unmix, edge despill; `key(im, debug=DIR)` dumps each stage |
 | `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
 | `imglib/look.py` | the `img_inspect.py` checks as functions |
