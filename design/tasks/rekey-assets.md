@@ -10,10 +10,9 @@ door: art_pipeline
 job: art_pipeline.pack
 units:
 done:
-needs-local: _src
 resume: python tools/open_slice.py art_pipeline.pack --task rekey-assets
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --job art_pipeline.pack --from-task rekey-assets
-The survey is done. The answers below stand. Ask again only what Open questions lists, or what a discovery changes. `_src` is a link to the main checkout's source plates: read it only. Never edit, move, or delete anything in it.
+Your first command, before any file read or memory topic: python tools/start_build_slice.py --job art_pipeline.pack --from-task rekey-assets, then python tools/task.py show rekey-assets
+The survey is done. The answers below stand. Ask again only what Open questions lists, or what a discovery changes.
 
 ## Task (her words)
 Color-to-alpha is not doing its job. The purple on the shopkeep and the wisp is blue glow and a translucent outer layer mixed with the plate. The arrow has translucent shading. The same glow made the hp orb border. Leave that shading in the art and turn it to alpha. Sample the strong black, white, and blue border pixels as the comparison base, and keep those border pixels distinct from the subject.

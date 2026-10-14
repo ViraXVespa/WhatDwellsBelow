@@ -72,7 +72,7 @@ def _git(root: Path, *a: str) -> str:
 
 def skeleton(root: Path, area: str, door: str, job: str, session: str = "", units: list[str] | None = None, done: list[str] | None = None, task: str = "") -> str:
     path = handoff_path(root, task)
-    first = f'python tools/start_build_slice.py --door {door or "<door>"}' + (f" --job {job}" if job else "") + f' --from-handoff "{path}"'
+    first = f'python tools/start_build_slice.py --door {door or "<door>"}' + (f" --job {job}" if job else "") + f' --from-handoff "{path}", then python tools/task.py show {path.stem}'
     head = [f"# Handoff: {area}", f"id: {path.stem}", "owner: build", "status: active", "done-when: <fill: when this task is finished, in her words>",
             f"area: {area}", f"door: {door}", f"job: {job}"]
     if units:  # a door worked as a queue of units: the order and what is done travel with the handoff

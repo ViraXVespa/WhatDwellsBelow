@@ -22,7 +22,6 @@ KEYS = ("id", "title", "owner", "status", "done-when", "resume", "needs", "needs
 ID_RE = re.compile(r"[a-z0-9][a-z0-9-]*$")
 FIRST_RE = re.compile(r"Your first command[^:]*:\s*(.+)$")
 FILL = "<fill"
-LOCAL = ("_src",)  # main-checkout-only (gitignored) folders open_slice.py may link into a worktree
 OPT_FLOOR = 4  # the old grok-bot-opt.md queue ended at opt-004; opt ids are never reused
 
 
@@ -157,9 +156,8 @@ def fails(root: Path) -> list[str]:
         for n in needs:
             if n not in tasks:
                 out.append(f"{where}: needs {n}, which is not an open task")
-        for loc in split(t.get("needs-local", "")):
-            if loc not in LOCAL:
-                out.append(f"{where}: needs-local {loc} is not one of {', '.join(LOCAL)}")
+        if split(t.get("needs-local", "")):
+            out.append(f"{where}: needs-local is retired. _src is in the repo, so a worktree already has it. Remove the line.")
         if t.get("status") == "blocked" and not needs:
             out.append(f"{where}: blocked with no `needs:` (name what it waits on, or make it open)")
     p = d / README

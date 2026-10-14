@@ -14,11 +14,11 @@ fork-from-ingest is the same token win). `--no-reuse` keeps the old one-shot tem
 
 Kinds (bundled specialist + Imagine tool):
 
-  tile       game-asset-core + game-tilesets + imagine     image_gen / style-only image_edit
-  character  game-asset-core + game-character-consistency  image_gen (new Bible) / image_edit (after lock)
-  i2v        game-asset-core + game-animation-frames       image_to_video from staged seed
-  ui         game-asset-core + game-ui-icons + imagine     image_gen / image_edit
-  still      game-asset-core + imagine                     image_gen fallback
+  tile       imagine + game-assets (tilesets.md)          image_gen / style-only image_edit
+  character  imagine + game-assets (characters.md)         image_gen (new Bible) / image_edit (after lock)
+  i2v        imagine + game-assets (animation.md)          image_to_video from staged seed
+  ui         imagine + game-assets (ui-icons.md)           image_gen / image_edit
+  still      imagine + game-assets (assets.md)             image_gen fallback; do not read animation.md
 
   python tools/run_isolated_grok.py --kind tile --dry-run --bible-style --keep
   python tools/run_isolated_grok.py --kind tile --bible-style --out /path/out
@@ -60,27 +60,35 @@ DEFAULT_DEST = {
     "still": "still.png",
 }
 
+REFERENCE = {
+    "tile": "tilesets.md",
+    "character": "characters.md",
+    "i2v": "animation.md",
+    "ui": "ui-icons.md",
+    "still": "assets.md",
+}
+SKILLS = "`imagine` and `game-assets`"
 STACK = {
     "tile": (
-        "`imagine`, `game-asset-core`, and `game-tilesets`",
+        SKILLS,
         "One tileable world texture. One `image_gen` call, then copy the file into this directory.",
     ),
     "character": (
-        "`imagine`, `game-asset-core`, and `game-character-consistency`",
+        SKILLS,
         "One character / overlay still. New Bible: one `image_gen`. After lock: one `image_edit` from the staged base. "
         "Then copy the file into this directory.",
     ),
     "i2v": (
-        "`imagine`, `game-asset-core`, and `game-animation-frames`",
+        SKILLS,
         "One Image-to-Video unit from the staged seed and prompt. Then copy the clip into this directory. "
         "Do not harvest or pack frames.",
     ),
     "ui": (
-        "`imagine`, `game-asset-core`, and `game-ui-icons`",
+        SKILLS,
         "One UI / HUD / icon still. No text in the art. One media call, then copy the file into this directory.",
     ),
     "still": (
-        "`imagine` and `game-asset-core`",
+        SKILLS,
         "One still. One media call, then copy the file into this directory.",
     ),
 }
@@ -178,7 +186,7 @@ def _tool_lines(kind: str, *, pinned: bool = False) -> str:
             "Tools:\n"
             "- `image_gen` once.\n"
             "- Do not call `image_edit` or `image_to_video`.\n"
-            "- Do not open skill files, list the directory, or run a 2x2 / 4x4 composite. The parent does that.\n"
+            "- Do not open any other `game-assets` reference, list the directory, or run a 2x2 / 4x4 composite. The parent does that.\n"
         )
     return (
         "Tools:\n"
@@ -213,6 +221,8 @@ def build_job(
     ingested: bool = False,
 ) -> str:
     skills, specialist = STACK[kind]
+    ref = REFERENCE[kind]
+    still_note = " Do not read `animation.md`." if kind == "still" else ""
     body = brief.strip() if brief.strip() else DEFAULT_BRIEF[kind]
     brief_block = f"Brief:\n{body}\n\n" if body else ""
     i2v_block = ""
@@ -232,7 +242,7 @@ def build_job(
             f"Prompt (use verbatim): `{prompt_name}`\n\n"
         )
     already = (
-        "Reference files are already in this conversation. Do not read them again.\n\n"
+        "Staged images are already in this conversation. Do not read those images again.\n\n"
         if ingested
         else ""
     )
@@ -240,8 +250,8 @@ def build_job(
         f"# Isolated {kind} job\n\n"
         "You are in a scratch directory on purpose. There is no game `AGENTS.md` here.\n\n"
         f"{already}"
-        f"Bundled skills that may auto-apply: {skills}. Do not open those skill files. "
-        "Do not load any other game-asset specialist.\n\n"
+        f"Bundled skills for this job: {skills}. Read `{ref}` only.{still_note} "
+        "Do not open the other `game-assets` references.\n\n"
         f"{specialist}\n\n"
         f"{_tool_lines(kind, pinned=bool(last_name))}\n"
         f"{_style_lines(use_bibles=use_bibles, kind=kind)}\n\n"
