@@ -46,17 +46,22 @@ def flow_key(path: Path) -> str | None:
     return path.parts[i + 1]
 
 def open_files(paths: list[Path], native: bool | None = None) -> int:
-    """Open the first file only. Returns how many were opened (0 when there is no viewer)."""
+    """Open the first file in Photos via the ms-photos URI.
+    Gives the app proper folder context so navigation/scrolling works.
+    """
     if native is None:
         native = os.name == "nt"
     if not native or not paths:
         return 0
+    target = paths[0].resolve()
+    # ms-photos URI (works even with spaces; no percent-encoding needed on recent Photos)
+    uri = f"ms-photos:viewer?fileName={target}"
     try:
-        os.startfile(str(paths[0]))  # type: ignore[attr-defined]
-        time.sleep(0.4)
+        subprocess.run(["cmd", "/c", "start", "", uri], check=False, shell=False)
+        time.sleep(0.6)
         return 1
-    except (OSError, AttributeError):
-        print(f"WARN: could not open {paths[0]}")
+    except (OSError, FileNotFoundError):
+        print(f"WARN: could not open {target} in Photos")
         return 0
 
 def parse_groups(groups: list[list[str]], bare: list[str]) -> list[tuple[str, list[tuple[str, str]]]]:
