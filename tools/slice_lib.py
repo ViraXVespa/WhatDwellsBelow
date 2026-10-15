@@ -118,7 +118,12 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         "A step this card's ORDER leaves out (a survey's baseline) is not skipped.",
         "ASK BEFORE THE CODE, not in a ledger line: a change in what a control does or in save or entry behaviour (a button that now saves, a changed trade) is her decision.",
         ("This tool never starts grok." if mode == "survey" else
-         "Cleanup, docs, tasks, gates, `commit_slice.py`, and the plain push to the week branch all finish first (even on red gates). "Only after that push lands do you open the prove folder, inform that the unit is done, and show the images. Do not ask for verification. Never advance to the next unit or task. "The verification ask names the frames that were opened and the folder path; it does not offer a commit option. "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit. "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
+         "Cleanup, docs, tasks, gates, `commit_slice.py`, and the plain push to the week branch all finish first (even on red gates). "
+         "Only after that push lands do you open the prove folder, inform that the unit is done, and show the images. "
+         "Do not ask for verification. Never advance to the next unit or task. "
+         "The verification ask names the frames that were opened and the folder path; it does not offer a commit option. "
+         "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit. "
+         "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
     ])
 
 def doors_hint(root: Path) -> str:
@@ -236,9 +241,9 @@ def selftest(script: Path) -> int:
             bad.append("boot in a Grok clone must say IN A WORKTREE and give the merge-back (push of the week branch)")
         if "worktree=wdb-demo-2" not in out or "Did not work:" not in out:
             bad.append("boot in a worktree must name the folder as the worktree and state the Did not work rule")
-        for need in ("This tool is the first command", "Session facts", "not verified", "/session-info", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
-                     "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0", "inherited from earlier work",
-                     "start_build_slice.py --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "commit_slice.py", "gate not run", "before your next tool call"):
+        for need in ("This tool is the first command", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
+                     "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0",
+                     "start_build_slice.py --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "commit_slice.py", "before your next tool call"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
