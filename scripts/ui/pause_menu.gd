@@ -12,16 +12,19 @@ const UiSession := preload("res://scripts/ui/ui_session.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const Flow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
+const QuestPage := preload("res://scripts/ui/pause_menu/quest_page.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 
 const TAB_SETTINGS := "settings"
 const TAB_INV := "inventory"
+const TAB_QUEST := "quest"
 const TAB_SKILLS := "skills"
 ## Tabs in order, by id: [id, label, page builder on this host]. A new tab is one row here (the shot flows and
 ## smokes name tabs by id, so a row inserted in the middle moves nothing else).
 const TABS: Array = [
 	[TAB_SETTINGS, "Settings", "_system"],
 	[TAB_INV, "Inventory", "_inv"],
+	[TAB_QUEST, "Quest", "_quest"],
 	[TAB_SKILLS, "Skills", "_skills"],
 ]
 
@@ -119,6 +122,9 @@ func _inv() -> void:
 
 func _inv_find_sel() -> Control:
 	return InvView.find_sel(self)
+
+func _quest() -> void:
+	QuestPage.build(self)
 
 func _skills() -> void:
 	PauseSkills.build(self)

@@ -9,6 +9,7 @@ const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Flow := preload("res://scripts/ui/progress_ui/ui_flow.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
 
 var open := false
@@ -56,6 +57,11 @@ var gear_stats_title: Label
 var gear_hint: Control
 var gear_page_left: Control
 var gear_page_right: Control
+var tip_host: PanelContainer
+var tip_lab: Label
+var tip_id: String = ""
+var tip_kind: String = ""
+var tip_from: Control = null
 
 var _skin_mode: String = "<unset>"
 var _skin_name: String = ""
@@ -113,6 +119,7 @@ func _clear() -> void:
 	WipeChildren.wipe(box)
 	focus_btn = null
 	status = null
+	TipHover.hide(self)
 	gear_tip = null
 	gear_stats = null
 	gear_stats_title = null
@@ -121,6 +128,9 @@ func _clear() -> void:
 
 func _st(msg: String) -> void:
 	UiSession.status(self, msg)
+
+func _blur_tip() -> void:
+	TipHover.blur(self, "quest_poster")
 
 func open_inventory() -> void:
 	mode = "inv"

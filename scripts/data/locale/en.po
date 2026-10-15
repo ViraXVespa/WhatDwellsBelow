@@ -1433,6 +1433,21 @@ msgstr "A curious relic."
 msgid "progress_make.trail_bread"
 msgstr "Trail Bread"
 
+msgid "quest_board.seal_fetch"
+msgstr "Cache"
+
+msgid "quest_board.seal_kill"
+msgstr "Foe"
+
+msgid "quest_board.seal_named"
+msgstr "Named"
+
+msgid "quest_board.seal_ore"
+msgstr "Ore"
+
+msgid "quest_board.tip"
+msgstr "%s\nReward: %s\n%d/%d"
+
 msgid "quest_prog.quest_complete_g_banked"
 msgstr "Quest complete — %dg banked."
 
@@ -1441,6 +1456,15 @@ msgstr "Quest complete — gear mailed to stash."
 
 msgid "quest_prog.quest_complete_xp"
 msgstr "Quest complete — %s / %s XP."
+
+msgid "quest_tab.none"
+msgstr "No guild task taken."
+
+msgid "quest_tab.progress"
+msgstr "Progress: %d / %d"
+
+msgid "quest_tab.reward"
+msgstr "Reward: %s"
 
 msgid "quest_roll.abandoned"
 msgstr "Abandoned."

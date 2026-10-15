@@ -42,6 +42,8 @@ static func begin_run(host: Node) -> void:
 	host.shop_spent = 0
 	host.ui_open = false
 	host.prog.begin_run_loadout()
+	if not host.prog.quest_active.is_empty():
+		host.prog.quest_delved = true
 	host.weapon = str(host.prog.slots.weapon.get("weapon", "great_axe")) if not host.prog.slots.weapon.is_empty() else "great_axe"
 	if host.playtest == null or not bool(host.playtest.get("live_running")):
 		host.tel.reset("human", false)

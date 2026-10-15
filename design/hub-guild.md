@@ -9,8 +9,8 @@ Read when: receptionist bust, notice errands, welcome cloth
 - Receptionist is a bust clipped into the painted window of `guild_reception.png` (not standing on the dirt in front of the building). Feet discard below UV.y 0.50 so they stay behind the sill.
 - Notice board sits on `Layout/Spots/Board` (default to the right of the combined guild).
 - Quest access via the Notice Board: `scripts/world/interact/interact_act.gd` (`quest_board` → `open_quest()` in `scripts/ui/progress_ui.gd`, built by `ui_hub.gd rebuild_quest`). The receptionist has her own entry (`receptionist` → `open_receptionist()`, `ui_hub.gd rebuild_receptionist`); it still shows the quest list until `ui-receptionist-tutorial` replaces it. Quest offers (kinds, rewards): `scripts/data/progress_quest/quest_roll.gd`. Prompt/title text: `interact_prompt.gd`; sprite/clerk look: `interact_fx.gd`; placement: `camp.gd` (`reception_pos`).
-- Offers 3 random quests; one active at a time.
-- Quests re-generated after each delve (active unfinished quest preserved).
+- Offers 3 random quests; one active at a time. Taking one lifts that poster off the board into the pause Quest tab.
+- After complete or cancel: three new offers if the player has entered the dungeon since accepting. Cancel before a delve restores the same three. A return with the task still active leaves the remaining posters. Unaccepted offers still refresh when the player comes back from a delve.
 - Quest types: defeat enemies, extract ore, retrieve item, vanquish named enemy (locks enemy spawn).
 - Rewards: XP, unowned gear, gold, items.
 

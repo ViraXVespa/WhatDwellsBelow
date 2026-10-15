@@ -23,10 +23,10 @@ Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, t
 
 ## Quest UI
 
-- Accessible from the guild in Placeholdia.
-- Displays three random quests.
-- Clear accept / decline flow.
-- Active quest status visible where appropriate.
+- Accessible from the guild notice board in Placeholdia.
+- The board shows flavor posters plus three offer posters. Accept lifts the chosen poster into the pause Quest tab.
+- Cancel before a delve restores the same three offers. Complete, or cancel after a delve, rolls three new ones.
+- Active quest status is on the Quest tab.
 
 ## Back layers (multi-level menus)
 

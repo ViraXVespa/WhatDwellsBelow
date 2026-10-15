@@ -187,7 +187,7 @@ static func _paint_page(host: CanvasLayer) -> void:
 			var share: float = Journal.EVEN_LEFT
 			if host.tab == host.TAB_SETTINGS:
 				share = Journal.SETTINGS_LEFT
-			elif host.tab != host.TAB_INV:
+			elif host.tab != host.TAB_INV and host.tab != host.TAB_QUEST:
 				share = Journal.SKILLS_LEFT
 			page.call("set_layout", Journal.KIND_TWO, share)
 	var edge: Node = host.get_node_or_null("menu_edge")

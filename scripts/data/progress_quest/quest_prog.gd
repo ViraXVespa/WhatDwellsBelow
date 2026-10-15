@@ -42,9 +42,15 @@ static func try_complete(p: Object) -> void:
 	else:
 		App.bank_gold += int(App.bal.quest_gold)
 		App.toast(App.tr("quest_prog.quest_complete_g_banked") % int(App.bal.quest_gold))
+	var restore: bool = not bool(p.quest_delved) and p.quest_pinned.size() > 0
+	var pinned: Array = p.quest_pinned.duplicate(true)
 	p.quest_active = {}
 	App.quest_named_type = ""
 	App.quest_named_name = ""
+	p.quest_pinned = []
+	if restore:
+		p.quests_offered = pinned
+		p.quest_delved = false
 
 static func unowned_gear(p: Object) -> Dictionary:
 	for s: String in Affix.ARMOR_SLOTS:

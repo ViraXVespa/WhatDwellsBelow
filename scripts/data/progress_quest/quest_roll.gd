@@ -3,6 +3,8 @@ extends Object
 ## Quest board offer roll / accept / abandon.
 
 static func roll_quests(p: Object, keep_active: bool) -> void:
+	if keep_active and not p.quest_active.is_empty() and int(p.quest_active.get("have", 0)) < int(p.quest_active.get("need", 1)):
+		return
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.randomize()
 	var types: PackedStringArray = PackedStringArray(["slime", "goblin", "bat", "spider", "archer", "orc", "wolf"])
@@ -34,13 +36,18 @@ static func roll_quests(p: Object, keep_active: bool) -> void:
 		p.quest_active = {}
 		App.quest_named_type = ""
 		App.quest_named_name = ""
+	p.quest_pinned = []
+	p.quest_delved = false
 
 static func accept_quest(p: Object, i: int) -> String:
 	if i < 0 or i >= p.quests_offered.size():
 		return App.tr("quest_roll.none")
 	if not p.quest_active.is_empty() and int(p.quest_active.get("have", 0)) < int(p.quest_active.get("need", 1)):
 		return App.tr("quest_roll.finish_or_abandon_the_current")
+	p.quest_pinned = p.quests_offered.duplicate(true)
+	p.quest_delved = false
 	p.quest_active = p.quests_offered[i].duplicate(true)
+	p.quests_offered.remove_at(i)
 	if str(p.quest_active.kind) == "named":
 		if str(p.quest_active.get("nname", "")) == "":
 			p.quest_active.nname = "Gra" + ["tok", "nash", "rath"][randi() % 3]
@@ -56,8 +63,16 @@ static func accept_quest(p: Object, i: int) -> String:
 static func abandon_quest(p: Object) -> String:
 	if p.quest_active.is_empty():
 		return App.tr("quest_roll.no_task")
+	var delved: bool = bool(p.quest_delved)
+	var pinned: Array = p.quest_pinned.duplicate(true)
 	p.quest_active = {}
 	App.quest_named_type = ""
 	App.quest_named_name = ""
+	p.quest_delved = false
+	p.quest_pinned = []
+	if not delved and pinned.size() > 0:
+		p.quests_offered = pinned
+	else:
+		roll_quests(p, true)
 	App.toast(App.tr("quest_roll.task_abandoned"))
 	return App.tr("quest_roll.abandoned")

@@ -10,6 +10,7 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
+const ScrollBox: GDScript = preload("res://scripts/ui/scroll_box.gd")
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 
 static func _ready(host: CanvasLayer) -> void:
@@ -27,6 +28,7 @@ static func _ready(host: CanvasLayer) -> void:
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.add_theme_constant_override("separation", 8)
 	scroll.add_child(host.box)
+	ScrollBox.make_tip(host)
 
 static func close_ui(host: CanvasLayer) -> void:
 	if host.mode == "extract" and host.extract_mailed and host.extract_spot and is_instance_valid(host.extract_spot) and host.extract_spot.has_method("mark_spent"):
