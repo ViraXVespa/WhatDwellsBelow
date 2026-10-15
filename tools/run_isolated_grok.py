@@ -700,8 +700,9 @@ def main() -> None:
         )
         child = run_cmd(argv, cwd=scratch, dry_run=args.dry_run)
         if child is not None:
-            sys.stdout.write(child.stdout or "")
-            if child.stderr:
+            # Parent only needs dest status; the full child transcript is noise.
+            # Keep stderr on failure. Do not dump the child's reasoning or tool calls.
+            if child.returncode != 0 and child.stderr:
                 sys.stderr.write(child.stderr)
             child_code = int(child.returncode)
 

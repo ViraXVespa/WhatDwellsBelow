@@ -66,7 +66,7 @@ def cmd_row(root: Path, args) -> int:
     for r in hits:
         lines += [f"system={r.system}", f"live={r.live}", ""]
     return agent_log.finish("code-map-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo="\n".join(x for x in lines[3:] if x.strip()) if hits else f"matches={len(hits)}", matches=len(hits))
+                            echo="\n".join(x for x in lines[3:] if x.strip()) if hits else f"matches={len(hits)} NO_ROW (run code_map.py check or patch --system S --add PATH)", matches=len(hits))
 
 def _parse_rename(raw: str) -> tuple[str, str] | None:
     old, _, new = raw.partition("=")
