@@ -3,7 +3,7 @@
 id: hub-perf-fix
 owner: build
 status: open
-done-when: The hub-bench walker reports 99 % of frames at or above 60 FPS (threshold 1×) across a full ~60 s run, with the causes of the previous sub-60 frames fixed and the hitch log clean of recurring major hits. Design docs and code-map updated if ownership or tunables changed.
+done-when: The hub-bench walker reports 99 % of frames at or above 60 FPS (threshold 1×) across two full ~30 s runs, with the causes of the previous sub-60 frames fixed and the hitch log clean of recurring major hits. Design docs and code-map updated if ownership or tunables changed.
 resume: python tools/open_slice.py debug --task hub-perf-fix
 area: debug
 door: debug
@@ -12,7 +12,8 @@ units:
 needs: none
 
 ## Intent
-Use the hitch JSONL and mark() tags produced by the hub-bench task to find why frames drop under 60 FPS in Placeholdia, fix them, and confirm the bench stays at or above the 99 % / 60 FPS bar.
+First, update the procedures of the new hub hitch test to be two 30s tests, one in the desktop build and one in a local web export build, instead of a single desktop build test.
+Then, use the hitch JSONL and mark() tags produced by the hub-bench task to find why frames drop under 60 FPS in Placeholdia, fix them, and confirm the bench stays at or above the 99 % / 60 FPS bar.
 
 ## Starting point
 Display run, not headless. `run_hub_bench.py` opened a gl_compatibility window, turned vsync off, set zoom to 1.0 (code default was 1.75), and used an empty `_logs/hub-bench-fresh` AppData (`HB: fresh=1`). Real save was not read. 58 s, 16 hitches at 1× (16.7 ms), worst 150 ms. Log: `_logs/hub-bench-fresh/Godot/app_userdata/What Dwells Below/hitch/hitch.jsonl`.
@@ -32,6 +33,3 @@ The walk held the line after the opens. Rows at or over 20 ms:
 `proc_ms` on the menu rows is several times `dt_ms`. Do not treat that monitor as the frame cost while a menu has paused the tree. `dt_ms` is the frame.
 
 Steady walk cycles did not recur as hitches. One loop row, 17 ms, loop_up_right.
-
-## Out of scope
-New features. Only the performance issues the bench surfaces.
