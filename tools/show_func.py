@@ -13,7 +13,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import gd_lib
 
-MAX_LINES = 80
+MAX_LINES = 20
 
 def py_span(lines: list[str], name: str) -> tuple[int, int] | None:
     """[start, end) of a column-0 Python def, up to the next column-0 def or class."""
