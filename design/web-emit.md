@@ -62,6 +62,16 @@ Any slice that creates or edits a `.py` file must prove those files in the same 
 Web writes a Build brief only when the User asks for one, and only for work Web cannot do itself: a large new system, video assets, tiled assets, or anything else Build must tackle. All other work stays on the web route: the scratch script (`doc_patch`, tool and recipe changes) and the Bot work queues. A prompt for Grok Build is a sealed brief, not a session export. Only: named job, writer door, in-scope paths, out-of-scope one-liners, prove runner. Do not pack web protocol, park theory, hitch hypotheses, or "while you are in there." Do not echo the gather report into the brief. If a sentence would make Build invent a step the named job and door would not already require, delete it. If the brief needs a second page, it is two jobs.
 
 ## Scratch helpers
+## Prove runner (web)
+
+The scratch must call the matching prove runner (`dp.run_checker`, `dp.dump_job`, etc.) and base the RESULT line solely on the integer it returns.
+Do not print `RESULT checker=PASS` (or any RESULT) until the runner has returned.
+Do not hard-code PASS. Do not claim a checker ran if the call is absent from the scratch.
+## Task creation (web)
+
+Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/task.py`.
+Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file.
+Extra header fields that `task.py new` does not emit (area, door, job, units, done) may be added afterward with `ensure_line`.
 
 Tool catalog (what each runner is, which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.

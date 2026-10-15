@@ -50,6 +50,7 @@ skills:
   shot_tool: .grok/skills/shot-tool/SKILL.md
   list_xref: .grok/skills/list-xref/SKILL.md
   show_func: .grok/skills/show-func/SKILL.md
+  review_shots_isolated: .grok/skills/review-shots-isolated/SKILL.md
 
 gates:
   tunables:
