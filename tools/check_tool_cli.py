@@ -226,7 +226,9 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         return
     if proc.returncode == 2 and "error:" in err:
         pass  # clean failure with a message
-    elif stem not in SMOKE_NO_RESULT and not last.startswith("RESULT ") and not last.startswith("{"):
+    elif stem not in SMOKE_NO_RESULT and proc.returncode != 0 and not last.startswith("RESULT ") and not last.startswith("{"):
+        # RESULT is required on stdout only when the run failed (exit != 0).
+        # On success an echo may already carry the useful lines, and finish() omits the RESULT line.
         bad.append(f"RESULT  {label}: last line is not RESULT")
     if lines > SMOKE_LINES.get(stem, SMOKE_MAX_LINES) and "--json" not in args:
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
