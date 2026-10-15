@@ -64,7 +64,8 @@ static func make_sprite(_host: CharacterBody3D, prio: int) -> Sprite3D:
 static func add_body_shape(host: CharacterBody3D) -> void:
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = T.PLAYER_BODY
+	var h := T.PLAYER_H
+	sh.size = Vector3(T.PLAYER_BODY.x, h, T.PLAYER_BODY.z)
 	cs.shape = sh
-	cs.position = Vector3(0.0, T.PLAYER_BODY.y * 0.5, 0.08)
+	cs.position = Vector3(0.0, h * 0.5 + T.FEET_LIFT, 0.08)
 	host.add_child(cs)

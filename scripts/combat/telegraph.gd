@@ -22,18 +22,22 @@ func set_color(c: Color) -> void:
 func show_arc(origin: Vector3, dir: Vector2, dist: float, arc_deg: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
 	set_color(col)
+	var old: Mesh = mesh_i.mesh
 	mesh_i.mesh = _fan(dir, dist, arc_deg, 14)
+	if old != null and old != mesh_i.mesh and is_instance_valid(old):
+		old.unreference()
 	visible = true
-
 func show_circle(origin: Vector3, radius: float, col: Color) -> void:
 	show_arc(origin, Vector2.DOWN, radius, 360.0, col)
 
 func show_line(origin: Vector3, dir: Vector2, dist: float, width: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
 	set_color(col)
+	var old: Mesh = mesh_i.mesh
 	mesh_i.mesh = _strip(dir, dist, width)
+	if old != null and old != mesh_i.mesh and is_instance_valid(old):
+		old.unreference()
 	visible = true
-
 func show_spread(origin: Vector3, dir: Vector2, dist: float, cone_deg: float, count: int, width: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
 	set_color(col)
@@ -49,9 +53,11 @@ func show_spread(origin: Vector3, dir: Vector2, dist: float, cone_deg: float, co
 		var d := Vector2(cos(a), sin(a))
 		_strip_into(st, d, dist, width)
 	st.set_material(mat)
+	var old: Mesh = mesh_i.mesh
 	mesh_i.mesh = st.commit()
+	if old != null and old != mesh_i.mesh and is_instance_valid(old):
+		old.unreference()
 	visible = true
-
 func hide_now() -> void:
 	visible = false
 

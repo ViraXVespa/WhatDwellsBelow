@@ -108,13 +108,15 @@ func _aim(cell: Vector2i) -> void:
 		y = clampi(cell.y - int(view / 2.0), 0, h - view)
 	var rw: int = mini(view, w)
 	var rh: int = mini(view, h)
+	var old: Texture2D = map_rect.texture
 	var atlas := AtlasTexture.new()
 	atlas.atlas = host.map_tex
 	atlas.region = Rect2(x, y, rw, rh)
 	atlas.filter_clip = true
 	map_rect.texture = atlas
+	if old != null and old != atlas and is_instance_valid(old):
+		old.unreference()
 	Util.place_mark(self, cell, x, y, rw, rh)
-
 func _pick_local(cell: Vector2i) -> void:
 	if spot and Vector2i(spot.get("crystal_cell")) == cell:
 		return

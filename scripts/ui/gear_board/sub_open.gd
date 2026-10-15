@@ -142,8 +142,10 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	if not bool(ui.get("gear_sub")):
 		return
 	if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui):
-		load("res://scripts/ui/gear_board/board_sub.gd")._anvil().analyze(ui, slot, row)
-		load("res://scripts/ui/gear_board/board_sub.gd").close_sub(ui)
+		var Anvil = load("res://scripts/ui/gear_board/board_sub.gd")._anvil()
+		Anvil.analyze(ui, slot, row)
+		if ui.status:
+			ui.status.text = App.tr("common.analyzed") if App.tr("common.analyzed") != "common.analyzed" else "Analyzed"
 		return
 	var it: Dictionary = {}
 	if row.get("it") is Dictionary:
@@ -161,7 +163,6 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	Board.clear_sub(ui)
 	Act.swallow_cancel()
 	load("res://scripts/ui/gear_board/board_sub.gd")._after_sub(ui, "slot:" + slot, true)
-
 static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	var Act = load("res://scripts/ui/gear_board/board_sub.gd")._act()
 	if it.is_empty():

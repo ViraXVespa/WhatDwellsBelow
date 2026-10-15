@@ -78,6 +78,10 @@ static func drop_sub(ui: CanvasLayer) -> void:
 	Board.hide_tip(ui)
 
 static func set_tab(ui: CanvasLayer, t: String) -> void:
+	if ui.forge_t > 0.0 or ui.forge_phase == "work":
+		var ForgeUI := load("res://scripts/ui/gear_board/anvil_forge.gd")
+		if ForgeUI.has_method("cancel_job"):
+			ForgeUI.cancel_job(ui)
 	ui.anvil_tab = t
 	ui.anvil_item = {}
 	ui.anvil_src = ""
@@ -91,7 +95,6 @@ static func set_tab(ui: CanvasLayer, t: String) -> void:
 	drop_sub(ui)
 	ui.call_deferred("_rebuild_anvil")
 	ui.call_deferred("_show")
-
 static func _analyze_body(ui: CanvasLayer, smith: int) -> void:
 	ui.status.text = App.tr("anvil_view.smithing_open_a_slot_to") % smith
 

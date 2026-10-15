@@ -15,9 +15,11 @@ static func ready(host: CharacterBody3D) -> void:
 	host.axis_lock_linear_y = true
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(0.48, 1.05, 0.38)
+	var su := float(host.get("size_u")) if host.get("size_u") != null else 1.5
+	var h := su * 0.96
+	sh.size = Vector3(0.48 * (su / 1.5), h, 0.38 * (su / 1.5))
 	cs.shape = sh
-	cs.position = Vector3(0.0, 0.52, 0.0)
+	cs.position = Vector3(0.0, h * 0.5, 0.0)
 	host.add_child(cs)
 	host.spr = BillSpr.bare(1)
 	host.spr.double_sided = true

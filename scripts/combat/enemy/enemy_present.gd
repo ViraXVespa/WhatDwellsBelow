@@ -28,10 +28,17 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 		return
 	EnemyAI.tick(host, delta)
 	host.move_and_slide()
-	host.global_position.y = 0.0
+	var lift := 0.0
+	if host.move_kind == "fly":
+		lift = App.bal.fly_height + sin(host.bob_t * 5.0) * 0.08
+	elif host.move_kind == "hop" and host.hop_t > 0.18:
+		lift = App.bal.hop_height * (host.hop_t / 0.42)
+	if lift > 0.001:
+		host.global_position.y = lift
+	else:
+		host.global_position.y = 0.0
 	EnemyAI.stuck(host, delta)
 	present(host, delta)
-
 static func present(host: CharacterBody3D, delta: float) -> void:
 	if host.spr == null:
 		return

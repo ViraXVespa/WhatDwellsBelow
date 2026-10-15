@@ -123,10 +123,14 @@ func open_door() -> void:
 	collision_layer = 0
 	if shape:
 		shape.disabled = true
+	remove_from_group("boss_door")
+	remove_from_group("interact")
+	for child in get_children():
+		if child is Hotspot:
+			child.remove_from_group("interact")
 	refresh()
 	var tw := create_tween()
 	tw.tween_property(self, "position:y", position.y - 1.8, 0.35)
-
 func occupies_cell(c: Vector2i) -> bool:
 	if open:
 		return false
