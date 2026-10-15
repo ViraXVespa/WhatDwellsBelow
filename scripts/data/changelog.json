@@ -3,6 +3,36 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.7.2",
+			"points": [
+				{
+					"text": "Combat: free previous HP-bar ImageTexture and telegraph meshes on update to stop leaks."
+				},
+				{
+					"text": "Enemy present: hop/fly lift moves body Y instead of always pinning to ground."
+				},
+				{
+					"text": "Player and enemy collision shapes now track visual height and feet."
+				},
+				{
+					"text": "Boss door removes itself and hotspots from interact groups when opened."
+				},
+				{
+					"text": "Anvil: tab change mid-forge calls cancel_job so paid materials are surfaced."
+				},
+				{
+					"text": "Anvil analyze: shows result text and leaves the sub open for more items."
+				},
+				{
+					"text": "Crystal map: free previous AtlasTexture on every aim to stop leaks."
+				},
+				{
+					"text": "Finished task bug-sweep-combined: Bug sweep findings."
+				}
+			],
+			"summary": "Completed bug-sweep-combined task."
+		},
+		{
 			"label": "0.7.1",
 			"points": [
 				{
