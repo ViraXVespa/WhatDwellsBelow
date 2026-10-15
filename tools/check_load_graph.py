@@ -154,10 +154,8 @@ INDEX_NO_TOPIC = (
     "design/code-map.md",
 )
 
-
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
-
 
 def scanned_md_files(root: Path) -> list[Path]:
     out: list[Path] = []
@@ -177,7 +175,6 @@ def scanned_md_files(root: Path) -> list[Path]:
             out.append(p)
     return out
 
-
 def citations(text: str) -> list[str]:
     found: list[str] = []
     for match in CITE_RE.finditer(text):
@@ -186,7 +183,6 @@ def citations(text: str) -> list[str]:
             continue
         found.append(item)
     return found
-
 
 def _job_lines(text: str):
     """Data rows of the job tables (after a JOB_HEAD line, up to the first non-table line, dividers skipped)."""
@@ -204,13 +200,11 @@ def _job_lines(text: str):
             continue
         yield line
 
-
 def job_table_paths(text: str) -> list[str]:
     paths: list[str] = []
     for line in _job_lines(text):
         paths.extend(citations(line))
     return paths
-
 
 def body_citations(text: str) -> list[str]:
     keep: list[str] = []
@@ -227,7 +221,6 @@ def body_citations(text: str) -> list[str]:
         keep.extend(citations(line))
     return keep
 
-
 def instruct_citations(text: str) -> list[str]:
     found: list[str] = []
     for line in text.splitlines():
@@ -236,11 +229,9 @@ def instruct_citations(text: str) -> list[str]:
         found.extend(citations(line))
     return found
 
-
 def _normalize_cycle(nodes: list[str]) -> tuple[str, ...]:
     i = nodes.index(min(nodes))
     return tuple(nodes[i:] + nodes[:i])
-
 
 def _dfs_cycles(graph: dict[str, set[str]]) -> list[tuple[str, ...]]:
     found: list[tuple[str, ...]] = []
@@ -271,7 +262,6 @@ def _dfs_cycles(graph: dict[str, set[str]]) -> list[tuple[str, ...]]:
             dfs(node)
     return found
 
-
 def citation_cycles(
     routes: dict, texts: dict[str, str]
 ) -> list[tuple[str, ...]]:
@@ -286,7 +276,6 @@ def citation_cycles(
             if role_of(routes, dest) in CYCLE_ROLES:
                 graph[posix].add(dest)
     return _dfs_cycles(graph)
-
 
 def topic_cycles(
     routes: dict, texts: dict[str, str], stems: dict[str, str]
@@ -307,7 +296,6 @@ def topic_cycles(
                 if dest and dest != posix:
                     graph[posix].add(dest)
     return _dfs_cycles(graph)
-
 
 def route_memberships(routes: dict) -> dict[str, list[str]]:
     found: dict[str, list[str]] = {}
@@ -348,10 +336,8 @@ def route_memberships(routes: dict) -> dict[str, list[str]]:
         add(str((gate or {}).get("file") or ""), f"gates.{name}")
     return found
 
-
 def _norm_stem(raw: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", raw.lower())
-
 
 def stem_token(token: str) -> str:
     word = token.lower()
@@ -364,7 +350,6 @@ def stem_token(token: str) -> str:
     if word.endswith("s") and not word.endswith("ss") and len(word) > 3:
         return word[:-1]
     return word
-
 
 def door_stem_index(routes: dict) -> dict[str, str]:
     index: dict[str, str] = {}
@@ -383,7 +368,6 @@ def door_stem_index(routes: dict) -> dict[str, str]:
                 index[key] = posix
     return index
 
-
 def skip_door_hits(text: str, posix: str, stems: dict[str, str]) -> list[str]:
     hits: list[str] = []
     seen: set[str] = set()
@@ -399,7 +383,6 @@ def skip_door_hits(text: str, posix: str, stems: dict[str, str]) -> list[str]:
         hits.append(f"{phrase} -> {target}")
     return hits
 
-
 def on_disk_skills(root: Path) -> set[str]:
     found: set[str] = set()
     skills_root = root / ".grok" / "skills"
@@ -409,7 +392,6 @@ def on_disk_skills(root: Path) -> set[str]:
         found.add(rel(path, root))
     return found
 
-
 def _phrase_tokens(phrase: str) -> set[str]:
     tokens: set[str] = set()
     for raw in READ_WHEN_TOKEN_RE.findall(phrase):
@@ -418,7 +400,6 @@ def _phrase_tokens(phrase: str) -> set[str]:
             continue
         tokens.add(token)
     return tokens
-
 
 def read_when_overlaps(routes: dict) -> list[str]:
     token_owners: dict[str, list[str]] = {}
@@ -440,7 +421,6 @@ def read_when_overlaps(routes: dict) -> list[str]:
         if len(names) > 1:
             fails.append(f"read_when overlap {token!r}: {names}")
     return fails
-
 
 def conflict_fails(routes: dict) -> list[str]:
     fails: list[str] = []
@@ -467,7 +447,6 @@ def conflict_fails(routes: dict) -> list[str]:
                     f"conflicts_with shared tokens {src} ~ {dest}: {shared}"
                 )
     return fails
-
 
 def increment6_schema_fails(routes: dict) -> list[str]:
     fails: list[str] = []
@@ -507,7 +486,6 @@ def increment6_schema_fails(routes: dict) -> list[str]:
                 fails.append(f"boot_max.{name} missing {absent}")
     return fails
 
-
 def route_map_fails(root: Path, routes: dict) -> list[str]:
     """routes.yaml smokes / shot_flows: keys must be doors or jobs, phases in SMOKE_PHASES, flows real files."""
     fails: list[str] = []
@@ -523,7 +501,6 @@ def route_map_fails(root: Path, routes: dict) -> list[str]:
                 if name == "shot_flows" and not (root / "tools" / "shot-flows" / f"{tok}.json").is_file():
                     fails.append(f"shot_flows.{key} flow has no tools/shot-flows/{tok}.json")
     return fails
-
 
 def boot_budget_fails(root: Path, routes: dict) -> list[str]:
     """Bot mode only: every boot_max path needs a budget in tools/bot_budgets.json; on-disk size must not exceed it."""
@@ -543,7 +520,6 @@ def boot_budget_fails(root: Path, routes: dict) -> list[str]:
             fails.append(f"boot file over byte budget: {posix} is {size} bytes, budget {cap} ({bot_gate_lib.BUDGETS})")
     return fails
 
-
 def set_budget_fails(root: Path) -> list[str]:
     """Bot mode only: the groups of files Build reads together (boot set, start-read set) stay within their summed on-disk budget."""
     fails: list[str] = []
@@ -552,7 +528,6 @@ def set_budget_fails(root: Path) -> list[str]:
         if total > cap:
             fails.append(f"read set over byte budget: {name} is {total} bytes, budget {cap} ({bot_gate_lib.BUDGETS})")
     return fails
-
 
 def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
@@ -589,7 +564,6 @@ def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
             fails.append(f"boot instruct outside boot_max.{name}: {posix} -> {extra}")
     return fails
 
-
 def fetch_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     merged: dict[str, list[str]] = {}
@@ -608,10 +582,8 @@ def fetch_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
                 fails.append(f"fetch-ban phrase in {posix}: {phrase}")
     return fails
 
-
 CAP_RE = re.compile(r"script cap|size cap|line cap|over the (?:\w+ )?cap|near the (?:\w+ )?cap|ship floor|size floor|byte budget|(?:under|over) \d+ ?KB", re.I)
 CAP_OK = ("BOT.md", "GROK-BOT.md", "design/refactor.md")
-
 
 def cap_wording_fails(texts: dict[str, str]) -> list[str]:
     """Size and cap wording belongs to the Bot only: no such phrase in a doc Build or Web can open (the Bot docs, BOT.md and refactor.md are exempt)."""
@@ -624,7 +596,6 @@ def cap_wording_fails(texts: dict[str, str]) -> list[str]:
             fails.append(f"size/cap wording in a Build-facing doc: {posix} ({m.group(0)!r}); caps stay Bot-only")
     return fails
 
-
 def smash_fails(root: Path, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     for posix, body in texts.items():
@@ -633,7 +604,6 @@ def smash_fails(root: Path, texts: dict[str, str]) -> list[str]:
         if "_/_" in body or "_in_the_" in body:
             fails.append(f"smashed skip-door phrase: {posix}")
     return fails
-
 
 def index_topic_cite_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
@@ -650,7 +620,6 @@ def index_topic_cite_fails(routes: dict, texts: dict[str, str]) -> list[str]:
             fails.append(f"index cites topic path: {posix} -> {hits}")
     return fails
 
-
 def citation_budget_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     for posix, text in sorted(texts.items()):
@@ -666,9 +635,7 @@ def citation_budget_fails(routes: dict, texts: dict[str, str]) -> list[str]:
             )
     return fails
 
-
 LOAD_BAN_NEEDLE = "Second topic door:"  # each path file states its own rule for a second door
-
 
 def job_table_rows(text: str) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
@@ -677,7 +644,6 @@ def job_table_rows(text: str) -> list[tuple[str, str]]:
         if len(cells) >= 2:
             rows.append((cells[0], cells[1]))
     return rows
-
 
 def load_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
@@ -690,7 +656,6 @@ def load_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
         if LOAD_BAN_NEEDLE.lower() not in text.lower():
             fails.append(f"load-ban sentence missing in {posix}")
     return fails
-
 
 def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
@@ -720,7 +685,6 @@ def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
                     f"Job cell tokens not in job_read_when {posix} {jid}: {extra}"
                 )
     return fails
-
 
 def main() -> int:
     ap = agent_log.std_parser("Check design-doc routing against design/routes.yaml.", json_out=True)
@@ -961,7 +925,6 @@ def main() -> int:
         "load-graph", root, body, "FAIL" if fails else "PASS", args=args, legacy=False,
         files=n, issues=len(fails),
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

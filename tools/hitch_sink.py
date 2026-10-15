@@ -21,7 +21,6 @@ REL = "_logs/web-perf/hitch.jsonl"
 STATE = {"run": "", "file": None}
 _LOCK = threading.Lock()
 
-
 class Handler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -43,11 +42,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
-
 class _Server(http.server.ThreadingHTTPServer):
     def handle_error(self, request, client_address):  # the browser closing mid-download is not news
         pass
-
 
 def serve(site: Path, root: Path, port: int = 0) -> http.server.ThreadingHTTPServer:
     out = root / REL
@@ -56,7 +53,6 @@ def serve(site: Path, root: Path, port: int = 0) -> http.server.ThreadingHTTPSer
     srv = _Server(("127.0.0.1", port), functools.partial(Handler, directory=str(site)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
-
 
 def rows(root: Path, run: str) -> list[dict]:
     p = root / REL
@@ -71,7 +67,6 @@ def rows(root: Path, run: str) -> list[dict]:
         if r.get("wp_run") == run:
             out.append(r)
     return out
-
 
 def main(argv: list[str] | None = None) -> int:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -89,7 +84,6 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         srv.shutdown()
     return agent_log.emit_result("PASS", rows=REL)
-
 
 if __name__ == "__main__":
     sys.exit(main())

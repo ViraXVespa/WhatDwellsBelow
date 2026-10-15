@@ -42,7 +42,6 @@ OPEN_SET = (
 BLUE = (30, 60, 140, 255)
 FIT_FLOOR = 24
 
-
 def _counts(arr: np.ndarray) -> dict[str, int]:
     alpha = arr[:, :, 3]
     rgb = arr[:, :, :3].astype(np.int16)
@@ -53,7 +52,6 @@ def _counts(arr: np.ndarray) -> dict[str, int]:
         "partial": int(((alpha > 0) & (alpha < 255)).sum()),
         "plate_opaque": int(((alpha > 200) & (spill >= 24)).sum()),
     }
-
 
 def _halo_cropped(im: Image.Image, floor: int = FIT_FLOOR) -> int:
     """Faint pixels outside the fit_box crop. Those are dropped when alpha_min stays at the default."""
@@ -70,7 +68,6 @@ def _halo_cropped(im: Image.Image, floor: int = FIT_FLOOR) -> int:
     keep[top:bottom, left:right] = True
     return int((faint & ~keep).sum())
 
-
 def _light_rows(arr: np.ndarray) -> tuple[int, int]:
     """Rows with a light pixel, and the longest gap between those rows. A string is a run, not sparkles."""
     rgb = arr[:, :, :3]
@@ -82,7 +79,6 @@ def _light_rows(arr: np.ndarray) -> tuple[int, int]:
     gaps = np.diff(rows) - 1
     gap = int(gaps.max()) if gaps.size else 0
     return int(rows.size), gap
-
 
 def _one(root: Path, name: str, live: str, canvas: int, pad: int, out_dir: Path, dry: bool) -> str:
     dest = root / live
@@ -111,7 +107,6 @@ def _one(root: Path, name: str, live: str, canvas: int, pad: int, out_dir: Path,
         bg.save(path)
         line += f" preview=_logs/rekey-look/{name}.png"
     return line
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Preview the open-set rekey on blue. Does not write live assets.", writes=True)
@@ -142,7 +137,6 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         lines.append(f"{missing} source(s) missing")
     return agent_log.finish("rekey-preview", root, "\n".join(lines), status, args=args, shown=shown, missing=missing)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

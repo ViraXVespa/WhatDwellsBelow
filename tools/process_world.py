@@ -20,14 +20,12 @@ SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandb
 THRESH = 58
 CANVAS = 128
 
-
 def sample_bg(im: Image.Image) -> tuple:
     rgb = im.convert("RGB")
     w, h = rgb.size
     pts = [(2, 2), (w - 3, 2), (2, h - 3), (w - 3, h - 3), (w // 2, 2), (2, h // 2)]
     cols = [rgb.getpixel(p) for p in pts]
     return tuple(int(sum(c[i] for c in cols) / len(cols)) for i in range(3))
-
 
 def key(im: Image.Image) -> Image.Image:
     im = im.convert("RGBA")
@@ -40,17 +38,14 @@ def key(im: Image.Image) -> Image.Image:
     arr[d <= THRESH] = 0
     return Image.fromarray(plate_key.strip_rim(arr), "RGBA")
 
-
 def fit(im: Image.Image, canvas: int, pad: int = 6) -> Image.Image:
     return fit_box(im, canvas, pad, to_int=int, empty_exit="empty after key")
-
 
 def sprite(src_name: str, dest: Path, canvas: int = CANVAS) -> None:
     im = key(imgio.load(SRC / src_name))
     dest.parent.mkdir(parents=True, exist_ok=True)
     fit(im, canvas).save(dest)
     print("sprite", dest)
-
 
 def crop_tile(src_name: str, dest: Path, box_frac, size: int = 64) -> None:
     im = imgio.load(SRC / src_name, "RGB")
@@ -61,7 +56,6 @@ def crop_tile(src_name: str, dest: Path, box_frac, size: int = 64) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     tile.save(dest)
     print("tile", dest)
-
 
 def wall_tile(src_name: str, dest: Path, size: int = 64) -> None:
     im = imgio.load(SRC / src_name)
@@ -80,14 +74,12 @@ def wall_tile(src_name: str, dest: Path, size: int = 64) -> None:
     tile.convert("RGB").save(dest)
     print("wall", dest)
 
-
 def building(src_name: str, dest: Path, max_w: int) -> None:
     im = key(imgio.load(SRC / src_name))
     resized = geom.fit_axis(im, width=max_w, empty="whole")
     dest.parent.mkdir(parents=True, exist_ok=True)
     resized.save(dest)
     print("building", dest, resized.size)
-
 
 def _run() -> None:
     tiles = ROOT / "assets" / "tiles"
@@ -143,10 +135,8 @@ def _run() -> None:
                 canvas.paste(t, (x * t.size[0], y * t.size[1]))
         geom.scale_nearest(canvas, size=(256, 256)).save(check / f"{name}_2x2.png")
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("process_world", 'Key and fit the _src world stills (tiles, props) into assets/.', _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -3,7 +3,6 @@
 Status: current plan + live snapshot  
 Read when: split chevron, Documents reader, dim inactive columnstack
 
-
 ## Archives browser UI
 
 Opened from title **Archives** only. Pause Settings MUST NOT open this browser.

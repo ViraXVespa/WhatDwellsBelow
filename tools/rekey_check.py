@@ -46,14 +46,11 @@ FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/s
 NEW_ART = ("assets/ui/gear/slot_legs.png", "assets/sprites/props/extract_gate_on.png")
 CLASSES = ("canvas", "quality", "hard", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost", "soft", "notch")
 
-
 def frozen(rel: str) -> bool:
     return any(rel == f or (f.endswith("/") and rel.startswith(f)) for f in FROZEN)
 
-
 def rgba(p: Path) -> np.ndarray:
     return np.asarray(Image.open(p).convert("RGBA"), dtype=np.float32)
-
 
 def core_box(a: np.ndarray, t: float = 128.0):
     ys, xs = np.nonzero(a >= t)
@@ -61,19 +58,16 @@ def core_box(a: np.ndarray, t: float = 128.0):
         return None
     return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
 
-
 def luma_on_grey(x: np.ndarray) -> np.ndarray:
     al = x[..., 3:4] / 255.0
     rgb = x[..., :3] * al + 128.0 * (1 - al)
     return rgb @ np.array([0.299, 0.587, 0.114], np.float32)
-
 
 def edge_energy(x: np.ndarray) -> float:
     l = luma_on_grey(x)
     gx = np.abs(np.diff(l, axis=1)).sum()
     gy = np.abs(np.diff(l, axis=0)).sum()
     return float(gx + gy)
-
 
 def rim_soft(x: np.ndarray) -> float:
     a = x[..., 3]
@@ -86,19 +80,16 @@ def rim_soft(x: np.ndarray) -> float:
         return 0.0
     return float(((a > 8) & (a < 247) & rim).sum() / rim.sum())
 
-
 def plate_left(x: np.ndarray) -> int:
     r, g, b, a = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
     exc = np.minimum(r, b) - g
     return int(((a > 32) & (exc > 60) & (r > 150) & (b > 120)).sum())
-
 
 def mad(a: np.ndarray, b: np.ndarray) -> float:
     pa, pb = a[..., 3:4] / 255.0, b[..., 3:4] / 255.0
     ca = a[..., :3] * pa + 128 * (1 - pa)
     cb = b[..., :3] * pb + 128 * (1 - pb)
     return float(np.abs(ca - cb).mean())
-
 
 def check(rel: str, src: Path, new_p: Path, flip: bool) -> dict:
     live_p = ROOT / rel
@@ -157,7 +148,6 @@ def check(rel: str, src: Path, new_p: Path, flip: bool) -> dict:
         row["new_art"] = True
     return row
 
-
 def mirror_pairs(entries: list, new_dir: Path, rows: dict) -> None:
     """Each flip row against the mirror of a non-flip row from the same plate with the same name minus left/right."""
     by_src = {}
@@ -178,14 +168,11 @@ def mirror_pairs(entries: list, new_dir: Path, rows: dict) -> None:
         if d > 0.5:
             rows[e["live"]]["fail"].append("mirror")
 
-
 SOFT_MIN = 3.0  # partial-alpha percent at or above this: a soft subject
-
 
 def _share(p: Path) -> float:
     a = rgba(p)[..., 3]
     return 100.0 * float(((a > 16) & (a < 239)).sum()) / max(1, int((a > 0).sum()))
-
 
 def soft_lost(row: dict, src_share, live_p: Path, new_p: Path) -> None:
     """Flag a soft subject (by its keyed plate) whose output kept under half of its partial alpha."""
@@ -193,7 +180,6 @@ def soft_lost(row: dict, src_share, live_p: Path, new_p: Path) -> None:
     row["soft"] = [round(src_share or 0.0, 1), round(live, 1), round(new, 1)]
     if src_share is not None and src_share >= SOFT_MIN and new < 0.5 * src_share:
         row["fail"].append("soft")
-
 
 def main(argv=None) -> int:
     ap = agent_log.std_parser("Full-set rekey quality check vs live assets and _src plates.", json_out=True)
@@ -249,7 +235,6 @@ def main(argv=None) -> int:
             body.append(f"{'F ' if r['frozen'] else '  '}{r['live']}: {','.join(r['fail'])} edge={r.get('edge')} area={r.get('area')} err={r.get('err')} src_err={r.get('src_err', '')}")
     bad = sum(counts.values()) if args.strict else sum(counts_open[c] for c in counts_open if c != "stale")
     return agent_log.finish("rekey-check", root, "\n".join(body), "FAIL" if bad else "PASS", args=args, **counts)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

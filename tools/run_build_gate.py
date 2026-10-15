@@ -20,13 +20,11 @@ import agent_log
 import bot_gate_lib
 import godot_lib
 
-
 def child(root: Path, script: str, job: str, *flags: str) -> tuple[int, list[str]]:
     p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / script), "--root", str(root), *flags],
                        cwd=root)
     s = agent_log.agent_summary_path(job, root)
     return p.returncode, (s.read_text(encoding="utf-8").splitlines() if s.is_file() else [])
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Post-slice gate: editor import check, load graph and script names.", json_out=True)
@@ -119,7 +117,6 @@ def main(argv: list[str] | None = None) -> int:
         fail += int(code != 0 and sg == "required")
     what = "run_build_gate.py" + (" --batch" if args.batch else "")
     return agent_log.finish("build-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(what, body), fail_signals=fail)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

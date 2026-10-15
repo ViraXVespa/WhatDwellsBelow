@@ -4,7 +4,6 @@ Status: current plan
 Read when: automated playtest or playtest journal  
 Code: `scripts/debug/`  
 
-
 ## Automated Playtest / AI Player system
 
 **Why this system is in the design database**

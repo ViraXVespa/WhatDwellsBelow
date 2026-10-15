@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: difficulty, raid-timer, parity, polish
 
-
 ## Time targets
 
 - A brand-new player SHOULD be able to achieve their first successful extraction in 5–10 minutes.

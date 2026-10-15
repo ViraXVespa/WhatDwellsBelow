@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: empty-death toast, full-pack toast, save fallback, confirm accidents
 
-
 ## “Dispel” or death on floor 1 with empty bag
 
 - Full recap screen is still shown.

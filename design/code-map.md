@@ -32,4 +32,3 @@ Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
-

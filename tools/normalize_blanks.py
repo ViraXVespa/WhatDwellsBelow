@@ -15,9 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import md_format_lib
 
-
 SKIP = {".git", "_logs", "archives", ".archive_worktrees", "__pycache__"}
-
 
 def iter_files(root: Path, paths: list[str], exts: set[str]) -> list[Path]:
     hits: list[Path] = []
@@ -39,7 +37,6 @@ def iter_files(root: Path, paths: list[str], exts: set[str]) -> list[Path]:
                 if p.suffix.lstrip(".").lower() in exts:
                     hits.append(p)
     return hits
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = agent_log.std_parser(
@@ -76,7 +73,6 @@ def main(argv: list[str] | None = None) -> int:
         changed=changed,
         scanned=len(files),
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

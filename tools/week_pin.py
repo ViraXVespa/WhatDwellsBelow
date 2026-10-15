@@ -27,7 +27,6 @@ import repo_lib
 
 CATALOG = "scripts/data/archive_catalog.json"
 
-
 def pin_spec(kind: str, n: int) -> dict:
     """Row facts for a weekly pin. Web and Build both pin the week-close merge, so both copy series n's notes."""
     web = kind == "web"
@@ -39,13 +38,11 @@ def pin_spec(kind: str, n: int) -> dict:
         "notes_series": n,
     }
 
-
 def design_docs(root: Path, commit: str) -> list[str]:
     """design/ md and yaml paths as they exist on `commit`; the working tree when git cannot list it."""
     code, out = repo_lib.run_git(root, "ls-tree", "-r", "--name-only", commit, "design")
     names = out.splitlines() if code == 0 else [p.relative_to(root).as_posix() for p in sorted((root / "design").rglob("*")) if p.is_file()]
     return [n for n in names if n.lower().endswith((".md", ".yaml", ".yml"))]
-
 
 def copy_notes(root: Path, epoch: int, series: int, dest: Path, dry: bool) -> list[str]:
     """Copy that series' per-build notes (flat, else archive/{epoch}.{series}/) to `dest`. Returns repo-relative targets."""
@@ -58,11 +55,9 @@ def copy_notes(root: Path, epoch: int, series: int, dest: Path, dry: bool) -> li
             shutil.copy2(p, dest / p.name)
     return [(dest / p.name).relative_to(root).as_posix() for p in srcs]
 
-
 def rows_of(data: dict) -> list:
     """The catalog rows the game and the Pages export read: the `archives` list."""
     return data.setdefault("archives", [])
-
 
 def read_catalog(root: Path) -> tuple[dict, bool, bool]:
     """(catalog object, had BOM, had CRLF). The file keeps its BOM / line endings on write."""
@@ -72,23 +67,19 @@ def read_catalog(root: Path) -> tuple[dict, bool, bool]:
         agent_log.fail("archive_catalog.json must be an object with an `archives` list")
     return data, raw.startswith(b"\xef\xbb\xbf"), b"\r\n" in raw
 
-
 def write_catalog(root: Path, data: dict, bom: bool, crlf: bool) -> None:
     text = json.dumps(data, indent="\t") + "\n"
     if crlf:
         text = text.replace("\n", "\r\n")
     (root / CATALOG).write_bytes((b"\xef\xbb\xbf" if bom else b"") + text.encode("utf-8"))
 
-
 def tag_commit(root: Path, tag: str) -> str:
     """Commit a local tag points at, '' when the tag does not exist."""
     code, out = repo_lib.run_git(root, "rev-list", "-n", "1", f"refs/tags/{tag}")
     return out.strip() if code == 0 else ""
 
-
 def commit_exists(root: Path, sha: str) -> bool:
     return repo_lib.run_git(root, "cat-file", "-e", f"{sha}^{{commit}}")[0] == 0
-
 
 def pin_row(root: Path, spec: dict, sha: str, epoch: int, dry: bool) -> dict:
     """Add the catalog row for `spec` (when absent), copy its notes and create its local tag (when absent).
@@ -121,7 +112,6 @@ def pin_row(root: Path, spec: dict, sha: str, epoch: int, dry: bool) -> dict:
             if not dry:
                 repo_lib.run_git(root, "tag", tag, at)
     return {"row": "exists" if have else ("would-add" if dry else "added"), "tag": tag_state, "commit": at, "docs": docs, "notes": len(notes)}
-
 
 def main() -> int:
     ap = agent_log.std_parser("Add a weekly archive pin (catalog row + local tag) for a commit; does not bump version.json.", writes=True)
@@ -156,7 +146,6 @@ def main() -> int:
     added = 1 if res["row"] == "added" else 0
     return agent_log.emit_result("PASS", id=spec["id"], added=added, would_add=1 if res["row"] == "would-add" else None,
                                  docs=res["docs"], notes=res["notes"], tag=res["tag"], dry_run=args.dry_run)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

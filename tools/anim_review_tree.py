@@ -27,7 +27,6 @@ import i2v_seeds
 from imglib import imgio
 import sprite_pipeline as sp
 
-
 def _cell_for(gender: str, facing: str) -> Image.Image | None:
     bible = lib.BIBLE.get(gender)
     if bible is None or not bible.is_file():
@@ -40,12 +39,10 @@ def _cell_for(gender: str, facing: str) -> Image.Image | None:
         return None
     return i2v_seeds.pad_chroma(i2v_seeds.scale_nn(im, i2v_seeds.SCALE), i2v_seeds.PAD_FRAC)
 
-
 def _wipe(dest: lib.Path) -> None:
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True, exist_ok=True)
-
 
 def _write_player(folder: lib.Path, row: dict) -> str:
     folder.mkdir(parents=True, exist_ok=True)
@@ -70,7 +67,6 @@ def _write_player(folder: lib.Path, row: dict) -> str:
         lib.write_text(folder / "notes.txt", note)
     return status
 
-
 def _write_enemy(folder: lib.Path, row: dict) -> str:
     folder.mkdir(parents=True, exist_ok=True)
     lib.write_text(
@@ -81,7 +77,6 @@ def _write_enemy(folder: lib.Path, row: dict) -> str:
     if note:
         lib.write_text(folder / "notes.txt", note)
     return "enemy-warning"
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser(__doc__, writes=True)
@@ -108,7 +103,6 @@ def main(argv: list[str] | None = None) -> int:
         counts[status] = counts.get(status, 0) + 1
     return agent_log.emit_result("PASS", dest=agent_log.rel(lib.ROOT, dest), regenerate=len(regen), ok=counts["ok"],
                                  missing_bible=counts["missing-bible"], enemy=counts["enemy-warning"])
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

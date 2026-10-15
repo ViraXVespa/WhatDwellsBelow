@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: web touch pad / touch HUD input  
 
-
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 
 Web-only. Not a native Android / iOS export requirement.

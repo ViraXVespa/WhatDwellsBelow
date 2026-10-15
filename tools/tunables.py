@@ -22,13 +22,10 @@ import agent_log
 import md_format_lib as md
 import tunables_lib as tl
 
-
 def _head(title: str, *extra: str) -> list[str]:
     return [f"tunable {title} {datetime.now(timezone.utc).isoformat()}", "root=.", *extra]
 
-
 FILES = ("tunables.md", "tunables-world.md")
-
 
 def _find(root: Path, key: str) -> tuple[list[tuple[Path, str, "tl.Hit"]], bool]:
     """(path, raw text, hit) for every row matching key across the tunables files; flag = main file exists."""
@@ -39,7 +36,6 @@ def _find(root: Path, key: str) -> tuple[list[tuple[Path, str, "tl.Hit"]], bool]
             raw = md.read_text(path)
             found += [(path, raw, h) for h in tl.find_hits(tl.parse_hits(raw), key)]
     return found, (root / "design" / FILES[0]).is_file()
-
 
 def cmd_get(root: Path, args) -> int:
     lines = _head("row", f"key={args.key}")
@@ -56,7 +52,6 @@ def cmd_get(root: Path, args) -> int:
     shown = [x for x in lines[4:] if x.strip()]  # the rows themselves, not only the summary file
     return agent_log.finish("tunable-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
                             echo="\n".join(shown[:30] + ([f"... +{len(shown) - 30} more lines (summary file); use a longer --key"] if len(shown) > 30 else [])) if hits else f"matches={len(hits)}", matches=len(hits))
-
 
 def cmd_add(root: Path, args) -> int:
     """Insert one row after an existing key's row (same table); other cells are `-` for the caller to fill."""
@@ -77,7 +72,6 @@ def cmd_add(root: Path, args) -> int:
         md.write_text(path, md.join_lines_keep_trailing(raw, out))
     lines += [f"section={hit.section}", f"inserted_after_line={hit.index + 1}", "other cells are `-`; fill them (suggested, note) with doc_patch.py replace"]
     return end("PASS", f"changed=1 section={hit.section}" + (" (dry-run)" if args.dry_run else ""), changed=1, dry_run=args.dry_run)
-
 
 def cmd_set(root: Path, args) -> int:
     lines = _head("patch", f"key={args.key}", f"set={args.value}")
@@ -103,7 +97,6 @@ def cmd_set(root: Path, args) -> int:
         md.write_text(path, md.join_lines_keep_trailing(raw, file_lines))
     lines += [f"live_was={hit.live_cell}", f"live_now={args.value}", "measure=mutate one tunables Live cell; do not read the rest of the file"]
     return end("PASS", f"changed=1 live={args.value}" + (" (dry-run)" if args.dry_run else ""), changed=1, dry_run=args.dry_run)
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Read or patch design/tunables.md / tunables-world.md rows.", writes=True, json_out=True)
@@ -134,7 +127,6 @@ def main(argv: list[str] | None = None) -> int:
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)
     root = agent_log.resolve_root(args)
     return {"get": cmd_get, "set": cmd_set, "add": cmd_add}[args.cmd](root, args)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

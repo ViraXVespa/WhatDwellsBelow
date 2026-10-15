@@ -8,7 +8,6 @@ The live path already exists. Phases below are a hard coverage list, not a licen
 
 Hard constraints and the Demo-Complete Checklist live in the constraints file. Use this file to find gaps, confirm which phases the live path already satisfies, and fill only the requested slice. These coverage phases are not web / chat Phase 1–7.
 
-
 ## Core construction rules
 
 - Work in the live path. MUST NOT archive-then-rewrite on a fresh instance. MUST NOT discard live scenes, scripts, autoloads, or architectural patterns to start over.

@@ -31,12 +31,10 @@ POINT_RE = re.compile(r"^-\s+(.*)$")
 SUB_RE = re.compile(r"^--\s+(.*)$")
 SUMMARY_RE = re.compile(r"^Summary:\s+(.*)$", re.I)
 
-
 def load_version() -> dict:
     if not VERSION_PATH.is_file():
         return {"epoch": 0, "series": 2, "patch": 0, "label": "0.2.0"}
     return json.loads(VERSION_PATH.read_text(encoding="utf-8"))
-
 
 def parse_md(path: Path) -> dict | None:
     text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
@@ -77,7 +75,6 @@ def parse_md(path: Path) -> dict | None:
             p.pop("subs", None)
     return {"label": label, "points": points, "summary": summary}
 
-
 def ver_tuple(label: str) -> tuple[int, int, int]:
     bits = label.split(".")
     out = [0, 0, 0]
@@ -85,7 +82,6 @@ def ver_tuple(label: str) -> tuple[int, int, int]:
         if b.isdigit():
             out[i] = int(b)
     return out[0], out[1], out[2]
-
 
 def main() -> int:
     global ROOT, CHANGELOG_DIR, VERSION_PATH, OUT_PATH
@@ -124,7 +120,6 @@ def main() -> int:
         OUT_PATH.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
         print(f"wrote {rel} ({len(entries)} entries)")
     return agent_log.emit_result("PASS", entries=len(entries), dry_run=args.dry_run, out=rel)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: borderless exclusive, mip decode ban, Compatibility preferred
 
-
 ## Display apply
 
 - Desktop applies saved `display_mode` at boot via `DisplayMode.apply_saved()`.

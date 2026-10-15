@@ -27,15 +27,12 @@ _JOB_KEY = re.compile(r"^[A-Za-z0-9._-]+$")
 STATUSES = ("PASS", "FAIL", "INFO")
 DRY_RUN = False  # set by run_writer --dry-run; tools that fan out to worker processes run serially when true
 
-
 GROK_SESSIONS_DEFAULT = r"C:\Users\Vira\.grok\sessions"
-
 
 def grok_sessions(*rest: str) -> Path:
     """Grok session store: $WDB_GROK_SESSIONS or the default above; `rest` parts may use backslashes."""
     base = Path(os.environ.get("WDB_GROK_SESSIONS") or GROK_SESSIONS_DEFAULT)
     return base.joinpath(*[p for r in rest for p in r.split("\\") if p])
-
 
 def repo_root(hint: str | Path | None = None) -> Path:
     """Walk up from hint, else from this file, then cwd, to the dir holding project.godot.
@@ -55,23 +52,19 @@ def repo_root(hint: str | Path | None = None) -> Path:
     where = f" at or above {starts[0]}" if hint else ""
     raise FileNotFoundError(f"repo root not found (no project.godot{where}); pass --root <repo dir>" if hint else "repo root not found (no project.godot); run from the repo or pass --root <repo dir>")
 
-
 def rel(root: Path | str, path: Path | str) -> str:
     try:
         return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
     except ValueError:
         return Path(path).as_posix()
 
-
 _REAL_STDOUT = None  # set while --json diverts text output; the final JSON object goes to the real stdout
-
 
 def _json_on(ns: argparse.Namespace) -> None:
     global _REAL_STDOUT
     if getattr(ns, "json", False) is True and _REAL_STDOUT is None:
         _REAL_STDOUT = sys.stdout
         sys.stdout = io.StringIO()  # progress text is dropped; stdout carries exactly one JSON object
-
 
 def _json_print(obj: dict) -> bool:
     """Print obj as the one JSON object (restoring stdout if --json diverted it). False when not in JSON mode."""
@@ -82,13 +75,11 @@ def _json_print(obj: dict) -> bool:
     print(json.dumps(obj, sort_keys=False))
     return True
 
-
 class _Parser(argparse.ArgumentParser):
     def parse_args(self, args=None, namespace=None):
         ns = super().parse_args(args, namespace)
         _json_on(ns)
         return ns
-
 
 def std_parser(description: str, *, writes: bool = False, json_out: bool = True) -> argparse.ArgumentParser:
     """Parser with --root, --json and (writes=True) --dry-run. json_out stays for old callers; every tool gets --json."""
@@ -100,7 +91,6 @@ def std_parser(description: str, *, writes: bool = False, json_out: bool = True)
         ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object (status, summary, counts) instead of text.")
     return ap
 
-
 def split_list(values: object, cast: type = str) -> list:
     """Flatten ['a,b', 'c'] (comma or space separated) into [a, b, c]."""
     out: list = []
@@ -108,14 +98,12 @@ def split_list(values: object, cast: type = str) -> list:
         out += [cast(p) for p in re.split(r"[,\s]+", str(v)) if p]
     return out
 
-
 def resolve_root(args_or_hint: object = None) -> Path:
     hint = args_or_hint if isinstance(args_or_hint, (str, Path)) else getattr(args_or_hint, "root", None)
     try:
         return repo_root(hint)
     except FileNotFoundError as exc:
         fail(str(exc))
-
 
 def cwd_scan_root(args: object) -> tuple[Path, str]:
     """(root, `root=<absolute>` line) for a tool that scans a project: --root, else the current directory's project (else the tool's own).
@@ -130,22 +118,18 @@ def cwd_scan_root(args: object) -> tuple[Path, str]:
     root = resolve_root(hint or cwd_root)
     return root, f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
 
-
 def fail(msg: str, code: int = 2) -> "None":
     print(f"error: {msg}", file=sys.stderr)
     raise SystemExit(code)
-
 
 def print_json(obj: dict) -> None:
     """Print obj as the one JSON object of a --json run (restores stdout when --json diverted it)."""
     if not _json_print(obj):
         print(json.dumps(obj))
 
-
 def _err(msg: str) -> None:
     print(f"error: {msg}", file=sys.stderr)
     _json_print({"status": "FAIL", "error": msg})
-
 
 def _cwd_rel(name: object) -> object:
     """Path relative to the cwd when under it (errors print repo-relative paths)."""
@@ -153,7 +137,6 @@ def _cwd_rel(name: object) -> object:
         return Path(str(name)).resolve().relative_to(Path.cwd().resolve()).as_posix() if name else name
     except ValueError:
         return name
-
 
 def guarded(main, *args: object) -> int:
     """Run main(*args); a missing/unreadable path or a bare SystemExit("msg") becomes `error: ...` + exit 2, not a traceback."""
@@ -173,7 +156,6 @@ def guarded(main, *args: object) -> int:
         print("error: interrupted", file=sys.stderr)
         return 130
 
-
 def result_line(status: str, summary: str | None = None, **kv: object) -> str:
     if status not in STATUSES:
         raise ValueError(f"agent_log: status must be one of {STATUSES}")
@@ -182,45 +164,37 @@ def result_line(status: str, summary: str | None = None, **kv: object) -> str:
         parts.append(f"summary={summary}")
     return " ".join(parts)
 
-
 def emit_result(status: str, summary: str | None = None, **kv: object) -> int:
     """Print the final RESULT line (no summary file) and return the exit code. Under --json: one JSON object instead."""
     if not _json_print({"status": status, "summary": summary, **kv}):
         print(result_line(status, summary, **kv))
     return exit_code(status)
 
-
 def exit_code(status: str) -> int:
     return 1 if status == "FAIL" else 0
-
 
 def agent_log_dir(job: str, root: Path | None = None) -> Path:
     if not _JOB_KEY.fullmatch(job):
         raise ValueError("agent_log: bad job name")
     return (repo_root(root) / "_logs" / job).resolve()
 
-
 def agent_summary_path(job: str, root: Path | None = None) -> Path:
     """The newest run's summary file of `job` (a missing summary.txt path when the job has not run)."""
     d = agent_log_dir(job, root)
     return run_log_lib.latest(d) or d / run_log_lib.LEGACY
-
 
 def ensure_agent_log_dir(job: str, root: Path | None = None) -> Path:
     path = agent_log_dir(job, root)
     path.mkdir(parents=True, exist_ok=True)
     return path
 
-
 def run_path(job: str, root: Path, name: str) -> Path:
     """This run's own raw log or artifact path: _logs/<job>/<stamp>-<name>. Never reused by a later run."""
     return run_log_lib.run_path(ensure_agent_log_dir(job, root), job, name)
 
-
 def write_summary(job: str, root: Path, body: str, status: str = "INFO", note: str = "") -> Path:
     """Write this run's summary (a new file per run), update index.txt, prune to the newest 20 runs."""
     return run_log_lib.write_summary(ensure_agent_log_dir(job, root), job, body, status, note)
-
 
 def write_run_file(root: Path, d: Path, job: str, body: str, status: str, write: bool = True, **kv: object) -> str:
     """Run summary for a tool with its own out folder `d`: body + RESULT line (naming the new stamped file),
@@ -232,7 +206,6 @@ def write_run_file(root: Path, d: Path, job: str, body: str, status: str, write:
     p.write_text((body.rstrip("\n") + "\n" if body else "") + res + "\n", encoding="utf-8")
     run_log_lib.record(d, p, status, " ".join(f"{k}={v}" for k, v in kv.items() if v is not None))
     return res
-
 
 def finish(
     job: str,
@@ -283,13 +256,11 @@ def finish(
         print(res)
     return exit_code(status)
 
-
 def _call(fn, args):
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         res = fn(*args)
     return res, buf.getvalue()
-
 
 def run_jobs(jobs: list) -> list:
     """Run [(fn, args), ...] in a process pool (serial when one job or under --dry-run). Worker prints and string
@@ -311,7 +282,6 @@ def run_jobs(jobs: list) -> list:
             print(res)
         out.append(res)
     return out
-
 
 def _dry_writes() -> "contextlib.ExitStack":
     """Patch the common write paths (PIL save, mkdir, Path writes, shutil copies, wave, subprocess) to print `would write X`."""
@@ -340,7 +310,6 @@ def _dry_writes() -> "contextlib.ExitStack":
     for obj, name, fake in targets:
         st.enter_context(mock.patch.object(obj, name, fake))
     return st
-
 
 def run_writer(tool: str, desc: str, run, argv: list[str] | None = None, g: "dict | list | None" = None, job: str | None = None, add_args=None) -> int:
     """Shared main for the one-shot art generators: --root, --dry-run, --verbose, folded output, summary + RESULT.
@@ -399,7 +368,6 @@ def run_writer(tool: str, desc: str, run, argv: list[str] | None = None, g: "dic
     status = "FAIL" if missing and not wrote else "PASS"  # every source missing = nothing happened
     return finish(job or tool, root, body, status, args=args, legacy=False, echo="\n".join(shown), tool=tool, wrote=wrote, missing=missing, dry_run=bool(args.dry_run))
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = std_parser("Print (and create) the _logs/<job> directory for a job.")
     ap.add_argument("job", nargs="?", default="", help="Job name, e.g. build-gate.")
@@ -428,7 +396,6 @@ def main(argv: list[str] | None = None) -> int:
     print(f"index=_logs/{job}/index.txt")
     print(result_line("INFO", f"_logs/{job}/index.txt", job=job))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

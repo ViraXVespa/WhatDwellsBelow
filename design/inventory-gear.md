@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source  
 
-
 ## Gear rules
 
 - White, green, and blue rarity appear in the demo.

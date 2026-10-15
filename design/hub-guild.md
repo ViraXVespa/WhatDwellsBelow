@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: receptionist bust, notice errands, welcome cloth
 
-
 ## Guild / Quest Access
 - One continuous L-shaped guild: main hall + inset east reception wing. Wing back wall is flush with the hall back wall. Wing is slightly smaller than the hall.
 - Hall, wing, roofs, and awnings follow `Layout` nodes. Reception bust stays clipped to the wing south face from the wing node.

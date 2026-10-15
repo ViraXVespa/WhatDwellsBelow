@@ -256,4 +256,3 @@ static func _bolt(img: Image, cx: int, cy: int) -> void:
 	UiBuild.dot(img, cx, cy, 2, HUB.lerp(STEEL_DARK, 0.2))
 	if cx >= 0 and cy >= 0 and cx < img.get_width() and cy < img.get_height():
 		img.set_pixel(cx, cy, STEEL_DARK)
-

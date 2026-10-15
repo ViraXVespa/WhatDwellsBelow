@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: transport decades, warp silence, spur length
 
-
 ## Floor crystals
 
 - Each floor places the entrance crystal at spawn plus extra crystals in combat rooms.

@@ -19,10 +19,8 @@ BUDGETS = "tools/bot_budgets.json"
 SHIP_BYTES = 10_000  # Bot script floor (BOT.md)
 SWEEP_BYTES = 5_000  # Bot sweep floor
 
-
 def add_flag(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--bot", action="store_true", help=argparse.SUPPRESS)
-
 
 def enabled(args: object = None) -> bool:
     if getattr(args, "bot", False) or os.environ.get("WDB_BOT"):
@@ -31,12 +29,10 @@ def enabled(args: object = None) -> bool:
         return False
     return os.environ.get("GITHUB_EVENT_NAME") != "pull_request" or os.environ.get("GITHUB_HEAD_REF", "").startswith("bot/")
 
-
 def not_run(what: str, **kv: object) -> int:
     """The answer for a size tool run outside Bot mode: nothing measured, nothing printed but this."""
     print(f"{what}: Bot-only check, not run here.")
     return agent_log.emit_result("INFO", None, skipped=1, **kv)
-
 
 def set_budgets(root: Path) -> dict[str, tuple[int, list[str]]]:
     """name -> (byte budget, files) for a group of files read together (the Build boot set, the Build start-read set)."""
@@ -45,7 +41,6 @@ def set_budgets(root: Path) -> dict[str, tuple[int, list[str]]]:
         return {}
     raw = json.loads(p.read_text(encoding="utf-8-sig")).get("set_bytes") or {}
     return {str(k): (int(v["bytes"]), [str(f) for f in v.get("files", [])]) for k, v in raw.items() if isinstance(v, dict) and isinstance(v.get("bytes"), int)}
-
 
 def boot_budgets(root: Path) -> dict[str, int]:
     p = root / BUDGETS

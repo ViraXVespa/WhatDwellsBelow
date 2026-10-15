@@ -21,13 +21,11 @@ import agent_log
 PNG = "assets/baked/hub_light.png"
 SRC = "scripts/graphics/light_rt/hub_bake.gd"
 
-
 def png_stamp(path: Path) -> tuple[str, int, int]:
     from PIL import Image
     with Image.open(path) as im:
         rgba = im.convert("RGBA")
         return hashlib.sha256(rgba.tobytes()).hexdigest()[:16], rgba.width, rgba.height
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check that the committed hub_light.png matches HUB_BAKE_STAMP.", json_out=True)
@@ -60,7 +58,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

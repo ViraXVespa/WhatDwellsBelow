@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import run_log_lib
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Delete raw logs (and with --new-week old summaries) under _logs/.", writes=True, json_out=True)
     ap.add_argument("--keep-raw", action="store_true", help="Keep raw .log/.err files (summaries still follow --max-age-hours).")
@@ -72,7 +71,6 @@ def main(argv: list[str] | None = None) -> int:
     echo = f"deleted={st['deleted']} kept={st['kept']} bytes_freed={st['freed']}"
     return agent_log.finish("clean", root, "\n".join(lines), "INFO", args=args, echo=echo, deleted=st["deleted"],
                             kept=st["kept"], bytes_freed=st["freed"], new_week=str(args.new_week).lower())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

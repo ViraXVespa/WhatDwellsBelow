@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: gauntlet HUD strip or web touch overlay  
 
-
 ## HUD – gauntlet strip (mandatory elements and behavior)
 
 The HUD is a persistent horizontal strip that MUST remain visible at all times during dungeon play and MUST be readable from couch distance on a 1080p television.

@@ -32,10 +32,8 @@ import agent_log
 COMPILE_RE = re.compile(r"Parse Error|Compile Error|Failed to compile|Failed to load script")
 HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|Lambda capture at index")
 
-
 class GodotBusy(RuntimeError):
     pass
-
 
 def godot_exe(override: str = "") -> Path:
     if override:
@@ -50,24 +48,19 @@ def godot_exe(override: str = "") -> Path:
         raise FileNotFoundError("godot_lib: no Godot (set GODOT_BIN, or run tools/bot_smokes.py --setup)")
     return p
 
-
 def norm_path(path: Path | str) -> str:
     return str(Path(path).resolve()).rstrip("\\/")
 
-
 def path_key(path: Path | str) -> str:
     return hashlib.sha256(norm_path(path).lower().encode("utf-8")).hexdigest()[:16]
-
 
 def lock_dir(root: Path) -> Path:
     d = Path(root) / "_logs" / "godot-lock"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
-
 def lock_file(root: Path, path: Path | str) -> Path:
     return lock_dir(root) / (path_key(path) + ".lock")
-
 
 def procs_on_path(path: Path | str) -> list[dict]:
     """Running godot* processes whose command line names this --path (best effort)."""
@@ -100,7 +93,6 @@ def procs_on_path(path: Path | str) -> list[dict]:
             hits.append({"pid": int(d.name), "command": " ".join(argv)})
     return hits
 
-
 def lock_fresh(lf: Path) -> bool:
     try:
         exp = datetime.fromisoformat(json.loads(lf.read_text(encoding="utf-8"))["expires_utc"])
@@ -109,7 +101,6 @@ def lock_fresh(lf: Path) -> bool:
         return exp > datetime.now(timezone.utc)
     except (OSError, ValueError, KeyError):
         return False
-
 
 def lock(root: Path, path: Path | str, timeout: int = 120, hold: int = 180) -> Path:
     """Take the per-path lock; returns the lock file. Raises GodotBusy on timeout."""
@@ -127,7 +118,6 @@ def lock(root: Path, path: Path | str, timeout: int = 120, hold: int = 180) -> P
     pids = ",".join(str(p["pid"]) for p in procs_on_path(norm))
     raise GodotBusy(f"godot_lock: busy path={norm} foreignPids={pids} lock={lf}")
 
-
 def unlock(lf: Path | None) -> None:
     if lf is not None:
         try:
@@ -135,16 +125,13 @@ def unlock(lf: Path | None) -> None:
         except OSError:
             pass
 
-
 def _read(p: Path | None) -> str:
     try:
         return p.read_text(encoding="utf-8", errors="replace") if p and p.is_file() else ""
     except OSError:
         return ""
 
-
 XVFB_SCREEN = "-screen 0 1280x800x24 +extension GLX +render -noreset"
-
 
 def _x_live(display: str) -> bool:
     """True when an X server answers on `display` (xdpyinfo when present, else the socket file)."""
@@ -157,7 +144,6 @@ def _x_live(display: str) -> bool:
     if which("xdpyinfo"):
         return subprocess.run(["xdpyinfo", "-display", display], capture_output=True).returncode == 0
     return True
-
 
 def pick_display() -> tuple[str, str]:
     """(kind, display): ('env'|'socket', ':N') for an existing X, ('xvfb', '') to wrap in xvfb-run, ('none', '')."""
@@ -175,7 +161,6 @@ def pick_display() -> tuple[str, str]:
     if which("xvfb-run"):
         return "xvfb", ""
     return "none", ""
-
 
 def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path | None = None,
               err_log: Path | None = None, timeout: int = 120, lock_timeout: int = 120,
@@ -247,19 +232,16 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
             "out_bytes": size(out_log), "godot_path": path, "exe": str(exe_path),
             "display": (dkind if gui else "n/a")}
 
-
 def modified_imports(root: Path) -> list[str]:
     """Tracked `*.import` files modified in the working tree."""
     out = subprocess.run(["git", "ls-files", "-m", "-z", "--", "*.import"], cwd=root, capture_output=True).stdout
     return [p for p in out.decode("utf-8", "replace").split("\0") if p]
-
 
 def restore_imports(root: Path, paths: list[str]) -> None:
     """git checkout these tracked sidecars (paths on stdin)."""
     if paths:
         subprocess.run(["git", "checkout", "--pathspec-from-file=-", "--pathspec-file-nul"], cwd=root,
                        input="\0".join(paths).encode("utf-8") + b"\0", capture_output=True)
-
 
 def restore_import_churn(root: Path) -> tuple[int, int]:
     """Undo what a Godot import writes into tracked sidecars: restore every modified tracked `*.import` (assets/, docs/, icon.svg.import)
@@ -282,12 +264,10 @@ def restore_import_churn(root: Path) -> tuple[int, int]:
                 pass
     return len(mod), gone
 
-
 def headless_args(root: Path, *app_args: str) -> list[str]:
     """Standard smoke argv: headless, dummy audio, --path root, then `-- app_args`."""
     a = ["--headless", "--display-driver", "headless", "--audio-driver", "Dummy", "--path", str(root)]
     return a + (["--"] + list(app_args) if app_args else [])
-
 
 def grep_logs(logs: list[Path], pattern: str) -> list[str]:
     """Matching lines from the logs, in order, duplicates dropped."""
@@ -298,7 +278,6 @@ def grep_logs(logs: list[Path], pattern: str) -> list[str]:
             if rx.search(line) and line not in out:
                 out.append(line)
     return out
-
 
 def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[str] | None = None) -> int:
     """Shared body of run_load_timing / run_dungeon_load_timing: run one --wdb-*-smoke, parse LOAD: lines."""
@@ -324,12 +303,10 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
     return agent_log.finish(job, root, "\n".join(body), "FAIL" if fail else "PASS", args=args, legacy=False,
                             echo="\n".join(echo), retry=(f"{job} (load timing)", body), fail_signals=fail, total_ms=total or -1)
 
-
 def timing_parser(desc: str) -> "argparse.ArgumentParser":
     ap = agent_log.std_parser(desc, json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout (default 180).")
     return ap
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock. --display reports the GUI display choice.")
@@ -350,7 +327,6 @@ def main(argv: list[str] | None = None) -> int:
     unlock(lf)
     print(f"locked path={norm_path(args.path or root)} file={agent_log.rel(root, lf)}")
     return agent_log.emit_result("PASS", locked=1)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

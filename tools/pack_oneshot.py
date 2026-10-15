@@ -61,7 +61,6 @@ FIXED_N = {
     "gather_hatchet": 6,
 }
 
-
 def even_pick(frames: list[T], count: int) -> list[T]:
     if count <= 0 or len(frames) <= count:
         return list(frames)
@@ -77,7 +76,6 @@ def even_pick(frames: list[T], count: int) -> list[T]:
         seen.add(i)
         out.append(frames[i])
     return out
-
 
 def pack_one(
     gender: str,
@@ -109,7 +107,6 @@ def pack_one(
     loc.write_seq(locked, dest, prefix)
     return f"{gender} {action} {facing} {len(locked)} -> {dest / (prefix + '_0.png')}"
 
-
 def _add_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--gender", action="append", choices=("male", "female"), help="male or female (repeatable; default both).")
     p.add_argument("--facing", action="append", choices=KEYS, help="Facing to pack (repeatable; default all eight).")
@@ -123,7 +120,6 @@ def _add_args(p: argparse.ArgumentParser) -> None:
         default=0,
         help="Force frame count. 0 = default (6 for attack/special/gather, all frames for death/dispel).",
     )
-
 
 def _run(args: argparse.Namespace) -> None:
     genders = args.gender or ["male", "female"]
@@ -155,10 +151,8 @@ def _run(args: argparse.Namespace) -> None:
                 )
     agent_log.run_jobs([(pack_one, job) for job in jobs])
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("pack_oneshot", "Pack one-shot I2V clips (attack, special, gather, death, dispel) into engine frames.", _run, argv, [globals(), loc.__dict__], add_args=_add_args)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

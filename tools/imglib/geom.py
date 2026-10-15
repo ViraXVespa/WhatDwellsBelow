@@ -10,7 +10,6 @@ from __future__ import annotations
 import numpy as np
 from PIL import Image
 
-
 def _lanczos_down(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     arr = np.array(im, dtype=np.float32)
     alpha = arr[:, :, 3:4] / 255.0
@@ -24,7 +23,6 @@ def _lanczos_down(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     rgb[nz] = np.clip(scaled[nz, :3] * (255.0 / np.maximum(out_a[nz], 1.0)), 0, 255)
     scaled[:, :, :3] = rgb
     return Image.fromarray(np.clip(np.rint(scaled), 0, 255).astype(np.uint8), "RGBA")
-
 
 def _cell_spread(arr: np.ndarray, scale: int) -> float:
     """Median colour spread of opaque pixels in subject cells. Transparent black is not a colour."""
@@ -44,7 +42,6 @@ def _cell_spread(arr: np.ndarray, scale: int) -> float:
         return 999.0
     return float(np.median(spread[subject]))
 
-
 def _subject_cell(im: Image.Image) -> int:
     """Largest power-of-two cell that is still a flat nearest upscale, or 1.
 
@@ -61,7 +58,6 @@ def _subject_cell(im: Image.Image) -> int:
         scale *= 2
     return best
 
-
 def _box_reduce(im: Image.Image, scale: int) -> Image.Image:
     w, h = im.size
     ww, hh = w - (w % scale), h - (h % scale)
@@ -76,7 +72,6 @@ def _box_reduce(im: Image.Image, scale: int) -> Image.Image:
     rgb[nz] = np.clip(cell[nz, :3] * (255.0 / np.maximum(out_a[nz], 1.0)), 0, 255)
     cell[:, :, :3] = rgb
     return Image.fromarray(np.clip(np.rint(cell), 0, 255).astype(np.uint8), "RGBA")
-
 
 def _keep_light_run(src: Image.Image, fitted: Image.Image) -> Image.Image:
     """Put back a near-white run when a heavy shrink averaged it away.
@@ -116,11 +111,9 @@ def _keep_light_run(src: Image.Image, fitted: Image.Image) -> Image.Image:
         out[y, x, 3] = max(int(out[y, x, 3]), 210)
     return Image.fromarray(out, "RGBA")
 
-
 ALPHA_JUMP = 96.0  # alpha range inside one footprint centre above this: a hard edge, snapped to its side
 SOFT_SHARE = 0.35  # share of a footprint in partial alpha above this: a soft ramp (glow, energy, foliage), never snapped
 CELL_FLAT = 7.0  # median luma spread inside a footprint's centre at or under this: the source is drawn in flat cells
-
 
 def _centre_windows(arr: np.ndarray, size: tuple[int, int], whole: bool = False):
     """Per output pixel, the source pixels in the centre half of its footprint (whole: the whole footprint):
@@ -138,7 +131,6 @@ def _centre_windows(arr: np.ndarray, size: tuple[int, int], whole: bool = False)
     ys = np.clip(cy[:, None] + np.arange(ky)[None, :], 0, sh - 1)  # (oh, ky)
     win = arr[ys[:, None, :, None], xs[None, :, None, :]]  # (oh, ow, ky, kx, 4)
     return win.reshape(oh, ow, ky * kx, 4).astype(np.float32)
-
 
 def cell_reduce(im: Image.Image, size: tuple[int, int]):
     """Shrink art drawn in flat cells (pixel art, AI pixel art on a loose grid, JPEG noise on top) by taking the
@@ -179,13 +171,11 @@ def cell_reduce(im: Image.Image, size: tuple[int, int]):
     out[med_a < 1.0] = 0
     return Image.fromarray(np.clip(np.rint(out), 0, 255).astype(np.uint8), "RGBA")
 
-
 def _coverage(arr: np.ndarray, size: tuple[int, int]) -> np.ndarray:
     """Alpha averaged over each output pixel's exact (fractional) footprint: which side of a hard edge the pixel is
     mostly on. The integer sample windows drift against the footprint when the scale is not whole (3.2 source px per
     output px), so their mean can say clear where the footprint is two-thirds paint: a notch cut into the outline."""
     return np.asarray(Image.fromarray(np.ascontiguousarray(arr[..., 3])).resize(size, Image.Resampling.BOX), np.float32)
-
 
 def _hard_jump(a: np.ndarray) -> np.ndarray:
     """Footprints (.., n alpha samples) holding a hard edge at source scale: clear and paint inside one footprint
@@ -194,7 +184,6 @@ def _hard_jump(a: np.ndarray) -> np.ndarray:
     rng = (a.max(axis=-1) - a.min(axis=-1)) > ALPHA_JUMP
     part = ((a > 16) & (a < 239)).mean(axis=-1)
     return rng & (part <= SOFT_SHARE)
-
 
 def _line_through(win: np.ndarray, ky: int, kx: int) -> np.ndarray:
     """Footprints holding a thin line (paint centred, clear on both sides), not the side of a solid edge."""
@@ -208,7 +197,6 @@ def _line_through(win: np.ndarray, ky: int, kx: int) -> np.ndarray:
         cx = (paint * xx[None, None, None, :]).sum(axis=(2, 3)) / n
     return (n > 0) & (np.abs(np.nan_to_num(cy, nan=1.0)) <= 0.2) & (np.abs(np.nan_to_num(cx, nan=1.0)) <= 0.2)
 
-
 def _thin(cov: np.ndarray, clear: float = 64.0) -> np.ndarray:
     """Output pixels with mostly clear footprints on two opposite sides (left and right, up and down, or a
     diagonal pair): a line thinner than a pixel. The rim of a solid body has solid next to it on one side and is
@@ -217,7 +205,6 @@ def _thin(cov: np.ndarray, clear: float = 64.0) -> np.ndarray:
     def at(dy, dx):
         return c[1 + dy:c.shape[0] - 1 + dy, 1 + dx:c.shape[1] - 1 + dx]
     return (at(0, -1) & at(0, 1)) | (at(-1, 0) & at(1, 0)) | (at(-1, -1) & at(1, 1)) | (at(-1, 1) & at(1, -1))
-
 
 def snap_edges(src: Image.Image, out: Image.Image) -> Image.Image:
     """Hard edges stay hard after a shrink: an output pixel whose footprint jumps from clear to paint (alpha range
@@ -251,7 +238,6 @@ def snap_edges(src: Image.Image, out: Image.Image) -> Image.Image:
     o[o[..., 3] == 0] = 0
     return Image.fromarray(o, "RGBA")
 
-
 def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     """Scale an RGBA image. Nearest when both sides grow. Shrinking: art drawn in flat cells takes the centre
     median of each footprint (cell_reduce, keeps pixel edges hard); anything else is premultiplied Lanczos."""
@@ -281,7 +267,6 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
             return _keep_light_run(source, im.resize(size, Image.Resampling.NEAREST))
     return _keep_light_run(source, snap_edges(im, _lanczos_down(im, size)))
 
-
 def bbox(im: Image.Image, alpha_min: int = 1):
     """(left, top, right, bottom) of pixels with alpha >= alpha_min, or None when empty."""
     a = im.convert("RGBA").getchannel("A")
@@ -289,18 +274,15 @@ def bbox(im: Image.Image, alpha_min: int = 1):
         a = a.point(lambda v: 255 if v >= alpha_min else 0)
     return a.getbbox()
 
-
 def crop(im: Image.Image, box, pad: int = 0) -> Image.Image:
     l, t, r, b = box
     return im.crop((max(0, l - pad), max(0, t - pad), min(im.width, r + pad), min(im.height, b + pad)))
-
 
 def scale_nearest(im: Image.Image, factor: float | None = None, size: tuple[int, int] | None = None) -> Image.Image:
     """Nearest-neighbour scale by factor or to size."""
     if size is None:
         size = (max(1, round(im.width * float(factor))), max(1, round(im.height * float(factor))))
     return im.resize(size, Image.Resampling.NEAREST)
-
 
 def shrink(im: Image.Image, cap: int) -> Image.Image:
     """High-quality shrink so the longest side is at most `cap` (returned as is when it already is)."""
@@ -310,7 +292,6 @@ def shrink(im: Image.Image, cap: int) -> Image.Image:
         return im
     s = cap / m
     return resize_rgba(im, (max(1, int(w * s)), max(1, int(h * s))))
-
 
 def fit_axis(im: Image.Image, *, width: int | None = None, height: int | None = None, to_int=int, empty: str = "none"):
     """Crop to `im.getbbox()` and scale so the width (or the height) equals the given size.
@@ -331,11 +312,9 @@ def fit_axis(im: Image.Image, *, width: int | None = None, height: int | None = 
         size = (max(1, to_int(cropped.size[0] * scale)), height)
     return resize_rgba(cropped, size)
 
-
 def core_box(im: Image.Image, alpha_min: int = 128):
     """Box of the solid body (alpha >= alpha_min), falling back to any alpha."""
     return bbox(im, alpha_min) or im.convert("RGBA").getbbox()
-
 
 def box_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     """Premultiplied area average: the exact source at output scale (a reference, not an output)."""
@@ -347,7 +326,6 @@ def box_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     al = r[..., 3:]
     r[..., :3] = np.where(al > 0, r[..., :3] * 255.0 / np.maximum(al, 1.0), 0)
     return Image.fromarray(np.clip(np.rint(r), 0, 255).astype(np.uint8), "RGBA")
-
 
 def fit_like(im: Image.Image, ref, alpha_min: int = 128, resize=None) -> Image.Image:
     """Place a keyed still on a canvas exactly like `ref` (the live still it replaces): same canvas size, the solid
@@ -380,16 +358,13 @@ def fit_like(im: Image.Image, ref, alpha_min: int = 128, resize=None) -> Image.I
     out.paste(small, (ox, oy), small)
     return out
 
-
 def flip(im: Image.Image, horizontal: bool = True) -> Image.Image:
     return im.transpose(Image.Transpose.FLIP_LEFT_RIGHT if horizontal else Image.Transpose.FLIP_TOP_BOTTOM)
-
 
 def grid_split(im: Image.Image, cols: int, rows: int) -> list[Image.Image]:
     """Equal cells, row-major."""
     cw, ch = im.width // cols, im.height // rows
     return [im.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)) for r in range(rows) for c in range(cols)]
-
 
 def fit_box(im, canvas: int, pad: int, *, resample=None, to_int=round, oy=None, empty_exit: str = "", alpha_min: int = 24):
     """Crop to the opaque box, pad it, scale to fit `canvas` square, paste centred (oy(nh) sets the y offset).

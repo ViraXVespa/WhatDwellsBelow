@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: live snapshot for binds or web_pad  
 
-
 ## Live snapshot — defaults (`scripts/input/binds/table.gd`)
 
 `table.gd` is the only place defaults are written; this table mirrors it. Every row is rebindable on Pause → Settings → Controls.

@@ -4,7 +4,6 @@ Status: current plan
 Read when: secret debug menu / balance page  
 Code: `scripts/debug/`  
 
-
 ## Secret debug / balance menu
 
 Accessed only by the following input sequence (gamepad): all four shoulder buttons (RT + RB + LT + LB) must go from pressed → released → pressed → released within a 1.5-second window. The 1.5-second timer resets after the first release so a full 1.5 seconds remains for the second press-and-release.

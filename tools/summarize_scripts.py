@@ -22,7 +22,6 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import gd_lib
 
-
 def select(root: Path, paths: list[Path] | None) -> list[Path]:
     if paths:
         out = []
@@ -32,7 +31,6 @@ def select(root: Path, paths: list[Path] | None) -> list[Path]:
                 out.append(p)
         return sorted(out)
     return gd_lib.iter_gd(root)
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Func-level script inventory for live .gd files.", json_out=True)
@@ -72,7 +70,6 @@ def main(argv: list[str] | None = None) -> int:
 
     return agent_log.finish("script-summary", root, "\n".join(lines), "PASS", args=args, legacy=False,
                             echo=f"Listed {listed} scripts", listed=listed)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

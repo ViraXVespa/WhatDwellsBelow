@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: COOP COEP off, id.txt querybust, serviceworker rename
 
-
 ## Web export requirements
 
 - MUST run in modern browsers.

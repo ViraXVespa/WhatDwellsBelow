@@ -42,7 +42,6 @@ STEAM_WIN = (
     "Godot Engine\\godot.windows.opt.tools.64.exe"
 )
 
-
 def pin_path() -> Path:
     env = os.environ.get("GODOT_BIN", "").strip()
     if env:
@@ -50,7 +49,6 @@ def pin_path() -> Path:
     if Path("/workspace").is_dir():
         return Path("/workspace/godot") / BIN_NAME
     return Path.home() / ".local" / "share" / "wdb-godot" / BIN_NAME
-
 
 def resolve_bin() -> Path | None:
     pin = pin_path()
@@ -60,7 +58,6 @@ def resolve_bin() -> Path | None:
     if steam.is_file():
         return steam
     return None
-
 
 def setup(pin: Path) -> Path:
     if pin.is_file():
@@ -89,7 +86,6 @@ def setup(pin: Path) -> Path:
     print(f"setup=installed\t{pin}")
     return pin
 
-
 def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = None) -> list[str]:
     args = [
         "--headless",
@@ -102,7 +98,6 @@ def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = 
     args.extend(["--", *(flags or [f"--wdb-phase{phase}-smoke"])])
     return args
 
-
 # Godot stderr lines that fail a phase. "SMOKE FAIL" is what a smoke check prints on a miss (e.g. smoke/marks_check.gd). A lambda whose captured node was freed runs with null (stale UI callback).
 FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index", "SMOKE FAIL")
 
@@ -111,7 +106,6 @@ FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index", "SMOKE FAIL")
 OPEN_TIMING = ["--wdb-load-timing-smoke", "--wdb-open-timing"]
 # ...and the baked frame-art check (art_bake.gd): every committed assets/ui/frames PNG matches what the art code draws.
 FRAME_ART = ["--wdb-frame-art-check"]
-
 
 def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, tag: str = "", flags: list[str] | None = None) -> int:
     log_dir = root / "_logs" / "smokes"
@@ -140,13 +134,11 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
         return max(1 if bad else 0, timing, art)
     return 1 if bad else 0
 
-
 def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
     """(warnscan areas, smoke phases) that load these files: bot_warnscan_lib.changed_areas is the one source."""
     from bot_warnscan_lib import changed_areas
     areas = changed_areas(files)
     return areas, sorted({int(a[1:]) for a in areas if re.fullmatch(r"p\d", a)})
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
@@ -236,7 +228,6 @@ def main(argv: list[str] | None = None) -> int:
         rc |= run_phase(exe, root, n, ns.timeout, ns.verbose)
     print(f"smokes={'PASS' if rc == 0 else 'FAIL'}")
     return agent_log.emit_result("PASS" if rc == 0 else "FAIL", phases=",".join(str(n) for n in phases))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

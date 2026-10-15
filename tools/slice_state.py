@@ -19,10 +19,8 @@ import session_lib
 
 REL = "_logs/slice-state.json"
 
-
 def path(root: Path) -> Path:
     return root / REL
-
 
 def load(root: Path) -> dict:
     try:
@@ -31,10 +29,8 @@ def load(root: Path) -> dict:
     except (OSError, ValueError):
         return {}
 
-
 def now() -> str:
     return dt.datetime.now().astimezone().isoformat(timespec="seconds")
-
 
 def clock(iso: str) -> str:
     """'17:23' (local clock) from an ISO time, or '?'."""
@@ -42,7 +38,6 @@ def clock(iso: str) -> str:
         return dt.datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone().strftime("%H:%M")
     except ValueError:
         return "?"
-
 
 def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None, units: list[str] | None = None, done: list[str] | None = None) -> dict:
     """The state a first run records. A door worked as a unit queue also carries the ordered units, which are done and the current one (the job)."""
@@ -54,12 +49,10 @@ def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None
         st["prompt"] = pf
     return st
 
-
 def save(root: Path, st: dict) -> None:
     p = path(root)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(st, indent=1) + "\n", encoding="utf-8")
-
 
 def steps(root: Path) -> dict:
     """Steps seen on disk right now: door run (the state file itself), import, baseline shots, checkpoint, handoff ('none' | 'skeleton' | 'ready')."""
@@ -71,7 +64,6 @@ def steps(root: Path) -> dict:
     return {"door run": True, "import": (root / ".godot" / "imported").is_dir(),
             "baseline shots": shots.is_dir() and any(shots.glob("*/flow.json")),
             "checkpoint": bool(retry_lib.gather_for(root).get("session")), "handoff": ho}
-
 
 def next_step(st: dict, s: dict) -> str:
     if st.get("mode") == "survey":
@@ -87,7 +79,6 @@ def next_step(st: dict, s: dict) -> str:
     if st.get("units"):
         return f"the unit in hand ({st.get('unit', '')}): edit, prove, commit_slice.py, then `python tools/start_build_slice.py --next` (message first)"
     return "the unit in hand: edit, prove, then the next ask (message first)"
-
 
 def short(root: Path, st: dict) -> str:
     """The SLICE ALREADY STARTED text for a later run."""

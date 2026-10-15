@@ -24,11 +24,9 @@ import gd_lib
 
 SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git"}
 
-
 def BOT_DOCS(rel: str) -> bool:
     """The Bot's own docs are not Build's search scope."""
     return rel == "BOT.md" or (rel.startswith("design/grok-bot-") and rel.endswith(".md"))
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Text search over scripts/scenes/tools/design.", json_out=True)
@@ -127,7 +125,6 @@ def main(argv: list[str] | None = None) -> int:
         echo += "\nnext: no match; try a shorter pattern or --regex (search is case-insensitive over scripts scenes tools design)"
     return agent_log.finish("xref", root, "\n".join(body), "INFO", args=args, echo=echo, files=len(files_hit),
                             hits=len(hits), scanned=scanned, truncated=trunc)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

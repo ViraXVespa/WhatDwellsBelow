@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: keyboard / mouse fallback  
 
-
 ## Input – Keyboard / mouse (fully featured fallback)
 
 All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB for attack is the default mouse scheme. Every player action is rebindable (see Rebinding); menu navigation and sticks are fixed.

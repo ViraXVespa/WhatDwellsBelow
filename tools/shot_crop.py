@@ -15,20 +15,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 
-
 def parse_box(text: str) -> tuple[int, int, int, int]:
     p = [int(v) for v in text.replace("x", ",").split(",")]
     if len(p) != 4 or p[2] <= 0 or p[3] <= 0:
         raise ValueError("--box is X,Y,W,H with W and H above 0")
     return p[0], p[1], p[2], p[3]
 
-
 def parse_hex(text: str) -> tuple[int, int, int]:
     h = text.lstrip("#")
     if len(h) != 6:
         raise ValueError("--near is a #rrggbb colour")
     return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-
 
 def stats(arr, mask, ox: int, oy: int) -> str:
     """'count=N bbox=x,y,w,h' (image coordinates) of the True cells of mask."""
@@ -39,7 +36,6 @@ def stats(arr, mask, ox: int, oy: int) -> str:
         return "count=0 bbox=none"
     ys, xs = np.where(mask)
     return "count=%d bbox=%d,%d,%d,%d" % (n, xs.min() + ox, ys.min() + oy, xs.max() - xs.min() + 1, ys.max() - ys.min() + 1)
-
 
 def run(png: Path, args) -> list[str]:
     import numpy as np
@@ -72,7 +68,6 @@ def run(png: Path, args) -> list[str]:
         dest = Path(args.out) if args.out else Path("_logs/shot-crop") / f"{png.stem}-{x}-{y}-{bw}x{bh}{'-z%d' % args.zoom if args.zoom > 1 else ''}.png"
         out.append("crop " + str(imgio.save(crop, dest)))
     return out
-
 
 def selftest() -> int:
     import subprocess
@@ -110,7 +105,6 @@ def selftest() -> int:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Crop, zoom and probe a shot PNG.")
     ap.add_argument("png", nargs="?", help="The PNG to look at.")
@@ -136,7 +130,6 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail(str(e))
     print("\n".join(lines))
     return agent_log.emit_result("PASS", png=png.name)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

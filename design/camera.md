@@ -4,7 +4,6 @@ Status: current plan + live snapshot
 Read when: Camera3D, zoom, renderer, depth sorting
 Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
 
-
 ## Camera (live 3D path)
 
 - Orthographic Camera3D

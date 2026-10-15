@@ -313,4 +313,3 @@ static func vend_sell(ui) -> void:
 	ui._st(App.tr("shop.sold_1_ore"))
 	VendorFrame.refresh_bank(ui)
 	App.save_now()
-

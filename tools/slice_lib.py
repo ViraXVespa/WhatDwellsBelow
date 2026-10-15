@@ -14,7 +14,6 @@ import session_lib
 
 VISUAL = {"ui", "theme", "visual"}
 
-
 def step0_note(door: str, job: str, area: str, flows: str, near: str = "") -> str:
     """STEP 0 text for a visual slice (a ui / theme / visual word in the door, job or area name, split on . - / space) whose routes.yaml
     `shot_flows` maps no flow to it; '' otherwise. A note, never a stop: creating the flow is the first job step. `near` = flows mapped
@@ -28,7 +27,6 @@ def step0_note(door: str, job: str, area: str, flows: str, near: str = "") -> st
             "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, map it by job, shoot it and look at it. "
             "Say whether that PNG is the screen being changed, and send its path with the ask."
             + (f" Mapped to the door only, so possibly another screen: {near}." if near else ""))
-
 
 def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
     """(door, job, flows, note) for an area the user typed: a routes.yaml job or door when it is one, else a free area name.
@@ -49,12 +47,10 @@ def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
         pass
     return door, job, flows, step0_note(door, job, "" if (door or job) else name, flows, near)
 
-
 Q0 = ("Q0 only when the task's Open questions do not already settle it: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
       "including frames or layouts already built. A task whose Open questions are none, or whose body already names the look, the reference, and the bounds, has answered Q0. Do not ask it again. "
       "When you do ask, look options differ in kind (one look shared by every screen, a look per screen or object, a new look, her words), not in detail, and are not all built on one existing look. "
       "Each option says `reuse <the existing asset or look>` or `draw new`; an option that only names an asset (\"the stall prop\") is not an option yet.")
-
 
 def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool:
     """A survey slice: a door (not a job) with several jobs and no handoff yet. It surveys from text and ends in `--handoff`."""
@@ -70,7 +66,6 @@ def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool
         return len(jobs) >= 2
     except Exception:
         return False
-
 
 def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implement", screen: bool = True) -> str:
     """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib).
@@ -130,7 +125,6 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
          "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
     ])
 
-
 def doors_hint(root: Path) -> str:
     """'doors: a, b, c; jobs are door.job (python tools/list_route.py lists them)' from routes.yaml, or ''."""
     try:
@@ -140,7 +134,6 @@ def doors_hint(root: Path) -> str:
     except Exception:
         return ""
     return f"doors: {', '.join(doors)}; jobs are door.job (`python tools/list_route.py` lists them)" if doors else ""
-
 
 def area_warning(root: Path, area: str, door: str = "", job: str = "") -> str:
     """WARN text when --area is neither a routes.yaml door nor a job: it then only names the worktree and gives no route card."""
@@ -158,7 +151,6 @@ def area_warning(root: Path, area: str, door: str = "", job: str = "") -> str:
     return (f"WARN: --area {area!r} is not a routes.yaml door or job, so it only names the worktree and gives no route card, smokes or flows. "
             f"Valid: {doors_hint(root) or 'see design/routes.yaml'}. Use --door / --job for the card; a free name is fine for a new, undocumented system (ask the User).")
 
-
 def worktree_kind(root: Path) -> str:
     """Which worktree shape root is: 'clone' = a Grok worktree (a full clone: `.git` is a directory, git dir == common dir, HEAD on the week
     branch), found by its place `<...>/.grok/worktrees/<repo>/<name>` (seen in a real session: C:\\Users\\Vira\\.grok\\worktrees\\repos-whatdwellsbelow\\wdb-...);
@@ -173,18 +165,15 @@ def worktree_kind(root: Path) -> str:
     out = [subprocess.run(["git", "rev-parse", f"--{k}"], cwd=root, capture_output=True, text=True).stdout.strip() for k in ("git-dir", "git-common-dir")]
     return "linked" if bool(out[0] and out[1]) and (root / out[0]).resolve() != (root / out[1]).resolve() else ""
 
-
 def is_linked(root: Path) -> bool:
     """True when root is a slice worktree of either shape (see worktree_kind)."""
     return bool(worktree_kind(root))
-
 
 def merge_back_text(week: str) -> str:
     """The merge-back card line: a Grok worktree is a full clone on the week branch, so a green prove ends in a plain push of it."""
     ask = "balance, audio, visuals, controls: ask the User for playtest approval first. Commit and push only after she says the final shot is settled (or told you to commit now)"
     return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): on a green prove and her OK, commit here "
             f"and `git push origin {week or 'grok-build-w{N}'}` (plain push, never main, no force); nothing to merge by hand. {ask}")
-
 
 def checkpoint(root: Path, args) -> int:
     """--checkpoint: save this (worktree) session's id so a red prove can fork it later from the worktree directory."""
@@ -203,7 +192,6 @@ def checkpoint(root: Path, args) -> int:
     msg = (f"CHECKPOINT saved: session {session} for worktree {root}. A red prove prints `grok -r {session} --fork-session` to run from this directory; "
            "the fork stays in this worktree because this session already lives here.")
     return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, route="checkpoint", saved="yes" if saved else "dry-run")
-
 
 def selftest(script: Path) -> int:
     """Main checkout says no slice starts there; a Grok clone prints the card, then SLICE ALREADY STARTED (--full reprints); survey vs implementation ORDER; checkpoint."""
@@ -360,7 +348,6 @@ def selftest(script: Path) -> int:
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
-
 
 def retry_selftest() -> int:
     """Save/lookup/block in a throwaway git repo: with session, without session, without base."""

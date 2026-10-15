@@ -15,7 +15,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Dungeon map smoke across seeds.", json_out=True)
     ap.add_argument("--count", type=int, default=10, help="Number of seeds to sweep (default 10).")
@@ -58,7 +57,6 @@ def main(argv: list[str] | None = None) -> int:
     body = [f"floor={args.floor} scale={args.scale} n={len(seeds)}", f"seeds={','.join(map(str, seeds))}", ""] + rows
     return agent_log.finish("dungeon-map-sweep", root, "\n".join(body), "FAIL" if fail_n else "PASS", args=args,
                             sweep_fail=fail_n, n=len(seeds))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

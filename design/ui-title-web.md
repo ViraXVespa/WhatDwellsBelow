@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: title / play menu, web fullscreen gate, loader  
 
-
 ## Title / play menu
 
 `scripts/title.gd` is the play menu. Overlay body lives in `scripts/title/news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.

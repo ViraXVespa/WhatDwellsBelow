@@ -20,7 +20,6 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-
 def _prompt_for(row: dict) -> str:
     if not row["player"]:
         return ""
@@ -34,7 +33,6 @@ def _prompt_for(row: dict) -> str:
         test=False,
         gender=row["gender"] or "male",
     )
-
 
 def _md(regen: list[dict], prompts: dict[str, str], missing: list[str]) -> str:
     lines = [
@@ -85,7 +83,6 @@ def _md(regen: list[dict], prompts: dict[str, str], missing: list[str]) -> str:
     )
     return "\n".join(lines)
 
-
 def main(argv: list[str] | None = None) -> int:
     args = lib.brief_args(agent_log.std_parser(__doc__, writes=True), "regen_brief", argv)
     review, missing = lib.load_with_missing(args.review)
@@ -101,7 +98,6 @@ def main(argv: list[str] | None = None) -> int:
     }
     lib.write_brief(args, _md(regen, prompts, missing), payload)
     return agent_log.emit_result("PASS", regenerate=len(regen), missing=len(missing))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

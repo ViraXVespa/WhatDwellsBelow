@@ -55,7 +55,6 @@ EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 EXPECT = _TOOLS / "keytest_expect.json"
 CELL = 360
 
-
 def _premul_fit(im: Image.Image, side: int) -> Image.Image:
     a = np.array(im.convert("RGBA")).astype(np.float32)
     a[..., :3] *= a[..., 3:] / 255.0
@@ -65,12 +64,10 @@ def _premul_fit(im: Image.Image, side: int) -> Image.Image:
     b[..., :3] = np.clip(b[..., :3] * 255.0 / np.maximum(b[..., 3:], 1.0), 0, 255)
     return Image.fromarray(np.rint(b).astype(np.uint8), "RGBA")
 
-
 def _checker(size, c: int = 12) -> Image.Image:
     y, x = np.mgrid[:size[1], :size[0]]
     v = np.where(((x // c) + (y // c)) % 2, 200, 140).astype(np.uint8)
     return Image.fromarray(np.dstack([v, v, v, np.full_like(v, 255)]), "RGBA")
-
 
 def sheet(src: Image.Image, keyed: Image.Image, label: str) -> Image.Image:
     from PIL import ImageDraw
@@ -85,11 +82,9 @@ def sheet(src: Image.Image, keyed: Image.Image, label: str) -> Image.Image:
     ImageDraw.Draw(out).text((4, 3), f"{label}   source | checker | dark | light", fill=(230, 230, 230))
     return out
 
-
 def _near(mask: np.ndarray, r: int) -> np.ndarray:
     import cv2
     return cv2.dilate(mask.astype(np.uint8), np.ones((2 * r + 1, 2 * r + 1), np.uint8)).astype(bool)
-
 
 def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     s = np.array(src.convert("RGB")).astype(np.int32)
@@ -168,7 +163,6 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
         "partial": int(soft.sum()),
     }
 
-
 def radial(src: Image.Image, keyed: Image.Image, plate: np.ndarray, span: int = 60, sectors: int = 36):
     import cv2
     """Round glows (orbs): profiles by radius beyond the opaque art, per angular sector.
@@ -228,7 +222,6 @@ def radial(src: Image.Image, keyed: Image.Image, plate: np.ndarray, span: int = 
     return {"rise": round(float(np.percentile(rises, 90)), 4), "corr": round(float(np.corrcoef(A, S)[0, 1]), 4),
             "rough": round(rough, 4), "noise": round(noise, 4), "tail": round(ta / max(ts, 1), 2)}
 
-
 def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
     lim = dict(exp.get("default", {}))
     lim.update(exp.get(name, {}))
@@ -263,7 +256,6 @@ def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
         bad.append("repeat: keying twice gave different bytes")
     return bad
 
-
 def check_callers(root: Path) -> list[str]:
     """Compile every tool that calls the keyer and flag removed keywords (spill_flood, tol, refs)."""
     import ast
@@ -285,7 +277,6 @@ def check_callers(root: Path) -> list[str]:
                         if kw.arg in ("spill_flood", "tol", "refs"):
                             bad.append(f"{f.name}:{node.lineno} {fn}({kw.arg}=) was removed")
     return bad
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Key assets/keytest (or --src) and check the numbers; write review sheets.", writes=True)
@@ -346,7 +337,6 @@ def main(argv: list[str] | None = None) -> int:
         EXPECT.write_text(json.dumps(exp, indent=2) + "\n", encoding="utf-8")
         lines.append("recorded fg updated in tools/keytest_expect.json")
     return agent_log.finish("keytest", root, "\n".join(lines), "FAIL" if fails else "PASS", args=args, checked=len(files), failing=fails)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

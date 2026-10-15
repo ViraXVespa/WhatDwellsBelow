@@ -4,7 +4,6 @@ Status: current plan
 Read when: movement, collision, character select, eight-dir body
 Code: `scripts/world/player.gd`, `player_anim.gd`, `anim_load.gd`, `anim_loco.gd`, `facing.gd`  
 
-
 ## Character selection
 
 - On first load the player chooses a male or female character.

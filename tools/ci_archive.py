@@ -35,15 +35,12 @@ WEEK_CLOSE = re.compile(r"^design/changelog/(\d+)\.(\d+)\.0\.md$")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 KINDS = ("web", "build")
 
-
 def git(root: Path, *args: str) -> tuple[int, str]:
     return repo_lib.run_git(root, *args)
-
 
 def rev(root: Path, ref: str) -> str:
     code, out = git(root, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
     return out.strip() if code == 0 else ""
-
 
 def detect(root: Path, before: str, head: str) -> list[tuple[int, int]]:
     """(epoch, series) of every week-close changelog added in before..head. A missing or all-zero `before`
@@ -57,7 +54,6 @@ def detect(root: Path, before: str, head: str) -> list[tuple[int, int]]:
         if m and int(m.group(2)) > 0:
             found.append((int(m.group(1)), int(m.group(2))))
     return sorted(set(found), key=lambda e: (e[0], e[1]))
-
 
 def pin_week(root: Path, epoch: int, n: int, head: str, dry: bool, say) -> tuple[list[str], list[str]]:
     """Pin web + build for week n. Returns (paths to commit, new local tags)."""
@@ -75,7 +71,6 @@ def pin_week(root: Path, epoch: int, n: int, head: str, dry: bool, say) -> tuple
         paths.append(week_pin.CATALOG)
     return paths, tags
 
-
 def commit_paths(root: Path, paths: list[str], message: str) -> str:
     """Commit only `paths` when they changed. Returns committed|clean|error."""
     code, out = git(root, "status", "--porcelain", "--", *paths)
@@ -85,7 +80,6 @@ def commit_paths(root: Path, paths: list[str], message: str) -> str:
     if git(root, "add", "--", *paths)[0] != 0:
         return "error"
     return "committed" if git(root, *ident, "commit", "-m", message, "--", *paths)[0] == 0 else "error"
-
 
 def push(root: Path, remote: str, branch: str, tags: list[str], commit: bool, say) -> str:
     """Plain pushes only: the new tags (refs/tags/..., never forced), then HEAD to the branch with fetch+rebase retries."""
@@ -107,7 +101,6 @@ def push(root: Path, remote: str, branch: str, tags: list[str], commit: bool, sa
             git(root, "rebase", "--abort")
             return "error"
     return "error"
-
 
 def run(root: Path, args) -> tuple[int, dict, list[str]]:
     lines: list[str] = []
@@ -159,7 +152,6 @@ def run(root: Path, args) -> tuple[int, dict, list[str]]:
     kv = dict(weeks=len(weeks), tags=len(tags), committed=1 if state == "committed" else 0, pushed=pushed, dry_run=dry)
     return (1 if bad else 0), kv, lines
 
-
 def _g(cwd: Path, *a: str) -> str:
     import subprocess
 
@@ -167,7 +159,6 @@ def _g(cwd: Path, *a: str) -> str:
     if p.returncode:
         raise RuntimeError(f"git {' '.join(a)}: {p.stderr.strip()}")
     return p.stdout.strip()
-
 
 def selftest() -> tuple[list[str], int]:
     """Prove the whole flow against a bare 'origin' on disk: squash-merge simulation, stamp commit, rerun, repair, race."""
@@ -311,7 +302,6 @@ def selftest() -> tuple[list[str], int]:
             check(exc.code == 2, "unknown commit exits 2")
     return bad, ran[0]
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("CI week-close archives: tag + catalog rows + docs for web and build when design/changelog/0.N.0.md lands.", writes=True)
     ap.add_argument("--before", default="", help="Push base SHA (github.event.before). Default HEAD^.")
@@ -334,7 +324,6 @@ def main(argv: list[str] | None = None) -> int:
     code, kv, lines = run(root, args)
     body = "\n".join([f"root=. dryRun={args.dry_run}", *lines])
     return agent_log.finish("ci-archive", root, body, "FAIL" if code else "PASS", args=args, echo="", **kv)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -45,4 +45,3 @@ Rules:
 2. Before asserting in a smoke, search for an existing helper (`interval_for`, `forge_hold`, …). If none exists, **extract** it from the live code first, then assert against the helper’s result. Grok Build may write that helper as a same-system API.
 3. When hostifying, keep smoke-reachable facades (see Hostify pitfall 9) **and** keep smokes on the shared calc route — updating only the smoke’s hardcoded constants is a regression waiting to happen.
 4. Search for duplicated literals of the same feature (example: `2.4` / `mine_time`) during size sweeps; fold them into the helper in the same batch when safe.
-

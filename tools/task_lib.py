@@ -24,18 +24,14 @@ FIRST_RE = re.compile(r"Your first command[^:]*:\s*(.+)$")
 FILL = "<fill"
 OPT_FLOOR = 4  # the old grok-bot-opt.md queue ended at opt-004; opt ids are never reused
 
-
 def tasks_dir(root: Path) -> Path:
     return root / TASKS_REL
-
 
 def task_path(root: Path, tid: str) -> Path:
     return tasks_dir(root) / f"{tid}.md"
 
-
 def split(raw: str) -> list[str]:
     return [p.strip() for p in (raw or "").split(",") if p.strip() and p.strip() != "none"]
-
 
 def head(text: str) -> dict[str, str]:
     """Header fields; `title` falls back to the `# ` heading, `resume` to a handoff's first-command line."""
@@ -58,15 +54,12 @@ def head(text: str) -> dict[str, str]:
         out["resume"] = out["first"]
     return out
 
-
 def files(root: Path) -> list[Path]:
     d = tasks_dir(root)
     return sorted(p for p in d.glob("*.md") if p.name != README) if d.is_dir() else []
 
-
 def load(root: Path) -> dict[str, dict[str, str]]:
     return {p.stem: {**head(md.read_text(p)), "path": f"{TASKS_REL}/{p.name}"} for p in files(root)}
-
 
 def set_head(path: Path, key: str, value: str) -> bool:
     """Replace one header line `key: ...` (or a handoff's first-command line when key is 'first'); True when the file changed."""
@@ -84,7 +77,6 @@ def set_head(path: Path, key: str, value: str) -> bool:
             md.write_text(path, "\n".join(lines), eol="crlf" if eol == "\r\n" else "lf", bom=bom)
             return True
     return False
-
 
 def set_section(path: Path, title: str, body: str) -> bool:
     """Replace the body of `## title` (added at the end when missing); True when the file changed."""
@@ -104,13 +96,11 @@ def set_section(path: Path, title: str, body: str) -> bool:
     md.write_text(path, new, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
     return True
 
-
 def index_lines(tasks: dict[str, dict[str, str]]) -> list[str]:
     rows = ["id | owner | status | title | needs", "--- | --- | --- | --- | ---"]
     for tid, t in sorted(tasks.items(), key=lambda kv: (OWNERS.index(kv[1].get("owner")) if kv[1].get("owner") in OWNERS else 9, kv[0])):
         rows.append(f"{tid} | {t.get('owner', '')} | {t.get('status', '')} | {t.get('title', '')} | {', '.join(split(t.get('needs', ''))) or '-'}")
     return rows if tasks else ["(no open tasks)"]
-
 
 def write_index(root: Path, dry: bool = False) -> bool:
     """Regenerate the README index block; True when it changed."""
@@ -125,7 +115,6 @@ def write_index(root: Path, dry: bool = False) -> bool:
     if not dry:
         md.write_text(p, new, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
     return True
-
 
 def fails(root: Path) -> list[str]:
     """Lint for check_load_graph.py and `task.py check`."""
@@ -168,7 +157,6 @@ def fails(root: Path) -> list[str]:
             out.append(f"{TASKS_REL}/README.md index is stale: run `python tools/task.py index`")
     return out
 
-
 def changelog_target(root: Path, create: bool = False) -> Path | None:
     """The newest design/changelog/X.Y.Z.md that main does not have yet (this branch's own entry).
     If create and none exists, write the next label (with blank line after header) and return it."""
@@ -194,8 +182,6 @@ def changelog_target(root: Path, create: bool = False) -> Path | None:
     path.write_text("## " + label + "\n\n", encoding="utf-8")
     return path
 
-
-
 def add_bullet(text: str, bullet: str) -> str:
     """The bullet after the entry's last `- ` line (before its `Summary:` line), else at the end.
     Ensures a blank line after a bare ## header."""
@@ -206,8 +192,6 @@ def add_bullet(text: str, bullet: str) -> str:
     if last < 0:
         last = next((i - 1 for i, l in enumerate(lines) if l.startswith("Summary:")), len(lines) - 1)
     return "\n".join(lines[:last + 1] + [bullet] + lines[last + 1:]) + "\n"
-
-
 
 def done(root: Path, tid: str, changelog: Path | None = None, dry: bool = False) -> list[str]:
     """Delete the task, unblock its dependants, add one changelog line. Returns what changed."""
@@ -243,13 +227,11 @@ def done(root: Path, tid: str, changelog: Path | None = None, dry: bool = False)
         write_index(root)
     return out
 
-
 def next_opt(root: Path) -> str:
     """`opt-next` for `task.py new`: one above every opt id open now or ever committed under design/tasks."""
     p = subprocess.run(["git", "log", "--all", "--format=", "--name-only", "--", f"{TASKS_REL}/opt-*.md"], cwd=root, capture_output=True, text=True)
     seen = [int(m) for m in re.findall(r"opt-(\d+)\.md", p.stdout + " ".join(f.name for f in files(root)))]
     return f"opt-{max(seen + [OPT_FLOOR]) + 1:03d}"
-
 
 def skeleton(tid: str, owner: str, title: str, done_when: str, resume: str, needs: list[str], body: str) -> str:
     lines = [f"# {title}", "", f"id: {tid}", f"owner: {owner}", f"status: {'blocked' if needs else 'open'}", f"done-when: {done_when}", f"resume: {resume}"]

@@ -36,15 +36,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = ROOT / "_src"
 MANIFEST = SRC_ROOT / "manifest.json"
 
-
 FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/sprites/buildings/guild_reception.png",
           "assets/sprites/buildings/stall.png", "assets/sprites/props/anvil.png", "assets/sprites/props/fence.png",
           "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
 
-
 # live is wrong here (Vira, 2026-10-13): the plate wins even though it is other art than live
 SOURCE_WINS = ("assets/sprites/props/extract_gate_on.png",)
-
 
 def _on_grey(im):
     from PIL import Image
@@ -52,16 +49,13 @@ def _on_grey(im):
     bg.alpha_composite(im.convert("RGBA"))
     return bg.convert("RGB")
 
-
 def frozen(rel: str) -> bool:
     return any(rel == f or (f.endswith("/") and rel.startswith(f)) for f in FROZEN)
-
 
 def _fit_ref(fit, flip: bool):
     """Recorded geometry -> ((W, H), box); a flip row places against the mirrored box."""
     W, H, x0, y0, x1, y1 = fit
     return ((W, H), (W - x1, y0, W - x0, y1) if flip else (x0, y0, x1, y1))
-
 
 def _partial_share(im, k: float = 1.0) -> float:
     """Percent of the subject's pixels in partial alpha (17..238) that a shrink by k can keep: partial runs wider than
@@ -76,7 +70,6 @@ def _partial_share(im, k: float = 1.0) -> float:
         part = np.asarray(Image.fromarray(part).filter(ImageFilter.MinFilter(2 * r + 1)))
     return 100.0 * float((part > 0).sum()) / max(1, int((a > 0).sum()))
 
-
 def _rim_band_soft(keyed, k: float) -> float:
     """Share of the band around the body's edge (one output pixel wide each side, k source px) that is partial
     alpha at source scale: what a faithful shrink can keep as soft rim. Pixel art scores low, glows high."""
@@ -90,7 +83,6 @@ def _rim_band_soft(keyed, k: float) -> float:
     av = np.asarray(a)
     return float(((av > 8) & (av < 247) & band).sum()) / max(1, int(band.sum()))
 
-
 def _notches(out, exact) -> tuple[int, int]:
     """Silhouette faults against the exact source at output scale (premultiplied area average, same placement):
     notch = output clear (< 128) where the source footprint is mostly paint (>= 160); bump = output solid where the
@@ -99,7 +91,6 @@ def _notches(out, exact) -> tuple[int, int]:
     o = np.asarray(out.convert("RGBA"))[..., 3].astype(np.int32)
     e = np.asarray(exact.convert("RGBA"))[..., 3].astype(np.int32)
     return int(((e >= 160) & (o < 128)).sum()), int(((e < 96) & (o >= 128)).sum())
-
 
 def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, include_frozen: bool = False,
          fit=None, approved: bool = False, rekey_approved: bool = False) -> str:
@@ -175,7 +166,6 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
     except Exception as exc:
         return f"FAIL {live_rel} ({exc})"
 
-
 def _record_fit(root, args, data) -> int:
     import io
     import subprocess
@@ -198,7 +188,6 @@ def _record_fit(root, args, data) -> int:
         MANIFEST.write_text(text, encoding="utf-8")
     return agent_log.finish("rekey-all-stills", root, f"recorded fit for {n} rows from {args.record_fit}", "PASS",
                             args=args, recorded=n)
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bulk rekey stills from the manifest. Overwrites live PNGs.", writes=True)
@@ -275,7 +264,6 @@ def main(argv: list[str] | None = None) -> int:
     lines.append(f"done wrote={wrote} skipped={skipped} failed={failed}")
     status = "FAIL" if failed else "PASS"
     return agent_log.finish("rekey-all-stills", root, "\n".join(lines), status, args=args, wrote=wrote, skipped=skipped, failed=failed)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

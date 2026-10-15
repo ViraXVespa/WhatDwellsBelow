@@ -4,7 +4,6 @@ Status: current plan + live snapshot
 Read when: roster, AI, pressure
 Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/enemies.gd`  
 
-
 ## Enemy variety
 
 - Minimum of 12 different types of normal enemies.

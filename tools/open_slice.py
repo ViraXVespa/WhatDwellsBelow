@@ -40,26 +40,21 @@ import task_lib
 
 BANNED = ("--fork-session", "--max-turns", "--prompt-file", "-p")
 
-
 def show(argv: list[str]) -> str:
     import shlex
 
     return subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
 
-
 def create_argv(grok: str, name: str, ref: str) -> list[str]:
     return [grok, "worktree", "create", name, "--ref", ref]
-
 
 def session_argv(grok: str, wt: str, prompt: str) -> list[str]:
     """Trust this folder. `grok --worktree --trust` trusts the source checkout, not the new one."""
     return [grok, "--cwd", wt, "--trust"] + ([prompt] if prompt else [])
 
-
 def task_prompt(tid: str, path: str, area: str) -> str:
     start = (f"python tools/start_build_slice.py {'--job' if '.' in area else '--door'} {area}, then " if area else "") + f"python tools/task.py show {tid}"
     return f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole."
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Start grok in a new worktree from the week branch (user-run launcher).", writes=True)
@@ -155,7 +150,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     return 0
 
-
 def selftest(script: Path) -> int:
     """Dry-run cases in a throwaway repo; the one non-dry case runs with an empty PATH, so grok cannot start."""
     bad: list[str] = []
@@ -243,7 +237,6 @@ def selftest(script: Path) -> int:
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

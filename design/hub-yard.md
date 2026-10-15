@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay
 
-
 ## Test Dummy
 - Striking dummy (`DummyS` / `scripts/combat/dummy.gd`) for testing.
 - Occupancy, no knockback, refill at 0 HP: combat.

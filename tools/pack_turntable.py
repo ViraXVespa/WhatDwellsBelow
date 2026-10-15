@@ -23,7 +23,6 @@ LAWN = (124, 252, 0)
 PICKS = [8, 12, 16, 20]
 ATK_PICKS = [8, 18, 28, 38]
 
-
 def key(im: Image.Image) -> Image.Image:
     keyed = plate_key.punch(im)
     arr = np.array(keyed)
@@ -33,7 +32,6 @@ def key(im: Image.Image) -> Image.Image:
     lawn = (lawn_d <= 72.0) | ((g > 150) & (g > r + 40) & (g > b + 40))
     arr[lawn] = 0
     return Image.fromarray(arr, "RGBA")
-
 
 def torso_x(im: Image.Image) -> int:
     px = im.load()
@@ -54,7 +52,6 @@ def torso_x(im: Image.Image) -> int:
     xs.sort()
     return xs[len(xs) // 2]
 
-
 def place(im: Image.Image) -> Image.Image:
     im = key(im)
     ch = geom.fit_axis(im, height=CHAR_H)
@@ -68,16 +65,13 @@ def place(im: Image.Image) -> Image.Image:
     out.paste(ch, (x0, y0), ch)
     return out
 
-
 def save(im: Image.Image, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     place(im).save(dest)
     print("wrote", dest.relative_to(ROOT))
 
-
 def frame(folder: str, i: int) -> Path:
     return FRAMES / folder / f"f{i:03d}.png"
-
 
 def pack_list(folder: str, idxs: list, dest_prefix: str) -> None:
     n = 0
@@ -88,7 +82,6 @@ def pack_list(folder: str, idxs: list, dest_prefix: str) -> None:
             continue
         save(imgio.load(p), OUT / f"{dest_prefix}_{n}.png")
         n += 1
-
 
 def _run() -> None:
     # Idles from stills + turntable
@@ -120,10 +113,8 @@ def _run() -> None:
     pack_list("atk_down_left_new", ATK_PICKS, "attack_down_left")
     print("turntable pack done")
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("pack_turntable", "Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -25,10 +25,8 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 from agent_log import rel
 
-
 def _sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
-
 
 def parse_mask(text: str) -> tuple[int, int, int, int]:
     try:
@@ -36,7 +34,6 @@ def parse_mask(text: str) -> tuple[int, int, int, int]:
     except ValueError:
         agent_log.fail(f"bad --mask {text!r}: want X,Y,W,H in pixels of a 1920x1080 frame (example 1040,20,260,100)")
     return x, y, w, h
-
 
 def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None, masks: list | None = None) -> dict:
     """Compare two PNGs. status: same | changed | size | missing. masks: [(x, y, w, h)] in 1920x1080 pixels, ignored
@@ -63,7 +60,6 @@ def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None, masks: 
         res["diff_png"] = str(out_png)
     return res
 
-
 def compare_dirs(a: Path, b: Path, tol: int = 0, out_dir: Path | None = None, masks: list | None = None) -> list[dict]:
     names = sorted({p.name for p in a.glob("*.png")} | {p.name for p in b.glob("*.png")})
     rows = []
@@ -76,14 +72,12 @@ def compare_dirs(a: Path, b: Path, tol: int = 0, out_dir: Path | None = None, ma
             rows.append(compare(a / nm, b / nm, tol, (out_dir / (nm[:-4] + ".diff.png")) if out_dir else None, masks))
     return rows
 
-
 def verdict(rows: list[dict], max_ratio: float | None) -> str:
     if any(r["status"] in ("size", "missing", "added", "removed") for r in rows):
         return "FAIL"
     if max_ratio is not None and any(r["ratio"] > max_ratio for r in rows):
         return "FAIL"
     return "PASS" if all(r["status"] == "same" for r in rows) else "INFO"
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Diff shot PNGs: before vs after (files or directories).", writes=True, json_out=True)
@@ -123,7 +117,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

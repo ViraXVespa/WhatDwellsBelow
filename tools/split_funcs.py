@@ -54,7 +54,6 @@ START = re.compile(
     r"|^(?:extends|class_name|signal|enum|class|@)\b"
 )
 
-
 def parse(text: str):
     """-> items: dicts kind(pre/func/const/var/other) name lines."""
     lines = text.split("\n")
@@ -84,10 +83,8 @@ def parse(text: str):
                       "static": head.startswith("static") if kind == "func" else None})
     return items
 
-
 def body(it) -> str:
     return "\n".join(it["lines"])
-
 
 def refs(it, names, cls_cache=None) -> set[str]:
     t = body(it)
@@ -100,7 +97,6 @@ def refs(it, names, cls_cache=None) -> set[str]:
                 out.add(n)
                 break
     return out - {it["name"]}
-
 
 def host_body(it, facade, owner, inst, pre, stem, alias, htype="Node"):
     """Rewrite an instance func into a static host-first func -> (text, helper stems used)."""
@@ -145,7 +141,6 @@ def host_body(it, facade, owner, inst, pre, stem, alias, htype="Node"):
     t = t[: head.start()] + re.sub(r"^([ \t]*)(?:static\s+)?func\s+(\w+)\(\)?", lambda k: k.group(1) + "static func " + k.group(2) + ("(host: %s)" if k.group(0).endswith(")") else "(host: %s, ") % htype, t[head.start() :], count=1, flags=re.M)
     return t, deps
 
-
 def sig_of(it):
     b = body(it)
     i0 = b.index("(", b.index("func"))
@@ -172,7 +167,6 @@ def sig_of(it):
     ret = re.search(r"->\s*(\w+)", b[i1:e])
     return sig, names, (ret.group(1) if ret else None)
 
-
 def outside(path: Path, root: Path) -> collections.Counter:
     rel = path.resolve().relative_to(root).as_posix()
     alias = re.compile(r'(?:const|var)\s+(\w+)\s*(?::[^=]*)?:?=\s*(?:preload|load)\("res://' + re.escape(rel) + r'"\)')
@@ -186,10 +180,8 @@ def outside(path: Path, root: Path) -> collections.Counter:
                 cnt[m.group(1)] += 1
     return cnt
 
-
 def camel(s: str) -> str:
     return "".join(w.capitalize() for w in s.split("_") if w)
-
 
 def decode(path: Path):
     raw = path.read_bytes()
@@ -198,13 +190,11 @@ def decode(path: Path):
     crlf = "\r\n" in t
     return t.replace("\r\n", "\n"), bom, crlf
 
-
 def encode(t: str, bom: bool, crlf: bool) -> bytes:
     t = re.sub(r"\n{3,}", "\n\n", t).rstrip("\n") + "\n"
     if crlf:
         t = t.replace("\n", "\r\n")
     return (b"\xef\xbb\xbf" if bom else b"") + t.encode("utf-8")
-
 
 def do_list(items, path, root):
     names = {it["name"]: it["kind"] for it in items if it["name"]}
@@ -217,7 +207,6 @@ def do_list(items, path, root):
         extra = f" ext={ext[it['name']]}" if ext[it["name"]] else ""
         print(f"{it['kind']:5} {it['name']:<28}{sz:>6}B uses={r}{extra}")
 
-
 def helper_dir(path: Path, in_folder: bool = False) -> tuple[Path, str]:
     """(folder for new helpers, cluster stem). Facade beside its folder -> `<dir>/<stem>/`; a helper already inside a
     cluster folder (`<dir>/<stem>/x.gd` with `<dir>/<stem>.gd` present, or --in-folder for facade-less families such as
@@ -226,7 +215,6 @@ def helper_dir(path: Path, in_folder: bool = False) -> tuple[Path, str]:
     if path.stem != par.name and ((par.parent / (par.name + ".gd")).is_file() or in_folder):
         return par, par.name
     return par / path.stem, path.stem
-
 
 def build(items, plan, path, root, in_folder=False):
     names = {it["name"]: it["kind"] for it in items if it["name"]}
@@ -321,14 +309,12 @@ def build(items, plan, path, root, in_folder=False):
     out[path] = "\n".join(fac)
     return out, alias
 
-
 def outside_strs(root: Path) -> collections.Counter:
     cnt: collections.Counter = collections.Counter()
     for d in ("scripts", "tests"):
         for f in (root / d).rglob("*.gd"):
             cnt.update(STRCALL.findall(f.read_text(encoding="utf-8-sig", errors="replace")))
     return cnt
-
 
 def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
@@ -376,7 +362,6 @@ def main() -> int:
     for f in out:
         print(f"{os.path.getsize(f):>7}B {f}" + (f"  (was {before}B)" if f == path else ""))
     return agent_log.emit_result("FAIL" if bad or miss else "PASS", mode="plan", files=len(out), requal_bad=bad, line_missing=sum(miss.values()))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

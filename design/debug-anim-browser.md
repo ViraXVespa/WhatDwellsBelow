@@ -4,7 +4,6 @@ Status: current plan
 Read when: animation browser debug page  
 Code: `scripts/debug/`  
 
-
 ## Animation Browser (secret debug page)
 
 Purpose: let the User review player and enemy animation states so art and facing can be checked without playing a full run.

@@ -4,7 +4,6 @@ Status: current plan
 Read when: the User has accepted an I2V clip and it is time to harvest or pack  
 Code: `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/plate_remap.py`, `tools/sprite_pipeline.py`
 
-
 ## Frame counts after harvest
 
 Walk harvest targets **8 frames** for `walk` when the clip supports it. `idle_to_walk` / `walk_to_idle` may be shorter (often 3–4) so long as both genders and all eight facings of that *state* share one count.
@@ -59,4 +58,3 @@ Re-runs: placement uses the manifest `fit` geometry ([W, H, x0, y0, x1, y1], liv
 Do not nearest-upscale the plate before the key. That distorted the female face.
 
 `rekey_preview.py` fits the open set from `_src` the same way (blue composites). It needs the `_src` link.
-

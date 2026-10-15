@@ -29,10 +29,8 @@ except ImportError as exc:  # pragma: no cover
 
 PLATE_HUE = (275.0, 350.0)
 
-
 def _ycc(rgb: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(rgb, cv2.COLOR_RGB2YCrCb).astype(np.float32)
-
 
 def denoise(rgb: np.ndarray, k: int = 3) -> np.ndarray:
     """YCrCb with Cr/Cb median-filtered (k px); luma untouched."""
@@ -40,7 +38,6 @@ def denoise(rgb: np.ndarray, k: int = 3) -> np.ndarray:
     for c in (1, 2):
         ycc[..., c] = cv2.medianBlur(np.ascontiguousarray(ycc[..., c]), k)
     return ycc.astype(np.float32)
-
 
 def plate_colour(rgb: np.ndarray, ring: int = 6):
     """(plate RGB tuple, chroma spread) from border pixels on the plate hue, or (None, 0) when no plate."""
@@ -59,13 +56,11 @@ def plate_colour(rgb: np.ndarray, ring: int = 6):
     spread = float(np.percentile(np.linalg.norm(ycc[:, 1:] - c0, axis=1), 95))
     return tuple(int(round(v)) for v in plate), spread
 
-
 def _flood(accept: np.ndarray) -> np.ndarray:
     n, lab = cv2.connectedComponents(accept.astype(np.uint8), connectivity=8)
     edge = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
     edge = edge[edge > 0]
     return np.isin(lab, edge)
-
 
 def _nearest(p: np.ndarray, mask: np.ndarray):
     """(distance, colour) of the nearest `mask` pixel for every pixel."""
@@ -76,13 +71,11 @@ def _nearest(p: np.ndarray, mask: np.ndarray):
     lut[labels[ys, xs]] = p[ys, xs]
     return dist, lut[labels]
 
-
 def _flood_from(accept: np.ndarray, seed: np.ndarray) -> np.ndarray:
     """Components of `accept` that touch `seed` (8-connected, one px dilation)."""
     n, lab = cv2.connectedComponents(accept.astype(np.uint8), connectivity=8)
     hit = np.unique(lab[cv2.dilate(seed.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool) & accept])
     return np.isin(lab, hit[hit > 0])
-
 
 def trimap(rgb: np.ndarray, plate, spread: float, ring: int, t_core: float = 0.5, clear=None):
     """Returns (bg, ring_mask, glow, solid, core) as bool/float H x W arrays."""
@@ -147,11 +140,9 @@ def trimap(rgb: np.ndarray, plate, spread: float, ring: int, t_core: float = 0.5
     core = inner if inner.any() else core
     return bg, ring_m, glow, solid, core
 
-
 def excess(c: np.ndarray) -> np.ndarray:
     """Magenta excess min(R,B)-G of float RGB."""
     return np.minimum(c[..., 0], c[..., 2]) - c[..., 1]
-
 
 def colour_field(p: np.ndarray, ref: np.ndarray, scales=(1.5, 4, 12, 36)) -> np.ndarray:
     """Art colour propagated smoothly outward from `ref` pixels: normalised Gaussian blur summed over
@@ -166,9 +157,7 @@ def colour_field(p: np.ndarray, ref: np.ndarray, scales=(1.5, 4, 12, 36)) -> np.
         acc += cv2.GaussianBlur(p * m[..., None], (k, k), sg)
     return acc / np.maximum(w[..., None], 1e-6)
 
-
 _M = np.array([[0.5, -0.4187, -0.0813], [-0.1687, -0.3313, 0.5]], np.float32)  # RGB -> (Cr, Cb) - 128
-
 
 def guided(I: np.ndarray, p: np.ndarray, r: int, eps: float) -> np.ndarray:
     """He et al. guided filter (grey guide), box radius r."""
@@ -177,7 +166,6 @@ def guided(I: np.ndarray, p: np.ndarray, r: int, eps: float) -> np.ndarray:
     a = (cv2.blur(I * p, k) - mI * mp) / (cv2.blur(I * I, k) - mI * mI + eps)
     b = mp - a * mI
     return cv2.blur(a, k) * I + cv2.blur(b, k)
-
 
 def sparkles(rgb, alpha, col, solid0, wide, plate, pale=None):
     """Small paint pieces inside a glow (sparkles) are paint over glow over plate. Their pixels are unmixed
@@ -228,11 +216,9 @@ def sparkles(rgb, alpha, col, solid0, wide, plate, pale=None):
     col = np.where(S[..., None], c_o, col)
     return alpha, col, S, sp
 
-
 def _chroma_rgb(u: np.ndarray) -> np.ndarray:
     """RGB change for a unit (Cr, Cb) chroma step with luma kept."""
     return np.array([1.402 * u[0], -0.344136 * u[1] - 0.714136 * u[0], 1.772 * u[1]], np.float32)
-
 
 def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.ndarray, noise=None, t_bg: float = 10.0,
           fine=None, bg=None, mix=None):
@@ -355,7 +341,6 @@ def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.
     hard[soft] = a_hard[soft]
     return alpha, out, G, floor, hard
 
-
 def despill(rgb: np.ndarray, F: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """Limit magenta excess min(R,B)-G in `mask` to the foreground colour's own excess."""
     out = rgb.copy()
@@ -365,7 +350,6 @@ def despill(rgb: np.ndarray, F: np.ndarray, mask: np.ndarray) -> np.ndarray:
     out[..., 0] -= cut
     out[..., 2] -= cut
     return np.clip(out, 0, 255)
-
 
 def _edge_frame(mask: np.ndarray, depth: int = 3) -> np.ndarray:
     """Crop seams: thin lines of paint along the picture's own border (a dark 1-2 px frame left by a crop or a
@@ -378,7 +362,6 @@ def _edge_frame(mask: np.ndarray, depth: int = 3) -> np.ndarray:
     edge = np.zeros_like(mask)
     edge[:depth], edge[-depth:], edge[:, :depth], edge[:, -depth:] = True, True, True, True
     return mask & edge & ~thick
-
 
 def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = None, name: str = "key", plate=None):
     """Key one opaque plate picture. Returns (RGBA image, stats dict). `plate` pins the plate RGB.

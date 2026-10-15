@@ -111,15 +111,12 @@ DEFAULT_BRIEF = {
     "still": "One still. Match the locked Bible palette and pixel-art finish when style sheets are staged.",
 }
 
-
 def _die(msg: str, code: int = 2) -> None:
     print(f"run_isolated_grok: {msg}", file=sys.stderr)
     raise SystemExit(code)
 
-
 def _which_grok(name: str) -> str | None:
     return shutil.which(name)
-
 
 def _style_lines(*, use_bibles: bool, kind: str) -> str:
     if not use_bibles:
@@ -136,7 +133,6 @@ def _style_lines(*, use_bibles: bool, kind: str) -> str:
         "Match a chunky SNES pixel-art finish from the brief."
     )
 
-
 def _parse_keyframe(spec: str) -> tuple[Path, float]:
     if "@" not in spec:
         _die("--keyframe must be path@seconds (Windows paths contain a colon)")
@@ -149,10 +145,8 @@ def _parse_keyframe(spec: str) -> tuple[Path, float]:
         _die(f"--keyframe timestamp must be inside the clip: {spec}")
     return Path(raw), stamp
 
-
 def _walk_prompt(path: Path) -> bool:
     return WALK_MARK in path.read_text(encoding="utf-8")
-
 
 def _tool_lines(kind: str, *, pinned: bool = False) -> str:
     if kind == "i2v" and pinned:
@@ -195,7 +189,6 @@ def _tool_lines(kind: str, *, pinned: bool = False) -> str:
         "- Do not call `image_to_video` in this job.\n"
     )
 
-
 def build_ingest_job(names: list[str]) -> str:
     listed = ", ".join(f"`{n}`" for n in names)
     return (
@@ -205,7 +198,6 @@ def build_ingest_job(names: list[str]) -> str:
         "Do not open skill files. Do not list the directory. Do not generate or edit images.\n"
         "Stop as soon as those files are in this conversation.\n"
     )
-
 
 def build_job(
     *,
@@ -263,10 +255,8 @@ def build_job(
         "Do not walk a parent repo. Do not edit Godot scenes.\n"
     )
 
-
 def write_job(path: Path, text: str) -> None:
     path.write_text(text.replace("\r\n", "\n"), encoding="utf-8")
-
 
 def copy_into(src: Path, dest_dir: Path) -> Path:
     if not src.is_file():
@@ -274,7 +264,6 @@ def copy_into(src: Path, dest_dir: Path) -> Path:
     dest = dest_dir / src.name
     shutil.copy2(src, dest)
     return dest
-
 
 def collect_results(scratch: Path, staged_names: set[str]) -> list[Path]:
     out: list[Path] = []
@@ -287,19 +276,15 @@ def collect_results(scratch: Path, staged_names: set[str]) -> list[Path]:
             out.append(child)
     return out
 
-
 def grok_home() -> Path:
     env = os.environ.get("GROK_HOME")
     return Path(env) if env else Path.home() / ".grok"
 
-
 def iso_home() -> Path:
     return grok_home() / "wdb-iso"
 
-
 def catalog_path() -> Path:
     return iso_home() / "catalog.json"
-
 
 def file_sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -307,7 +292,6 @@ def file_sha256(path: Path) -> str:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
-
 
 def ref_key(kind: str, sources: list[Path]) -> str:
     h = hashlib.sha256()
@@ -319,7 +303,6 @@ def ref_key(kind: str, sources: list[Path]) -> str:
         h.update(file_sha256(src).encode("ascii"))
         h.update(b"\n")
     return h.hexdigest()
-
 
 def load_catalog() -> dict:
     path = catalog_path()
@@ -336,19 +319,16 @@ def load_catalog() -> dict:
         data["entries"] = {}
     return data
 
-
 def save_catalog(data: dict) -> None:
     path = catalog_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent="\t") + "\n", encoding="utf-8")
-
 
 def session_alive(session_id: str, cwd: Path) -> bool:
     if not session_id:
         return False
     root = grok_home() / "sessions" / quote(str(cwd.resolve()), safe="") / session_id
     return (root / "summary.json").is_file()
-
 
 def parse_session_id(text: str) -> str:
     blob = text.strip()
@@ -367,7 +347,6 @@ def parse_session_id(text: str) -> str:
     if not isinstance(obj, dict):
         return ""
     return str(obj.get("sessionId") or obj.get("session_id") or "")
-
 
 def grok_child_argv(
     grok_bin: str,
@@ -400,7 +379,6 @@ def grok_child_argv(
     ]
     return argv
 
-
 def harvest_session_media(scratch: Path, dest: Path) -> Path | None:
     """If the child left Imagine output in its session folder, copy it to scratch."""
     root = grok_home() / "sessions" / quote(str(scratch), safe="")
@@ -424,13 +402,11 @@ def harvest_session_media(scratch: Path, dest: Path) -> Path | None:
         shutil.copy2(src, dest)
     return dest
 
-
 def inspect_mentions_repo_agents(text: str) -> bool:
     low = text.replace("\\", "/").lower()
     if "agents.md" not in low:
         return False
     return "whatdwellsbelow" in low or "dwellsbelow" in low
-
 
 def inspect_instruction_count(text: str) -> int | None:
     marker = "Project Instructions ("
@@ -447,7 +423,6 @@ def inspect_instruction_count(text: str) -> int | None:
     if not raw.isdigit():
         return None
     return int(raw)
-
 
 def session_model_calls(scratch: Path) -> int | None:
     root = grok_home() / "sessions" / quote(str(scratch.resolve()), safe="")
@@ -477,7 +452,6 @@ def session_model_calls(scratch: Path) -> int | None:
             found = True
     return total if found else None
 
-
 def run_cmd(
     argv: list[str],
     *,
@@ -498,7 +472,6 @@ def run_cmd(
     except FileNotFoundError:
         _die(f"executable not found: {argv[0]}")
     return None
-
 
 def main() -> None:
     p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
@@ -759,7 +732,6 @@ def main() -> None:
     finally:
         if scratch_holder is not None:
             scratch_holder.cleanup()
-
 
 if __name__ == "__main__":
     main()

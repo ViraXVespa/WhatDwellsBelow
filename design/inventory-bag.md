@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: bag, equipment slots, food vs potion  
 
-
 ## Bag
 
 - Fixed capacity (current value 28).

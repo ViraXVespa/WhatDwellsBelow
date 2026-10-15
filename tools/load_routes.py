@@ -8,7 +8,6 @@ from typing import Any
 
 SMOKE_PHASES = tuple(range(1, 10))  # numbered smoke phases (scripts/debug/smoke.gd --wdb-phaseN-smoke); every tool derives from this
 
-
 ROUTES_REL = "design/routes.yaml"
 
 _KEY = re.compile(r"^([A-Za-z0-9_./-]+):\s*(.*)$")
@@ -27,10 +26,8 @@ INC6_KEYS = (
     "fetch_ban",
 )
 
-
 class RoutesError(ValueError):
     pass
-
 
 def _parse_scalar(raw: str) -> Any:
     raw = raw.strip()
@@ -51,7 +48,6 @@ def _parse_scalar(raw: str) -> Any:
     ):
         return raw[1:-1]
     return raw
-
 
 def parse_constrained_yaml(text: str) -> dict[str, Any]:
     """Map/list YAML with 2-space indent. No anchors, tags, or flow maps."""
@@ -142,7 +138,6 @@ def parse_constrained_yaml(text: str) -> dict[str, Any]:
         raise RoutesError("root must be a mapping")
     return data
 
-
 def load_routes(root: Path) -> dict[str, Any]:
     path = root / ROUTES_REL
     if not path.is_file():
@@ -152,7 +147,6 @@ def load_routes(root: Path) -> dict[str, Any]:
     if int(data.get("version", 0)) != 1:
         raise RoutesError("routes.yaml version must be 1")
     return data
-
 
 def all_route_files(data: dict[str, Any]) -> set[str]:
     files: set[str] = set()
@@ -181,7 +175,6 @@ def all_route_files(data: dict[str, Any]) -> set[str]:
     if isinstance(skills, dict):
         files.update(str(v) for v in skills.values())
     return files
-
 
 def role_of(data: dict[str, Any], posix: str) -> str:
     boot = data.get("boot") or {}
@@ -215,13 +208,11 @@ def role_of(data: dict[str, Any], posix: str) -> str:
             return "gate"
     return "unknown"
 
-
 def role_sets(data: dict[str, Any]) -> dict[str, set[str]]:
     grouped: dict[str, set[str]] = {}
     for posix in all_route_files(data):
         grouped.setdefault(role_of(data, posix), set()).add(posix)
     return grouped
-
 
 def job_index(data: dict[str, Any]) -> dict[str, dict[str, str]]:
     by_id: dict[str, str] = {}
@@ -234,13 +225,11 @@ def job_index(data: dict[str, Any]) -> dict[str, dict[str, str]]:
             by_path[path] = jid
     return {"by_id": by_id, "by_path": by_path}
 
-
 def job_read_when(data: dict[str, Any]) -> dict[str, str]:
     raw = data.get("job_read_when") or {}
     if not isinstance(raw, dict):
         return {}
     return {str(key): str(val) for key, val in raw.items()}
-
 
 def check_route(data: dict[str, Any], door: str = "", job: str = "") -> str:
     """Error text naming the valid doors/jobs when door or job is not in routes.yaml, else ''."""
@@ -251,7 +240,6 @@ def check_route(data: dict[str, Any], door: str = "", job: str = "") -> str:
     if job.strip() and job.strip() not in jobs:
         return f"unknown job {job.strip()!r} (use door.job). jobs: {', '.join(jobs)}"
     return ""
-
 
 def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[int]:
     """Numbered smoke phases for a door/job: job key, then door key, then `default`."""
@@ -266,7 +254,6 @@ def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[in
             break
     return [int(x) for x in str(val or "1").replace(" ", "").split(",") if x.isdigit()]
 
-
 def shot_flows(data: dict[str, Any], door: str = "", job: str = "", job_only: bool = False) -> list[str]:
     """Shot flow names for a door/job: job key, then door key (no default; empty when unmapped).
     job_only: a job maps only to its own key (no door fallback to flows that may show another screen)."""
@@ -279,14 +266,12 @@ def shot_flows(data: dict[str, Any], door: str = "", job: str = "", job_only: bo
             return [x for x in str(raw[key]).replace(" ", "").split(",") if x]
     return []
 
-
 def job_flow_map(data: dict[str, Any], door: str) -> str:
     """'ui.pause=a,b; ui.run_flow=c' : the flows each job of `door` maps to (empty when none maps)."""
     raw = data.get("shot_flows") or {}
     if not isinstance(raw, dict):
         return ""
     return "; ".join("%s=%s" % (k, str(v).replace(" ", "")) for k, v in raw.items() if str(k).startswith(door + ".") and v)
-
 
 def shot_gaps_mode(data: dict[str, Any], who: str) -> str:
     """'required' | 'advisory' | 'off' for new-UI-state shot gaps, per agent (bot, build). Default: bot required, build advisory."""
@@ -296,13 +281,11 @@ def shot_gaps_mode(data: dict[str, Any], who: str) -> str:
         return want
     return "required" if who == "bot" else "advisory"
 
-
 def job_parked_ids(data: dict[str, Any]) -> list[str]:
     raw = data.get("job_parked") or []
     if not isinstance(raw, list):
         return []
     return [str(item) for item in raw]
-
 
 def _str_lists(data: dict[str, Any], key: str) -> dict[str, list[str]]:
     """data[key] as {str: [str]}; anything not a dict gives {}, a non-list value gives []."""
@@ -315,18 +298,14 @@ def _str_lists(data: dict[str, Any], key: str) -> dict[str, list[str]]:
         out[str(k)] = [str(item) for item in items]
     return out
 
-
 def conflicts_with(data: dict[str, Any]) -> dict[str, list[str]]:
     return _str_lists(data, "conflicts_with")
-
 
 def boot_max(data: dict[str, Any]) -> dict[str, list[str]]:
     return _str_lists(data, "boot_max")
 
-
 def fetch_ban(data: dict[str, Any]) -> dict[str, list[str]]:
     return _str_lists(data, "fetch_ban")
-
 
 def resolve_route_ref(data: dict[str, Any], raw: str) -> str:
     token = str(raw).strip()
@@ -357,17 +336,14 @@ def resolve_route_ref(data: dict[str, Any], raw: str) -> str:
         return str(indexes[token])
     return ""
 
-
 def increment6_missing_keys(data: dict[str, Any]) -> list[str]:
     return [key for key in INC6_KEYS if key not in data]
-
 
 def door_job_targets(data: dict[str, Any], door_file: str) -> set[str]:
     for door in (data.get("doors") or {}).values():
         if str(door["file"]) == door_file:
             return {str(v) for v in (door.get("jobs") or {}).values()}
     return set()
-
 
 def parked_job_files(data: dict[str, Any]) -> set[str]:
     out = {str(v) for v in (data.get("parked_jobs") or [])}
@@ -378,13 +354,11 @@ def parked_job_files(data: dict[str, Any]) -> set[str]:
             out.add(path)
     return out
 
-
 def skill_files(data: dict[str, Any]) -> set[str]:
     skills = data.get("skills") or {}
     if not isinstance(skills, dict):
         return set()
     return {str(v) for v in skills.values()}
-
 
 def allowed_citations(data: dict[str, Any], posix: str) -> set[str]:
     """Paths this file may name. Topic job/door bodies are handled separately."""

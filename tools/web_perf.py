@@ -39,7 +39,6 @@ DOWN = {"avg_fps": (30, 3)}
 SCALAR = ("load_ms", "wall_ms", "wasm_dl_ms", "wasm_compile_ms", "pck_end_ms", "init_ms", "frames", "avg_fps", "avg_frame_ms",
           "p95_frame_ms", "max_frame_ms", "long_frames", "shot_excluded", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
 
-
 def median(runs: list[dict]) -> dict:
     rep = dict(runs[len(runs) // 2])
     for k in SCALAR:
@@ -54,7 +53,6 @@ def median(runs: list[dict]) -> dict:
         rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
     return rep
 
-
 def diff(cur: dict, base: dict, pct: float | None) -> list[str]:
     out = []
     for table, sign in ((UP, 1), (DOWN, -1)):
@@ -66,7 +64,6 @@ def diff(cur: dict, base: dict, pct: float | None) -> list[str]:
             if d > floor and (b <= 0 or d * 100 / b > (lim if pct is None else pct)):
                 out.append("WORSE %s %s -> %s" % (k, b, a))
     return out
-
 
 def health(rep: dict) -> list[str]:
     """Playtester health for one run (flows with a play result or a waitplay step); a non-empty list = INVALID, never baselined."""
@@ -93,7 +90,6 @@ def health(rep: dict) -> list[str]:
         bad.append("INVALID frame stall %sms" % mx)
     return bad
 
-
 def stuck(flow: dict, shots: dict) -> list[str]:
     """expect_change: [[shot_a, shot_b], ...]; mean luminance within 10% means the flow stayed on that screen."""
     out = []
@@ -101,7 +97,6 @@ def stuck(flow: dict, shots: dict) -> list[str]:
         if shots.get(a, -1) >= 0 and shots.get(b, -1) >= 0 and abs(shots[a] - shots[b]) * 100 / max(shots[a], 1) < 10:
             out.append("STUCK shots %s and %s look the same (luminance %s vs %s): the flow did not change screens" % (a, b, shots[a], shots[b]))
     return out
-
 
 def check(flow: dict, rep: dict) -> list[str]:
     """Flow "assert": {"audio_gaps": max, "p95_frame_ms": max (phase "music" or the measured frames), ...}; a breach is ASSERT (exit 1)."""
@@ -116,7 +111,6 @@ def check(flow: dict, rep: dict) -> list[str]:
         if not isinstance(v, (int, float)) or v > lim:
             out.append("ASSERT %s=%s over %s" % (k, v, lim))
     return out
-
 
 def selftest() -> list[str]:
     """Offline checks of the report logic (no browser): flow asserts, baseline diff, uncapped launch flags."""
@@ -136,7 +130,6 @@ def selftest() -> list[str]:
     if "--disable-frame-rate-limit" not in web_perf_lib.UNCAP:
         bad.append("frame pacing not uncapped")
     return bad
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Chrome.", json_out=True)
@@ -246,7 +239,6 @@ def main(argv: list[str] | None = None) -> int:
     first = next(iter(reps.values()))
     return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flows=",".join(names), load_ms=first["load_ms"],
                             avg_fps=first["avg_fps"], heap_mb=first["heap_mb"], wasm_mb=first["wasm_mem_mb"], flagged=flags)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

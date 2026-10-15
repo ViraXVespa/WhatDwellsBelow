@@ -23,10 +23,8 @@ import code_map_lib as cm
 import gd_lib
 import md_format_lib as md
 
-
 def _head(title: str, *extra: str) -> list[str]:
     return [f"code-map {title} {datetime.now(timezone.utc).isoformat()}", "root=.", *extra]
-
 
 def cmd_check(root: Path, args) -> int:
     path = root / "design" / "code-map.md"
@@ -53,7 +51,6 @@ def cmd_check(root: Path, args) -> int:
     return agent_log.finish("code-map-check", root, "\n".join(lines), status, args=args, echo=echo,
                             unmapped=len(unmapped), missing=len(missing), mapped=mapped, scripts=len(scripts))
 
-
 def cmd_row(root: Path, args) -> int:
     path = root / "design" / "code-map.md"
     needle = cm.posix(args.path)
@@ -71,12 +68,10 @@ def cmd_row(root: Path, args) -> int:
     return agent_log.finish("code-map-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
                             echo="\n".join(x for x in lines[3:] if x.strip()) if hits else f"matches={len(hits)}", matches=len(hits))
 
-
 def _parse_rename(raw: str) -> tuple[str, str] | None:
     old, _, new = raw.partition("=")
     old, new = old.strip(), new.strip()
     return (old, new) if old and new else None
-
 
 def cmd_patch(root: Path, args) -> int:
     path = root / "design" / "code-map.md"
@@ -137,8 +132,6 @@ def cmd_patch(root: Path, args) -> int:
     return end("FAIL" if failed else "PASS", echo, changed=changed, added=added, removed=removed,
                renamed=renamed, skipped=skipped, failed=failed, dry_run=args.dry_run)
 
-
-
 def cmd_sweep(root: Path, args) -> int:
     path = root / "design" / "code-map.md"
     lines = _head("sweep", f"system={args.system or '*'}")
@@ -192,7 +185,6 @@ def cmd_sweep(root: Path, args) -> int:
     echo = f"systems={len(targets)} missing={missing_total}"
     return agent_log.finish("code-map-sweep", root, "\n".join(lines), status, args=args, echo=echo, missing=missing_total)
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check, query, or patch design/code-map.md.", writes=True, json_out=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -222,7 +214,6 @@ def main(argv: list[str] | None = None) -> int:
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)
     root = agent_log.resolve_root(args)
     return {"check": cmd_check, "row": cmd_row, "patch": cmd_patch, "sweep": cmd_sweep}[args.cmd](root, args)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

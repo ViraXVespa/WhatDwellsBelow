@@ -8,7 +8,6 @@ Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKI
 This file is the Imagine **gate**. It is not an art-pipeline job. Grok Build must load it before any `image_gen`, `image_edit`, or `image_to_video` call.
 CLI-only. Web / chat and Grok Bot do not run Imagine and do not spawn this runner.
 
-
 ## Default
 
 Isolate. Do not call Imagine in the game-repo cwd unless a row in **In-session exceptions** matches. Project hook `.grok/hooks/wdb-pretool.json` denies Imagine/I2V when cwd is this repo.

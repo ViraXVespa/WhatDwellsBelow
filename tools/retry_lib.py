@@ -23,14 +23,12 @@ WEAK = re.compile(r"\bFAIL\b|exit=[1-9]|missing|busy", re.I)
 KEEP = 20
 END = "--- end ---"
 
-
 def pick_red(lines: list[str], n: int = 2) -> list[str]:
     """The n most telling red lines (errors first, then failed exits), each trimmed to one short line."""
     rows = [" ".join(ln.split()) for ln in lines]
     rows = [s for i, s in enumerate(rows) if s and not s.startswith("RESULT") and s not in rows[:i]]
     out = [s[:160] for s in rows if STRONG.search(s)] + [s[:160] for s in rows if WEAK.search(s) and not STRONG.search(s)]
     return out[:n]
-
 
 def strip(lines: "list[str] | str") -> list[str]:
     """Drop RETRY blocks (head line through `--- end ---`) from a child summary embedded in a parent's body."""
@@ -43,7 +41,6 @@ def strip(lines: "list[str] | str") -> list[str]:
             skip = False
     return out
 
-
 def changed_files(root: Path, base: str, limit: int = 8) -> list[str]:
     """Files that differ from BASE in the working tree (committed or not) plus untracked ones."""
     code, out = repo_lib.run_git(root, "diff", "--name-only", base)
@@ -51,7 +48,6 @@ def changed_files(root: Path, base: str, limit: int = 8) -> list[str]:
     code, out = repo_lib.run_git(root, "ls-files", "--others", "--exclude-standard")
     files += [f for f in (out.splitlines() if code == 0 else []) if f not in files]
     return files[:limit]
-
 
 def state_path(root: Path) -> Path | None:
     """Gather-session file in the git common dir (outside the tree, shared by all worktrees); None without git."""
@@ -61,14 +57,12 @@ def state_path(root: Path) -> Path | None:
     d = Path(out)
     return (d if d.is_absolute() else root / d).resolve() / "wdb-gather-sessions.json"
 
-
 def _load(path: Path | None) -> dict:
     try:
         data = json.loads(path.read_text(encoding="utf-8")) if path and path.is_file() else {}
     except (OSError, ValueError):
         return {}
     return data if isinstance(data, dict) else {}
-
 
 def save_gather(root: Path, wt: str, session: str, ref: str, where: str = "") -> str:
     """Remember the gather session for worktree `wt` (+ its folder `where` when known). Returns the file written, '' when there is no session or no git."""
@@ -82,13 +76,11 @@ def save_gather(root: Path, wt: str, session: str, ref: str, where: str = "") ->
     path.write_text(json.dumps(data, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     return str(path)
 
-
 def _same(a: str, b: Path) -> bool:
     try:
         return bool(a) and Path(a).resolve() == b.resolve()
     except OSError:
         return False
-
 
 def gather_for(root: Path) -> dict:
     """The saved entry for this worktree (its saved path, else its folder name), or {}."""
@@ -99,10 +91,8 @@ def gather_for(root: Path) -> dict:
     e = data.get(root.name)
     return e if isinstance(e, dict) else {}
 
-
 def _q(p: Path) -> str:
     return f'"{p}"' if " " in str(p) else str(p)
-
 
 def block(root: Path, what: str, red: list[str]) -> str:
     """The RETRY text for a red prove `what` (a command or check name); `red` = its red output lines."""
@@ -126,7 +116,6 @@ def block(root: Path, what: str, red: list[str]) -> str:
            f"Read only the changed files (start with {', '.join(files) or 'the files in that diff'}), "
            "then give one diagnosis and make one fix. Rerun that prove once and report.")
     return "\n".join([head, "--- paste ---", ask, END])
-
 
 if __name__ == "__main__":
     sys.exit(__import__("slice_lib").retry_selftest() if "--selftest" in sys.argv[1:] else print(__doc__) or 0)

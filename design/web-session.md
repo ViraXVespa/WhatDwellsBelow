@@ -18,7 +18,6 @@ If the next write would be an assumption, ask, as many questions as needed, and 
 
 If a request needs multiple turns to investigate fully, say so instead of assuming.
 
-
 ## Flows
 
 After Phase 1, default to **brainstorm**. Directed-goal is opt-in.

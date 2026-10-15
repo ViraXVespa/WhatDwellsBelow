@@ -22,7 +22,6 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-
 def run_git(root: Path, args: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", "-C", str(root), *args],
@@ -30,7 +29,6 @@ def run_git(root: Path, args: list[str], check: bool = False) -> subprocess.Comp
         capture_output=True,
         check=check,
     )
-
 
 def run_godot(
     godot: Path,
@@ -49,7 +47,6 @@ def run_godot(
         env=env,
     )
 
-
 def dump_proc(proc: subprocess.CompletedProcess[str]) -> None:
     if proc.stdout:
         sys.stdout.write(proc.stdout)
@@ -60,7 +57,6 @@ def dump_proc(proc: subprocess.CompletedProcess[str]) -> None:
         if not proc.stderr.endswith("\n"):
             sys.stderr.write("\n")
 
-
 def stamp_project(path: Path, label: str) -> None:
     text = path.read_text(encoding="utf-8")
     named = f"What Dwells Below — {label}"
@@ -69,10 +65,8 @@ def stamp_project(path: Path, label: str) -> None:
         raise RuntimeError(f"could not stamp name in {path}")
     path.write_text(text, encoding="utf-8", newline="\n")
 
-
 def cached_export(cache_pin: Path) -> bool:
     return (cache_pin / "index.html").is_file()
-
 
 def copy_export(src: Path, dest: Path) -> None:
     if dest.exists():
@@ -80,13 +74,11 @@ def copy_export(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(src, dest)
 
-
 def remove_worktree(root: Path, wt: Path) -> None:
     if wt.exists():
         run_git(root, ["worktree", "remove", "--force", str(wt)])
     if wt.exists():
         shutil.rmtree(wt, ignore_errors=True)
-
 
 def export_pin(
     root: Path,
@@ -167,7 +159,6 @@ def export_pin(
             shutil.rmtree(stage, ignore_errors=True)
         remove_worktree(root, wt)
 
-
 def export_archives(root: Path, site: Path, godot: Path, cache_root: Path, wt_root: Path) -> int:
     catalog_path = root / "scripts" / "data" / "archive_catalog.json"
     if not catalog_path.is_file():
@@ -210,7 +201,6 @@ def export_archives(root: Path, site: Path, godot: Path, cache_root: Path, wt_ro
     print(f"archives copied={ok} failed={failed} skipped={skipped}", flush=True)
     return 0
 
-
 def main() -> int:
     parser = agent_log.std_parser("Best-effort cached export of catalog archives.")
     parser.add_argument("--site", type=Path, required=True, help="Pages site dir the archive builds are written under.")
@@ -228,7 +218,6 @@ def main() -> int:
         wt = root / wt
     rc = export_archives(root, site, args.godot.resolve(), cache, wt)
     return agent_log.emit_result("PASS" if rc == 0 else "FAIL", exit=rc)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

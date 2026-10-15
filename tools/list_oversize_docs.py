@@ -23,12 +23,10 @@ import bot_gate_lib
 
 _SENT = re.compile(r"(?<=[.!?:;])\s+|\n+")
 
-
 def _doc_files(root: Path) -> list[Path]:
     out = sorted(root.glob("*.md")) + sorted((root / "design").glob("*.md"))
     out += sorted((root / ".grok" / "skills").glob("*/SKILL.md"))
     return [f for f in out if f.is_file()]
-
 
 def boot_report(root: Path) -> tuple[list[str], int]:
     from load_routes import boot_max, load_routes
@@ -42,7 +40,6 @@ def boot_report(root: Path) -> tuple[list[str], int]:
         lines.append(f"  {name}: {total} bytes ~{total // 4} tokens  " + " ".join(f"{p}={n}" for p, n in sizes))
     return lines, worst
 
-
 def dupe_report(root: Path, min_chars: int) -> tuple[list[str], int]:
     seen: dict[str, set[str]] = defaultdict(set)
     for f in _doc_files(root):
@@ -55,7 +52,6 @@ def dupe_report(root: Path, min_chars: int) -> tuple[list[str], int]:
     lines = ["", f"repeated sentences (>= {min_chars} chars, 2+ files):"]
     lines += [f"  [{len(s)}] {', '.join(fs)} :: {s[:90]}" for s, fs in hits]
     return lines, len(hits)
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List design/*.md by os.path.getsize; OVER marks files at or over --over-kb. --boot / --dupes: doc SNR sweep.", json_out=True)
@@ -88,7 +84,6 @@ def main(argv: list[str] | None = None) -> int:
         more, extra["dupes"] = dupe_report(root, args.min_chars)
         lines += more
     return agent_log.finish("oversize-docs", root, "\n".join(lines), "INFO", args=args, legacy=False, over=over, files=len(files), **extra)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

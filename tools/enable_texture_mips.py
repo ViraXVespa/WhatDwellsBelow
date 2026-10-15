@@ -28,14 +28,12 @@ OFF_PREFIXES = (
     "mipmaps/generate=0",
 )
 
-
 def _is_texture_import(text: str) -> bool:
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("importer="):
             return stripped.split("=", 1)[1].strip().strip('"') == "texture"
     return False
-
 
 def _enable(text: str) -> tuple[str, str]:
     """Return (new_text, action) where action is 'on' | 'already' | 'insert'."""
@@ -90,7 +88,6 @@ def _enable(text: str) -> tuple[str, str]:
         return new, "on"
     return new, "insert"
 
-
 def patch_file(path: pathlib.Path, write: bool) -> str:
     text = path.read_bytes().decode("utf-8")  # no newline translation: keep each file's CRLF
     if not _is_texture_import(text):
@@ -102,7 +99,6 @@ def patch_file(path: pathlib.Path, write: bool) -> str:
         path.write_text(new, encoding="utf-8", newline="")
     return action
 
-
 def iter_imports(root: pathlib.Path) -> list[pathlib.Path]:
     folders = [root / "assets" / d for d in MIP_DIRS]
     found: list[pathlib.Path] = []
@@ -111,7 +107,6 @@ def iter_imports(root: pathlib.Path) -> list[pathlib.Path]:
             continue
         found.extend(sorted(folder.rglob("*.import")))
     return found
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = agent_log.std_parser("Enable mipmaps/generate on 3D world texture imports.", writes=True)
@@ -141,7 +136,6 @@ def main(argv: list[str] | None = None) -> int:
         f"files={len(paths)} dry_run={args.dry_run}"
     )
     return agent_log.emit_result("PASS", flipped=counts["on"], inserted=counts["insert"], already=counts["already"], files=len(paths), dry_run=args.dry_run)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -21,7 +21,6 @@ import agent_log
 import md_format_lib as md
 import task_lib
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List, show, create, finish and check the task files in design/tasks/.", writes=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -119,7 +118,6 @@ def main(argv: list[str] | None = None) -> int:
         return end("index " + ("refreshed" if changed else "already current"), "PASS", changed=int(changed))
     bad = task_lib.fails(root)
     return end("\n".join(f"- {b}" for b in bad) or "tasks ok", "FAIL" if bad else "PASS", tasks=len(tasks), problems=len(bad))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

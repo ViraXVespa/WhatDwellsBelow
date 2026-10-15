@@ -37,10 +37,8 @@ NOTES_SKIP = {
 
 SKIP_PARTS = {".git", "_logs", "site", "docs", "_pages", ".godot"}
 
-
 def _posix(root: Path, path: Path) -> str:
     return path.resolve().relative_to(root).as_posix()
-
 
 def _iter_game_files(root: Path) -> list[Path]:
     out: list[Path] = []
@@ -64,7 +62,6 @@ def _iter_game_files(root: Path) -> list[Path]:
     out.sort(key=lambda p: _posix(root, p))
     return out
 
-
 def game_hash(root: Path) -> tuple[str, int]:
     digest = hashlib.sha256()
     files = _iter_game_files(root)
@@ -76,12 +73,10 @@ def game_hash(root: Path) -> tuple[str, int]:
         digest.update(b"\0")
     return digest.hexdigest(), len(files)
 
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = agent_log.std_parser("Print a stable hash of game-affecting export inputs.")
     parser.add_argument("--out", default="", help="Optional stamp file")
     return parser.parse_args(argv)
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
@@ -93,7 +88,6 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.out).write_text(digest + "\n", encoding="utf-8")
     print(summary, end="")
     return agent_log.emit_result("PASS", game_hash=digest, files=count, summary=agent_log.rel(root, log))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

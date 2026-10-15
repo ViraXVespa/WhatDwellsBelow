@@ -63,7 +63,6 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Suggested starts + live defaults | `tunables.md` |
 Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
 
-
 ## House rules for editing these files
 
 - Keep one concern per file.

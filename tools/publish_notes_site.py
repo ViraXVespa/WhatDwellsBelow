@@ -15,7 +15,6 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 from repo_lib import write_text_nl
 
-
 def _load(path: Path) -> dict:
     if not path.is_file():
         return {}
@@ -24,7 +23,6 @@ def _load(path: Path) -> dict:
     except json.JSONDecodeError:
         return {}
     return raw if isinstance(raw, dict) else {}
-
 
 def publish(root: Path, site: Path) -> dict:
     version = _load(root / "scripts" / "data" / "version.json")
@@ -50,12 +48,10 @@ def publish(root: Path, site: Path) -> dict:
     agent_log.write_summary("notes-site", root, summary, "PASS", f"label={label}")
     return {"label": label, "entries": len(entries), "site": str(site)}
 
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = agent_log.std_parser("Publish loose version/changelog files for GitHub Pages.", writes=True)
     parser.add_argument("--site", default="site", help="Site dir to write the notes data into (default site).")
     return parser.parse_args(argv)
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
@@ -69,7 +65,6 @@ def main(argv: list[str] | None = None) -> int:
     info = publish(root, site)
     print("label=%s entries=%s site=%s" % (info["label"], info["entries"], info["site"]))
     return agent_log.emit_result("PASS", label=info["label"], entries=info["entries"])
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

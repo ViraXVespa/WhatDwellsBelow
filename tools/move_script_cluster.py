@@ -38,14 +38,11 @@ SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".gdshader", ".md", ".json", ".godot",
 SKIP_PREFIXES = (*(d + "/" for d in gd_lib.SKIP_PARTS), "design/changelog/", "_logs/")  # repo-root relative
 SKIP_FILES = ("scripts/data/changelog.json", "tools/move_script_cluster.py")
 
-
 def rel(p: Path) -> str:
     return agent_log.rel(ROOT, p)
 
-
 def run_git(args: list[str]) -> None:
     subprocess.run(["git", *args], cwd=ROOT, check=True)
-
 
 def list_cluster(from_dir: Path, stem: str) -> list[Path]:
     """Facade `<from_dir>/<stem>.gd` + helpers in `<from_dir>/<stem>/*.gd` (folder layout), plus legacy loose `<stem>_*.gd`."""
@@ -57,7 +54,6 @@ def list_cluster(from_dir: Path, stem: str) -> list[Path]:
     if sub.is_dir():
         files += sorted(sub.glob("*.gd"))
     return files
-
 
 def collect_files(args: argparse.Namespace) -> list[Path]:
     args.files = agent_log.split_list(args.files)
@@ -81,7 +77,6 @@ def collect_files(args: argparse.Namespace) -> list[Path]:
         raise SystemExit(f"no cluster files for stem={args.stem} in {rel(from_dir)}; check --stem/--from-dir (`--list-cluster FACADE` shows a facade and its helpers)")
     return files
 
-
 def build_moves(files: list[Path], to_dir: Path, stem: str = "") -> list[tuple[Path, Path]]:
     """`stem` set (--stem mode): helpers that live in `<stem>/` keep that folder under to_dir (facade lands beside it)."""
     moves = []
@@ -92,7 +87,6 @@ def build_moves(files: list[Path], to_dir: Path, stem: str = "") -> list[tuple[P
         if uid.exists():
             moves.append((uid, Path(str(dst) + ".uid")))
     return moves
-
 
 def read_map(path: str) -> list[tuple[Path, Path]]:
     """--map JSON {old_file: new_file} (repo-relative or absolute) -> moves incl. .uid sidecars."""
@@ -109,7 +103,6 @@ def read_map(path: str) -> list[tuple[Path, Path]]:
             moves.append((uid, Path(str(dst) + ".uid")))
     return moves
 
-
 def rename_basenames(moves: list[tuple[Path, Path]]) -> list[tuple[str, str]]:
     """(old basename, new basename) for moves whose file name changed (bare mentions in docs/code-map rows stay bare:
     code_map.py check treats any tick containing `/` as a full repo path; basenames are unique repo-wide)."""
@@ -119,10 +112,8 @@ def rename_basenames(moves: list[tuple[Path, Path]]) -> list[tuple[str, str]]:
             out.append((src.name, dst.name))
     return out
 
-
 _BARE_LB = r"(?<![A-Za-z0-9_/.\-])"
 _BARE_LA = r"(?![A-Za-z0-9_])"
-
 
 def rewrite_text(text: str, pairs: list[tuple[str, str]], names: list[tuple[str, str]]) -> str:
     if pairs:
@@ -134,7 +125,6 @@ def rewrite_text(text: str, pairs: list[tuple[str, str]], names: list[tuple[str,
         rx = re.compile(_BARE_LB + "(" + "|".join(re.escape(o) for o, _ in sorted(names, key=lambda t: len(t[0]), reverse=True)) + ")" + _BARE_LA)
         text = rx.sub(lambda m: table[m.group(1)], text)
     return text
-
 
 def rewrite_map(moves: list[tuple[Path, Path]]) -> list[tuple[str, str]]:
     pairs: list[tuple[str, str]] = []
@@ -148,7 +138,6 @@ def rewrite_map(moves: list[tuple[Path, Path]]) -> list[tuple[str, str]]:
         pairs.append((rel(src), rel(dst)))
     pairs.sort(key=lambda t: len(t[0]), reverse=True)
     return pairs
-
 
 def iter_text_files() -> list[Path]:
     out: list[Path] = []
@@ -183,7 +172,6 @@ def iter_text_files() -> list[Path]:
             seen.add(rp)
     return out
 
-
 def apply_rewrites(pairs: list[tuple[str, str]], dry_run: bool, names: list[tuple[str, str]] | None = None) -> tuple[list[str], dict[Path, str]]:
     """Return changed paths and optional in-memory texts for residual checks before write."""
     changed: list[str] = []
@@ -202,7 +190,6 @@ def apply_rewrites(pairs: list[tuple[str, str]], dry_run: bool, names: list[tupl
                 path.write_bytes(text.encode("utf-8"))
     return changed, texts
 
-
 def write_wrappers(moves: list[tuple[Path, Path]], dry_run: bool) -> list[str]:
     written = []
     for src, dst in moves:
@@ -214,7 +201,6 @@ def write_wrappers(moves: list[tuple[Path, Path]], dry_run: bool) -> list[str]:
             src.parent.mkdir(parents=True, exist_ok=True)
             src.write_text(body, encoding="utf-8", newline="\n")
     return written
-
 
 def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
     residuals = []
@@ -228,7 +214,6 @@ def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
             if old in text:
                 residuals.append(f"{rel(path)} still has {old}")
     return residuals
-
 
 def main() -> int:
     global ROOT
@@ -335,7 +320,6 @@ def main() -> int:
     status = "FAIL" if residuals and not args.dry_run else "PASS"
     return agent_log.finish("move-cluster", ROOT, "\n".join(lines), status, args=args, moved=0 if args.dry_run else len(moves),
                             rewrite_files=len(changed), residuals=len(residuals), dry_run=args.dry_run)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

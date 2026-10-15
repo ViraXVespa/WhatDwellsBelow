@@ -503,7 +503,6 @@ OVERLAY_TOOL = {
     ),
 }
 
-
 def normalize_overlay(tool: str) -> str:
     key = tool.lower().strip().replace("-", "_").replace(" ", "_")
     key = OVERLAY_ALIAS.get(key, key)
@@ -511,7 +510,6 @@ def normalize_overlay(tool: str) -> str:
         known = ", ".join(sorted(OVERLAY_TOOL))
         raise ValueError(f"unknown overlay tool {tool!r}; expected one of: {known}")
     return key
-
 
 def build_overlay_prompt(facing: str, tool: str) -> str:
     key = normalize_overlay(tool)
@@ -526,12 +524,10 @@ def build_overlay_prompt(facing: str, tool: str) -> str:
         "Leave the flat #FF00FF plate opaque. No anti-aliasing. No new background."
     )
 
-
 def scale_nn(im: Image.Image, factor: int) -> Image.Image:
     im = im.convert("RGBA")
     w, h = im.size
     return geom.scale_nearest(im, size=(w * factor, h * factor))
-
 
 def figure_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
     rgba = im.convert("RGBA")
@@ -557,7 +553,6 @@ def figure_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
         return None
     return (x0, y0, x1, y1)
 
-
 def pad_chroma(im: Image.Image, frac: float) -> Image.Image:
     """Pad #FF00FF after NN scale. Never shrink the figure."""
     rgba = im.convert("RGBA")
@@ -578,7 +573,6 @@ def pad_chroma(im: Image.Image, frac: float) -> Image.Image:
     out.paste(rgba, (pad_l, pad_t))
     return out
 
-
 def palette_hex(im: Image.Image, limit: int = 16) -> list[str]:
     rgba = im.convert("RGBA")
     counts: dict[tuple[int, int, int], int] = {}
@@ -593,14 +587,11 @@ def palette_hex(im: Image.Image, limit: int = 16) -> list[str]:
     ranked = sorted(counts.items(), key=lambda kv: -kv[1])[:limit]
     return [f"#{c[0]:02X}{c[1]:02X}{c[2]:02X}" for c, _n in ranked]
 
-
 def facing_key(name: str) -> str:
     return name.strip().lower().replace("-", "_").replace(" ", "_")
 
-
 def facing_label(name: str) -> str:
     return facing_key(name).replace("_", "-").title()
-
 
 def facing_lock(name: str, planted: bool = False) -> str:
     key = facing_key(name)
@@ -609,13 +600,11 @@ def facing_lock(name: str, planted: bool = False) -> str:
         key = "down"
     return table[key]
 
-
 def gender_key(name: str) -> str:
     g = name.strip().lower()
     if g in ("male", "female"):
         return g
     return "male"
-
 
 def infer_gender(src: Path | None, explicit: str) -> str:
     g = explicit.strip().lower()
@@ -629,21 +618,17 @@ def infer_gender(src: Path | None, explicit: str) -> str:
             return "male"
     return "male"
 
-
 def is_female_up(gender: str, facing: str) -> bool:
     return gender_key(gender) == "female" and facing_key(facing) == "up"
-
 
 def identity_lock(gender: str, facing: str = "down") -> str:
     if is_female_up(gender, facing):
         return IDENTITY_LOCK["female_up"]
     return IDENTITY_LOCK[gender_key(gender)]
 
-
 def normalize_action(action: str) -> str:
     key = action.lower().strip().replace("-", "_").replace(" ", "_")
     return ACTION_ALIAS.get(key, key)
-
 
 def motion_keys(action: str) -> list[str]:
     key = normalize_action(action)
@@ -653,7 +638,6 @@ def motion_keys(action: str) -> list[str]:
         return [key]
     known = ", ".join(sorted(MOTION) + ["gather"])
     raise ValueError(f"unknown I2V action {action!r}; expected one of: {known}")
-
 
 def _identity_for(key: str, gender: str, facing: str) -> str:
     text = identity_lock(gender, facing)
@@ -666,7 +650,6 @@ def _identity_for(key: str, gender: str, facing: str) -> str:
         "Hands empty.",
         DISPEL_IDENTITY_TAIL,
     )
-
 
 def _strip_wrap_language(text: str) -> str:
     cuts = (
@@ -683,7 +666,6 @@ def _strip_wrap_language(text: str) -> str:
     for cut in cuts:
         out = out.replace(cut, "")
     return out
-
 
 def _format_one(facing: str, key: str, gender: str) -> str:
     female_up = is_female_up(gender, facing)
@@ -704,7 +686,6 @@ def _format_one(facing: str, key: str, gender: str) -> str:
         return _strip_wrap_language(text)
     return text
 
-
 def build_prompt(
     facing: str,
     action: str,
@@ -724,14 +705,12 @@ def build_prompt(
         return TEST_PREFIX + body
     return body
 
-
 def write_palette(im: Image.Image, dest_dir: Path, extra: dict) -> list[str]:
     colors = palette_hex(im)
     payload = {"hex": colors}
     payload.update(extra)
     (dest_dir / "palette.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return colors
-
 
 def export_cell(
     src: Path,
@@ -778,7 +757,6 @@ def export_cell(
         out["overlay_prompt"] = str(overlay_path)
     return out
 
-
 def export_bible(
     src: Path,
     dest_dir: Path,
@@ -816,7 +794,6 @@ def export_bible(
             overlay_path = dest_dir / f"overlay_{overlay_key}_{name}.txt"
             overlay_path.write_text(build_overlay_prompt(name, overlay_key), encoding="utf-8")
     return out
-
 
 def main() -> None:
     p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
@@ -890,7 +867,6 @@ def main() -> None:
         print("# overlay")
         print()
         print(build_overlay_prompt(args.facing, args.overlay))
-
 
 if __name__ == "__main__":
     main()

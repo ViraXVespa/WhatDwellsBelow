@@ -30,12 +30,10 @@ VIRTUAL = frozenset({
     "_export_begin", "_export_end",
 })
 
-
 IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 KEY_AFTER = re.compile(r"[ \t]*:(?!=)")  # {"key": v}
 KEY_BEFORE = re.compile(r"(?:\.get|\.has|\.erase)\([ \t]*$|(?<=[\w)\]])\[[ \t]*$")  # d.get("key"), d["key"]
 DYN = re.compile(r"call|connect|Callable|has_method|emit_signal|method=|bind|callback")
-
 
 def scan(line: str):
     """Yield (identifier, in_quote). A string literal only yields when the whole literal is one
@@ -65,7 +63,6 @@ def scan(line: str):
             continue
         i += 1
 
-
 def files_of(root: Path) -> list[Path]:
     """GDScript plus every non-script file that can name a func (scenes, flow json, web shells)."""
     found = sorted((root / "scripts").rglob("*.gd"))
@@ -79,11 +76,9 @@ def files_of(root: Path) -> list[Path]:
         found.append(project)
     return found
 
-
 DECL_RE = re.compile(r"^(const|signal)[ \t]+([A-Za-z_][A-Za-z0-9_]*)")
 # Tunable registry: read by tools/tunables.py and docs, so an unreferenced const is a knob, not dead code.
 KEEP_DECLS = frozenset({"scripts/data/tunables.gd"})
-
 
 def collect(root: Path):
     """Returns (unused funcs, maybe funcs, defs, dynamic funcs, unused const/signal decls).
@@ -137,12 +132,10 @@ def collect(root: Path):
     dead_decls = [row for row in decls if hits[row[2]] == 0]
     return unused, maybe, defs, dynamic, dead_decls
 
-
 ALIAS_RE = re.compile(r"^(?:static[ \t]+)?const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[^=]*)?:?=[ \t]*(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"']")
 CLASS_RE = re.compile(r"^class_name[ \t]+([A-Za-z_]\w*)")
 EXTENDS_RE = re.compile(r"^extends[ \t]+(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))")
 USE_RE = re.compile(r"(?:([A-Za-z_]\w*)[ \t]*\.[ \t]*|(\.)[ \t]*)?\b([A-Za-z_]\w*)\b")
-
 
 def code_of(raw: str) -> str:
     """Line with comments and string literals blanked (whole-identifier literals are kept as dynamic refs elsewhere)."""
@@ -165,7 +158,6 @@ def code_of(raw: str) -> str:
         out.append(ch)
         i += 1
     return "".join(out)
-
 
 def collision_dead(root: Path, plain_unused: list) -> list[tuple[str, int, str, int]]:
     """Funcs whose name is defined in 2+ files, so the bare-name count cannot tell them apart.
@@ -252,7 +244,6 @@ def collision_dead(root: Path, plain_unused: list) -> list[tuple[str, int, str, 
                 dead.append((rel, lineno, name, sizes.get(rel, 0)))
     return sorted(dead)
 
-
 def dead_aliases(root: Path, known: list) -> list[tuple[str, int, str, int]]:
     """`const X := preload(...)` aliases never used in their own file and never read as `.X` elsewhere
     (the bare-name count cannot see these when other files reuse the alias name)."""
@@ -279,11 +270,9 @@ def dead_aliases(root: Path, known: list) -> list[tuple[str, int, str, int]]:
                 dead.append((rel, lineno, name, 0))
     return dead
 
-
 DECL_END = re.compile(
     "^(?P<indent>[ " + chr(9) + "]*)(?:static[ " + chr(9) + "]+)?(?:func|const|var|class_name|enum|signal)[ " + chr(9) + "]+"
 )
-
 
 def span_end(lines: list[str], start: int) -> int:
     base = re.match(r"[ \t]*", lines[start]).group(0)
@@ -316,7 +305,6 @@ def span_start(lines: list[str], func_at: int) -> int:
         break
     return start
 
-
 def collapse_blanks(lines: list[str]) -> str:
     out: list[str] = []
     blank = 0
@@ -334,8 +322,6 @@ def collapse_blanks(lines: list[str]) -> str:
     if text and not text.endswith("\n"):
         text += "\n"
     return text
-
-
 
 def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
     by_file: dict[str, list[int]] = defaultdict(list)
@@ -378,8 +364,6 @@ def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
                 path.with_name(path.name + ".uid").unlink(missing_ok=True)
                 print("deleted_file\t%s" % rel)
     return deleted
-
-
 
 def apply_facade_auto(root: Path, do_delete: bool = True) -> int:
     import re
@@ -550,7 +534,6 @@ def apply_facade_auto(root: Path, do_delete: bool = True) -> int:
             path.write_text(collapse_blanks(lines), encoding="utf-8", newline=chr(10))
     return deleted
 
-
 def write_summary(root: Path, found: dict, nfuncs: int, elapsed: float) -> Path:
     rows = []
     for kind, items in found.items():
@@ -561,7 +544,6 @@ def write_summary(root: Path, found: dict, nfuncs: int, elapsed: float) -> Path:
         rows.append("%s_count=%s" % (kind, len(items)))
     rows.append("seconds=%.2f" % elapsed)
     return agent_log.write_summary("unused-funcs", root, "\n".join(rows), "INFO", f"funcs_scanned={nfuncs}")
-
 
 def main() -> int:
     parser = agent_log.std_parser(
@@ -618,7 +600,6 @@ def main() -> int:
     print("report=PASS")
     left = len(unused) + len(decls) + len(shadowed)
     return agent_log.emit_result("FAIL" if ns.apply and left else "PASS", summary=agent_log.rel(root, summary), scanned=len(defs), unused=len(unused), shadowed=len(shadowed), decl=len(decls), maybe=len(maybe), dynamic=len(dynamic), deleted=deleted)
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -15,7 +15,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import task
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Shim: forwards the old opt-queue flags to tools/task.py.", writes=True)
     ap.add_argument("--list", action="store_true", help="task.py list --owner bot")
@@ -39,7 +38,6 @@ def main(argv: list[str] | None = None) -> int:
         return task.main(head + ["list", "--owner", "bot"])
     agent_log.fail("this tool is a shim now: use python tools/task.py (list / show / new opt-next / done)")
     return 2
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

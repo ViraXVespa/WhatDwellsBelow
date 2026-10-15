@@ -4,7 +4,6 @@ Status: suggested starts + live snapshot
 Read when: the work changes a number, formula, or debug default  
 Code: `scripts/data/balance.gd`, `access.gd`, `schema.gd`, `enemies.gd`, `migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
-
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  
 Suggested starts are seeds only.

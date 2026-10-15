@@ -20,14 +20,12 @@ import agent_log  # noqa: E402
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
-
 def clip_dir(name: str) -> Path:
     """Unkeyed clips live under _src/sources/clips. A legacy _src/<name> folder still works."""
     modern = ROOT / "_src" / "sources" / "clips" / name
     if modern.is_dir():
         return modern
     return ROOT / "_src" / name
-
 
 FINAL = clip_dir("walk_final")
 OUT = ROOT / "assets" / "sprites" / "player"
@@ -53,7 +51,6 @@ PINK_EXCESS = 10
 LEG_TOP = 0.45
 EXTENT_SIZE = (64, 96)
 _BIBLE_CELLS: dict[str, dict[str, Image.Image]] = {}
-
 
 def extract(video: Path, dest: Path, fps: int = 8, reuse: bool = False) -> list[Path]:
     """Full-size RGB PNGs. Nearest chroma upsample; no pre-key shrink."""
@@ -81,13 +78,11 @@ def extract(video: Path, dest: Path, fps: int = 8, reuse: bool = False) -> list[
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return sorted(dest.glob("f*.png"))
 
-
 def bible_cell(gender: str, facing: str) -> Image.Image:
     if gender not in _BIBLE_CELLS:
         bible = imgio.load(BIBLES[gender])
         _BIBLE_CELLS[gender] = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(bible)))
     return _BIBLE_CELLS[gender][facing]
-
 
 def _stamp(im: Image.Image, size: tuple[int, int] = COMPARE_SIZE) -> Image.Image:
     """Plate-ignored figure stamp for idle compare. Not a shipping matte."""
@@ -114,12 +109,10 @@ def _stamp(im: Image.Image, size: tuple[int, int] = COMPARE_SIZE) -> Image.Image
     canvas.paste(rsz, ((size[0] - nw) // 2, size[1] - nh))
     return canvas
 
-
 def _mad(a: Image.Image, b: Image.Image) -> float:
     pa = np.asarray(a, dtype=np.int16)
     pb = np.asarray(b, dtype=np.int16)
     return float(np.mean(np.abs(pa - pb)))
-
 
 def _smooth(vals: list[float], radius: int = 2) -> list[float]:
     out: list[float] = []
@@ -128,11 +121,9 @@ def _smooth(vals: list[float], radius: int = 2) -> list[float]:
         out.append(sum(w) / len(w))
     return out
 
-
 def idle_scores(images: list[Image.Image], ref: Image.Image) -> list[float]:
     stamp = _stamp(ref)
     return [_mad(_stamp(im), stamp) for im in images]
-
 
 def _pad(items: list, n: int) -> list:
     if not items:
@@ -142,7 +133,6 @@ def _pad(items: list, n: int) -> list:
         out.append(out[-1])
     return out[:n]
 
-
 def _figure_keep(im: Image.Image, size: tuple[int, int] = EXTENT_SIZE) -> np.ndarray:
     im = geom.scale_nearest(im.convert("RGBA"), size=size)
     arr = np.asarray(im)
@@ -151,7 +141,6 @@ def _figure_keep(im: Image.Image, size: tuple[int, int] = EXTENT_SIZE) -> np.nda
     key = np.array(sp.KEY_RGB, dtype=np.int16)
     dist = np.sqrt(((rgb - key).astype(np.float32) ** 2).sum(axis=-1))
     return (alpha >= 16) & (dist > 40.0)
-
 
 def _leg_wh(im: Image.Image) -> tuple[float, float]:
     """Lower-body bbox. Arms above the cut do not drive stride width."""
@@ -167,13 +156,11 @@ def _leg_wh(im: Image.Image) -> tuple[float, float]:
     ys, xs = np.where(band)
     return float(xs.max() - xs.min() + 1), float(ys.max() - ys.min() + 1)
 
-
 def _amp(vals: list[float]) -> float:
     if not vals:
         return 0.0
     mid = sum(vals) / len(vals)
     return (max(vals) - min(vals)) / max(1.0, mid)
-
 
 def _extent_series(images: list[Image.Image], facing: str) -> tuple[list[float], str]:
     """Width on side/diagonal. Height on front/back so up/down still have a stride."""
@@ -183,7 +170,6 @@ def _extent_series(images: list[Image.Image], facing: str) -> tuple[list[float],
     if facing in ("up", "down"):
         return _smooth(heights), "h"
     return _smooth(widths), "w"
-
 
 def _motion_onset(exts: list[float]) -> int:
     n = len(exts)
@@ -205,7 +191,6 @@ def _motion_onset(exts: list[float]) -> int:
     while i < len(sl) and sl[i] < thr:
         i += 1
     return min(i, cap)
-
 
 def _one_cycle(
     stamps: list[Image.Image],
@@ -248,7 +233,6 @@ def _one_cycle(
         return onset, CYCLE_N, -1.0
     return best_i, best_p, best
 
-
 def _to_eight(
     frames: list[Image.Image],
     sl: list[float],
@@ -267,7 +251,6 @@ def _to_eight(
     src = [src_off + j for j in order]
     return mid, src, k
 
-
 def _mass_x(im: Image.Image) -> float:
     arr = np.asarray(im.convert("RGBA"))
     alpha = arr[:, :, 3] > 8
@@ -276,7 +259,6 @@ def _mass_x(im: Image.Image) -> float:
     top = alpha[: max(1, arr.shape[0] // 2)]
     ys, xs = np.where(top if top.any() else alpha)
     return float(xs.mean())
-
 
 def lock_x(frames: list[Image.Image], ref: Image.Image) -> list[Image.Image]:
     """Keep the torso on the idle still's X so clip switches do not slide."""
@@ -292,7 +274,6 @@ def lock_x(frames: list[Image.Image], ref: Image.Image) -> list[Image.Image]:
         out.append(canvas)
     return out
 
-
 def _split_time(images: list[Image.Image]) -> tuple[list[Image.Image], list[Image.Image], list[Image.Image]]:
     n = len(images)
     if n < START_N + CYCLE_N + STOP_N:
@@ -300,7 +281,6 @@ def _split_time(images: list[Image.Image]) -> tuple[list[Image.Image], list[Imag
     a = START_N
     b = n - STOP_N
     return _pad(images[:a], START_N), pick(images[a:b], CYCLE_N), _pad(images[b:], STOP_N)
-
 
 def split_phases(
     images: list[Image.Image],
@@ -361,14 +341,12 @@ def split_phases(
     )
     return start, mid, stop
 
-
 def pick(items: list, n: int) -> list:
     if not items:
         return []
     if len(items) <= n:
         return list(items)
     return [items[int(round(i * (len(items) - 1) / (n - 1)))] for i in range(n)]
-
 
 def _hsv(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     r = rgb[:, :, 0].astype(np.float32) / 255.0
@@ -390,7 +368,6 @@ def _hsv(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     h %= 360.0
     return h, s, v
 
-
 def _near_clear(clear: np.ndarray, radius: int) -> np.ndarray:
     near = clear.copy()
     for _ in range(max(0, radius)):
@@ -406,7 +383,6 @@ def _near_clear(clear: np.ndarray, radius: int) -> np.ndarray:
         near = nxt
     return near & ~clear
 
-
 def _magenta_lip(arr: np.ndarray, hue_width: float) -> np.ndarray:
     rgb = arr[:, :, :3].astype(np.int16)
     alpha = arr[:, :, 3]
@@ -419,7 +395,6 @@ def _magenta_lip(arr: np.ndarray, hue_width: float) -> np.ndarray:
     pink = (r >= g + PINK_EXCESS) & (b >= g + PINK_EXCESS)
     hue_hit = (s >= RIM_SAT_MIN) & (hd <= hue_width)
     return (alpha >= 16) & (pink | hue_hit | (dist <= RIM_KEY_DIST))
-
 
 def finish_matte(im: Image.Image, rim: int, hue_width: float) -> Image.Image:
     """Punch the pink lip, then despill a milder cast at canvas resolution (after 128-fit)."""
@@ -446,17 +421,14 @@ def finish_matte(im: Image.Image, rim: int, hue_width: float) -> Image.Image:
         arr[lip] = 0
     return Image.fromarray(arr, "RGBA")
 
-
 def key_fit(im: Image.Image, rim: int = 2, rim_hue: float = 26.0) -> Image.Image:
     keyed = sp.key_to_alpha(im.convert("RGBA"))
     fitted = sp.fit_canvas(geom.shrink(keyed, KEYED_CAP), key=False)
     return finish_matte(fitted, rim, rim_hue)
 
-
 def clean(im: Image.Image, rim: int, rim_hue: float) -> Image.Image:
     # I2V chroma pad (PAD_FRAC) is plate; keyed bbox is the figure, then 128-fit.
     return key_fit(im, rim, rim_hue)
-
 
 def _seq_frame(name: str, prefix: str) -> bool:
     if not name.endswith(".png"):
@@ -467,7 +439,6 @@ def _seq_frame(name: str, prefix: str) -> bool:
         return False
     return stem[len(head) :].isdigit()
 
-
 def write_seq(frames: list[Image.Image], dest: Path, prefix: str) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     for old in dest.glob(f"{prefix}_*.png"):
@@ -475,7 +446,6 @@ def write_seq(frames: list[Image.Image], dest: Path, prefix: str) -> None:
             old.unlink()
     for i, im in enumerate(frames):
         im.save(dest / f"{prefix}_{i}.png")
-
 
 def pack_idle(gender: str) -> None:
     bible = imgio.load(BIBLES[gender])
@@ -486,7 +456,6 @@ def pack_idle(gender: str) -> None:
         im = key_fit(cells[k], rim=0, rim_hue=26.0)
         im.save(out / f"idle_{k}.png")
         print("idle", gender, k)
-
 
 def pack_clip(
     gender: str,
@@ -522,7 +491,6 @@ def pack_clip(
     write_seq(stop_c, dest, f"walk_to_idle_{facing}")
     return f"packed {gender} {facing} frames {len(images)}"
 
-
 def _add_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--gender", action="append", choices=("male", "female"), help="male or female (repeatable; default both).")
     parser.add_argument("--facing", action="append", choices=KEYS, help="Facing to pack (repeatable; default all eight).")
@@ -530,7 +498,6 @@ def _add_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--reuse-harvest", action="store_true", help="Reuse frames already extracted under _src/walk_harvest.")
     parser.add_argument("--rim", type=int, default=2, help="Rim-clean passes (default 2).")
     parser.add_argument("--rim-hue", type=float, default=26.0, help="Rim hue to clean (default 26).")
-
 
 def _run(args: argparse.Namespace) -> None:
     genders = args.gender or ["male", "female"]
@@ -547,10 +514,8 @@ def _run(args: argparse.Namespace) -> None:
             jobs.append((gender, facing, str(vid), args.reuse_harvest, args.rim, args.rim_hue))
     agent_log.run_jobs([(pack_clip, job) for job in jobs])
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("pack_locomotion", "Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips into engine frames.", _run, argv, globals(), add_args=_add_args)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

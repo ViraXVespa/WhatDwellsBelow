@@ -12,7 +12,6 @@ from PIL import Image
 
 from . import HAVE_CV2, compare, key, look
 
-
 def _sprite() -> Image.Image:
     im = Image.new("RGBA", (60, 80), (0, 0, 0, 0))
     a = np.zeros((80, 60, 4), np.uint8)
@@ -20,7 +19,6 @@ def _sprite() -> Image.Image:
     a[10:70, 15:17] = (10, 10, 10, 255)
     a[20:24, 5:55] = (120, 80, 30, 255)
     return Image.fromarray(a)
-
 
 def _on_plate(sprite: Image.Image, corners, jpeg: bool) -> Image.Image:
     a = np.array(sprite)
@@ -41,7 +39,6 @@ def _on_plate(sprite: Image.Image, corners, jpeg: bool) -> Image.Image:
         b.seek(0)
         rgb = Image.open(b).convert("RGB")
     return rgb.convert("RGBA"), canvas[..., 3] > 0
-
 
 def run() -> list[tuple[str, bool, str]]:
     out: list[tuple[str, bool, str]] = []

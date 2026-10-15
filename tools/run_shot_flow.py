@@ -36,7 +36,6 @@ JOB = "shot-flow"
 FLOW_DIR = "tools/shot-flows"
 NON_FLOW = {"states.json"}
 
-
 def list_flows(root: Path) -> dict[str, dict]:
     out: dict[str, dict] = {}
     for f in sorted((root / FLOW_DIR).glob("*.json")):
@@ -47,7 +46,6 @@ def list_flows(root: Path) -> dict[str, dict]:
         out[str(data.get("name") or f.stem)] = data
     return out
 
-
 def _shot_names(steps: list) -> list[str]:
     out: list[str] = []
     for s in steps:
@@ -56,7 +54,6 @@ def _shot_names(steps: list) -> list[str]:
                 out.append(str(s.get("name", "")))
             out += _shot_names(s.get("steps", []) if isinstance(s.get("steps"), list) else [])
     return out
-
 
 def survey_lines(root: Path, flows: dict[str, dict], names: list[str]) -> list[str]:
     """One text line per flow, so a survey needs no picture: about | states | last shot | band."""
@@ -77,7 +74,6 @@ def survey_lines(root: Path, flows: dict[str, dict], names: list[str]) -> list[s
             n, about, ",".join(states) or "none", rel(root, pngs[-1]) if pngs else "none", band))
     return lines
 
-
 def contact_sheet(root: Path, name: str) -> Path | None:
     """Tile a flow's numbered frames into <flow dir>/sheet.png (imglib montage); None when there are no frames."""
     fdir = root / "_logs" / JOB / name
@@ -89,7 +85,6 @@ def contact_sheet(root: Path, name: str) -> Path | None:
     cols = min(4, len(pngs))
     sheet = compare.montage([imgio.load(p) for p in pngs], [p.stem for p in pngs], cols=cols, cell=(480, 270))
     return imgio.save(sheet, fdir / "sheet.png")
-
 
 def job_flows(root: Path, flows: dict[str, dict], job: str) -> list[str]:
     """Flow names routes.yaml maps to `job` (door.job: its own mapping; a door name: the door's mapping)."""
@@ -108,7 +103,6 @@ def job_flows(root: Path, flows: dict[str, dict], job: str) -> list[str]:
         agent_log.fail("routes.yaml maps %s to unknown flow %s. flows: %s" % (job, ", ".join(missing), ", ".join(flows)))
     return names
 
-
 def changed_flows(root: Path, flows: dict[str, dict]) -> list[str]:
     """Flows whose JSON file changed (git status), plus the flows mapped to a job whose doc changed."""
     import subprocess
@@ -126,7 +120,6 @@ def changed_flows(root: Path, flows: dict[str, dict]) -> list[str]:
         pass
     return list(dict.fromkeys(picked))
 
-
 def state_flow(flow: dict, state: str, path: Path) -> dict | None:
     """The flow cut after its top-level `shot` named `state`: earlier shots and their text asserts are dropped (setup steps stay). None when there is no such shot."""
     steps = flow.get("steps", [])
@@ -136,18 +129,15 @@ def state_flow(flow: dict, state: str, path: Path) -> dict | None:
     keep = [s for s in steps[:idx] if not (isinstance(s, dict) and s.get("op") in ("shot", "assert_texts"))] + [steps[idx]]
     return {**{k: v for k, v in flow.items() if k not in ("_file", "steps")}, "steps": keep, "_file": path}
 
-
 def state_frame(fdir: Path, state: str) -> Path | None:
     hits = sorted(fdir.glob("[0-9]*-%s.png" % state)) if fdir.is_dir() else []
     return hits[0] if hits else None
-
 
 def state_verdict(old: bytes | None, new: Path) -> str:
     """'same' | 'changed' | 'new' for a re-shot state against the frame it replaces."""
     if old is None:
         return "new (no earlier frame of this state to compare)"
     return "same as the earlier frame" if hashlib.sha256(old).digest() == hashlib.sha256(new.read_bytes()).digest() else "CHANGED against the earlier frame"
-
 
 def plan(flows: dict[str, dict], todo: list[str], dedupe: bool = True) -> tuple[list[str], list[str]]:
     """(flows to run, note lines): a flow `covered_by` another picked flow is skipped; picked flows that cover a common state are noted."""
@@ -165,7 +155,6 @@ def plan(flows: dict[str, dict], todo: list[str], dedupe: bool = True) -> tuple[
                 notes.append("overlap: %s and %s both cover %s" % (a, b, ", ".join(both)))
     return run, notes
 
-
 def pick(flows: dict[str, dict], names: list[str], smoke: bool, every: bool) -> list[str]:
     if every:
         return list(flows)
@@ -176,7 +165,6 @@ def pick(flows: dict[str, dict], names: list[str], smoke: bool, every: bool) -> 
         agent_log.fail("unknown flow %s. flows: %s" % (", ".join(bad), ", ".join(flows)))
     return names
 
-
 def publish_blocked(root: Path, dest: Path) -> bool:
     """True when dest is inside <root>/assets (after resolving .. and symlinks). Build alone places assets."""
     try:
@@ -185,7 +173,6 @@ def publish_blocked(root: Path, dest: Path) -> bool:
     except OSError:
         return True
     return d == a or a in d.parents
-
 
 def publish(root: Path, flow: dict, frames_dir: Path, dest_override: str, dry: bool) -> dict:
     """Copy a flow's PNGs to its publish dir and write shots.json (name, file, sha256, size)."""
@@ -212,7 +199,6 @@ def publish(root: Path, flow: dict, frames_dir: Path, dest_override: str, dry: b
     if not dry:
         (dest / ("%sshots.json" % prefix)).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return {"dir": rel(root, dest) if dest.is_absolute() and str(dest).startswith(str(root)) else str(dest), "files": len(rows)}
-
 
 def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
     fdir = out_root / name
@@ -276,7 +262,6 @@ def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
         row["published"] = publish(root, flow, fdir, args.publish_dir, False)
     return row
 
-
 def selftest() -> int:
     """plan(): a flow covered_by a picked flow is skipped; alone it runs; common `covers` ids are noted."""
     fl = {"a": {"covered_by": "b"}, "b": {"covers": ["ui:x"]}, "c": {"covers": ["ui:x"]}}
@@ -295,7 +280,6 @@ def selftest() -> int:
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Run scripted shot flows: capture, assert, diff against a baseline, publish.",
@@ -425,7 +409,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

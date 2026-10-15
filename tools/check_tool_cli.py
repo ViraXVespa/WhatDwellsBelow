@@ -111,17 +111,14 @@ SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  #
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
 PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
 
-
 def snapshot(root: Path) -> tuple:
     logs = root / "_logs"
     files = sorted((p.as_posix(), p.stat().st_mtime_ns) for p in logs.rglob("*") if p.is_file()) if logs.is_dir() else []
     return (tuple(repo_lib.git_changed(root) or ()), tuple(files))
 
-
 def classify(src: str) -> str:
     mods = set(re.findall(r"^\s*(?:import|from)\s+(\w+)", src, re.M))
     return "media" if mods & set(MEDIA_IMPORTS) else "ops"
-
 
 def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> None:
     name = path.stem
@@ -181,7 +178,6 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
     if snapshot(root) != before:
         bad.append(f"MUTATE  {path.name}: --help changed files")
 
-
 def make_sandbox(root: Path) -> Path:
     """Copy tracked + untracked-not-ignored files into a temp dir with its own git history."""
     sb = Path(tempfile.mkdtemp(prefix="wdb-smoke-"))
@@ -195,7 +191,6 @@ def make_sandbox(root: Path) -> Path:
     for cmd in (["init", "-q"], ["add", "-A"], ["commit", "-qm", "base"]):
         subprocess.run(git + cmd, cwd=sb, capture_output=True)
     return sb
-
 
 def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], table: list[str]) -> None:
     args, ok_codes = (case[0], case[1]) if isinstance(case, tuple) else (case, (0, 1))
@@ -246,7 +241,6 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
             subprocess.run(["git", "checkout", "-q", "--", "."], cwd=sb)
             subprocess.run(["git", "clean", "-qfd"], cwd=sb)
 
-
 def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, list[str]]:
     sb = make_sandbox(root)
     for path in (root / "tools").glob("*.py"):  # the live tools, not the committed ones
@@ -280,7 +274,6 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
             shutil.rmtree(sb, ignore_errors=True)
     return tools, runs, table
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
     ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable).")
@@ -303,7 +296,6 @@ def main(argv: list[str] | None = None) -> int:
     status = "FAIL" if bad else "PASS"
     return agent_log.finish("tool-cli", root, "\n".join(lines + table), status, args=args, echo="\n".join(lines),
                             checked=tally["checked"], problems=len(bad), **smoke)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

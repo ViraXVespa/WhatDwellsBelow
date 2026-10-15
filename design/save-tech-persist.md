@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: primary backup wipe, game_ver stamp, isolated AI profiles
 
-
 ## Save system
 
 - Save data is stored in browser `user://` (or equivalent platform-appropriate location).

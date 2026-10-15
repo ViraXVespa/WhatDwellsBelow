@@ -39,7 +39,6 @@ import task_lib
 import unit_lib
 from load_routes import check_route, job_flow_map, load_routes, shot_flows, smoke_phases
 
-
 def not_carried(other: list[str]) -> str:
     """The 'changed here but not carried' line: files listed by name; Godot .import sidecars only counted."""
     files, n = handoff_lib.sidecars(other)
@@ -47,7 +46,6 @@ def not_carried(other: list[str]) -> str:
         return "No other changes here."
     return ("Changed here but not carried (the fresh worktree is cut from the week branch and will not have them): " + (", ".join(files) or "no files")
             + (f"; plus {n} Godot .import sidecars (import churn, not carried)" if n else ""))
-
 
 def write_handoff(root: Path, args) -> int:
     """--handoff: in the survey worktree, write the skeleton (first run) or validate the filled file, save the survey edits and print the launch command."""
@@ -82,14 +80,12 @@ def write_handoff(root: Path, args) -> int:
              "(The file is the new session's first message. `--checkpoint` is different: it saves an implementation session for a red prove's retry fork.)"]
     return end("\n".join(lines), "PASS", "handoff-ready")
 
-
 def unit_state_note(job: str, units: list[str]) -> str:
     """' state NAME' for a unit that is one shot of a shared flow, else ''."""
     if not units or job not in units:
         return ""
     state = unit_lib.job_state(load_routes(Path(__file__).resolve().parents[1]), job)
     return f" state {state}" if state else ""
-
 
 def advance(root: Path, args) -> str:
     """--next: mark the slice's current unit done in the slice state and make the next unit current. Returns the door; the caller prints the next card."""
@@ -109,7 +105,6 @@ def advance(root: Path, args) -> str:
     if tp and tp.is_file():
         task_lib.set_head(tp, "done", ", ".join(done) or "none")
     return st.get("door", "")
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Resolve a route and print the grok commands that open a Build slice (never starts grok).", writes=True)
@@ -254,7 +249,6 @@ def main(argv: list[str] | None = None) -> int:
     echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref) if not compact else ''}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "")
     return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
                             args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

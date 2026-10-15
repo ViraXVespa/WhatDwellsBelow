@@ -18,7 +18,6 @@ EXT = re.compile(r'^\[ext_resource[^\]]*\bpath="([^"]+)"[^\]]*\bid="([^"]+)"')
 NODE = re.compile(r'^\[node\s+name="([^"]+)"(?:\s+type="([^"]*)")?(?:\s+parent="([^"]*)")?')
 SCRIPT = re.compile(r'^script\s*=\s*ExtResource\("([^"]+)"\)')
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List .tscn nodes + scripts (headers only).", json_out=True)
     ap.add_argument("--path", nargs="+", default=["scenes"], help="Scene file(s) or dir(s).")
@@ -67,7 +66,6 @@ def main(argv: list[str] | None = None) -> int:
     echo = f"scenes={len(scenes)} nodes={nodes} scripts={scripts} truncated={trunc}"
     return agent_log.finish("scenes", root, "\n".join(body), "INFO", args=args, echo=echo, scenes=len(scenes),
                             nodes=nodes, scripts=scripts, truncated=trunc)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: playable surface theme tokens  
 
-
 ## UI theme (playable surfaces)
 
 Player-facing UI is skinned. The pause uses the field journal. Other surfaces match the object they represent and stay cohesive with that journal work: the same ink, handwriting, and focus underline, on that object's own frame. Nothing a normal player opens ships as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, the web fullscreen gate, confirmation prompts, the title “what’s new” overlay, the web touch overlay, and any other surface a normal player can open.

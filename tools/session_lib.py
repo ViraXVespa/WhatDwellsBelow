@@ -13,7 +13,6 @@ from pathlib import Path
 
 import agent_log
 
-
 def session_dir(sid: str = "", base: Path | None = None) -> Path | None:
     """The folder of session `sid` (default $GROK_SESSION_ID) under any cwd-named folder of the session store, or None."""
     sid = (sid or os.environ.get("GROK_SESSION_ID", "")).strip()
@@ -27,7 +26,6 @@ def session_dir(sid: str = "", base: Path | None = None) -> Path | None:
         except OSError:
             continue
     return None
-
 
 def _rows(path: Path) -> list[dict]:
     out: list[dict] = []
@@ -43,15 +41,12 @@ def _rows(path: Path) -> list[dict]:
         return []
     return out
 
-
 def _text(content: object) -> str:
     if isinstance(content, str):
         return content
     if isinstance(content, list):
         return "\n".join(str(p.get("text", "")) for p in content if isinstance(p, dict))
     return ""
-
-
 
 def prompt_facts(sdir: Path | None) -> dict:
     """{'time': ISO str, 'chars': int} of this session's first prompt from <sessions>/<cwd>/prompt_history.jsonl, or {} (not verified)."""
@@ -62,8 +57,6 @@ def prompt_facts(sdir: Path | None) -> dict:
         if r.get("session_id") == sid:
             return {"time": str(r.get("timestamp", "")), "chars": len(str(r.get("prompt", "")))}
     return {}
-
-
 
 def failed_since_ask(rows: list[dict]) -> list[dict]:
     """Failed tool steps after the last ask_user_question call (all of them when there was no ask yet), in order: {'tool', 'what', 'why'}.
@@ -97,7 +90,6 @@ def failed_since_ask(rows: list[dict]) -> list[dict]:
             tool, what = calls.get(str(r.get("tool_call_id")), ("?", ""))
             out.append({"tool": tool, "what": what, "why": why[:160]})
     return out
-
 
 def failed_block(sdir: Path | None = None) -> str:
     """The `Did not work:` lines for the next message, built from this session's own tool results (see failed_since_ask); '' text says none or not verified."""

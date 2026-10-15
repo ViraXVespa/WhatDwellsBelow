@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: catalog sets or required slots live snapshot  
 
-
 ## Live snapshot — catalog sets
 
 Live set ids: `cinder`, `tide`, `root`, `ash`, `spark`, `bone`, `veil`, `iron`.

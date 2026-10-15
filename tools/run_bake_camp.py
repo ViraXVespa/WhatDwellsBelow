@@ -23,7 +23,6 @@ import godot_lib
 
 GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"]
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
@@ -50,7 +49,6 @@ def main(argv: list[str] | None = None) -> int:
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("bake-camp", root, "\n".join(body), status, args=args,
                             clean=str(clean).lower(), shadow_px=shadow, stamp=stamp, display=kind)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

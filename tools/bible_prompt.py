@@ -78,10 +78,8 @@ FACING = ('Facing per cell: Down "face and chest toward the viewer"; Up "back to
 NO_PROPS = "PROPS: none. No weapons, no held items, no extra limbs or props; the hands hold nothing."
 UNKNOWN = " [HAND UNKNOWN: confirm from the live still before sending]"
 
-
 def build_prompt(gender: str) -> str:
     return TEMPLATE.format(gender=gender, hair=HAIR[gender]).rstrip() + "\n"
-
 
 def _clause(prop: Prop) -> tuple[str, bool]:
     kind, name, side, piece, note, idle = prop
@@ -104,7 +102,6 @@ def _clause(prop: Prop) -> tuple[str, bool]:
         text += f" ({note})"
     return text[0].upper() + text[1:] + "." + (UNKNOWN if unknown else ""), unknown
 
-
 def build_enemy(enemy: str, body: str = "") -> tuple[str, list[str]]:
     props = ENEMIES[enemy]
     if not props:
@@ -117,7 +114,6 @@ def build_enemy(enemy: str, body: str = "") -> tuple[str, list[str]]:
                 + " ".join(c for c, _ in parts) + " No other props, extra limbs or duplicated weapons.")
     text = ENEMY_TEMPLATE.format(enemy=enemy, body=body or f"{'an' if enemy[0] in 'aeiou' else 'a'} {enemy} as it looks in the live game", facing=FACING, props=line)
     return text, unknown
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).",
@@ -139,7 +135,6 @@ def main() -> None:
             sys.stderr.write(f"bible_prompt: UNKNOWN hand '?': {u}\n")
     else:
         sys.stdout.write(build_prompt(args.gender))
-
 
 if __name__ == "__main__":
     main()

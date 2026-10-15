@@ -35,7 +35,6 @@ SECTIONS = [
     ("Open questions", "<fill or none>"),
 ]
 
-
 def task_id(root: Path, task: str = "") -> str:
     """The handoff's task id: given, else the slice state's task, else its door."""
     if task:
@@ -46,10 +45,8 @@ def task_id(root: Path, task: str = "") -> str:
         st = {}
     return str(st.get("task") or st.get("door") or "")
 
-
 def handoff_path(root: Path, task: str = "") -> Path:
     return task_lib.task_path(root, task_id(root, task) or "handoff")
-
 
 def edits_dir(handoff: Path) -> Path:
     """Where a handoff's survey edits live: <survey root>/_logs/handoff/survey-edits (an old _logs handoff kept them beside itself)."""
@@ -57,18 +54,15 @@ def edits_dir(handoff: Path) -> Path:
         return handoff.parents[2] / EDITS_REL
     return handoff.parent / "survey-edits"
 
-
 def from_task_cmd(door: str, tid: str, job: str = "") -> str:
     """User starts with open_slice; Build resumes with start_build_slice --job door.job."""
     if job and "." in job:
         return f"python tools/open_slice.py {job} --task {tid}"
     return f"python tools/open_slice.py {door or '<door>'} --task {tid}"
 
-
 def _git(root: Path, *a: str) -> str:
     p = subprocess.run(["git", *a], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return p.stdout.strip() if p.returncode == 0 else ""
-
 
 def skeleton(root: Path, area: str, door: str, job: str, session: str = "", units: list[str] | None = None, done: list[str] | None = None, task: str = "") -> str:
     path = handoff_path(root, task)
@@ -85,7 +79,6 @@ def skeleton(root: Path, area: str, door: str, job: str, session: str = "", unit
     for title, hint in SECTIONS:
         body += [f"## {title}", hint, ""]
     return "\n".join(head + body)
-
 
 def parse(text: str) -> tuple[dict[str, str], dict[str, str]]:
     """(header key -> value, section title -> body)"""
@@ -104,7 +97,6 @@ def parse(text: str) -> tuple[dict[str, str], dict[str, str]]:
             secs[cur] += line + "\n"
     return head, {k: v.strip() for k, v in secs.items()}
 
-
 def baselines(root: Path, body: str) -> list[tuple[str, bool, str]]:
     """(path, exists, note) per non-empty line of the baselines section; the note follows ' - ' or an em dash."""
     out = []
@@ -117,7 +109,6 @@ def baselines(root: Path, body: str) -> list[tuple[str, bool, str]]:
         q = Path(p)
         out.append((p, (q if q.is_absolute() else root / q).is_file(), note))
     return out
-
 
 def code_names(root: Path, body: str) -> list[str]:
     """Problems with `path: name, name` lines of the Files and functions section: the file must exist, and each plain identifier listed must be in it (a func, const or var)."""
@@ -136,7 +127,6 @@ def code_names(root: Path, body: str) -> list[str]:
             if re.fullmatch(r"[A-Za-z_]\w*", name) and not re.search(r"\b%s\b" % re.escape(name), src):
                 bad.append(f"Files and functions: {m.group(1)} has no {name}")
     return bad
-
 
 def check(root: Path, text: str) -> list[str]:
     """Problems that stop the handoff from being ready."""
@@ -165,7 +155,6 @@ def check(root: Path, text: str) -> list[str]:
             bad.append(f"baseline has no one-line description: {p}")
     return bad
 
-
 def survey_edits(root: Path) -> list[str]:
     """Changed or new paths outside _logs/ (what the fresh worktree will not have)."""
     p = subprocess.run(["git", "status", "--porcelain=v1", "-uall"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -179,12 +168,10 @@ def survey_edits(root: Path) -> list[str]:
             paths.append(p)
     return paths
 
-
 def sidecars(paths: list[str]) -> tuple[list[str], int]:
     """(paths without Godot `.import` sidecars, how many sidecars there were): the sidecars are import churn, so they are counted, not listed."""
     keep = [p for p in paths if not p.endswith(".import")]
     return keep, len(paths) - len(keep)
-
 
 def save_edits(root: Path) -> tuple[list[str], list[str]]:
     """Copy the carried survey edits (the task file too) to _logs/handoff/survey-edits; returns (saved, not_carried)."""
@@ -203,7 +190,6 @@ def save_edits(root: Path) -> tuple[list[str], list[str]]:
     if saved:
         (dest / "base.txt").write_text(_git(root, "rev-parse", "HEAD") + "\n", encoding="utf-8")
     return saved, other
-
 
 def restore_edits(handoff: Path, root: Path) -> list[str]:
     """Put the saved survey edits into this (fresh) worktree: new files always; a file that exists is replaced only when HEAD is the survey's base."""
@@ -225,10 +211,8 @@ def restore_edits(handoff: Path, root: Path) -> list[str]:
             lines.append(f"DIFFERS, not copied (the week branch moved since the survey): {rel}; the survey's copy is {f}")
     return lines
 
-
 def command(root: Path, area: str, path: Path) -> str:
     return f'python tools/open_slice.py {area} --prompt-file "{path}"'
-
 
 def start_block(root: Path, path: Path, queue: bool = False, restore: bool = True) -> list[str]:
     """What a fresh session prints for --from-handoff: where it came from and what to open; the full text is already its first message."""
@@ -255,7 +239,6 @@ def start_block(root: Path, path: Path, queue: bool = False, restore: bool = Tru
     if bad:
         lines.append("HANDOFF problems: " + "; ".join(bad))
     return lines
-
 
 def selftest(script: Path) -> list[str]:
     """Handoff cases for start_build_slice.py --selftest; returns the failures."""

@@ -17,10 +17,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 
-
 def git(root: Path, *a: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", str(root), *a], capture_output=True, text=True, encoding="utf-8", errors="replace")
-
 
 def changed(root: Path) -> list[tuple[str, str]]:
     """[(XY status, path)] from `git status --porcelain -z`, _logs/ left out."""
@@ -37,7 +35,6 @@ def changed(root: Path) -> list[tuple[str, str]]:
             rows.append((e[:2], e[3:]))
     return rows
 
-
 def gate_state(root: Path, rows: list[tuple[str, str]]) -> str:
     """'' when the newest build-gate summary passed after the last edit; else the reason it did not."""
     found = sorted((root / "_logs" / "build-gate").glob("*-build-gate.txt"))
@@ -49,7 +46,6 @@ def gate_state(root: Path, rows: list[tuple[str, str]]) -> str:
         return f"the newest build gate did not pass ({last[-1] if last else 'no RESULT line'})"
     stale = [p for _, p in rows if not p.endswith(".import") and (root / p).is_file() and (root / p).stat().st_mtime > sp.stat().st_mtime]
     return f"{len(stale)} file(s) changed after the last gate, e.g. {stale[0]}" if stale else ""
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Commit the slice after the build gate (or an explicit skip).", writes=True)
@@ -88,7 +84,6 @@ def main(argv: list[str] | None = None) -> int:
     if why:
         print(f"Did not work: gate not run ({args.gate_skipped.strip()})")
     return agent_log.emit_result("PASS", commit=sha, paths=len(paths), left_out=len(churn), gate="skipped" if why else "passed")
-
 
 def selftest() -> int:
     import os
@@ -142,7 +137,6 @@ def selftest() -> int:
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

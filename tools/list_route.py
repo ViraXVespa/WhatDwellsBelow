@@ -20,15 +20,12 @@ import agent_log
 import unit_lib
 from load_routes import job_flow_map, job_index, job_read_when, load_routes, shot_flows, smoke_phases
 
-
 FULL_GATES = False  # set by --gates
-
 
 def _ascii(text: str) -> str:
     for a, b in (("\u2014", "-"), ("\u2013", "-"), ("\u2192", "->"), ("\u2019", "'"), ("\u201c", '"'), ("\u201d", '"'), ("\u00d7", "x")):
         text = text.replace(a, b)
     return text.encode("ascii", "replace").decode("ascii")
-
 
 def _digest(root: Path, rel_path: str, headings: bool = True) -> list[str]:
     """Status, Read when and the headings (with line numbers, code fences skipped) of one doc; headings=False: one line, Read when and the section count."""
@@ -47,7 +44,6 @@ def _digest(root: Path, rel_path: str, headings: bool = True) -> list[str]:
             out.append(f"  L{n}\t{_ascii(line.strip())[:110]}")
     return out if headings else [f"{rel_path}\t{when or 'Read when: (none)'}\t{n_sec} sections"]
 
-
 def _digest_lines(root: Path, data: dict, door: str, job: str) -> list[str]:
     doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
     spec = doors.get(door) if isinstance(doors, dict) else None
@@ -63,7 +59,6 @@ def _digest_lines(root: Path, data: dict, door: str, job: str) -> list[str]:
         lines.append("A survey is written from these lines. Open a doc only for the unit she chooses: `python tools/list_route.py --digest --job J` prints its headings with line numbers.")
     return lines
 
-
 def _gate_lines(data: dict) -> list[str]:
     gates = data.get("gates")
     if not isinstance(gates, dict):
@@ -78,7 +73,6 @@ def _gate_lines(data: dict) -> list[str]:
     if FULL_GATES:
         return ["gates\tdesign/<name>.md, open only when its when matches: " + " ".join(parts)]
     return [f"gates\t{len(parts)} gate docs, open one only when its trigger applies; `list_route.py --gates` lists names and triggers"]
-
 
 def _door_card(data: dict, door_name: str) -> list[str]:
     doors = data.get("doors")
@@ -116,7 +110,6 @@ def _door_card(data: dict, door_name: str) -> list[str]:
     lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
     return lines
 
-
 def _job_card(data: dict, job_id: str, root: Path | None = None, units: list[str] | None = None, done: list[str] | None = None) -> list[str]:
     idx = job_index(data)["by_id"]
     if job_id not in idx:
@@ -151,7 +144,6 @@ def _job_card(data: dict, job_id: str, root: Path | None = None, units: list[str
     lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
     return lines
 
-
 def parse_args(argv: list[str]):
     parser = agent_log.std_parser("Print one door or job card from design/routes.yaml (no argument: list the doors).")
     parser.add_argument("target", nargs="?", default="", help="Door name, or door.job for a job card (same as --door / --job).")
@@ -170,7 +162,6 @@ def parse_args(argv: list[str]):
         else:
             args.door = args.target
     return args
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
@@ -193,7 +184,6 @@ def main(argv: list[str] | None = None) -> int:
         lines = _door_card(data, args.door.strip())
     return agent_log.finish("route", root, "\n".join(lines), "PASS", args=args, legacy=False,
                             door=args.door or args.job.split(".", 1)[0], cards=len(lines))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

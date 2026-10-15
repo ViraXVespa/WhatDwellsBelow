@@ -24,10 +24,8 @@ MANIFEST = ROOT / "tools" / "tutorial_shots.json"
 FLOWS = ROOT / "tools" / "shot-flows"
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
-
 def load() -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
-
 
 def check(man: dict) -> list[str]:
     bad: list[str] = []
@@ -44,7 +42,6 @@ def check(man: dict) -> list[str]:
         if row.get("shot") not in shots:
             bad.append(f"{tid}: flow {row['flow']} has no shot {row.get('shot')} (has {shots})")
     return bad
-
 
 def run(man: dict, out: Path) -> list[str]:
     bad: list[str] = []
@@ -68,7 +65,6 @@ def run(man: dict, out: Path) -> list[str]:
     (out / "tutorial_shots.json").write_text(json.dumps({"dest": man["dest"], "topics": rows}, indent=2) + "\n", encoding="utf-8")
     return bad
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--run", action="store_true", help="shoot the flows and stage PNGs in --out")
@@ -87,7 +83,6 @@ def main(argv: list[str] | None = None) -> int:
     staged = f" staged={a.out} dest={man.get('dest')}" if a.run and not bad else ""
     print(f"RESULT {'FAIL' if bad else 'PASS'} topics={n} problems={len(bad)}{staged}")
     return 1 if bad else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

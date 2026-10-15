@@ -30,10 +30,8 @@ TOKEN = ""
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 
-
 ROOT: Path | None = None
 SCRATCH: Path | None = None
-
 
 def configure(root: Path, token: str) -> None:
     """Bind the repo root, scratch file, and token (called from main so --help never needs them)."""
@@ -45,7 +43,6 @@ def configure(root: Path, token: str) -> None:
     SCRATCH = ROOT / "tools" / "_scratch.py"
     SCRATCH.parent.mkdir(parents=True, exist_ok=True)
 
-
 def job_snapshot(job: dict) -> dict:
     return {
         "ok": True,
@@ -56,7 +53,6 @@ def job_snapshot(job: dict) -> dict:
         "output": job["output"],
         "error": job["error"],
     }
-
 
 def run_job(job_id: str, code: str) -> None:
     with JOBS_LOCK:
@@ -142,7 +138,6 @@ def run_job(job_id: str, code: str) -> None:
             job["exit_code"] = -1
             job["error"] = str(exc)
 
-
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -223,7 +218,6 @@ class Handler(BaseHTTPRequestHandler):
         threading.Thread(target=run_job, args=(job_id, code), daemon=True).start()
         self._json(200, {"ok": True, "job_id": job_id, "done": False, "output": ""})
 
-
 def main(argv: list[str] | None = None) -> int:
     global HOST, PORT
     ap = agent_log.std_parser("Token-protected local HTTP runner for web scratch files (needs WDB_SCRATCH_TOKEN; WDB_ROOT is the --root default).")
@@ -238,7 +232,6 @@ def main(argv: list[str] | None = None) -> int:
     agent_log.emit_result("INFO", state="listening", host=HOST, port=PORT)
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

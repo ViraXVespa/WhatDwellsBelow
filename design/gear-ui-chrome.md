@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: Analyze Forge bumpers, verbs, deferred teardown, script map  
 
-
 ## Anvil tabs
 
 - Analyze / Forge tabs sit in the Anvil footer.

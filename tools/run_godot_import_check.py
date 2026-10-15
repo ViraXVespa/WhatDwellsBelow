@@ -13,7 +13,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Headless editor import check.", json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
@@ -31,7 +30,6 @@ def main(argv: list[str] | None = None) -> int:
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("godot-import-check", root, "\n".join(body), "PASS" if clean else "FAIL", args=args, retry=("run_godot_import_check.py", body),
                             clean=str(clean).lower(), status_godot=r["status"])
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

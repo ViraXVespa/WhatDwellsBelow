@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: worktree minimize, Godot child restore, slug copyhit
 
-
 ## Play
 
 **Web:** loader overlay, then same-tab redirect to the catalog `pages_url` (`JavaScriptBridge` `location` assign). Do not `OS.shell_open` a new tab. The browser Back button returns to the live title. The archive is a pre-exported Godot Web build under GitHub Pages. Never spawn Godot or checkout in the browser.

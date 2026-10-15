@@ -13,7 +13,6 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Length, newline, BOM, and indent stats without reading into chat.", json_out=True)
     parser.add_argument("paths_pos", nargs="*", metavar="PATH", help="File or directory (same as --path)")
@@ -23,7 +22,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     args = parser.parse_args(argv)
     args.path = list(args.path) + list(args.paths_pos)
     return args
-
 
 def probe(path: Path) -> dict[str, object]:
     row: dict[str, object] = {
@@ -58,7 +56,6 @@ def probe(path: Path) -> dict[str, object]:
     )
     return row
 
-
 def collect(root: Path, paths: list[str], glob: str, cap: int) -> list[dict[str, object]]:
     hits: list[Path] = []
     raw = paths or ["."]
@@ -80,7 +77,6 @@ def collect(root: Path, paths: list[str], glob: str, cap: int) -> list[dict[str,
         hits.append(target)  # missing: probe() reports exists=0
     return [probe(path) for path in hits[: max(1, cap)]]
 
-
 def render(rows: list[dict[str, object]], root: Path, where: str) -> str:
     lines = [
         "file-stat",
@@ -100,7 +96,6 @@ def render(rows: list[dict[str, object]], root: Path, where: str) -> str:
         )
     return "\n".join(lines)
 
-
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     root, where = agent_log.cwd_scan_root(args)
@@ -111,7 +106,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {missing} path(s) not found (exists=0 rows); pass files or directories relative to the repo root", file=sys.stderr)
     return agent_log.finish("file-stat", root, render(rows, root, where), "FAIL" if missing else "PASS",
                             args=args, legacy=False, count=len(rows), missing=missing)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

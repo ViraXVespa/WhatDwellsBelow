@@ -24,17 +24,14 @@ FILE_SUFFIXES = (
     ".yaml",
 )
 
-
 class Row(NamedTuple):
     system: str
     live: str
     listed: list[str]
     index: int
 
-
 def posix(rel: str) -> str:
     return md.posix(rel)
-
 
 def row_paths(live_cell: str) -> list[str]:
     found: list[str] = []
@@ -52,7 +49,6 @@ def row_paths(live_cell: str) -> list[str]:
         found.append(token)
     return found
 
-
 def matches(needle: str, listed: list[str]) -> bool:
     n = posix(needle)
     base = n.rsplit("/", 1)[-1]
@@ -62,7 +58,6 @@ def matches(needle: str, listed: list[str]) -> bool:
         if base and (item == base or item.rsplit("/", 1)[-1] == base):
             return True
     return False
-
 
 def parse_rows(text: str) -> list[Row]:
     rows: list[Row] = []
@@ -82,7 +77,6 @@ def parse_rows(text: str) -> list[Row]:
         rows.append(Row(left, right, row_paths(right), index))
     return rows
 
-
 def find_system(rows: list[Row], needle: str) -> Row | None:
     n = needle.strip().lower()
     if not n:
@@ -100,7 +94,6 @@ def find_system(rows: list[Row], needle: str) -> Row | None:
         return subs[0]
     return None
 
-
 def system_choices(rows: list[Row], needle: str) -> list[str]:
     n = needle.strip().lower()
     names = [row.system for row in rows]
@@ -109,7 +102,6 @@ def system_choices(rows: list[Row], needle: str) -> list[str]:
     hits = [row.system for row in rows if n in row.system.lower()]
     return hits or names
 
-
 def _parent(path: str) -> str:
     p = posix(path)
     if p.endswith("/"):
@@ -117,7 +109,6 @@ def _parent(path: str) -> str:
     if "/" not in p:
         return ""
     return p.rsplit("/", 1)[0]
-
 
 def _iter_ticks(live: str) -> list[tuple[re.Match[str], str, str]]:
     """(match, token, resolved path) in left-to-right order."""
@@ -137,10 +128,8 @@ def _iter_ticks(live: str) -> list[tuple[re.Match[str], str, str]]:
         out.append((m, token, resolved))
     return out
 
-
 def format_row(system: str, live: str) -> str:
     return f"| {system} | {live} |"
-
 
 def add_path(live: str, path: str) -> tuple[str, str, str]:
     """Return (new_live, as_token, action) where action is added|skip."""
@@ -169,7 +158,6 @@ def add_path(live: str, path: str) -> tuple[str, str, str]:
     new_live = live.rstrip() + f"{sep}{md.tick_wrap(token)}"
     return new_live, token, "added"
 
-
 def _drop_tick(live: str, m: re.Match[str]) -> str:
     pre = live[: m.start()]
     post = live[m.end() :]
@@ -186,7 +174,6 @@ def _drop_tick(live: str, m: re.Match[str]) -> str:
             return pre + post[len(sep) :]
     return pre + post
 
-
 def remove_path(live: str, path: str) -> tuple[str, str, str]:
     """Return (new_live, resolved, action) where action is removed|skip."""
     needle = posix(path)
@@ -195,7 +182,6 @@ def remove_path(live: str, path: str) -> tuple[str, str, str]:
         if matches(needle, [_token, resolved]):
             return _drop_tick(live, m), resolved, "removed"
     return live, needle, "skip"
-
 
 def _rename_token(old_token: str, old_resolved: str, new_path: str) -> str:
     new_p = posix(new_path)
@@ -210,7 +196,6 @@ def _rename_token(old_token: str, old_resolved: str, new_path: str) -> str:
         )
     return new_base
 
-
 def rename_path(live: str, old: str, new: str) -> tuple[str, str, str, str]:
     """Return (new_live, old_resolved, new_token, action)."""
     needle = posix(old)
@@ -223,10 +208,8 @@ def rename_path(live: str, old: str, new: str) -> tuple[str, str, str, str]:
             return new_live, resolved, new_token, "renamed"
     return live, needle, new_p, "skip"
 
-
 def is_dir_token(token: str) -> bool:
     return posix(token).endswith("/")
-
 
 def file_is_mapped(rel: str, rows: list[Row]) -> bool:
     n = posix(rel)
@@ -243,7 +226,6 @@ def file_is_mapped(rel: str, rows: list[Row]) -> bool:
         if n.startswith(prefix) or n.startswith(p.rstrip("/") + "/"):
             return True
     return False
-
 
 def listed_file_paths(rows: list[Row]) -> list[str]:
     """Resolved file paths (full ticks and bare basenames that inherit last_dir)."""

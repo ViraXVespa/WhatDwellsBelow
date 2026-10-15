@@ -5,7 +5,6 @@ Read when: every fresh instance; before adding a system; before calling the demo
 
 This is the current **product scope**; the User can change it. They do not ban Grok Build from adding helpers, same-system APIs, or local module shape. Code-architecture rules for Build stay on the Build path file. “System” in this file means a player-facing game system, not a code module.
 
-
 ## Current scope (the plan today)
 
 - Solo play only; no co-op scaffolding left active in the live path.

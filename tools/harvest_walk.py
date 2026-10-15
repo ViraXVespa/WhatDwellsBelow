@@ -22,7 +22,6 @@ from imglib import geom
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 FRAME_COUNT = 6
 
-
 def extract(video: Path, tmp: Path, fps: int = 12) -> list[Path]:
     tmp.mkdir(parents=True, exist_ok=True)
     for p in tmp.glob("f*.png"):
@@ -30,7 +29,6 @@ def extract(video: Path, tmp: Path, fps: int = 12) -> list[Path]:
     cmd = [FFMPEG, "-y", "-i", str(video), "-vf", f"fps={fps}", str(tmp / "f%03d.png")]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return sorted(tmp.glob("f*.png"))
-
 
 def pick(paths: list[Path], count: int) -> list[Path]:
     if not paths:
@@ -43,11 +41,9 @@ def pick(paths: list[Path], count: int) -> list[Path]:
     idxs = [int(round(i * (n - 1) / (count - 1))) for i in range(count)]
     return [usable[i] for i in idxs]
 
-
 def clean_frame(src: Path) -> Image.Image:
     im = range_key(Image.open(src))
     return quantize_palette(fit_canvas(im))
-
 
 def harvest(video: Path, dest_dir: Path, prefix: str) -> list[Path]:
     tmp = Path("_src/walk_raw") / prefix
@@ -63,14 +59,12 @@ def harvest(video: Path, dest_dir: Path, prefix: str) -> list[Path]:
         print("wrote", p)
     return out
 
-
 def flip_set(src_prefix: str, dest_prefix: str, folder: Path) -> None:
     for i in range(FRAME_COUNT):
         src = folder / f"{src_prefix}_{i}.png"
         dest = folder / f"{dest_prefix}_{i}.png"
         geom.flip(Image.open(src)).save(dest)
         print("flip", dest)
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Extract evenly spaced walk frames from an I2V clip (Section 19).")
@@ -80,7 +74,6 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     out = harvest(args.video, args.dest_dir, args.prefix)
     return agent_log.emit_result("PASS" if out else "FAIL", frames=len(out))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

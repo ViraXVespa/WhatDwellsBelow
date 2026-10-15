@@ -35,10 +35,8 @@ RE_STR_N_AME = re.compile(r"str\(n\)ame")
 RE_HOST_TRAILING_COMMA = re.compile(r"\bhost\s*,\s*\)")
 RE_EXTENDS_CB = re.compile(r"^extends\s+CharacterBody(?:2D|3D)\b", re.M)
 
-
 def rel(p: Path) -> str:
     return agent_log.rel(ROOT, p)
-
 
 def lint_file(path: Path) -> list[str]:
     hits: list[str] = []
@@ -66,7 +64,6 @@ def lint_file(path: Path) -> list[str]:
         if RE_HOST_TRAILING_COMMA.search(line):
             hits.append(f"{rel(path)}:{i}: HOST_TRAILING_COMMA {stripped}")
     return hits
-
 
 def main() -> int:
     global ROOT
@@ -100,7 +97,6 @@ def main() -> int:
     head = [f"Scanned {len(files)} scripts; {len(all_hits)} hits"] + [f"  {k}: {v}" for k, v in sorted(kinds.items())]
     code = agent_log.finish("hostify-lint", ROOT, "\n".join(lines), "INFO", args=args, echo="\n".join(head), hits=len(all_hits), files=len(files))
     return code
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

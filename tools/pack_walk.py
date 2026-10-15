@@ -38,7 +38,6 @@ ATTACK_JOBS = {
     "left": SESSION_VID / "7.mp4",
 }
 
-
 def extract(src: Path, dest_dir: Path, fps: int = 8) -> list[Path]:
     """Full-size RGB PNGs. Nearest chroma upsample; always re-extract."""
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -61,11 +60,9 @@ def extract(src: Path, dest_dir: Path, fps: int = 8) -> list[Path]:
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return sorted(dest_dir.glob("f*.png"))
 
-
 def fit(im: Image.Image, canvas: int = CANVAS) -> Image.Image:
     keyed = sp.key_to_alpha(im.convert("RGBA"))
     return sp.fit_canvas(geom.shrink(keyed, KEYED_CAP), canvas, key=False)
-
 
 def pick_loop(paths: list[Path], count: int = 4) -> list[Path]:
     # skip first/last 15% (settle / drift), then even samples
@@ -78,7 +75,6 @@ def pick_loop(paths: list[Path], count: int = 4) -> list[Path]:
     step = len(span) / count
     return [span[int(i * step)] for i in range(count)]
 
-
 def _pack_one(kind: str, facing: str, video: str) -> str:
     vid = Path(video)
     raw = extract(vid, RAW / f"player_{kind}_{facing}")
@@ -89,7 +85,6 @@ def _pack_one(kind: str, facing: str, video: str) -> str:
         fit(imgio.load(src)).save(dest)
         wrote.append(dest.name)
     return f"{kind} {facing} " + " ".join(wrote)
-
 
 def _run() -> None:
     jobs: list[tuple[str, str, str]] = []
@@ -105,10 +100,8 @@ def _run() -> None:
         jobs.append(("walk", facing, str(vid)))
     agent_log.run_jobs([(_pack_one, job) for job in jobs])
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("pack_walk", "Extract, key, and pack walk-cycle frames from Imagine videos.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

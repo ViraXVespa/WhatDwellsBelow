@@ -23,7 +23,6 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import audio_lib as al
 
-
 def render(node: list) -> list[float]:
     kind = node[0]
     if kind == "sine":
@@ -38,7 +37,6 @@ def render(node: list) -> list[float]:
             out += render(n)
         return out
     raise ValueError(f"unknown node {kind!r}")
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Generate placeholder SFX wavs from tools/sfx-cues.json.", writes=True)
@@ -86,7 +84,6 @@ def main(argv: list[str] | None = None) -> int:
     if len(cues) > 8:
         print(f"... +{len(cues) - 8} more cues")
     return agent_log.emit_result("PASS", written=0 if args.dry_run else len(cues), dir="assets/audio")
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

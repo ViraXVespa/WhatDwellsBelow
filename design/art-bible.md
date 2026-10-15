@@ -63,4 +63,3 @@ Failures:
 - Persistent identity or scale failure → return to Bible and re-lock only with User approval if style would change.
 - One bad facing → regenerate that unit only.
 - Harvest cuts fail but the clip is good → adjust pack points; do not silently invent a new I2V method.
-

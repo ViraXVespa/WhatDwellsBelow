@@ -3,7 +3,6 @@
 Status: current plan + live snapshot  
 Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 
-
 ## Boss / guardian rules
 
 - Each Floor Guardian and the Gate Master spawns behind a special boss door that the player can see and prepare in front of.

@@ -24,12 +24,10 @@ ROOT = _TOOLS.parent
 FRAMES = ROOT / "assets" / "ui" / "frames"
 JOB = "frame-art"
 
-
 def godot(*args: str, timeout: int = 600) -> str:
     exe = str(godot_lib.godot_exe())
     r = subprocess.run([exe, "--headless", "--path", str(ROOT), *args], capture_output=True, text=True, errors="replace", timeout=timeout)
     return r.stdout + r.stderr
-
 
 def fix_imports() -> int:
     n = 0
@@ -41,13 +39,11 @@ def fix_imports() -> int:
             n += 1
     return n
 
-
 def show(out: str) -> bool:
     for line in out.splitlines():
         if line.startswith("FRAME_ART") or godot_lib.HARD_RE.search(line):
             print(line)
     return not godot_lib.HARD_RE.search(out)
-
 
 def main(argv: list[str] | None = None) -> int:
     global ROOT, FRAMES
@@ -71,7 +67,6 @@ def main(argv: list[str] | None = None) -> int:
         ok = ok and show(out) and re.search(r"stale=0\b", out) is not None
     return agent_log.finish(JOB, ROOT, "frame art %s" % ("time" if a.time else "check" if a.check else "bake"), "PASS" if ok else "FAIL",
                             args=a, pngs=len(list(FRAMES.rglob("*.png"))))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

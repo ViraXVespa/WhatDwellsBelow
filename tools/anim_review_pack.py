@@ -19,7 +19,6 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-
 def _scan_good_pack_clips() -> list[dict]:
     """Clips on disk that look like packed locomotion and are not flagged."""
     flagged = {row["key"] for row in lib.clip_rows()}
@@ -57,7 +56,6 @@ def _scan_good_pack_clips() -> list[dict]:
                     }
                 )
     return found
-
 
 def _md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
     lines = [
@@ -115,7 +113,6 @@ def _md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
     )
     return "\n".join(lines)
 
-
 def main(argv: list[str] | None = None) -> int:
     args = lib.brief_args(agent_log.std_parser(__doc__, writes=True), "pack_brief", argv)
     review, missing = lib.load_with_missing(args.review)
@@ -133,7 +130,6 @@ def main(argv: list[str] | None = None) -> int:
     }
     lib.write_brief(args, _md(repack, good, missing), payload)
     return agent_log.emit_result("PASS", repack=len(repack), good=len(good), missing=len(missing))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

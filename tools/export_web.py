@@ -19,10 +19,8 @@ import godot_lib
 
 TOOLS = Path(__file__).resolve().parent
 
-
 def py(*a: str) -> int:
     return subprocess.run([sys.executable, *a]).returncode
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Export the Web build to docs/ (or _pages/ with --archives).", json_out=True)
@@ -75,7 +73,6 @@ def main(argv: list[str] | None = None) -> int:
     body += ["", "files:"] + files
     return agent_log.finish("export-web", root, "\n".join(body), "PASS" if ok else "FAIL", args=args, failed_step=fail or None,
                             out=agent_log.rel(root, out_dir))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

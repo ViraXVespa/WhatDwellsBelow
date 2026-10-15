@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, toasts  
 
-
 ## Extraction Gate UI
 
 - Opens on interact with an active Extraction Gate.

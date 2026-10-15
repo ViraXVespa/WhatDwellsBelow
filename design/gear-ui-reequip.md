@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: re-equip lists, submenu chrome  
 
-
 ## Re-equip and Anvil submenus
 
 **A** / confirm on a live slot opens a modal for that slot.

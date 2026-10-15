@@ -31,7 +31,6 @@ import agent_log
 
 DEF = re.compile(r"^(?:static\s+)?func\s+(\w+)|^const\s+(\w+)|^(?:static\s+)?var\s+(\w+)", re.M)
 
-
 def kinds(text: str) -> list[str]:
     """Per-char class: c code, m comment, s string (single-line and triple quotes)."""
     out = ["c"] * len(text)
@@ -64,14 +63,12 @@ def kinds(text: str) -> list[str]:
             i += 1
     return out
 
-
 def defs(text: str) -> dict[str, str]:
     """name -> 'f' (func) or 'v' (const/var), top level only."""
     d = {}
     for m in DEF.finditer(text):
         d[m.group(1) or m.group(2) or m.group(3)] = "f" if m.group(1) else "v"
     return d
-
 
 def find(text: str, name: str, cls: list[str], call: bool) -> dict[str, list[int]]:
     hits: dict[str, list[int]] = {"c": [], "m": [], "s": []}
@@ -82,17 +79,14 @@ def find(text: str, name: str, cls: list[str], call: bool) -> dict[str, list[int
         hits[cls[m.start()]].append(m.start())
     return hits
 
-
 def line_of(text: str, pos: int) -> int:
     return text.count("\n", 0, pos) + 1
-
 
 def project_root(p: Path) -> Path:
     for d in [p.resolve().parent, *p.resolve().parents]:
         if (d / "project.godot").is_file():
             return d
     return Path.cwd()
-
 
 def modules(text: str, path: Path, root: Path) -> dict[str, dict[str, str]]:
     mods = {}
@@ -102,7 +96,6 @@ def modules(text: str, path: Path, root: Path) -> dict[str, dict[str, str]]:
         if f.is_file() and f.resolve() != path.resolve() and f.parent.resolve() in (here, here / path.stem):
             mods[m.group(1)] = defs(f.read_text(encoding="utf-8-sig"))
     return mods
-
 
 def auto_syms(text: str, path: Path, root: Path) -> tuple[list[tuple[str, str, bool]], list[str]]:
     own, mods = defs(text), modules(text, path, root)
@@ -124,7 +117,6 @@ def auto_syms(text: str, path: Path, root: Path) -> tuple[list[tuple[str, str, b
         syms.append((n, mm[0], call))
     return syms, notes
 
-
 def bad_callers(text: str, path: Path, root: Path) -> list[str]:
     rel = path.resolve().relative_to(root).as_posix()
     try:
@@ -143,7 +135,6 @@ def bad_callers(text: str, path: Path, root: Path) -> list[str]:
                 if m.group(1) in gone:
                     out.append(f"BAD-CALLER {f.relative_to(root)}:{line_of(t, m.start())}: {a}.{m.group(1)}")
     return out
-
 
 def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
@@ -193,7 +184,6 @@ def main() -> int:
     if not ns.dry_run:
         path.write_bytes(text.encode("utf-8"))
     return agent_log.emit_result("PASS", mode="rewrite", syms=len(syms), dry_run=ns.dry_run)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

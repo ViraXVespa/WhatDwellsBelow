@@ -42,7 +42,6 @@ SMALL = 256
 WALK_PICKS = (8, 12, 16, 20)
 ATK_PICKS = (8, 18, 28, 38)
 
-
 def prep(im: Image.Image) -> Image.Image:
     """Bible-style 4x NN if the still is small. Do not shrink before remap/key.
 
@@ -54,15 +53,12 @@ def prep(im: Image.Image) -> Image.Image:
         im = i2v_seeds.scale_nn(im, i2v_seeds.SCALE)
     return im
 
-
 def key_still(src: Path) -> Image.Image:
     raw = prep(imgio.load(src))
     return sp.key_to_alpha(raw)
 
-
 def fit_square(keyed: Image.Image, canvas: int) -> Image.Image:
     return sp.fit_canvas(keyed, canvas, key=False)
-
 
 def fit_width(keyed: Image.Image, width: int) -> Image.Image:
     out = geom.fit_axis(keyed, width=width, to_int=round)
@@ -70,12 +66,10 @@ def fit_width(keyed: Image.Image, width: int) -> Image.Image:
         return Image.new("RGBA", (width, width), (0, 0, 0, 0))
     return out
 
-
 def write(im: Image.Image, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     im.save(dest)
     print(f"wrote {dest.relative_to(ROOT)} {im.size}", flush=True)
-
 
 def rekey(src: Path, dest: Path, canvas: int, wide: bool = False) -> Image.Image | None:
     use = matcher.resolve_source(dest, src)
@@ -87,12 +81,10 @@ def rekey(src: Path, dest: Path, canvas: int, wide: bool = False) -> Image.Image
     write(out, dest)
     return out
 
-
 def fill_dirs(down: Image.Image, dest_dir: Path, prefix: str) -> None:
     flipped = geom.flip(down)
     for k in DIRS:
         write(flipped if k in LEFT else down, dest_dir / f"{prefix}_{k}.png")
-
 
 def fill_diags(folder: Path, pose: str) -> None:
     mapping = {
@@ -107,17 +99,14 @@ def fill_diags(folder: Path, pose: str) -> None:
         if src.exists():
             Image.open(src).save(dest)
 
-
 def pack_cycle(folder: str, dest_dir: Path, prefix: str, picks: tuple[int, ...], canvas: int = 128) -> None:
     for i, fi in enumerate(picks):
         src = FRAMES / folder / f"f{fi:03d}.png"
         rekey(src, dest_dir / f"{prefix}_{i}.png", canvas)
 
-
 def _rekey_job(src: str, dest: str, canvas: int, wide: bool) -> str:
     rekey(Path(src), Path(dest), canvas, wide)
     return dest
-
 
 def _enemy_job(name: str, typ: str) -> str:
     dest_dir = SPR / "enemies" / typ
@@ -126,10 +115,8 @@ def _enemy_job(name: str, typ: str) -> str:
         fill_dirs(im, dest_dir, "idle")
     return typ
 
-
 def _run_pool(jobs: list) -> None:
     agent_log.run_jobs(jobs)
-
 
 def _run() -> None:
     p4_enemies = {
@@ -292,10 +279,8 @@ def _run() -> None:
 
     print("rekey stills done", flush=True)
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("rekey_stills", "Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -4,7 +4,6 @@ Status: parked experiment. Not the live I2V plan.
 Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.
 Code: `tools/attack_keyframes.py`
 
-
 Do not read when: the job is walk or idle I2V, pack, overlay, Godot, combat numbers, or a general art-pipeline session.
 
 Log: `tools/attack_keyframes_log.json`
