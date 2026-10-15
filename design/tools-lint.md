@@ -10,6 +10,7 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
 | `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them); prints the absolute root it read. Summary: `file-stat`. | BD | `--help` | Y |
+| `session_dump.py` | Interactive dump of a recent Grok session (chat, events, updates, usage, prompt_context, system prompt, terminal logs) into one .txt on the clipboard. Skips wdb-iso worktrees. | D | `--help` | N |
 | `summarize_scripts.py` | Func inventory per `.gd` (`--path`, `--top-funcs`) | BD | `--help` | Y |
 | `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
 | `list_dupes.py` | Duplicate finder (read-only): exact / shape / near function clones and verbatim or literal-masked line blocks across `scripts/**/*.gd` and `tools/*.py`, ranked by (copies-1) x lines. `--lang gd\|py\|all`, `--min-lines`, `--min-block`, `--md PATH`. Feeds `design/reuse-map.md`. Summary: `dupes`. | B | `--help` | Y |
