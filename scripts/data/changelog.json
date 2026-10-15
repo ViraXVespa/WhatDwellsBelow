@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.7.7",
+			"points": [
+				{
+					"text": "Reassigned rekey-assets from Build to Bot (owner, resume, index)."
+				},
+				{
+					"text": "Bot docs now allow User-named art-pipeline / rekey / stills work when the task assigns it."
+				},
+				{
+					"text": "web-emit.md notes the checker example and the full prove suite."
+				}
+			],
+			"summary": "Task ownership and Bot scope docs for rekey-assets."
+		},
+		{
 			"label": "0.7.6",
 			"points": [
 				{
