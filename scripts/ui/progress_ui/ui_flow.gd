@@ -12,6 +12,7 @@ const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
 const ScrollBox: GDScript = preload("res://scripts/ui/scroll_box.gd")
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
+const Reception := preload("res://scripts/ui/progress_ui/receptionist.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -164,7 +165,10 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 			host._st(App.tr("common.forge_cancelled_materials_stay_s"))
 		else:
 			App.sfx("ui_cancel")
-			host.close_ui()
+			if (str(host.mode) == "receptionist" or str(host.mode) == "guide") and Reception.back(host):
+				pass
+			else:
+				host.close_ui()
 		host.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		host.get_viewport().set_input_as_handled()

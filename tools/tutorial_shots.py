@@ -27,6 +27,18 @@ ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 def load() -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
+def _shot_names(steps: list) -> list[str]:
+    names: list[str] = []
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+        if step.get("op") == "shot":
+            names.append(step.get("name"))
+        if step.get("op") == "repeat":
+            names.extend(_shot_names(step.get("steps", [])))
+    return names
+
+
 def check(man: dict) -> list[str]:
     bad: list[str] = []
     if not str(man.get("dest", "")).startswith("assets/ui/tutorial"):
@@ -38,7 +50,7 @@ def check(man: dict) -> list[str]:
         if not flow.is_file():
             bad.append(f"{tid}: no flow {row.get('flow')}")
             continue
-        shots = [s.get("name") for s in json.loads(flow.read_text(encoding="utf-8")).get("steps", []) if s.get("op") == "shot"]
+        shots = _shot_names(json.loads(flow.read_text(encoding="utf-8")).get("steps", []))
         if row.get("shot") not in shots:
             bad.append(f"{tid}: flow {row['flow']} has no shot {row.get('shot')} (has {shots})")
     return bad

@@ -11,6 +11,7 @@ const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Flow := preload("res://scripts/ui/progress_ui/ui_flow.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
+const Reception := preload("res://scripts/ui/progress_ui/receptionist.gd")
 
 var open := false
 var mode := ""
@@ -62,6 +63,8 @@ var tip_lab: Label
 var tip_id: String = ""
 var tip_kind: String = ""
 var tip_from: Control = null
+var reception_page := "root"
+var reception_topic := ""
 
 var _skin_mode: String = "<unset>"
 var _skin_name: String = ""
@@ -106,6 +109,9 @@ func _show() -> void:
 
 func _paint_menu_hint() -> void:
 	if _gear_busy():
+		return
+	if mode == "receptionist" or mode == "guide":
+		Reception.hint(self)
 		return
 	PromptView.footer(self, [{"action": "ui_cancel", "verb": "leave"}])
 
@@ -191,12 +197,12 @@ func open_quest() -> void:
 	_rebuild_quest()
 	_show()
 
-## Guild receptionist: its own mode and entry (ui-receptionist-tutorial replaces the body; today it is the quest list).
+## Guild receptionist: Talk, then Ask? for the How-to-Play pages. Quests stay on the notice board.
 func open_receptionist() -> void:
 	mode = "receptionist"
+	reception_page = "root"
+	reception_topic = ""
 	_drop_sub()
-	if App.prog.quests_offered.is_empty():
-		App.prog.roll_quests(true)
 	Hub.rebuild_receptionist(self)
 	_show()
 

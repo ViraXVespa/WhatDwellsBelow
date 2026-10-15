@@ -444,7 +444,7 @@ unit_files:
   ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop; scripts/ui/gear_icons.gd; scripts/ui/item_board.gd"
   ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play; scripts/ui/recap/bars.gd; scripts/ui/tip_hover.gd; scripts/ui/pause_skills.gd; scripts/ui/pause_menu/journal_page.gd; scripts/ui/journal_spread.gd"
   ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd; scripts/ui/pause_menu.gd: TABS; scripts/ui/pause_menu/menu_flow.gd; scripts/ui/pause_menu/pause_menu_view.gd; scripts/ui/tip_hover.gd"
-  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/world/interact/interact_act.gd: interact; scripts/data/talk_lines.gd; tools/tutorial_shots.py"
+  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/ui/progress_ui/receptionist.gd: rebuild, back; scripts/ui/progress_ui/receptionist_frame.gd: spec, build, place; scripts/ui/progress_ui/receptionist_art.gd: body, speech, bust; scripts/ui/progress_ui/guide_frame.gd: spec, build, place; scripts/ui/progress_ui/guide_art.gd: body; scripts/data/tutorial_pages.gd: page_of, shot_tex; scripts/data/talk_lines.gd: line_key, commit_once; scripts/world/interact/interact_act.gd: interact; tools/tutorial_shots.py"
 
 # A unit that is one state of a shared flow: the job's flow, cut after that top-level shot (run_shot_flow.py --job J re-shoots only it).
 shot_states:

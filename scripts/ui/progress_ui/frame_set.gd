@@ -12,8 +12,10 @@ const CrystalFrame: GDScript = preload("res://scripts/ui/progress_ui/crystal_fra
 const ExtractFrame: GDScript = preload("res://scripts/ui/progress_ui/extract_frame.gd")
 const ShopFrame: GDScript = preload("res://scripts/ui/progress_ui/shop_frame.gd")
 const QuestFrame: GDScript = preload("res://scripts/ui/progress_ui/quest_frame.gd")
+const ReceptionFrame: GDScript = preload("res://scripts/ui/progress_ui/receptionist_frame.gd")
+const GuideFrame: GDScript = preload("res://scripts/ui/progress_ui/guide_frame.gd")
 
-const SKINS: Array = [VendorFrame, DumpsterFrame, ControlsFrame, AnvilFrame, CrystalFrame, ExtractFrame, ShopFrame, QuestFrame]
+const SKINS: Array = [VendorFrame, DumpsterFrame, ControlsFrame, AnvilFrame, CrystalFrame, ExtractFrame, ShopFrame, QuestFrame, ReceptionFrame, GuideFrame]
 
 static func mount(host: CanvasLayer) -> void:
 	for skin: GDScript in SKINS:

@@ -2203,3 +2203,105 @@ msgstr "Ore’s fine, but a full stomach is what gets you back to the surface."
 
 msgid "talk.vendor.08"
 msgstr "Don’t ask me what’s in the green one. It works. That’s the warranty."
+
+msgid "talk.receptionist.01"
+msgstr "First time? I'm sure you'll figure things out, but I'm here if you need me."
+
+msgid "talk.receptionist.02"
+msgstr "I tried dungeon delving once, but the transfer back was too much for me."
+
+msgid "talk.receptionist.03"
+msgstr "We don't know much about the dungeon. The crystal just randomly appeared one day."
+
+msgid "talk.receptionist.04"
+msgstr "I don't know how you guys handle experiencing death each run without going insane. It's really impressive!"
+
+msgid "talk.receptionist.05"
+msgstr "Some people say the dungeon is a trial sent to us by the gods, but that feels derivative to me."
+
+msgid "talk.receptionist.06"
+msgstr "This dungeon is technically the property of the lord of this land, but they leave management to us at the Adventurer’s Guild."
+
+msgid "talk.receptionist.07"
+msgstr "Me? I think the dungeon is some kind of alien artifact that uses the allure of treasure to entice people to enter, then harvests the emotional energy of the suffering of death to power their other technology."
+
+msgid "talk.receptionist.08"
+msgstr "We don’t know how the extraction gates function. It doesn’t seem to use any kind of magic."
+
+msgid "talk.receptionist.09"
+msgstr "The dungeon changes every time someone enters… It almost makes it feel like it’s alive."
+
+msgid "talk.receptionist.10"
+msgstr "There is no “secret cow level”. That’s just a weird rumor. I’ve no idea how it started… Or what a 'level' is…"
+
+msgid "talk.receptionist.11"
+msgstr "Do you ever wonder why enemies drop coins? That's really weird, right? Like… Is their biology economy based or something? Hmm…"
+
+msgid "receptionist.talk"
+msgstr "Talk"
+
+msgid "receptionist.ask"
+msgstr "Ask?"
+
+msgid "receptionist.prompt"
+msgstr "What would you like to know about?"
+
+msgid "tutorial.forging.title"
+msgstr "Forging"
+
+msgid "tutorial.forging.body"
+msgstr "The anvil in Placeholdia analyzes a piece, then forges a new one. Green or blue is available after you have analyzed that type and rarity. Armor costs gold and ore. Weapons and tools cost gold, ore, and wood. You confirm every forge. A lock keeps an analyzed trait and raises the cost. Finished pieces wait on a results screen, and you choose which ones to hold."
+
+msgid "tutorial.xp.title"
+msgstr "Experience you keep"
+
+msgid "tutorial.xp.body"
+msgstr "Experience you earn in the dungeon counts for this run. When you die or Dispel, the recap keeps a fraction of that run experience as permanent experience and drops the rest. It shows each skill drain down to the amount you keep, then your new totals and levels. Skill levels are built from the permanent total."
+
+msgid "tutorial.extraction.title"
+msgstr "Extraction"
+
+msgid "tutorial.extraction.body"
+msgstr "An extraction gate in the dungeon mails goods home. The page lists what you have equipped and what you carry. Choose a piece to mail it, or use Send All. Artifacts, forged holds, and a white weapon or tool stay with you. A confirm asks before anything leaves the run."
+
+msgid "tutorial.skills.title"
+msgstr "Skills"
+
+msgid "tutorial.skills.body"
+msgstr "Open Pause, then Skills. Eleven skills are listed with the current level, the bar to the next level, and your permanent total. Experience earned this descent is shown there too."
+
+msgid "tutorial.gear.title"
+msgstr "Gear"
+
+msgid "tutorial.gear.body"
+msgstr "Pause, then Inventory, or open your pack in Placeholdia. The paper doll is what you have equipped. The bag is seven columns. Highlight a piece for its stats. Y cycles the flyout. In the dungeon the list is the equipped piece plus the bag. In Placeholdia it also offers starters, holds, and banked pieces that are not white."
+
+msgid "tutorial.combat.title"
+msgstr "Combat"
+
+msgid "tutorial.combat.body"
+msgstr "The gauntlet strip stays on screen in the dungeon. It shows health, mana under it, and the cooldowns for your potion, dash, and special. A special does not start when mana is short. Mana returns over time, and from orbs, potions, and food. The gem on the right warns when nearby foes are above your combat level."
+
+msgid "tutorial.gathering.title"
+msgstr "Gathering"
+
+msgid "tutorial.gathering.body"
+msgstr "Ore nodes and wood nodes stand in the dungeon. Walk up and interact. You stay put while you work the node. A pickaxe mines ore. A hatchet chops wood. You choose one tool for the whole run at the floor crystal. Mining and woodcutting levels, and the tool's quality, change the rewards. The strip shows the ore and wood you are carrying."
+
+msgid "tutorial.loadout.title"
+msgstr "Loadout"
+
+msgid "tutorial.loadout.body"
+msgstr "The floor crystal in Placeholdia opens the loadout. Choose a starting weapon and either a pickaxe or a hatchet. That tool is locked for the run. The floor can only be one you have already reached. Enter dungeon goes in. Back leaves without entering."
+
+msgid "tutorial.inventory.title"
+msgstr "Inventory"
+
+msgid "tutorial.inventory.body"
+msgstr "Open Inventory in Placeholdia, or from Pause while you are below. Worn slots and the bag sit on one board. Use, equip, and drop from the highlighted piece. The stats pages turn with the page glyphs. Back closes the inventory."
+
+msgid "tutorial.recap.title"
+msgstr "Death recap"
+
+msgid "tutorial.recap.body"
+msgstr "Dying or Dispelling opens the recap. It shows the run, then each skill's run experience draining down to the fragment you keep. After that you see the new permanent totals, and any gold and items you had already sent home. Continue sends you back to Placeholdia."
