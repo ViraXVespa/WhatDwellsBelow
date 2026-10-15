@@ -5,6 +5,8 @@ Read when: writing or running a `tools/shot-flows/*.json` flow, updating guide i
 
 Rendering, modes, worker, bands, display, knobs and troubleshooting live in the shot-tool door. A tool that misbehaves gets fixed, not worked around.
 
+Before guessing a `--state` or `--flow` name, run `python tools/run_shot_flow.py --list` or `--survey`. The tool also prints the valid state names when a `--state` misses.
+
 ## Flows
 
 A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale fixed_fps`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `covered_by` (another flow that shoots and asserts everything this one does: `run_shot_flow.py` skips this flow when that one is picked too; `check_shot_gaps.py` fails a name that is no flow), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
@@ -68,4 +70,3 @@ Menu screens boot from a flow header `"scene": "title"` (flow `title-menu`), `"s
 |---|---|---|
 | `--steps`, `--frames-dir`, `--no-pixels` | scripted flows, numbered frames, headless asserts | NPC/menu/page captures (first row) |
 | `--width`, `--height`, `--show` | window size; window left visible | honored by the shot runner |
-
