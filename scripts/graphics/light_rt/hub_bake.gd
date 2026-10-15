@@ -5,6 +5,7 @@ extends Object
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
 ## Bake stamp: first 16 hex of the SHA-256 of hub_light.png's RGBA8 pixels. The hub loads only a baked image with this
@@ -80,6 +81,7 @@ static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
 	_hub_make_rt(x0, z0, tw, th)
+	HitchLog.mark("hub_bake_rebuild")
 ## The bake: a fresh field image through _hub_render, nothing else on top, saved as the png.
 static func save_hub_bake() -> void:
 	var rt: Variant = load(RT_PATH)
@@ -110,10 +112,12 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
 	var img: Image = _load_baked(tw * rt.HUB_SUB, th * rt.HUB_SUB)
+	HitchLog.mark("hub_bake_load")
 	rt._img = img
 	rt._gpu = ImageTexture.create_from_image(img)
 	rt.tex = rt._gpu
 	rt._push()
+	HitchLog.mark("hub_bake_push")
 	LoadTiming.note("hub_light", "baked")
 static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 	var rt: Variant = load(RT_PATH)

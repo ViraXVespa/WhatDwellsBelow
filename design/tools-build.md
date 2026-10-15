@@ -15,6 +15,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `run_post_split_gate.py` | Import check, then optional smokes. Summary: `post-split-gate`. | D | `--help` | N |
 | `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`); `--door` / `--job` pick the `routes.yaml` `smokes` phases. Prints `check_shot_gaps.py --changed --advisory` mid-slice (the END gate, `run_build_gate.py`, is required). Summary: `smokes`. | D | `--help` | N |
 | `run_load_timing.py` | Title -> Placeholdia load-timing smoke. Summary: `load-timing`. | WD | `--help` | N |
+| `run_hub_bench.py` | One ~60 s hub walk on a real display (`--wdb-hub-bench`, hitch mult 1, gl_compatibility window, vsync off, zoom 1). Uses an empty `_logs/hub-bench-fresh` AppData (no save, no shader cache); does not touch the real user save. `--headless` is not an FPS reading. Prints `HB:` lines and the slowest hitch rows. Summary: `hub-bench`. | D | `--help` | N |
 | `run_dungeon_load_timing.py` | Placeholdia -> Dungeon load-timing smoke. Summary: `dungeon-load-timing`. | WD | `--help` | N |
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `--help` | N |
 | `run_dungeon_map_sweep.py` | Map smoke over seeds. Summary: `dungeon-map-sweep`. | D | `--help` | N |

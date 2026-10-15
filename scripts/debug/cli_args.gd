@@ -39,3 +39,11 @@ static func int_arg(key: String, fallback: int) -> int:
 		if s.begins_with(prefix):
 			return int(s.substr(prefix.length()))
 	return fallback
+
+static func float_arg(key: String, fallback: float) -> float:
+	var prefix: String = key + "="
+	for a: String in args():
+		var s: String = str(a)
+		if s.begins_with(prefix):
+			return float(s.substr(prefix.length()))
+	return fallback

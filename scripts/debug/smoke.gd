@@ -3,6 +3,7 @@ extends RefCounted
 ## Phase smoke tests. Live scenes call attach_* / route_boot / active / hold_player.
 ## CLI: --wdb-phaseN-smoke  (N = 1..9)
 ## Load timing: --wdb-load-timing-smoke (Title → Placeholdia; not a numbered phase)
+## Hub bench: --wdb-hub-bench (one camp walk; not a numbered phase)
 ## Dungeon load timing: --wdb-dungeon-load-timing-smoke (Placeholdia → Dungeon; not a numbered phase)
 ## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
@@ -13,6 +14,7 @@ const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const PlaytestLive := preload("res://scripts/debug/playtest/live_smoke.gd")
+const HubBench := preload("res://scripts/debug/playtest/hub_bench.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
@@ -24,7 +26,7 @@ static func args() -> PackedStringArray:
 	return CliArgs.args()
 
 static func active() -> bool:
-	if PlaytestLive.active():
+	if PlaytestLive.active() or HubBench.active():
 		return true
 	for a: String in args():
 		var s: String = str(a)
@@ -55,6 +57,9 @@ static func route_boot() -> bool:
 		return true
 	if PlaytestLive.active():
 		PlaytestLive.start()
+		return true
+	if HubBench.active():
+		HubBench.start()
 		return true
 	if LoadTiming.hub_active():
 		App.character_type = "male"
@@ -126,6 +131,8 @@ static func attach_dungeon(host: Node) -> void:
 		Late.p9(host)
 
 static func attach_camp(host: Node) -> void:
+	if HubBench.active():
+		HubBench.attach(host)
 	if ShotTool.active():
 		ShotTool.attach_dungeon(host)
 	if phase(6):

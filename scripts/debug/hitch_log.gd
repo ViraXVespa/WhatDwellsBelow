@@ -8,6 +8,7 @@ const CAP := 256
 const KIND := "wdb_hitch_log"
 const REL_DIR := "hitch"
 const REL_FILE := "hitch.jsonl"
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
 
 static var started: bool = false
 static var hitch_n: int = 0
@@ -23,6 +24,9 @@ static var gy: int = 0
 static var _whys: PackedStringArray = PackedStringArray()
 static var _mark_ms: int = 0
 static var _mark_frame: int = -1
+static var _mult: float = 0.0
+static var _skip_gap: bool = false
+static var _keep_all: bool = false
 
 static func enabled() -> bool:
 	if _on >= 0:
@@ -33,9 +37,61 @@ static func enabled() -> bool:
 		_on = 1
 	return _on == 1
 
+static func set_mult(mult: float) -> void:
+	_mult = maxf(0.05, mult)
+
+static func mult() -> float:
+	return _mult if _mult > 0.0 else MULT
+
+## Drop the next tick. The bench uses this so a paused menu's hold is not logged as a hitch.
+static func skip_gap() -> void:
+	_skip_gap = true
+
+## Write one hitch row when sec is over the threshold. Keeps why tags already on this frame.
+static func note_span(host: Node, reason: String, sec: float) -> void:
+	if not enabled():
+		return
+	if not started:
+		begin(host)
+	if not started:
+		return
+	if sec < BUDGET_SEC * mult():
+		return
+	if _whys.size() >= 16:
+		_whys.remove_at(0)
+	_whys.append("%s:0" % reason)
+	why = reason
+	_note(host, sec)
+
+## Bench start: apply the multiplier and replace the hitch file so the run is one session.
+static func bench_reset(mult_value: float) -> void:
+	set_mult(mult_value)
+	close()
+	var path: String = OS.get_user_data_dir().path_join(REL_DIR).path_join(REL_FILE)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+	started = false
+	hitch_n = 0
+	worst_ms = 0.0
+	why = ""
+	gx = 0
+	gy = 0
+	_whys = PackedStringArray()
+	_mark_ms = 0
+	_mark_frame = -1
+	_skip_gap = false
+	_keep_all = true
+	file_path = ""
+	_t0_ms = 0
+	begin()
+
 static func begin(_host: Node = null) -> void:
 	if started or not enabled():
 		return
+	if _mult <= 0.0:
+		var cli_mult: float = CliArgs.float_arg("--wdb-hitch-mult", 0.0)
+		if cli_mult > 0.0:
+			set_mult(cli_mult)
 	ver = _ver_label()
 	_t0_ms = Time.get_ticks_msec()
 	var dir_path: String = OS.get_user_data_dir().path_join(REL_DIR)
@@ -59,11 +115,14 @@ static func tick(host: Node, delta: float) -> void:
 		begin(host)
 	if not started:
 		return
+	if _skip_gap:
+		_skip_gap = false
+		return
 	if Engine.time_scale != 1.0:
 		return
 	if host.get_tree() != null and host.get_tree().paused:
 		return
-	if delta < BUDGET_SEC * MULT:
+	if delta < BUDGET_SEC * mult():
 		return
 	_note(host, delta)
 
@@ -109,7 +168,7 @@ static func status_line() -> String:
 	var worst: String = "0"
 	if worst_ms > 0.0:
 		worst = str(snappedf(worst_ms, 0.1))
-	return "Hitch %d/%d  worst %s ms  %s" % [hitch_n, CAP, worst, file_path]
+	return "Hitch %d/%d  worst %s ms  x%.2f  %s" % [hitch_n, CAP, worst, mult(), file_path]
 
 static func _note(host: Node, delta: float) -> void:
 	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
@@ -122,7 +181,7 @@ static func _note(host: Node, delta: float) -> void:
 	gy = 0
 	_whys.clear()
 	_mark_ms = 0
-	if hitch_n > CAP:
+	if hitch_n > CAP and not _keep_all:
 		_close()
 		_trim_file()
 		_fh = FileAccess.open(file_path, FileAccess.READ_WRITE)
@@ -141,6 +200,8 @@ static func _session_row() -> Dictionary:
 		"os": OS.get_name(),
 		"web": 1 if OS.has_feature("web") else 0,
 		"godot": str(Engine.get_version_info().get("string", "")),
+		"mult": mult(),
+		"thr_ms": snappedf(BUDGET_SEC * mult() * 1000.0, 0.1),
 	}
 	return row
 
@@ -159,6 +220,8 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
 		"draw": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"proc_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1),
+		"mult": mult(),
+		"thr_ms": snappedf(BUDGET_SEC * mult() * 1000.0, 0.1),
 	}
 	if not _whys.is_empty():
 		row["why"] = ",".join(_whys)
@@ -167,7 +230,48 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 	if why == "geo_activate" or (not _whys.is_empty() and _whys[_whys.size() - 1].begins_with("geo_activate")):
 		row["gx"] = gx
 		row["gy"] = gy
+	if str(row.get("where", "")) == "hub":
+		_hub_ctx(host, row)
 	return row
+
+static func _hub_ctx(host: Node, row: Dictionary) -> void:
+	var tree: SceneTree = host.get_tree()
+	if tree == null:
+		return
+	var actor: Node = tree.get_first_node_in_group("player")
+	if actor is Node3D:
+		var at: Vector3 = (actor as Node3D).global_position
+		row["px"] = snappedf(at.x, 0.1)
+		row["pz"] = snappedf(at.z, 0.1)
+		row["cell"] = "%d,%d" % [int(at.x), int(at.z)]
+		var loco_i: int = int(actor.get("loc_state"))
+		var loco_name: String = "idle"
+		if loco_i == 1:
+			loco_name = "start"
+		elif loco_i == 2:
+			loco_name = "loop"
+		elif loco_i == 3:
+			loco_name = "stop"
+		var face: String = str(actor.get("facing_key"))
+		row["face"] = face
+		row["anim"] = loco_name + "_" + face
+	var scn: Node = tree.current_scene
+	if scn == null:
+		return
+	var panels: PackedStringArray = PackedStringArray()
+	var ui_v: Variant = scn.get("ui")
+	if ui_v is Node and bool((ui_v as Node).get("open")):
+		panels.append(str((ui_v as Node).get("mode")))
+	if App != null and App.pause_menu != null and bool(App.pause_menu.get("open")):
+		panels.append("pause")
+	if panels.is_empty() and App != null and App.ui_open:
+		panels.append("ui")
+	if not panels.is_empty():
+		row["ui"] = ",".join(panels)
+	var gen: Node = scn.get_node_or_null("Generated")
+	row["gen"] = gen.get_child_count() if gen != null else 0
+	row["meshes"] = gen.find_children("*", "MeshInstance3D", true, false).size() if gen != null else 0
+	row["lights"] = scn.find_children("*", "Light3D", true, false).size()
 
 static func _where(host: Node) -> String:
 	if App != null and App.in_dungeon:

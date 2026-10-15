@@ -4,6 +4,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Load := preload("res://scripts/world/player/anim_load.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const LOC_IDLE := 0
 const LOC_START := 1
 const LOC_LOOP := 2
@@ -26,6 +27,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 	if moving:
 		if host.loc_state == LOC_IDLE or host.loc_state == LOC_STOP:
 			host.loc_state = LOC_START if not start_f.is_empty() else LOC_LOOP
+			HitchLog.mark("loco_walk" if host.loc_state == LOC_START else "loco_cycle")
 			host.loc_t = 0.0
 			host.walk_t = 0.0
 			host.loc_foot = 0
@@ -36,6 +38,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 			var idx := int(host.loc_t * T.WALK_FPS)
 			if idx >= start_f.size():
 				host.loc_state = LOC_LOOP
+				HitchLog.mark("loco_cycle")
 				host.walk_t = 0.0
 				host.loc_foot = 0
 				host.loc_from = 0
@@ -53,6 +56,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 			# Same foot as the start _fac.clip. Play the already-shown idle_to_walk segment backward.
 			host.loc_rev = true
 			host.loc_state = LOC_STOP
+			HitchLog.mark("loco_idle")
 			host.loc_t = 0.0
 		elif host.loc_state == LOC_LOOP:
 			# First foot -> idle_to_walk backward. Opposite foot -> walk_to_idle forward.
@@ -71,6 +75,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 				else:
 					host.loc_from = _fac._stop_from(host.loc_from, loop_f.size(), stop_f.size())
 			host.loc_state = LOC_STOP
+			HitchLog.mark("loco_idle")
 			host.loc_t = 0.0
 			host.walk_t = 0.0
 		if host.loc_state == LOC_STOP:
@@ -95,7 +100,10 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 
 static func apply_facing(host: Node, delta: float) -> void:
 	var _fac = _anim()
-	var key := Facing.from_aim(host.aim_dir)
+	var prev_face: String = str(host.facing_key)
+	var key: String = Facing.from_aim(host.aim_dir)
+	if prev_face != key:
+		HitchLog.mark("face_" + key)
 	host.facing_key = key
 	var tex: Texture2D = null
 	if host.exiting:

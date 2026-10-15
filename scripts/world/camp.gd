@@ -5,6 +5,7 @@ const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const View := preload("res://scripts/world/camp/camp_view.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Warm := preload("res://scripts/world/camp/warm.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
@@ -28,10 +29,12 @@ func _ready() -> void:
 		Build.realize_editor(self, _layout)
 		return
 	App.in_dungeon = false
+	HitchLog.mark("layout_tree")
 	Talk.on_hub_entry()
 	LoadTiming.mark("camp_enter")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
+	HitchLog.mark("hub_env")
 	LightRt.prepare_hub(
 		int(_layout.aabb_x0()),
 		int(_layout.aabb_z0()),
@@ -43,6 +46,7 @@ func _ready() -> void:
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	LightRt.rebind_tree(self)
 	LoadTiming.mark("camp_light")
+	HitchLog.mark("hub_light")
 	var gen: Node3D = Build.generated(self)
 	if gen.get_child_count() > 0:
 		Build.clear_generated(self)
@@ -50,12 +54,15 @@ func _ready() -> void:
 	LoadTiming.note("camp_geo", "build")
 	Build.ground(gen)
 	LoadTiming.mark("camp_ground")
+	HitchLog.mark("hub_ground")
 	Build.buildings(gen)
 	Build.strip_building_cubes(gen)
 	Build.quiet_shadows(gen)
 	LoadTiming.mark("camp_buildings")
+	HitchLog.mark("hub_buildings")
 	View.fence(gen)
 	LoadTiming.mark("camp_fence")
+	HitchLog.mark("hub_fence")
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D
 	player.position = _layout.spot_pos("Spawn")
@@ -63,9 +70,12 @@ func _ready() -> void:
 	if player.body:
 		player.body.render_priority = 18
 	LoadTiming.mark("camp_player")
+	HitchLog.mark("hub_player")
 	_spots()
 	LoadTiming.mark("camp_spots")
+	HitchLog.mark("hub_spots")
 	Build.stamp_actor_blobs(self)
+	HitchLog.mark("hub_blobs")
 	if bool(App.get("_menu_loading")) or App.wake_pending:
 		LoadTiming.note("camp_dummy", "deferred")
 	else:
@@ -167,6 +177,7 @@ func ensure_dummy() -> void:
 	dummy = n
 	add_child(n)
 	Build.stamp_actor_blobs(self)
+	HitchLog.mark("hub_blobs")
 
 func _tune_label(host: Node3D) -> void:
 	if host == null or not ("label" in host) or host.label == null:
