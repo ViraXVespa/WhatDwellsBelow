@@ -33,8 +33,8 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a non-mutating `--help`, ASCII output.
 - Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
-- Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; no `Summary -> <abs>` line. Exempt: printers and `wdb_scratch_server`.
-- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX (exception: `list_xref.py`, `show_func.py`, `file_stat.py`, `list_changed.py`, `read_summary.py`, `check_shot_gaps.py`, `run_shot_flow.py` and `run_godot_import_check.py` print the absolute root they read, with a WARN when it is not the current directory's project).
+- When an echo is supplied and status is not FAIL, the RESULT line is omitted from stdout (it is still written to the summary file). Otherwise the last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; no `Summary -> <abs>` line. Exempt: printers and `wdb_scratch_server`.
+- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX. Tools that scan a project (`list_xref.py`, `show_func.py`, `file_stat.py`, `list_changed.py`, `read_summary.py`, `check_shot_gaps.py`, `run_shot_flow.py`, `run_godot_import_check.py`) print a WARN line only when the scanned root is not the current directory's project; they do not print a bare root= prefix.
 
 ## Run when
 
