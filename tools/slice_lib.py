@@ -118,7 +118,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         "A step this card's ORDER leaves out (a survey's baseline) is not skipped.",
         "ASK BEFORE THE CODE, not in a ledger line: a change in what a control does or in save or entry behaviour (a button that now saves, a changed trade) is her decision.",
         ("This tool never starts grok." if mode == "survey" else
-         "Cleanup, docs, tasks, gates, `commit_slice.py`, and the plain push to the week branch all finish first (even on red gates). "Only after that push lands do you open the prove folder and ask for verification. "The verification ask names the frames that were opened and the folder path; it does not offer a commit option. "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit. "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
+         "Cleanup, docs, tasks, gates, `commit_slice.py`, and the plain push to the week branch all finish first (even on red gates). "Only after that push lands do you open the prove folder, inform that the unit is done, and show the images. Do not ask for verification. Never advance to the next unit or task. "The verification ask names the frames that were opened and the folder path; it does not offer a commit option. "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit. "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
     ])
 
 def doors_hint(root: Path) -> str:

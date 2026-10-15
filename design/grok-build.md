@@ -21,13 +21,13 @@ Finish one unit, show the prove folder (one sheet per area, before and after of 
 
 Any script that programmatically generates such an asset is saved under `tools/` (extend an existing generator when one already owns the job; do not leave a durable generator as a one-off scratch).
 
-Before asking for playtest / verification confirmation: update every affected design doc, code-map row, and tunables entry; close or update tasks (`python tools/task.py done ID` or status update); ensure live sources and tools are consistent (normal gates); commit and push to the week branch (`python tools/commit_slice.py` then plain `git push origin grok-build-wN`; never main, never force). This cleanup + commit + push always happens at the end of a unit that touched the tree, even on red gates or imperfect work. Only after that push lands do you open the prove folder and ask for verification. A handoff is only for a survey that never implemented; it is not a substitute for settling code that already exists. You will revert or drop the commit yourself if the work is bad. Any required follow-up is a new commit or a fresh session via handoff.
+Before asking for playtest / verification confirmation: update every affected design doc, code-map row, and tunables entry; close or update tasks (`python tools/task.py done ID` or status update); ensure live sources and tools are consistent (normal gates); commit and push to the week branch (`python tools/commit_slice.py` then plain `git push origin grok-build-wN`; never main, never force). This cleanup + commit + push always happens at the end of a unit that touched the tree, even on red gates or imperfect work. Only after that push lands do you open the prove folder and inform that the unit is done and show the prove folder (do not ask). A handoff is only for a survey that never implemented; it is not a substitute for settling code that already exists. You will revert or drop the commit yourself if the work is bad. Any required follow-up is a new commit or a fresh session via handoff.
 Do not ask "Settled? commit?" or any variant that waits for approval before the commit.
 Cleanup, docs, tasks, gates, commit_slice.py, and the plain push to the week branch all finish first.
-Only after that push lands do you open the prove folder and ask for verification.
+Only after that push lands do you open the prove folder and inform that the unit is done and show the prove folder (do not ask).
 
 Prove presentation (Build):
-- Do not open the baseline / before image for the User when it is first gathered. Use it only for your own restate. The User sees before and after together, on one sheet, in the verification ask (after the push has landed).
+- Do not open the baseline / before image for the User when it is first gathered. Use it only for your own restate. The User sees before and after together, on one sheet, in the done notice (after the push has landed).
 - Finish writing every sheet into `_logs/prove-view/<ask>/` before you call show_png. show_png opens only the first file so Photos can arrow through the rest; if the rest are not yet on disk the arrows do nothing.
 - One show_png call per ask. Same place = one sheet (side-by-side or stacked). Different areas = next file. Never open one window per PNG.
 - The verification ask comes after the commit and push. The message names the frames that were opened and the folder path.
@@ -58,7 +58,7 @@ Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; one diagnosis
 
 Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly; report "gates pass", not "proved". Ask the playtest confirm only after the compile check passed, every output was read, and (visual) the prove folder was shown (`show_png.py`, first sheet only) and each sheet described; the question carries the change summary and the folder path. Look and sound stay unverified until confirmed.
 
-Gates: `tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` every pass in small batches (read every output you run), then `python tools/run_build_gate.py` (`--batch --visual JOB` for a visual change) and `python tools/read_summary.py --job build-gate` once; `commit_slice.py` (after gates; push lands before the verification ask), which refuses without that gate, or say `Did not work: gate not run (why)`. A screen change adds `run_shot_flow.py --job J` (or `run_build_gate.py --batch --visual J`) and the UI load check; at the END a missing or stale frame fails the prove. A job with no shot flow does not add `--visual`. A still rekey is that case (`rekey_preview.py`). Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9).
+Gates: `tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` every pass in small batches (read every output you run), then `python tools/run_build_gate.py` (`--batch --visual JOB` for a visual change) and `python tools/read_summary.py --job build-gate` once; `commit_slice.py` (after gates; push lands before the done notice), which refuses without that gate, or say `Did not work: gate not run (why)`. A screen change adds `run_shot_flow.py --job J` (or `run_build_gate.py --batch --visual J`) and the UI load check; at the END a missing or stale frame fails the prove. A job with no shot flow does not add `--visual`. A still rekey is that case (`rekey_preview.py`). Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9).
 
 **Unit queue.** A door that has `unit_queue` in `routes.yaml` must be started with `--door` (not only `--job`) so `--next` and the queue are armed. The start card will say so.
 
@@ -72,3 +72,8 @@ Gates: `tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual u
 - Surface art-survey items (frame, portrait, refs) in the initial restate so the draw-new vs reuse decision is explicit.
 - End of last unit: cleanup + gates + `commit_slice.py` + push, then verification ask; use `--handoff` (not `--next`).
 - Visual review: load the review-shots-isolated skill and bring back only the text report.
+
+## Session close (hard rules)
+- A session never moves to the next task or unit. The next flow starts the next one. Do not run `--next`.
+- After cleanup + gates + commit_slice.py + push: inform that the unit/task is done and show the prove folder / images. Do not ask for verification. Stop.
+- If the work is unfinished or red-gated: write the handoff notes into the existing task file (status, what remains, rough edges, prove paths). The same task is reopened next session.
