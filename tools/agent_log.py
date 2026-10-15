@@ -106,8 +106,8 @@ def resolve_root(args_or_hint: object = None) -> Path:
         fail(str(exc))
 
 def cwd_scan_root(args: object) -> tuple[Path, str]:
-    """(root, `root=<absolute>` line) for a tool that scans a project: --root, else the current directory's project (else the tool's own).
-    The line carries a WARN when the scanned root is not the current directory's project."""
+    """(root, optional WARN line) for a tool that scans a project: --root, else the current directory's project (else the tool's own).
+    Returns an empty string when the scanned root matches the current directory's project; otherwise a WARN line. Never a bare root= prefix."""
     hint = getattr(args, "root", None)
     cwd_root = None
     if not hint:
@@ -116,7 +116,9 @@ def cwd_scan_root(args: object) -> tuple[Path, str]:
         except FileNotFoundError:
             pass
     root = resolve_root(hint or cwd_root)
-    return root, f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
+    if cwd_root and cwd_root != root:
+        return root, f"WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}"
+    return root, ""
 
 def fail(msg: str, code: int = 2) -> "None":
     print(f"error: {msg}", file=sys.stderr)
@@ -253,7 +255,9 @@ def finish(
             print(shown.rstrip("\n"))
         if legacy and path is not None:
             print(f"Summary -> {path}")
-        print(res)
+        # Suppress RESULT when echo was supplied, status is not FAIL, and no extra flags
+        if not (echo is not None and status != "FAIL" and not any(k in kv for k in ("truncated", "warn", "error"))):
+            print(res)
     return exit_code(status)
 
 def _call(fn, args):

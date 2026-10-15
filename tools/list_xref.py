@@ -104,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
         if not hits:
             agent_log.fail("no hits in %s for %r; files with hits: %s" % (", ".join(expand), pattern, ", ".join(sorted(by_file)) or "none"))
     mode = "regex" if args.regex else "simple"
-    where = f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
+    where = ""  # cwd_scan_root already returns "" or a WARN-only line
     body = [f"{where} pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
             f"scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
