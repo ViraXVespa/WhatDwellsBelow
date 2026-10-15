@@ -18,7 +18,7 @@ README = "README.md"
 BEGIN, END = "<!-- tasks:begin -->", "<!-- tasks:end -->"
 OWNERS = ("build", "web", "bot")
 STATUSES = ("open", "active", "blocked")
-KEYS = ("id", "title", "owner", "status", "done-when", "resume", "needs", "needs-local", "area", "door", "job", "units", "done", "from")
+KEYS = ("id", "title", "owner", "status", "done-when", "resume", "needs", "area", "door", "job", "units", "done", "from")
 ID_RE = re.compile(r"[a-z0-9][a-z0-9-]*$")
 FIRST_RE = re.compile(r"Your first command[^:]*:\s*(.+)$")
 FILL = "<fill"
@@ -156,8 +156,6 @@ def fails(root: Path) -> list[str]:
         for n in needs:
             if n not in tasks:
                 out.append(f"{where}: needs {n}, which is not an open task")
-        if split(t.get("needs-local", "")):
-            out.append(f"{where}: needs-local is retired. _src is in the repo, so a worktree already has it. Remove the line.")
         if t.get("status") == "blocked" and not needs:
             out.append(f"{where}: blocked with no `needs:` (name what it waits on, or make it open)")
     p = d / README
