@@ -14,7 +14,10 @@ The goal of this task is to update all of the menus to be high-quality, professi
 
 ## Process / Review
 
-First session works the crystal UI. Deliver before/after shots and stop for visual approval of professional quality.
+Follow the start-card ORDER: baseline shot + restate before any generation or edit.
+Load the review-shots-isolated skill; bring back only the text report. Do not view PNGs in the main session.
+First session works the crystal UI only. Deliver before/after shots, inform that the unit is done, and stop.
+Do not advance to the next area or task. Next flow starts the next slice.
 
 After approval:
 - Good result → next session covers three areas.
@@ -22,6 +25,13 @@ After approval:
 Update this task with notes + the exact next slice before handoff.
 
 Once three areas are consistently solid in one session, organize the remaining UI into door/job combos. Stand up a base session that loads the locked style notes, then fork that session as the starting point for each combo.
+
+
+## Locked style (load first every session)
+Pixel-art feel of the title-screen background + professionalism of the Journal UI.
+No pink. 9-slice rules as listed per row. Gamepad-first, readable at a glance.
+Load `imagine-isolated` and `review-shots-isolated` before any image work.
+Bring back only the text report from review_shots; avoid viewing PNGs in the main session whenever possible.
 
 ## Style
 
@@ -31,7 +41,10 @@ Style references (resized):
 - [title-background](../refs/ui-png-art/title-background.png)
 - [journal-ui](../refs/ui-png-art/journal-ui.png)
 
-## Items (element: now -> art; spec; priority)
+## Items
+
+ (element: now -> art; spec; priority)
+- Receptionist portrait in the receptionist UI: currently a placeholder/drawing. Replace with the live receptionist character art (assets/sprites/npcs/receptionist.png or the current bust source) so the UI portrait updates automatically when the character art changes. High.
 - Crystal background, floor + loadout crystal, shared by the teleport network (her request): flat pale-cyan fill inside the baked frame -> a proper crystal-interior graphic; panel-size opaque or 9-slice 128. High. Remove the four pink diamond studs (the PINK / PINK_LIT constants and _spark draws in crystal_art.gd). They came from erroneous magenta keying leftover and are not intended; there should be no pink. Rebake the crystal frame art after the removal. Refs [camp-npc-panels_04-loadout](../refs/ui-png-art/camp-npc-panels_04-loadout.jpg), [dungeon-map-crystal_02-crystal-root](../refs/ui-png-art/dungeon-map-crystal_02-crystal-root.jpg).
 - Crystal buttons + floor -/+ stepper: flat teal bars, tiny squares -> crystal-cut button 9-slice 96x32 x2 states, arrows 32x32. Med. Same refs.
 - Slot tiles (inventory, anvil, crystal loadout, extract): outlined boxes, the empty bag reads like a spreadsheet -> one inset socket 9-slice 64x64 (normal/selected/empty), tinted per screen. High. Refs [camp-pause-pages_10-pause-inventory](../refs/ui-png-art/camp-pause-pages_10-pause-inventory.jpg), [camp-anvil-tabs_01-tab](../refs/ui-png-art/camp-anvil-tabs_01-tab.jpg), [dungeon-gate-shop_01-extract](../refs/ui-png-art/dungeon-gate-shop_01-extract.jpg).
@@ -50,3 +63,7 @@ Settings and rebind rows, XP rows, stat lists, resource chips, toasts. Gear icon
 
 ## Not shot
 Journal page, gear board, teleport network list, fs_gate (no flows).
+
+
+## Next slice
+(filled by the finishing session before handoff: exact areas or "crystal only — needs work")
