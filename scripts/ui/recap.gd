@@ -29,10 +29,17 @@ var tip_lab: Label
 var tip_id := ""
 var tip_kind := ""
 var tip_from: Control = null
+var tip_sheet: Rect2 = Rect2()
+var sheet_rect: Rect2 = Rect2()
+var header: VBoxContainer
+var footer: VBoxContainer
+var cont_btn: Button
 
 func _ready() -> void:
-	set_meta("btn_skin", "neutral")
 	Ui.build(self)
+
+func _fit_sheet() -> void:
+	Ui.fit(self)
 
 func play(cond: String) -> void:
 	Flow.play(self, cond)

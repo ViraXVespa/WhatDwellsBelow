@@ -11,7 +11,7 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - On purpose separate: HUD draw alphas (`touch_hud/hud_draw.gd` builds on tokens), the title / splash / fs-gate / loader / prompt / hud local label twins. Merge one only on her word.
 
 ## Control skins (`scripts/ui/btn_skin.gd`)
-- Outside the pause journal, buttons, tabs and gear slots wear a skin from `ui_tokens.gd` `SKINS`: `neutral` (hub cream-plate menus, ghost shop, anvil, recap), `title` (title card, news, archives: also turns ink labels and plates dark), `crystal` (loadout crystal, dungeon floor crystal, extraction gate).
+- Outside the pause journal, buttons, tabs and gear slots wear a skin from `ui_tokens.gd` `SKINS`: `neutral` (hub cream-plate menus, ghost shop, anvil), `title` (title card, news, archives: also turns ink labels and plates dark), `crystal` (loadout crystal, dungeon floor crystal, extraction gate). Death recap uses the pause Skills journal (two sheets, `SKILLS_LEFT`) and leaves `btn_skin` unset, so its buttons stay paper.
 - A host names its skin with meta `btn_skin` or a `btn_skin()` method; the progress panel asks its open frame (`BTN_SKIN` const on the frame script, else `neutral`). No skin found = paper (the journal).
 - `ThemeS.btn`, `paint_tab`, `paint_plate`, `lab` and `Plate.plate` / `edge` register the control; it is restyled on entering the tree. Frame-dressed buttons (`UiBuild.button_base`) keep their frame look.
 - The gear board stats card ("Bonuses" pager) takes the host skin too (`BtnSkin.card`); crystal has one button look (primary = secondary), so the loadout matches the transport pages.

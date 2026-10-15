@@ -28,26 +28,30 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 		title = App.tr("rebuild.deep_enough_to_matter")
 		sub = App.tr("rebuild.the_gate_remembers")
 	host.last_title = title
-	host.box.add_child(ThemeS.lab(title, 32, ThemeS.INK))
-	host.box.add_child(ThemeS.lab(sub, 22, Color(0.82, 0.76, 0.66)))
+	_header(host)
+	_line(host, title, 32, ThemeS.INK)
+	_line(host, sub, 22, ThemeS.INK_SOFT)
 	var end_n := "“Dispel”" if cond == "dispel" else ("Death" if cond == "death" else cond)
-	host.box.add_child(ThemeS.lab(App.tr("rebuild.end_floor_f") % [end_n, App.floor_n], 18, Color(0.8, 0.75, 0.65)))
+	_line(host, App.tr("rebuild.end_floor_f") % [end_n, App.floor_n], 18, ThemeS.INK)
 	var dur := 0
 	var kills := 0
 	if App.tel:
 		dur = int(App.tel.duration)
 		kills = int(App.tel.kills)
-	host.box.add_child(ThemeS.lab(App.tr("rebuild.run_s_kills") % [dur, kills, App.weapon, App.prog.tool_type, App.character_type], 18, Color(0.82, 0.76, 0.66)))
-	host.box.add_child(ThemeS.lab(App.tr("rebuild.carried_g_ore_wood_bag") % [App.gold, App.ore, App.wood, App.prog.bag_count()], 18, Color(0.82, 0.76, 0.66)))
-	host.flavor = ThemeS.lab(App.tr("rebuild.xp_host_draining"), 18, ThemeS.INK_SOFT)
-	host.box.add_child(host.flavor)
-	var heads := HBoxContainer.new()
+	_line(host, App.tr("rebuild.run_s_kills") % [dur, kills, App.weapon, App.prog.tool_type, App.character_type], 18, ThemeS.INK)
+	_line(host, App.tr("rebuild.carried_g_ore_wood_bag") % [App.gold, App.ore, App.wood, App.prog.bag_count()], 18, ThemeS.INK)
+	host.flavor = _line(host, App.tr("rebuild.xp_host_draining"), 18, ThemeS.INK_SOFT)
+	var heads: HBoxContainer = HBoxContainer.new()
 	heads.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heads.add_theme_constant_override("separation", 24)
-	heads.add_child(RecapBars.skill_lab(App.tr("rebuild.permanent_xp"), 18, ThemeS.INK))
+	heads.custom_minimum_size = Vector2(host.sheet_rect.size.x, 0.0)
+	var head_left: Label = RecapBars.skill_lab(App.tr("rebuild.permanent_xp"), 18, ThemeS.INK)
+	head_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heads.add_child(head_left)
 	host.head_right = RecapBars.skill_lab(App.tr("common.dungeon_xp"), 18, ThemeS.INK)
+	host.head_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heads.add_child(host.head_right)
-	host.box.add_child(heads)
+	host.header.add_child(heads)
 	host.skill_labs.clear()
 	host.rows.clear()
 	var first: Control = null
@@ -70,12 +74,53 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 		host.skill_labs[id] = perm_block.lab
 		if first == null:
 			first = perm_block.wrap
+	_footer(host)
 	host.mailed_lab = ThemeS.lab("", 18, Color(0.16, 0.38, 0.16))
-	host.box.add_child(host.mailed_lab)
-	var cont := ThemeS.btn(App.tr("common.continue"), func(): host._finish(), true, "primary")
+	host.mailed_lab.custom_minimum_size = Vector2(host.sheet_rect.size.x, 0.0)
+	host.footer.add_child(host.mailed_lab)
+	var cont: Button = ThemeS.btn(App.tr("common.continue"), func(): host._finish(), true, "primary")
 	cont.set_meta("recap_continue", true)
 	cont.disabled = true
-	host.box.add_child(cont)
+	cont.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.footer.add_child(cont)
+	host.cont_btn = cont
 	host.focus_btn = first if first else cont
 	RecapBars.refresh(host)
+	host._fit_sheet()
+	host.call_deferred("_fit_sheet")
 	host.call_deferred("_focus")
+
+static func _header(host: CanvasLayer) -> void:
+	if host.header == null:
+		var col: VBoxContainer = VBoxContainer.new()
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_theme_constant_override("separation", 4)
+		col.position = host.sheet_rect.position
+		col.size = Vector2(host.sheet_rect.size.x, 0.0)
+		host.add_child(col)
+		host.header = col
+		return
+	var old: Array[Node] = host.header.get_children()
+	for c: Node in old:
+		host.header.remove_child(c)
+		c.free()
+
+static func _footer(host: CanvasLayer) -> void:
+	if host.footer == null:
+		var col: VBoxContainer = VBoxContainer.new()
+		col.add_theme_constant_override("separation", 4)
+		col.position = host.sheet_rect.position
+		col.size = Vector2(host.sheet_rect.size.x, 0.0)
+		host.add_child(col)
+		host.footer = col
+		return
+	var old: Array[Node] = host.footer.get_children()
+	for c: Node in old:
+		host.footer.remove_child(c)
+		c.free()
+
+static func _line(host: CanvasLayer, text: String, font_px: int, col: Color) -> Label:
+	var lab: Label = ThemeS.lab(text, font_px, col)
+	lab.custom_minimum_size = Vector2(host.sheet_rect.size.x, 0.0)
+	host.header.add_child(lab)
+	return lab

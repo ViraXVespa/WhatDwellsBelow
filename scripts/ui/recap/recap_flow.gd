@@ -62,6 +62,9 @@ static func tick(host: CanvasLayer, delta: float) -> void:
 		RecapBars.refresh(host)
 
 static func continue_btn(host: CanvasLayer) -> Button:
+	var held: Button = host.cont_btn
+	if held != null and is_instance_valid(held):
+		return held
 	for n in host.box.get_children():
 		if n is Button and bool(n.get_meta("recap_continue", false)):
 			return n

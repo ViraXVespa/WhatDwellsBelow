@@ -25,7 +25,6 @@ id | owner | status | title | needs
 --- | --- | --- | --- | ---
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 ui-quest-board-posters | build | open | Quest board posters plus pause Quest tab | -
-ui-recap-skills-style | build | open | Recap matches skills page chrome | -
 ui-receptionist-tutorial | build | open | Receptionist as lore/tutorial How-to-Play guide | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 rekey-assets | bot | open | Rekey assets after the keying changes | -
