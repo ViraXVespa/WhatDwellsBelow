@@ -21,7 +21,16 @@ Finish one unit, show the prove folder (one sheet per area, before and after of 
 
 Any script that programmatically generates such an asset is saved under `tools/` (extend an existing generator when one already owns the job; do not leave a durable generator as a one-off scratch).
 
-Before asking for playtest / verification confirmation: update every affected design doc, code-map row, and tunables entry; close or update tasks (`python tools/task.py done ID` or status update); ensure live sources and tools are consistent (normal gates); commit and push to the week branch (`python tools/commit_slice.py` then plain `git push origin grok-build-wN`; never main, never force). Only after that commit lands, ask for verification. Any required follow-up is a new commit or a fresh session via handoff. The prior "Settled? commit?" gate is retired.
+Before asking for playtest / verification confirmation: update every affected design doc, code-map row, and tunables entry; close or update tasks (`python tools/task.py done ID` or status update); ensure live sources and tools are consistent (normal gates); commit and push to the week branch (`python tools/commit_slice.py` then plain `git push origin grok-build-wN`; never main, never force). Only after that commit lands, ask for verification. Any required follow-up is a new commit or a fresh session via handoff.
+Do not ask "Settled? commit?" or any variant that waits for approval before the commit.
+Cleanup, docs, tasks, gates, commit_slice.py, and the plain push to the week branch all finish first.
+Only after that push lands do you open the prove folder and ask for verification.
+
+Prove presentation (Build):
+- Do not open the baseline / before image for the User when it is first gathered. Use it only for your own restate. The User sees before and after together, on one sheet, at the settle step.
+- Finish writing every sheet into `_logs/prove-view/<ask>/` before you call show_png. show_png opens only the first file so Photos can arrow through the rest; if the rest are not yet on disk the arrows do nothing.
+- One show_png call per ask. Same place = one sheet (side-by-side or stacked). Different areas = next file. Never open one window per PNG.
+- The verification ask comes after the commit and push. The message names the frames that were opened and the folder path.
 
 ## First (once, before anything else)
 

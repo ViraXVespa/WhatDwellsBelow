@@ -48,6 +48,8 @@ skills:
   i2v_isolated: .grok/skills/i2v-isolated/SKILL.md
   pc_offload: .grok/skills/pc-offload/SKILL.md
   shot_tool: .grok/skills/shot-tool/SKILL.md
+  list_xref: .grok/skills/list-xref/SKILL.md
+  show_func: .grok/skills/show-func/SKILL.md
 
 gates:
   tunables:

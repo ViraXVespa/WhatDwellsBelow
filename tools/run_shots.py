@@ -45,30 +45,30 @@ FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "
 
 
 def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
-    """Hide only windows belonging to the given Godot PID (off-screen + taskbar strip)."""
+    """PID-only off-screen + taskbar strip. No title read, no print."""
     try:
         user32 = ctypes.windll.user32
-        SW_HIDE = 0
         GWL_EXSTYLE = -20
         WS_EX_TOOLWINDOW = 0x00000080
         WS_EX_APPWINDOW = 0x00040000
+        SWP_NOSIZE = 0x0001
+        SWP_NOZORDER = 0x0004
         WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
 
         def enum_cb(hwnd, lparam):
             proc_id = ctypes.c_ulong()
             user32.GetWindowThreadProcessId(hwnd, ctypes.byref(proc_id))
-            if proc_id.value == pid:
-                user32.ShowWindow(hwnd, SW_HIDE)
-                ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-                user32.SetWindowLongW(hwnd, GWL_EXSTYLE, (ex | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
-                user32.SetWindowPos(hwnd, None, -32000, -32000, 0, 0, 0x0001 | 0x0002)
-                return False
+            if proc_id.value != pid:
+                return True
+            ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, (ex | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
+            user32.SetWindowPos(hwnd, None, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER)
             return True
 
         cb = WNDENUMPROC(enum_cb)
         while not stop_event.is_set():
             user32.EnumWindows(cb, 0)
-            time.sleep(0.01)
+            time.sleep(0.001)
     except Exception:
         pass
 
