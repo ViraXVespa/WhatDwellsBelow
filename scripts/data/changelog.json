@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.7.1",
+			"points": [
+				{
+					"text": "Cleaned leftover notes about the old needs-local source-plate linking from the task and tools docs. _src remains the live durable-source folder."
+				},
+				{
+					"text": "Updated web sessions protocols to emit changelogs when appropriate."
+				},
+				{
+					"text": "Added .gdignore files to improve Godot import speeds."
+				}
+			],
+			"summary": "Documentation housekeeping."
+		},
+		{
 			"label": "0.7.0",
 			"points": [
 				{
