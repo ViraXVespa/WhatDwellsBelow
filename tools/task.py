@@ -45,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     up.add_argument("--section", default="", help="Section title to replace, e.g. 'Open questions'.")
     up.add_argument("--body", default="")
     up.add_argument("--body-file", dest="body_file", default="")
-    dn = sub.add_parser("done", help="Finish a task: delete it, unblock dependants, one changelog line.")
+    dn = sub.add_parser("done", help="Finish a task: delete it, unblock dependants, one changelog line (skipped on grok-build-w* branches).")
     dn.add_argument("id")
     dn.add_argument("--changelog", default="", help="Changelog file for the line (default: the newest design/changelog entry main does not have).")
     sub.add_parser("index", help="Regenerate the README index.")

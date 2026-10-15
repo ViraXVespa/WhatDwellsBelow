@@ -30,6 +30,7 @@ Shot-flow text dumps:
 python tools/list_xref.py --pattern recap --texts
 
 Rules:
+- The tool requires --pattern; a bare positional string is rejected.
 - Start with an index-style call. Add --expand FILE only for the files you actually need the body of.
 - --regex only when the pattern is a real regex (anchors, groups, |). Plain text does not need it.
 - Default paths are already scripts scenes tools design. Narrow with --path when you know the area.

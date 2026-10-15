@@ -24,6 +24,7 @@ Batch several related ones in one command (semicolon-separated; works in PowerSh
 python tools/show_func.py scripts/ui/recap/rebuild.gd rebuild; python tools/show_func.py scripts/ui/recap/recap_ui.gd build
 
 Rules:
+- Both PATH and NAME are required (example: show_func.py scripts/app.gd _ready).
 - Positional PATH NAME is enough. --path / --name are optional.
 - Batch related funcs from the same system in one shell command.
 - Output is capped (first 80 lines of the declaration) and logged under _logs/show-func/. Read the printed RESULT / summary; do not open the log files.
