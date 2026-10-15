@@ -52,32 +52,6 @@ def _text(content: object) -> str:
     return ""
 
 
-def context_facts(sdir: Path | None) -> dict:
-    """{'agents': [file names] | None, 'skill_at_start': bool | None}. None = could not be read (not verified)."""
-    out: dict = {"agents": None, "skill_at_start": None}
-    if sdir is None:
-        return out
-    try:
-        ctx = json.loads((sdir / "prompt_context.json").read_text(encoding="utf-8"))
-        files = ctx.get("agents_md_files")
-        if isinstance(files, list):
-            out["agents"] = [str(f.get("file_name", "?")) for f in files if isinstance(f, dict)]
-    except (OSError, ValueError):
-        pass
-    rows = _rows(sdir / "chat_history.jsonl")
-    if rows:
-        seen = False
-        for r in rows:
-            if r.get("type") in ("assistant", "tool_result"):
-                break
-            if r.get("type") == "user" and "skills are available" in _text(r.get("content")):
-                seen = True
-                if "pc-offload" in _text(r.get("content")):
-                    out["skill_at_start"] = True
-                    return out
-        out["skill_at_start"] = False if seen else None
-    return out
-
 
 def prompt_facts(sdir: Path | None) -> dict:
     """{'time': ISO str, 'chars': int} of this session's first prompt from <sessions>/<cwd>/prompt_history.jsonl, or {} (not verified)."""
@@ -89,20 +63,6 @@ def prompt_facts(sdir: Path | None) -> dict:
             return {"time": str(r.get("timestamp", "")), "chars": len(str(r.get("prompt", "")))}
     return {}
 
-
-def statement(sdir: Path | None) -> str:
-    """The first-message facts, only what was read from the session's files; Build then says which of AGENTS.md and the skill it opened."""
-    f = context_facts(sdir)
-    ask = ("Your first text to her, before your next tool call, says which of AGENTS.md and the pc-offload skill you actually opened, or that you opened neither; "
-           "write 'loaded' or 'read' only for what you opened. It is not kept for the first ask.")
-    if f["agents"] is None and f["skill_at_start"] is None:
-        return "Session facts: not verified (this session's files could not be read; `/session-info` shows the agents file and skill list). " + ask
-    a = f"prompt_context.json: agents_md_files=[{', '.join(f['agents'])}]" if f["agents"] is not None else "agents_md_files: not verified"
-    s = {True: "pc-offload is in the skills list at start", False: "pc-offload is not in the skills list at start", None: "skills list at start: not verified"}[f["skill_at_start"]]
-    return f"Session facts: {a}; {s}. " + ask
-
-
-FAIL_TEXT = re.compile(r"^(Error|The string to replace was not found|File not found|.{0,80}(does not exist|No such file))", re.S)
 
 
 def failed_since_ask(rows: list[dict]) -> list[dict]:

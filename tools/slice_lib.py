@@ -50,9 +50,9 @@ def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
     return door, job, flows, step0_note(door, job, "" if (door or job) else name, flows, near)
 
 
-Q0 = ("Q0, in every slice, even when the prompt gives a look: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
-      "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line. "
-      "Look options differ in kind (one look shared by every screen, a look per screen or object, a new look, her words), not in detail, and are not all built on one existing look. "
+Q0 = ("Q0 only when the task's Open questions do not already settle it: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
+      "including frames or layouts already built. A task whose Open questions are none, or whose body already names the look, the reference, and the bounds, has answered Q0. Do not ask it again. "
+      "When you do ask, look options differ in kind (one look shared by every screen, a look per screen or object, a new look, her words), not in detail, and are not all built on one existing look. "
       "Each option says `reuse <the existing asset or look>` or `draw new`; an option that only names an asset (\"the stall prop\") is not an option yet.")
 
 
@@ -78,7 +78,6 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
     `screen` is false when the job has no shot flow and is not a ui/theme/visual screen: no play-camera baseline."""
     start = [
         "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice; a later run says where the slice stands (`--full` reprints this).",
-        session_lib.statement(sdir),
     ]
     no_cam = ("NO PLAY CAMERA: this job has no shot flow and it is not a screen. No play-camera baseline, no new shot flow, and no `--visual` on the gate. "
               "The gate is `python tools/run_build_gate.py --batch`. A keyed still is proved against its source plate with `python tools/rekey_preview.py`, then `show_png.py` on the paths it prints. "
