@@ -61,3 +61,14 @@ Proof rules (`prove.md`): one-line intended outcome before a behavior change; a 
 Gates: `tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` every pass in small batches (read every output you run), then `python tools/run_build_gate.py` (`--batch --visual JOB` for a visual change) and `python tools/read_summary.py --job build-gate` once; `commit_slice.py` (after gates; push lands before the verification ask), which refuses without that gate, or say `Did not work: gate not run (why)`. A screen change adds `run_shot_flow.py --job J` (or `run_build_gate.py --batch --visual J`) and the UI load check; at the END a missing or stale frame fails the prove. A job with no shot flow does not add `--visual`. A still rekey is that case (`rekey_preview.py`). Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9).
 
 **Unit queue.** A door that has `unit_queue` in `routes.yaml` must be started with `--door` (not only `--job`) so `--next` and the queue are armed. The start card will say so.
+
+## Process notes (Build)
+
+- Unit-queue doors start with `--door` (not only `--job`) so `--next` is armed.
+- Follow the start-card ORDER: load/import check, baseline shot, restate, questions, then edit.
+- Prefer `code_map.py row` and targeted `show_func` / `list_xref` over open-ended searches.
+- Normalize fancy punctuation (curly quotes, ellipses) in lore lines on first data pass, or document the encoding.
+- Keep the ledger tight: one xref per shared script, list every other screen that uses it.
+- Surface art-survey items (frame, portrait, refs) in the initial restate so the draw-new vs reuse decision is explicit.
+- End of last unit: cleanup + gates + `commit_slice.py` + push, then verification ask; use `--handoff` (not `--next`).
+- Visual review: load the review-shots-isolated skill and bring back only the text report.

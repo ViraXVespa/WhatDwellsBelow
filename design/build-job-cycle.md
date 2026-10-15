@@ -89,3 +89,14 @@ Proof recipes by change kind: `prove.md`. A proof that needs a check no tool doe
 Concurrent agents share catalog tools. They do not share logs: each worktree has its own `_logs/`, cleared weekly.
 
 **Unit queue.** A door that has `unit_queue` in `routes.yaml` must be started with `--door` (not only `--job`) so `--next` and the queue are armed. The start card will say so.
+
+## Process notes (Build)
+
+- Unit-queue doors start with `--door` (not only `--job`) so `--next` is armed.
+- Follow the start-card ORDER: load/import check, baseline shot, restate, questions, then edit.
+- Prefer `code_map.py row` and targeted `show_func` / `list_xref` over open-ended searches.
+- Normalize fancy punctuation (curly quotes, ellipses) in lore lines on first data pass, or document the encoding.
+- Keep the ledger tight: one xref per shared script, list every other screen that uses it.
+- Surface art-survey items (frame, portrait, refs) in the initial restate so the draw-new vs reuse decision is explicit.
+- End of last unit: cleanup + gates + `commit_slice.py` + push, then verification ask; use `--handoff` (not `--next`).
+- Visual review: load the review-shots-isolated skill and bring back only the text report.

@@ -61,7 +61,8 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_opt.py` | Shim for one release: forwards `--list` / `--id` / `--status opt-N=done` to `task.py`. | BD | `--help` | Y |
 | `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. | BWD | - | Y |
 | `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above); `--smoke-run` runs every tool in a throwaway copy. | BWD | `--help` | Y |
-| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. `--stale-refs` fails on dead paths, identifiers and Godot version drift; `--narration` is advisory. | BWD | `--help` | Y |
+| `check_tool_docs.py`
+| `review_shots.py` | BW | Y | Read-only shot reviewer; prints text report only (isolated session) | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. `--stale-refs` fails on dead paths, identifiers and Godot version drift; `--narration` is advisory. | BWD | `--help` | Y |
 
 ### Split, code map, doc edits, inventory and lint
 
