@@ -5,13 +5,10 @@ title: Quest board posters plus pause Quest tab
 owner: build
 status: open
 done-when: board shows flavor posters plus three selectable quest posters; selection moves the poster into the new Quest tab (between Inventory and Skills) with poster on one side and info/cancel on the other; refresh rules match the rulings; Vira has seen the board and the tab
-area: ui
+resume: python tools/open_slice.py ui.quest_board --task ui-quest-board-posters
 door: ui
 job: quest_board
 units: ui.quest_board
-done:
-
-Your first command, before any file read or memory topic: python tools/open_slice.py ui.quest_board --task ui-quest-board-posters
 
 ## Intent
 Posters instead of buttons. Reference: design/refs/ui-quest-board-posters/quest-board.jpg

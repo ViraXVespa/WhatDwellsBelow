@@ -5,13 +5,10 @@ title: Receptionist as lore/tutorial How-to-Play guide
 owner: build
 status: open
 done-when: Talk cycles the receptionist-dialog lines with seen-tracking on Placeholdia re-entry; Ask? opens a modular How-to-Play covering all systems with static baked screenshots and regeneration tooling; Vira has seen the menu and at least two tutorial pages
-area: ui
+resume: python tools/open_slice.py ui.receptionist --task ui-receptionist-tutorial
 door: ui
 job: receptionist
 units: ui.receptionist
-done:
-
-Your first command, before any file read or memory topic: python tools/open_slice.py ui.receptionist --task ui-receptionist-tutorial
 
 ## Intent
 Replace the shared quest flow. Receptionist is the lore/tutorial system. Talk uses the lines listed below. Ask? is the complete How-to-Play guide with screenshots.
