@@ -255,8 +255,9 @@ def finish(
             print(shown.rstrip("\n"))
         if legacy and path is not None:
             print(f"Summary -> {path}")
-        # Suppress RESULT when echo was supplied, status is not FAIL, and no extra flags
-        if not (echo is not None and status != "FAIL" and not any(k in kv for k in ("truncated", "warn", "error"))):
+        # RESULT is always written to the summary file. On stdout, omit it when an echo
+        # already carried the useful lines and the status is not FAIL.
+        if echo is None or status == "FAIL":
             print(res)
     return exit_code(status)
 
