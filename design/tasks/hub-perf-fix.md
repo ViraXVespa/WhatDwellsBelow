@@ -47,3 +47,7 @@ Desktop, last finished run (`_logs/hub-bench/20261015-182024-hub-bench.txt`): ex
 Rows still over a refresh on that desktop log, t and dt: boot 0.1 / 144 and 0.8 / 129; hub_buildings 148 inside a 144 ms frame that also marked `ui_close_anvil`; hub_spots 130 inside a 150 ms frame that also marked `ui_close_controls`; first `loco_walk` gaps around 32 to 38 ms with frame dt 132, 52, 43, 41; one `loco_idle` at t=23.4, dt 59, proc 5, idle_left. `dt_ms` on the frame after a long step can be the previous step. `proc_ms` while a menu is up is still not the frame cost.
 
 The 99 % bar is not met until both legs finish and the causes above are actually gone, not only until the percentage passes on one desktop log.
+
+---
+
+Additional session notes from Vira: For this session, don't worry about actually fixing any of the performance issues. This session's goal will be to make sure the benchmarking system is actually functioning correctly and logging everything it needs to be logging. I also want you to investigate the correct way to disable vsync without overloading the GPU and causing a BSOD like the last attempt did. I'm sure there's probably a documented method to do that safely somewhere online.
