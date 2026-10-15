@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.7.4",
+			"points": [
+				{
+					"text": "Finished task crystal-frame-pink: Crystal frame studs: stop deriving from the mis-keyed pink."
+				},
+				{
+					"text": "Folded crystal-frame-pink into ui-png-art: the four pink diamond studs are to be removed (erroneous keying leftover, no pink intended)."
+				}
+			],
+			"summary": "Finished task crystal-frame-pink: Crystal frame studs: stop deriving from the mis-keyed pink."
+		},
+		{
 			"label": "0.7.3",
 			"points": [
 				{
