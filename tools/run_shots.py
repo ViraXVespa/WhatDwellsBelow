@@ -15,7 +15,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
+import threading
+import time
+import ctypes
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -36,10 +40,37 @@ TIMEOUT_SEC = 180
 WARN_BYTES = 2048
 RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
-SCREENS = ("title", "splash", "fs_gate")  # menu screens the worker can boot (scripts/debug/shot_tool/tool_args.gd)
-# Flow-file header keys that fill an unset CLI default (scene, hud, zoom, ...).
+SCREENS = ("title", "splash", "fs_gate")
 FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height", "fixed_fps")
 
+
+def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
+    """Hide only windows belonging to the given Godot PID (off-screen + taskbar strip)."""
+    try:
+        user32 = ctypes.windll.user32
+        SW_HIDE = 0
+        GWL_EXSTYLE = -20
+        WS_EX_TOOLWINDOW = 0x00000080
+        WS_EX_APPWINDOW = 0x00040000
+        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+
+        def enum_cb(hwnd, lparam):
+            proc_id = ctypes.c_ulong()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(proc_id))
+            if proc_id.value == pid:
+                user32.ShowWindow(hwnd, SW_HIDE)
+                ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                user32.SetWindowLongW(hwnd, GWL_EXSTYLE, (ex | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
+                user32.SetWindowPos(hwnd, None, -32000, -32000, 0, 0, 0x0001 | 0x0002)
+                return False
+            return True
+
+        cb = WNDENUMPROC(enum_cb)
+        while not stop_event.is_set():
+            user32.EnumWindows(cb, 0)
+            time.sleep(0.01)
+    except Exception:
+        pass
 
 def _load_recipe(root: Path, name: str) -> dict:
     path = root / "tools" / "shot-recipes.json"
@@ -104,7 +135,7 @@ def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int,
     head = (["--headless", "--display-driver", "headless", "--audio-driver", "Dummy"] if args.no_pixels else
             ["--audio-driver", "Dummy", "--rendering-method", RENDER_METHOD, "--rendering-driver", RENDER_DRIVER])
     if args.fixed_fps > 0:
-        head = head + ["--fixed-fps", str(args.fixed_fps)]  # fixed frame delta: repeatable animation and AI
+        head = head + ["--fixed-fps", str(args.fixed_fps)]
     godot_args = head + [
         "--path", str(root),
         "--",
@@ -158,25 +189,22 @@ def _band(ok: bool, nbytes: int, width: int, height: int) -> str:
 
 
 def apply_flow_header(args: argparse.Namespace, header: dict, given: set[str]) -> None:
-    """Fill CLI values the user left at default from a flow file header."""
     for key in FLOW_KEYS:
         if key in header and key not in given:
             setattr(args, key, str(header[key]) if key in ("px", "pz") else type(getattr(args, key))(header[key]))
 
 
 def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict:
-    """Stitch the sweep.json tiles into png. The camera never yaws, so a tile is the same picture shifted: exact integer offsets, no blending."""
     from PIL import Image
     import shutil
     from imglib import compare
-
     Image.MAX_IMAGE_PIXELS = None
     d = json.loads((tiles_dir / "sweep.json").read_text(encoding="utf-8"))
     ppu, sp, tw, th, mx, my = d["ppu"], d["sinp"], d["tile_w"], d["tile_h"], d["crop_x"], d["crop_y"]
     cw, ch = int(-(-d["w"] * ppu // 1)), int(-(-d["h"] * sp * ppu // 1))
     f = 1
     while max_px > 0 and max(cw, ch) // f > max_px:
-        f *= 2  # exact box average: every tile piece starts on a multiple of f
+        f *= 2
     canvas = Image.new("RGB", (-(-cw // f), -(-ch // f)), (10, 10, 10))
     place: dict[tuple[int, int], tuple[int, int, Path]] = {}
     resid = 0.0
@@ -190,7 +218,6 @@ def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict
         with Image.open(tiles_dir / "tiles" / t["file"]) as im:
             piece = im.crop((left, top, right, bot))
             canvas.paste(piece.reduce(f) if f > 1 else piece, ((ox + left) // f, (oy + top) // f))
-    # Seam check: the same world pixels as seen from the two tiles either side of each cut (a 32 px band each side).
     means, bad_px = [], 0
     for (r, c), (ox, oy, fa) in place.items():
         for dr, dc in ((0, 1), (1, 0)):
@@ -253,9 +280,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def setup_full_map(args: argparse.Namespace, root: Path) -> None:
-    """--full-map: write the one-op sweep flow and point --steps, --frames-dir and --out at it."""
     args.scene, args.hud, args.no_pixels = "dungeon", 0, False
-    args.zoom = 1.0  # the real game scale: lights depend on the distance to the player, so the kept centre of each tile is what play shows
+    args.zoom = 1.0
     args.fixed_fps = args.fixed_fps or 60
     args.scale = 100
     out_dir = _out_dir(root)
@@ -272,7 +298,6 @@ def setup_full_map(args: argparse.Namespace, root: Path) -> None:
 
 
 def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None) -> dict:
-    """Run one worker boot and return the result dict (band, png, frames, flow, lines). Writes the summary."""
     given = given or set()
     poses = ""
     if args.full_map:
@@ -313,11 +338,30 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
         res.update(band="dry", status="DRY", lines=[], ok=True)
         return res
     out_log, err_log = run_log_lib.run_path(out_dir, JOB, "out.log"), run_log_lib.run_path(out_dir, JOB, "err.log")
+    # Resolve the Godot executable, then launch so we have the PID for the watcher.
+    exe = godot_lib.godot_exe()
+    cmd = [str(exe)] + godot_args
+    proc = subprocess.Popen(
+        cmd,
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stop_event = threading.Event()
+    hide_thread = threading.Thread(target=_hide_godot_window, args=(stop_event, proc.pid), daemon=True)
+    hide_thread.start()
     try:
-        run = godot_lib.run_godot(root, root, godot_args, out_log, err_log, max(1, args.timeout_sec),
-                                  gui=not args.no_pixels)
-    except (FileNotFoundError, godot_lib.GodotBusy) as exc:
-        agent_log.fail(str(exc))
+        stdout, stderr = proc.communicate(timeout=max(1, args.timeout_sec))
+        # Write logs the same way the old path did.
+        out_log.write_bytes(stdout or b"")
+        err_log.write_bytes(stderr or b"")
+        run = {"status": f"EXIT={proc.returncode}", "ms": 0, "timed_out": False}
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        run = {"status": "TIMEOUT", "ms": args.timeout_sec * 1000, "timed_out": True}
+    finally:
+        stop_event.set()
+        hide_thread.join(timeout=1.0)
     shot_hits = _shot_lines([err_log, out_log])
     err_hits = _error_lines([err_log, out_log])
     shot_ok = any("ok=true" in line for line in shot_hits)

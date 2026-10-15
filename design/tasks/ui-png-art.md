@@ -12,6 +12,24 @@ Bot screenshot survey of grok-build-w7 on 2026-10-11, judging where code-drawn U
 ## Intent
 The goal of this task is to update all of the menus to be high-quality, professional feeling UIs instead of the current amateur/placeholder feels of many UI locations. This will likely be accomplished by generating high-quality assets from which to compose the menus rather than the comparatively limited programmatically created UIs we're currently using. The existing UIs should be considered layout/style baselines to be improved upon by this task. The areas listed in this task should not be considered to be an exhaustive or up-to-date list of areas that require a rework. It's just a list of starting areas that have been collected to give an outline of the kinds of areas that need to be addressed to reach the professional look we're going for. Final results should have all relevant interactable areas of the UI displayed entirely within their menus (where possible) and should be free of any stretched textures, repeating seams, and disjointed layouts.
 
+
+## Process / Review
+
+First session works the crystal UI (background + buttons + stepper + remove the four pink diamond studs, rebake frame). Deliver before/after shots and stop for visual approval of professional quality.
+
+After approval:
+- Good result → next session covers three areas.
+- Needs work → next session covers one new area.
+Update this task with notes + the exact next slice before handoff.
+
+Once three areas are consistently solid in one session, organize the remaining UI into door/job combos. Stand up a base session that loads the locked style notes, then fork that session as the starting point for each combo.
+
+Style targets: pixel-art feel of the title-screen background + professionalism of the Journal UI. Gamepad-first and readable at a glance. No stretched textures, repeating seams, or disjointed layouts.
+
+Style references (resized):
+- [title-background](../refs/ui-png-art/title-background.png)
+- [journal-ui](../refs/ui-png-art/journal-ui.png)
+
 ## Items (element: now -> art; spec; priority)
 - Crystal background, floor + loadout crystal, shared by the teleport network (her request): flat pale-cyan fill inside the baked frame -> a proper crystal-interior graphic; panel-size opaque or 9-slice 128. High. Remove the four pink diamond studs (the PINK / PINK_LIT constants and _spark draws in crystal_art.gd). They came from erroneous magenta keying leftover and are not intended; there should be no pink. Rebake the crystal frame art after the removal. Refs [camp-npc-panels_04-loadout](../refs/ui-png-art/camp-npc-panels_04-loadout.jpg), [dungeon-map-crystal_02-crystal-root](../refs/ui-png-art/dungeon-map-crystal_02-crystal-root.jpg).
 - Crystal buttons + floor -/+ stepper: flat teal bars, tiny squares -> crystal-cut button 9-slice 96x32 x2 states, arrows 32x32. Med. Same refs.

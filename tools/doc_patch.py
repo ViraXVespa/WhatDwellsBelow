@@ -344,8 +344,10 @@ def next_label(root: Path | None = None) -> str:
 
 def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
     line = f"Summary: {summary.strip()}"
+    # Replace an existing Summary line if one is present; otherwise append.
     if re.search(r"^Summary:", text, re.I | re.M):
-        return text, False
+        text = re.sub(r"^Summary:.*$", line, text, count=1, flags=re.I | re.M)
+        return text, True
     if not text.endswith("\n"):
         text += "\n"
     return text + "\n" + line + "\n", True
