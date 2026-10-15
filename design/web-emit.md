@@ -13,6 +13,8 @@ Revise from a fetched raw body plus the artifact byte check, or from a User past
 
 Scratch shape. One file, `tools/_scratch.py`. The runner imports `doc_patch` before the scratch body, so a scratch cannot repair a broken `doc_patch`. That repair is a direct `python` file.
 
+The block below is an example only (docs/load-graph checker). A real scratch must call the prove tools that match the work that landed (see the prove table). The full suite is available: check_load_graph, run_build_gate, run_load_timing, run_dungeon_load_timing, run_dungeon_map, run_smokes, run_godot_import_check, run_shots, and task.py list/show. Always print RESULT checker=PASS|FAIL (or gate=...) from the exit code.
+
 ```python
 import sys
 from pathlib import Path

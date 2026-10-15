@@ -70,7 +70,7 @@ Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `pyth
 
 ## Hard stops
 
-No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V, locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
+No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V (except User-named art-pipeline / rekey / stills work when the task file assigns it to Bot), locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
 Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named opt item lists them.
 Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ beyond this file and the one Job file. Do not pin weeks or run `tools/week_start.py` (human-only). Do not invent numbers. Bot may save its own skill after two good clusters.
 

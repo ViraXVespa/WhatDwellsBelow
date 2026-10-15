@@ -2,7 +2,7 @@
 
 id: rekey-assets
 title: Rekey assets after the keying changes
-owner: build
+owner: bot
 status: open
 done-when: Vira confirms the open-set stills below. Each one keys from its source plate with one soft color-to-alpha. slot_legs.png is the empty leg slot from her jpg.
 area: art_pipeline
@@ -10,7 +10,7 @@ door: art_pipeline
 job: art_pipeline.pack
 units:
 done:
-resume: python tools/open_slice.py art_pipeline.pack --task rekey-assets
+resume: Read this task file. Review sheets live in /workspace/rekey-review/. Continue from the open-set state.
 Your first command, before any file read or memory topic: python tools/start_build_slice.py --job art_pipeline.pack --from-task rekey-assets, then python tools/task.py show rekey-assets
 The survey is done. The answers below stand. Ask again only what Open questions lists, or what a discovery changes.
 
