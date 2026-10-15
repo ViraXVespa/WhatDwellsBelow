@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.7.3",
+			"points": [
+				{
+					"text": "Updated UI rework task for more reliable results."
+				}
+			],
+			"summary": "ui-png-art task updated."
+		},
+		{
 			"label": "0.7.2",
 			"points": [
 				{
