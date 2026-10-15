@@ -112,8 +112,17 @@ static func play_from_menu_async(host: Node) -> void:
 		if host.loader:
 			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp")))
 	LoadTiming.mark("camp_ready")
+	var scene_b: Node = host.get_tree().current_scene
+	var built_n: int = 0
+	while built_n < 240 and scene_b != null and scene_b.get("build_done") != true:
+		built_n += 1
+		if host.loader:
+			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp"))
+		await host.get_tree().process_frame
+		scene_b = host.get_tree().current_scene
 	Hub.LoadW.done(&"camp")
 	LoadTiming.note("camp_wait_frames", str(guard))
+	LoadTiming.note("camp_build_frames", str(built_n))
 	await Hub._warmup_hub(host)
 	var scene: Node = host.get_tree().current_scene
 	if host.loader:

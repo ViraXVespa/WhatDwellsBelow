@@ -56,7 +56,17 @@ static func outer_grass(host: Node3D) -> void:
 	MeshS.grass_pad(host, Vector3((ix1 + x1) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(x1 - ix1, iz1 - iz0), tex, fb)
 
 static func buildings(host: Node3D) -> void:
-	Parts.guild(host)
+	hall(host)
+	wing(host)
+	stall(host)
+
+static func hall(host: Node3D) -> void:
+	Parts.guild_hall(host)
+
+static func wing(host: Node3D) -> void:
+	Parts.guild_wing(host)
+
+static func stall(host: Node3D) -> void:
 	var lay: Node3D = LayoutS.of(host)
 	var stall_at: Vector3 = lay.stall_pos()
 	var stall_box: Vector3 = lay.stall_box

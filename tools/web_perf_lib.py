@@ -1,6 +1,8 @@
 """Browser side of tools/web_perf.py: init script, flow replay, one measured page load. Advisory; see web_perf.py."""
 from __future__ import annotations
 
+import os
+import shutil
 import statistics
 import time
 from pathlib import Path
@@ -50,6 +52,42 @@ UNCAP = ["--disable-frame-rate-limit", "--disable-gpu-vsync", "--disable-backgro
 PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death",
         "think_ms", "think_max_ms", "think_n", "phys_ms", "gate_s", "gate_over", "unstick_n", "stuck_max", "time_scale")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
+
+def find_browser(explicit: str = "") -> tuple[str, str]:
+    """Edge first. Chrome/Chromium is the fallback for a PC that has no Edge (the Grok Bot) and for CHROME_BIN.
+
+    Returns (path, kind) with kind 'edge' or 'chrome'. An empty path means neither is installed.
+    --chrome / explicit wins. CHROME_BIN does not skip Edge.
+    """
+    if explicit:
+        kind = "edge" if "edge" in Path(explicit).name.lower() else "chrome"
+        return explicit, kind
+    for name in ("msedge", "microsoft-edge"):
+        found = shutil.which(name)
+        if found:
+            return found, "edge"
+    for env in ("PROGRAMFILES", "PROGRAMFILES(X86)"):
+        root = os.environ.get(env, "")
+        if root == "":
+            continue
+        cand = Path(root) / "Microsoft" / "Edge" / "Application" / "msedge.exe"
+        if cand.is_file():
+            return str(cand), "edge"
+    chrome_env = os.environ.get("CHROME_BIN", "")
+    if chrome_env and Path(chrome_env).is_file():
+        return chrome_env, "chrome"
+    for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "chrome"):
+        found = shutil.which(name)
+        if found:
+            return found, "chrome"
+    for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+        root = os.environ.get(env, "")
+        if root == "":
+            continue
+        cand = Path(root) / "Google" / "Chrome" / "Application" / "chrome.exe"
+        if cand.is_file():
+            return str(cand), "chrome"
+    return "", ""
 
 def _lum(png: bytes) -> float:
     try:

@@ -1,6 +1,6 @@
 extends Node
 
-## --wdb-hub-bench: one camp walk, about 60 s, then quit.
+## --wdb-hub-bench: one camp walk, about 30 s, then quit.
 ## Eight facings with idle and walk, then crystal, anvil, vendor, guild board,
 ## receptionist, and one strike on the dummy. Drives App.playtest (ai_on) and
 ## does not start a dungeon live run. --wdb-hitch-mult=N (default 1).
@@ -18,8 +18,8 @@ const ST_GAP := 5
 const ST_STRIKE := 6
 const ST_FILL := 7
 
-const PLAY_SEC := 58.0
-const HARD_SEC := 72.0
+const PLAY_SEC := 30.0
+const HARD_SEC := 45.0
 
 static func active() -> bool:
 	return CliArgs.has(FLAG)
@@ -154,12 +154,12 @@ func _face(delta: float) -> void:
 		App.playtest.move = dir
 		var key: String = _face_names[_face_i]
 		var seen: bool = bool(_faces.get(key, false))
-		if (seen and _sub_t > 0.55) or _sub_t > 2.1:
+		if (seen and _sub_t > 0.45) or _sub_t > 1.6:
 			_face_idle = true
 			_sub_t = 0.0
 			printerr("HB: face=%s loop=%d" % [key, 1 if seen else 0])
 		return
-	if _sub_t < 0.4:
+	if _sub_t < 0.05:
 		return
 	_face_i += 1
 	_face_idle = false
@@ -187,7 +187,7 @@ func _goto(actor: Node3D, delta: float) -> void:
 	var nd: float = _xz(actor.global_position, look)
 	var strike: bool = bool(row["strike"])
 	var close: bool = nd <= 1.15 or (nd <= 1.45 and _sub_t > 3.0)
-	if not close and _sub_t <= 8.0:
+	if not close and _sub_t <= 12.0:
 		return
 	if strike:
 		if nd > 2.2:
@@ -233,7 +233,7 @@ func _open(actor: Node3D, delta: float) -> void:
 
 func _hold(delta: float) -> void:
 	_sub_t += delta
-	if _sub_t < 1.15:
+	if _sub_t < 0.55:
 		return
 	var t0: int = Time.get_ticks_usec()
 	_close_ui()
@@ -244,7 +244,7 @@ func _hold(delta: float) -> void:
 
 func _gap(delta: float) -> void:
 	_sub_t += delta
-	if _sub_t < 0.35:
+	if _sub_t < 0.2:
 		return
 	_next_visit()
 
@@ -256,7 +256,7 @@ func _strike(actor: Node3D, delta: float) -> void:
 	_sub_t += delta
 	if int(actor.get("atk_state")) != 0:
 		_got["dummy"] = true
-	if _sub_t < 1.2:
+	if _sub_t < 0.8:
 		return
 	if bool(_got.get("dummy", false)):
 		printerr("HB: strike=dummy")
@@ -265,7 +265,7 @@ func _strike(actor: Node3D, delta: float) -> void:
 	_next_visit()
 
 func _fill(delta: float) -> void:
-	if _clock >= PLAY_SEC:
+	if _clock >= PLAY_SEC or _fill_i >= 2:
 		_finish("")
 		return
 	var dir: Vector2 = _dirs[_fill_i * 2]
@@ -416,9 +416,10 @@ func _finish(extra: String) -> void:
 			missing.append(need)
 	var ok: bool = missing.is_empty()
 	var miss: String = "-" if ok else ",".join(missing)
-	printerr("HB: sec=%.1f hitches=%d worst=%.1f path=%s" % [_clock, HitchLog.hitch_n, HitchLog.worst_ms, HitchLog.file_path])
+	printerr("HB: sec=%.1f hitches=%d frames=%d slow=%d fps_pct=%.1f worst=%.1f path=%s" % [_clock, HitchLog.hitch_n, HitchLog.frame_n, HitchLog.slow_n, HitchLog.fps_pct(), HitchLog.worst_ms, HitchLog.file_path])
 	printerr("HB: missing=%s" % miss)
 	printerr("HB: ok=%d" % (1 if ok else 0))
+	HitchLog.bench_done(_clock, ok, miss)
 	var tree: SceneTree = get_tree()
 	if tree != null:
 		tree.quit(0 if ok else 1)

@@ -36,6 +36,7 @@ static func _warmup_hub(host: Node) -> void:
 		LoadTiming.note("warmup_texs", str(texs.size()))
 		for tex in texs:
 			Anim.apply_tex(p, tex)
+			RenderingServer.force_draw()
 		Anim.warmup_physics(p)
 		p.global_position = Vector3(pin.x, 0.0, pin.z)
 		var down: Texture2D = Anim.pose_tex(p, "down")

@@ -33,3 +33,17 @@ The walk held the line after the opens. Rows at or over 20 ms:
 `proc_ms` on the menu rows is several times `dt_ms`. Do not treat that monitor as the frame cost while a menu has paused the tree. `dt_ms` is the frame.
 
 Steady walk cycles did not recur as hitches. One loop row, 17 ms, loop_up_right.
+
+## Resume (next session)
+
+Status stays open. Do not launch the web leg with Chromium uncap flags.
+
+The web leg in `tools/run_hub_bench.py` now opens a visible Edge window (Chrome if Edge is not installed) and leaves the browser frame cap and GPU vsync on. It must not pass `--disable-frame-rate-limit` or `--disable-gpu-vsync`. Those flags, copied from headless software-GL `web_perf.py`, were pointed at this machine's real GPU. The window opened and Windows bugchecked `0x1A` `MEMORY_MANAGEMENT` at 18:33:24 on 2026-10-15 (parameters `0x5150a`, `0x175f63`, `0x176863`, `0xC00000A0`; dump `C:\WINDOWS\MEMORY.DMP`). She is not bothered if a later run crashes. She does want the capped window, not the uncapped one. `web_perf.py` is unchanged and is still not an FPS reading.
+
+Next step is `python tools/run_hub_bench.py --leg web`. A refresh-paced browser sits near 16.7 ms, so a 1× hitch row may be the refresh rather than a stall. Read frames clearly over one refresh. Do not turn the GPU uncap back on to make the 1× bar look like the desktop run.
+
+Desktop, last finished run (`_logs/hub-bench/20261015-182024-hub-bench.txt`): exit 0, sec 24.2, frames 5229, slow 19, fps_pct 99.6, worst 150, every station opened. That was before the later camp split. The split (hall, wing, stall, one frame per spot, `build_done` before menu warmup) is in the tree and has not had a finished bench. A follow-up desktop run was killed so the web export could start. The export then died on a stale Godot lock; `godot_lib.lock_fresh` now treats a dead holder pid as not fresh. No web fps_pct exists yet.
+
+Rows still over a refresh on that desktop log, t and dt: boot 0.1 / 144 and 0.8 / 129; hub_buildings 148 inside a 144 ms frame that also marked `ui_close_anvil`; hub_spots 130 inside a 150 ms frame that also marked `ui_close_controls`; first `loco_walk` gaps around 32 to 38 ms with frame dt 132, 52, 43, 41; one `loco_idle` at t=23.4, dt 59, proc 5, idle_left. `dt_ms` on the frame after a long step can be the previous step. `proc_ms` while a menu is up is still not the frame cost.
+
+The 99 % bar is not met until both legs finish and the causes above are actually gone, not only until the percentage passes on one desktop log.

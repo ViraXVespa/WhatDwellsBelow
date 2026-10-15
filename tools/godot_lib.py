@@ -93,13 +93,33 @@ def procs_on_path(path: Path | str) -> list[dict]:
             hits.append({"pid": int(d.name), "command": " ".join(argv)})
     return hits
 
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
+        if not handle:
+            return False
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return True
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
 def lock_fresh(lf: Path) -> bool:
     try:
-        exp = datetime.fromisoformat(json.loads(lf.read_text(encoding="utf-8"))["expires_utc"])
+        data = json.loads(lf.read_text(encoding="utf-8"))
+        exp = datetime.fromisoformat(data["expires_utc"])
         if exp.tzinfo is None:
             exp = exp.replace(tzinfo=timezone.utc)
-        return exp > datetime.now(timezone.utc)
-    except (OSError, ValueError, KeyError):
+        if exp <= datetime.now(timezone.utc):
+            return False
+        return _pid_alive(int(data.get("holder_pid", 0)))
+    except (OSError, ValueError, KeyError, TypeError):
         return False
 
 def lock(root: Path, path: Path | str, timeout: int = 120, hold: int = 180) -> Path:

@@ -27,6 +27,8 @@ static var _mark_frame: int = -1
 static var _mult: float = 0.0
 static var _skip_gap: bool = false
 static var _keep_all: bool = false
+static var frame_n: int = 0
+static var slow_n: int = 0
 
 static func enabled() -> bool:
 	if _on >= 0:
@@ -81,6 +83,8 @@ static func bench_reset(mult_value: float) -> void:
 	_mark_frame = -1
 	_skip_gap = false
 	_keep_all = true
+	frame_n = 0
+	slow_n = 0
 	file_path = ""
 	_t0_ms = 0
 	begin()
@@ -122,8 +126,10 @@ static func tick(host: Node, delta: float) -> void:
 		return
 	if host.get_tree() != null and host.get_tree().paused:
 		return
+	frame_n += 1
 	if delta < BUDGET_SEC * mult():
 		return
+	slow_n += 1
 	_note(host, delta)
 
 static func copy_text() -> String:
@@ -139,11 +145,42 @@ static func clear_log() -> void:
 	started = false
 	hitch_n = 0
 	worst_ms = 0.0
+	frame_n = 0
+	slow_n = 0
 	if enabled():
 		begin()
 
 static func close() -> void:
 	_close()
+
+## Share of counted frames faster than the 60 FPS budget. Paused frames are not counted.
+static func fps_pct() -> float:
+	if frame_n <= 0:
+		return 100.0
+	return snappedf(100.0 * float(frame_n - slow_n) / float(frame_n), 0.1)
+
+## One session row the hub bench runner reads (desktop file and the localhost hitch sink).
+static func bench_done(sec: float, ok: bool, missing: String) -> void:
+	if not enabled():
+		return
+	if not started:
+		begin()
+	var row: Dictionary = {
+		"ev": "bench",
+		"sec": snappedf(sec, 0.1),
+		"ok": 1 if ok else 0,
+		"missing": missing,
+		"hitches": hitch_n,
+		"frames": frame_n,
+		"slow": slow_n,
+		"fps_pct": fps_pct(),
+		"worst_ms": snappedf(worst_ms, 0.1),
+		"web": 1 if OS.has_feature("web") else 0,
+	}
+	if started and _fh != null:
+		_write_row(row)
+	else:
+		_post(JSON.stringify(row))
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	var now: int = Time.get_ticks_msec()

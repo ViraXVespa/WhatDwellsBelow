@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Advisory performance run of the EXPORTED web build in headless Chrome. Not a gate, except a flow `assert` breach (FAIL).
+"""Advisory performance run of the EXPORTED web build in headless Edge, or headless Chrome when Edge is not installed. Not a gate, except a flow `assert` breach (FAIL). Not an FPS reading.
 
   python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
@@ -9,14 +9,12 @@ tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay
 frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
 page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
 a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
---mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
+--mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Edge (or Chrome/Chromium when Edge is not installed); no browser download. Software GL:
 compare runs on the same machine only. Not a numbered smoke.
 """
 from __future__ import annotations
 
 import json
-import os
-import shutil
 import statistics
 import sys
 import time
@@ -132,11 +130,11 @@ def selftest() -> list[str]:
     return bad
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Chrome.", json_out=True)
+    ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Edge (Chrome if Edge is missing).", json_out=True)
     ap.add_argument("--site", default="docs", help="Exported site dir (default docs; may be stale, export with export_web.py --out).")
     ap.add_argument("--url", default="", help="Test this URL instead of serving --site.")
     ap.add_argument("--flow", default="title-idle", help="Flow name(s), comma separated, or all (see %s)." % FLOWS)
-    ap.add_argument("--chrome", default=os.environ.get("CHROME_BIN", ""), help="Chrome/Chromium binary (default PATH).")
+    ap.add_argument("--chrome", default="", help="Force this browser binary. Default: Edge if installed, else Chrome/Chromium (CHROME_BIN or PATH).")
     ap.add_argument("--long-ms", type=float, default=50.0, help="A frame over this many ms is long (default 50).")
     ap.add_argument("--timeout-sec", type=int, default=120, help="Load timeout.")
     ap.add_argument("--width", type=int, default=1280, help="Viewport width in px (default 1280).")
@@ -160,9 +158,10 @@ def main(argv: list[str] | None = None) -> int:
     for n in names:
         if n not in flows:
             agent_log.fail("unknown flow %s. flows: %s" % (n, ", ".join(sorted(flows))))
-    chrome = args.chrome or shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser") or ""
+    chrome, browser_kind = web_perf_lib.find_browser(args.chrome)
     if not chrome:
-        agent_log.fail("no Chrome/Chromium: pass --chrome or set CHROME_BIN")
+        agent_log.fail("no Edge or Chrome: pass --chrome or set CHROME_BIN")
+    print("browser=%s kind=%s" % (Path(chrome).name, browser_kind))
     try:
         import playwright  # noqa: F401
     except ImportError:
