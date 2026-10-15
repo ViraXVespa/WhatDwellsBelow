@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.7.6",
+			"points": [
+				{
+					"text": "Split ui-png-art Process / Review into a short sequencing section and a separate Style subsection."
+				},
+				{
+					"text": "Style subsection now holds the pixel-art + Journal targets and the two resized reference links."
+				},
+				{
+					"text": "Removed restated sentences that already appeared in Intent or Items."
+				}
+			],
+			"summary": "ui-png-art task reorganized so process rules and style constraints are separate and non-redundant."
+		},
+		{
 			"label": "0.7.5",
 			"points": [
 				{
