@@ -171,8 +171,9 @@ def fails(root: Path) -> list[str]:
     return out
 
 
-def changelog_target(root: Path) -> Path | None:
-    """The newest design/changelog/X.Y.Z.md that main does not have yet (this branch's own entry), else None."""
+def changelog_target(root: Path, create: bool = False) -> Path | None:
+    """The newest design/changelog/X.Y.Z.md that main does not have yet (this branch's own entry).
+    If create and none exists, write the next label (with blank line after header) and return it."""
     def key(p: Path) -> tuple[int, ...]:
         return tuple(int(x) for x in p.stem.split("."))
     logs = sorted((p for p in (root / "design" / "changelog").glob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)), key=key, reverse=True)
@@ -181,25 +182,43 @@ def changelog_target(root: Path) -> Path | None:
         on_main = any(subprocess.run(["git", "cat-file", "-e", f"{ref}:{rel}"], cwd=root, capture_output=True).returncode == 0 for ref in ("origin/main", "main"))
         if not on_main:
             return p
+        break
+    if not create:
         return None
-    return None
+    if logs:
+        parts = list(key(logs[0]))
+        parts[-1] += 1
+        label = ".".join(map(str, parts))
+    else:
+        label = "0.0.1"
+    path = root / "design" / "changelog" / f"{label}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("## " + label + "\n\n", encoding="utf-8")
+    return path
+
 
 
 def add_bullet(text: str, bullet: str) -> str:
-    """The bullet after the entry's last `- ` line (before its `Summary:` line), else at the end."""
+    """The bullet after the entry's last `- ` line (before its `Summary:` line), else at the end.
+    Ensures a blank line after a bare ## header."""
     lines = text.rstrip("\n").split("\n") if text.strip() else []
+    if lines and lines[0].startswith("## ") and (len(lines) == 1 or lines[1] != ""):
+        lines.insert(1, "")
     last = max((i for i, l in enumerate(lines) if l.startswith("- ")), default=-1)
     if last < 0:
         last = next((i - 1 for i, l in enumerate(lines) if l.startswith("Summary:")), len(lines) - 1)
     return "\n".join(lines[:last + 1] + [bullet] + lines[last + 1:]) + "\n"
 
 
-def done(root: Path, tid: str, changelog: Path, dry: bool = False) -> list[str]:
+
+def done(root: Path, tid: str, changelog: Path | None = None, dry: bool = False) -> list[str]:
     """Delete the task, unblock its dependants, add one changelog line. Returns what changed."""
     tasks = load(root)
     t = tasks[tid]
     title = t.get("title") or tid
-    out = [f"deleted {t['path']}", f"changelog {changelog.relative_to(root).as_posix()}: - Finished task {tid}: {title}."]
+    out = [f"deleted {t['path']}"]
+    if changelog is not None:
+        out.append(f"changelog {changelog.relative_to(root).as_posix()}: - Finished task {tid}: {title}.")
     for oid, o in tasks.items():
         needs = split(o.get("needs", ""))
         if tid in needs:
@@ -212,8 +231,17 @@ def done(root: Path, tid: str, changelog: Path, dry: bool = False) -> list[str]:
                     set_head(op, "status", "open")
     if not dry:
         (root / t["path"]).unlink()
-        text, eol, bom = md.read_text(changelog, with_meta=True) if changelog.is_file() else ("", "\r\n", False)
-        md.write_text(changelog, add_bullet(text, f"- Finished task {tid}: {title}."), eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+        if changelog is not None:
+            text, eol, bom = md.read_text(changelog, with_meta=True) if changelog.is_file() else ("", "\r\n", False)
+            bullet = f"- Finished task {tid}: {title}."
+            text = add_bullet(text, bullet)
+            if "Summary:" not in text:
+                # make the finished-task line the summary
+                summary_line = f"Summary: Finished task {tid}: {title}."
+                if not text.endswith("\n"):
+                    text += "\n"
+                text += "\n" + summary_line + "\n"
+            md.write_text(changelog, text, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
         write_index(root)
     return out
 

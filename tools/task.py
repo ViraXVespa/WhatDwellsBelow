@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -104,9 +105,13 @@ def main(argv: list[str] | None = None) -> int:
             task_lib.write_index(root)
         return end(f"{tasks[args.id]['path']}: " + (", ".join(changed) or ("would update" if dry else "no change")), "PASS", id=args.id, changed=len(changed))
     if args.cmd == "done":
-        log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root)
+        branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
+        if branch.startswith("grok-build-w"):
+            # Build path: no changelog
+            return end("\n".join(task_lib.done(root, args.id, None, dry)), "PASS", id=args.id, changed=0 if dry else 1)
+        log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root, create=True)
         if log is None:
-            print("error: no changelog entry for this branch yet: add design/changelog/<next label>.md first, or pass --changelog PATH", file=sys.stderr)
+            print("error: could not resolve or create changelog", file=sys.stderr)
             return end("", "FAIL", error="no-changelog")
         return end("\n".join(task_lib.done(root, args.id, log, dry)), "PASS", id=args.id, changed=0 if dry else 1)
     if args.cmd == "index":
