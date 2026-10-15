@@ -207,3 +207,24 @@ def write_text(
         path.parent.mkdir(parents=True, exist_ok=True)
     data = text.encode("utf-8")
     path.write_bytes((b"\xef\xbb\xbf" if bom else b"") + data)
+
+def collapse_blanks(text: str) -> str:
+    """Collapse runs of 2+ blank lines to a single blank line. Leading and trailing blanks are dropped.
+    Preserves the content of non-blank lines. Callers that need BOM/EOL kept should use write_text after."""
+    lines = force_lf(text).split("\n")
+    out: list[str] = []
+    blank = 0
+    for line in lines:
+        if line.strip() == "":
+            blank += 1
+            if blank == 1 and out:
+                out.append("")
+            continue
+        blank = 0
+        out.append(line)
+    while out and out[-1] == "":
+        out.pop()
+    text = "\n".join(out)
+    if text and not text.endswith("\n"):
+        text += "\n"
+    return text

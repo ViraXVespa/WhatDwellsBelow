@@ -1,4 +1,4 @@
-# Tools catalog: inventory, lint, split and doc edits
+| `normalize_blanks.py` | Collapse consecutive blank lines to one (BOM/EOL kept). Paths or dirs; `--glob`, `--dry-run`. Summary: `normalize-blanks`. | BD | `--help` | Y |\n# Tools catalog: inventory, lint, split and doc edits
 
 Status: protocol  
 Read when: running a dupe, dead-code, stat, split, code-map or doc-edit tool, or reading a shared lib row  
