@@ -69,18 +69,8 @@ Discuss only; no emit. Rules, end of brainstorm, park packet: `web-discuss.md`, 
 Goal, questions, Source/Docs emit list; the User accepts it before Phase 4. Rules: `web-plan.md`, opened at Phase 3 and not before.
 
 ### Phase 4 — Emit
-## Prove runner (web)
 
-The scratch must call the matching prove runner (`dp.run_checker`, `dp.dump_job`, etc.) and base the RESULT line solely on the integer it returns.
-Do not print `RESULT checker=PASS` (or any RESULT) until the runner has returned.
-Do not hard-code PASS. Do not claim a checker ran if the call is absent from the scratch.
-## Task creation (web)
-
-Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/task.py`.
-Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file.
-Extra header fields that `task.py new` does not emit (area, door, job, units, done) may be added afterward with `ensure_line`.
-
-One action, one `tools/_scratch.py`. The emit rules (scratch shape, revise-from-fetch, docs in the pass, prove table, py_compile rule), Build co-op prompts, scratch helpers and the fetch recipe live in the emit sibling. Open it at Phase 4 and not before: `web-emit.md`.
+One action, one `tools/_scratch.py`. Always create, update, or close tasks via `doc_patch.task([...])` (`tools/task.py`); never hand-edit a task skeleton. The scratch must call the matching prove runner and base RESULT solely on the integer it returns—do not print RESULT until the runner has returned, and never hard-code PASS. The rest of the emit rules (scratch shape, revise-from-fetch, docs in the pass, prove table, py_compile rule), Build co-op prompts, scratch helpers and the fetch recipe live in the emit sibling. Open it at Phase 4 and not before: `web-emit.md`.
 
 ### Phase 5 — Test
 

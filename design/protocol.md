@@ -7,17 +7,8 @@ The design here is the current plan: the road we are building, not a route we ha
 If a path file is already loaded, stay on that path.
 
 ## Core rules
-## Prove runner (web)
 
-The scratch must call the matching prove runner (`dp.run_checker`, `dp.dump_job`, etc.) and base the RESULT line solely on the integer it returns.
-Do not print `RESULT checker=PASS` (or any RESULT) until the runner has returned.
-Do not hard-code PASS. Do not claim a checker ran if the call is absent from the scratch.
-## Task creation (web)
-
-Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/task.py`.
-Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file.
-Extra header fields that `task.py new` does not emit (area, door, job, units, done) may be added afterward with `ensure_line`.
-
+- Web task files: always via `doc_patch.task` / `tools/task.py`. Never hand-edit a task skeleton. Web prove: the scratch calls the runner and bases RESULT on its real exit code; never claim a checker ran without the call.
 - Fresh web / Build: this file, `design/constraints.md`, then the topic that matches the work. Web, User present: picture-read is uncapped inside `design/` and the live tree the thread is on. Implementation reads the doc and `design/code-map.md` row of every system the job touches (Build: read first, `grok-build.md`). Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Do not read `design/changelog/` to learn history (only for a named archive pin, a revert, a named past build, or when the User asks what shipped). Web writes the changelog entry for every change (`tools/doc_patch.py changelog --bullet`); Build writes none (its notes go in commit messages).
 - Implement the **game** systems the plan names. Do not add skills, rarities, hub upgrades, meta-progression, or co-op scaffolding unasked; suggest them in a question. Grok Build may add helpers and same-system APIs. A new cross-system owner or named live-module replace is asked first.
 - Open numbers may start coherent. Expose every invented value in the secret debug menu and record it in `design/tunables.md`.
