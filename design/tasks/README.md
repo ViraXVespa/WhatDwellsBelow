@@ -7,7 +7,7 @@ One open task is one `<id>.md` in this folder: Web parks, Build handoffs and uni
 
 ## Fields
 
-The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, `resume` (the first command or line of a fresh session; a Build handoff's `Your first command` line counts), optional `needs` (ids it waits on; set while blocked). `_src` is in the repo, so a worktree already has it. `needs-local` is retired. Build handoffs also carry `area`, `door`, `job`, `units` and `done`. The body is free sections.
+The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, `resume` (the first command or line of a fresh session; a Build handoff's `Your first command` line counts), optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`. The body is free sections.
 
 ## Lifecycle
 

@@ -79,3 +79,4 @@ lint_hostify out-dir takes ROOT, not root.
 
 Do not treat a page-tool summary as the live file.
 
+When not on a grok-build branch the scratch calls `doc_patch.write_changelog` by default.
