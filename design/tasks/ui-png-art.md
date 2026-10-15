@@ -15,7 +15,7 @@ The goal of this task is to update all of the menus to be high-quality, professi
 
 ## Process / Review
 
-First session works the crystal UI (background + buttons + stepper + remove the four pink diamond studs, rebake frame). Deliver before/after shots and stop for visual approval of professional quality.
+First session works the crystal UI. Deliver before/after shots and stop for visual approval of professional quality.
 
 After approval:
 - Good result → next session covers three areas.
@@ -24,7 +24,9 @@ Update this task with notes + the exact next slice before handoff.
 
 Once three areas are consistently solid in one session, organize the remaining UI into door/job combos. Stand up a base session that loads the locked style notes, then fork that session as the starting point for each combo.
 
-Style targets: pixel-art feel of the title-screen background + professionalism of the Journal UI. Gamepad-first and readable at a glance. No stretched textures, repeating seams, or disjointed layouts.
+## Style
+
+Pixel-art feel of the title-screen background combined with the professionalism of the Journal UI. Gamepad-first and readable at a glance.
 
 Style references (resized):
 - [title-background](../refs/ui-png-art/title-background.png)

@@ -329,10 +329,31 @@ def highest_label(root: Path) -> str:
     return max(found, key=_label_key) if found else ""
 
 
+
+def dirty_changelog_label(root: Path) -> str:
+    """Highest x.y.z label among design/changelog/*.md that are dirty in the working tree; '' if none."""
+    try:
+        out = subprocess.check_output(
+            ["git", "status", "--porcelain", "design/changelog"],
+            cwd=root, text=True, stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        return ""
+    labels = []
+    for line in out.splitlines():
+        path = line[3:].strip()
+        stem = Path(path).stem
+        if re.fullmatch(r"\d+\.\d+\.\d+", stem):
+            labels.append(stem)
+    return max(labels, key=_label_key) if labels else ""
+
 def next_label(root: Path | None = None) -> str:
-    """Highest label on disk + 1 (stacked PRs own earlier labels), never below the baked version.json label + 1.
-    A second bullet for the same PR passes --label."""
+    """Prefer a dirty changelog label in the working tree; otherwise highest on disk + 1.
+    Never below the baked version.json label + 1. A second bullet for the same PR passes --label."""
     root = repo_root(root)
+    dirty = dirty_changelog_label(root)
+    if dirty:
+        return dirty
     label = repo_lib.next_label(root)
     top = highest_label(root)
     if top and _label_key(top) >= _label_key(label):
