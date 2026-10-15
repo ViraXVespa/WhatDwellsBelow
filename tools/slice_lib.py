@@ -171,7 +171,7 @@ def is_linked(root: Path) -> bool:
 
 def merge_back_text(week: str) -> str:
     """The merge-back card line: a Grok worktree is a full clone on the week branch, so a green prove ends in a plain push of it."""
-    ask = "balance, audio, visuals, controls: ask the User for playtest approval first. Commit and push only after she says the final shot is settled (or told you to commit now)"
+    ask = "balance, audio, visuals, controls: the verification ask (after push) carries the change summary and prove folder; do not wait for approval before the commit"
     return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): on a green prove and her OK, commit here "
             f"and `git push origin {week or 'grok-build-w{N}'}` (plain push, never main, no force); nothing to merge by hand. {ask}")
 
