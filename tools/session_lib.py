@@ -58,6 +58,8 @@ def prompt_facts(sdir: Path | None) -> dict:
             return {"time": str(r.get("timestamp", "")), "chars": len(str(r.get("prompt", "")))}
     return {}
 
+FAIL_TEXT = re.compile(r"^(Error|The string to replace was not found|File not found|.{0,80}(does not exist|No such file))", re.S)
+
 def failed_since_ask(rows: list[dict]) -> list[dict]:
     """Failed tool steps after the last ask_user_question call (all of them when there was no ask yet), in order: {'tool', 'what', 'why'}.
     Failed = a terminal result with a non-zero exit or a `RESULT FAIL` line, or another tool whose result starts with an error."""
