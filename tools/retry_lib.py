@@ -23,7 +23,18 @@ WEAK = re.compile(r"\bFAIL\b|exit=[1-9]|missing|busy", re.I)
 KEEP = 20
 END = "--- end ---"
 
+_GLES_LEAK = ("N5GLES34MeshE", "N5GLES37TextureE")
+
+def _drop_known_leaks(lines: list[str]) -> list[str]:
+    out = []
+    for ln in lines:
+        if "leaked at exit" in ln and any(t in ln for t in _GLES_LEAK):
+            continue
+        out.append(ln)
+    return out
+
 def pick_red(lines: list[str], n: int = 2) -> list[str]:
+    lines = _drop_known_leaks(lines)
     """The n most telling red lines (errors first, then failed exits), each trimmed to one short line."""
     rows = [" ".join(ln.split()) for ln in lines]
     rows = [s for i, s in enumerate(rows) if s and not s.startswith("RESULT") and s not in rows[:i]]
@@ -105,9 +116,8 @@ def block(root: Path, what: str, red: list[str]) -> str:
         return "\n".join([head, "NO BASE: no grok-build-w* week branch and no saved --ref, so there is no diff to point a retry at. "
                            "Ask Vira in a question prompt (she runs `python tools/week_start.py` to start a week). Nothing is started for you.", END])
     if not session:
-        head += (f" NO CHECKPOINT for this worktree ({root.name}): the gather session was not recorded, so there is nothing to fork. Nothing is forked or started for you. "
-                 "Your next message to Vira starts with \"Did not work: no checkpoint was saved\". Run `python tools/start_build_slice.py --checkpoint` in the session that did the gather, "
-                 "or ask Vira in a question prompt for its id (`/session-info`, or `grok sessions list` in this directory). Paste only after that:")
+        head += (f" No checkpoint was recorded for this worktree ({root.name}). Continue from the current checkout. "
+                 "One diagnosis, one fix, then rerun the prove once. Paste:")
     else:
         head += (f" The User runs, from the worktree directory (`cd {_q(root)}`): `grok -r {session} --fork-session`. The fork's directory is the checkpoint's, "
                  "which is this worktree; gather context is kept, no re-gather. Paste:")

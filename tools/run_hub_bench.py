@@ -615,7 +615,12 @@ def main(argv: list[str] | None = None) -> int:
         report += _hb_lines(ordered) or ["(no HB: lines)"]
         report += ["", "--- slow shape ---"] + _shape_lines(hitch_rows, bench)
         report += ["", "--- slowest hitches ---"] + (_slow_lines(ranked) or ["(none)"])
-        return agent_log.finish(
+        
+    # stable pointer so `read_summary.py --job hub-bench` works even before index.txt is consulted
+    summary_dir = root / "_logs" / "hub-bench"
+    summary_dir.mkdir(parents=True, exist_ok=True)
+    (summary_dir / "summary.txt").write_text("\n".join(body) + "\n", encoding="utf-8")
+    return agent_log.finish(
             "hub-bench-report",
             root,
             "\n".join(report),
