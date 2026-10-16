@@ -4,7 +4,7 @@ id: hub-perf-fix
 owner: build
 status: open
 done-when: The hub-bench walker reports 99 % of frames at or above 60 FPS (threshold 1×) across two full ~30 s runs, with the causes of the previous sub-60 frames fixed and the hitch log clean of recurring major hits. Design docs and code-map updated if ownership or tunables changed.
-resume: python tools/open_slice.py debug.playtest --task hub-perf-fix
+resume: python tools/start_build_slice.py --door debug --job playtest --task hub-perf-fix
 area: debug
 door: debug
 job: playtest
