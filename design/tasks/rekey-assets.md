@@ -91,10 +91,10 @@ The 2026-10-09 key described above was replaced on 2026-10-11 (see Files and fun
 Next session, in order:
 
 1. Run `python tools/keytest.py` and look at its sheets, then refit the open set with `python tools/rekey_preview.py`. For a blue glow, also composite on black.
-2. She confirms each still. Write that live PNG only after her yes. Her shopkeep yes was for the old key; ask again on the new still.
+2. She confirms each still. Write that live PNG only after her yes. Her shopkeep yes was for the old key; show the new still before calling that look kept.
 3. All eight wisp idles are the one `idle_up.jpg` plate. Do not rekey dummy, guild, guild reception, stall, anvil, fence, pickaxe, or the male frames.
 4. Do not edit `_src`.
-5. Commit only when she says so. Gate is `python tools/run_build_gate.py --batch` with no `--visual`.
+5. Commit and push the slice without waiting for a yes. Gate is `python tools/run_build_gate.py --batch` with no `--visual`. Do not write a live PNG until she has accepted that still.
 
 ## Notes (2026-10-13)
 

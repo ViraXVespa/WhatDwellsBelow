@@ -120,9 +120,9 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         ("This tool never starts grok." if mode == "survey" else
          "Cleanup, docs, tasks, gates, `commit_slice.py`, and the plain push to the week branch all finish first (even on red gates). "
          "Only after that push lands do you open the prove folder, inform that the unit is done, and show the images. "
-         "Do not ask for verification. Never advance to the next unit or task. "
-         "The verification ask names the frames that were opened and the folder path; it does not offer a commit option. "
-         "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit. "
+         "Say whether a playtest confirmation is required (look, sound, balance, or controls), recommended (feel, hitch, or timing the gates do not score), or not needed (a refactor, tool, doc, or test). "
+         "That notice is not a question. Never advance to the next unit or task. "
+         "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit or the push. "
          "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
     ])
 
@@ -172,9 +172,11 @@ def is_linked(root: Path) -> bool:
 
 def merge_back_text(week: str) -> str:
     """The merge-back card line: a Grok worktree is a full clone on the week branch, so a green prove ends in a plain push of it."""
-    ask = "balance, audio, visuals, controls: the verification ask (after push) carries the change summary and prove folder; do not wait for approval before the commit"
+    note = ("after the push, say whether a playtest confirmation is required (balance, audio, visuals, controls), "
+            "recommended (feel, hitch, or timing the gates do not score), or not needed (a refactor, tool, doc, or test). "
+            "Do not ask, and do not wait for a reply before the commit or the push")
     return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): "
-            f"cleanup + gate + commit_slice.py + plain `git push origin {week or 'grok-build-w{N}'}` finish first; then the verification ask. {ask}")
+            f"cleanup + gate + commit_slice.py + plain `git push origin {week or 'grok-build-w{N}'}` finish first; then that notice. {note}")
 
 def checkpoint(root: Path, args) -> int:
     """--checkpoint: save this (worktree) session's id so a red prove can fork it later from the worktree directory."""
