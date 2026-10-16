@@ -42,6 +42,11 @@ static func _hb(msg: String) -> void:
 	printerr(msg)
 	HitchLog.hb(msg)
 
+func pin_zoom() -> void:
+	if _saved_zoom < 0.0:
+		_saved_zoom = float(App.cam_zoom)
+	App.set_zoom(1.0)
+
 func _phase_name() -> String:
 	if _state == ST_FACE:
 		return "face"
@@ -102,6 +107,7 @@ var _to_idle: bool = false
 var _was_moving: bool = false
 var _stuck_t: float = 0.0
 var _bias_t: float = 0.0
+var _post_t: float = 0.0
 var _stuck_from: Vector3 = Vector3.ZERO
 var _dirs: Array[Vector2] = []
 var _face_names: PackedStringArray = PackedStringArray()
@@ -134,6 +140,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	HitchLog.set_phase(_phase_name())
 	HitchLog.set_play_s(_clock)
+	_post_t += delta
+	if _post_t >= 0.5:
+		_post_t = 0.0
+		HitchLog.flush_web()
 	if _done or App.playtest == null:
 		return
 	if _state == ST_WAIT:
@@ -176,8 +186,7 @@ func _wait(delta: float) -> void:
 			_finish("stall")
 		return
 	App.playtest.ai_on = true
-	_saved_zoom = float(App.cam_zoom)
-	App.set_zoom(1.0)
+	pin_zoom()
 	_state = ST_FACE
 	_sub_t = 0.0
 	_hb("HB: begin mult=%.2f zoom=1.0 was=%.2f %s" % [HitchLog.mult(), _saved_zoom, HitchLog.present_text()])
@@ -301,17 +310,22 @@ func _strike(actor: Node3D, delta: float) -> void:
 	_next_visit()
 
 func _fill(delta: float) -> void:
-	if _clock >= PLAY_SEC or _fill_i >= 2:
+	if _clock >= PLAY_SEC:
 		_finish("")
 		return
-	var dir: Vector2 = _dirs[_fill_i * 2]
+	# Walk out and back on each facing. A one-way shove from the last station
+	# slides on the fence and the web present stays at two refreshes.
+	var leg: int = int(_fill_i / 2.0) % _dirs.size()
+	var dir: Vector2 = _dirs[leg]
+	if _fill_i % 2 == 1:
+		dir = -dir
 	App.playtest.move = dir
 	App.playtest.aim = dir
 	_sub_t += delta
-	if _sub_t < 1.0:
+	if _sub_t < 0.8:
 		return
 	_sub_t = 0.0
-	_fill_i = (_fill_i + 1) % 4
+	_fill_i += 1
 
 func _next_visit() -> void:
 	_vi += 1

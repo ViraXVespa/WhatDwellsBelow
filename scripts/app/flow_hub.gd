@@ -33,20 +33,8 @@ static func _warmup_hub(host: Node) -> void:
 		p.body.visible = true
 	if p:
 		var pin: Vector3 = p.global_position
-		var texs: Array = Anim.warmup_texs(p)
-		LoadTiming.note("warmup_texs", str(texs.size()))
-		for tex in texs:
-			Anim.apply_tex(p, tex)
-			RenderingServer.force_draw()
 		Anim.warmup_physics(p)
 		p.global_position = Vector3(pin.x, 0.0, pin.z)
-		var down: Texture2D = Anim.pose_tex(p, "down")
-		if down:
-			Anim.apply_tex(p, down)
-		p.loc_state = Anim.LOC_IDLE
-		p.loc_t = 0.0
-		p.walk_t = 0.0
-		RenderingServer.force_draw()
 	LoadW.done(&"warm_frame")
 	if host.loader:
 		host.loader.stage(LoadW.at(&"warm_ui"), LoadW.after(&"warm_ui"))
@@ -55,7 +43,23 @@ static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_ui")
 	if scene and scene.has_method("warmup_restore"):
 		scene.warmup_restore()
+	var bench: Node = host.get_node_or_null("HubBench")
+	if bench != null and bench.has_method("pin_zoom"):
+		bench.pin_zoom()
 	if p:
+		HitchLog.mark("warmup_play_zoom")
+		var texs: Array = Anim.warmup_texs(p)
+		LoadTiming.note("warmup_texs", str(texs.size()))
+		for tex in texs:
+			Anim.apply_tex(p, tex)
+			RenderingServer.force_draw()
+		var down: Texture2D = Anim.pose_tex(p, "down")
+		if down:
+			Anim.apply_tex(p, down)
+		p.loc_state = Anim.LOC_IDLE
+		p.loc_t = 0.0
+		p.walk_t = 0.0
+		RenderingServer.force_draw()
 		PlayerSetup.ensure_combat_fx(p)
 		for path: String in PLAYER_LAZY:  # first unlocked player tick loads these (~130 ms on web)
 			PlayerTick._gd(path)
@@ -157,7 +161,8 @@ static func pump_fps(host: Node, hub: bool) -> void:
 	var n: int = 0
 	var last_dt: int = 0
 	var prev_dt: int = -1
-	while n < int(T.WARM_FRAMES_MAX):
+	var cap: int = int(T.WARM_HUB_FRAMES_MAX) if hub else int(T.WARM_FRAMES_MAX)
+	while n < cap:
 		var t0: int = Time.get_ticks_usec()
 		RenderingServer.force_draw()
 		await host.get_tree().process_frame
@@ -169,8 +174,12 @@ static func pump_fps(host: Node, hub: bool) -> void:
 		good = good + 1 if last_dt <= 17 else 0
 		steady = steady + 1 if prev_dt >= 0 and absi(last_dt - prev_dt) <= int(T.WARM_STEADY_MS) else 0
 		prev_dt = last_dt
-		# Stable: two fast frames, or a slow device whose last few frames all took about the same time.
-		if good >= 2 or steady >= int(T.WARM_STEADY_N):
+		# Hub stays covered until two frames are on the 60 FPS budget. A slow plateau is not a reveal.
+		# Other pumps still accept a steady slow device so the bar cannot sit there.
+		var settled: bool = good >= 2
+		if not hub and steady >= int(T.WARM_STEADY_N):
+			settled = true
+		if settled:
 			break
 	var ok_s: String = "1" if good >= 2 else "0"
 	if hub:

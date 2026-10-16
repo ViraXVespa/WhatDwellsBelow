@@ -45,6 +45,8 @@ static var _run_n: int = 0
 static var _run_best: int = 0
 static var _run_vals: PackedFloat32Array = PackedFloat32Array()
 static var _run_best_vals: PackedFloat32Array = PackedFloat32Array()
+## Web only. A JavaScript eval on every slow frame keeps the present over one refresh.
+static var _web_q: PackedStringArray = PackedStringArray()
 
 static func enabled() -> bool:
 	if _on >= 0:
@@ -133,6 +135,7 @@ static func bench_reset(mult_value: float) -> void:
 	_run_best = 0
 	_run_vals = PackedFloat32Array()
 	_run_best_vals = PackedFloat32Array()
+	_web_q = PackedStringArray()
 	_bench_gen += 1
 	file_path = ""
 	_t0_ms = 0
@@ -327,6 +330,7 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 		_write_row(row)
 	else:
 		_post(JSON.stringify(row))
+	_flush_web()
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	var now: int = Time.get_ticks_msec()
@@ -635,11 +639,28 @@ static func _write_row(row: Dictionary) -> void:
 	if not OS.has_feature("web"):
 		_fh.flush()
 
-## Localhost web only (enabled() gates it): fire-and-forget POST to tools/hitch_sink.py; never awaited, errors dropped.
+## Localhost web only. Rows wait here so the frame that measured them does not eval JavaScript.
 static func _post(line: String) -> void:
 	if not OS.has_feature("web"):
 		return
-	JavaScriptBridge.eval("fetch('/_wdb/hitch',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:%s}).catch(function(){})" % JSON.stringify(line), false)
+	_web_q.append(line)
+
+static func flush_web() -> void:
+	_flush_web()
+
+static func _flush_web() -> void:
+	if not OS.has_feature("web") or _web_q.is_empty():
+		return
+	var i: int = 0
+	while i < _web_q.size():
+		var js := ""
+		var n: int = 0
+		while i < _web_q.size() and n < 40:
+			js += "fetch('/_wdb/hitch',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:%s}).catch(function(){});" % JSON.stringify(_web_q[i])
+			i += 1
+			n += 1
+		JavaScriptBridge.eval(js, false)
+	_web_q = PackedStringArray()
 
 static func _trim_file() -> void:
 	if file_path == "" or not FileAccess.file_exists(file_path):
