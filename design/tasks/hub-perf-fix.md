@@ -96,3 +96,7 @@ Logging now:
 Desktop `20261015-194431`: exit 0, sec 24.2, frames 2582, slow 17, pause_slow 1, fps_pct 99.3, worst 150. Read-back vsync=0, max_fps=120, refresh 60, paced=0, p50=p95=8.3. Shape edge=3 stutter=8 spike=6. The sustained runs there are the camp load (phase wait, play_s 0), not a walk. Window read-back was 1024x768.
 
 Web, this worktree, three capped Edge runs (`--timeout-sec` 300, then 300, then 120): each timed out with the browser still open. The sink stayed at 4 rows: session bench_gen 0 (max_fps 0), session bench_gen 1 (max_fps 120), `HB: fresh=1`, and one boot hitch t=0.3 phase=wait refresh_n=9. No ev=mark. The stall is before the first HitchLog.mark, so it is in the title-to-hub load, not in a camp build step. Replacing PackedFloat32Array.duplicate did not move it. No web fps_pct this session.
+
+---
+
+Additional session notes from Vira: Looks like we still don't have the web benchmarking nailed down. Make that the goal of this session and don't worry about the actual performance issues.
