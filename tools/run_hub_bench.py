@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -313,9 +314,10 @@ def _browser_notes(profile: Path) -> list[str]:
     text = log_path.read_text(encoding="utf-8", errors="replace")
     keep: list[str] = []
     for line in text.splitlines():
-        upper = line.upper()
-        if "CONSOLE" in upper or "ERROR" in upper or "WASM" in upper or "GODOT" in upper:
-            keep.append(line.strip()[:240])
+        # Game output only. Browser-process ERRORs stay in the log file.
+        if "index.js" not in line and "HB:" not in line and "SCRIPT ERROR" not in line:
+            continue
+        keep.append(line.strip()[:240])
     if not keep:
         return ["browser_log=%s bytes=%d console=(none)" % (log_path.name, log_path.stat().st_size)]
     out = ["browser_log=%s bytes=%d console_lines=%d" % (log_path.name, log_path.stat().st_size, len(keep))]
@@ -497,6 +499,16 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     except OSError as exc:
         return 1, ["web", "hitch sink failed: %s" % exc]
     port = int(srv.server_address[1])
+    ready = False
+    for _ in range(20):
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.25):
+                ready = True
+                break
+        except OSError:
+            time.sleep(0.1)
+    if not ready:
+        return 1, ["web", "hitch sink not listening on %d" % port]
     url = "http://127.0.0.1:%d/index.html?wdb-hub-bench&wdb-hitch-mult=1" % port
     print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (Path(browser).name, kind, url))
     # Fullscreen at device pixels. A 1280x720 window makes the adaptive canvas
@@ -588,6 +600,22 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     return fail, body
 
 
+def _echo_lines(lines: list[str]) -> list[str]:
+    keep = []
+    for ln in lines:
+        if ln.startswith(("status=", "fps_pct=", "edge=", "leg=", "desktop root=", "web browser=")):
+            keep.append(ln)
+        elif ln.startswith("sustained=") or ln.startswith("sustained:"):
+            keep.append(ln)
+    return keep or lines[:4]
+
+def _retry_lines(lines: list[str]) -> list[str]:
+    keep = []
+    for ln in lines:
+        if ln.startswith(("fps_pct=", "edge=", "no bench row", "hitch sink")):
+            keep.append(ln)
+    return keep or ["(no structured fail line)"]
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Two ~30s hub bench walks (desktop window and a visible web export), plus a hitch summary.", json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=240, help="Desktop Godot timeout, and the web wait after export (default 240).")
@@ -637,7 +665,7 @@ def main(argv: list[str] | None = None) -> int:
         w_fail, w_body = _web(root, args)
         fail += w_fail
         body += w_body
-    echo = body[:8]
+    echo = _echo_lines(body)
     summary_dir = root / "_logs" / "hub-bench"
     summary_dir.mkdir(parents=True, exist_ok=True)
     (summary_dir / "summary.txt").write_text("\n".join(body) + "\n", encoding="utf-8")
@@ -649,7 +677,7 @@ def main(argv: list[str] | None = None) -> int:
         args=args,
         legacy=False,
         echo="\n".join(echo),
-        retry=("hub-bench", body),
+        retry=("hub-bench", _retry_lines(body)),
         fail_signals=fail,
     )
 

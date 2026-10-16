@@ -5,14 +5,23 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
-## One LOD-0 light tap shared with wall_shader. Text only (no function): ground inlines it, wall wraps it
+## Bilinear light-buffer tap shared with wall_shader. Text only (no function): ground inlines it, wall wraps it
 ## in tap_lit(xz). Needs light_tex / light_origin / light_span uniforms and a vec2 `xz` in scope.
-## The hub bake has no mip chain. texture() was sampling a missing mip and the yard repainted on web.
 const TAP_BODY := """
 	vec2 span = max(light_span, vec2(0.001));
 	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
+	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
+	vec2 max_p = max(vec2(ts) - vec2(1.0001), vec2(0.0));
+	vec2 p = clamp(luv * vec2(ts) - vec2(0.5), vec2(0.0), max_p);
+	vec2 fr = fract(p);
+	ivec2 i0 = ivec2(floor(p));
+	ivec2 i1 = min(i0 + ivec2(1), ts - ivec2(1));
+	vec3 s00 = texelFetch(light_tex, i0, 0).rgb;
+	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
+	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
+	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
 """
-const TAP_MIX := "textureLod(light_tex, luv, 0.0).rgb;\n"
+const TAP_MIX := "mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);\n"
 
 static var _sh: Shader
 
@@ -22,22 +31,15 @@ static func shader() -> Shader:
 	var sh := Shader.new()
 	sh.code = """
 shader_type spatial;
-render_mode unshaded, specular_disabled;
+render_mode unshaded;
 uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
-uniform sampler2D path_tex : source_color, filter_nearest_mipmap, repeat_enable;
-uniform sampler2D grass_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 uv_scale = vec2(1.0);
-uniform vec2 path_uv = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
 uniform float hash_m = 4.0;
 uniform float variant_n = 3.0;
 uniform float wear = 0.0;
-uniform float yard = 0.0;
-uniform vec4 grass_lim = vec4(2.0, 31.0, 4.0, 25.0);
-uniform vec4 path_a = vec4(6.0, 13.0, 27.0, 17.0);
-uniform vec4 path_b = vec4(15.0, 8.0, 18.0, 23.0);
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 varying vec3 world_pos;
@@ -46,21 +48,8 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
-bool in_rect(vec4 r, vec2 xz) {
-	return xz.x >= r.x && xz.x < r.z && xz.y >= r.y && xz.y < r.w;
-}
-
 void fragment() {
 	vec2 xz = world_pos.xz;
-	vec2 uv = xz * uv_scale + uv_off;
-	vec3 c = texture(albedo_tex, uv).rgb;
-	if (yard > 0.5) {
-		if (in_rect(path_a, xz) || in_rect(path_b, xz)) {
-			c = texture(path_tex, xz * path_uv + uv_off).rgb;
-		} else if (xz.x < grass_lim.x || xz.x >= grass_lim.y || xz.y < grass_lim.z || xz.y >= grass_lim.w) {
-			c = texture(grass_tex, uv).rgb;
-		}
-	}
 	float cell = max(hash_m, 0.001);
 	vec2 q = xz / cell;
 	vec2 qi = floor(q);
@@ -77,6 +66,8 @@ void fragment() {
 		float pick = h;
 		quilt_tint = mix(vec3(0.98), vec3(1.02), pick);
 	}
+	vec2 uv = xz * uv_scale + uv_off;
+	vec3 c = texture(albedo_tex, uv).rgb;
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
 """ + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * quilt_tint * worn * lit;
 }
@@ -106,9 +97,6 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 		wear = App.bal.getv("ground_wear")
 	var repeats: float = density / px
 	mat.set_shader_parameter("albedo_tex", albedo)
-	mat.set_shader_parameter("path_tex", albedo)
-	mat.set_shader_parameter("grass_tex", albedo)
-	mat.set_shader_parameter("yard", 0.0)
 	mat.set_shader_parameter("uv_scale", Vector2(repeats, repeats))
 	mat.set_shader_parameter("uv_off", Vector2.ZERO)
 	mat.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
@@ -116,26 +104,6 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.set_shader_parameter("variant_n", variants)
 	mat.set_shader_parameter("wear", wear)
 	LightRt.bind(mat)
-	return mat
-
-## One inner-slab sheet: grass frame, packed dirt, and the path. No second plane on top.
-static func yard_material() -> ShaderMaterial:
-	var mat: ShaderMaterial = material("res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30))
-	var grass: Texture2D = albedo_tex("res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	var path_albedo: Texture2D = albedo_tex("res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
-	mat.set_shader_parameter("grass_tex", grass)
-	mat.set_shader_parameter("path_tex", path_albedo)
-	var path_px: float = float(maxi(path_albedo.get_width(), 1))
-	var path_density: float = T.GROUND_PX_PER_M
-	if not Engine.is_editor_hint() and App.get("bal") != null:
-		path_density = App.bal.getv("ground_px_per_m")
-		if path_density < 1.0:
-			path_density = T.GROUND_PX_PER_M
-	mat.set_shader_parameter("path_uv", Vector2(path_density / path_px, path_density / path_px))
-	mat.set_shader_parameter("yard", 1.0)
-	mat.set_shader_parameter("grass_lim", Vector4(2.0, 31.0, 4.0, 25.0))
-	mat.set_shader_parameter("path_a", Vector4(6.0, 13.0, 27.0, 17.0))
-	mat.set_shader_parameter("path_b", Vector4(15.0, 8.0, 18.0, 23.0))
 	return mat
 
 static func albedo_tex(tex_path: String, fallback: Color) -> Texture2D:
