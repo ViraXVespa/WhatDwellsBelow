@@ -18,7 +18,7 @@ from pathlib import Path
 
 import repo_lib
 
-STRONG = re.compile(r"SCRIPT ERROR|Parse Error|Compile Error|ERROR:|TIMEOUT|clean=false|DUPE|assert|mismatch", re.I)
+STRONG = re.compile(r"SCRIPT ERROR|Parse Error|Compile Error|ERROR:|TIMEOUT|clean=false|DUPE|assert|mismatch|fps_pct=|no bench row|hitch sink not listening", re.I)
 WEAK = re.compile(r"\bFAIL\b|exit=[1-9]|missing|busy", re.I)
 KEEP = 20
 END = "--- end ---"
