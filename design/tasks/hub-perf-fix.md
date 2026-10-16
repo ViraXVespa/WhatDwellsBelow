@@ -21,3 +21,6 @@ Web, same walk, capped Edge, vsync left on: fps_pct 78.0 on the latest run (sec 
 
 ## Next
 The walk stays. The open cost is that ending view on web. Desktop at the same spot stays at 8.3 ms.
+
+## Notes from Vira
+That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.
