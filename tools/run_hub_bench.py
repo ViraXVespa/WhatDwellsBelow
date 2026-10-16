@@ -638,6 +638,9 @@ def main(argv: list[str] | None = None) -> int:
         fail += w_fail
         body += w_body
     echo = body[:8]
+    summary_dir = root / "_logs" / "hub-bench"
+    summary_dir.mkdir(parents=True, exist_ok=True)
+    (summary_dir / "summary.txt").write_text("\n".join(body) + "\n", encoding="utf-8")
     return agent_log.finish(
         "hub-bench",
         root,

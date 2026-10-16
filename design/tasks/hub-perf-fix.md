@@ -26,3 +26,9 @@ The walk stays. Web at that west-arm camera still presents at about two to three
 
 ## Notes from Vira
 That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.
+
+## Known non-signals
+- GLES quit leaks (N5GLES34MeshE / N5GLES37TextureE leaked at exit, and the raw Texture with GL ID / Buffer with GL ID leaked N bytes lines) are Compatibility-renderer artifacts on web exit. They are not the fail.
+- Desktop hub-bench already clears the 99% bar (99.7-99.8%, p50/p95 8.3 ms).
+- Web is refresh-paced (vsync=1 paced=1). fps_pct stuck mid-70s, dt_p50_ms ~17, dt_p95_ms ~44, worst 100-140. The fail is that tail.
+- One diagnosis, one fix, then run_hub_bench.py --leg web once. Do not open shader or mesh files because a quit-leak line named a texture or buffer.

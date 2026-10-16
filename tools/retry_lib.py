@@ -30,6 +30,8 @@ def _drop_known_leaks(lines: list[str]) -> list[str]:
     for ln in lines:
         if "leaked at exit" in ln and any(t in ln for t in _GLES_LEAK):
             continue
+        if "leaked" in ln and ("Texture with GL ID" in ln or "Buffer with GL ID" in ln):
+            continue
         out.append(ln)
     return out
 
