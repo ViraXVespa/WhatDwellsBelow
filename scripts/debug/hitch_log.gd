@@ -9,6 +9,10 @@ const KIND := "wdb_hitch_log"
 const REL_DIR := "hitch"
 const REL_FILE := "hitch.jsonl"
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
+## Refresh-paced frames cluster a few ms over one refresh. That cluster is the present, not a stall.
+const PRESENT_SLACK_SEC := 0.003
+## Float slack so a frame at exactly 1/60 is not a hitch when vsync is actually off.
+const BUDGET_EPS_SEC := 0.0005
 
 static var started: bool = false
 static var hitch_n: int = 0
@@ -29,6 +33,7 @@ static var _skip_gap: bool = false
 static var _keep_all: bool = false
 static var frame_n: int = 0
 static var slow_n: int = 0
+static var _dts: PackedFloat32Array = PackedFloat32Array()
 
 static func enabled() -> bool:
 	if _on >= 0:
@@ -57,7 +62,7 @@ static func note_span(host: Node, reason: String, sec: float) -> void:
 		begin(host)
 	if not started:
 		return
-	if sec < BUDGET_SEC * mult():
+	if not _over_budget(sec):
 		return
 	if _whys.size() >= 16:
 		_whys.remove_at(0)
@@ -85,6 +90,7 @@ static func bench_reset(mult_value: float) -> void:
 	_keep_all = true
 	frame_n = 0
 	slow_n = 0
+	_dts = PackedFloat32Array()
 	file_path = ""
 	_t0_ms = 0
 	begin()
@@ -127,7 +133,9 @@ static func tick(host: Node, delta: float) -> void:
 	if host.get_tree() != null and host.get_tree().paused:
 		return
 	frame_n += 1
-	if delta < BUDGET_SEC * mult():
+	if _keep_all:
+		_dts.append(snappedf(delta * 1000.0, 0.1))
+	if not _over_budget(delta):
 		return
 	slow_n += 1
 	_note(host, delta)
@@ -147,11 +155,73 @@ static func clear_log() -> void:
 	worst_ms = 0.0
 	frame_n = 0
 	slow_n = 0
+	_dts = PackedFloat32Array()
 	if enabled():
 		begin()
 
 static func close() -> void:
 	_close()
+
+## Read-back of the window the frame was actually presented on. Web is always paced:
+## DisplayServerWeb ignores window_set_vsync_mode and the loop is requestAnimationFrame.
+static func present() -> Dictionary:
+	var mode: DisplayServer.VSyncMode = DisplayServer.window_get_vsync_mode()
+	var hz: float = DisplayServer.screen_get_refresh_rate()
+	if hz <= 1.0:
+		hz = 60.0
+	var paced: int = 0
+	if OS.has_feature("web") or mode != DisplayServer.VSYNC_DISABLED:
+		paced = 1
+	var scr_i: int = DisplayServer.window_get_current_screen()
+	var screen: Vector2i = DisplayServer.screen_get_size(scr_i)
+	var win: Vector2i = DisplayServer.window_get_size()
+	return {
+		"vsync": int(mode),
+		"max_fps": Engine.max_fps,
+		"refresh_hz": snappedf(hz, 0.1),
+		"paced": paced,
+		"renderer": RenderingServer.get_current_rendering_method(),
+		"win_w": win.x,
+		"win_h": win.y,
+		"screen_w": screen.x,
+		"screen_h": screen.y,
+	}
+
+static func present_text() -> String:
+	var info: Dictionary = present()
+	return "vsync=%d max_fps=%d refresh=%.1f paced=%d" % [int(info["vsync"]), int(info["max_fps"]), float(info["refresh_hz"]), int(info["paced"])]
+
+static func _stamp_present(row: Dictionary) -> void:
+	var info: Dictionary = present()
+	row["vsync"] = int(info["vsync"])
+	row["max_fps"] = int(info["max_fps"])
+	row["refresh_hz"] = float(info["refresh_hz"])
+	row["paced"] = int(info["paced"])
+	row["renderer"] = str(info["renderer"])
+	row["win_w"] = int(info["win_w"])
+	row["win_h"] = int(info["win_h"])
+	row["screen_w"] = int(info["screen_w"])
+	row["screen_h"] = int(info["screen_h"])
+
+## True when this delta is a stall. A refresh-paced present within 3 ms of one
+## refresh is not a stall. An uncapped desktop frame is a stall over the 60 FPS budget.
+static func _over_budget(delta: float) -> bool:
+	var budget: float = BUDGET_SEC * mult()
+	var info: Dictionary = present()
+	if int(info["paced"]) == 1:
+		var refresh: float = 1.0 / float(info["refresh_hz"])
+		var line: float = budget
+		if refresh > line:
+			line = refresh
+		return delta > line + PRESENT_SLACK_SEC
+	return delta > budget + BUDGET_EPS_SEC
+
+static func _percentile(p: float) -> float:
+	var n: int = _dts.size()
+	if n <= 0:
+		return 0.0
+	var i: int = int(float(n - 1) * p)
+	return snappedf(_dts[i], 0.1)
 
 ## Share of counted frames faster than the 60 FPS budget. Paused frames are not counted.
 static func fps_pct() -> float:
@@ -177,6 +247,11 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 		"worst_ms": snappedf(worst_ms, 0.1),
 		"web": 1 if OS.has_feature("web") else 0,
 	}
+	if _dts.size() > 0:
+		_dts.sort()
+	row["dt_p50_ms"] = _percentile(0.50)
+	row["dt_p95_ms"] = _percentile(0.95)
+	_stamp_present(row)
 	if started and _fh != null:
 		_write_row(row)
 	else:
@@ -240,6 +315,7 @@ static func _session_row() -> Dictionary:
 		"mult": mult(),
 		"thr_ms": snappedf(BUDGET_SEC * mult() * 1000.0, 0.1),
 	}
+	_stamp_present(row)
 	return row
 
 static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:

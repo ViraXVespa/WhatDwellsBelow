@@ -20,13 +20,20 @@ const ST_FILL := 7
 
 const PLAY_SEC := 30.0
 const HARD_SEC := 45.0
+## Above the 60 FPS bar, and finite. VSYNC_DISABLED with max_fps 0 can peg the GPU.
+const FPS_CAP := 120
 
 static func active() -> bool:
 	return CliArgs.has(FLAG)
 
 static func _vsync_off() -> void:
+	# Compatibility honors VSYNC_DISABLED (swap interval 0). Web ignores it.
+	# The cap only pads frames faster than 120; a frame over 16.7 ms stays slow.
+	# Borderless fullscreen so the framebuffer is the screen, not a smaller window.
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
-	Engine.max_fps = 0
+	Engine.max_fps = FPS_CAP
+	if not OS.has_feature("web"):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 static func _warm_user() -> bool:
 	return FileAccess.file_exists("user://live/save.json")
@@ -144,7 +151,7 @@ func _wait(delta: float) -> void:
 	App.set_zoom(1.0)
 	_state = ST_FACE
 	_sub_t = 0.0
-	printerr("HB: begin mult=%.2f zoom=1.0 was=%.2f vsync=0" % [HitchLog.mult(), _saved_zoom])
+	printerr("HB: begin mult=%.2f zoom=1.0 was=%.2f %s" % [HitchLog.mult(), _saved_zoom, HitchLog.present_text()])
 
 func _face(delta: float) -> void:
 	var dir: Vector2 = _dirs[_face_i]
@@ -416,7 +423,7 @@ func _finish(extra: String) -> void:
 			missing.append(need)
 	var ok: bool = missing.is_empty()
 	var miss: String = "-" if ok else ",".join(missing)
-	printerr("HB: sec=%.1f hitches=%d frames=%d slow=%d fps_pct=%.1f worst=%.1f path=%s" % [_clock, HitchLog.hitch_n, HitchLog.frame_n, HitchLog.slow_n, HitchLog.fps_pct(), HitchLog.worst_ms, HitchLog.file_path])
+	printerr("HB: sec=%.1f hitches=%d frames=%d slow=%d fps_pct=%.1f worst=%.1f %s path=%s" % [_clock, HitchLog.hitch_n, HitchLog.frame_n, HitchLog.slow_n, HitchLog.fps_pct(), HitchLog.worst_ms, HitchLog.present_text(), HitchLog.file_path])
 	printerr("HB: missing=%s" % miss)
 	printerr("HB: ok=%d" % (1 if ok else 0))
 	HitchLog.bench_done(_clock, ok, miss)

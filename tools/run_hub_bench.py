@@ -77,21 +77,64 @@ def _fps_fail(pct: float, frames: int) -> int:
     return 0 if pct >= 99.0 else 1
 
 
+# Chromium's --disable-frame-rate-limit also turns on --disable-gpu-vsync and
+# drops present back-pressure. That combination bugchecked this GPU. Never pass them.
+_GPU_UNCAP = ("--disable-frame-rate-limit", "--disable-gpu-vsync")
+_PRESENT_KEYS = (
+    "vsync", "max_fps", "refresh_hz", "paced", "renderer",
+    "win_w", "win_h", "screen_w", "screen_h",
+    "dt_p50_ms", "dt_p95_ms", "frames", "fps_pct",
+)
+
+
 def _slow_lines(rows: list[dict]) -> list[str]:
     slow = []
     for row in rows[:8]:
         slow.append(
-            "dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s"
+            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s draw=%s"
             % (
+                row.get("t", ""),
                 row.get("dt_ms", ""),
                 row.get("why", ""),
                 row.get("where", ""),
                 row.get("anim", ""),
                 row.get("ui", ""),
                 row.get("cell", ""),
+                row.get("proc_ms", ""),
+                row.get("draw", ""),
             )
         )
     return slow
+
+
+def _present_line(row: dict | None) -> str:
+    if not row:
+        return "present=(no bench row)"
+    return (
+        "present vsync=%s max_fps=%s refresh_hz=%s paced=%s renderer=%s win=%sx%s screen=%sx%s dt_p50_ms=%s dt_p95_ms=%s"
+        % (
+            row.get("vsync", ""),
+            row.get("max_fps", ""),
+            row.get("refresh_hz", ""),
+            row.get("paced", ""),
+            row.get("renderer", ""),
+            row.get("win_w", ""),
+            row.get("win_h", ""),
+            row.get("screen_w", ""),
+            row.get("screen_h", ""),
+            row.get("dt_p50_ms", ""),
+            row.get("dt_p95_ms", ""),
+        )
+    )
+
+
+def _present_fail(row: dict | None) -> int:
+    if not row:
+        return 1
+    for key in _PRESENT_KEYS:
+        if key not in row:
+            return 1
+    return 0
 
 
 def _bench_row(path: Path) -> dict | None:
@@ -111,15 +154,32 @@ def _bench_row(path: Path) -> dict | None:
     return found
 
 
-def _stop_profile(profile: Path) -> None:
+def _profile_pids(profile: Path) -> list[int]:
     needle = str(profile).replace("'", "''")
     script = (
         "Get-CimInstance Win32_Process | "
         "Where-Object { $_.CommandLine -and $_.CommandLine.Contains('%s') } | "
-        "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+        "ForEach-Object { $_.ProcessId }"
         % needle
     )
-    subprocess.run(["powershell", "-NoProfile", "-Command", script], capture_output=True)
+    found = subprocess.run(
+        ["powershell", "-NoProfile", "-Command", script],
+        capture_output=True, text=True,
+    )
+    pids: list[int] = []
+    for line in (found.stdout or "").splitlines():
+        line = line.strip()
+        if line.isdigit():
+            pids.append(int(line))
+    return pids
+
+
+def _stop_profile(profile: Path) -> None:
+    for pid in _profile_pids(profile):
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command", "Stop-Process -Id %d -Force -ErrorAction SilentlyContinue" % pid],
+            capture_output=True,
+        )
 
 
 def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[str]]:
@@ -150,11 +210,13 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
         r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to|Lambda capture at index",
     )
     stat = _hb_stat(hb)
+    bench = _bench_row(Path(stat["path"])) if stat["path"] else None
     rows = _hitches(stat["path"])
     slow = _slow_lines(rows)
     fail = int(r["status"] == "TIMEOUT")
     fail += int(r["status"].startswith("EXIT=") and r["status"] != "EXIT=0")
     fail += int(bool(errs)) + int(not stat["ok"])
+    fail += _present_fail(bench)
     if args.headless:
         fail += 1
     else:
@@ -165,6 +227,7 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
             r["status"], r["ms"], r["err_bytes"], r["out_bytes"], 0 if args.headless else 1,
         ),
         "fps_pct=%s frames=%s sec=%s bar=99" % (stat["fps_pct"], stat["frames"], stat["sec"]),
+        _present_line(bench),
         "",
         "--- HB lines ---",
     ]
@@ -207,43 +270,62 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         return 1, ["web", "hitch sink failed: %s" % exc]
     port = int(srv.server_address[1])
     url = "http://127.0.0.1:%d/index.html?wdb-hub-bench&wdb-hitch-mult=1" % port
-    print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 url=%s)..." % (Path(browser).name, kind, url))
-    proc = subprocess.Popen(
-        [
-            browser,
-            "--user-data-dir=" + str(profile),
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--disable-extensions",
-            "--autoplay-policy=no-user-gesture-required",
-            "--new-window",
-            "--window-size=1280,720",
-            url,
-        ]
-    )
+    print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (Path(browser).name, kind, url))
+    # Fullscreen at device pixels. A 1280x720 window makes the adaptive canvas
+    # render small. These flags do not disable GPU vsync or the frame cap.
+    argv = [
+        browser,
+        "--user-data-dir=" + str(profile),
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--autoplay-policy=no-user-gesture-required",
+        "--new-window",
+        "--start-fullscreen",
+        "--force-device-scale-factor=1",
+        url,
+    ]
+    for flag in _GPU_UNCAP:
+        if flag in argv:
+            srv.shutdown()
+            return 1, ["web", "refusing %s; the browser frame cap and GPU vsync stay on" % flag]
+    proc = subprocess.Popen(argv)
     row = None
     deadline = time.time() + max(args.timeout_sec, 180)
+    # Edge's starter process often exits after it hands the window to a child.
+    # That exit is not the window dying. Wait for the bench row, or until no
+    # process still has this profile.
+    grace_until = time.time() + 8.0
+    next_pid_check = 0.0
     try:
         while time.time() < deadline:
             row = _bench_row(hitch)
             if row is not None:
                 break
-            if proc.poll() is not None and row is None:
-                time.sleep(1.0)
-                row = _bench_row(hitch)
-                break
+            if proc.poll() is not None and time.time() >= next_pid_check:
+                next_pid_check = time.time() + 2.0
+                alive = _profile_pids(profile)
+                if not alive and time.time() > grace_until:
+                    time.sleep(1.0)
+                    row = _bench_row(hitch)
+                    break
             time.sleep(0.5)
     finally:
+        launcher_exit = proc.poll()
         _stop_profile(profile)
         if proc.poll() is None:
             proc.terminate()
         srv.shutdown()
     if row is None:
-        return 1, ["web", "browser=%s kind=%s headed=1" % (Path(browser).name, kind), "no bench row (window did not finish)"]
+        return 1, [
+            "web",
+            "browser=%s kind=%s headed=1 fullscreen=1" % (Path(browser).name, kind),
+            "no bench row (window did not finish) launcher_exit=%s" % launcher_exit,
+        ]
     pct = float(row.get("fps_pct", 0))
     frames = int(row.get("frames", 0))
     ok = int(row.get("ok", 0)) == 1
-    fail = int(not ok) + _fps_fail(pct, frames)
+    fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
     rows = [r for r in _hitches(str(hitch))]
     slow = _slow_lines(rows)
     body = [
@@ -251,6 +333,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         "fps_pct=%s frames=%s slow=%s sec=%s ok=%s worst=%s bar=99" % (
             pct, frames, row.get("slow", ""), row.get("sec", ""), row.get("ok", ""), row.get("worst_ms", ""),
         ),
+        _present_line(row),
         "",
         "--- slowest hitches ---",
     ]

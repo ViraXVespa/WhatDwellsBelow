@@ -51,3 +51,27 @@ The 99 % bar is not met until both legs finish and the causes above are actually
 ---
 
 Additional session notes from Vira: For this session, don't worry about actually fixing any of the performance issues. This session's goal will be to make sure the benchmarking system is actually functioning correctly and logging everything it needs to be logging. I also want you to investigate the correct way to disable vsync without overloading the GPU and causing a BSOD like the last attempt did. I'm sure there's probably a documented method to do that safely somewhere online.
+
+## Session note (2026-10-15, logging only)
+
+Perf causes above are untouched. Status stays open.
+
+Vsync, from Godot and Chromium docs:
+
+- Desktop Compatibility does honor `VSYNC_DISABLED` (`wglSwapIntervalEXT(0)`). Adaptive and Mailbox do not. The call is `DisplayServer.window_set_vsync_mode`, not the project setting.
+- Godot's own `VSYNC_DISABLED` note says an unlimited framerate can peg the hardware, and to cap it with `Engine.max_fps`. A blank Compatibility project with vsync off has also been reported to spike the GPU into a driver timeout (godotengine/godot#118905). The bench now sets `Engine.max_fps` to 120. That only pads frames faster than 120. A frame over 16.7 ms is still slow.
+- Web cannot disable vsync. `DisplayServerWeb::window_set_vsync_mode` is an empty override, and the export loop is `emscripten_set_main_loop(..., -1)`, which is `requestAnimationFrame`. `Engine.max_fps` on web only skips early callbacks. It cannot outrun the browser.
+- Chromium's `--disable-frame-rate-limit` also enables `--disable-gpu-vsync` (chromium commit 5590468 / ad3e51ee). Together they remove present back-pressure (`kMaxPendingSubmitFrames`). That is the pair that bugchecked this machine. There is no documented Chromium flag that uncaps a real GPU without that pair. The web leg still refuses both flags.
+
+Logging:
+
+- The old `HB:` begin line printed a fixed `vsync=0`. It now prints the read-back (`vsync`, `max_fps`, `refresh`, `paced`).
+- Session and bench rows add `vsync`, `max_fps`, `refresh_hz`, `paced`, `renderer`. The bench row also adds `dt_p50_ms` and `dt_p95_ms` from every counted frame.
+- A refresh-paced frame within 3 ms of one refresh is not a hitch and is not a slow frame. An uncapped desktop frame is slow when it is over the 16.7 ms budget. The runner fails a leg whose bench row is missing those present fields. Slowest-hitch lines include `t`, `proc_ms`, and `draw`.
+
+Measured this session, causes untouched:
+
+- Desktop `20261015-190533`: exit 0, sec 24.2, frames 2575, slow 20, fps_pct 99.2, worst 147.6. Read-back vsync=0, max_fps=120, refresh 60, paced=0, p50=p95=8.3 (the 120 cap). That run was before the explicit fullscreen call. Fresh boot was already borderless.
+- Web `20261015-191344`: the first window was killed because Edge's starter process exits and the runner treated that as a crash. The rerun stayed up, fullscreen, win=screen=1920x1080. vsync read-back 1, paced=1, p50=16.7 (the refresh), p95=41.6, frames 1041, slow 95, fps_pct 90.9, sec 21.5, ok=1, worst 150. The leg fails the 99% bar. Browser cap and GPU vsync stayed on.
+
+Still open: the 99% bar on the web leg, and the boot / camp / first-walk causes. Do not launch the web leg with the uncap flags. Walk clock ends before 30 s because the end fill stops after two steps.
