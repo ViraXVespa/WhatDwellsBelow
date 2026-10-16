@@ -15,14 +15,14 @@ needs: none
 Both legs walk a full 30 s. Eight facings, the stations, one strike on the dummy, then an out-and-back walk on each facing until the play clock reaches 30 s. The window closes when that clock ends. `fps_pct` counts only while the hub is visible: camp is showing and the loader bar is down. 99% of those frames at or above 60 FPS is the bar. 100% is the aim.
 
 ## Where it stands
-Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. That leg still passes.
+Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. Not re-run this session.
 
-Web, capped Edge, vsync on, same window: the ending fill is still the miss, about fps_pct 75 to 77, fill median about 43 ms, cells on the west arm. Standing still at the dummy was 70.5. Hiding the hall and wing was 77.0. The fill cost is not the guild meshes and not the walk cycle. Draw stayed about 70. Fill physics was about 4 ms. Do not pass `--disable-frame-rate-limit` or `--disable-gpu-vsync`. A per-frame hitch-log scene walk still latches the whole bench; do not put that back.
+Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (first launch, `--isolate`): every hidden layer stayed at p50 and p95 16.7 ms, base draw 68. Fence, ground, buildings, sprites, light marks, and the HUD are not the still-camera cost. The full walk (second launch): fps_pct 77.0, frames 1236, slow 284, p50 16.7, p95 41.7, worst 144.8, ok 1. The sustained miss is the ending fill only (266 slow frames, median 38.9 ms, west-arm cells, phys about 2-4 ms, draw 48-78). The station walk is not that run. Do not pass `--disable-frame-rate-limit` or `--disable-gpu-vsync`. A per-frame hitch-log scene walk still latches the whole bench; do not put that back.
 
 The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again. The blocky look is on main too, so it is not a branch regression and not this task.
 
 ## Next
-The walk stays. Web at that west-arm camera still presents at about two to three refreshes with the hall gone and while standing. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. The next probe is whatever else that camera is paying for. Desktop at the same spot stays at 8.3 ms.
+The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. The next fix is whatever the moving fill adds on top of that still camera. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--isolate` (`run_hub_bench.py --leg web --isolate`) is the still-camera split; it does not score the 99% bar.
 
 ## Notes from Vira
 That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.

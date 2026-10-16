@@ -7,4 +7,5 @@ static func box(host: Node3D, pos: Vector3, _box_size: Vector3, _col: Color) -> 
 	body.collision_layer = 1
 	body.position = pos
 	host.add_child(body)
+	body.add_to_group("hub_build")
 	return body

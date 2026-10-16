@@ -515,6 +515,8 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     if not ready:
         return 1, ["web", "hitch sink not listening on %d" % port]
     url = "http://127.0.0.1:%d/index.html?wdb-hub-bench&wdb-hitch-mult=1" % port
+    if args.isolate:
+        url += "&wdb-hub-isolate"
     print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (Path(browser).name, kind, url))
     # Fullscreen at device pixels. A 1280x720 window makes the adaptive canvas
     # render small. These flags do not disable GPU vsync or the frame cap.
@@ -586,8 +588,16 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     pct = float(row.get("fps_pct", 0))
     frames = int(row.get("frames", 0))
     ok = int(row.get("ok", 0)) == 1
-    fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
     ordered_all = _read_rows(str(hitch))
+    isolate_lines = [
+        str(item.get("msg", ""))
+        for item in ordered_all
+        if "isolate layer=" in str(item.get("msg", ""))
+    ]
+    if args.isolate:
+        fail = 0 if isolate_lines else 1
+    else:
+        fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
     ordered = [item for item in ordered_all if item.get("ev") == "hitch"]
     rows = sorted(ordered, key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
     slow = _slow_lines(rows)
@@ -613,6 +623,8 @@ def _echo_lines(lines: list[str]) -> list[str]:
     keep = []
     for ln in lines:
         if ln.startswith(("status=", "fps_pct=", "edge=", "leg=", "desktop root=", "web browser=")):
+            keep.append(ln)
+        elif "isolate layer=" in ln or ln.startswith("HB: isolate"):
             keep.append(ln)
         elif ln.startswith("sustained=") or ln.startswith("sustained:"):
             keep.append(ln)
@@ -670,6 +682,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--leg", choices=("both", "desktop", "web"), default="both", help="Which walks to run (default both).")
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a walk.")
+    ap.add_argument("--isolate", action="store_true", help="Web only: stand at the dummy and time each hidden group. Does not score the 99 percent bar.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
@@ -704,11 +717,11 @@ def main(argv: list[str] | None = None) -> int:
     err_log = agent_log.run_path("hub-bench", root, "err.log")
     fail = 0
     body = ["hub bench root=.", "leg=%s" % args.leg]
-    if args.leg in ("both", "desktop"):
+    if args.leg in ("both", "desktop") and not args.isolate:
         d_fail, d_body = _desktop(root, args, out_log, err_log)
         fail += d_fail
         body += d_body
-    if args.leg in ("both", "web"):
+    if args.leg in ("both", "web") or args.isolate:
         w_fail, w_body = _web(root, args)
         fail += w_fail
         body += w_body

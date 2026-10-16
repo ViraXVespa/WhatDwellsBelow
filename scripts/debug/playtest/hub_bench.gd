@@ -17,6 +17,8 @@ const ST_HOLD := 4
 const ST_GAP := 5
 const ST_STRIKE := 6
 const ST_FILL := 7
+const ST_ISO := 8
+const ISO_FLAG := "--wdb-hub-isolate"
 
 const PLAY_SEC := 30.0
 const HARD_SEC := 45.0
@@ -62,6 +64,8 @@ func _phase_name() -> String:
 		return "strike"
 	if _state == ST_FILL:
 		return "fill"
+	if _state == ST_ISO:
+		return "iso"
 	return "wait"
 
 static func start() -> void:
@@ -115,9 +119,22 @@ var _need: PackedStringArray = PackedStringArray()
 var _visits: Array[Dictionary] = []
 var _faces: Dictionary = {}
 var _got: Dictionary = {}
+var _iso_ready: bool = false
+var _iso_i: int = 0
+var _iso_applied: int = -1
+var _iso_t: float = 0.0
+var _iso_spot: Vector3 = Vector3.ZERO
+var _iso_dts: Array[float] = []
+var _iso_proc: Array[float] = []
+var _iso_all: Array[Node] = []
+var _iso_on: Array[bool] = []
+var _iso_tag: PackedStringArray = PackedStringArray()
+var _iso_lits: Array[Node] = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if CliArgs.has(ISO_FLAG):
+		process_priority = 100
 	_vsync_off()
 	_dirs = [
 		Vector2(1, 0),
@@ -173,21 +190,24 @@ func _process(delta: float) -> void:
 		_strike(actor, delta)
 	elif _state == ST_FILL:
 		_fill(delta)
-	if not _done and _state != ST_WAIT and _state != ST_HOLD and _visits_done() and _faces_done() and _clock >= PLAY_SEC:
+	elif _state == ST_ISO:
+		_isolate(actor, delta)
+	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and _visits_done() and _faces_done() and _clock >= PLAY_SEC:
 		_finish("")
 
 func _wait(delta: float) -> void:
-	if bool(App.get("_menu_loading")) or _actor() == null:
+	var iso: bool = CliArgs.has(ISO_FLAG)
+	if bool(App.get("_menu_loading")) or _actor() == null or (iso and not _hub_up()):
 		_wait_t += delta
 		if _wait_t >= _wait_hb and _wait_t <= 45.0:
 			_wait_hb += 2.0
-			_hb("HB: wait t=%.1f loading=%s actor=%s" % [_wait_t, str(bool(App.get("_menu_loading"))), str(_actor() != null)])
+			_hb("HB: wait t=%.1f loading=%s actor=%s hub=%s" % [_wait_t, str(bool(App.get("_menu_loading"))), str(_actor() != null), str(_hub_up())])
 		if _wait_t > 45.0:
 			_finish("stall")
 		return
 	App.playtest.ai_on = true
 	pin_zoom()
-	_state = ST_FACE
+	_state = ST_ISO if iso else ST_FACE
 	_sub_t = 0.0
 	_hb("HB: begin mult=%.2f zoom=1.0 was=%.2f %s" % [HitchLog.mult(), _saved_zoom, HitchLog.present_text()])
 
@@ -452,6 +472,203 @@ func _faces_done() -> bool:
 		if not bool(_got.get(need, false)):
 			return false
 	return true
+
+func _hub_up() -> bool:
+	var loader_v: Variant = App.get("loader")
+	if loader_v is Node:
+		var loader: Node = loader_v as Node
+		if bool(loader.get("open")) or bool(loader.get("visible")):
+			return false
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return false
+	var scene: Node = tree.current_scene
+	if str(scene.name) == "Camp":
+		return true
+	return str(scene.scene_file_path).find("camp") >= 0
+
+func _iso_kinds() -> PackedStringArray:
+	return PackedStringArray([
+		"warm", "base", "fence", "ground", "build", "sprites", "marks", "hud", "bare",
+	])
+
+func _iso_gather() -> void:
+	_iso_all.clear()
+	_iso_on.clear()
+	_iso_lits.clear()
+	_iso_tag = PackedStringArray()
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.root == null:
+		return
+	var stack: Array[Node] = [tree.root]
+	while stack.size() > 0:
+		var n: Node = stack.pop_back()
+		var tag: String = ""
+		if n.is_in_group("hub_fence"):
+			tag = "fence"
+		elif n.is_in_group("hub_ground"):
+			tag = "ground"
+		elif n.is_in_group("hub_build"):
+			tag = "build"
+		elif n is Sprite3D:
+			tag = "sprites"
+		elif str(n.name) == "ActorLit":
+			_iso_lits.append(n)
+			var kids: Array = n.get_children()
+			var k: int = 0
+			while k < kids.size():
+				var mark_child: Node = kids[k]
+				if mark_child is Node3D:
+					var mark: Node3D = mark_child as Node3D
+					_iso_all.append(mark)
+					_iso_on.append(mark.visible)
+					_iso_tag.append("marks")
+				k += 1
+		if n is Node3D and tag != "":
+			var body: Node3D = n as Node3D
+			_iso_all.append(body)
+			_iso_on.append(body.visible)
+			_iso_tag.append(tag)
+		elif n is CanvasLayer:
+			var layer: CanvasLayer = n as CanvasLayer
+			_iso_all.append(layer)
+			_iso_on.append(layer.visible)
+			_iso_tag.append("hud")
+		for c in n.get_children():
+			stack.append(c)
+
+func _iso_counts() -> String:
+	var fence_n: int = 0
+	var ground_n: int = 0
+	var build_n: int = 0
+	var sprite_n: int = 0
+	var mark_n: int = 0
+	var hud_n: int = 0
+	var i: int = 0
+	while i < _iso_tag.size():
+		var tag: String = _iso_tag[i]
+		if tag == "fence":
+			fence_n += 1
+		elif tag == "ground":
+			ground_n += 1
+		elif tag == "build":
+			build_n += 1
+		elif tag == "sprites":
+			sprite_n += 1
+		elif tag == "marks":
+			mark_n += 1
+		elif tag == "hud":
+			hud_n += 1
+		i += 1
+	return "fence=%d ground=%d build=%d sprites=%d marks=%d hud=%d" % [fence_n, ground_n, build_n, sprite_n, mark_n, hud_n]
+
+func _iso_restore() -> void:
+	var i: int = 0
+	while i < _iso_all.size():
+		var n: Node = _iso_all[i]
+		var on: bool = _iso_on[i]
+		if n is Node3D:
+			(n as Node3D).visible = on
+		elif n is CanvasLayer:
+			(n as CanvasLayer).visible = on
+		i += 1
+
+func _iso_hide(tag: String) -> void:
+	var i: int = 0
+	while i < _iso_all.size():
+		if tag == "bare" or _iso_tag[i] == tag:
+			var n: Node = _iso_all[i]
+			if n is Node3D:
+				(n as Node3D).visible = false
+			elif n is CanvasLayer:
+				(n as CanvasLayer).visible = false
+		i += 1
+
+func _iso_apply(kind: String) -> void:
+	_iso_restore()
+	var pause_lits: bool = kind == "marks" or kind == "bare"
+	for lit: Node in _iso_lits:
+		lit.set_process(not pause_lits)
+	if kind == "bare":
+		_iso_hide("bare")
+	elif kind != "warm" and kind != "base":
+		_iso_hide(kind)
+
+func _iso_stand(actor: Node3D) -> void:
+	if _iso_spot == Vector3.ZERO:
+		_iso_spot = Vector3(8.5, 0.0, 15.5)
+		var camp: Node = _camp()
+		if camp != null:
+			var dummy_v: Variant = camp.get("dummy")
+			if dummy_v is Node3D:
+				_iso_spot = (dummy_v as Node3D).global_position
+	if actor.global_position.distance_squared_to(_iso_spot) > 0.16:
+		actor.global_position = _iso_spot
+	if "velocity" in actor:
+		actor.set("velocity", Vector3.ZERO)
+	App.playtest.move = Vector2.ZERO
+	App.playtest.aim = Vector2(-1.0, 0.0)
+	App.playtest.attack = false
+
+func _iso_mid(vals: Array[float]) -> float:
+	if vals.is_empty():
+		return 0.0
+	var ordered: Array[float] = vals.duplicate()
+	ordered.sort()
+	var at: int = int(round(float(ordered.size() - 1) * 0.5))
+	return ordered[at]
+
+func _iso_report(kind: String) -> void:
+	var n: int = _iso_dts.size()
+	var good: int = 0
+	for dt: float in _iso_dts:
+		if dt <= 0.020:
+			good += 1
+	var pct: float = 0.0
+	if n > 0:
+		pct = 100.0 * float(good) / float(n)
+	var draws: int = int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+	_hb("HB: isolate layer=%s n=%d p50=%.1f p95=%.1f fps=%.1f draw=%d proc=%.1f" % [
+		kind, n, _iso_mid(_iso_dts) * 1000.0, _iso_p95() * 1000.0, pct, draws, _iso_mid(_iso_proc),
+	])
+
+func _iso_p95() -> float:
+	if _iso_dts.is_empty():
+		return 0.0
+	var ordered: Array[float] = _iso_dts.duplicate()
+	ordered.sort()
+	var at: int = int(round(float(ordered.size() - 1) * 0.95))
+	return ordered[at]
+
+func _isolate(actor: Node3D, delta: float) -> void:
+	if not _iso_ready:
+		_iso_gather()
+		_iso_ready = true
+		_hb("HB: isolate counts %s" % _iso_counts())
+	_iso_stand(actor)
+	var kinds: PackedStringArray = _iso_kinds()
+	if _iso_i >= kinds.size():
+		_finish("isolate")
+		return
+	var kind: String = kinds[_iso_i]
+	if _iso_applied != _iso_i:
+		_iso_applied = _iso_i
+		_iso_t = 0.0
+		_iso_dts.clear()
+		_iso_proc.clear()
+	_iso_apply(kind)
+	if _iso_t >= 0.35:
+		_iso_dts.append(delta)
+		_iso_proc.append(float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0)
+	_iso_t += delta
+	var hold: float = 1.5 if kind == "warm" else 2.5
+	if _iso_t < hold:
+		return
+	_iso_report(kind)
+	_iso_i += 1
+	_iso_applied = -1
+	if _iso_i >= kinds.size():
+		_finish("isolate")
 
 func _finish(extra: String) -> void:
 	if _done:

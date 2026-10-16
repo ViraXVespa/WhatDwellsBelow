@@ -94,6 +94,8 @@ static func grass_pad(
 
 	inst.material_override = GroundShader.material(tex_path, fallback)
 
+	inst.add_to_group("hub_ground")
+
 	host.add_child(inst)
 
 static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
