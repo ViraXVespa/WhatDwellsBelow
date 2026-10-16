@@ -113,6 +113,11 @@ _PRESENT_KEYS = (
 )
 
 
+_KNOWN_GLES_LEAKS = ("N5GLES34MeshE", "N5GLES37TextureE")
+
+def _is_known_gles_leak(line: str) -> bool:
+    return "leaked at exit" in line and any(t in line for t in _KNOWN_GLES_LEAKS)
+
 def _slow_lines(rows: list[dict]) -> list[str]:
     slow = []
     for row in rows:

@@ -57,6 +57,12 @@ def matches(needle: str, listed: list[str]) -> bool:
             return True
         if base and (item == base or item.rsplit("/", 1)[-1] == base):
             return True
+        # stem without extension (agents say "hub_bench", map has "hub_bench.gd")
+        stem = base.rsplit(".", 1)[0] if "." in base else base
+        item_base = item.rsplit("/", 1)[-1]
+        item_stem = item_base.rsplit(".", 1)[0]
+        if stem and (item_stem == stem or item_base == stem):
+            return True
     return False
 
 def parse_rows(text: str) -> list[Row]:

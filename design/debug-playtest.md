@@ -123,3 +123,12 @@ Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
 ## Web perf hook (opt-in URL args)
 
 `scripts/debug/cli_args.gd` also reads URL params that start with `wdb-` on web (`?wdb-seed=42` reads as `--wdb-seed=42`). `AppRun.begin_run` reads it with `CliArgs.int_arg("--wdb-seed", 0)` (not `seed_arg`, which maps 0 to 1) and, when positive, uses it as the run seed and seeds the global RNG; without the param the seed stays `randi()`. `?wdb-playtest` makes `scripts/debug/web_hook.gd` register `window.wdbPlaytest(sec)` and `window.wdbEnter()` (the player's own dungeon entry with cover and reveal; web_perf flow `dungeon-arrive`) and `window.wdbZoom(z)` (camera zoom; flow `camp-zoom` shoots the hub ground at zoom 1, 2 and 4). `wdbPlaytest` enqueues one fresh Great Axe live run at real time (`scale` 1) through the playtester above; the finished run's telemetry (plus `stuck_t`) lands in `window.__wdbPlay`; `web_perf.py` marks a run INVALID when it ends early, makes no kills, is stuck (`stuck_t`, or `stuck_max` over 6 s), has a gate that never opened, runs at a time scale other than 1.0, stalls or logs console errors. `tools/web_perf.py` flow `dungeon-fight` uses both. Normal URLs register nothing.
+
+## Known non-fatal signals (hub-bench)
+- Build never runs `open_slice.py`. The User started the session; you are already in the worktree. First command is `start_build_slice.py`.
+
+- `code_map.py row hub_bench` now matches the stem (map lists `hub_bench.gd`).
+- Web exit may print 3 Mesh + 1 Texture GLES RID leaks (`N5GLES34MeshE`, `N5GLES37TextureE`). These are Compatibility-renderer quit artifacts and do not fail the bench when `fps_pct >= 99` and no other ERROR lines are present.
+- If no checkpoint was recorded, continue from the current worktree. One diagnosis, one fix, then rerun the prove once.
+- Already inside a worktree: do not call `open_slice.py` again (`RESULT FAIL route=in-worktree` means continue).
+- `show_func` prints the first 20 lines of a declaration (`truncated=True` when longer). Use `--lines` or `read_file` with offset/limit for the rest.

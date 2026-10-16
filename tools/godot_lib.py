@@ -122,7 +122,20 @@ def lock_fresh(lf: Path) -> bool:
     except (OSError, ValueError, KeyError, TypeError):
         return False
 
-def lock(root: Path, path: Path | str, timeout: int = 120, hold: int = 180) -> Path:
+def lock(root: Path, path: Path | str, timeout: int = 120, hold: int = 180, retries: int = 3) -> Path:
+    import time
+    last_exc = None
+    for attempt in range(retries):
+        try:
+            return _lock_once(root, path, timeout, hold)
+        except GodotBusy as e:
+            last_exc = e
+            if attempt == retries - 1:
+                raise
+            time.sleep(2 ** attempt)
+    raise last_exc
+
+def _lock_once(root: Path, path: Path | str, timeout: int = 120, hold: int = 180) -> Path:
     """Take the per-path lock; returns the lock file. Raises GodotBusy on timeout."""
     norm = norm_path(path)
     lf = lock_file(root, norm)
