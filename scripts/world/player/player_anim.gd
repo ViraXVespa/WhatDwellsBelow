@@ -52,6 +52,9 @@ static func warmup(host: Node) -> void:
 		return
 	if host.body:
 		host.body.visible = true
+	for k in Facing.KEYS:
+		Load.ensure_loco(host, k)
+		Load.ensure_attack(host, k)
 	for tex in warmup_texs(host):
 		apply_tex(host, tex)
 	warmup_physics(host)

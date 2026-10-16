@@ -67,7 +67,7 @@ void fragment() {
 		quilt_tint = mix(vec3(0.98), vec3(1.02), pick);
 	}
 	vec2 uv = xz * uv_scale + uv_off;
-	vec3 c = texture(albedo_tex, uv).rgb;
+	vec3 c = textureLod(albedo_tex, uv, 0.0).rgb;
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
 """ + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * quilt_tint * worn * lit;
 }

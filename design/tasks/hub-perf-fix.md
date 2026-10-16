@@ -19,7 +19,7 @@ Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 
 
 Web, capped Edge, vsync on, same window: the ending fill is still the miss, about fps_pct 75 to 77, fill median about 43 ms, cells on the west arm. Standing still at the dummy was 70.5. Hiding the hall and wing was 77.0. The fill cost is not the guild meshes and not the walk cycle. Draw stayed about 70. Fill physics was about 4 ms. Do not pass `--disable-frame-rate-limit` or `--disable-gpu-vsync`. A per-frame hitch-log scene walk still latches the whole bench; do not put that back.
 
-The inner yard is one plane. The path uses its own repeat. The hub light tap is LOD 0 because `hub_light.png` has no mip chain (`texture()` repainted the yard and, when the shader failed, took the ground and the baked shadows with it). Vira looked at the desktop window: the path scale looks right, and the ground and shadows are back.
+The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again. The blocky look is on main too, so it is not a branch regression and not this task.
 
 ## Next
 The walk stays. Web at that west-arm camera still presents at about two to three refreshes with the hall gone and while standing. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. The next probe is whatever else that camera is paying for. Desktop at the same spot stays at 8.3 ms.
@@ -32,3 +32,7 @@ That hitching on web during that last walk phase looks like a similar issue I've
 - Desktop hub-bench already clears the 99% bar (99.7-99.8%, p50/p95 8.3 ms).
 - Web is refresh-paced (vsync=1 paced=1). fps_pct stuck mid-70s, dt_p50_ms ~17, dt_p95_ms ~44, worst 100-140. The fail is that tail.
 - One diagnosis, one fix, then run_hub_bench.py --leg web once. Do not open shader or mesh files because a quit-leak line named a texture or buffer.
+- Attack does not clear the walk cache. ensure_loco and ensure_attack fill separate dictionaries and return once the key is present. The only clear is load_sprites at init.
+- Preloading every facing in warmup (ensure_loco + ensure_attack, then apply_tex) did not move the web number. Still fps_pct 76.8.
+- A warm Edge process can report 99 %. That is not the cold number the task measures.
+- Chrome task-manager lines (fallback_task_provider) are Edge internals, not the fail.

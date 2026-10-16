@@ -483,7 +483,12 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     exp = subprocess.run(
         [sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--out", str(site)],
         cwd=str(root),
+        capture_output=True,
+        text=True,
     )
+    for ln in (exp.stdout or "").splitlines():
+        if ln.startswith("RESULT"):
+            print(ln)
     if exp.returncode != 0 or not (site / "index.html").is_file():
         return 1, ["web export failed exit=%s site=%s" % (exp.returncode, site)]
     hitch = Path(root) / "_logs" / "web-perf" / "hitch.jsonl"
@@ -518,6 +523,9 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         "--user-data-dir=" + str(profile),
         "--no-first-run",
         "--no-default-browser-check",
+    "--disable-sync",
+    "--guest",
+    "--edge-skip-compat-layer-relaunch",
         "--disable-extensions",
         "--autoplay-policy=no-user-gesture-required",
         "--new-window",
@@ -532,6 +540,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
             srv.shutdown()
             return 1, ["web", "refusing %s; the browser frame cap and GPU vsync stay on" % flag]
     proc = subprocess.Popen(argv)
+    _raise_bench_window(proc)
     row = None
     started = time.time()
     limit = max(args.timeout_sec, 180)
@@ -615,6 +624,44 @@ def _retry_lines(lines: list[str]) -> list[str]:
         if ln.startswith(("fps_pct=", "edge=", "no bench row", "hitch sink")):
             keep.append(ln)
     return keep or ["(no structured fail line)"]
+
+def _raise_bench_window(proc: subprocess.Popen) -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        found = []
+        @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        def _enum(hwnd, _lparam):
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value == proc.pid and user32.IsWindowVisible(hwnd):
+                found.append(hwnd)
+            return True
+        for _ in range(40):
+            found.clear()
+            user32.EnumWindows(_enum, 0)
+            if found:
+                break
+            time.sleep(0.1)
+        if not found:
+            return
+        hwnd = found[0]
+        fg = user32.GetForegroundWindow()
+        fg_thread = user32.GetWindowThreadProcessId(fg, None) if fg else 0
+        this_thread = kernel32.GetCurrentThreadId()
+        if fg_thread and fg_thread != this_thread:
+            user32.AttachThreadInput(fg_thread, this_thread, True)
+        user32.ShowWindow(hwnd, 9)
+        user32.BringWindowToTop(hwnd)
+        user32.SetForegroundWindow(hwnd)
+        if fg_thread and fg_thread != this_thread:
+            user32.AttachThreadInput(fg_thread, this_thread, False)
+    except Exception:
+        pass
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Two ~30s hub bench walks (desktop window and a visible web export), plus a hitch summary.", json_out=True)
