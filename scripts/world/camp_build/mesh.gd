@@ -53,24 +53,18 @@ static func ground(host: Node3D) -> void:
 	cs.position = Vector3(float(ox) + float(gw) * 0.5, -0.2, float(oz) + float(gd) * 0.5)
 	body.add_child(cs)
 	var y: float = T.FLOOR_Y
-	# grass frame
-	_band(host, ox, oz, ox + gw - 1, 3, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	_band(host, ox, 25, ox + gw - 1, oz + gd - 1, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	_band(host, ox, 4, 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	_band(host, 31, 4, ox + gw - 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	# yard dirt + path plus
-	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30))
-	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
-	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
+	# One sheet for the inner slab so the path is not a second plane repainting the dirt.
+	var sx: float = float(gw)
+	var sz: float = float(gd)
+	var yard_mesh: PlaneMesh = PlaneMesh.new()
+	yard_mesh.size = Vector2(sx, sz)
+	var yard_inst: MeshInstance3D = MeshInstance3D.new()
+	yard_inst.name = "Yard"
+	yard_inst.mesh = yard_mesh
+	yard_inst.position = Vector3(float(ox) + sx * 0.5, y, float(oz) + sz * 0.5)
+	yard_inst.material_override = GroundShader.yard_material()
+	host.add_child(yard_inst)
 	load("res://scripts/world/camp_build.gd").outer_grass(host)
-
-static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color) -> void:
-	if x1 < x0 or z1 < z0:
-		return
-	var sx: float = float(x1 - x0 + 1) * T.TILE
-	var sz: float = float(z1 - z0 + 1) * T.TILE
-	var c := Vector3(float(x0) + sx * 0.5, y, float(z0) + sz * 0.5)
-	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback)
 
 static func grass_pad(
 
