@@ -23,7 +23,7 @@ import agent_log
 import godot_lib
 
 
-def _hitches(path: str) -> list[dict]:
+def _read_rows(path: str) -> list[dict]:
     p = Path(path)
     if path == "" or not p.is_file():
         return []
@@ -36,9 +36,34 @@ def _hitches(path: str) -> list[dict]:
             row = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if isinstance(row, dict) and row.get("ev") == "hitch":
+        if isinstance(row, dict):
             rows.append(row)
-    rows.sort(key=lambda r: float(r.get("dt_ms", 0)), reverse=True)
+    return _latest_gen(rows)
+
+
+def _latest_gen(rows: list[dict]) -> list[dict]:
+    # bench_gen is the log generation. `gen` on a hitch row is the hub generated-node count.
+    gens: list[int] = []
+    for row in rows:
+        if "bench_gen" not in row:
+            continue
+        try:
+            gens.append(int(row["bench_gen"]))
+        except (TypeError, ValueError):
+            continue
+    if not gens:
+        return rows
+    keep = max(gens)
+    return [row for row in rows if int(row.get("bench_gen", -1)) == keep]
+
+
+def _hitch_rows(path: str) -> list[dict]:
+    return [row for row in _read_rows(path) if row.get("ev") == "hitch"]
+
+
+def _hitches(path: str) -> list[dict]:
+    rows = _hitch_rows(path)
+    rows.sort(key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
     return rows
 
 
@@ -84,6 +109,7 @@ _PRESENT_KEYS = (
     "vsync", "max_fps", "refresh_hz", "paced", "renderer",
     "win_w", "win_h", "screen_w", "screen_h",
     "dt_p50_ms", "dt_p95_ms", "frames", "fps_pct",
+    "pause_slow", "n_edge", "n_stutter", "n_spike", "slow_run_n", "slow_run_med_ms",
 )
 
 
@@ -105,6 +131,171 @@ def _slow_lines(rows: list[dict]) -> list[str]:
             )
         )
     return slow
+
+
+def _refresh_ms(bench: dict | None) -> float:
+    hz = 60.0
+    if bench and bench.get("refresh_hz"):
+        try:
+            hz = float(bench["refresh_hz"])
+        except (TypeError, ValueError):
+            hz = 60.0
+    if hz <= 1.0:
+        hz = 60.0
+    return 1000.0 / hz
+
+
+def _clusters(rows: list[dict]) -> list[list[dict]]:
+    clusters: list[list[dict]] = []
+    cur: list[dict] = []
+    prev_t: float | None = None
+    prev_frame: int | None = None
+    for row in rows:
+        try:
+            t = float(row.get("t", 0) or 0)
+        except (TypeError, ValueError):
+            t = 0.0
+        frame_raw = row.get("frame")
+        frame: int | None = None
+        if frame_raw is not None:
+            try:
+                frame = int(frame_raw)
+            except (TypeError, ValueError):
+                frame = None
+        split = False
+        if cur:
+            if frame is not None and prev_frame is not None:
+                split = frame - prev_frame > 2
+            elif prev_t is not None and t - prev_t > 0.35:
+                split = True
+        if split and cur:
+            clusters.append(cur)
+            cur = []
+        cur.append(row)
+        prev_t = t
+        if frame is not None:
+            prev_frame = frame
+    if cur:
+        clusters.append(cur)
+    return clusters
+
+
+def _median(vals: list[float]) -> float:
+    if not vals:
+        return 0.0
+    ordered = sorted(vals)
+    return ordered[len(ordered) // 2]
+
+
+def _run_line(rows: list[dict]) -> str:
+    dts: list[float] = []
+    anims: list[str] = []
+    phases: list[str] = []
+    cells: list[str] = []
+    why_empty = 0
+    held = 0
+    paused = 0
+    prev_proc = None
+    for row in rows:
+        try:
+            dts.append(float(row.get("dt_ms", 0) or 0))
+        except (TypeError, ValueError):
+            dts.append(0.0)
+        anim = str(row.get("anim", ""))
+        if anim and anim not in anims:
+            anims.append(anim)
+        phase = str(row.get("phase", ""))
+        if phase and phase not in phases:
+            phases.append(phase)
+        cell = str(row.get("cell", ""))
+        if cell:
+            cells.append(cell)
+        if not row.get("why"):
+            why_empty += 1
+        if int(row.get("paused", 0) or 0) == 1:
+            paused += 1
+        proc = row.get("proc_ms")
+        if int(row.get("proc_held", 0) or 0) == 1 or (prev_proc is not None and proc == prev_proc):
+            held += 1
+        prev_proc = proc
+    cell_txt = ""
+    if cells:
+        cell_txt = cells[0] if cells[0] == cells[-1] else "%s..%s" % (cells[0], cells[-1])
+    return (
+        "n=%d t=%s-%s play=%s-%s dt_med=%s phase=%s anim=%s cell=%s why_empty=%d proc_held=%d paused=%d"
+        % (
+            len(rows),
+            rows[0].get("t", ""),
+            rows[-1].get("t", ""),
+            rows[0].get("play_s", ""),
+            rows[-1].get("play_s", ""),
+            _median(dts),
+            ",".join(phases),
+            ",".join(anims[:6]),
+            cell_txt,
+            why_empty,
+            held,
+            paused,
+        )
+    )
+
+
+def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
+    refresh = _refresh_ms(bench)
+    edge = 0
+    stutter = 0
+    spike = 0
+    pause = 0
+    live: list[dict] = []
+    for row in hitch_rows:
+        if int(row.get("paused", 0) or 0) == 1:
+            pause += 1
+            continue
+        live.append(row)
+        try:
+            dt = float(row.get("dt_ms", 0) or 0)
+        except (TypeError, ValueError):
+            dt = 0.0
+        if dt >= 100.0:
+            spike += 1
+        elif dt >= refresh * 2.0:
+            stutter += 1
+        else:
+            edge += 1
+    lines = ["edge=%d stutter=%d spike=%d pause_rows=%d" % (edge, stutter, spike, pause)]
+    if bench and "slow_run_n" in bench:
+        lines.append(
+            "bench_run n=%s med_ms=%s pause_slow=%s"
+            % (bench.get("slow_run_n", ""), bench.get("slow_run_med_ms", ""), bench.get("pause_slow", ""))
+        )
+    clusters = [cluster for cluster in _clusters(live) if len(cluster) >= 4]
+    clusters.sort(key=len, reverse=True)
+    if not clusters:
+        lines.append("sustained=(none)")
+        return lines
+    lines.append("sustained:")
+    for cluster in clusters[:3]:
+        lines.append(_run_line(cluster))
+    return lines
+
+
+def _sink_tail(path: Path) -> list[str]:
+    if not path.is_file():
+        return ["sink=(missing)"]
+    text = path.read_text(encoding="utf-8", errors="replace")
+    lines = [line for line in text.splitlines() if line.strip()]
+    out = ["sink_bytes=%d rows=%d" % (path.stat().st_size, len(lines))]
+    for line in lines[-6:]:
+        out.append(line[:240])
+    return out
+
+
+def _hb_lines(rows: list[dict]) -> list[str]:
+    out: list[str] = []
+    for row in rows:
+        if row.get("ev") == "hb" and row.get("msg"):
+            out.append(str(row["msg"]))
+    return out
 
 
 def _present_line(row: dict | None) -> str:
@@ -138,18 +329,9 @@ def _present_fail(row: dict | None) -> int:
 
 
 def _bench_row(path: Path) -> dict | None:
-    if not path.is_file():
-        return None
     found = None
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(row, dict) and row.get("ev") == "bench":
+    for row in _read_rows(str(path)):
+        if row.get("ev") == "bench":
             found = row
     return found
 
@@ -211,7 +393,8 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
     )
     stat = _hb_stat(hb)
     bench = _bench_row(Path(stat["path"])) if stat["path"] else None
-    rows = _hitches(stat["path"])
+    ordered = _hitch_rows(stat["path"]) if stat["path"] else []
+    rows = sorted(ordered, key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
     slow = _slow_lines(rows)
     fail = int(r["status"] == "TIMEOUT")
     fail += int(r["status"].startswith("EXIT=") and r["status"] != "EXIT=0")
@@ -232,6 +415,7 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
         "--- HB lines ---",
     ]
     body += hb or ["(no HB: lines)"]
+    body += ["", "--- slow shape ---"] + _shape_lines(ordered, bench)
     body += ["", "--- slowest hitches ---"] + (slow or ["(none)"])
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
     if args.headless:
@@ -291,17 +475,26 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
             return 1, ["web", "refusing %s; the browser frame cap and GPU vsync stay on" % flag]
     proc = subprocess.Popen(argv)
     row = None
-    deadline = time.time() + max(args.timeout_sec, 180)
+    started = time.time()
+    limit = max(args.timeout_sec, 180)
+    deadline = started + limit
+    cap = started + limit + 180
     # Edge's starter process often exits after it hands the window to a child.
     # That exit is not the window dying. Wait for the bench row, or until no
-    # process still has this profile.
+    # process still has this profile. A growing sink means the page is still
+    # inside a long frame, so the deadline moves forward up to three minutes.
     grace_until = time.time() + 8.0
     next_pid_check = 0.0
+    last_size = -1
     try:
         while time.time() < deadline:
             row = _bench_row(hitch)
             if row is not None:
                 break
+            size = hitch.stat().st_size if hitch.is_file() else 0
+            if size != last_size:
+                last_size = size
+                deadline = min(cap, max(deadline, time.time() + 30))
             if proc.poll() is not None and time.time() >= next_pid_check:
                 next_pid_check = time.time() + 2.0
                 alive = _profile_pids(profile)
@@ -317,16 +510,19 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
             proc.terminate()
         srv.shutdown()
     if row is None:
+        why = "timed out" if time.time() >= deadline else "browser process exited"
         return 1, [
             "web",
             "browser=%s kind=%s headed=1 fullscreen=1" % (Path(browser).name, kind),
-            "no bench row (window did not finish) launcher_exit=%s" % launcher_exit,
-        ]
+            "no bench row (%s) launcher_exit=%s" % (why, launcher_exit),
+        ] + _sink_tail(hitch)
     pct = float(row.get("fps_pct", 0))
     frames = int(row.get("frames", 0))
     ok = int(row.get("ok", 0)) == 1
     fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
-    rows = [r for r in _hitches(str(hitch))]
+    ordered_all = _read_rows(str(hitch))
+    ordered = [item for item in ordered_all if item.get("ev") == "hitch"]
+    rows = sorted(ordered, key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
     slow = _slow_lines(rows)
     body = [
         "web browser=%s kind=%s headed=1 cap=1" % (Path(browser).name, kind),
@@ -335,9 +531,11 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         ),
         _present_line(row),
         "",
-        "--- slowest hitches ---",
+        "--- HB lines ---",
     ]
-    body += slow or ["(none)"]
+    body += _hb_lines(ordered_all) or ["(no HB: lines)"]
+    body += ["", "--- slow shape ---"] + _shape_lines(ordered, row)
+    body += ["", "--- slowest hitches ---"] + (slow or ["(none)"])
     return fail, body
 
 
@@ -347,8 +545,37 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--headless", action="store_true", help="desktop driver only; not an FPS reading")
     ap.add_argument("--leg", choices=("both", "desktop", "web"), default="both", help="Which walks to run (default both).")
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
+    ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a walk.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
+    if args.report:
+        ordered = _read_rows(args.report)
+        bench = None
+        for item in ordered:
+            if item.get("ev") == "bench":
+                bench = item
+        hitch_rows = [item for item in ordered if item.get("ev") == "hitch"]
+        ranked = sorted(hitch_rows, key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
+        report = [
+            "hub bench report",
+            "path=%s" % args.report,
+            _present_line(bench),
+            "",
+            "--- HB lines ---",
+        ]
+        report += _hb_lines(ordered) or ["(no HB: lines)"]
+        report += ["", "--- slow shape ---"] + _shape_lines(hitch_rows, bench)
+        report += ["", "--- slowest hitches ---"] + (_slow_lines(ranked) or ["(none)"])
+        return agent_log.finish(
+            "hub-bench-report",
+            root,
+            "\n".join(report),
+            "PASS",
+            args=args,
+            legacy=False,
+            echo="\n".join(report),
+            fail_signals=0,
+        )
     out_log = agent_log.run_path("hub-bench", root, "out.log")
     err_log = agent_log.run_path("hub-bench", root, "err.log")
     fail = 0

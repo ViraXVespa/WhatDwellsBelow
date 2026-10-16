@@ -38,17 +38,39 @@ static func _vsync_off() -> void:
 static func _warm_user() -> bool:
 	return FileAccess.file_exists("user://live/save.json")
 
+static func _hb(msg: String) -> void:
+	printerr(msg)
+	HitchLog.hb(msg)
+
+func _phase_name() -> String:
+	if _state == ST_FACE:
+		return "face"
+	if _state == ST_GOTO:
+		return "goto"
+	if _state == ST_OPEN:
+		return "open"
+	if _state == ST_HOLD:
+		return "hold"
+	if _state == ST_GAP:
+		return "gap"
+	if _state == ST_STRIKE:
+		return "strike"
+	if _state == ST_FILL:
+		return "fill"
+	return "wait"
+
 static func start() -> void:
 	_vsync_off()
 	if _warm_user():
-		printerr("HB: fresh=0")
-		printerr("HB: missing=warm_user")
-		printerr("HB: ok=0")
+		_hb("HB: fresh=0")
+		_hb("HB: missing=warm_user")
+		_hb("HB: ok=0")
 		App.get_tree().quit(1)
 		return
-	printerr("HB: fresh=1")
 	var mult: float = CliArgs.float_arg("--wdb-hitch-mult", 1.0)
 	HitchLog.bench_reset(mult)
+	HitchLog.set_phase("wait")
+	_hb("HB: fresh=1")
 	App.character_type = "male"
 	App.character_chosen = true
 	App.call_deferred("play_from_menu")
@@ -108,6 +130,8 @@ func _ready() -> void:
 	])
 
 func _process(delta: float) -> void:
+	HitchLog.set_phase(_phase_name())
+	HitchLog.set_play_s(_clock)
 	if _done or App.playtest == null:
 		return
 	if _state == ST_WAIT:
@@ -151,7 +175,7 @@ func _wait(delta: float) -> void:
 	App.set_zoom(1.0)
 	_state = ST_FACE
 	_sub_t = 0.0
-	printerr("HB: begin mult=%.2f zoom=1.0 was=%.2f %s" % [HitchLog.mult(), _saved_zoom, HitchLog.present_text()])
+	_hb("HB: begin mult=%.2f zoom=1.0 was=%.2f %s" % [HitchLog.mult(), _saved_zoom, HitchLog.present_text()])
 
 func _face(delta: float) -> void:
 	var dir: Vector2 = _dirs[_face_i]
@@ -164,7 +188,7 @@ func _face(delta: float) -> void:
 		if (seen and _sub_t > 0.45) or _sub_t > 1.6:
 			_face_idle = true
 			_sub_t = 0.0
-			printerr("HB: face=%s loop=%d" % [key, 1 if seen else 0])
+			_hb("HB: face=%s loop=%d" % [key, 1 if seen else 0])
 		return
 	if _sub_t < 0.05:
 		return
@@ -198,14 +222,14 @@ func _goto(actor: Node3D, delta: float) -> void:
 		return
 	if strike:
 		if nd > 2.2:
-			printerr("HB: miss=%s" % str(row["id"]))
+			_hb("HB: miss=%s" % str(row["id"]))
 			_next_visit()
 			return
 		_state = ST_STRIKE
 		_sub_t = 0.0
 		return
 	if nd > 1.45:
-		printerr("HB: miss=%s" % str(row["id"]))
+		_hb("HB: miss=%s" % str(row["id"]))
 		_next_visit()
 		return
 	_state = ST_OPEN
@@ -227,13 +251,13 @@ func _open(actor: Node3D, delta: float) -> void:
 	if App.ui_open:
 		HitchLog.skip_gap()
 		_got[id] = true
-		printerr("HB: open=%s" % id)
+		_hb("HB: open=%s" % id)
 		_state = ST_HOLD
 		_sub_t = 0.0
 		return
 	_open_tries += 1
 	if _open_tries >= 3:
-		printerr("HB: miss=%s" % id)
+		_hb("HB: miss=%s" % id)
 		_next_visit()
 		return
 	_state = ST_GOTO
@@ -266,9 +290,9 @@ func _strike(actor: Node3D, delta: float) -> void:
 	if _sub_t < 0.8:
 		return
 	if bool(_got.get("dummy", false)):
-		printerr("HB: strike=dummy")
+		_hb("HB: strike=dummy")
 	else:
-		printerr("HB: miss=dummy")
+		_hb("HB: miss=dummy")
 	_next_visit()
 
 func _fill(delta: float) -> void:
@@ -423,9 +447,9 @@ func _finish(extra: String) -> void:
 			missing.append(need)
 	var ok: bool = missing.is_empty()
 	var miss: String = "-" if ok else ",".join(missing)
-	printerr("HB: sec=%.1f hitches=%d frames=%d slow=%d fps_pct=%.1f worst=%.1f %s path=%s" % [_clock, HitchLog.hitch_n, HitchLog.frame_n, HitchLog.slow_n, HitchLog.fps_pct(), HitchLog.worst_ms, HitchLog.present_text(), HitchLog.file_path])
-	printerr("HB: missing=%s" % miss)
-	printerr("HB: ok=%d" % (1 if ok else 0))
+	_hb("HB: sec=%.1f hitches=%d frames=%d slow=%d pause_slow=%d fps_pct=%.1f worst=%.1f %s path=%s" % [_clock, HitchLog.hitch_n, HitchLog.frame_n, HitchLog.slow_n, HitchLog.pause_slow_n, HitchLog.fps_pct(), HitchLog.worst_ms, HitchLog.present_text(), HitchLog.file_path])
+	_hb("HB: missing=%s" % miss)
+	_hb("HB: ok=%d" % (1 if ok else 0))
 	HitchLog.bench_done(_clock, ok, miss)
 	var tree: SceneTree = get_tree()
 	if tree != null:

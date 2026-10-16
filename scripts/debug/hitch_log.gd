@@ -33,7 +33,17 @@ static var _skip_gap: bool = false
 static var _keep_all: bool = false
 static var frame_n: int = 0
 static var slow_n: int = 0
+static var pause_slow_n: int = 0
 static var _dts: PackedFloat32Array = PackedFloat32Array()
+static var _phase: String = ""
+static var _play_s: float = 0.0
+static var _bench_gen: int = 0
+static var _last_proc: float = -1.0
+static var _proc_held: int = 0
+static var _run_n: int = 0
+static var _run_best: int = 0
+static var _run_vals: PackedFloat32Array = PackedFloat32Array()
+static var _run_best_vals: PackedFloat32Array = PackedFloat32Array()
 
 static func enabled() -> bool:
 	if _on >= 0:
@@ -50,9 +60,30 @@ static func set_mult(mult: float) -> void:
 static func mult() -> float:
 	return _mult if _mult > 0.0 else MULT
 
-## Drop the next tick. The bench uses this so a paused menu's hold is not logged as a hitch.
+## Drop the next tick from the FPS count. The bench uses this so the frame that
+## opens a menu is recorded as ev=gap, not as a counted hitch.
 static func skip_gap() -> void:
 	_skip_gap = true
+
+static func set_phase(phase_name: String) -> void:
+	_phase = phase_name
+
+static func set_play_s(sec: float) -> void:
+	_play_s = sec
+
+## One HB line in the hitch file. The web console never reaches the runner.
+static func hb(msg: String) -> void:
+	if not enabled():
+		return
+	if not started:
+		begin()
+	if not started:
+		return
+	var t_sec: float = 0.0
+	if _t0_ms > 0:
+		t_sec = snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1)
+	var row: Dictionary = {"ev": "hb", "msg": msg, "t": t_sec}
+	_write_row(row)
 
 ## Write one hitch row when sec is over the threshold. Keeps why tags already on this frame.
 static func note_span(host: Node, reason: String, sec: float) -> void:
@@ -90,7 +121,17 @@ static func bench_reset(mult_value: float) -> void:
 	_keep_all = true
 	frame_n = 0
 	slow_n = 0
+	pause_slow_n = 0
 	_dts = PackedFloat32Array()
+	_phase = ""
+	_play_s = 0.0
+	_last_proc = -1.0
+	_proc_held = 0
+	_run_n = 0
+	_run_best = 0
+	_run_vals = PackedFloat32Array()
+	_run_best_vals = PackedFloat32Array()
+	_bench_gen += 1
 	file_path = ""
 	_t0_ms = 0
 	begin()
@@ -125,17 +166,28 @@ static func tick(host: Node, delta: float) -> void:
 		begin(host)
 	if not started:
 		return
-	if _skip_gap:
-		_skip_gap = false
-		return
 	if Engine.time_scale != 1.0:
 		return
-	if host.get_tree() != null and host.get_tree().paused:
+	_sample_proc()
+	if _skip_gap:
+		_skip_gap = false
+		_break_run()
+		_write_gap(delta, "skip_gap")
+		return
+	var tree: SceneTree = host.get_tree()
+	if tree != null and tree.paused:
+		_break_run()
+		if _over_budget(delta):
+			pause_slow_n += 1
+			_note_paused(host, delta)
 		return
 	frame_n += 1
+	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
 	if _keep_all:
-		_dts.append(snappedf(delta * 1000.0, 0.1))
-	if not _over_budget(delta):
+		_dts.append(dt_ms)
+	var slow: bool = _over_budget(delta)
+	_track_run(dt_ms, slow)
+	if not slow:
 		return
 	slow_n += 1
 	_note(host, delta)
@@ -246,12 +298,20 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 		"fps_pct": fps_pct(),
 		"worst_ms": snappedf(worst_ms, 0.1),
 		"web": 1 if OS.has_feature("web") else 0,
+		"pause_slow": pause_slow_n,
 	}
+	var shape: Dictionary = _slow_shape()
+	row["n_edge"] = int(shape["n_edge"])
+	row["n_stutter"] = int(shape["n_stutter"])
+	row["n_spike"] = int(shape["n_spike"])
+	row["slow_run_n"] = int(shape["slow_run_n"])
+	row["slow_run_med_ms"] = float(shape["slow_run_med_ms"])
 	if _dts.size() > 0:
 		_dts.sort()
 	row["dt_p50_ms"] = _percentile(0.50)
 	row["dt_p95_ms"] = _percentile(0.95)
 	_stamp_present(row)
+	row["bench_gen"] = _bench_gen
 	if started and _fh != null:
 		_write_row(row)
 	else:
@@ -260,12 +320,15 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	var now: int = Time.get_ticks_msec()
 	var frame: int = int(Engine.get_process_frames())
+	var gap: int = 0
+	if _mark_ms > 0:
+		gap = now - _mark_ms
 	var dt: int = 0
 	if frame != _mark_frame:
 		_whys.clear()
 		_mark_frame = frame
 	elif _mark_ms > 0:
-		dt = now - _mark_ms
+		dt = gap
 	_mark_ms = now
 	why = reason
 	gx = int(origin.x)
@@ -273,6 +336,10 @@ static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	if _whys.size() >= 16:
 		_whys.remove_at(0)
 	_whys.append("%s:%d" % [reason, dt])
+	# A bench frame can run for a long time before the next tick. Post the mark
+	# now so a hung load still names the last step.
+	if _keep_all and started:
+		_write_mark(reason, gap)
 
 static func status_line() -> String:
 	if not enabled():
@@ -333,9 +400,16 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
 		"draw": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"proc_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1),
+		"phys_ms": snappedf(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, 0.1),
+		"proc_held": _proc_held,
+		"refresh_n": _refresh_n(dt_ms),
+		"play_s": snappedf(_play_s, 0.1),
+		"frame": int(Engine.get_process_frames()),
 		"mult": mult(),
 		"thr_ms": snappedf(BUDGET_SEC * mult() * 1000.0, 0.1),
 	}
+	if _phase != "":
+		row["phase"] = _phase
 	if not _whys.is_empty():
 		row["why"] = ",".join(_whys)
 	elif why != "":
@@ -399,7 +473,119 @@ static func _where(host: Node) -> String:
 		return "hub"
 	return scn
 
+static func _sample_proc() -> void:
+	var proc: float = snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1)
+	if _last_proc >= 0.0 and is_equal_approx(proc, _last_proc):
+		_proc_held = 1
+	else:
+		_proc_held = 0
+	_last_proc = proc
+
+static func _refresh_n(dt_ms: float) -> int:
+	var info: Dictionary = present()
+	var refresh_ms: float = 1000.0 / float(info["refresh_hz"])
+	if refresh_ms <= 0.0:
+		return 1
+	return maxi(1, roundi(dt_ms / refresh_ms))
+
+## Counted-frame shape. edge is one late refresh, stutter is two or more, spike is 100 ms or more.
+static func _slow_shape() -> Dictionary:
+	var info: Dictionary = present()
+	var refresh_ms: float = 1000.0 / float(info["refresh_hz"])
+	var two: float = refresh_ms * 2.0
+	if int(info["paced"]) == 0:
+		two = BUDGET_SEC * mult() * 1000.0 * 2.0
+	_break_run()
+	var edge: int = 0
+	var stutter: int = 0
+	var spike: int = 0
+	for dt: float in _dts:
+		if not _over_budget(dt / 1000.0):
+			continue
+		if dt >= 100.0:
+			spike += 1
+		elif dt >= two:
+			stutter += 1
+		else:
+			edge += 1
+	var med: float = 0.0
+	if _run_best_vals.size() > 0:
+		var ordered: PackedFloat32Array = _copy_run(_run_best_vals)
+		ordered.sort()
+		med = snappedf(ordered[int(float(ordered.size()) / 2.0)], 0.1)
+	return {
+		"n_edge": edge,
+		"n_stutter": stutter,
+		"n_spike": spike,
+		"slow_run_n": _run_best,
+		"slow_run_med_ms": med,
+	}
+
+static func _copy_run(src: PackedFloat32Array) -> PackedFloat32Array:
+	var out: PackedFloat32Array = PackedFloat32Array()
+	out.resize(src.size())
+	for i: int in src.size():
+		out[i] = src[i]
+	return out
+
+static func _break_run() -> void:
+	if _run_n > _run_best:
+		_run_best = _run_n
+		_run_best_vals = _copy_run(_run_vals)
+	_run_n = 0
+	_run_vals = PackedFloat32Array()
+
+static func _track_run(dt_ms: float, slow: bool) -> void:
+	if not slow:
+		_break_run()
+		return
+	_run_n += 1
+	_run_vals.append(dt_ms)
+
+static func _write_mark(reason: String, gap_ms: int) -> void:
+	var t_sec: float = 0.0
+	if _t0_ms > 0:
+		t_sec = snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1)
+	var row: Dictionary = {
+		"ev": "mark",
+		"why": reason,
+		"dt_ms": gap_ms,
+		"t": t_sec,
+		"play_s": snappedf(_play_s, 0.1),
+	}
+	if _phase != "":
+		row["phase"] = _phase
+	_write_row(row)
+
+static func _write_gap(delta: float, reason: String) -> void:
+	var t_sec: float = 0.0
+	if _t0_ms > 0:
+		t_sec = snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1)
+	var row: Dictionary = {
+		"ev": "gap",
+		"why": reason,
+		"dt_ms": snappedf(delta * 1000.0, 0.1),
+		"t": t_sec,
+		"play_s": snappedf(_play_s, 0.1),
+	}
+	if _phase != "":
+		row["phase"] = _phase
+	_write_row(row)
+
+static func _note_paused(host: Node, delta: float) -> void:
+	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
+	var row: Dictionary = _hitch_row(host, dt_ms)
+	row["paused"] = 1
+	hitch_n += 1
+	_write_row(row)
+	why = ""
+	gx = 0
+	gy = 0
+	_whys.clear()
+	_mark_ms = 0
+
 static func _write_row(row: Dictionary) -> void:
+	row["bench_gen"] = _bench_gen
 	if _fh == null:
 		return
 	var line: String = JSON.stringify(row)

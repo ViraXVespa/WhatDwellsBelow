@@ -79,3 +79,20 @@ Still open: the 99% bar on the web leg, and the boot / camp / first-walk causes.
 ---
 
 Additional session notes from Vira: I'm not sure that everything got completed on the playtest end. The web playtest definitely had some visible FPS drops going on there that will probably be revealing in regards to the updates needed to the logging. Keep this session focused on getting the hub-bench logics up to the level we need them to be at before we can have you focused entirely on solving the hitching issues.
+
+## Session note (2026-10-15, bench report)
+
+Perf causes are still untouched. Status stays open. Do not launch the web leg with the uncap flags.
+
+The 19:14 web log, reprinted with `run_hub_bench.py --report`, is the drop she saw. It is not the eight 130–150 ms spikes the old summary printed. It is one sustained run: n=42, t=36.9–38.7, dt median 44.8 ms (about 22 FPS), cells 10,15 to 13,19, anim idle_right / start_right / loop_right / loop_down. 38 of those 42 rows have an empty why, and proc_ms repeats on 38 of them. Shape of that file: edge=29, stutter=51, spike=15. p95 41.6 ms is that run.
+
+Logging now:
+
+- Hitch rows carry phase, play_s, frame, refresh_n, phys_ms, proc_held, bench_gen. `gen` stays the hub node count.
+- A paused stall is paused=1 and is not counted in frames, slow, or fps_pct. The menu-open frame is ev=gap.
+- The summary prints the slow shape and up to three sustained runs (4 or more slow frames with no good frame between them).
+- Bench marks also write ev=mark immediately, so a long frame names its last step. A web wait with no bench row says timed out or browser exited, and prints the sink tail.
+
+Desktop `20261015-194431`: exit 0, sec 24.2, frames 2582, slow 17, pause_slow 1, fps_pct 99.3, worst 150. Read-back vsync=0, max_fps=120, refresh 60, paced=0, p50=p95=8.3. Shape edge=3 stutter=8 spike=6. The sustained runs there are the camp load (phase wait, play_s 0), not a walk. Window read-back was 1024x768.
+
+Web, this worktree, three capped Edge runs (`--timeout-sec` 300, then 300, then 120): each timed out with the browser still open. The sink stayed at 4 rows: session bench_gen 0 (max_fps 0), session bench_gen 1 (max_fps 120), `HB: fresh=1`, and one boot hitch t=0.3 phase=wait refresh_n=9. No ev=mark. The stall is before the first HitchLog.mark, so it is in the title-to-hub load, not in a camp build step. Replacing PackedFloat32Array.duplicate did not move it. No web fps_pct this session.
