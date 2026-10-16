@@ -19,12 +19,14 @@ static var _task: int = -1
 static func start() -> void:
 	if _task != -1:
 		return
-	ResourceLoader.load_threaded_request(HOST_PATH)
 	BtnSkin.prewarm()
-	## Web builds have no threads: the art is drawn by finish(), still behind the loader.
+	## A nothreads web export never finishes load_threaded_request: status stays
+	## IN_PROGRESS and load_threaded_get spins on the main thread. finish() draws
+	## the art on that build, still behind the loader. Desktop keeps the worker.
 	if not OS.has_feature("threads"):
 		_task = -2
 		return
+	ResourceLoader.load_threaded_request(HOST_PATH)
 	_task = WorkerThreadPool.add_task(_draw_art, true, "ui art")
 
 static func _draw_art() -> void:
@@ -38,6 +40,9 @@ static func wait() -> void:
 	if _task >= 0:
 		WorkerThreadPool.wait_for_task_completion(_task)
 		_task = -2
+	if not OS.has_feature("threads"):
+		ResourceLoader.load(HOST_PATH)
+		return
 	if ResourceLoader.load_threaded_get_status(HOST_PATH) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
 		ResourceLoader.load_threaded_get(HOST_PATH)
 

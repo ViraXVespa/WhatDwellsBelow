@@ -115,7 +115,9 @@ _PRESENT_KEYS = (
 
 def _slow_lines(rows: list[dict]) -> list[str]:
     slow = []
-    for row in rows[:8]:
+    for row in rows:
+        if int(row.get("paused", 0) or 0) == 1 or int(row.get("bar", 0) or 0) == 1:
+            continue
         slow.append(
             "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s draw=%s"
             % (
@@ -130,6 +132,8 @@ def _slow_lines(rows: list[dict]) -> list[str]:
                 row.get("draw", ""),
             )
         )
+        if len(slow) >= 8:
+            break
     return slow
 
 
@@ -246,10 +250,14 @@ def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
     stutter = 0
     spike = 0
     pause = 0
+    bar = 0
     live: list[dict] = []
     for row in hitch_rows:
         if int(row.get("paused", 0) or 0) == 1:
             pause += 1
+            continue
+        if int(row.get("bar", 0) or 0) == 1:
+            bar += 1
             continue
         live.append(row)
         try:
@@ -262,7 +270,7 @@ def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
             stutter += 1
         else:
             edge += 1
-    lines = ["edge=%d stutter=%d spike=%d pause_rows=%d" % (edge, stutter, spike, pause)]
+    lines = ["edge=%d stutter=%d spike=%d pause_rows=%d bar_rows=%d" % (edge, stutter, spike, pause, bar)]
     if bench and "slow_run_n" in bench:
         lines.append(
             "bench_run n=%s med_ms=%s pause_slow=%s"
@@ -277,6 +285,37 @@ def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
     for cluster in clusters[:3]:
         lines.append(_run_line(cluster))
     return lines
+
+
+def _browser_notes(profile: Path) -> list[str]:
+    """Console lines from the headed browser log. Not an FPS reading."""
+    names = ("browser.log", "chrome_debug.log")
+    found: list[Path] = []
+    if profile.is_dir():
+        for name in names:
+            direct = profile / name
+            if direct.is_file():
+                found.append(direct)
+        for child in profile.iterdir():
+            if child.is_dir():
+                for name in names:
+                    nested = child / name
+                    if nested.is_file():
+                        found.append(nested)
+    if not found:
+        return ["browser_log=(missing)"]
+    log_path = max(found, key=lambda item: item.stat().st_mtime)
+    text = log_path.read_text(encoding="utf-8", errors="replace")
+    keep: list[str] = []
+    for line in text.splitlines():
+        upper = line.upper()
+        if "CONSOLE" in upper or "ERROR" in upper or "WASM" in upper or "GODOT" in upper:
+            keep.append(line.strip()[:240])
+    if not keep:
+        return ["browser_log=%s bytes=%d console=(none)" % (log_path.name, log_path.stat().st_size)]
+    out = ["browser_log=%s bytes=%d console_lines=%d" % (log_path.name, log_path.stat().st_size, len(keep))]
+    out.extend(keep[-30:])
+    return out
 
 
 def _sink_tail(path: Path) -> list[str]:
@@ -467,6 +506,8 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         "--new-window",
         "--start-fullscreen",
         "--force-device-scale-factor=1",
+        "--enable-logging",
+        "--log-file=" + str(profile / "browser.log"),
         url,
     ]
     for flag in _GPU_UNCAP:
@@ -515,7 +556,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
             "web",
             "browser=%s kind=%s headed=1 fullscreen=1" % (Path(browser).name, kind),
             "no bench row (%s) launcher_exit=%s" % (why, launcher_exit),
-        ] + _sink_tail(hitch)
+        ] + _sink_tail(hitch) + _browser_notes(profile)
     pct = float(row.get("fps_pct", 0))
     frames = int(row.get("frames", 0))
     ok = int(row.get("ok", 0)) == 1
@@ -536,6 +577,9 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     body += _hb_lines(ordered_all) or ["(no HB: lines)"]
     body += ["", "--- slow shape ---"] + _shape_lines(ordered, row)
     body += ["", "--- slowest hitches ---"] + (slow or ["(none)"])
+    notes = _browser_notes(profile)
+    if any("ERROR" in line.upper() or "WASM" in line.upper() for line in notes):
+        body += ["", "--- browser console ---"] + notes
     return fail, body
 
 

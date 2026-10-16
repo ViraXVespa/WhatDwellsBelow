@@ -23,8 +23,10 @@ var _editor_hooked: bool = false
 var build_done: bool = false
 
 func _ready() -> void:
+	HitchLog.mark("camp_enter")
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
+	HitchLog.mark("camp_layout")
 	if Engine.is_editor_hint():
 		_hook_editor()
 		Build.realize_editor(self, _layout)

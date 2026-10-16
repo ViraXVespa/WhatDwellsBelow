@@ -2,6 +2,7 @@ extends Object
 
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
 const Hub := preload("res://scripts/app/flow_hub.gd")
@@ -89,6 +90,7 @@ static func play_from_menu(host: Node) -> void:
 	host._play_from_menu_async()
 
 static func play_from_menu_async(host: Node) -> void:
+	HitchLog.mark("load_play")
 	LoadTiming.mark("play_begin")
 	if host.loader:
 		host.loader.begin("Placeholdia", App.tr("common.gathering_the_square"))
@@ -96,8 +98,10 @@ static func play_from_menu_async(host: Node) -> void:
 	if host.loader:
 		host.loader.stage(0.0, Hub.LoadW.after(&"preload"))
 	await host.get_tree().process_frame
+	HitchLog.mark("load_paint")
 	LoadTiming.mark("loader_paint")
 	UiWarm.start()
+	HitchLog.mark("load_preload")
 	preload_hub(host)
 	if host.loader:
 		host.loader.set_status(App.tr("app_flow.raising_placeholdia"))
@@ -105,12 +109,14 @@ static func play_from_menu_async(host: Node) -> void:
 	if host.loader:
 		host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp"))
 	await host.get_tree().process_frame
+	HitchLog.mark("load_camp")
 	LoadTiming.mark("camp_change")
 	host.go_camp()
 	host.ui_open = true
 	var guard: int = await Leg.wait_scene(host, "camp", "Camp", func():
 		if host.loader:
 			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp")))
+	HitchLog.mark("load_camp_scene")
 	LoadTiming.mark("camp_ready")
 	var scene_b: Node = host.get_tree().current_scene
 	var built_n: int = 0
@@ -123,7 +129,9 @@ static func play_from_menu_async(host: Node) -> void:
 	Hub.LoadW.done(&"camp")
 	LoadTiming.note("camp_wait_frames", str(guard))
 	LoadTiming.note("camp_build_frames", str(built_n))
+	HitchLog.mark("load_warmup")
 	await Hub._warmup_hub(host)
+	HitchLog.mark("load_finish")
 	var scene: Node = host.get_tree().current_scene
 	if host.loader:
 		host.loader.finish()

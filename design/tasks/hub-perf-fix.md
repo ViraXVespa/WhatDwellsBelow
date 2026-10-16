@@ -100,3 +100,17 @@ Web, this worktree, three capped Edge runs (`--timeout-sec` 300, then 300, then 
 ---
 
 Additional session notes from Vira: Looks like we still don't have the web benchmarking nailed down. Make that the goal of this session and don't worry about the actual performance issues.
+
+## Session note (2026-10-15, web leg completes)
+
+Perf causes are still untouched. Status stays open. Do not launch the web leg with the uncap flags.
+
+The web leg was timing out because the bench node was attached only at the end of camp build, and a nothreads export could spin inside `load_threaded_get` after `load_threaded_request`. The node now lives on `App` from `start()`, so the 45 s wait runs during the load and a hung load posts `missing=stall` plus a bench row. `UiWarm.start` does not call `load_threaded_request` when `threads` is off; `wait` uses `ResourceLoader.load`. Load steps post `ev=mark` as they start. Hitch rows post to the sink before the user:// write. The runner passes `--enable-logging` (not an uncap flag) and prints console lines.
+
+Web `20261015-220844` still counted load frames: ok=1, missing=-, sec=21.4, frames=1115, slow=47, fps_pct=95.8, worst=150. That percentage is not the bar.
+
+Vira: warmup frames are only frames while the loading bar is up. The 99% is the entire time the player can see the hub.
+
+`fps_pct` now counts a frame only when camp is showing and the loader bar is down. A frame before that is `bar=1` and is left out of `frames`, `slow`, and `fps_pct`. Paused menu frames stay out, as before.
+
+Web `20261015-221620`, that rule: ok=1, missing=-, sec=21.4, frames=1092, slow=15, fps_pct=98.6, worst=144.1. vsync=1, max_fps=120, refresh=60, paced=1, p50=16.7, p95=17.5, win=screen=1920x1080. bar_rows=26, pause_rows=2. Shape of the visible frames: edge=12 stutter=2 spike=1. Sustained run n=5, t=13.6–13.7, dt median 22.9, the moment the hub appears. The 144 ms row is `loco_idle` at t=32.5, idle_left, cell 9,15. The other visible slows are the first step of a facing, about 24–35 ms. Perf causes are still untouched. The visible-hub bar is 98.6, not 99.

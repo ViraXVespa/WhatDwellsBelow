@@ -73,19 +73,21 @@ static func start() -> void:
 	_hb("HB: fresh=1")
 	App.character_type = "male"
 	App.character_chosen = true
+	attach(App)
 	App.call_deferred("play_from_menu")
 
-static func attach(host: Node) -> void:
-	if not active() or host.get_node_or_null("HubBench") != null:
+static func attach(_host: Node) -> void:
+	if not active() or App.get_node_or_null("HubBench") != null:
 		return
 	var scr: GDScript = load("res://scripts/debug/playtest/hub_bench.gd") as GDScript
 	var node: Node = scr.new() as Node
 	node.name = "HubBench"
-	host.add_child(node)
+	App.add_child(node)
 
 var _state: int = ST_WAIT
 var _clock: float = 0.0
 var _wait_t: float = 0.0
+var _wait_hb: float = 2.0
 var _sub_t: float = 0.0
 var _face_i: int = 0
 var _face_idle: bool = false
@@ -167,6 +169,9 @@ func _process(delta: float) -> void:
 func _wait(delta: float) -> void:
 	if bool(App.get("_menu_loading")) or _actor() == null:
 		_wait_t += delta
+		if _wait_t >= _wait_hb and _wait_t <= 45.0:
+			_wait_hb += 2.0
+			_hb("HB: wait t=%.1f loading=%s actor=%s" % [_wait_t, str(bool(App.get("_menu_loading"))), str(_actor() != null)])
 		if _wait_t > 45.0:
 			_finish("stall")
 		return
@@ -317,8 +322,20 @@ func _next_visit() -> void:
 	_bias_t = 0.0
 	_state = ST_GOTO
 
+func _camp() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	var scene: Node = tree.current_scene
+	if scene != null and scene.get("_layout") != null:
+		return scene
+	return null
+
 func _build_visits() -> void:
-	var lay: Node = get_parent().get("_layout") as Node
+	var camp: Node = _camp()
+	var lay: Node = null
+	if camp != null:
+		lay = camp.get("_layout") as Node
 	if lay == null:
 		_finish("no_layout")
 		return
@@ -399,7 +416,7 @@ func _blank() -> void:
 	App.playtest.special = false
 
 func _close_ui() -> void:
-	var camp: Node = get_parent()
+	var camp: Node = _camp()
 	var ui_v: Variant = camp.get("ui") if camp != null else null
 	if ui_v is Node and (ui_v as Node).has_method("close_ui") and bool((ui_v as Node).get("open")):
 		(ui_v as Node).call("close_ui")

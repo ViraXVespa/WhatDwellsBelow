@@ -34,6 +34,7 @@ static var _keep_all: bool = false
 static var frame_n: int = 0
 static var slow_n: int = 0
 static var pause_slow_n: int = 0
+static var bar_slow_n: int = 0
 static var _dts: PackedFloat32Array = PackedFloat32Array()
 static var _phase: String = ""
 static var _play_s: float = 0.0
@@ -122,6 +123,7 @@ static func bench_reset(mult_value: float) -> void:
 	frame_n = 0
 	slow_n = 0
 	pause_slow_n = 0
+	bar_slow_n = 0
 	_dts = PackedFloat32Array()
 	_phase = ""
 	_play_s = 0.0
@@ -180,6 +182,14 @@ static func tick(host: Node, delta: float) -> void:
 		if _over_budget(delta):
 			pause_slow_n += 1
 			_note_paused(host, delta)
+		return
+	# The 99% bar is the whole time the player can see the hub. Frames while the
+	# loading bar is up, and frames before camp is showing, are not that time.
+	if not _hub_on_screen(host):
+		_break_run()
+		if _over_budget(delta):
+			bar_slow_n += 1
+			_note_bar(host, delta)
 		return
 	frame_n += 1
 	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
@@ -299,6 +309,7 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 		"worst_ms": snappedf(worst_ms, 0.1),
 		"web": 1 if OS.has_feature("web") else 0,
 		"pause_slow": pause_slow_n,
+		"bar_slow": bar_slow_n,
 	}
 	var shape: Dictionary = _slow_shape()
 	row["n_edge"] = int(shape["n_edge"])
@@ -572,6 +583,33 @@ static func _write_gap(delta: float, reason: String) -> void:
 		row["phase"] = _phase
 	_write_row(row)
 
+static func _hub_on_screen(host: Node) -> bool:
+	var loader_v: Variant = host.get("loader")
+	if loader_v is Node:
+		var loader: Node = loader_v as Node
+		if bool(loader.get("open")) or bool(loader.get("visible")):
+			return false
+	var tree: SceneTree = host.get_tree()
+	if tree == null:
+		return false
+	var scene: Node = tree.current_scene
+	if scene == null:
+		return false
+	if str(scene.name) == "Camp":
+		return true
+	return str(scene.scene_file_path).find("camp") >= 0
+
+static func _note_bar(host: Node, delta: float) -> void:
+	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
+	var row: Dictionary = _hitch_row(host, dt_ms)
+	row["bar"] = 1
+	_write_row(row)
+	why = ""
+	gx = 0
+	gy = 0
+	_whys.clear()
+	_mark_ms = 0
+
 static func _note_paused(host: Node, delta: float) -> void:
 	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
 	var row: Dictionary = _hitch_row(host, dt_ms)
@@ -586,12 +624,16 @@ static func _note_paused(host: Node, delta: float) -> void:
 
 static func _write_row(row: Dictionary) -> void:
 	row["bench_gen"] = _bench_gen
+	var line: String = JSON.stringify(row)
+	# Post before the file write. A web user:// flush must not hide the row, and
+	# a missing file handle must not drop it. Web skips per-row flush; the sink
+	# is what the runner reads, and close() still flushes.
+	_post(line)
 	if _fh == null:
 		return
-	var line: String = JSON.stringify(row)
 	_fh.store_line(line)
-	_fh.flush()
-	_post(line)
+	if not OS.has_feature("web"):
+		_fh.flush()
 
 ## Localhost web only (enabled() gates it): fire-and-forget POST to tools/hitch_sink.py; never awaited, errors dropped.
 static func _post(line: String) -> void:

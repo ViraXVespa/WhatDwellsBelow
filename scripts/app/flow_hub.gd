@@ -4,6 +4,7 @@ extends Object
 
 const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const PlayerSetup := preload("res://scripts/world/player/player_setup.gd")
@@ -104,6 +105,7 @@ static func _hub_paths() -> PackedStringArray:
 	])
 
 static func preload_hub(host: Node, _t0: int = 0) -> void:
+	HitchLog.mark("preload_music")
 	if host.music and host.music.has_method("preload_dungeon"):
 		var t_mus: int = Time.get_ticks_msec()
 		host.music.preload_dungeon()
@@ -124,6 +126,7 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 		var path: String = paths[i]
 		if host.loader:
 			host.loader.set_status(hub_status_for(path))
+		HitchLog.mark("preload_" + path.get_file().get_basename())
 		var t_file: int = Time.get_ticks_msec()
 		ResourceLoader.load(path)
 		LoadTiming.note("file", App.tr("flow_hub.dt") % [path.get_file(), Time.get_ticks_msec() - t_file])
