@@ -47,6 +47,15 @@ static var _run_vals: PackedFloat32Array = PackedFloat32Array()
 static var _run_best_vals: PackedFloat32Array = PackedFloat32Array()
 ## Web only. A JavaScript eval on every slow frame keeps the present over one refresh.
 static var _web_q: PackedStringArray = PackedStringArray()
+## Display server read-back. Queried at most twice a second; every frame was a web stall.
+static var _present_at: int = -100000
+static var _present_row: Dictionary = {}
+## Mesh and light totals. One walk per bench. A walk on every stall held web at two refreshes.
+static var _counted: bool = false
+static var _mesh_n: int = 0
+static var _light_n: int = 0
+## Last time a full stall row was built. Building one on every miss held the next present.
+static var _emit_at: int = -100000
 
 static func enabled() -> bool:
 	if _on >= 0:
@@ -136,6 +145,12 @@ static func bench_reset(mult_value: float) -> void:
 	_run_vals = PackedFloat32Array()
 	_run_best_vals = PackedFloat32Array()
 	_web_q = PackedStringArray()
+	_present_at = -100000
+	_present_row = {}
+	_counted = false
+	_mesh_n = 0
+	_light_n = 0
+	_emit_at = -100000
 	_bench_gen += 1
 	file_path = ""
 	_t0_ms = 0
@@ -230,6 +245,9 @@ static func close() -> void:
 ## Read-back of the window the frame was actually presented on. Web is always paced:
 ## DisplayServerWeb ignores window_set_vsync_mode and the loop is requestAnimationFrame.
 static func present() -> Dictionary:
+	var now: int = Time.get_ticks_msec()
+	if not _present_row.is_empty() and now - _present_at < 500:
+		return _present_row
 	var mode: DisplayServer.VSyncMode = DisplayServer.window_get_vsync_mode()
 	var hz: float = DisplayServer.screen_get_refresh_rate()
 	if hz <= 1.0:
@@ -240,7 +258,8 @@ static func present() -> Dictionary:
 	var scr_i: int = DisplayServer.window_get_current_screen()
 	var screen: Vector2i = DisplayServer.screen_get_size(scr_i)
 	var win: Vector2i = DisplayServer.window_get_size()
-	return {
+	_present_at = now
+	_present_row = {
 		"vsync": int(mode),
 		"max_fps": Engine.max_fps,
 		"refresh_hz": snappedf(hz, 0.1),
@@ -251,6 +270,7 @@ static func present() -> Dictionary:
 		"screen_w": screen.x,
 		"screen_h": screen.y,
 	}
+	return _present_row
 
 static func present_text() -> String:
 	var info: Dictionary = present()
@@ -366,9 +386,16 @@ static func status_line() -> String:
 
 static func _note(host: Node, delta: float) -> void:
 	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
-	if dt_ms > worst_ms:
+	var fresh: bool = dt_ms > worst_ms
+	if fresh:
 		worst_ms = dt_ms
 	hitch_n += 1
+	# The counters above are the 99% bar. Building the row on every miss costs
+	# another present on web, so a single stall becomes the rest of the walk.
+	var now: int = Time.get_ticks_msec()
+	if not fresh and now - _emit_at < 100:
+		return
+	_emit_at = now
 	_write_row(_hitch_row(host, dt_ms))
 	why = ""
 	gx = 0
@@ -472,8 +499,12 @@ static func _hub_ctx(host: Node, row: Dictionary) -> void:
 		row["ui"] = ",".join(panels)
 	var gen: Node = scn.get_node_or_null("Generated")
 	row["gen"] = gen.get_child_count() if gen != null else 0
-	row["meshes"] = gen.find_children("*", "MeshInstance3D", true, false).size() if gen != null else 0
-	row["lights"] = scn.find_children("*", "Light3D", true, false).size()
+	if not _counted and gen != null:
+		_counted = true
+		_mesh_n = gen.find_children("*", "MeshInstance3D", true, false).size()
+		_light_n = scn.find_children("*", "Light3D", true, false).size()
+	row["meshes"] = _mesh_n
+	row["lights"] = _light_n
 
 static func _where(host: Node) -> String:
 	if App != null and App.in_dungeon:
@@ -629,15 +660,13 @@ static func _note_paused(host: Node, delta: float) -> void:
 static func _write_row(row: Dictionary) -> void:
 	row["bench_gen"] = _bench_gen
 	var line: String = JSON.stringify(row)
-	# Post before the file write. A web user:// flush must not hide the row, and
-	# a missing file handle must not drop it. Web skips per-row flush; the sink
-	# is what the runner reads, and close() still flushes.
+	# Post before the file write. A web user:// write on the stall frame held
+	# the next present. The sink is what the web runner reads.
 	_post(line)
-	if _fh == null:
+	if OS.has_feature("web") or _fh == null:
 		return
 	_fh.store_line(line)
-	if not OS.has_feature("web"):
-		_fh.flush()
+	_fh.flush()
 
 ## Localhost web only. Rows wait here so the frame that measured them does not eval JavaScript.
 static func _post(line: String) -> void:
