@@ -4,7 +4,7 @@ id: hub-perf-fix
 owner: build
 status: open
 done-when: The hub-bench walker reports 99 % of frames at or above 60 FPS (threshold 1×) across two full ~30 s runs, with the causes of the previous sub-60 frames fixed and the hitch log clean of recurring major hits. Design docs and code-map updated if ownership or tunables changed.
-resume: python tools/open_slice.py debug --task hub-perf-fix
+resume: python tools/open_slice.py debug.playtest --task hub-perf-fix
 area: debug
 door: debug
 job: playtest
@@ -75,3 +75,7 @@ Measured this session, causes untouched:
 - Web `20261015-191344`: the first window was killed because Edge's starter process exits and the runner treated that as a crash. The rerun stayed up, fullscreen, win=screen=1920x1080. vsync read-back 1, paced=1, p50=16.7 (the refresh), p95=41.6, frames 1041, slow 95, fps_pct 90.9, sec 21.5, ok=1, worst 150. The leg fails the 99% bar. Browser cap and GPU vsync stayed on.
 
 Still open: the 99% bar on the web leg, and the boot / camp / first-walk causes. Do not launch the web leg with the uncap flags. Walk clock ends before 30 s because the end fill stops after two steps.
+
+---
+
+Additional session notes from Vira: I'm not sure that everything got completed on the playtest end. The web playtest definitely had some visible FPS drops going on there that will probably be revealing in regards to the updates needed to the logging. Keep this session focused on getting the hub-bench logics up to the level we need them to be at before we can have you focused entirely on solving the hitching issues.
