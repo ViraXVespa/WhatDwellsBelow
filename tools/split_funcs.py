@@ -309,7 +309,7 @@ def build(items, plan, path, root, in_folder=False):
                 if re.search(r"(?<![\w.])await\b", body(it)):  # coroutine: keep the delegate awaiting it
                     call = "await " + call
                 fac.append(sig + "\n\t" + ("" if ret == "void" else "return ") + call + "\n")
-            elif it["kind"] == "const" and ext[n]:
+            elif it["kind"] == "const" and (ext[n] or any(re.search(r"(?<![\w.])" + n + r"\b", body(o)) for o in items if o["name"] not in owner)):
                 fac.append(f"const {n} := {alias[owner[n]]}.{n}")
         else:
             fac.append(body(it))
