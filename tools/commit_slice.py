@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Commit the slice at Complete (no wait for her yes), only when the build gate ran after your last edit, or the skip is said out loud.
 
-    python tools/commit_slice.py [--message-file _logs/commit-msg.txt] [--gate-skipped "why"] [--dry-run]
+    python tools/commit_slice.py [--message-file _logs/commit-msg.txt] [--gate-skipped "why" | --red-gate LOGPATH] [--dry-run]
 The gate is `python tools/run_build_gate.py --batch`, plus `--visual JOB` only when that job has a shot flow. This tool reads its newest summary in _logs/build-gate: it must end in
 `RESULT PASS` and be newer than every changed file. With no passing gate it stops (exit 1) and prints both ways forward. `--gate-skipped WHY`
-commits anyway and prints the line `Did not work: gate not run (WHY)` that opens your final message.
+commits anyway and prints the line `Did not work: gate not run (WHY)` that opens your final message. `--red-gate LOGPATH` is for a gate
+that ran and stayed red at Complete: it commits with `RED GATE: ` before the subject and a `Red-gate: LOGPATH` line, and prints the
+`Red gate: LOGPATH` line that opens the done notice.
 Staged: every change, new `.import` sidecars included; sidecars Godot only modified (churn) are left out and counted. Nothing is pushed: plain `git push` of the week branch follows, then the done notice.
 """
 from __future__ import annotations
@@ -50,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Commit the slice after the build gate (or an explicit skip).", writes=True)
     ap.add_argument("--message-file", default="_logs/commit-msg.txt", help="Commit message file inside the worktree (default _logs/commit-msg.txt).")
     ap.add_argument("--gate-skipped", default="", metavar="WHY", help="Commit without a passing gate; prints the `Did not work: gate not run` line for your message.")
+    ap.add_argument("--red-gate", dest="red_gate", default="", metavar="LOGPATH", help="Commit at Complete with the gate red: marks the commit message and prints the `Red gate:` line for the done notice.")
     ap.add_argument("--selftest", action="store_true", help="Run the built-in cases.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -63,8 +66,13 @@ def main(argv: list[str] | None = None) -> int:
     if not rows:
         agent_log.fail("nothing to commit")
     why = gate_state(root, rows)
-    if why and not args.gate_skipped.strip():
-        agent_log.fail(f"gate: {why}. Run `python tools/run_build_gate.py --batch` (add `--visual JOB` only when that job has a shot flow), or commit with --gate-skipped \"why\" and open your final message with `Did not work: gate not run (why)`")
+    red = args.red_gate.strip()
+    if red and args.gate_skipped.strip():
+        agent_log.fail("--red-gate (the gate ran red) and --gate-skipped (it never ran) do not go together")
+    if red and not (root / red).is_file() and not Path(red).is_file():
+        agent_log.fail(f"--red-gate: no log at {red}; pass the red gate's summary path (`read_summary.py --job build-gate` names it)")
+    if why and not (args.gate_skipped.strip() or red):
+        agent_log.fail(f"gate: {why}. Run `python tools/run_build_gate.py --batch` (add `--visual JOB` only when that job has a shot flow), or commit with --red-gate LOGPATH (it ran red) or --gate-skipped \"why\" (never ran) and open your final message with `Did not work: gate not run (why)`")
     churn = [p for st, p in rows if p.endswith(".import") and st.strip() == "M"]
     paths = [p for _, p in rows if p not in churn]
     if not paths:
@@ -75,14 +83,20 @@ def main(argv: list[str] | None = None) -> int:
     p = subprocess.run(["git", "-C", str(root), "add", "-A", "--pathspec-from-file=-"], input="\n".join(paths) + "\n", capture_output=True, text=True, encoding="utf-8")
     if p.returncode:
         agent_log.fail("git add failed: " + (p.stderr or p.stdout).strip()[:300])
+    if red:
+        text = msg.read_text(encoding="utf-8-sig")
+        if not text.startswith("RED GATE: "):
+            msg.write_text("RED GATE: " + text.rstrip("\n") + f"\n\nRed-gate: {red}\n", encoding="utf-8")
     c = git(root, "commit", "-F", str(msg))
     if c.returncode:
         agent_log.fail("git commit failed: " + (c.stderr or c.stdout).strip()[:300])
     sha = git(root, "rev-parse", "--short", "HEAD").stdout.strip()
     print(f"committed {sha}: {len(paths)} path(s); {len(churn)} modified .import sidecar(s) left uncommitted (Godot churn); not pushed: plain `git push` now, then the done notice")
-    if why:
+    if red:
+        print(f"Red gate: {red} (open the done notice with this line; the task keeps its handoff notes)")
+    elif why:
         print(f"Did not work: gate not run ({args.gate_skipped.strip()})")
-    return agent_log.emit_result("PASS", commit=sha, paths=len(paths), left_out=len(churn), gate="skipped" if why else "passed")
+    return agent_log.emit_result("PASS", commit=sha, paths=len(paths), left_out=len(churn), gate="red" if red else "skipped" if why else "passed")
 
 def selftest() -> int:
     import os
@@ -133,6 +147,14 @@ def selftest() -> int:
         p = run("--gate-skipped", "no Godot here")
         if p.returncode != 0 or "Did not work: gate not run (no Godot here)" not in p.stdout:
             bad.append("--gate-skipped commits and prints the Did not work line: " + p.stdout + p.stderr)
+        (r / "a.txt").write_text("4", encoding="utf-8")
+        (g / "red.txt").write_text("RESULT FAIL fail_signals=1\n", encoding="utf-8")
+        if run("--red-gate", "_logs/build-gate/missing.txt").returncode == 0 or run("--red-gate", "_logs/build-gate/red.txt", "--gate-skipped", "x").returncode == 0:
+            bad.append("--red-gate needs an existing log and refuses --gate-skipped")
+        p = run("--red-gate", "_logs/build-gate/red.txt")
+        log = git(r, "log", "-1", "--format=%B").stdout
+        if p.returncode != 0 or "Red gate: _logs/build-gate/red.txt" not in p.stdout or not log.startswith("RED GATE: slice") or "Red-gate: _logs/build-gate/red.txt" not in log or "Did not work" in p.stdout:
+            bad.append("--red-gate commits with the RED GATE marker and prints the Red gate line: " + p.stdout + p.stderr + log)
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
