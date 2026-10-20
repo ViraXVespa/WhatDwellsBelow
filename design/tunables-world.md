@@ -147,7 +147,7 @@ Roll rules and the holds cap: inventory (gear job).
 | Display mode | borderless | Desktop: windowed / borderless / exclusive. Web: `web_fullscreen` off until a gesture. |
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target dives to steady early clears | 20–30 | Competent player; feel target |
-| Target floor-5 clear time | 5–10 hours | Competent player; feel target |
+| Target time to reach floor 6 or clear floor 5 | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |
 | Hitch budget | 1/60 s | Frame budget used by the hitch log |
 | Hitch multiplier | 4 | Trip when `delta >= budget × 4` (~66.7 ms) |

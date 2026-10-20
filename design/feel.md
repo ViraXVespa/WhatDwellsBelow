@@ -6,7 +6,7 @@ Read when: difficulty, raid-timer, parity, polish
 ## Time targets
 
 - A brand-new player SHOULD reach a first successful extraction quickly (target: tunables-world).
-- A competent player SHOULD be able to reach and clear floor 6 in roughly 5–10 hours of total play. This is a feel target, not a hard cap.
+- A competent player SHOULD be able to reach floor 6 or clear floor 5 within the target total play time (tunables-world). This is a feel target, not a hard cap.
 - Skilled play SHOULD support significantly longer continuous runs.
 
 ## Death and learning curve
