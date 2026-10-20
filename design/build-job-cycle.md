@@ -5,7 +5,49 @@ Read when: Grok Build gather, change, or prove
 
 For **Grok Build** only. Web / chat and Grok Bot do not load this file.
 
-A **job** is one cycle: gather, change, prove. Report when the work is done.
+A **job** is one cycle: Gather, Prepare, Change, Prove, Complete. Report when the work is done. Ask as many questions as the job needs, in as many rounds as it needs, and ask again whenever a discovery changes what the User will see or what was assumed. No limit on count or rounds. **Multi-system job:** before the first change, list every system it touches and read each one's doc and `code_map.py row`.
+
+### Gather
+
+Gather finishes before any change.
+
+1. Read the relevant code and docs (planned `list_xref`, planned `show_func`, one `code_map.py` row when a live script is involved; list every system and read its doc and code-map row before a multi-system change).
+2. State the observable outcome that will show the task is done (one line: what the User or the bench will see if the work is correct).
+3. Confirm whether the existing tooling or in-game signal can show that outcome. Record what is missing, if anything.
+
+No code changes. No new tools.  
+End of Gather: tell the User to run `/fork`. Continue in the new peer session. The original session ID is the reset point. Later retries use `grok -r <original-session-id> --fork-session` from the worktree directory.
+
+### Prepare
+
+If a signal is missing, add the cheapest instrument that provides it, or run the information-gathering pass that does not alter behavior. Gate new instrumentation the same way existing debug logging is gated (runtime check, localhost/web or bench flag only) so shipping builds are unaffected. A tool that would help later tasks is added under `tools.md` rule 5.
+
+If Prepare discovers the task is blocked or needs a design answer, stop and update the task instead of continuing.
+
+### Change
+
+Implement the task using the information and tooling from Gather and Prepare.  
+Run `python tools/check_gd_load.py` once the edits for the unit are complete, before Prove.  
+No formal prove yet.
+
+### Prove
+
+Final verification that the outcome is met.  
+Run the compile check, then (for a visual change) the job’s shot flows and that door’s UI load check, then `run_build_gate.py --batch`.
+
+A red prove allows at most one small corrective edit and one re-run (`tools.md` rule 10). Still red: stop and report the log path. Do not open a new diagnostic cycle inside the prove.
+
+### Complete
+
+Update docs and the task.  
+- If done: close the task (`python tools/task.py done ID`).  
+- If not: update the task with handoff notes (what was tried, what the prove showed, where to resume) and the command `grok -r <original-session-id> --fork-session` (run from the worktree directory).  
+
+Commit and push (`commit_slice.py` then plain `git push` to the week branch).  
+Present the user with any verification they still need to do and, when the task is not closed, the `grok -r <original-session-id> --fork-session` command.
+
+A session does one unit. Do not run `--next`.
+
 
 Gather is planned `list_xref` plus planned `show_func` plus one `code_map.py row` when a live script is in the slice. `summarize_scripts` is not gather. `list_route` and `list_changed` stay outside the gather set (`list_route` is slice boot; `list_changed` is git inventory).
 
@@ -21,7 +63,7 @@ Change is one slice in a Grok worktree cut from the week branch `grok-build-w{N}
 
 **Visual unit.** A job the start card marks NO PLAY CAMERA is not one of these: no play-camera baseline, no new shot flow, no `--visual` on the gate. Its proof is the check the job doc names (a keyed still: `rekey_preview.py`). A screen: baseline first (`run_shot_flow.py --job J`, or `--flow N`; `--save-baseline DIR` keeps it), looked at. Change one unit or screen. Re-shooting one state: `run_shot_flow.py --flow N --state NAME` (the steps up to that shot; says changed or same). A detail or a pixel question: `python tools/shot_crop.py PNG --box X,Y,W,H --zoom N` / `--probe X,Y` / `--near HEX`, not a script of your own. Shoot after, look at before and after, `python tools/show_png.py PATH=description ...` opens them for her, say what is on each. Cleanup, gates, commit_slice.py and the push finish before the done notice. Do not start the next unit. After a rejection the next step is a question about what was wrong, not an edit. Before the done notice, update docs/tasks/sources/tools, run gates, then `commit_slice.py` + plain push to the week branch. After the commit and push, inform her whether a playtest confirmation is required, recommended, or not needed. Do not ask. Follow-ups become a new commit or handoff session. (Never main, never force.) Iterating one unit with the User is exempt from the rerun counts (`tools.md` rule 10).
 
-**Every pass.** After each small batch of edits (a few files, never a sweep), run `python tools/check_gd_load.py`: it loads every changed and untracked `.gd` inside the project with its autoloads, so a stray `)` or a bad reference fails. The import check, a smoke and a standalone `--script` parse do not load every script, so none of them is evidence that the scripts compile. A multi-line splice gets its own check before the next edit.
+**Compile check.** Run `python tools/check_gd_load.py` once the edits for the unit are complete (before Prove). It loads every changed and untracked `.gd` inside the project with its autoloads, so a stray `)` or a bad reference fails. The import check, a smoke and a standalone `--script` parse do not load every script, so none of them is evidence that the scripts compile.
 
 **Read what you run.** Open stderr and every check result before you describe it; output you did not read is not harmless, and a passing check that does not cover the claim is not evidence of it. The done notice comes after the compile check passed, the output is read, the commit and push have landed, and (visual) the frames are shown and described. It carries a short summary of what changed and whether a playtest confirmation is required, recommended, or not needed. It is not a question.
 
@@ -74,7 +116,7 @@ Lean: the task in her words; where the last result and its handoff notes live (c
 
 ## Red prove and merge-back
 
-**Retry** (one diagnosis, one fix: `tools.md` rule 10). The checkpoint (the worktree's gather session) is the point a retry returns to. A red prove prints a RETRY block: the command `grok -r <checkpoint> --fork-session` for the User to run from the worktree directory (a fork keeps the directory of the session it forks, which is the worktree; no `--cwd`, never `--worktree`; gather context kept), and a paste-ready prompt: which prove failed, the red output in a line or two, the files in `git diff grok-build-w{N}` (working tree, so uncommitted edits show; untracked files are listed too) to look at first, and the ask for one diagnosis and one fix. The forked session does not re-gather: it reads only the changed files, diagnoses once, fixes once and reruns once. No checkpoint saved for this worktree: the block says so and forks nothing; run `--checkpoint` in the gather session, or ask the User for its id (`grok sessions list` in the worktree). Still red: stop and report. The worktree's git history holds the code.
+**Retry** (one small corrective edit (prove is final verification): `tools.md` rule 10). The checkpoint (the worktree's gather session) is the point a retry returns to. A red prove prints a RETRY block: the command `grok -r <checkpoint> --fork-session` for the User to run from the worktree directory (a fork keeps the directory of the session it forks, which is the worktree; no `--cwd`, never `--worktree`; gather context kept), and a paste-ready prompt: which prove failed, the red output in a line or two, the files in `git diff grok-build-w{N}` (working tree, so uncommitted edits show; untracked files are listed too) to look at first, and the ask for one diagnosis and one fix. The forked session does not re-gather: it reads only the changed files, diagnoses once, fixes once and reruns once. No checkpoint saved for this worktree: the block says so and forks nothing; run `--checkpoint` in the gather session, or ask the User for its id (`grok sessions list` in the worktree). Still red: stop and report. The worktree's git history holds the code.
 
 **Merge-back** on a green prove. A Grok worktree is a full clone on the week branch itself: commit there, then `git push origin grok-build-w{N}` (plain push, no force, never main); there is no separate commit to merge by hand, and the main checkout pulls it. Put a short note in the commit message (a file under the worktree's `_logs/`, `git commit -F`); resolve conflicts yourself. Do not wait for approval before the commit or the push. After the push, the done notice says whether a playtest confirmation is required (game balance, audio, visuals / art, controls), recommended (feel, hitch, or timing the gates do not score), or not needed (refactors, tools, docs, and tests). Build writes no changelog files (the week-close `0.N.0.md` is a web session's: `versioning.md`).
 
