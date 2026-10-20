@@ -26,6 +26,7 @@ id | owner | status | title | needs
 hub-perf-fix | build | open | Hub perf fix — diagnose and clear sub-60 FPS on the bench | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
+debug-ship-exclude | bot | open | Exclude debug systems from ship builds | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
