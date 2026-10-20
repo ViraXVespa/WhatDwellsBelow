@@ -8,6 +8,8 @@ extends Object
 
 const Tok := preload("res://scripts/ui/ui_tokens.gd")
 
+const Face := preload("res://scripts/ui/btn_skin/face.gd")
+const Tint := preload("res://scripts/ui/btn_skin/tint.gd")
 static func watch(c: Control, kind: String, data: Array = []) -> void:
 	c.set_meta("skin_kind", kind)
 	c.set_meta("skin_data", data)
@@ -46,29 +48,7 @@ static func _added(n: Node) -> void:
 
 ## Ink words, cream plates and rules on one node -> the skin's panel colours.
 static func tint(n: Node, p: Dictionary) -> void:
-	var inks: Array = [Tok.INK, Tok.INK_SOFT, Tok.INK_FAINT]
-	if n is RichTextLabel or n is Label:
-		var key: String = "default_color" if n is RichTextLabel else "font_color"
-		var src: Color = n.get_meta("ink_src", (n as Control).get_theme_color(key))
-		n.set_meta("ink_src", src)
-		if src.is_equal_approx(Tok.DANGER):
-			(n as Control).add_theme_color_override(key, p["danger_word"])
-		for i: int in inks.size():
-			if src.is_equal_approx(inks[i]):
-				(n as Control).add_theme_color_override(key, p["words"][i])
-		## Outline only behind light words (UiBuild.halo): a dark halo smudges dark ink.
-		if (n as Control).get_theme_color(key).get_luminance() < 0.5:
-			(n as Control).add_theme_constant_override("outline_size", 0)
-	elif n is ColorRect:
-		var r := n as ColorRect
-		var src: Color = r.get_meta("ink_src", r.color)
-		r.set_meta("ink_src", src)
-		if Color(src, 1.0).is_equal_approx(Color(Tok.PAPER, 1.0)):
-			r.color = p["panel"]
-		elif src.is_equal_approx(Tok.RULE):
-			r.color = p["panel_edge"]
-	elif n is TextureRect and n.has_meta("paper_tex"):
-		(n as TextureRect).visible = false
+	Tint.tint(n, p)
 
 ## Scroll bars in the skin: a quiet track, the edge colour for the thumb, the bright edge when hovered/dragged.
 static func scroll(sc: ScrollContainer, name: String, p: Dictionary) -> void:
@@ -156,31 +136,11 @@ static func restyle(c: Control) -> void:
 			slot(c as Button, name, data[0], data[1], bool(data[2]))
 
 static func box(bg: Color, edge: Color, width: int, foot: int, radius: int) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = bg
-	s.border_color = edge
-	s.set_border_width_all(width)
-	s.border_width_bottom = foot
-	s.set_corner_radius_all(radius)
-	s.anti_aliasing = false
-	s.content_margin_left = 14
-	s.content_margin_right = 14
-	s.content_margin_top = 6
-	s.content_margin_bottom = 6
-	return s
+	return Face.box(bg, edge, width, foot, radius)
 
 ## Focus ring drawn over the current state: no fill, bright edge and a soft glow, so gamepad focus always reads.
 static func ring(p: Dictionary) -> StyleBoxFlat:
-	var w: int = int(p.get("ring", 2))
-	var s: StyleBoxFlat = box(Color(0, 0, 0, 0), p["glow"], w, w, int(p["radius"]))
-	s.draw_center = false
-	s.shadow_color = Color(p["glow"].r, p["glow"].g, p["glow"].b, 0.55)
-	s.shadow_size = 5
-	s.expand_margin_left = 2
-	s.expand_margin_right = 2
-	s.expand_margin_top = 2
-	s.expand_margin_bottom = 2
-	return s
+	return Face.ring(p)
 
 static var _faces: Dictionary = {}
 
@@ -191,13 +151,13 @@ static func prewarm() -> void:
 			for lit: bool in [false, true]:
 				var key: String = name + "|" + role + ("|lit" if lit else "")
 				if not _faces.has(key):
-					_faces[key] = _face(palette(name), role, lit)
+					_faces[key] = Face._face(palette(name), role, lit)
 
 ## A button face set. lit = the selected tab/option. Boxes are shared per skin, role and lit.
 static func button(b: Button, name: String, role: String, lit: bool) -> void:
 	var key: String = name + "|" + role + ("|lit" if lit else "")
 	if not _faces.has(key):
-		_faces[key] = _face(palette(name), role, lit)
+		_faces[key] = Face._face(palette(name), role, lit)
 	_wear(b, _faces[key])
 
 static func _wear(b: Button, f: Dictionary) -> void:
@@ -208,57 +168,12 @@ static func _wear(b: Button, f: Dictionary) -> void:
 		b.add_theme_color_override(col, f["words"][col])
 	b.end_bulk_theme_override()
 
-static func _face(p: Dictionary, role: String, lit: bool) -> Dictionary:
-	var r: int = int(p["radius"])
-	var fill: Color = p["primary_fill"] if role == "primary" else p["fill"]
-	var edge: Color = p["primary_edge"] if role == "primary" else p["edge"]
-	var word: Color = p["word"]
-	if role == "danger":
-		edge = p["danger_edge"]
-		word = p["danger_word"]
-	if lit:
-		fill = p["primary_fill"]
-		edge = p["glow"]
-		word = p["word_hi"]
-	var normal: StyleBoxFlat = box(fill, edge, 2 if lit else 1, 4 if lit else 3, r)
-	normal.shadow_color = Color(0, 0, 0, 0.35)
-	normal.shadow_size = 2
-	normal.shadow_offset = Vector2(0, 2)
-	var hover: StyleBoxFlat = box(p["hover"], p["edge_hi"], 1, 3, r)
-	var press: StyleBoxFlat = box(p["press"], p["edge_hi"], 1, 1, r)
-	press.content_margin_top = 8
-	press.content_margin_bottom = 4
-	var off: StyleBoxFlat = box(p["off"], p["edge_off"], 1, 1, r)
-	return {
-		"boxes": {"normal": normal, "hover": hover, "pressed": press, "hover_pressed": press, "focus": ring(p), "disabled": off},
-		"words": {"font_color": word, "font_hover_color": p["word_hi"], "font_focus_color": p["word_hi"],
-			"font_pressed_color": p["word_hi"], "font_hover_pressed_color": p["word_hi"], "font_disabled_color": p["word_off"]},
-	}
-
 ## Gear slot / item cell: the frame's slot face, tinted by rarity, rarity edge when it has one. Shared per look.
 static func slot(b: Button, name: String, fill: Color, border: Color, on: bool) -> void:
 	var key: String = "slot|%s|%s|%s|%s" % [name, fill.to_html(), border.to_html(), on]
 	if not _faces.has(key):
-		_faces[key] = _slot_face(palette(name), fill, border, on)
+		_faces[key] = Face._slot_face(palette(name), fill, border, on)
 	_wear(b, _faces[key])
-
-static func _slot_face(p: Dictionary, fill: Color, border: Color, on: bool) -> Dictionary:
-	var r: int = int(p["radius"])
-	var face: Color = p["slot"]
-	if fill.a > 0.05 and (fill.r + fill.g + fill.b) < 2.7:
-		face = face.lerp(Color(fill.r, fill.g, fill.b, face.a), 0.30)
-	var edge: Color = border if border.a > 0.4 else p["slot_edge"]
-	var se: Color = p["slot_edge"]
-	return {
-		"boxes": {
-			"normal": box(face, p["glow"] if on else edge, 2 if on else 1, 3 if on else 2, r),
-			"hover": box(face.lightened(0.12), p["edge_hi"], 1, 2, r),
-			"pressed": box(face.darkened(0.12), p["edge_hi"], 1, 1, r),
-			"focus": ring(p),
-			"disabled": box(Color(face.r, face.g, face.b, 0.22), Color(se.r, se.g, se.b, 0.35), 1, 1, r),
-		},
-		"words": {"font_color": Tok.INK, "font_hover_color": Tok.INK, "font_focus_color": Tok.INK},
-	}
 
 ## Stats card (gear board "Bonuses" pager) on a host frame: the skin's button face as panel, its words for text.
 static func card(panel: PanelContainer, p: Dictionary, labels: Array) -> void:
