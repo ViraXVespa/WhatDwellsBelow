@@ -2,7 +2,7 @@ extends Object
 
 ## Split from hub_bench.gd: _build_visits, _add_visit, _push_visit....
 
-const End := preload("res://scripts/debug/playtest/hub_bench_end.gd")
+const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 
 static func _build_visits(host: Node) -> void:
 	var camp: Node = _camp(host)

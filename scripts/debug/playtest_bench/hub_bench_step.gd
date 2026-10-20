@@ -4,8 +4,8 @@ extends Object
 
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const End := preload("res://scripts/debug/playtest/hub_bench_end.gd")
-const Visit := preload("res://scripts/debug/playtest/hub_bench_visit.gd")
+const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
+const Visit := preload("res://scripts/debug/playtest_bench/hub_bench_visit.gd")
 
 static func _wait(host: Node, delta: float) -> void:
 	var iso: bool = CliArgs.has(host.ISO_FLAG)

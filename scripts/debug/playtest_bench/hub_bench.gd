@@ -9,9 +9,9 @@ const FLAG := "--wdb-hub-bench"
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
-const Iso := preload("res://scripts/debug/playtest/hub_bench_iso.gd")
-const End := preload("res://scripts/debug/playtest/hub_bench_end.gd")
-const Step := preload("res://scripts/debug/playtest/hub_bench_step.gd")
+const Iso := preload("res://scripts/debug/playtest_bench/hub_bench_iso.gd")
+const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
+const Step := preload("res://scripts/debug/playtest_bench/hub_bench_step.gd")
 const ST_WAIT := 0
 const ST_FACE := 1
 const ST_GOTO := 2
@@ -91,7 +91,7 @@ static func start() -> void:
 static func attach(_host: Node) -> void:
 	if not active() or App.get_node_or_null("HubBench") != null:
 		return
-	var scr: GDScript = load("res://scripts/debug/playtest/hub_bench.gd") as GDScript
+	var scr: GDScript = load("res://scripts/debug/playtest_bench/hub_bench.gd") as GDScript
 	var node: Node = scr.new() as Node
 	node.name = "HubBench"
 	App.add_child(node)

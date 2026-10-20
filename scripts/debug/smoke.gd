@@ -14,7 +14,7 @@ const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const PlaytestLive := preload("res://scripts/debug/playtest/live_smoke.gd")
-const HubBench := preload("res://scripts/debug/playtest/hub_bench.gd")
+const HubBench := preload("res://scripts/debug/playtest_bench/hub_bench.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 

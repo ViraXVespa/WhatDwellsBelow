@@ -2,8 +2,8 @@ extends Object
 
 ## Split from hub_bench.gd: _iso_kinds, _iso_gather, _iso_counts....
 
-const End := preload("res://scripts/debug/playtest/hub_bench_end.gd")
-const Visit := preload("res://scripts/debug/playtest/hub_bench_visit.gd")
+const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
+const Visit := preload("res://scripts/debug/playtest_bench/hub_bench_visit.gd")
 
 static func _iso_kinds() -> PackedStringArray:
 	return PackedStringArray([
