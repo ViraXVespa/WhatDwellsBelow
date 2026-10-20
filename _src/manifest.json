@@ -126,48 +126,6 @@
       "cell": ""
     },
     {
-      "live": "assets/tiles/plaza_grass.png",
-      "source": "sources/assets/tiles/plaza_grass.jpg",
-      "origin": "_src/sources/assets/tiles/plaza_grass.jpg",
-      "mad": 1.53,
-      "agree": 0.999,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
-      "cell": ""
-    },
-    {
-      "live": "assets/tiles/plaza_ground.png",
-      "source": "sources/assets/tiles/plaza_ground.jpg",
-      "origin": "_src/sources/assets/tiles/plaza_ground.jpg",
-      "mad": 0.78,
-      "agree": 1.0,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
-      "cell": ""
-    },
-    {
-      "live": "assets/tiles/plaza_ground_b.png",
-      "source": "sources/assets/tiles/plaza_ground_b.jpg",
-      "origin": "_src/sources/assets/tiles/plaza_ground_b.jpg",
-      "mad": 0.72,
-      "agree": 1.0,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
-      "cell": ""
-    },
-    {
       "live": "assets/tiles/plaza_path.png",
       "source": "sources/assets/tiles/plaza_path.png",
       "origin": "_src/sources/assets/tiles/plaza_path.png",
@@ -207,20 +165,6 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 1024,
-      "cell": ""
-    },
-    {
-      "live": "assets/tiles/plaza_wall.png",
-      "source": "sources/assets/tiles/plaza_wall.png",
-      "origin": "_src/sources/assets/tiles/plaza_wall.png",
-      "mad": 0.0,
-      "agree": 1.0,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
       "cell": ""
     },
     {
@@ -7849,30 +7793,6 @@
     },
     {
       "live": "assets/ui/frames/dumpster/body.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-40-1.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-55-2.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-64-8.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-72-3.png",
       "best_mad": null,
       "best_agree": null,
       "best_origin": null
