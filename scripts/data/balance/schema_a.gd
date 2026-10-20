@@ -83,7 +83,7 @@ static func rows() -> Array:
 		["hall_hug_gap", 1.0, 8.0, 1.0],
 		["hall_stub_count", 0.0, 24.0, 1.0],
 		["fog_radius", 2.0, 12.0, 1.0],
-		["max_clerks", 1.0, 3.0, 1.0],
+		["max_clerks", 1.0, 12.0, 1.0],
 		["ghost_shop_chance", 0.0, 1.0, 0.05],
 		["base_guards", 3.0, 16.0, 1.0],
 		["boss_hp_mult", 2.0, 20.0, 0.5],
