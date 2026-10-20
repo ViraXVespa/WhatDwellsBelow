@@ -31,12 +31,10 @@ USEFUL = (
     "summary.json",
 )
 
-
 def label(cwd_encoded: str) -> str:
     """Text after the last %5C (the worktree or folder name)."""
     parts = cwd_encoded.split("%5C")
     return unquote(parts[-1]) if parts else cwd_encoded
-
 
 def recent(n: int = 10) -> list[tuple[float, Path, str]]:
     """(mtime, session_dir, label) for the n newest sessions, skipping iso worktrees."""
@@ -60,12 +58,9 @@ def recent(n: int = 10) -> list[tuple[float, Path, str]]:
     out.sort(key=lambda x: x[0], reverse=True)
     return out[:n]
 
-
-
 ENC = re.compile(r'"encrypted_content":\s*"[^"]*"')
 IMG_READ = re.compile(r'^\{"type":"tool_result".*?"content":"Read image file:')
 IMG_DATA = re.compile(r'"type":"image","data":')
-
 
 def scrub(text: str) -> str:
     """Drop encrypted blobs and image-read tool results."""
@@ -73,13 +68,11 @@ def scrub(text: str) -> str:
     lines = [ln for ln in text.splitlines() if not IMG_READ.match(ln) and not IMG_DATA.search(ln)]
     return "\n".join(lines)
 
-
 def read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return ""
-
 
 def terminal_blob(sess: Path) -> str:
     term = sess / "terminal"
@@ -92,8 +85,6 @@ def terminal_blob(sess: Path) -> str:
             continue
         parts.append(f"===== {log.name} =====\n{body}")
     return scrub("\n\n".join(parts)) if parts else "(no .log files)"
-
-
 
 def _file_to_clipboard(path: Path) -> None:
     """Put path on the Windows clipboard as a file drop (CF_HDROP) so Ctrl+V pastes the file."""
@@ -144,7 +135,6 @@ def _file_to_clipboard(path: Path) -> None:
     else:
         kernel32.GlobalFree(hglobal)
 
-
 def dump(sess: Path, label_text: str) -> Path:
     chunks: list[str] = [f"session={sess}", f"label={label_text}", ""]
     for name in USEFUL:
@@ -164,7 +154,6 @@ def dump(sess: Path, label_text: str) -> Path:
         pass
     return out
 
-
 def pick(rows: list[tuple[float, Path, str]]) -> int | None:
     print("Recent sessions (0-9 to select, q to quit):")
     for i, (mtime, sess, lab) in enumerate(rows):
@@ -179,7 +168,6 @@ def pick(rows: list[tuple[float, Path, str]]) -> int | None:
     if ch in "0123456789" and int(ch) < len(rows):
         return int(ch)
     return None
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = agent_log.std_parser("Dump a recent Grok session to one .txt and the clipboard.")
@@ -198,7 +186,6 @@ def main(argv: list[str] | None = None) -> int:
     print(f"wrote {out}")
     print("clipboard: set")
     return agent_log.emit_result("PASS", None, cmd="dump", out=str(out), session=sess.name)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

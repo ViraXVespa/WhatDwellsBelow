@@ -23,7 +23,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
 
-
 def _read_rows(path: str) -> list[dict]:
     p = Path(path)
     if path == "" or not p.is_file():
@@ -41,7 +40,6 @@ def _read_rows(path: str) -> list[dict]:
             rows.append(row)
     return _latest_gen(rows)
 
-
 def _latest_gen(rows: list[dict]) -> list[dict]:
     # bench_gen is the log generation. `gen` on a hitch row is the hub generated-node count.
     gens: list[int] = []
@@ -57,21 +55,17 @@ def _latest_gen(rows: list[dict]) -> list[dict]:
     keep = max(gens)
     return [row for row in rows if int(row.get("bench_gen", -1)) == keep]
 
-
 def _hitch_rows(path: str) -> list[dict]:
     return [row for row in _read_rows(path) if row.get("ev") == "hitch"]
-
 
 def _hitches(path: str) -> list[dict]:
     rows = _hitch_rows(path)
     rows.sort(key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
     return rows
 
-
 # Same window the game uses: project.godot is gl_compatibility / opengl3. No --headless,
 # so the present path is in the frame time.
 GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"]
-
 
 def _field(line: str, key: str) -> str:
     token = key + "="
@@ -81,7 +75,6 @@ def _field(line: str, key: str) -> str:
     if key == "path":
         return rest.strip()
     return rest.split()[0].strip()
-
 
 def _hb_stat(lines: list[str]) -> dict:
     stat = {"ok": False, "fps_pct": 0.0, "frames": 0, "path": "", "sec": ""}
@@ -96,12 +89,10 @@ def _hb_stat(lines: list[str]) -> dict:
             stat["path"] = _field(line, "path")
     return stat
 
-
 def _fps_fail(pct: float, frames: int) -> int:
     if frames <= 0:
         return 1
     return 0 if pct >= 99.0 else 1
-
 
 # Chromium's --disable-frame-rate-limit also turns on --disable-gpu-vsync and
 # drops present back-pressure. That combination bugchecked this GPU. Never pass them.
@@ -112,7 +103,6 @@ _PRESENT_KEYS = (
     "dt_p50_ms", "dt_p95_ms", "frames", "fps_pct",
     "pause_slow", "n_edge", "n_stutter", "n_spike", "slow_run_n", "slow_run_med_ms",
 )
-
 
 _KNOWN_GLES_LEAKS = ("N5GLES34MeshE", "N5GLES37TextureE")
 
@@ -142,7 +132,6 @@ def _slow_lines(rows: list[dict]) -> list[str]:
             break
     return slow
 
-
 def _refresh_ms(bench: dict | None) -> float:
     hz = 60.0
     if bench and bench.get("refresh_hz"):
@@ -153,7 +142,6 @@ def _refresh_ms(bench: dict | None) -> float:
     if hz <= 1.0:
         hz = 60.0
     return 1000.0 / hz
-
 
 def _clusters(rows: list[dict]) -> list[list[dict]]:
     clusters: list[list[dict]] = []
@@ -189,13 +177,11 @@ def _clusters(rows: list[dict]) -> list[list[dict]]:
         clusters.append(cur)
     return clusters
 
-
 def _median(vals: list[float]) -> float:
     if not vals:
         return 0.0
     ordered = sorted(vals)
     return ordered[len(ordered) // 2]
-
 
 def _run_line(rows: list[dict]) -> str:
     dts: list[float] = []
@@ -249,7 +235,6 @@ def _run_line(rows: list[dict]) -> str:
         )
     )
 
-
 def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
     refresh = _refresh_ms(bench)
     edge = 0
@@ -292,7 +277,6 @@ def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
         lines.append(_run_line(cluster))
     return lines
 
-
 def _browser_notes(profile: Path) -> list[str]:
     """Console lines from the headed browser log. Not an FPS reading."""
     names = ("browser.log", "chrome_debug.log")
@@ -324,7 +308,6 @@ def _browser_notes(profile: Path) -> list[str]:
     out.extend(keep[-30:])
     return out
 
-
 def _sink_tail(path: Path) -> list[str]:
     if not path.is_file():
         return ["sink=(missing)"]
@@ -335,14 +318,12 @@ def _sink_tail(path: Path) -> list[str]:
         out.append(line[:240])
     return out
 
-
 def _hb_lines(rows: list[dict]) -> list[str]:
     out: list[str] = []
     for row in rows:
         if row.get("ev") == "hb" and row.get("msg"):
             out.append(str(row["msg"]))
     return out
-
 
 def _present_line(row: dict | None) -> str:
     if not row:
@@ -364,7 +345,6 @@ def _present_line(row: dict | None) -> str:
         )
     )
 
-
 def _present_fail(row: dict | None) -> int:
     if not row:
         return 1
@@ -373,14 +353,12 @@ def _present_fail(row: dict | None) -> int:
             return 1
     return 0
 
-
 def _bench_row(path: Path) -> dict | None:
     found = None
     for row in _read_rows(str(path)):
         if row.get("ev") == "bench":
             found = row
     return found
-
 
 def _profile_pids(profile: Path) -> list[int]:
     needle = str(profile).replace("'", "''")
@@ -401,14 +379,12 @@ def _profile_pids(profile: Path) -> list[int]:
             pids.append(int(line))
     return pids
 
-
 def _stop_profile(profile: Path) -> None:
     for pid in _profile_pids(profile):
         subprocess.run(
             ["powershell", "-NoProfile", "-Command", "Stop-Process -Id %d -Force -ErrorAction SilentlyContinue" % pid],
             capture_output=True,
         )
-
 
 def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[str]]:
     kind = "headless" if args.headless else godot_lib.pick_display()[0]
@@ -467,7 +443,6 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
     if args.headless:
         body.append("headless is not an FPS reading")
     return fail, body
-
 
 def _web(root: Path, args) -> tuple[int, list[str]]:
     import hitch_sink
@@ -618,7 +593,6 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         body += ["", "--- browser console ---"] + notes
     return fail, body
 
-
 def _echo_lines(lines: list[str]) -> list[str]:
     keep = []
     for ln in lines:
@@ -740,7 +714,6 @@ def main(argv: list[str] | None = None) -> int:
         retry=("hub-bench", _retry_lines(body)),
         fail_signals=fail,
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

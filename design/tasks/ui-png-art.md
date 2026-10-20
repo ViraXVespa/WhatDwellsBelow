@@ -26,7 +26,6 @@ Update this task with notes + the exact next slice before handoff.
 
 Once three areas are consistently solid in one session, organize the remaining UI into door/job combos. Stand up a base session that loads the locked style notes, then fork that session as the starting point for each combo.
 
-
 ## Locked style (load first every session)
 Pixel-art feel of the title-screen background + professionalism of the Journal UI.
 No pink. 9-slice rules as listed per row. Gamepad-first, readable at a glance.
@@ -63,7 +62,6 @@ Settings and rebind rows, XP rows, stat lists, resource chips, toasts. Gear icon
 
 ## Not shot
 Journal page, gear board, teleport network list, fs_gate (no flows).
-
 
 ## Next slice
 (filled by the finishing session before handoff: exact areas or "crystal only — needs work")

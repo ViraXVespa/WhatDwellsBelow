@@ -43,7 +43,6 @@ def _shot_names(steps: list) -> list[str]:
             names.extend(_shot_names(step.get("steps", [])))
     return names
 
-
 def check(man: dict) -> list[str]:
     bad: list[str] = []
     if not str(man.get("dest", "")).startswith("assets/ui/tutorial"):

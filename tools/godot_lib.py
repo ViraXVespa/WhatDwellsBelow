@@ -109,7 +109,6 @@ def _pid_alive(pid: int) -> bool:
         return False
     return True
 
-
 def lock_fresh(lf: Path) -> bool:
     try:
         data = json.loads(lf.read_text(encoding="utf-8"))

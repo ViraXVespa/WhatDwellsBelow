@@ -116,7 +116,6 @@ class WMSA(nn.Module):
         # negative is allowed
         return self.relative_position_params[:, relation[:,:,0].long(), relation[:,:,1].long()]
 
-
 class Block(nn.Module):
     def __init__(self, input_dim, output_dim, head_dim, window_size, drop_path, type='W', input_resolution=None):
         """ SwinTransformer Block
@@ -143,7 +142,6 @@ class Block(nn.Module):
         x = x + self.drop_path(self.msa(self.ln1(x)))
         x = x + self.drop_path(self.mlp(self.ln2(x)))
         return x
-
 
 class ConvTransBlock(nn.Module):
     def __init__(self, conv_dim, trans_dim, head_dim, window_size, drop_path, type='W', input_resolution=None):
@@ -183,7 +181,6 @@ class ConvTransBlock(nn.Module):
 
         return x
 
-
 class SCUNet(nn.Module):
 
     def __init__(self, in_nc=3, config=[2,2,2,2,2,2,2], dim=64, drop_path_rate=0.0, input_resolution=256):
@@ -221,12 +218,12 @@ class SCUNet(nn.Module):
         self.m_up3 = [nn.ConvTranspose2d(8*dim, 4*dim, 2, 2, 0, bias=False),] + \
                       [ConvTransBlock(2*dim, 2*dim, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW',input_resolution//4)
                       for i in range(config[4])]
-                      
+
         begin += config[4]
         self.m_up2 = [nn.ConvTranspose2d(4*dim, 2*dim, 2, 2, 0, bias=False),] + \
                       [ConvTransBlock(dim, dim, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW', input_resolution//2)
                       for i in range(config[5])]
-                      
+
         begin += config[5]
         self.m_up1 = [nn.ConvTranspose2d(2*dim, dim, 2, 2, 0, bias=False),] + \
                     [ConvTransBlock(dim//2, dim//2, self.head_dim, self.window_size, dpr[i+begin], 'W' if not i%2 else 'SW', input_resolution) 
@@ -263,9 +260,8 @@ class SCUNet(nn.Module):
         x = self.m_tail(x+x1)
 
         x = x[..., :h, :w]
-        
-        return x
 
+        return x
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -275,7 +271,6 @@ class SCUNet(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
-
 
 def _sha(p: Path) -> str:
     h = hashlib.sha256()
