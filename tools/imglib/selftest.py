@@ -10,7 +10,7 @@ import io
 import numpy as np
 from PIL import Image
 
-from . import HAVE_CV2, compare, key, look
+from . import HAVE_CV2, compare, geom, key, look
 
 def _sprite() -> Image.Image:
     im = Image.new("RGBA", (60, 80), (0, 0, 0, 0))
@@ -116,4 +116,19 @@ def run() -> list[tuple[str, bool, str]]:
         out.append(("find template", bool(hits) and hits[0][:2] == (50, 40), f"hits {hits[:1]}"))
     else:
         out.append(("find template", True, "skipped: no OpenCV"))
+    # pixel art: 6 px cells of random colour, opaque disc. shrink_art keeps interior cells exact (no averaging);
+    # detect_grid finds the 6 px grid, and a blurred copy scores 0 confidence.
+    rs = np.random.RandomState(3)
+    cells = rs.randint(0, 255, (64, 64, 3)).astype(np.uint8).repeat(6, 0).repeat(6, 1)
+    yy, xx = np.mgrid[:384, :384]
+    art = np.dstack([cells, np.where((yy - 192) ** 2 + (xx - 192) ** 2 < 170 ** 2, 255, 0).astype(np.uint8)])
+    im = Image.fromarray(art, "RGBA")
+    small = np.array(geom.shrink_art(im, (64, 64)))
+    inner = small[24:40, 24:40, :3].astype(int) - cells[::6, ::6][24:40, 24:40]
+    out.append(("shrink_art exact interior", int(np.abs(inner).max()) == 0, f"max diff {int(np.abs(inner).max())}"))
+    g = geom.detect_grid(im.convert("RGB"), alpha=art[..., 3])
+    import cv2
+    blur = Image.fromarray(cv2.GaussianBlur(cells, (0, 0), 3))
+    gb = geom.detect_grid(blur, alpha=art[..., 3])
+    out.append(("detect_grid", abs(g[0] - 6) < 0.1 and g[3] >= 0.5 and gb[3] < 0.5, f"pitch {g[0]:.2f} conf {g[3]:.2f}, blurred {gb[3]:.2f}"))
     return out

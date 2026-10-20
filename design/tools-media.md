@@ -41,7 +41,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `process_sprites.py` | process_sprites.py | D | `--help` | N |
 | `process_world.py` | process_world.py | D | `--help` | N |
 | `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
-| `keytest.py` | Golden-set keying regression: truth mattes in `_src/truth` keyed again from a drifting JPEG plate (alpha error, area, edge, halo, repeat); sheets in `_logs/keytest/`. Summary: `keytest`. | BD | `--help` | N |
+| `keytest.py` | Golden-set keying regression: truth mattes in `_src/truth` keyed again from a drifting JPEG plate (alpha error, area, edge, halo, interior detail, repeat); sheets in `_logs/keytest/`. Summary: `keytest`. | BD | `--help` | N |
 | `keytest_expect.json` | Limits for `keytest.py` (`default` plus per-name overrides). | D | - | N |
 | `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
@@ -64,9 +64,10 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 | Module | Owns |
 |---|---|
 | `imglib/imgio.py` | `load` / `save`, numpy round trip, `MAGENTA`, `hex_of` (named `imgio`, not `io`, to keep stdlib names free) |
-| `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis`, `fit_like`; `resize_rgba` (nearest up, one premultiplied box down), `alpha_policy` (soft / crisp / hard), `detect_grid` |
+| `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis`, `fit_like`; `resize_rgba` (nearest up, one premultiplied box down), `shrink_art` (box edge band, exact interior), `alpha_policy` (soft / crisp / hard), `detect_grid` |
 | `imglib/color.py` | Lab distance, hue, `background_refs`, `palette`, WCAG `contrast_ratio` |
 | `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `strip_rim`; `key_to_alpha` / `punch` call `matte` |
+| `imglib/band.py` | edge band for `shrink_art`: 2 px, wider along a detected glow ramp |
 | `imglib/matte.py` | the keyer: clean plate B(x), trimap, one alpha solve, decontaminate F = (I - (1-a)B)/a; `key(im, debug=DIR)` dumps each stage |
 | `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
 | `imglib/look.py` | the `img_inspect.py` checks as functions |

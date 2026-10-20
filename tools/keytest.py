@@ -12,6 +12,8 @@ Each truth matte (_src/truth/<name>.png, RGBA at source size) is composited over
   area     the same at output scale: both shrunk by the premultiplied box to the live still's size, mean over edge px
   edge     mean sub-pixel edge position error at output scale, px (rekey_all_stills.metrics)
   halo     visible partial pixels still plate-coloured at output scale (share)
+  inner_mad     mean |RGB| inside the edge band after the fit shrink (geom.shrink_art) vs nearest-sampled truth
+  inner_detail  Laplacian energy there over truth's, a minimum (an averaging shrink reads about 0.6)
   real     mean |alpha - truth| of the key of the real plate (drift since the truth was made)
   repeat   keying twice gives identical bytes
 The truth mattes come from the keyer and were reviewed by eye once; they pin behaviour on hard plates, they are
@@ -76,6 +78,26 @@ def _small(im: Image.Image, truth: Image.Image, live: Path) -> Image.Image:
     c = im.crop(box)
     return geom.resize_rgba(c, (max(1, round(c.width * k)), max(1, round(c.height * k))))
 
+def _interior(keyed: Image.Image, truth: Image.Image, live: Path) -> dict:
+    """Interior detail after the fit shrink (geom.shrink_art): inside the edge band the keyed pixels must be the
+    nearest source pixels, not an average. inner_mad: mean |RGB| vs nearest-sampled truth inside the band;
+    inner_detail: Laplacian energy there over truth's (an averaging shrink reads about 0.6)."""
+    import cv2
+    from imglib import band
+    ref = Image.open(live).convert("RGBA")
+    rb, sb, box = geom.core_box(ref, 128), geom.core_box(truth, 128), truth.getbbox()
+    k = float(np.sqrt((rb[2] - rb[0]) / max(1, sb[2] - sb[0]) * (rb[3] - rb[1]) / max(1, sb[3] - sb[1])))
+    size = (max(1, round((box[2] - box[0]) * k)), max(1, round((box[3] - box[1]) * k)))
+    sk = np.asarray(geom.shrink_art(keyed.crop(box), size), np.float32)
+    nt = np.asarray(truth.crop(box).resize(size, Image.Resampling.NEAREST), np.float32)
+    inner, _ = band.band_info(sk[..., 3].astype(np.uint8), sk[..., :3])
+    inner &= nt[..., 3] == 255
+    if int(inner.sum()) < 16:
+        return {"inner_mad": 0.0, "inner_detail": 1.0}
+    lap = lambda a: float(np.abs(cv2.Laplacian(cv2.cvtColor(a[..., :3].astype(np.uint8), cv2.COLOR_RGB2GRAY).astype(np.float32), cv2.CV_32F))[inner].mean())
+    return {"inner_mad": round(float(np.abs(sk[..., :3] - nt[..., :3])[inner].mean()), 2),
+            "inner_detail": round(lap(sk) / max(lap(nt), 1e-6), 3)}
+
 def run_one(name: str, out: Path) -> dict:
     live, src = GOLDEN[name]
     truth = Image.open(TRUTH / f"{name}.png").convert("RGBA")
@@ -89,6 +111,7 @@ def run_one(name: str, out: Path) -> dict:
     st, sk = _small(truth, truth, ROOT / live), _small(keyed, truth, ROOT / live)
     m = ras.metrics(sk, st)
     r.update(area=m["area"], edge=m["edge"], halo=ras.metrics(sk, sk)["halo"])
+    r.update(_interior(keyed, truth, ROOT / live))
     real, _ = matte.key(Image.open(ROOT / "_src" / src))
     r["real"] = round(float(np.abs(np.asarray(real)[..., 3].astype(np.float32) - ta)[band].mean() / 255.0), 4)
     r["repeat"] = np.asarray(keyed).tobytes() == np.asarray(again).tobytes()
@@ -133,7 +156,8 @@ def main(argv=None) -> int:
     for n in names:
         r = run_one(n, out)
         lim = {**exp["default"], **exp.get(n, {})}
-        f = [k for k in ("sad", "area", "edge", "halo", "real") if r[k] > lim[k]] + ([] if r["repeat"] else ["repeat"])
+        f = [k for k in ("sad", "area", "edge", "halo", "real", "inner_mad") if r[k] > lim[k]]
+        f += ([] if r["inner_detail"] >= lim["inner_detail"] else ["inner_detail"]) + ([] if r["repeat"] else ["repeat"])
         fails += bool(f)
         res[n] = {**r, "fail": f}
         lines.append(f"{'FAIL' if f else 'ok  '} {n}: " + " ".join(f"{k}={v}" for k, v in r.items()) + (f"  ({','.join(f)})" if f else ""))

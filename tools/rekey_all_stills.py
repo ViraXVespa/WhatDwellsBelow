@@ -125,7 +125,7 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
             return f"KEPT {live_rel} ({why})"
         raw = imgio.load(src).convert("RGBA")
         keyed = key.key_to_alpha(raw)
-        pitch, gx, gy, conf = geom.detect_grid(raw)
+        pitch, gx, gy, conf = geom.detect_grid(raw, alpha=keyed.getchannel("A"))
         grid = (pitch, gx, gy) if conf >= GRID_CONF else None
         # a left-facing still is placed like the mirrored live still, then mirrored: exactly its right sibling's mirror
         place = _fit_ref(fit, flip) if fit else (geom.flip(ref) if flip else ref) if ref is not None else None

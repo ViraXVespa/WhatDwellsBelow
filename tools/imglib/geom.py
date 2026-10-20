@@ -1,6 +1,6 @@
 """Geometry helpers: bbox, crop, fit, scale, flip, grid split.
 
-Nearest-neighbour is only for sizing up. Sizing down is one premultiplied box (area) average.
+Nearest-neighbour is only for sizing up. Sizing down is one premultiplied box (area) average; fit_like shrinks with shrink_art (interior kept exact).
 The hard-edge rule is alpha_policy, applied once at output scale.
 """
 from __future__ import annotations
@@ -34,6 +34,16 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
         return im.resize(size, Image.Resampling.NEAREST)
     return _box_down(im, size)
 
+def shrink_art(im: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """resize_rgba, except a shrink keeps the interior: opaque pixels past the edge band (band.py: 2 px, wider along
+    a detected glow) are the exact nearest source pixels; alpha and the band are the box average."""
+    im = im.convert("RGBA")
+    size = (max(1, int(size[0])), max(1, int(size[1])))
+    if size == im.size or (size[0] >= im.size[0] and size[1] >= im.size[1]):
+        return resize_rgba(im, size)
+    from .band import shrink_keep_interior
+    return shrink_keep_interior(im, size, _box_down)
+
 POLICIES = ("soft", "crisp", "hard")
 CRISP_LO, CRISP_HI = 0.12, 0.88  # crisp: coverage under/over these goes clear/opaque; the anti-aliased middle stays
 
@@ -53,22 +63,53 @@ def alpha_policy(im: Image.Image, policy: str = "crisp") -> Image.Image:
     o[o[..., 3] == 0] = 0
     return Image.fromarray(o, "RGBA")
 
-def detect_grid(im: Image.Image, lo: float = 2.0, hi: float = 16.0):
-    """(pitch, phase x, phase y, confidence) of a pixel-art grid from luma-gradient profiles (a fractional comb, as
-    pixfix does); confidence is the comb's share of the gradient energy in both axes (about 0.5+ is a real grid)."""
+GRID_AGREE = 0.9  # share of tiles whose own comb peak sits within 3% of the grid pitch
+
+def _comb(p: np.ndarray, pitches: np.ndarray) -> np.ndarray:
+    """Complex comb response per pitch of a mean-free profile, normalised by its energy."""
+    p = p - p.mean()
+    z = np.exp(2j * np.pi * np.arange(len(p))[None, :] / pitches[:, None]) @ p
+    return z / max(float(np.abs(p).sum()), 1e-6)
+
+def detect_grid(im: Image.Image, lo: float = 2.0, hi: float = 16.0, alpha=None, tile: int = 192):
+    """(pitch, phase x, phase y, confidence) of a pixel-art grid. Luma-gradient combs per tile (pixfix-style), on
+    gradients inside the subject only (alpha >= 250, eroded; the silhouette is not the grid). Tiles are summed by
+    magnitude, so AI art whose grid drifts a cell across the picture still scores. Pitch: the largest pitch within
+    85% of the best (a comb at a divisor of the pitch, 2 or 3 for a 6 px grid, scores as high). Confidence is the mean tile score at that pitch, and 0 unless GRID_AGREE of
+    the tiles peak there too. Phase comes from the whole-picture comb at that pitch. About 0.5+ is a real grid."""
+    import cv2
     g = np.asarray(im.convert("L"), np.float32)
-    best = (0.0, 0.0, 0.0, 0.0)
-    prof = [np.abs(np.diff(g, axis=1)).sum(0), np.abs(np.diff(g, axis=0)).sum(1)]
-    prof = [p - p.mean() for p in prof]
-    for pitch in np.arange(lo, hi, 0.02):
-        r = []
-        for p in prof:
-            z = (p * np.exp(2j * np.pi * np.arange(len(p)) / pitch)).sum()
-            r.append((abs(z) / max(np.abs(p).sum(), 1e-6), (np.angle(z) * pitch / (2 * np.pi)) % pitch))
-        c = min(r[0][0], r[1][0])
-        if c > best[3]:
-            best = (float(pitch), float(r[0][1]), float(r[1][1]), float(c))
-    return best
+    H, W = g.shape
+    m = np.ones_like(g, bool) if alpha is None else np.asarray(alpha) >= 250
+    m = cv2.erode(m.astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
+    gx, gy = np.abs(np.diff(g, axis=1)), np.abs(np.diff(g, axis=0))
+    gx[~(m[:, 1:] & m[:, :-1])] = 0
+    gy[~(m[1:] & m[:-1])] = 0
+    pitches = np.arange(lo, hi, 0.02)
+    T = min(tile, H, W)
+    specs = []
+    for y in range(0, H - T + 1, max(1, T // 2)):
+        for x in range(0, W - T + 1, max(1, T // 2)):
+            if m[y:y + T, x:x + T].mean() < 0.6:
+                continue
+            sx = np.abs(_comb(gx[y:y + T, x:x + T - 1].sum(0), pitches))
+            sy = np.abs(_comb(gy[y:y + T - 1, x:x + T].sum(1), pitches))
+            specs.append(np.minimum(sx, sy))
+    if not specs:
+        return (0.0, 0.0, 0.0, 0.0)
+    S = np.array(specs)
+    mean = S.mean(0)
+    def top(v):  # peak of the last run of pitches within 85% of the best
+        i = j = int(np.nonzero(v >= 0.85 * v.max())[0][-1])
+        while i > 0 and v[i - 1] >= 0.85 * v.max():
+            i -= 1
+        return i + int(np.argmax(v[i:j + 1]))
+    k = top(mean)
+    pitch = float(pitches[k])
+    agree = float(np.mean([abs(pitches[top(v)] - pitch) / pitch < 0.03 for v in S]))
+    ph = [float((np.angle(_comb(p, np.array([pitch]))[0]) * pitch / (2 * np.pi)) % pitch)
+          for p in (gx.sum(0), gy.sum(1))]
+    return (pitch, ph[0], ph[1], float(mean[k]) if agree >= GRID_AGREE else 0.0)
 
 def bbox(im: Image.Image, alpha_min: int = 1):
     """(left, top, right, bottom) of pixels with alpha >= alpha_min, or None when empty."""
@@ -153,7 +194,7 @@ def fit_like(im: Image.Image, ref, alpha_min: int = 128, resize=None, grid=None)
     else:
         crop = im.crop(full)
         nw, nh = max(1, round(crop.width * scale)), max(1, round(crop.height * scale))
-    small = (resize or resize_rgba)(crop, (nw, nh))
+    small = (resize or shrink_art)(crop, (nw, nh))
     # line up the body: bottom edge and centre x of the scaled body on ref's
     bx0 = (sb[0] - full[0]) * scale
     bx1 = (sb[2] - full[0]) * scale
