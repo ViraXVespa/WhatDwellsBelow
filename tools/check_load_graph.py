@@ -503,12 +503,13 @@ def route_map_fails(root: Path, routes: dict) -> list[str]:
     return fails
 
 def boot_budget_fails(root: Path, routes: dict) -> list[str]:
-    """Bot mode only: every boot_max path needs a budget in tools/bot_budgets.json; on-disk size must not exceed it."""
+    """Bot mode only: every boot_max path not in no_budget needs a budget in tools/bot_budgets.json; on-disk size must not exceed it."""
     budgets = bot_gate_lib.boot_budgets(root)
     if not budgets:
         return []
     fails: list[str] = []
-    boot_paths = sorted({p for paths in boot_max(routes).values() for p in paths})
+    skip = bot_gate_lib.unbudgeted(root)
+    boot_paths = sorted({p for paths in boot_max(routes).values() for p in paths} - skip)
     for posix in boot_paths:
         cap = budgets.get(posix)
         if cap is None:

@@ -60,7 +60,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 
-1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`.
+1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`. `web-session.md` has none (`no_budget`): web sessions are limited by turns, not tokens.
 2. Bot boot is BOT.md + one Job sibling.
 3. No mutual See also.
 4. One job phrase belongs to one door.

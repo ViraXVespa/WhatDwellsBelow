@@ -30,7 +30,7 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `task_lib.py` | Task files in `design/tasks/`: header fields, the README index, `done` (delete, unblock dependants, changelog line), next opt id, and the `check_load_graph.py` lint | BWD | module docstring (no `--help`) | Y |
 | `slice_lib.py` | `start_build_slice.py` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, survey vs job, checkpoint) and the `open_slice.py` area check | D | module docstring (no `--help`) | Y |
 | `bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` | BWD | module docstring (no `--help`) | Y |
-| `bot_budgets.json` | Budgets read by `bot_gate_lib` in Bot mode | B | - | Y |
+| `bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode | B | - | Y |
 
 ### Split, code map and doc edits
 

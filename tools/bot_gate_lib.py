@@ -4,7 +4,7 @@ Size limits are enforced by the Bot and by CI, never by Build or Web. A size che
 `--bot` (flag hidden from --help), when WDB_BOT is set, or when GitHub Actions runs it (GITHUB_ACTIONS). Anyone
 else gets an INFO line and exit 0, with no limit, byte count or list printed. On Actions, a pull_request from a
 branch that does not start with `bot/` (the Build week PR) counts as "anyone else"; main pushes and `bot/` PRs run them.
-`tools/bot_budgets.json` holds the per-file byte budgets of the boot files and the summed budgets of the read sets (read only in Bot mode).
+`tools/bot_budgets.json` holds the per-file byte budgets of the boot files and the summed budgets of the read sets (read only in Bot mode); `no_budget` lists boot files left unbudgeted on purpose.
 """
 from __future__ import annotations
 
@@ -48,3 +48,10 @@ def boot_budgets(root: Path) -> dict[str, int]:
         return {}
     raw = json.loads(p.read_text(encoding="utf-8-sig")).get("boot_bytes") or {}
     return {str(k): int(v) for k, v in raw.items() if isinstance(v, int)}
+
+def unbudgeted(root: Path) -> set[str]:
+    """Boot files with no byte budget on purpose (`no_budget` in bot_budgets.json; reason: design/load-graph.md)."""
+    p = root / BUDGETS
+    if not p.is_file():
+        return set()
+    return {str(f) for f in json.loads(p.read_text(encoding="utf-8-sig")).get("no_budget") or []}
