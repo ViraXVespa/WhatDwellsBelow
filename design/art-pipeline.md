@@ -22,7 +22,7 @@ Imagine calls (`image_gen`, `image_edit`, `image_to_video`) use the isolated-med
 
 Reliability comes from **one Image-to-Video clip at a time**, the live prompt in `tools/i2v_seeds.py`, **User review**, and plate-correct / cleanup scripts. Do not run automatic multi-pass fill-in.
 
-After an isolated still lands under `_src/`, the only allowed keying steps are `python tools/plate_remap.py SRC DEST` then `python tools/sprite_pipeline.py key` (or `matte`). Do not write a new keyer, a PIL loop, or a one-off script for chroma. Extend an existing `process_*.py` only if a durable batch wrapper is needed, and tell the User.
+After an isolated still lands under `_src/`, key the source plate directly with `python tools/sprite_pipeline.py key` (or `matte`; both use `tools/imglib/matte.py`), no remap first (art-pack, Still rekey). `tools/plate_remap.py` is only for opaque I2V seed plates. Do not write a new keyer, a PIL loop, or a one-off script for chroma. Extend an existing `process_*.py` only if a durable batch wrapper is needed, and tell the User.
 
 All character art (player and enemies) MUST follow this pipeline. Props may use a simplified stills-only variant.  
 Male and female player characters MUST each have their own locked Character Bible and MUST maintain full animation parity so that weapon and tool paper-doll **layers** composite onto either body without special per-gender tweaks.  

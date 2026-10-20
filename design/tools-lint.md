@@ -1,4 +1,4 @@
-| `normalize_blanks.py` | Collapse consecutive blank lines to one (BOM/EOL kept). Paths or dirs; `--glob`, `--dry-run`. Summary: `normalize-blanks`. | BD | `--help` | Y |\n# Tools catalog: inventory, lint, split and doc edits
+# Tools catalog: inventory, lint, split and doc edits
 
 Status: protocol  
 Read when: running a dupe, dead-code, stat, split, code-map or doc-edit tool, or reading a shared lib row  
@@ -9,6 +9,8 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
+| `normalize_blanks.py` | Collapse consecutive blank lines to one (BOM/EOL kept). Paths or dirs; `--ext`, `--dry-run`. Summary: `normalize-blanks`. | BD | `--help` | Y |
+| `check_tool_docs.py` | Tool catalog gate: every `tools/` file has one row in `design/tools*.md` that matches `bot_allow.txt`; `--stale-refs` lists dead doc paths (`--narration` adds narration lines). Summary: `tool-docs` / `stale-refs`. | BD | `--help` | Y |
 | `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them); prints the absolute root it read. Summary: `file-stat`. | BD | `--help` | Y |
 | `session_dump.py` | Interactive dump of a recent Grok session (chat, events, updates, usage, prompt_context, system prompt, terminal logs) into one .txt on the clipboard. Skips wdb-iso worktrees. | D | `--help` | N |
 | `summarize_scripts.py` | Func inventory per `.gd` (`--path`, `--top-funcs`) | BD | `--help` | Y |

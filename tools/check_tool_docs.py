@@ -100,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish("stale-refs", root, "\n".join(bad + narr + [head]), "FAIL" if bad else ("INFO" if narr else "PASS"),
                                 args=args, legacy=False, dead=len(bad), narration=len(narr))
     tools = root / "tools"
-    files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py"}
+    files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py" and not f.name.startswith(".")}  # dotfiles (.gdignore) are not tools
     globs = repo_lib.load_allowlist(root)
     allow = {n for n in files if repo_lib.allowed(f"tools/{n}", globs)}  # honours globs (`tools/*`), `!` denies and exact lines
     exact = {g[len("tools/"):] for g in globs if g.startswith("tools/") and not any(c in g for c in "*?[!")}

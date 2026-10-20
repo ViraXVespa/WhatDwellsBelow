@@ -34,7 +34,7 @@ Then the User judges the packed strip. Do not start the next unit until the User
 
 ## Still rekey
 
-The open set is the rekey-assets task. Source plates live under `_src/sources`, mirrored to the live path. `assets/keytest` is retired.
+Every still with a source plate is rekeyed (rows in `_src/manifest.json`). Source plates live under `_src/sources`, mirrored to the live path. `assets/keytest` is retired.
 
 The keyer is `tools/imglib/matte.py` (`key_to_alpha` and `punch` in `imglib/key.py` call it). Key the source plate directly at full resolution; no remap first. Order (`key(im, debug=DIR)` dumps plate, trimap, alpha, keyed):
 1. Clean plate: border pixels on the plate hue are clustered in YCrCb; the sure plate is the border flood within 3 sigma of the local plate plus enclosed plate pockets; B(x) is that plate inpainted under the subject. Drift and gradients (B 153..243) follow B(x).
@@ -46,7 +46,7 @@ Sizing (`imglib/geom.py` `resize_rgba`): nearest only when both sides grow; othe
 
 Placement (`geom.fit_like`). A rekeyed still lands exactly like the live still it replaces: same canvas and mode, the solid body (alpha >= 128) scaled to live's body and lined up on live's bottom edge and centre x. No recentring and no padding of its own. A manifest `flip` row is placed like the mirrored live still and then mirrored. The keyer drops a thin frame of paint along the picture's own border (a crop seam).
 
-Full set: `python tools/rekey_all_stills.py --out DIR --jobs 8` writes a review copy (live `assets/` untouched) and `DIR/_metrics.json`; `python tools/rekey_check.py --new DIR` scores every row (canvas, quality, area, edge, halo, shift, pad, mirror, plate, alpha, stale, lost, notch) into `_logs/rekey-check/last.json`. area, edge, halo and notch compare the output with the exact area average of the same key. Live art with no alpha is kept; a stale plate is reported (live is the truth); a key that loses the subject keeps live (lost).
+Full set: `python tools/rekey_all_stills.py --out DIR --jobs 8` writes a review copy (live `assets/` untouched) and `<DIR>/_metrics.json`; `python tools/rekey_check.py --new DIR` scores every row (canvas, quality, area, edge, halo, shift, pad, mirror, plate, alpha, stale, lost, notch) into `_logs/rekey-check/last.json`. area, edge, halo and notch compare the output with the exact area average of the same key. Live art with no alpha is kept; a stale plate is reported (live is the truth); a key that loses the subject keeps live (lost).
 Golden set: `python tools/keytest.py` keys the truth mattes in `_src/truth` (nail, crack, lightning, tree, longbow, wisp, female idle) again from a drifting JPEG plate and checks alpha error, area, edge and halo (`keytest_expect.json`). The truth mattes come from the keyer and were reviewed once; `--make-truth` rewrites them only after the User accepts a new key.
 Re-runs: placement uses the manifest `fit` geometry ([W, H, x0, y0, x1, y1], recorded with `--record-fit REV`), not the current live file. Every run rekeys every still; the only pass-throughs are opaque live art, the lost-subject guard and `SOURCE_WINS`. `python tools/rekey_all_stills.py --check` (in the build gate) runs the set twice and fails unless the runs are byte-identical. A pass is numbers, not the User's yes.
 

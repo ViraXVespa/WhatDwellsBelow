@@ -9,16 +9,16 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 
 | Parameter | Suggested start | Live default | Notes |
 |-----------|-----------------|--------------|-------|
-| Floor grid size | 48×48 – 64×64 | **432×432** | Geo streams like enemies |
-| Rooms | — | **128** | Keeps empty walks short |
-| Room min / max | — | 5 / 9 | |
-| Extra loops | — | 8 | MST + extra loops |
+| Floor grid size (`gen_w` / `gen_h`) | 48×48 – 64×64 | **432×432** | Geo streams like enemies |
+| Rooms (`gen_rooms`) | — | **128** | Keeps empty walks short |
+| Room min / max (`gen_room_min` / `gen_room_max`) | — | 5 / 9 | |
+| Extra loops (`gen_extra_loops`) | — | 8 | MST + extra loops |
 | Hall hug gap min / default | 3 / 4 | **3 / 4** | Unused cells between hall floors; closer loops rejected |
 | Hall width min / mode / max | 2 / 3 / 4 | **2 / 3 / 4** | Mode changes every `hall_w_interval` |
 | Hall width interval | 10 | **10** | Tiles along a winding path |
 | Hall width min / mode pct | 0.15 / 0.60 | **0.15 / 0.60** | Remainder is max width |
 | Fog of war reveal radius | 5 tiles | 5 | Map disk only, not 3D chunks |
-| Max Extraction Gates per floor (`max_clerks`) | 3 | 3 | |
+| Max Extraction Gates per floor (`max_clerks`) | 3 | **12** | |
 | Ghost shop chance | ~33 % | 0.33 | Always in safe room |
 | Named monster rate | ~1 every 3 floors | 3 | |
 | Flee events per full clear | Average 2 | 2 | Small speed boost |

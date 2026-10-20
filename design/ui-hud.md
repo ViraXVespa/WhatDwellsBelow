@@ -42,11 +42,16 @@ Binding rules live in input. UI rules for this slice:
 
 ## HUD / pause layout
 
-`hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: metal-chain strip top-left (iron 9-slice card, bone type, mana bar under HP, danger gem on the right of the same card). Minimap top-right in a thin rule, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Meter fills keep their own colors inside iron troughs. Toast and the look cue stay light because they sit on the world. The boss bar stays a flat meter. Level string uses combat level and parenthetical style level. The danger gem reads walk-distance Threat CL against `combat_lv()` (green at or under, yellow at +3, red at +7) and hides from Settings → Graphics. Mana refills over time, from mana orbs, and from potions and food. A special does not start when mana is short.
-Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. Default tab is Settings (`pause_settings.gd`). The current tab uses hover-panel chrome and darker tan text. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from Settings → Graphics. Alt+Enter also toggles display through `DisplayMode.handle_input`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter is Mipmaps / Anisotropic checkboxes through `App.set_sprite_filter`. Loadout opens focused on **Enter dungeon**.
-`confirm_dlg.gd` restores prior focus on cancel and draws Select / Back on the dialog itself. `PromptView.pulse()` refreshes tab chips, gear page glyphs, and footers when `Pad.mode` flips.
+- Metal-chain strip top-left: iron card, bone type, mana bar under HP, danger gem on the right of the same card. Minimap top-right in a thin rule, boss bar when near, toast, interact glyph row, look-mode cue under the minimap.
+- Meter fills keep their own colors inside iron troughs. Toast and look cue stay light because they sit on the world. The boss bar stays a flat meter.
+- Level string: combat level with style level in parentheses. The danger gem compares walk-distance Threat CL with combat level (green at or under, yellow at +3, red at +7) and can be hidden from Settings → Graphics.
+- Mana refills over time, from mana orbs, potions and food. A special does not start when mana is short.
+- Pause Skills also shows run XP earned this descent.
+- Inventory and loadout share one board. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (not on loadout). The stats card is not in the focus chain. Pages change with Q / LT and E / RT; pause tabs with LB / RB. Default tab is Settings; the current tab uses hover-panel chrome and darker tan text.
+- Camera zoom, HUD scale, display mode and sprite filter (Mipmaps / Anisotropic checkboxes) apply without a restart. Alt+Enter also toggles display. Small windows scale HUD chrome and fonts from the saved text floor (default 14).
+- Loadout opens focused on **Enter dungeon**.
+- Confirm dialogs restore prior focus on cancel and draw Select / Back on the dialog. Prompts, tab chips and footers refresh when the input scheme flips.
 
 ## Web touch wiring
 
-`App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand cluster, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and `force_show`. Overlay layer 28. Visibility is `Touch.wants_show()`. Large-map transform lives in `map_act.gd`.
+Touch overlay (move stick, right-hand cluster, pinch, map swipe) sits on layer 28 and shows only when touch is wanted.

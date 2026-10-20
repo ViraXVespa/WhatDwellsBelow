@@ -35,10 +35,8 @@ Prompt / confirm copy: interactables.
 
 ## Boss doors and enter cover
 
-`boss_door.gd`: collision + “PREPARE” label; interact opens; linked doors open together; door tweens up, disables collision, frees grid cells, label becomes “OPEN”. Stairs still wait for `App.notify_boss_dead()`.
-
-`scenes/foundation.tscn` is the combat sandbox / smoke host, not the player hub.
-
-`--wdb-dungeon-map-smoke` loads a live floor (`App.begin_run`, pinned seed/floor) and dumps rooms, placed objects, spawn jobs, spec checks, and a downsampled ASCII occupancy map. Silhouette specs (`spans_present`, `solid_size`, `span_on_solid`, `jobs_on_solid`) live in `map_spec.gd`. Helper `scripts/debug/dungeon_map.gd`; runner `tools/run_dungeon_map.py`. Does not `stream_all`.
-
-Enter dungeon covers immediately (`present.cover_enter` on the Floor Crystal press), waits until that sheet has presented (`wait_painted`: always-timer + two `frame_post_draw`), then saves and changes scene. It fades for 1.05s after floor `_ready` (`release_enter`). `--wdb-dungeon-load-timing-smoke` times Placeholdia → Dungeon (`go_camp`, then `begin_run` / `go_dungeon` / `dungeon_boot.ready_floor`). Runner `tools/run_dungeon_load_timing.py`. Clock starts after Camp is ready. Seed 42 / floor 1. Gear UI (`progress_ui`) is not const-preloaded in `dungeon_boot`; `world_ui()` / `ensure_ui()` load it on first extract / shop / anvil. Floor crystals load `crystal_ui` on interact, not at spawn. Dead-end crystal spur checks stop at `crystal_deadend_len` (hub-cell set, not a full-floor BFS). The large map overlay builds on first map-view, not at floor boot. World props, ambushes, and extra crystals queue after boot and instantiate on the 0.2s stream pulse inside `STREAM_IN` (P5 still eager-spawns the full dump). The Floor Guardian is a stream job. Boot builds nearby geo only. `stream_all` / `force_all` dumps enemies, queues ambushes, and flushes props.
+- Boss doors show “PREPARE”, open on interact (linked doors together), free their cells and read “OPEN”. Stairs still wait for the boss kill.
+- `scenes/foundation.tscn` is the combat sandbox / smoke host, not the player hub.
+- Enter dungeon covers on the Floor Crystal press, waits until that cover has presented, then saves and changes scene; it fades 1.05s after the floor is ready.
+- Floor boot stays light: gear UI, crystal UI and the large map load on first use; props, ambushes and extra crystals stream in on the pulse inside `STREAM_IN`. The Floor Guardian is a stream job.
+- Map dump and Placeholdia → Dungeon timing smokes: debug-smokes.

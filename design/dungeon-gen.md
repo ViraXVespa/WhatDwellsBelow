@@ -16,7 +16,7 @@ Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, de
 
 ## Map generation
 
-Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.
+Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable. Values: tunables-world, Dungeon generation.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
 Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width. Cardinal connections stay a winding span on the 1 m grid; width still changes at `hall_w_interval` on those. After carve, clean one-tile teeth and accidental stair-steps. Keep intentional maze jogs. The cleaned 1 m grid is the maze. There is no floor-wide rim.

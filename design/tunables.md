@@ -26,6 +26,8 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `LOOK_LIFT` | 0.42 |
 | `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 4.0 |
 | Default `cam_zoom` | 1.75 |
+| `PLAYER_BODY` / `PLAYER_H` | (0.42, 0.78, 0.32) / 1.55 |
+| `MOVE_EPS` / `WALK_FPS` | 0.12 / 8 |
 | `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
 | `UI_TEXT_FLOOR` | 14 |
 | `UI_TEXT_FLOOR_MIN` / `UI_TEXT_FLOOR_MAX` | 8 / 24 |

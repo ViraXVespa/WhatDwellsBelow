@@ -56,7 +56,7 @@ A unit is acceptable only when all of the following hold:
 - Feet plant on a stable baseline.
 - Packed walk loops; start/stop cuts are readable.
 - Readable `idle_to_walk` and `walk_to_idle` on every facing that has shipped those states.
-- Pixel-grid edges after cleanup. No anti-aliasing. No magenta lip.
+- Edges follow the manifest alpha policy (`crisp` default, `soft` for fx and soft rows, `hard` on request). No magenta lip.
 
 Failures:
 
