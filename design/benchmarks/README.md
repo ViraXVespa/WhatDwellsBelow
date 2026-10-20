@@ -8,7 +8,7 @@ Measured numbers only, newest first. Thresholds and budgets stay in the tunables
 Rules:
 - Every record names its machine (a row below) plus date (America/Chicago), commit, Godot version, renderer, vsync / frame cap, resolution, headless or windowed, and the browser and version for web. A field nobody recorded is `unknown`; never fill one in by guess.
 - Compare numbers only within one machine. A cross-machine comparison is not valid (different CPU, GPU, OS or browser).
-- When a benchmark is rerun or a perf change lands, add the new row next to the old one (keep the old row). `web_perf.py` and `run_hub_bench.py` print an `env:` line in their summary (`tools/bench_env.py`); copy it into the record.
+- When a benchmark is rerun or a perf change lands, add the new row next to the old one (keep the old row). `web_perf.py`, `run_hub_bench.py` and the `open_timing` smoke (`bot_smokes.py`) print an `env:` line (`tools/bench_env.py`); copy it into the record.
 
 ## Machines
 

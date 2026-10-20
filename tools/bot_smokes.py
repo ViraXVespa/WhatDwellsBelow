@@ -128,6 +128,12 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
     print(f"{tag or f'P{phase}'}={'FAIL' if bad else 'PASS'}\texit={proc.returncode}")
     if bad and tag:
         print("\n".join(ln for ln in text.splitlines() if ln.startswith("OPEN:")))
+    if tag.startswith("open_timing"):
+        import bench_env
+        eng = next((ln[len("OPEN: env "):] for ln in text.splitlines() if ln.startswith("OPEN: env ")), "engine=unknown")
+        line = bench_env.env_line(godot=bench_env.godot_version(str(exe)), headless=True) + " engine: " + eng
+        (log_dir / f"{name}.env.txt").write_text(line + "\n", encoding="utf-8")
+        print(line)
     if phase == 6 and not tag:
         timing = run_phase(exe, root, 6, timeout, verbose, "open_timing", OPEN_TIMING)
         if timing:

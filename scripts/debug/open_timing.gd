@@ -43,6 +43,9 @@ static func run(tree: SceneTree) -> bool:
 	rows.append(["recap", func(): App.recap.play("death")])
 	var ok: bool = true
 	var extras: Dictionary = {}
+	## Engine side of the benchmark env line (design/benchmarks): tools/bot_smokes.py adds the machine fields.
+	var vp: Vector2i = tree.root.get_viewport().get_visible_rect().size
+	printerr("OPEN: env godot=%s renderer=%s gpu=%s display=%s vsync=%d max_fps=%d res=%dx%d" % [Engine.get_version_info().string, RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name(), DisplayServer.get_name(), DisplayServer.window_get_vsync_mode(), Engine.max_fps, vp.x, vp.y])
 	for i: int in 10:
 		await tree.process_frame
 	await _shot(tree, "camp")
