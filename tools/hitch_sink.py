@@ -3,7 +3,7 @@
 
   python tools/hitch_sink.py [--site DIR] [--port N]
 
-Serves DIR (default docs) on 127.0.0.1. On localhost the game (scripts/debug/hitch_log.gd) POSTs each hitch-log row to
+Serves DIR (default _out/web) on 127.0.0.1. On localhost the game (scripts/debug/hitch_log.gd) POSTs each hitch-log row to
 /_wdb/hitch (fire-and-forget fetch); they are appended to _logs/web-perf/hitch.jsonl. web_perf.py uses the same handler and
 tags each row with its flow run (`wp_run`). Other static servers just refuse the POST; the game ignores that.
 """
@@ -73,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
     import agent_log
 
     ap = agent_log.std_parser(__doc__.splitlines()[0])
-    ap.add_argument("--site", default="docs")
+    ap.add_argument("--site", default="_out/web")
     ap.add_argument("--port", type=int, default=8060)
     a = ap.parse_args(argv)
     root = agent_log.resolve_root(a)

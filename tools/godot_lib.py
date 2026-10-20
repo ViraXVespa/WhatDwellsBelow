@@ -277,7 +277,7 @@ def restore_imports(root: Path, paths: list[str]) -> None:
                        input="\0".join(paths).encode("utf-8") + b"\0", capture_output=True)
 
 def restore_import_churn(root: Path) -> tuple[int, int]:
-    """Undo what a Godot import writes into tracked sidecars: restore every modified tracked `*.import` (assets/, docs/, icon.svg.import)
+    """Undo what a Godot import writes into tracked sidecars: restore every modified tracked `*.import` (assets/, icon.svg.import)
     and delete untracked `*.import` whose source file is tracked. Paths go to git on stdin, so the Windows command-line length never applies.
     Returns (restored, removed). Do not call it after an intended `.import` edit."""
     def git(*a: str, data: bytes = b"") -> bytes:

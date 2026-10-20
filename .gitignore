@@ -9,7 +9,7 @@ export_credentials.cfg.uid
 .archive_worktrees/
 .archive_export_cache/
 _pages/
-docs/archives/
+docs/
 
 # Local Copilot sweep notes (do not commit)
 _logs/

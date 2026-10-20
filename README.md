@@ -20,7 +20,7 @@ This is a no-threads Web export so it runs on GitHub Pages without special COOP/
 
 python tools/export_web.py
 
-That writes into `docs/`. Combined live + archived builds (preview):
+That writes into `_out/web/` (untracked; the live site is built by `.github/workflows/pages.yml`). Combined live + archived builds (preview):
 
 python tools/export_web.py --archives
 

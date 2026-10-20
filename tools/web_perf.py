@@ -3,7 +3,7 @@
 
   python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
-Serves --site (default docs; use a fresh `export_web.py --debug --out DIR`: hitch rows and wdb-playtest flows need the debug export, docs/ is release and may be stale) and replays flows from
+Serves --site (default _out/web; use a fresh `export_web.py --debug --out DIR`: hitch rows and wdb-playtest flows need the debug export, _out/web/ is release and may be stale) and replays flows from
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
@@ -140,7 +140,7 @@ def hook_free(flow: dict) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Edge (Chrome if Edge is missing).", json_out=True)
-    ap.add_argument("--site", default="docs", help="Exported site dir (default docs; may be stale, export with export_web.py --out).")
+    ap.add_argument("--site", default="_out/web", help="Exported site dir (default _out/web; may be stale, export with export_web.py --out).")
     ap.add_argument("--url", default="", help="Test this URL instead of serving --site.")
     ap.add_argument("--flow", default="title-idle", help="Flow name(s), comma separated, or all (see %s)." % FLOWS)
     ap.add_argument("--chrome", default="", help="Force this browser binary. Default: Edge if installed, else Chrome/Chromium (CHROME_BIN or PATH).")
@@ -179,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
                 agent_log.fail("--release-ref: use %s (release and debug baselines are not comparable)" % REL_BASE)
         if args.url:
             agent_log.fail("--release-ref serves its own export (or --site DIR); no --url")
-        if args.site == "docs":
+        if args.site == "_out/web":
             args.site = "_logs/web-perf-release/site"
             print("exporting release (preset Web) -> %s" % args.site)
             ex = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--out", str(root / args.site)], cwd=str(root))
