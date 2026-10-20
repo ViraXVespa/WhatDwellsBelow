@@ -16,6 +16,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `anim_review_tree.py` | Build a wiped I2V test tree for every Regenerate clip in review.json | D | `--help` | N |
 | `attack_keyframes.py` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
 | `attack_keyframes_log.json` | Sidecar data for the tool of the same stem | D | - | N |
+| `bible_normalize.py` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
 | `bible_prompt.py` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
 | `gen_prompt_glyphs.py` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
 | `harvest_walk.py` | Extract evenly spaced walk frames from I2V clips (Section 19) | D | `--help` | N |
@@ -58,6 +59,7 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 |---|---|---|---|---|
 | `img_inspect.py` | Programmatic eyes, text facts plus optional PNG: `describe`, `layout` (off-screen, clipped, overlap, safe area, alignment, gaps; `--box` for node rects), `contrast` (WCAG per `--box`), `grid`, `zoom`, `diff` (heatmap, regions, `--mask`, `--max-ratio`), `montage`, `find` (template), `halo` (rim tint, leftover plate), `rimclean` (re-key a rim with `--refs`), `motion` (frame to frame), `selftest` | BWD | `--help` | N |
 | `requirements.txt` | Pip deps for the image tools | BWD | - | Y |
+| `requirements-ml.txt` | Optional torch + einops for the `bible_normalize.py` denoise (`imglib/scunet.py`) | D | - | N |
 
 | Module | Owns |
 |---|---|
@@ -68,3 +70,4 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 | `imglib/matte.py` | the keyer: clean plate B(x), trimap, one alpha solve, decontaminate F = (I - (1-a)B)/a; `key(im, debug=DIR)` dumps each stage |
 | `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
 | `imglib/look.py` | the `img_inspect.py` checks as functions |
+| `imglib/scunet.py` | Optional SCUNet denoiser (vendored cszn/SCUNet, Apache-2.0); weights downloaded to `_cache/models/` with pinned sha256; needs `requirements-ml.txt` |
