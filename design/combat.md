@@ -61,7 +61,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Triggers after sufficient kills in a short window (exact threshold tunable).
 - Effects while active:
   - Increased movement speed
-  - Stacking XP bonus (capped; tunables)
+  - Stacking XP bonus (capped; tunables-combat)
   - Flaming aura on the player
   - Continuous wooshing / crackling sound
 - Starts with a warcry.
@@ -79,7 +79,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Each floor spans a fixed band of combat levels, and each floor starts where the last ended (band width: tunables-world).
 - Enemy CL walk and pack HP: enemies (`Threat.level_at`).
 - Rank multipliers are shallow (values: tunables-world). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
-- Axe basic damage stays low enough that the player does not outpace the floor-1 HP table (tunables).
+- Axe basic damage stays low enough that the player does not outpace the floor-1 HP table (tunables-combat).
 - Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near the floor-1 combat-level target (tunables-world). That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
 - Ambush and pressure kills grant XP. Wave count is capped per floor (`pressure_waves`, `ambush_cap`) so that target stays measurable.
 

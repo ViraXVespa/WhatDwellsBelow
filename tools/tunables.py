@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""design/tunables.md, tunables-world.md and tunables-economy.md CLI: get, set, add.
+"""design/tunables.md, tunables-combat.md, tunables-world.md and tunables-economy.md CLI: get, set, add.
 
     python tools/tunables.py get --key <key-or-alias>
     python tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
@@ -25,7 +25,7 @@ import tunables_lib as tl
 def _head(title: str, *extra: str) -> list[str]:
     return [f"tunable {title} {datetime.now(timezone.utc).isoformat()}", "root=.", *extra]
 
-FILES = ("tunables.md", "tunables-world.md", "tunables-economy.md")
+FILES = ("tunables.md", "tunables-combat.md", "tunables-world.md", "tunables-economy.md")
 
 def _find(root: Path, key: str) -> tuple[list[tuple[Path, str, "tl.Hit"]], bool]:
     """(path, raw text, hit) for every row matching key across the tunables files; flag = main file exists."""
@@ -99,7 +99,7 @@ def cmd_set(root: Path, args) -> int:
     return end("PASS", f"changed=1 live={args.value}" + (" (dry-run)" if args.dry_run else ""), changed=1, dry_run=args.dry_run)
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Read or patch design/tunables.md / tunables-world.md / tunables-economy.md rows.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Read or patch design/tunables*.md rows.", writes=True, json_out=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("get", help="Print one tunables row.")
     s.add_argument("key_pos", nargs="?", default="", metavar="KEY", help="Tunable key or unique alias (same as --key)")

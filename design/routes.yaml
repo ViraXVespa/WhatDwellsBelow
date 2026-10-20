@@ -60,6 +60,9 @@ gates:
   tunables:
     file: design/tunables.md
     when: numbers_change
+  tunables_combat:
+    file: design/tunables-combat.md
+    when: combat_gathering_drop_or_consumable_number_change
   tunables_world:
     file: design/tunables-world.md
     when: dungeon_or_enemy_number_change

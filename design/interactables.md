@@ -18,7 +18,7 @@ Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `int
 - Nodes have more hits than mining nodes.
 - Player approaches and interacts; gathering animation plays while stationary.
 - Hits come faster than mining, but each succeeds less often.
-- Hit counts, intervals and reward chances: tunables, Gathering.
+- Hit counts, intervals and reward chances: tunables-combat, Gathering.
 - Reward chance and quality are influenced by Woodcutting level, hatchet quality, and node type.
 - No progress bar is shown.
 - Node is destroyed after its hit count is exhausted.
@@ -70,13 +70,13 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 - If the room cannot hold the full kit, shrink it. Order: paired gate, then plate **or** lever (never both), then a visible chest, then a hidden chest plus an adjacent cracked wall. Skip a later piece rather than placing outside the room.
 - A room gets one activator: a pressure plate **or** a lever, chosen at spawn. Both toggle the paired gate on a rising edge and latch it. Stepping off a plate does not close the gate. Stepping on again toggles it closed.
 - Plate prompt verb is “Step the plate”. Lever prompt verb is “Pull lever”.
-- Cracked walls take more hits than normal breakables (Crack HP: tunables). Breaking one reveals its linked hidden chest.
+- Cracked walls take more hits than normal breakables (Crack HP: tunables-combat). Breaking one reveals its linked hidden chest.
 - Dead-end chests and puzzle chests may optionally contain Artifacts in addition to normal loot.
 - There is no open-chest sprite. A used chest (`chest`, `base_chest`, `puzzle_chest`) fades and tints in place and keeps the “Empty.” prompt for the rest of the floor.
 
 ## Puzzle rooms
 
-`props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first steps inside its trigger radius (tunables). `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
+`props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first steps inside its trigger radius (tunables-combat). `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
 
 ## Stairs
 
