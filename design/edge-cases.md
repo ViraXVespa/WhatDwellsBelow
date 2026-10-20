@@ -24,7 +24,7 @@ Read when: empty-death toast, full-pack toast, save fallback, confirm accidents
 ## Multiple Extraction Gates / shops
 
 - Hard limit: maximum one Ghost Shop per floor.
-- Hard limit: three Extraction Gates per floor, each in its own safe room, not near one another.
+- Hard limit: twelve Extraction Gates per floor (`max_clerks`), each in its own safe room, not near one another.
 - Generation MUST respect these caps.
 
 ## Save corruption or missing save
