@@ -6,7 +6,7 @@ binary only when the pin is missing. Editor playtest is out of scope.
 
   python tools/bot_smokes.py --doctor
   python tools/bot_smokes.py --setup
-  python tools/bot_smokes.py --phases 1,2,6
+  python tools/bot_smokes.py --phases 1,2,6 [--release]   (--release: run_release_smoke.py too)
   python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
   python tools/bot_smokes.py --for scripts/world/player.gd   (which phases load a file; runs nothing)
 """
@@ -161,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
+    p.add_argument("--release", action="store_true", help="Also run run_release_smoke.py (release mode: no debug code, title to dungeon). Alone: just that.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (end gate: a new UI state without a shot flow FAILS this run)")
     p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
@@ -191,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))
     pin = pin_path()
     found = resolve_bin()
-    if ns.doctor or (not ns.setup and not ns.phases):
+    if ns.doctor or (not ns.setup and not ns.phases and not ns.release):
         print(f"version={VERSION}")
         print(f"pin={pin}")
         print(f"bin={'missing' if found is None else found}")
@@ -201,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     exe = found
     if ns.setup or exe is None:
         exe = setup(pin)
-    if ns.flows and not ns.phases:
+    if (ns.flows or ns.release) and not ns.phases:
         ns.phases = "0"
     if not ns.phases:
         print(f"ready\t{exe}")
@@ -236,6 +237,10 @@ def main(argv: list[str] | None = None) -> int:
             rc = 1
             continue
         rc |= run_phase(exe, root, n, ns.timeout, ns.verbose)
+    if ns.release:
+        rrc = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "run_release_smoke.py"), "--root", str(root)], check=False).returncode
+        print(f"release={'PASS' if rrc == 0 else 'FAIL'}")
+        rc |= 1 if rrc else 0
     print(f"smokes={'PASS' if rc == 0 else 'FAIL'}")
     return agent_log.emit_result("PASS" if rc == 0 else "FAIL", phases=",".join(str(n) for n in phases))
 

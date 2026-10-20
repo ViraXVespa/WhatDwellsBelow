@@ -88,6 +88,10 @@ def main(argv: list[str] | None = None) -> int:
             code, lines = child(root, "rekey_all_stills.py", "rekey-all-stills", "--check", "--jobs", "4")
             body += [f"--- rekey determinism exit={code} ---"] + lines[-4:] + [""]
             fail += int(code != 0)
+        print("== release smoke (stripped) ==")
+        code, lines = child(root, "run_release_smoke.py", "release-smoke", "--modes", "stripped")
+        body += [f"--- release smoke exit={code} ---"] + lines[-4:] + [""]
+        fail += int(code != 0)
         print("== hub bake stamp ==")
         code, lines = child(root, "check_hub_bake.py", "hub-bake")
         body += [f"--- hub bake stamp exit={code} ---"] + lines[-3:] + [""]
