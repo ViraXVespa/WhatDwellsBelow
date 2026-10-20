@@ -6,7 +6,7 @@ extends Object
 ## Off: DYNRES_ON false in tunables.gd, or the launch flag --wdb-no-dynres (web: ?wdb-no-dynres).
 ## Player setting App.render_scale: 0 = Auto (all of the above); 1.0 / 0.8 / 0.6 pin the scale and stop Auto.
 const T := preload("res://scripts/data/tunables.gd")
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 static var _acc := 0.0
 static var _n := 0

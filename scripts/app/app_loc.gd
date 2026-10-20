@@ -3,7 +3,7 @@ extends Object
 ## Localization setup. English ("en") is the default locale and the only one shipped (scripts/data/locale/en.po).
 ## Keys are "<file stem>.<slug>" or "common.<slug>". How to add a string or a locale: design/localization.md.
 
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const DEFAULT := "en"
 const LOCALES: PackedStringArray = ["en"]
 const DIR := "res://scripts/data/locale/"

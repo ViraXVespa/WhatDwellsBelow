@@ -1,12 +1,12 @@
 ﻿extends Object
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const WALL := 0
 const FLOOR := 1
 const Carve := preload("res://scripts/dungeon/gen/carve.gd")
 const Rooms := preload("res://scripts/dungeon/gen/rooms.gd")
 const Doors := preload("res://scripts/dungeon/gen/doors.gd")
 const Outline := preload("res://scripts/dungeon/gen/outline.gd")
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 static func cycle_of(floor_n: int) -> int:
 	return int((maxi(1, floor_n) - 1) / 5.0)
@@ -43,15 +43,15 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 			data["boss_title"] = boss_title(floor_n)
 			data["boss_role"] = boss_role(floor_n)
 			data["gate_master"] = is_gate_master(floor_n)
-			LoadTiming.dmark("gen_carve")
+			Dbg.lt_dmark("gen_carve")
 			Outline.stamp(data, rng, bal)
-			LoadTiming.dmark("gen_outline")
+			Dbg.lt_dmark("gen_outline")
 			return data
 	return _fallback(floor_n, w, h, bal)
 
 static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin: int, rmax: int, loops: int, bal: Object) -> Dictionary:
 	Carve.begin_halls()
-	LoadTiming.dmark("gen_place")
+	Dbg.lt_dmark("gen_place")
 	var grid: PackedByteArray = PackedByteArray()
 	grid.resize(w * h)
 	grid.fill(WALL)
@@ -60,16 +60,16 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 	Carve.place_spread_rooms(rng, grid, w, h, rooms, pack, rmin, rmax)
 	if rooms.size() < 6:
 		return {"ok": false, "rooms": rooms}
-	LoadTiming.dmark("gen_tree")
+	Dbg.lt_dmark("gen_tree")
 	Carve.connect_winding_tree(rng, grid, w, h, rooms)
-	LoadTiming.dmark("gen_loops")
+	Dbg.lt_dmark("gen_loops")
 	Carve.extra_winding_loops(rng, grid, w, h, rooms, loops)
 	var stubs: int = mini(12, maxi(4, int(pack / 8.0)))
 	if bal:
 		stubs = maxi(0, int(bal.get("hall_stub_count")))
-	LoadTiming.dmark("gen_spurs")
+	Dbg.lt_dmark("gen_spurs")
 	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, stubs)
-	LoadTiming.dmark("gen_kinds")
+	Dbg.lt_dmark("gen_kinds")
 	Rooms.assign_kinds(rng, grid, w, h, rooms, bal)
 	var spawn_r: Dictionary = Rooms.find_kind(rooms, "spawn")
 	var boss_r: Dictionary = Rooms.find_kind(rooms, "boss")

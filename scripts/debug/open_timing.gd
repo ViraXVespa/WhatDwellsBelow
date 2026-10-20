@@ -10,7 +10,7 @@ extends Object
 const FLAG := "--wdb-open-timing"
 const BUDGET_MS := 16.0
 const SLACK_MS := 6.0
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 static func active() -> bool:
 	return CliArgs.has(FLAG)

@@ -9,7 +9,7 @@ extends RefCounted
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
 
 const ArtBake := preload("res://scripts/ui/progress_ui/art_bake.gd")
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")

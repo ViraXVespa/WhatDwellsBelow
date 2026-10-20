@@ -37,6 +37,7 @@ static func p9(host: Node) -> void:
 		if not found:
 			model_ok = false
 	printerr("P9: anim_browser_ok=" + str(models.size() >= 16 and model_ok))
+	App.ensure_anim_browser()
 	if App.anim_browser and App.anim_browser.has_method("open_browser"):
 		App.anim_browser.open_browser()
 		printerr("P9: anim_open=" + str(App.anim_browser.open) + " focus=" + str(App.anim_browser.back_btn != null))

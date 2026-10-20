@@ -1,8 +1,7 @@
 extends Object
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
 const Hub := preload("res://scripts/app/flow_hub.gd")
@@ -90,18 +89,18 @@ static func play_from_menu(host: Node) -> void:
 	host._play_from_menu_async()
 
 static func play_from_menu_async(host: Node) -> void:
-	HitchLog.mark("load_play")
-	LoadTiming.mark("play_begin")
+	Dbg.hitch("load_play")
+	Dbg.lt_mark("play_begin")
 	if host.loader:
 		host.loader.begin("Placeholdia", App.tr("common.gathering_the_square"))
 	Hub.LoadW.begin()
 	if host.loader:
 		host.loader.stage(0.0, Hub.LoadW.after(&"preload"))
 	await host.get_tree().process_frame
-	HitchLog.mark("load_paint")
-	LoadTiming.mark("loader_paint")
+	Dbg.hitch("load_paint")
+	Dbg.lt_mark("loader_paint")
 	UiWarm.start()
-	HitchLog.mark("load_preload")
+	Dbg.hitch("load_preload")
 	preload_hub(host)
 	if host.loader:
 		host.loader.set_status(App.tr("app_flow.raising_placeholdia"))
@@ -109,15 +108,15 @@ static func play_from_menu_async(host: Node) -> void:
 	if host.loader:
 		host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp"))
 	await host.get_tree().process_frame
-	HitchLog.mark("load_camp")
-	LoadTiming.mark("camp_change")
+	Dbg.hitch("load_camp")
+	Dbg.lt_mark("camp_change")
 	host.go_camp()
 	host.ui_open = true
 	var guard: int = await Leg.wait_scene(host, "camp", "Camp", func():
 		if host.loader:
 			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp")))
-	HitchLog.mark("load_camp_scene")
-	LoadTiming.mark("camp_ready")
+	Dbg.hitch("load_camp_scene")
+	Dbg.lt_mark("camp_ready")
 	var scene_b: Node = host.get_tree().current_scene
 	var built_n: int = 0
 	while built_n < 240 and scene_b != null and scene_b.get("build_done") != true:
@@ -127,11 +126,11 @@ static func play_from_menu_async(host: Node) -> void:
 		await host.get_tree().process_frame
 		scene_b = host.get_tree().current_scene
 	Hub.LoadW.done(&"camp")
-	LoadTiming.note("camp_wait_frames", str(guard))
-	LoadTiming.note("camp_build_frames", str(built_n))
-	HitchLog.mark("load_warmup")
+	Dbg.lt_note("camp_wait_frames", str(guard))
+	Dbg.lt_note("camp_build_frames", str(built_n))
+	Dbg.hitch("load_warmup")
 	await Hub._warmup_hub(host)
-	HitchLog.mark("load_finish")
+	Dbg.hitch("load_finish")
 	var scene: Node = host.get_tree().current_scene
 	if host.loader:
 		host.loader.finish()
@@ -139,38 +138,38 @@ static func play_from_menu_async(host: Node) -> void:
 	host._menu_loading = false
 	if scene and ("player" in scene) and scene.player:
 		scene.player.set_physics_process(true)
-	LoadTiming.note("camp_ui", "deferred")
-	LoadTiming.mark("loader_finish")
-	LoadTiming.finish()
+	Dbg.lt_note("camp_ui", "deferred")
+	Dbg.lt_mark("loader_finish")
+	Dbg.lt_finish()
 	if scene and scene.has_method("ensure_dummy"):
 		scene.ensure_dummy()
 
 static func dungeon_load_timing_async(host: Node) -> void:
 	host.go_camp()
 	var hub_guard: int = await Leg.wait_scene(host, "camp", "Camp")
-	LoadTiming.dnote("hub_wait_frames", str(hub_guard))
-	LoadTiming.dmark("hub_ready")
+	Dbg.lt_dnote("hub_wait_frames", str(hub_guard))
+	Dbg.lt_dmark("hub_ready")
 	AppRunS.ensure_dungeon_packed(host)
-	LoadTiming.dmark("dungeon_pack")
-	LoadTiming.dmark("enter_begin")
+	Dbg.lt_dmark("dungeon_pack")
+	Dbg.lt_dmark("enter_begin")
 	host.save_now()
-	LoadTiming.dmark("save")
+	Dbg.lt_dmark("save")
 	host.ui_open = false
 	if host.present and host.present.has_method("hide_overlay"):
 		host.present.hide_overlay()
 	host._after_enter()
 	host.floor_n = 1
 	host.run_seed = 42
-	LoadTiming.dnote("seed", str(host.run_seed))
-	LoadTiming.dnote("floor", str(host.floor_n))
+	Dbg.lt_dnote("seed", str(host.run_seed))
+	Dbg.lt_dnote("floor", str(host.floor_n))
 	var dun_guard: int = await Leg.wait_scene(host, "dungeon", "Dungeon")
-	LoadTiming.dmark("dungeon_scene")
-	LoadTiming.dnote("dungeon_wait_frames", str(dun_guard))
+	Dbg.lt_dmark("dungeon_scene")
+	Dbg.lt_dnote("dungeon_wait_frames", str(dun_guard))
 	await pump_fps(host, false)
 	if host.present and host.present.has_method("release_enter"):
 		host.present.release_enter()
-	LoadTiming.dmark("dungeon_ready")
-	LoadTiming.finish()
+	Dbg.lt_dmark("dungeon_ready")
+	Dbg.lt_finish()
 
 static func pump_fps(host: Node, hub: bool) -> void:
 	await Hub.pump_fps(host, hub)

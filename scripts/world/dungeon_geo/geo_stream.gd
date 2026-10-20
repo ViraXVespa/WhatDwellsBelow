@@ -1,12 +1,11 @@
 ﻿extends RefCounted
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 const Clip := preload("res://scripts/world/dungeon_geo/stream_clip.gd")
 const Emit := preload("res://scripts/world/dungeon_geo/stream_emit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -78,7 +77,7 @@ static func prime_visible(host: Node) -> void:
 			var job: Dictionary = job_at(host, o)
 			if str(job.state) != "pending":
 				continue
-			HitchLog.mark("geo_activate", Vector2i(job.origin))
+			Dbg.hitch("geo_activate", Vector2i(job.origin))
 			activate_job(host, job)
 		dy += 1
 static func follow(host: Node, _delta: float) -> void:
@@ -91,7 +90,7 @@ static func follow(host: Node, _delta: float) -> void:
 	var h: int = host.data.h
 	var cur: Dictionary = job_at(host, origin)
 	if str(cur.state) == "pending":
-		HitchLog.mark("geo_activate", Vector2i(cur.origin))
+		Dbg.hitch("geo_activate", Vector2i(cur.origin))
 		activate_job(host, cur)
 	host.set_meta("wdb_geo_origin", origin)
 	var budget: int = PER_FRAME
@@ -114,7 +113,7 @@ static func follow(host: Node, _delta: float) -> void:
 				continue
 			if built >= budget:
 				continue
-			HitchLog.mark("geo_activate", Vector2i(job.origin))
+			Dbg.hitch("geo_activate", Vector2i(job.origin))
 			activate_job(host, job)
 			built += 1
 		dy += 1
@@ -133,11 +132,11 @@ static func follow(host: Node, _delta: float) -> void:
 				var job2: Dictionary = job_at(host, o2)
 				if str(job2.state) != "pending":
 					continue
-				HitchLog.mark("geo_activate", Vector2i(job2.origin))
+				Dbg.hitch("geo_activate", Vector2i(job2.origin))
 				activate_job(host, job2)
 				built += 1
 			dy2 += 1
-	LoadTiming.dnote("geo_built", str(built))
+	Dbg.lt_dnote("geo_built", str(built))
 	LightRt.maintain(host)
 static func tick(host: Node, delta: float) -> void:
 	follow(host, delta)
@@ -166,7 +165,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var grid: PackedByteArray = host.data.grid
 	var floor_cells: Array[Vector2i] = WallRects.solid_cells(solid, sw, sh, n, ox, oy, x1, y1)
 	var wall_cells: Array[Vector2i] = WallRects.volume_cells(solid, sw, sh, n, grid, w, h, ox, oy, x1, y1)
-	HitchLog.mark("geo_cells")
+	Dbg.hitch("geo_cells")
 	if floor_cells.is_empty() and wall_cells.is_empty():
 		job.state = "cleared"
 		return
@@ -177,11 +176,11 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var runs: Array[Dictionary] = []
 	if outlined or not wall_cells.is_empty():
 		runs = Clip._wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
-	HitchLog.mark("geo_runs")
+	Dbg.hitch("geo_runs")
 	if not floor_cells.is_empty():
 		if outlined:
 			var lip: Node3D = Emit._emit_floor_lip(Clip._outline_loops(host), ox * n, oy * n, x1 * n, y1 * n, fine_m, host.floor_mat)
-			HitchLog.mark("geo_lip")
+			Dbg.hitch("geo_lip")
 			root.add_child(lip)
 			var mm: MultiMeshInstance3D = Emit._first_mm(lip)
 			if host.floor_mm == null and mm != null:
@@ -192,15 +191,15 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 			if host.floor_mm == null:
 				host.floor_mm = fm
 			host.floor_mm = fm
-		HitchLog.mark("geo_lip")
+		Dbg.hitch("geo_lip")
 	if not runs.is_empty():
 		var wall_inst: MeshInstance3D = Emit._ensure_wall_mesh(host, runs, fine_m)
 		if wall_inst != null:
 			root.add_child(wall_inst)
-		HitchLog.mark("geo_walls")
+		Dbg.hitch("geo_walls")
 	if outlined or not runs.is_empty():
 		Emit._add_ribbon_boxes(root, runs, fine_m)
-		HitchLog.mark("geo_col")
+		Dbg.hitch("geo_col")
 	elif not wall_cells.is_empty():
 		add_collision(root, wall_cells, fine_m)
 	job.node = root

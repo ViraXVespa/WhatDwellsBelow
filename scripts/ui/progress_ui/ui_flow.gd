@@ -1,5 +1,6 @@
 extends Object
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
@@ -13,7 +14,6 @@ const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
 const ScrollBox: GDScript = preload("res://scripts/ui/scroll_box.gd")
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 const Reception := preload("res://scripts/ui/progress_ui/receptionist.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -33,7 +33,7 @@ static func _ready(host: CanvasLayer) -> void:
 	ScrollBox.make_tip(host)
 
 static func close_ui(host: CanvasLayer) -> void:
-	HitchLog.mark("ui_close_" + str(host.mode))
+	Dbg.hitch("ui_close_" + str(host.mode))
 	if host.mode == "extract" and host.extract_mailed and host.extract_spot and is_instance_valid(host.extract_spot) and host.extract_spot.has_method("mark_spent"):
 		host.extract_spot.mark_spent()
 	host.extract_spot = null

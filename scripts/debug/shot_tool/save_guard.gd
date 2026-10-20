@@ -21,7 +21,7 @@ static func _sig() -> String:
 
 ## "" when isolated and armed; else why not.
 static func arm() -> String:
-	if not App.Smoke.active():
+	if not App.Dbg.smoke_active():
 		return "no smoke flag is active, so App.save_now() would write the live slot"
 	if Store.dir_for("smoke") == Store.dir_for("live") or not Store.dir_for("smoke").begins_with("user://playtest/"):
 		return "the smoke slot is not a separate folder from the live slot"

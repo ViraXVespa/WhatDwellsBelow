@@ -1,7 +1,7 @@
 extends Node
 
 func _ready() -> void:
-	if App.Smoke.route_boot():
+	if App.Dbg.smoke_route_boot():
 		return
 	var next: String = "res://scenes/splash.tscn"
 	if App.Disp.wants_gate():

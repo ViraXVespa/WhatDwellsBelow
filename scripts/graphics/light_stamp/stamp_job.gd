@@ -4,7 +4,7 @@ extends RefCounted
 ## step(budget_us) runs units until the budget is spent (negative: all). The pixels do not depend on how many frames it takes.
 ## The float buffers stay static (their wall texels carry over between stamps, as before).
 
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const Dbg := preload("res://scripts/app/dbg.gd")
 const K := preload("res://scripts/graphics/light_stamp/stamp_k.gd")
 const Fov := preload("res://scripts/graphics/light_stamp/fov.gd")
 const Grid := preload("res://scripts/graphics/light_stamp/stamp_grid.gd")
@@ -61,7 +61,7 @@ func image() -> Image:
 	return Image.create_from_data(iw, ih, false, Image.FORMAT_RGBA8, Grid._rgba)
 
 func _go(next: int, mark: String) -> void:
-	HitchLog.mark(mark)
+	Dbg.hitch(mark)
 	phase = next
 	cur = 0
 

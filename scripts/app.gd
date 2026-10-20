@@ -1,19 +1,18 @@
 extends Node
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const BalanceS := preload("res://scripts/data/balance.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const SfxS := preload("res://scripts/audio/sfx.gd")
 const ProgressS := preload("res://scripts/data/progress.gd")
-const TelS := preload("res://scripts/debug/telemetry.gd")
+const TelS := preload("res://scripts/app/telemetry.gd")
 const PauseS := preload("res://scripts/ui/pause_menu.gd")
 const RecapS := preload("res://scripts/ui/recap.gd")
 const Store := preload("res://scripts/data/save_store.gd")
 const PresentS := preload("res://scripts/ui/present.gd")
 const MusicS := preload("res://scripts/audio/music.gd")
 const ArchS := preload("res://scripts/ui/archives_ui.gd")
-const PlayS := preload("res://scripts/debug/playtest.gd")
 const LoaderS := preload("res://scripts/ui/loader.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Pad := preload("res://scripts/input/pad.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
@@ -143,7 +142,7 @@ func _open_debug() -> void:
 		debug.show_menu()
 
 func save_now() -> void:
-	if Smoke.active():
+	if Dbg.smoke_active():
 		Store.save_slot("smoke")
 		return
 	if playtest and bool(playtest.get("live_running")):

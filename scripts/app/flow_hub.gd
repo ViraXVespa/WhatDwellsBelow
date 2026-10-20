@@ -2,9 +2,8 @@ extends Object
 
 ## Split from app_flow.gd: _warmup_hub, _hub_player, hub_preload_paths....
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const Anim := preload("res://scripts/world/player/player_anim.gd")
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const PlayerSetup := preload("res://scripts/world/player/player_setup.gd")
@@ -14,7 +13,7 @@ const LoadW := preload("res://scripts/ui/loader_weights.gd")
 const PLAYER_LAZY: Array[String] = ["res://scripts/world/player/player_act.gd", "res://scripts/world/player/player_lock.gd", "res://scripts/combat/player_hit.gd"]
 
 static func _warmup_hub(host: Node) -> void:
-	LoadTiming.mark("warmup_begin")
+	Dbg.lt_mark("warmup_begin")
 	if host.loader:
 		host.loader.set_status(App.tr("flow_hub.warming_things_up_for_you"))
 		if host.loader.has_method("set_solid"):
@@ -27,7 +26,7 @@ static func _warmup_hub(host: Node) -> void:
 		scene.ensure_dummy()
 	if scene and scene.has_method("warmup"):
 		scene.warmup()
-	LoadTiming.mark("warmup_frame")
+	Dbg.lt_mark("warmup_frame")
 	var p: Node = _hub_player(host, scene)
 	if p and p.body:
 		p.body.visible = true
@@ -38,18 +37,18 @@ static func _warmup_hub(host: Node) -> void:
 	LoadW.done(&"warm_frame")
 	if host.loader:
 		host.loader.stage(LoadW.at(&"warm_ui"), LoadW.after(&"warm_ui"))
-	LoadTiming.mark("warmup_gpu")
+	Dbg.lt_mark("warmup_gpu")
 	await UiWarm.finish(scene)
-	LoadTiming.mark("warmup_ui")
+	Dbg.lt_mark("warmup_ui")
 	if scene and scene.has_method("warmup_restore"):
 		scene.warmup_restore()
 	var bench: Node = host.get_node_or_null("HubBench")
 	if bench != null and bench.has_method("pin_zoom"):
 		bench.pin_zoom()
 	if p:
-		HitchLog.mark("warmup_play_zoom")
+		Dbg.hitch("warmup_play_zoom")
 		var texs: Array = Anim.warmup_texs(p)
-		LoadTiming.note("warmup_texs", str(texs.size()))
+		Dbg.lt_note("warmup_texs", str(texs.size()))
 		for tex in texs:
 			Anim.apply_tex(p, tex)
 			RenderingServer.force_draw()
@@ -73,7 +72,7 @@ static func _warmup_hub(host: Node) -> void:
 	LoadW.done(&"settle")
 	if host.loader:
 		host.loader.set_progress(LoadW.END)
-	LoadTiming.mark("warmup_end")
+	Dbg.lt_mark("warmup_end")
 
 static func _hub_player(host: Node, scene: Node) -> Node:
 	if scene and ("player" in scene) and scene.player:
@@ -109,36 +108,36 @@ static func _hub_paths() -> PackedStringArray:
 	])
 
 static func preload_hub(host: Node, _t0: int = 0) -> void:
-	HitchLog.mark("preload_music")
+	Dbg.hitch("preload_music")
 	if host.music and host.music.has_method("preload_dungeon"):
 		var t_mus: int = Time.get_ticks_msec()
 		host.music.preload_dungeon()
-		LoadTiming.note("music_dungeon", "dt=%d" % (Time.get_ticks_msec() - t_mus))
+		Dbg.lt_note("music_dungeon", "dt=%d" % (Time.get_ticks_msec() - t_mus))
 	var paths := hub_preload_paths(host)
 	var n: int = paths.size()
 	if n <= 0:
 		if host.loader:
 			host.loader.set_progress(LoadW.after(&"preload"))
 		return
-	LoadTiming.mark("preload_begin")
-	LoadTiming.note("files", str(n))
-	LoadTiming.note("batch", "sync")
-	LoadTiming.note("sub_threads", "false")
-	LoadTiming.note("web", str(OS.has_feature("web")))
+	Dbg.lt_mark("preload_begin")
+	Dbg.lt_note("files", str(n))
+	Dbg.lt_note("batch", "sync")
+	Dbg.lt_note("sub_threads", "false")
+	Dbg.lt_note("web", str(OS.has_feature("web")))
 	var i: int = 0
 	while i < n:
 		var path: String = paths[i]
 		if host.loader:
 			host.loader.set_status(hub_status_for(path))
-		HitchLog.mark("preload_" + path.get_file().get_basename())
+		Dbg.hitch("preload_" + path.get_file().get_basename())
 		var t_file: int = Time.get_ticks_msec()
 		ResourceLoader.load(path)
-		LoadTiming.note("file", App.tr("flow_hub.dt") % [path.get_file(), Time.get_ticks_msec() - t_file])
+		Dbg.lt_note("file", App.tr("flow_hub.dt") % [path.get_file(), Time.get_ticks_msec() - t_file])
 		if host.loader:
 			host.loader.stage_at(0.0, LoadW.after(&"preload"), float(i + 1) / float(n))
 		i += 1
-	LoadTiming.mark("preload_end")
-	LoadTiming.note("preload_got", str(n))
+	Dbg.lt_mark("preload_end")
+	Dbg.lt_note("preload_got", str(n))
 
 static func hub_status_for(path: String) -> String:
 	if path.ends_with("camp.tscn") or path.ends_with("camp.gd"):
@@ -183,12 +182,12 @@ static func pump_fps(host: Node, hub: bool) -> void:
 			break
 	var ok_s: String = "1" if good >= 2 else "0"
 	if hub:
-		LoadTiming.note("warm_frames", str(n))
-		LoadTiming.note("fps_ok", ok_s)
-		LoadTiming.note("warm_last_dt", str(last_dt))
-		LoadTiming.note("warm_steady", str(steady))
+		Dbg.lt_note("warm_frames", str(n))
+		Dbg.lt_note("fps_ok", ok_s)
+		Dbg.lt_note("warm_last_dt", str(last_dt))
+		Dbg.lt_note("warm_steady", str(steady))
 	else:
-		LoadTiming.dnote("warm_frames", str(n))
-		LoadTiming.dnote("fps_ok", ok_s)
-		LoadTiming.dnote("warm_last_dt", str(last_dt))
-		LoadTiming.dnote("warm_steady", str(steady))
+		Dbg.lt_dnote("warm_frames", str(n))
+		Dbg.lt_dnote("fps_ok", ok_s)
+		Dbg.lt_dnote("warm_last_dt", str(last_dt))
+		Dbg.lt_dnote("warm_steady", str(steady))

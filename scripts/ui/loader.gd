@@ -1,7 +1,7 @@
 extends CanvasLayer
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 ## Menu load overlay. Lives on App so it survives the title → camp swap.
 

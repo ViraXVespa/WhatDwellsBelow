@@ -6,7 +6,7 @@ extends Object
 
 const FLAG := "--wdb-load-timing-smoke"
 const DUNGEON_FLAG := "--wdb-dungeon-load-timing-smoke"
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const OpenTiming := preload("res://scripts/debug/open_timing.gd")
 
 static var _hub := -1

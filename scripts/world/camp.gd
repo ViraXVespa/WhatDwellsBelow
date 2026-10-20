@@ -1,11 +1,10 @@
 @tool
 extends Node3D
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const View := preload("res://scripts/world/camp/camp_view.gd")
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Warm := preload("res://scripts/world/camp/warm.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
@@ -25,10 +24,10 @@ var _editor_hooked: bool = false
 var build_done: bool = false
 
 func _ready() -> void:
-	HitchLog.mark("camp_enter")
+	Dbg.hitch("camp_enter")
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
-	HitchLog.mark("camp_layout")
+	Dbg.hitch("camp_layout")
 	if Engine.is_editor_hint():
 		_hook_editor()
 		Build.realize_editor(self, _layout)
@@ -74,12 +73,12 @@ func _run_paced(steps: Array[Callable]) -> void:
 
 func _step_env() -> void:
 	App.in_dungeon = false
-	HitchLog.mark("layout_tree")
+	Dbg.hitch("layout_tree")
 	Talk.on_hub_entry()
-	LoadTiming.mark("camp_enter")
+	Dbg.lt_mark("camp_enter")
 	Build.world(self)
-	LoadTiming.mark("camp_world")
-	HitchLog.mark("hub_env")
+	Dbg.lt_mark("camp_world")
+	Dbg.hitch("hub_env")
 
 func _step_light() -> void:
 	LightRt.prepare_hub(
@@ -92,40 +91,40 @@ func _step_light() -> void:
 	)
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	LightRt.rebind_tree(self)
-	LoadTiming.mark("camp_light")
-	HitchLog.mark("hub_light")
+	Dbg.lt_mark("camp_light")
+	Dbg.hitch("hub_light")
 
 func _step_ground() -> void:
 	var gen: Node3D = Build.generated(self)
 	if gen.get_child_count() > 0:
 		Build.clear_generated(self)
 		gen = Build.generated(self)
-	LoadTiming.note("camp_geo", "build")
+	Dbg.lt_note("camp_geo", "build")
 	Build.ground(gen)
-	LoadTiming.mark("camp_ground")
-	HitchLog.mark("hub_ground")
+	Dbg.lt_mark("camp_ground")
+	Dbg.hitch("hub_ground")
 
 func _step_hall() -> void:
 	Build.hall(Build.generated(self))
-	HitchLog.mark("hub_hall")
+	Dbg.hitch("hub_hall")
 
 func _step_wing() -> void:
 	Build.wing(Build.generated(self))
-	HitchLog.mark("hub_wing")
+	Dbg.hitch("hub_wing")
 
 func _step_stall() -> void:
 	var gen: Node3D = Build.generated(self)
 	Build.stall(gen)
 	Build.strip_building_cubes(gen)
 	Build.quiet_shadows(gen)
-	LoadTiming.mark("camp_buildings")
-	HitchLog.mark("hub_stall")
+	Dbg.lt_mark("camp_buildings")
+	Dbg.hitch("hub_stall")
 
 func _step_fence() -> void:
 	var gen: Node3D = Build.generated(self)
 	View.fence(gen)
-	LoadTiming.mark("camp_fence")
-	HitchLog.mark("hub_fence")
+	Dbg.lt_mark("camp_fence")
+	Dbg.hitch("hub_fence")
 
 func _step_player() -> void:
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
@@ -134,20 +133,20 @@ func _step_player() -> void:
 	add_child(player)
 	if player.body:
 		player.body.render_priority = 18
-	LoadTiming.mark("camp_player")
-	HitchLog.mark("hub_player")
+	Dbg.lt_mark("camp_player")
+	Dbg.hitch("hub_player")
 
 func _step_spot_crystal() -> void:
 	Spot._add_spot(self, "loadout_crystal", _layout.spot_pos("Crystal"))
-	HitchLog.mark("hub_spot_crystal")
+	Dbg.hitch("hub_spot_crystal")
 
 func _step_spot_anvil() -> void:
 	Spot._add_spot(self, "anvil", _layout.spot_pos("Anvil"))
-	HitchLog.mark("hub_spot_anvil")
+	Dbg.hitch("hub_spot_anvil")
 
 func _step_spot_board() -> void:
 	Spot._add_spot(self, "quest_board", _layout.spot_pos("Board"))
-	HitchLog.mark("hub_spot_board")
+	Dbg.hitch("hub_spot_board")
 
 func _step_spot_receptionist() -> void:
 	Banner._banner(self)
@@ -164,7 +163,7 @@ func _step_spot_receptionist() -> void:
 	if rec_lab:
 		rec_lab.position.y = 0.85
 	Spot._tune_label(rec)
-	HitchLog.mark("hub_spot_receptionist")
+	Dbg.hitch("hub_spot_receptionist")
 
 func _step_spot_vendor() -> void:
 	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
@@ -172,22 +171,22 @@ func _step_spot_vendor() -> void:
 	if v_lab:
 		v_lab.position.y = 2.25
 	Spot._tune_label(v)
-	HitchLog.mark("hub_spot_vendor")
+	Dbg.hitch("hub_spot_vendor")
 
 func _step_spot_dumpster() -> void:
 	Spot._add_spot(self, "dumpster", _layout.spot_pos("Dumpster"))
-	HitchLog.mark("hub_spot_dumpster")
+	Dbg.hitch("hub_spot_dumpster")
 
 func _step_spot_billboard() -> void:
 	Spot._add_spot(self, "billboard", _layout.spot_pos("Billboard"))
-	LoadTiming.mark("camp_spots")
-	HitchLog.mark("hub_spot_billboard")
+	Dbg.lt_mark("camp_spots")
+	Dbg.hitch("hub_spot_billboard")
 
 func _step_rest() -> void:
 	Build.stamp_actor_blobs(self)
-	HitchLog.mark("hub_blobs")
+	Dbg.hitch("hub_blobs")
 	if bool(App.get("_menu_loading")) or App.wake_pending:
-		LoadTiming.note("camp_dummy", "deferred")
+		Dbg.lt_note("camp_dummy", "deferred")
 	else:
 		ensure_dummy()
 	Hud._hud(self)
@@ -214,16 +213,15 @@ func _step_rest() -> void:
 		var r: String = App.prog.restock()
 		if r != "":
 			App.toast(r)
-	var Smoke: GDScript = load("res://scripts/debug/smoke.gd") as GDScript
 	if (
-		not Smoke.phase(8)
+		not Dbg.smoke_phase(8)
 		and not (App.playtest and bool(App.playtest.get("live_running")))
 		and not bool(App.get("_menu_loading"))
 	):
 		App.save_now()
-	if Smoke.phase(6):
+	if Dbg.smoke_phase(6):
 		ensure_ui()
-	Smoke.attach_camp(self)
+	Dbg.smoke_attach("camp", self)
 	build_done = true
 func _hook_editor() -> void:
 	if _editor_hooked:
@@ -243,11 +241,11 @@ func world_ui() -> Node:
 func ensure_ui() -> void:
 	if ui != null:
 		return
-	LoadTiming.mark("camp_ui_begin")
+	Dbg.lt_mark("camp_ui_begin")
 	var UiS: GDScript = load("res://scripts/ui/progress_ui.gd") as GDScript
 	ui = UiS.new()
 	add_child(ui)
-	LoadTiming.mark("camp_ui")
+	Dbg.lt_mark("camp_ui")
 
 func warmup() -> void:
 	Warm.frame(self)
@@ -288,7 +286,7 @@ func ensure_dummy() -> void:
 	dummy = n
 	add_child(n)
 	Build.stamp_actor_blobs(self)
-	HitchLog.mark("hub_blobs")
+	Dbg.hitch("hub_blobs")
 
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):

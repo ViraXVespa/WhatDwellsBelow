@@ -2,7 +2,7 @@ extends Object
 
 ## Split from hub_bench.gd: _wait, _face, _goto....
 
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 const Visit := preload("res://scripts/debug/playtest_bench/hub_bench_visit.gd")

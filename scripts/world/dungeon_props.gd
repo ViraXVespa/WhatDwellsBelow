@@ -3,7 +3,6 @@
 const GatherS := preload("res://scripts/world/gather/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
 const Spawn := preload("res://scripts/world/dungeon_props/spawn.gd")
 const Place := preload("res://scripts/world/dungeon_props/props_place.gd")
 
