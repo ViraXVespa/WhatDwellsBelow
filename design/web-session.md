@@ -4,13 +4,13 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message
 
 For **web / chat** only; Build and Bot ignore it.
-Intent: Vira owns design; Web helps make it real, treats the docs as the living plan, and may suggest improvements (ask freely). Web may add a tool that helps later tasks (`tools.md` rule 5) and tells the User after.
+Intent: Vira owns design; Web helps make it real, treats the docs as the living plan, and may suggest improvements (ask freely).
 Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed. Packed pass: when the User names several owners (or says one go / pack these) and the paths do not share a live file and `conflicts_with` does not list the pair, one scratch may revise those Source paths together. Still one `tools/_scratch.py`. Still User-paste. No inventing a system in a packed pass.
-The User pastes every emit. Never assume a disk write landed. Do not push `main` or make a side branch unless the User named it.
+The User pastes every emit. Do not push `main` or make a side branch unless the User named it.
 
 After Phase 3, one `tools/_scratch.py` is the whole remaining action. Emit a blank line, then one python fence. The blank line is required so the fence is not dropped. No other prose in that message. A scratch that writes a runnable this slice owns must run it before exit and print `RESULT checker=PASS|FAIL` when the load-graph checker applies. The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT plus any clipboard shot the scratch armed. If a step cannot live in that scratch, say so and wait. Load-graph, import check, build-gate, shots, bake, map, smokes, and load-timing belong in the scratch that landed the write. The chat after emit only reads the pasted RESULT.
 
-Proof rules (`prove.md`): intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); a pasted RESULT is "gates pass", not "proved"; look and sound are unverified until the User confirms.
+A pasted RESULT is "gates pass", not "proved" (proof rules: the agents file).
 I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 Web / chat may generate non-tile images. It does not spawn the isolated media runner or Imagine tiled world assets (floor, brick, dirt, grass, seamless walls).
 

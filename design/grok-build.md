@@ -9,7 +9,7 @@ Read when: Grok Build (CLI) path; every CLI instance after a gap
 
 A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, look, layout, material or texture, what counts as done, save or entry behavior, what a button or control does (a trade that now saves), scope splits, which of two valid routes) goes to the User, before the design doc or any code, with `ask_user_question` where it exists (plain text alongside is fine); so do improvements. Ask as many questions as the job needs, in as many rounds as needed, again whenever a discovery changes what she will see or what was assumed. Offer 2-4 options; free text is welcome. Mark one recommended only for code shape or process, never a look, feel or scope.
 Always-allow covers permissions only (Access), never a design question. A dismissed or timed-out question is not an answer: stop and report. No `ask_user_question` tool: ask in plain text and stop.
-Build decides code shape inside one system and starts open numbers coherent (`tunables.md`). Doc and code disagree: trust the newer (`list_changed.py --history`).
+Build decides code shape inside one system and starts open numbers coherent (`tunables.md`).
 
 ## Restate, then change
 
@@ -37,7 +37,7 @@ New feature flow: `build-job-cycle.md`. A new system: plan it and ask every open
 
 ## Read
 
-Agents file once, then this file. Plan pair only if missing, then the named topic. Route first: read what the route card names, not sibling docs (`list_route.py --digest --door D`: headings with line numbers). A survey starts from text (`run_shot_flow.py --survey`, `list_route.py --digest --door D`: one line per doc); open a doc only for the unit she chose, a picture only for the unit being compared. Reading habits: `build-job-cycle.md`. **More than one system: read first** (each doc and `code_map.py row`). Imagine: `design/isolated-media.md` first. Gather / change / prove: `build-job-cycle.md`.
+Agents file once, then this file. Plan pair only if missing, then the named topic. Route first: read what the route card names, not sibling docs (`list_route.py --digest --door D`: headings with line numbers). A survey starts from text (`run_shot_flow.py --survey`, `list_route.py --digest --door D`: one line per doc); open a doc only for the unit she chose, a picture only for the unit being compared. Reading habits: `build-job-cycle.md`. Gather / change / prove: `build-job-cycle.md`.
 
 Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py` (`--texts` for shot-flow words), not grep. Extract: `python tools/show_func.py --path <script> --name <func>`. No `python -c`.
 
@@ -49,28 +49,12 @@ Access and Just do / Ask first: `build-job-cycle.md`.
 
 ## Red prove, merge-back, other roles
 
-Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; one diagnosis, one fix per retry (`tools.md` rule 10); never merge into main. Bot notes: park with `python tools/task.py new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`; you may add a tool. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
+Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; one diagnosis, one fix per retry (`tools.md` rule 10); never merge into main. Bot notes: park with `python tools/task.py new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
 
 ## After a job
 
-Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly; report "gates pass", not "proved". After the compile check passed, every output was read, the slice is committed and pushed, and (visual) the prove folder was shown (`show_png.py`, first sheet only) with each sheet described, inform her whether a playtest confirmation is required, recommended, or not needed. The notice carries the change summary and the folder path. It is not a question. Look and sound stay unverified until she confirms.
+After the compile check passed, every output was read, the slice is committed and pushed, and (visual) the prove folder was shown (`show_png.py`, first sheet only) with each sheet described, inform her whether a playtest confirmation is required, recommended, or not needed. The notice carries the change summary and the folder path. It is not a question.
 
 Gates: `tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` every pass in small batches (read every output you run), then `python tools/run_build_gate.py` (`--batch --visual JOB` for a visual change) and `python tools/read_summary.py --job build-gate` once; `commit_slice.py` (after gates; push lands before the done notice), which refuses without that gate, or say `Did not work: gate not run (why)`. A screen change adds `run_shot_flow.py --job J` (or `run_build_gate.py --batch --visual J`) and the UI load check; at the END a missing or stale frame fails the prove. A job with no shot flow does not add `--visual`. A still rekey is that case (`rekey_preview.py`). Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9).
 
-**Unit queue.** A door that has `unit_queue` in `routes.yaml` must be started with `--door` (not only `--job`) so the queue is armed. This session does one unit and does not run `--next`. The start card will say so.
-
-## Process notes (Build)
-
-- Unit-queue doors start with `--door` (not only `--job`) so the queue is armed. This session does not run `--next`.
-- Follow the start-card ORDER: load/import check, baseline shot, restate, questions, then edit.
-- Prefer `code_map.py row` and targeted `show_func` / `list_xref` over open-ended searches.
-- Normalize fancy punctuation (curly quotes, ellipses) in lore lines on first data pass, or document the encoding.
-- Keep the ledger tight: one xref per shared script, list every other screen that uses it.
-- Surface art-survey items (frame, portrait, refs) in the initial restate so the draw-new vs reuse decision is explicit.
-- End of last unit: cleanup + gates + `commit_slice.py` + push, then the done notice (playtest confirmation required, recommended, or not needed). Do not ask. Use `--handoff` for a survey that never implemented, not `--next`.
-- Visual review: load the review-shots-isolated skill and bring back only the text report.
-
-## Session close (hard rules)
-- A session never moves to the next task or unit. The next flow starts the next one. Do not run `--next`.
-- After cleanup + gates + commit_slice.py + push: inform that the unit/task is done, show the prove folder / images, and say whether a playtest confirmation is required, recommended, or not needed. Do not ask. Stop.
-- If the work is unfinished or red-gated: write the handoff notes into the existing task file (status, what remains, rough edges, prove paths). The same task is reopened next session.
+Unit queue, process notes and session close (hard rules): `build-job-cycle.md`.

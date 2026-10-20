@@ -5,9 +5,7 @@ Read when: Grok Build gather, change, or prove
 
 For **Grok Build** only. Web / chat and Grok Bot do not load this file.
 
-Intent: Vira owns design; Build implements it and defers to her on design, asking whenever that helps; the docs are the living plan, not a fixed route (`grok-build.md`).
-
-A **job** is one cycle: gather, change, prove. Report when the work is done. Ask as many questions as the job needs, in as many rounds as it needs, and ask again whenever a discovery changes what the User will see or what was assumed. No limit on count or rounds. **Multi-system job:** before the first change, list every system it touches and read each one's doc and `code_map.py row`.
+A **job** is one cycle: gather, change, prove. Report when the work is done.
 
 Gather is planned `list_xref` plus planned `show_func` plus one `code_map.py row` when a live script is in the slice. `summarize_scripts` is not gather. `list_route` and `list_changed` stay outside the gather set (`list_route` is slice boot; `list_changed` is git inventory).
 
