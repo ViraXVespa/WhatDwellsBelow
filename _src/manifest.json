@@ -505,6 +505,7 @@
     },
     {
       "live": "assets/sprites/props/hp_orb.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/props/hp_orb.jpg",
       "origin": "_src/sources/assets/sprites/props/hp_orb.jpg",
       "fit": [128, 128, 8, 11, 120, 124],
@@ -527,6 +528,7 @@
     },
     {
       "live": "assets/sprites/props/mana_orb.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/props/mana_orb.jpg",
       "origin": "_src/sources/assets/sprites/props/mana_orb.jpg",
       "fit": [128, 128, 11, 2, 116, 126]
@@ -2114,6 +2116,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2130,6 +2133,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_left.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.49,
@@ -2146,6 +2150,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_right.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2162,6 +2167,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_left.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.49,
@@ -2178,6 +2184,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_right.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2194,6 +2201,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "_src/sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "mad": 8.29,
@@ -2210,6 +2218,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_left.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.49,
@@ -2226,6 +2235,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_right.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,

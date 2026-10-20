@@ -7,8 +7,10 @@ DIR holds the same relative paths as the live assets (tools/rekey_all_stills.py 
 entry. Failure classes (each is counted):
   canvas    size or mode differs from the live PNG
   quality   detail lost: edge energy under 80 % of live, or (opaque art) mean colour error vs live over 6
-  hard      hard edges went soft: share of partial-alpha pixels on the opaque rim over the larger of live's and the
-            plate's own soft rim at output scale (DIR/_soft.json rim) + 0.20
+  area      alpha off the exact premultiplied area average of the same key (same placement) by more than
+            AREA_MAX on an edge pixel: anything beyond the row's alpha policy (DIR/_metrics.json, rekey_all_stills)
+  edge      mean sub-pixel half-coverage edge position off that average by more than EDGE_MAX px (stair-steps, lumps)
+  halo      over HALO_MAX of the visible partial pixels still plate-coloured (magenta excess over 24)
   shift     opaque box moved vs live (top, bottom or centre x off by more than 2 px; recentring)
   pad       opaque box grew or shrank by more than 4 % (padding or crop added)
   mirror    a left-facing still (manifest flip) is not the exact mirror of its right-facing sibling from the same
@@ -17,11 +19,7 @@ entry. Failure classes (each is counted):
   alpha     live is fully opaque (tile, finished art) and the output is not
   stale     the source plate no longer matches the live art (live is the truth): opaque assets by colour error,
             keyed ones as reported in DIR/_kept.json by rekey_all_stills. Reported; the output must equal live.
-  soft      softness lost: the plate keys to a soft subject (partial alpha wider than half an output pixel on >= 3%
-            of its pixels, DIR/_soft.json share) and the output keeps under half of that share. Old live is not a
-            reference here: its softness was often blur from the old shrink
-  notch     notches cut into the silhouette: 2+ output pixels clear where the exact source at output scale
-            (premultiplied area average, same placement) is mostly paint (alpha >= 160); shrinks of 1.5x or more (DIR/_soft.json notch)
+  notch     2+ output pixels clear where that average is mostly paint (alpha >= 160) (DIR/_metrics.json)
   lost      the key lost the subject (paint on the plate's hue); the pipeline kept live (DIR/_kept.json)
 Rows that are out of bounds for the open-set pass (dummy, guild, guild_reception, stall, anvil, fence, pickaxe,
 male frames) are checked too and tagged frozen. Writes _logs/rekey-check/<stamp>.json.
@@ -44,7 +42,7 @@ FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/s
           "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
 # replaced art: slot_legs (new art from her jpg), extract_gate_on (live was wrong; the plate wins)
 NEW_ART = ("assets/ui/gear/slot_legs.png", "assets/sprites/props/extract_gate_on.png")
-CLASSES = ("canvas", "quality", "hard", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost", "soft", "notch")
+CLASSES = ("canvas", "quality", "area", "edge", "halo", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost", "notch")
 
 def frozen(rel: str) -> bool:
     return any(rel == f or (f.endswith("/") and rel.startswith(f)) for f in FROZEN)
@@ -68,17 +66,6 @@ def edge_energy(x: np.ndarray) -> float:
     gx = np.abs(np.diff(l, axis=1)).sum()
     gy = np.abs(np.diff(l, axis=0)).sum()
     return float(gx + gy)
-
-def rim_soft(x: np.ndarray) -> float:
-    a = x[..., 3]
-    solid = a >= 128
-    pad = np.pad(solid, 1)
-    inner = pad[1:-1, 1:-1]
-    nb = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
-    rim = inner & ~nb
-    if rim.sum() == 0:
-        return 0.0
-    return float(((a > 8) & (a < 247) & rim).sum() / rim.sum())
 
 def plate_left(x: np.ndarray) -> int:
     r, g, b, a = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
@@ -135,10 +122,6 @@ def check(rel: str, src: Path, new_p: Path, flip: bool) -> dict:
     row["edge"] = round(e_n / max(e_l, 1.0), 3)
     if row["edge"] < 0.8:
         row["fail"].append("quality")
-    rs_l, rs_n = rim_soft(live), rim_soft(new)
-    row["rim_soft"] = [round(rs_l, 3), round(rs_n, 3)]
-    if rs_n > rs_l + 0.20:
-        row["fail"].append("hard")
     row["plate"] = plate_left(new)
     if row["plate"] > 3 and row["plate"] > 2 * plate_left(live):
         row["fail"].append("plate")
@@ -168,24 +151,27 @@ def mirror_pairs(entries: list, new_dir: Path, rows: dict) -> None:
         if d > 0.5:
             rows[e["live"]]["fail"].append("mirror")
 
-SOFT_MIN = 3.0  # partial-alpha percent at or above this: a soft subject
+AREA_MAX = 0.15  # alpha off the exact area average by more than this /255 share on any edge pixel
+EDGE_MAX = 0.25  # mean sub-pixel edge position error, px
+HALO_MAX = 0.05  # share of partial pixels still plate-coloured
 
-def _share(p: Path) -> float:
-    a = rgba(p)[..., 3]
-    return 100.0 * float(((a > 16) & (a < 239)).sum()) / max(1, int((a > 0).sum()))
-
-def soft_lost(row: dict, src_share, live_p: Path, new_p: Path) -> None:
-    """Flag a soft subject (by its keyed plate) whose output kept under half of its partial alpha."""
-    new, live = _share(new_p), _share(live_p)
-    row["soft"] = [round(src_share or 0.0, 1), round(live, 1), round(new, 1)]
-    if src_share is not None and src_share >= SOFT_MIN and new < 0.5 * src_share:
-        row["fail"].append("soft")
+def metric_fails(row: dict, m: dict) -> None:
+    """area / edge / halo / notch from DIR/_metrics.json (rekey_all_stills, against the exact area average)."""
+    row["metrics"] = m
+    if m.get("area_max", 0.0) > AREA_MAX:
+        row["fail"].append("area")
+    if m.get("edge", 0.0) > EDGE_MAX:
+        row["fail"].append("edge")
+    if m.get("halo", 0.0) > HALO_MAX:
+        row["fail"].append("halo")
+    if m.get("notch", 0) >= 2:
+        row["fail"].append("notch")
 
 def main(argv=None) -> int:
     ap = agent_log.std_parser("Full-set rekey quality check vs live assets and _src plates.", json_out=True)
     ap.add_argument("--new", required=True, help="Rekey output folder (rekey_all_stills.py --out).")
     ap.add_argument("--only", default="")
-    ap.add_argument("--soft", default="", help="Source softness file (default DIR/_soft.json).")
+    ap.add_argument("--metrics", default="", help="Metrics file (default DIR/_metrics.json).")
     ap.add_argument("--strict", action="store_true", help="FAIL on frozen rows too.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -205,19 +191,11 @@ def main(argv=None) -> int:
             r["fail"].append("stale")
         elif why.startswith("LOST"):
             r["fail"].append("lost")
-    soft_p = Path(args.soft) if args.soft else Path(args.new) / "_soft.json"
-    soft = json.loads(soft_p.read_text(encoding="utf-8")) if soft_p.is_file() else {}
+    met_p = Path(args.metrics) if args.metrics else Path(args.new) / "_metrics.json"
+    met = json.loads(met_p.read_text(encoding="utf-8")) if met_p.is_file() else {}
     for r in rows:
-        if "missing" not in r["fail"]:
-            sv = soft.get(r["live"]) or {}
-            sv = {"share": sv} if isinstance(sv, (int, float)) else sv
-            rs = r.get("rim_soft")
-            if "hard" in r["fail"] and rs and rs[1] <= max(rs[0], sv.get("rim", 0.0)) + 0.20:
-                r["fail"].remove("hard")
-            if sv.get("notch", 0) >= 2:
-                r["fail"].append("notch")
-            r["notch"] = [sv.get("notch"), sv.get("bump")]
-            soft_lost(r, sv.get("share"), ROOT / r["live"], Path(args.new) / r["live"])
+        if "missing" not in r["fail"] and r["live"] in met:
+            metric_fails(r, met[r["live"]])
     mirror_pairs([e for e in man["entries"] if e.get("live")], Path(args.new), {r["live"]: r for r in rows})
     counts = {c: 0 for c in CLASSES + ("missing",)}
     counts_open = dict(counts)

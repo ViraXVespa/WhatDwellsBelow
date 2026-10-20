@@ -67,7 +67,7 @@ The attempt before this one had lost the glow, the orb border, the hatchet outli
 - Regression: `assets/keytest` is retired. Source plates live under `_src/sources`. `run_build_gate.py --batch` runs `python tools/process_gear_icons.py --check` (each expected gear icon has a plate and a live png).
 - Live stills: `python tools/rekey_preview.py`, then `python tools/show_png.py` on the paths it prints. Write a live PNG only after her yes on that still.
 - A key change: run `python tools/img_inspect.py selftest` and `python tools/process_gear_icons.py --check`, look at the stills, then write a live PNG only after she accepts.
-- tools/imglib/geom.py: `resize_rgba` and `fit_box` as before (nearest only when sizing up, premultiplied high-quality downscale, `alpha_min` floor 24; pass a lower floor when faint glow is the result).
+- tools/imglib/geom.py: `resize_rgba` (nearest up, one premultiplied box down), `alpha_policy`, `fit_like`, `fit_box` (`alpha_min` floor 24).
 
 ## Did not work
 `python tools/img_inspect.py selftest` passed 12 checks after the accepted halo. A passing selftest is not acceptance of the open set.
@@ -90,7 +90,7 @@ The 2026-10-09 key described above was replaced on 2026-10-11 (see Files and fun
 
 Next session, in order:
 
-1. Run `python tools/keytest.py` and look at its sheets, then refit the open set with `python tools/rekey_preview.py`. For a blue glow, also composite on black.
+1. Run `python tools/keytest.py` (golden set) and look at its sheets, then refit the open set with `python tools/rekey_preview.py`. For a blue glow, also composite on black.
 2. She confirms each still. Write that live PNG only after her yes. Her shopkeep yes was for the old key; show the new still before calling that look kept.
 3. All eight wisp idles are the one `idle_up.jpg` plate. Do not rekey dummy, guild, guild reception, stall, anvil, fence, pickaxe, or the male frames.
 4. Do not edit `_src`.
@@ -106,7 +106,7 @@ Next session, in order:
 
 ## Build 2026-10-13 (after her full run)
 Live PNGs were not written. Review copy: `python tools/rekey_all_stills.py --out DIR --jobs 8`, then `python tools/rekey_check.py --new DIR`. Sheets (source | live | her run | new) were made in the Bot's box at /workspace/rekey-review/ and are not in the repo.
-- Global quality loss: the shrink box-averaged a guessed pixel grid (`_subject_cell` -> `_box_reduce`) or ran Lanczos on pixel art, blurring every cell edge. Shrinks now take centre medians on cell art and snap hard edges (`geom.cell_reduce`, `snap_edges`; art-pack "Still rekey").
+- Global quality loss: the shrink box-averaged a guessed pixel grid (`_subject_cell` -> `_box_reduce`) or ran Lanczos on pixel art, blurring every cell edge. (Replaced by the 2026-10-20 rebuild below.)
 - Flip, recentring, padding: `rekey_all_stills.py` ignored manifest `flip` and fitted every still into a padded, centred square. Now `geom.fit_like` places each still like live and flip rows mirror their sibling exactly.
 - Tiles and finished pictures (no alpha in live) are kept, never keyed or resized. Their five stale plates were replaced by the live tiles on 2026-10-13 (below). welcome_banner's plate has no lettering (live does). splash_shamelessly is pink lettering on a pink plate: the key loses it, so live is kept.
 - Check after: canvas 0, quality 7, hard 13, shift 12 (8 wisp idles against the rejected live wisp, 4 female frames), pad 0, mirror 0, plate 0, alpha 0, stale 6, lost 1.
@@ -121,3 +121,9 @@ Idempotent 2026-10-13: fit geometry recorded from ef7c0dee (before any approved 
 Soft fix 2026-10-13: snap fired on any footprint whose alpha range topped 96, so glows and translucent rims ramping across one footprint were snapped to 0/255 (lightning, tree, crack). Now only edges that are hard at source scale snap (`geom._hard_jump`). Approved rows stay as live: the fix would change about 1% of pixels on 15 of the 16 (head is unchanged), so to re-review them run `--rekey-approved`. Sheet: /workspace/rekey-review/soft-fix.png in the Bot's box.
 
 Notch fix 2026-10-13 (iron_nail gashes): the downscale decided each pixel from integer windows that drift against a fractional footprint (3.2 source px per output px), so a pixel that was mostly paint could read as clear. Rim pixels were also thickened as fake thin lines, and centre medians under-read soft rims. Now edge sides and soft alpha use exact footprint coverage, a line needs clear on two opposite sides, and box reduce never goes below the target. Trace: /workspace/rekey-review/nail-trace/; sheet: notch-fix.png (both in the Bot's box).
+
+## Rebuild 2026-10-20 (her go-ahead)
+The keyer and shrink were rebuilt in the order of the audit (art-pack "Still rekey"): clean plate B(x), trimap, one alpha solve, decontaminate, one premultiplied box shrink, one alpha policy per row (manifest `alpha`; wisp idles and the orbs are `soft`). Gone: the special pixel classes (specks, see-through, violet, sparkles, glow ramp), `cell_reduce`, Lanczos, `snap_edges`, the thin-line rule and `_keep_light_run`. `fit_like` and `fit_box` no longer square partial alpha when pasting. pymatting and BiRefNet were not added (the colour-line solve needs neither; BiRefNet is a large model).
+Checks: `rekey_check` `hard`/`soft` became `area`, `edge`, `halo` (against the exact area average of the same key); `python tools/keytest.py` is the golden set (truth mattes in `_src/truth`).
+Live PNGs were not written. The 16 approved stills change and need her re-approval: review copy and sheets in the Bot's box at /workspace/rekey-review/rebuild/ and /workspace/rekey-review/rebuild-sheets/. Until then they stay as live and `--check` passes. After her yes, write them and rerun `python tools/keytest.py --make-truth` only if she accepted a changed golden still.
+Open for her eye: longbow string is now its true coverage (fainter than live); mana_orb keeps a blue-violet outer ring; the shopkeep halo she accepted is mostly gone; the axe blade on some female frames keeps light-pink spill.

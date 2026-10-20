@@ -10,12 +10,15 @@
     python tools/rekey_all_stills.py --record-fit REV        (store each still's fit geometry from live at REV)
 
 Reads the manifest, resolves each source under _src/sources, keys it (imglib.matte), mirrors manifest flip rows, and
-places it exactly like the live still it replaces (geom.fit_like: canvas, body size, bottom edge, centre x). Live
+places it exactly like the live still it replaces (geom.fit_like: canvas, body size, bottom edge, centre x; one
+premultiplied box shrink, on a detected pixel grid when there is one), then applies the row's alpha policy once
+(manifest `alpha`: soft, crisp or hard; default soft for fx, crisp otherwise). Live
 art with no alpha (tiles, finished pictures) and the out-of-bounds stills are kept; a stale source is reported.
 The placement reference is the manifest `fit` field ([W, H, x0, y0, x1, y1]: canvas and solid body box of the live
 still before any rekey), never the current live file, so a re-run reproduces its own output. Rows marked
 `approved` are stills Vira accepted: they stay as live (--rekey-approved shows what the current key would make), and
---check fails if a run would change one. DIR/_soft.json records each keyed row's partial-alpha share at source scale.
+--check fails if a run would change one. DIR/_metrics.json records each keyed row's area/edge/halo/notch metrics
+against the exact area average of the same key.
 Check the result with python tools/rekey_check.py --new DIR.
 """
 from __future__ import annotations
@@ -57,43 +60,56 @@ def _fit_ref(fit, flip: bool):
     W, H, x0, y0, x1, y1 = fit
     return ((W, H), (W - x1, y0, W - x0, y1) if flip else (x0, y0, x1, y1))
 
-def _partial_share(im, k: float = 1.0) -> float:
-    """Percent of the subject's pixels in partial alpha (17..238) that a shrink by k can keep: partial runs wider than
-    half an output pixel (a glow, a translucent rim). A one- or two-pixel antialiased or JPEG fringe on hard pixel
-    art is eroded away, so it does not read as a soft subject."""
-    import numpy as np
-    from PIL import Image, ImageFilter
-    a = np.asarray(im.convert("RGBA"))[..., 3]
-    part = ((a > 16) & (a < 239)).astype(np.uint8) * 255
-    r = int(k // 4)
-    if r >= 1:
-        part = np.asarray(Image.fromarray(part).filter(ImageFilter.MinFilter(2 * r + 1)))
-    return 100.0 * float((part > 0).sum()) / max(1, int((a > 0).sum()))
+GRID_CONF = 0.5  # detect_grid confidence for a real pixel grid
+EDGE_CAP = 2.0  # px: one edge position error counts at most this (a speck or a lost branch is one fault, not a run)
 
-def _rim_band_soft(keyed, k: float) -> float:
-    """Share of the band around the body's edge (one output pixel wide each side, k source px) that is partial
-    alpha at source scale: what a faithful shrink can keep as soft rim. Pixel art scores low, glows high."""
-    import numpy as np
-    from PIL import ImageFilter
-    a = keyed.convert("RGBA").getchannel("A")
-    solid = a.point(lambda v: 255 if v >= 128 else 0)
-    r = max(1, int(round(k / 2.0))) * 2 + 1
-    band = np.asarray(solid.filter(ImageFilter.MaxFilter(r))) > 0
-    band &= ~(np.asarray(solid.filter(ImageFilter.MinFilter(r))) > 0)
-    av = np.asarray(a)
-    return float(((av > 8) & (av < 247) & band).sum()) / max(1, int(band.sum()))
+def policy_for(rel: str, row: dict) -> str:
+    """Alpha policy: the manifest row's `alpha`, else soft for fx (glows, energy), else crisp."""
+    return row.get("alpha") or ("soft" if rel.startswith("assets/fx/") else "crisp")
 
-def _notches(out, exact) -> tuple[int, int]:
-    """Silhouette faults against the exact source at output scale (premultiplied area average, same placement):
-    notch = output clear (< 128) where the source footprint is mostly paint (>= 160); bump = output solid where the
-    footprint is mostly clear (< 96)."""
+def _edges(a, axis: int):
+    """Sub-pixel x of the half-coverage crossings along each row (axis 1) or column (axis 0): first and last."""
     import numpy as np
-    o = np.asarray(out.convert("RGBA"))[..., 3].astype(np.int32)
-    e = np.asarray(exact.convert("RGBA"))[..., 3].astype(np.int32)
-    return int(((e >= 160) & (o < 128)).sum()), int(((e < 96) & (o >= 128)).sum())
+    a = (a if axis == 1 else a.T).astype(np.float32) / 255.0
+    pos = []
+    for r in a:
+        idx = np.nonzero(r >= 0.5)[0]
+        if len(idx) == 0:
+            pos.append((np.nan, np.nan))
+            continue
+        i, j = idx[0], idx[-1]
+        left = i - (r[i] - 0.5) / max(r[i] - r[i - 1], 1e-3) if i > 0 else float(i)
+        right = j + (r[j] - 0.5) / max(r[j] - r[j + 1], 1e-3) if j < len(r) - 1 else float(j)
+        pos.append((left, right))
+    return np.array(pos)
+
+def metrics(out, exact) -> dict:
+    """The output against the exact area average of the same key at output scale (same placement):
+    area   mean and max |alpha difference| /255 over edge pixels (partial in either)
+    edge   mean |sub-pixel half-coverage edge position| difference in px (each capped at EDGE_CAP) over rows and columns
+    halo   share of visible partial pixels still plate-coloured (magenta excess over 24)
+    notch  output clear (< 128) where the exact footprint is mostly paint (>= 160); bump the reverse (< 96)"""
+    import numpy as np
+    o = np.asarray(out.convert("RGBA")).astype(np.int32)
+    e = np.asarray(exact.convert("RGBA")).astype(np.int32)
+    oa, ea = o[..., 3], e[..., 3]
+    band = ((oa > 0) & (oa < 255)) | ((ea > 0) & (ea < 255))
+    d = np.abs(oa - ea)[band] / 255.0
+    errs = []
+    for ax in (0, 1):
+        x, y = _edges(oa, ax), _edges(ea, ax)
+        m = ~np.isnan(x) & ~np.isnan(y)
+        errs.append(np.minimum(np.abs(x - y)[m], EDGE_CAP))
+    err = np.concatenate(errs)
+    part = (oa > 16) & (oa < 240)
+    ex = np.minimum(o[..., 0], o[..., 2]) - o[..., 1]
+    return {"area": round(float(d.mean()) if d.size else 0.0, 4), "area_max": round(float(d.max()) if d.size else 0.0, 3),
+            "edge": round(float(err.mean()) if err.size else 0.0, 3),
+            "halo": round(float((part & (ex > 24)).sum()) / max(1, int(part.sum())), 4),
+            "notch": int(((ea >= 160) & (oa < 128)).sum()), "bump": int(((ea < 96) & (oa >= 128)).sum())}
 
 def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, include_frozen: bool = False,
-         fit=None, approved: bool = False, rekey_approved: bool = False) -> str:
+         fit=None, approved: bool = False, rekey_approved: bool = False, policy: str = "crisp") -> str:
     """Key one still from its plate and place it like the live still (geom.fit_like): same canvas, body size,
     bottom edge and centre. Live art with no alpha (tiles, finished pictures) has nothing to key: it is kept as is,
     and a source that no longer matches it is reported STALE (the live file is the truth). Out-of-bounds stills
@@ -126,14 +142,12 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
             return f"KEPT {live_rel} (approved)"
         raw = imgio.load(src).convert("RGBA")
         keyed = key.key_to_alpha(raw)
+        pitch, gx, gy, conf = geom.detect_grid(raw)
+        grid = (pitch, gx, gy) if conf >= GRID_CONF else None
         # a left-facing still is placed like the mirrored live still, then mirrored: exactly its right sibling's mirror
         place = _fit_ref(fit, flip) if fit else (geom.flip(ref) if flip else ref) if ref is not None else None
-        if place is not None:
-            fitted = geom.fit_like(keyed, place)
-            exact = geom.fit_like(keyed, place, resize=geom.box_rgba)
-        else:
-            fitted = geom.fit_box(keyed, 128, 8)
-            exact = fitted
+        exact = geom.fit_like(keyed, place, grid=grid) if place is not None else geom.fit_box(keyed, 128, 8)
+        fitted = geom.alpha_policy(exact, policy)
         if flip:
             fitted, exact = geom.flip(fitted), geom.flip(exact)
         # never trade live art for a key that lost the subject (paint on the plate's own hue, such as pink lettering
@@ -148,21 +162,18 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     dest.write_bytes(live.read_bytes())
                 return f"KEPT {live_rel} (STALE source: other art than live, err {diff:.1f})"
-            if body_live and body_new < 0.6 * body_live:
+            if body_live and (body_new < 0.6 * body_live or (diff > 20.0 and body_new < 0.9 * body_live)):
                 if not dry and dest != live:
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     dest.write_bytes(live.read_bytes())
                 return f"KEPT {live_rel} (LOST subject: key kept {body_new} of {body_live} solid px)"
-        kb, fb = geom.core_box(keyed), geom.core_box(fitted)
-        k = (kb[3] - kb[1]) / max(1, fb[3] - fb[1]) if kb and fb else 1.0
-        rim = _rim_band_soft(keyed, k)
-        soft = _partial_share(keyed, k)
-        # only a real shrink can cut a notch; near 1:1 the area average just copies a dithered or noisy alpha
-        notch, bump = _notches(fitted, exact) if k >= 1.5 else (0, 0)
+        m = metrics(fitted, exact)
         if not dry:
             dest.parent.mkdir(parents=True, exist_ok=True)
             fitted.save(dest)
-        return f"WROTE {live_rel} {fitted.size[0]}x{fitted.size[1]} from {src.relative_to(SRC_ROOT).as_posix()}{' flipped' if flip else ''} soft={soft:.2f} rim={rim:.3f} notch={notch} bump={bump}"
+        kv = " ".join(f"{k}={v}" for k, v in m.items())
+        g = f" grid={pitch:.2f}" if grid else ""
+        return f"WROTE {live_rel} {fitted.size[0]}x{fitted.size[1]} from {src.relative_to(SRC_ROOT).as_posix()}{' flipped' if flip else ''} policy={policy}{g} {kv}"
     except Exception as exc:
         return f"FAIL {live_rel} ({exc})"
 
@@ -218,6 +229,7 @@ def main(argv: list[str] | None = None) -> int:
     fits = [e.get("fit") for e in rows]
     apprs = [bool(e.get("approved")) for e in rows]
     reap = [bool(args.rekey_approved)] * len(rows)
+    pols = [policy_for(e["live"], e) for e in rows]
     tmp = None
     if args.check:
         import tempfile
@@ -227,15 +239,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.jobs > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(args.jobs) as ex:
-            results = list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, incl, fits, apprs, reap, chunksize=4))
+            results = list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, incl, fits, apprs, reap, pols, chunksize=4))
     else:
-        results = [_one(t, args.dry_run, out, f, i, g, a, r) for t, f, i, g, a, r in zip(todo, flips, incl, fits, apprs, reap)]
-    kept, soft = {}, {}
+        results = [_one(t, args.dry_run, out, f, i, g, a, r, p) for t, f, i, g, a, r, p in zip(todo, flips, incl, fits, apprs, reap, pols)]
+    kept, met = {}, {}
     for line in results:
-        if line.startswith("WROTE") and " soft=" in line:
+        if line.startswith("WROTE") and " area=" in line:
             kv = dict(t.split("=", 1) for t in line.split() if "=" in t)
-            soft[line.split()[1]] = {"share": float(kv["soft"]), "rim": float(kv["rim"]),
-                                     "notch": int(kv["notch"]), "bump": int(kv["bump"])}
+            met[line.split()[1]] = {k: (v if k == "policy" else float(v)) for k, v in kv.items()}
         lines.append(line)
         if line.startswith("KEPT "):
             rel, why = line[5:].split(" (", 1)
@@ -249,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
     if out and not args.dry_run:
         out.mkdir(parents=True, exist_ok=True)
         (out / "_kept.json").write_text(json.dumps(kept, indent=1), encoding="utf-8")
-        (out / "_soft.json").write_text(json.dumps(soft, indent=1), encoding="utf-8")
+        (out / "_metrics.json").write_text(json.dumps(met, indent=1), encoding="utf-8")
     drift = 0
     if args.check:
         appr = [e["live"] for e in rows if e.get("approved")]
