@@ -11,3 +11,4 @@ This file is the door. Open the Job-table sibling only when that row matches.
 | primary backup wipe, game_ver stamp, isolated AI profiles | `design/save-tech-persist.md` |
 | COOP COEP off, id.txt querybust, serviceworker rename | `design/save-tech-web.md` |
 | borderless exclusive, mip decode ban, Compatibility preferred | `design/save-tech-runtime.md` |
+| benchmark records, open_timing, fps_pct, hitch timings | `design/benchmarks/README.md` |

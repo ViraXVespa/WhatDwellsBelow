@@ -24,6 +24,10 @@ notes_exempt:
   - design/reuse-map.md
   - design/tasks/README.md
   - design/refs/README.md
+  - design/benchmarks/frame-time.md
+  - design/benchmarks/menu-open.md
+  - design/benchmarks/web-perf.md
+  - design/benchmarks/hub-bench.md
 
 
 parked_jobs:
@@ -254,6 +258,7 @@ doors:
       persist: design/save-tech-persist.md
       web: design/save-tech-web.md
       runtime: design/save-tech-runtime.md
+      benchmarks: design/benchmarks/README.md
   feel:
     file: design/feel.md
     read_when: "difficulty, raid-timer, parity, polish"
@@ -342,6 +347,7 @@ job_read_when:
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
   save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
+  save_tech.benchmarks: "benchmark records, open_timing, fps_pct, hitch timings"
   archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
   archives.play: "worktree minimize, Godot child restore, slug copyhit"
   archives.ui: "split chevron, Documents reader, dim inactive columnstack"
