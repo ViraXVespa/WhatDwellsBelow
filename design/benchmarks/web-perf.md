@@ -3,7 +3,7 @@
 Status: record
 Read when: `web_perf.py` is rerun or its baseline changes
 
-Baseline file the tool compares against: `tools/web-perf-baseline.json` (committed 2026-10-13, `0204b8ca`; headless Chrome, SwiftShader). Per flow: load_ms / avg_fps / p95 frame ms / heap MB.
+Baseline file the tool compares against: `tools/web-perf-baseline.json` (committed 2026-10-13 in `0204b8ca`, build_id `52f50eb125790f66`). Machine: `unknown` (the file records only `google-chrome`, headless, viewport 1280x720; Chrome version, CPU, GPU and OS were not saved). Renderer: Compatibility on SwiftShader per the tool docstring. Per flow: load_ms / avg_fps / p95 frame ms / heap MB.
 
 | Flow | load_ms | avg_fps | p95 ms | heap MB |
 |------|---------|---------|--------|---------|
@@ -19,4 +19,4 @@ Baseline file the tool compares against: `tools/web-perf-baseline.json` (committ
 | dungeon-fight | 2853 | 35.0 | 40.8 | 122.2 |
 | dungeon-music-cold | 89641 | 28.1 | 65.8 | 101.7 |
 
-Reruns, dungeon-arrive (2026-10-11): load_ms 2505-2739, avg_fps 27.4-28.2, heap 103-106 MB, wasm 95.8 MB.
+Reruns, dungeon-arrive (2026-10-11, machine `unknown`): load_ms 2505-2739, avg_fps 27.4-28.2, heap 103-106 MB, wasm 95.8 MB.

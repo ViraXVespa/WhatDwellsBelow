@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import bench_env
 import godot_lib
 
 def _read_rows(path: str) -> list[dict]:
@@ -691,6 +692,8 @@ def main(argv: list[str] | None = None) -> int:
     err_log = agent_log.run_path("hub-bench", root, "err.log")
     fail = 0
     body = ["hub bench root=.", "leg=%s" % args.leg]
+    body.append(bench_env.env_line(godot=bench_env.godot_version(str(godot_lib.godot_exe())), renderer="gl_compatibility",
+        browser="see web leg" if args.leg in ("both", "web") else "n/a", vsync="see present line", cap="max_fps 120", headless=bool(args.headless)))
     if args.leg in ("both", "desktop") and not args.isolate:
         d_fail, d_body = _desktop(root, args, out_log, err_log)
         fail += d_fail

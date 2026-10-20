@@ -25,6 +25,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import bench_env
 import hitch_sink
 import web_perf_lib
 
@@ -211,6 +212,8 @@ def main(argv: list[str] | None = None) -> int:
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
     hard = 0
     lines, flags = ["build_id=%s chrome=%s viewport=%s report=%s" % (label, full["chrome"], full["viewport"], agent_log.rel(root, out))], 0
+    lines.append(bench_env.env_line(browser="%s %s" % (full["chrome"], bench_env._run([chrome, "--version"]) or "unknown"), renderer="gl_compatibility (web)",
+        vsync="browser rAF", cap="browser", resolution=full["viewport"], headless=True))
     for n, r in reps.items():
         lines.append("flow %s" % n)
         lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]

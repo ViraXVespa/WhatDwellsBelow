@@ -17,7 +17,7 @@ Read when: borderless exclusive, mip decode ban, Compatibility preferred
 
 `SpriteFilt.ensure_mips` must not decode a `CompressedTexture2D` into `ImageTexture` at runtime. Web export bakes mip chains via `tools/enable_texture_mips.py`. Local play uses the imported texture as-is.
 
-Measured frame time and per-function costs: benchmarks. Whenever a benchmark is rerun, add its row there.
+Measured frame time and per-function costs: benchmarks. Whenever a benchmark is rerun, add its row there with the machine it ran on; numbers compare only within one machine.
 
 Title → Play (`scripts/app/app_flow.gd`) sync-loads a short hub list (scene, tiles, props, music) and does not insert a fake progress wait. Debug menu and Animation Browser are created on the first idle frame (immediately when a smoke / `--wdb-debug` boot needs them).
 

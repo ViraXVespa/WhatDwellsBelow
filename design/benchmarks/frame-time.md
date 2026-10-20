@@ -3,6 +3,8 @@
 Status: record
 Read when: comparing frame cost per system, desktop vs web
 
+Machine: `unknown` (the original note says only "8-core Xeon shared with other jobs", software GL). Commit, date, browser version and resolution: unknown. Godot 4.x (exact version unknown).
+
 Frame-time breakdown (0.5.21, ms per frame, 8-core Xeon shared with other jobs, so +-20% noise; software GL both ways). Measured with a temporary probe (not kept): `process_priority` +-100000 marker nodes bracket every `_process` / `_physics_process` (script and node time), `RenderingServer.viewport_get_measured_render_time_cpu` gives render CPU. `Performance.TIME_PROCESS` / `TIME_PHYSICS_PROCESS` read above the frame time here and are not usable.
 
 | Build, scene | Frame | Script process | Script physics | Render CPU | Rest (GPU / swap wait) |
