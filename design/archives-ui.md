@@ -22,4 +22,4 @@ Two columns. Only one column is active.
 
 Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
-List MUST include every catalog row (`design/archives-catalog.md`). Videos do not exist; the Video button stays disabled until they do.
+List MUST include every catalog row (archives catalog). Videos do not exist; the Video button stays disabled until they do.

@@ -17,7 +17,7 @@ Boot and path procedure live in `AGENTS.md` and that path’s session file.
 
 This file is the **topic index** only. Do not open this file’s topic table “for context.” Live-path rows stay on the code map when a live file is needed. Routing edges: load-graph sketch when the User names routing work.
 
-Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update matching file in the same slice. After a live script split, update the live code map in the same slice.
+Open only the topic files that match the requested work. Numbers: `design/tunables.md`. After a behavior change, update matching file in the same slice. After a live script split, update the live code map in the same slice.
 
 Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 

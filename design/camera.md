@@ -24,7 +24,7 @@ Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full P
 
 ## Archives
 
-Title-only Archives browser and its rules: `design/archives.md`.
+Title-only Archives browser and its rules: archives.
 
 ## Renderer
 

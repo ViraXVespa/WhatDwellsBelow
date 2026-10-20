@@ -61,6 +61,6 @@ Both are stored under isolated paths and follow the same primary + backup safety
 
 ## Archives
 
-Title-only browser, catalog, isolation and Play: `design/archives.md` (desktop / web Play: `design/archives-play.md`).
+Title-only browser, catalog, isolation and Play: archives.
 
 Pages live export of HEAD is required. Catalog pin exports are best-effort via `tools/export_archives.py` and MUST NOT fail the live Pages deploy. Frozen pins are cached by `{id}/{commit}` under `.archive_export_cache/` (gitignored). CI restores that cache across runs so unchanged pins are copied into `site/<pages_slug>/` instead of rebuilt. `tools/web_postexport.py` stays live-only.
