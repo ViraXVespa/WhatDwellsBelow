@@ -35,6 +35,8 @@ Store them as:
 - `assets/sprites/player/bible_locked_female.png`
 - (+ locked palettes)
 
+These files are updated from the live lock (**Bible procedure** below) only after the User accepts it.
+
 **Note on reliability:** Single-pass 3×3 generation currently produces the highest identity consistency. Chained image-edits from a single anchor introduce cumulative off-model drift and should be avoided for the Bible itself. If layout errors persist after 3–4 attempts, fall back to generating the eight full-body views + face individually (using soft identity language against the chosen style, then against the locked Bible once it exists) and compositing them deterministically with a script.
 
 **Plate colour:** Grok often paints near-magenta instead of pure `#FF00FF` (example: `#F50487`, `#EE22DD`, other hot pinks / violets). Do not lock that raw plate. Do not punch it to alpha yet.
@@ -67,7 +69,21 @@ Instead, recover the intended grid and crop to that:
 - Do not stretch or linearly scale to force a square. Crop only.
 - If centers do not form a readable 3×3 (skewed rows, missing figure, overlapping cells), discard and regenerate the Bible rather than guess a crop.
 
-Save the squared, remapped sheet as the locked Bible.
+### Bible procedure
+
+1. Generate one single-pass 3×3 (`python tools/bible_prompt.py`, Imagine as above).
+2. Square it on the lattice (above). Crop only.
+3. Archive the squared raw as `_src/new_bibles/source/male.png` / `female.png`. Archive only; nothing downstream reads it.
+4. Run `python tools/bible_normalize.py _src/new_bibles/source/female.png _src/new_bibles/female.png` (same for male). It remaps the plate, removes JPEG damage, normalizes and rebuilds each cell. Read its per-cell table and flags. Install: `tools/requirements-ml.txt` (`--no-denoise` runs without torch).
+5. The output is the live lock `_src/new_bibles/{male,female}.png`. Seeds, mid-clip pins and style refs use the live lock.
+6. After the User accepts the live lock, copy it to `assets/sprites/player/bible_locked_*.png`.
+
+Rules:
+
+- Lattice and facings stay as generated. The tool does not move figures between cells.
+- Every full-body figure has the same height, with 4 px of plate above and below it in the final cell. The bust keeps its source crop.
+- Do not regenerate single cells: it causes identity drift. Do not palette-snap the sheet.
+- Work on copies. Never edit `_src` sources or locked files in place.
 
 ## Appendix C — Character Bible prompt template
 
