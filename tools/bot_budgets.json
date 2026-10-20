@@ -8,7 +8,7 @@
 	},
 	"set_bytes": {
 		"build_boot": {
-			"bytes": 16600,
+			"bytes": 16450,
 			"files": [
 				"AGENTS.md",
 				"design/grok-build.md",
