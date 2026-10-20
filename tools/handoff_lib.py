@@ -221,12 +221,22 @@ def start_block(root: Path, path: Path, queue: bool = False, restore: bool = Tru
     except OSError as exc:
         return [f"HANDOFF: cannot read {path} ({exc}). Ask the User; do not re-run the survey."]
     head, secs = parse(text)
-    lines = [f"HANDOFF from {path}: survey done. area={head.get('area', '')} door={head.get('door', '')} job={head.get('job', '')}",
-             "Do not re-run the survey and do not open pictures other than the baselines below. Q0 answers, decisions and the ledger are in the handoff; they stand."]
-    if head.get("units"):
-        units = [u.strip() for u in head["units"].split(",") if u.strip()]
-        done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
-        cur = next((u for u in units if u not in done), "")
+    units = [u.strip() for u in head.get("units", "").split(",") if u.strip()]
+    done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
+    cur = next((u for u in units if u not in done), "")
+    survey = restore and text.lstrip().startswith("# Handoff:")  # a fresh session straight from a survey's --handoff
+    where = f"area={head.get('area', '')} door={head.get('door', '')} job={head.get('job', '')}"
+    if survey:
+        lines = [f"HANDOFF from {path}: survey done. {where}",
+                 "Do not re-run the survey and do not open pictures other than the baselines below. Q0 answers, decisions and the ledger are in the handoff; they stand."]
+    elif units:
+        pos = f"unit {units.index(cur) + 1} of {len(units)} ({cur})" if cur else f"all {len(units)} units done"
+        lines = [f"RESUMING UNIT QUEUE from task {path.stem} ({path}): {pos}. {where}",
+                 "Its decisions and notes stand; finished units are not redone. Open only the baselines below."]
+    else:
+        lines = [f"RESUMING TASK {path.stem} ({path}). {where}",
+                 "Its decisions and notes stand; do not re-run a survey. Open only the baselines below."]
+    if units:
         lines.append(f"Units, her order: {', '.join(units)}. Done: {', '.join(done) or 'none'}. Current: {cur or 'all done'}. "
                      "Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot. At each unit's Complete `python tools/start_build_slice.py --unit-done` marks it done (no new survey).")
     for title in (() if queue else ("Chosen surfaces, in order", "Files and functions to touch", "Did not work", "Open questions")):  # a queue: those sections are in the first message already
@@ -235,7 +245,7 @@ def start_block(root: Path, path: Path, queue: bool = False, restore: bool = Tru
     lines.append("Open these baselines (only these): " + ("; ".join(f"{p}{'' if ok else ' (MISSING: re-shoot it)'} - {n}" for p, ok, n in bl)
                                                            or "none listed (the Baselines section names the flows to shoot)"))
     lines += restore_edits(path, root) if restore else []
-    bad = check(root, text)
+    bad = check(root, text) if text.lstrip().startswith("# Handoff:") else []
     if bad:
         lines.append("HANDOFF problems: " + "; ".join(bad))
     return lines
@@ -339,7 +349,7 @@ def selftest(script: Path) -> list[str]:
         if not (fresh / "tools" / "shot-flows" / "new-flow.json").is_file() or not (fresh / "design" / "tasks" / "ui.md").is_file():
             bad.append("the survey's flow file and task file must exist in the fresh worktree")
         code, out = run(fresh, "--door", "ui", "--from-task", "ui", "--dry-run")
-        if code != 0 or "HANDOFF from" not in out or "restored" in out:
+        if code != 0 or "RESUMING TASK ui" not in out or "HANDOFF from" in out or "survey done" in out or "restored" in out:
             bad.append(f"--from-task ID must print the summary from design/tasks/ID.md without restoring survey edits (code={code})")
         code, out = run(fresh, "--door", "ui", "--from-task", "nope", "--dry-run")
         if code == 0:

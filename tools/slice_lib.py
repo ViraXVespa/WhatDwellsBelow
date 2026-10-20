@@ -337,6 +337,8 @@ def selftest(script: Path) -> int:
             bad.append("a new session resuming from a task file runs its own Gather: it is the original for its unit")
         if code != 0 or "ui.menu (2 of 2)" not in out:
             bad.append("a new session on the door must resume the queue from design/tasks/ui-units.md, not unit 1")
+        if "RESUMING UNIT QUEUE from task ui-units" not in out or "unit 2 of 2 (ui.menu)" not in out or "survey done" in out:
+            bad.append("a queue resumed from a task must say so (unit N of M), not 'survey done'")
         plain = Path(td) / "plain" / "worktrees" / "repos-demo" / "wdb-demo-3"
         plain.parent.mkdir(parents=True)
         git(Path(td), "clone", "-q", str(root), str(plain))
