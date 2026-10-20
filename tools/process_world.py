@@ -90,7 +90,6 @@ def _run() -> None:
     crop_tile("46.jpg", tiles / "dungeon_floor.png", (0.28, 0.28, 0.72, 0.72))
     crop_tile("46.jpg", tiles / "dungeon_floor_b.png", (0.08, 0.42, 0.52, 0.86))
     crop_tile("37.jpg", tiles / "plaza_ground.png", (0.22, 0.22, 0.78, 0.78))
-    crop_tile("37.jpg", tiles / "plaza_ground_b.png", (0.05, 0.40, 0.55, 0.90))
     wall_tile("42.jpg", tiles / "dungeon_wall.png")
 
     wall = imgio.load(tiles / "dungeon_wall.png", "RGB")
@@ -127,7 +126,7 @@ def _run() -> None:
 
     check = ROOT / "tools" / "_tilecheck"
     check.mkdir(parents=True, exist_ok=True)
-    for name in ["dungeon_floor", "dungeon_floor_b", "plaza_ground", "plaza_ground_b"]:
+    for name in ["dungeon_floor", "dungeon_floor_b", "plaza_ground"]:
         t = Image.open(tiles / f"{name}.png")
         canvas = Image.new("RGB", (t.size[0] * 2, t.size[1] * 2))
         for y in range(2):

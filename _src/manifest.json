@@ -126,6 +126,20 @@
       "cell": ""
     },
     {
+      "live": "assets/tiles/plaza_ground.png",
+      "source": "sources/assets/tiles/plaza_ground.jpg",
+      "origin": "_src/sources/assets/tiles/plaza_ground.jpg",
+      "mad": 0.78,
+      "agree": 1.0,
+      "overlap": 1.0,
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "opaque_side": 128,
+      "cell": ""
+    },
+    {
       "live": "assets/tiles/plaza_path.png",
       "source": "sources/assets/tiles/plaza_path.png",
       "origin": "_src/sources/assets/tiles/plaza_path.png",
@@ -165,6 +179,20 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 1024,
+      "cell": ""
+    },
+    {
+      "live": "assets/tiles/plaza_wall.png",
+      "source": "sources/assets/tiles/plaza_wall.png",
+      "origin": "_src/sources/assets/tiles/plaza_wall.png",
+      "mad": 0.0,
+      "agree": 1.0,
+      "overlap": 1.0,
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "opaque_side": 128,
       "cell": ""
     },
     {
