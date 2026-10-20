@@ -24,7 +24,7 @@ Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full P
 
 ## Archives
 
-The demo MUST ship with the Archives browser on the title card. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per archives. There is no in-pause presentation-mode switcher.
+Title-only Archives browser and its rules: `design/archives.md`.
 
 ## Renderer
 

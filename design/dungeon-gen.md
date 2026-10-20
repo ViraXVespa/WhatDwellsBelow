@@ -19,20 +19,20 @@ Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, de
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable. Values: tunables-world, Dungeon generation.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
-Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width. Cardinal connections stay a winding span on the 1 m grid; width still changes at `hall_w_interval` on those. After carve, clean one-tile teeth and accidental stair-steps. Keep intentional maze jogs. The cleaned 1 m grid is the maze. There is no floor-wide rim.
+A connection is a segment plus width (hall width min / mode / max: tunables-world). Cardinal connections stay a winding span on the 1 m grid, not band stamps; width changes at `hall_w_interval` on those.
 
 Room bands span the full interior; leftover slots are skipped inside the grid so the last row is not left uncarved.
 Live extra loops copy the grid and carve. A hug reverts, then retries through offset waypoints so `gen_extra_loops` is a landed-count, not an attempt-count. Stubs stop instead of crossing the hug band.
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end hall stubs are a small leaf budget on the order of extra loops, not on the order of rooms.
 
-Hug mask `_near` is dilated room AABBs plus hall-axis paint. Do not rebuild it from post-tree occupancy. Extra loops may approach another hall. They MUST NOT hug it. Hug clearance counts unused cells between the two floors. Legal minimum is `hall_hug_gap_min` (3). First live default is `hall_hug_gap` (4). Reject the candidate. Do not weld spans across the gap.
+Hug mask `_near` is dilated room AABBs plus hall-axis paint. Do not rebuild it from post-tree occupancy. Extra loops may approach another hall. They MUST NOT hug it. Hug clearance counts unused cells between the two floors. Legal minimum is `hall_hug_gap_min`; the live default is `hall_hug_gap` (values: tunables-world). Reject the candidate. Do not weld spans across the gap.
 
 ## Maze carve and hall runs
 
 The 1 m FLOOR/WALL grid is the maze: rooms, connection endpoints, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, stream chunk index, default walk, default collision, and default floor/wall skin. Room rectangles stay unpadded and axis-aligned. Do not pad rooms so they merge through a 1 m wall. Unused stone is any cell that was never carved.
 
-Silhouette order is fixed. Carve the 1 m grid. Clean one-tile teeth and accidental stair-steps. Do not fillet or jag the whole rim. Wear is a shader concern. Do not author both rims as a floor-wide polyline and rasterize that as walk truth. Do not merge every room and hall into one hull and fill that.
+Silhouette order is fixed. Carve the 1 m grid. Clean one-tile teeth and accidental stair-steps; keep intentional maze jogs. Do not fillet or jag the whole rim. Wear is a shader concern. Do not author both rims as a floor-wide polyline and rasterize that as walk truth. Do not merge every room and hall into one hull and fill that.
 
 Gen publishes hall runs from that carve: one corridor is one wall pair. Outline resolution is fixed at 1 m (no tunable). Do not keep a floor-wide fine solid as a second dungeon. Do not ship a floor-wide trace-then-repair loop as the silhouette. Do not stamp rim_closed OK to hide holes on hall-local spans.
 
@@ -41,7 +41,6 @@ Live outline publishes spans from room and hall shapes after join-ends only. Thi
 ## Key object placement
 
 Placement rules and probabilities for crystal, stairs, Extraction Gates, mining nodes, wood nodes, breakables, shrine, campfire, ghost shop, puzzle elements, chests, and enemy bases are fully tunable.
-Safe rooms (Extraction Gate, ghost shop, puzzle) MUST remain enemy-free.
 
 Dead-end termini (leaf rooms with one exit, plus 1-neighbor hall cells) are recorded in `data.deadends`. A terminus gets a convenience crystal only when the spur walk to the nearest multi-exit room is at least `crystal_deadend_len`, it clears `crystal_deadend_sep` from spawn, and it clears `crystal_min_sep` from every already-placed crystal. Short hall stubs stay dark.
 
@@ -55,7 +54,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 
 ## Safe rooms
 
-- Extraction Gate rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
+- Extraction Gate rooms, ghost shop rooms, and puzzle rooms MUST remain enemy-free.
 - Idle / pressure spawn rules: enemies.
 
 ## Ambushes and pressure
@@ -67,9 +66,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 ## Size and floor cycle
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
-Boss room is farthest from spawn that still meets `Rooms.min_boss_sep` = max(16, max(w,h) * 0.5).
+Boss room is a random room whose walk distance from spawn is at least max(`Rooms.min_boss_sep`, 0.55 × the farthest room's walk distance) and whose room distance is at least `Rooms.min_boss_sep` = max(16, max(w,h) * 0.5); with no such room, the farthest room.
 cycle_of(n)     = (n - 1) / 5
 loop_index(n)   = ((n - 1) % 5) + 1
 is_gate_master  = loop_index == 5
-
-Live winding stays on the 1 m cardinal grid; room-to-room links are not band stamps.
