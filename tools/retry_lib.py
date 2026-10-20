@@ -1,7 +1,8 @@
 """Red-prove retry prompt: what a Build prove tool prints when its check fails (prove is final verification, `design/tools.md` rule 10).
 
-The reset point is the original session: the one that ran `start_build_slice.py` first in this worktree (its id is in `_logs/slice-state.json`).
-Gather ends with the User running `/fork`; work goes on in the peer session. A red prove prints `grok -r <original-session-id> --fork-session`
+The reset point is the original session: the one that ran `start_build_slice.py` first in this worktree and did its Gather (id in
+`_logs/slice-state.json`; later runs, the forked peer included, never overwrite it). Gather ends with the User running `/fork`; work goes on
+in the peer session. A handoff opens a new worktree whose first session runs its own Gather, so it is the original for that unit. A red prove prints `grok -r <original-session-id> --fork-session`
 for the USER to run from the worktree directory (no --cwd): a fork keeps the directory of the session it forks. Build never starts grok. The block
 points at the work in the worktree (`git diff BASE` against the working tree plus the untracked files; BASE = the first run's --ref, else the
 week branch grok-build-w{N}) and asks for one small corrective edit and one rerun. No recorded id: the block names the placeholder and where to
@@ -81,12 +82,12 @@ def block(root: Path, what: str, red: list[str]) -> str:
         return "\n".join([head, "NO BASE: no grok-build-w* week branch and no saved --ref, so there is no diff to point a retry at. "
                            "Ask Vira in a question prompt (she runs `python tools/week_start.py` to start a week). Nothing is started for you.", END])
     if session:
-        head += f" Retry: the User runs, from the worktree directory (`cd {_q(root)}`): `grok -r {session} --fork-session` (the original session ID)."
+        head += f" Retry: the User runs, from the worktree directory (`cd {_q(root)}`): `grok -r {session} --fork-session`: a fork of the original session, from the end of its Gather."
     else:
         head += (f" NO SESSION ID recorded for this worktree ({root.name}). Retry: the User runs, from the worktree directory (`cd {_q(root)}`): "
                  "`grok -r <original-session-id> --fork-session`; the original session is the one she ran `/fork` from at the end of Gather "
                  "(`/session-info` there, or `grok sessions list` in this directory). Nothing is forked or started for you.")
-    head += " The fork keeps the worktree and the gather context; no re-gather. Paste:"
+    head += " The fork keeps the worktree and that Gather's context; no re-gather. Paste:"
     files = changed_files(root, base)
     ask = (f'The prove "{what}" is red: {" | ".join(seen)}. The work so far, committed or not, is in this worktree: `git diff {base}` (working tree) and the untracked files. '
            f"Read only the changed files (start with {', '.join(files) or 'the files in that diff'}), "
