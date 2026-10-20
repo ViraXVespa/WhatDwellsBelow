@@ -41,7 +41,7 @@ Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience
 - Recap Continue: wake cover at once, then `go_camp()`; the fade starts when camp is ready. No Title → Play warmup on that return, and camp does not save again.
 - Player body and adrenaline aura stay hidden until they have a real texture.
 - Hub ground: grass outside the yard, one packed-dirt fill, cobble-tinted path. No scattered dark dirt patches. Outer grass is four tiled planes.
-- Buildings are 3D boxes with `plaza_wall` sides, a top plane and a south-face facade sprite fitted to the box.
+- Buildings are 3D boxes with plain-colour sides (untextured on purpose: the play camera does not show them), a top plane and a south-face facade sprite fitted to the box.
 - Guild roofs use `plaza_roof.png` with world-space wrap and a russet remap to awning-red terracotta, not dungeon slate. Lids do not sample the yard atlas. The stall top uses `plaza_tarp.png` as one sheet.
 - Hall and wing keep a compact 3D awning at the south eave (`plaza_awning.png`, chunky cream/rust stripes along the building width): a short shelf with a small front lip, dark underside and side triangles, covering the shingle band only. The stall keeps its painted tarp.
 - Hall and wing are separate two-slope gables (L-shape), not sheds: ridge along the width, rise 0.55 hall / 0.48 wing, no overhang, timber triangles close each end.

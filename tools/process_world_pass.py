@@ -247,7 +247,6 @@ def mix_path() -> None:
 def _run() -> None:
     tile_out("7.jpg", TILES / "plaza_ground.png")
     tile_out("10.jpg", TILES / "plaza_path.png")
-    tile_out("9.jpg", TILES / "plaza_wall.png", quad="tr")
     tile_out("8.jpg", TILES / "plaza_roof.png")
     tile_out("4.jpg", TILES / "foundation_floor.png", quad="tl")
     tile_out("6.jpg", TILES / "foundation_wall.png")

@@ -92,16 +92,6 @@ def _run() -> None:
     crop_tile("37.jpg", tiles / "plaza_ground.png", (0.22, 0.22, 0.78, 0.78))
     wall_tile("42.jpg", tiles / "dungeon_wall.png")
 
-    wall = imgio.load(tiles / "dungeon_wall.png", "RGB")
-    px = wall.load()
-    w, h = wall.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b = px[x, y]
-            px[x, y] = (min(255, int(r * 1.15 + 18)), min(255, int(g * 0.95 + 8)), max(0, int(b * 0.72)))
-    wall.save(tiles / "plaza_wall.png")
-    print("wall", tiles / "plaza_wall.png")
-
     sprite("33.jpg", props / "crystal.png")
     sprite("44.jpg", props / "stairs.png")
     sprite("49.jpg", props / "ore.png")
