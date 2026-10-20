@@ -1,4 +1,4 @@
-"""start_build_slice.py / open_slice.py helpers: the start-card text, the area check, the worktree checkpoint, the STEP 0 (missing flow) note and the selftests (`python tools/start_build_slice.py --selftest`)."""
+"""start_build_slice.py / open_slice.py helpers: the start-card text, the area check, the STEP 0 (missing flow) note and the selftests (`python tools/start_build_slice.py --selftest`)."""
 from __future__ import annotations
 
 import os
@@ -100,7 +100,15 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
                  Q0]
     gate = ("`python tools/run_build_gate.py --batch --visual JOB`" if screen
             else "`python tools/run_build_gate.py --batch` (no `--visual`: this job has no shot flow)")
-    return "\n".join(start + order + [
+    cycle = [] if mode == "survey" else [
+        "CYCLE (build-job-cycle.md): GATHER finishes before any change: no code changes, no new tools; read the code and docs, state the observable outcome "
+        "that shows the task is done, confirm the tooling or in-game signal can show it. End of Gather: tell the User to run `/fork` and continue in the new peer "
+        "session; the original session ID is the reset point. PREPARE: a missing signal gets the cheapest gated instrument; blocked or a design answer needed: stop "
+        "and update the task. CHANGE: `python tools/check_gd_load.py` once the edits are complete. PROVE is final verification: at most one small corrective "
+        "edit and one rerun; still red: stop and report the log path (the RETRY block names `grok -r <original-session-id> --fork-session`). COMPLETE: docs and "
+        "the task (`task.py done ID`, or handoff notes plus that retry command), "
+        "`python tools/start_build_slice.py --unit-done` for a unit queue, commit, push, the done notice. One unit per session."]
+    return "\n".join(start + order + cycle + [
         ("EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
          "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. "
          + ("Order: shoot, look at the pictures yourself, " if screen else "Order: run the check, look at the pictures yourself, ")
@@ -178,26 +186,8 @@ def merge_back_text(week: str) -> str:
     return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): "
             f"cleanup + gate + commit_slice.py + plain `git push origin {week or 'grok-build-w{N}'}` finish first; then that notice. {note}")
 
-def checkpoint(root: Path, args) -> int:
-    """--checkpoint: save this (worktree) session's id so a red prove can fork it later from the worktree directory."""
-    def fail(msg: str, route: str) -> int:
-        return agent_log.finish("slice-boot", root, msg, "FAIL", args=args, write=not args.dry_run, route=route)
-
-    if not is_linked(root):
-        return fail("NOT A WORKTREE: this directory is a main checkout (not under .grok/worktrees/, and not a Grok worktree), so no checkpoint is saved. "
-                    "Say so in your next message to the User (\"Did not work: --checkpoint, not a worktree\"). A slice is a Grok worktree: she starts one with `python tools/open_slice.py`, and --checkpoint runs in that session after gather.", "checkpoint-main")
-    session = (args.session or os.environ.get("GROK_SESSION_ID", "")).strip()
-    if not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", session):
-        return fail("NO SESSION ID: $GROK_SESSION_ID is empty in this session and no --session was given. Nothing is saved, so a red prove could not be forked. "
-                    "Start your next message to the User with \"Did not work: --checkpoint (no session id)\", and ask her in a question prompt for this session's id "
-                    "(she types `/session-info` in grok, or runs `grok sessions list` in this directory), then rerun with --session ID.", "checkpoint-no-id")
-    saved = "" if args.dry_run else retry_lib.save_gather(root, root.name, session, args.ref, str(root))
-    msg = (f"CHECKPOINT saved: session {session} for worktree {root}. A red prove prints `grok -r {session} --fork-session` to run from this directory; "
-           "the fork stays in this worktree because this session already lives here.")
-    return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, route="checkpoint", saved="yes" if saved else "dry-run")
-
 def selftest(script: Path) -> int:
-    """Main checkout says no slice starts there; a Grok clone prints the card, then SLICE ALREADY STARTED (--full reprints); survey vs implementation ORDER; checkpoint."""
+    """Main checkout says no slice starts there; a Grok clone prints the card, then SLICE ALREADY STARTED (--full reprints); survey vs implementation ORDER; forked session; retry block; unit queue."""
     me = str(script)
     bad: list[str] = []
 
@@ -224,9 +214,6 @@ def selftest(script: Path) -> int:
         code, out = run(root, "--dry-run")
         if code != 0 or "MAIN CHECKOUT" not in out or "open_slice.py" not in out or "IN A WORKTREE" in out or "START 1" in out:
             bad.append("a main checkout must say no slice starts there and name open_slice.py")
-        code, out = run(root, "--checkpoint", env="sess-1")
-        if code == 0 or "NOT A WORKTREE" not in out:
-            bad.append("--checkpoint in the main checkout must fail")
         git(root, "branch", "grok-build-w9")
         # Grok's real shape: a FULL CLONE under .grok/worktrees/<repo>/<name>: .git is a directory, git dir == common dir, HEAD on the week branch
         clone = Path(td) / "home" / ".grok" / "worktrees" / "repos-demo" / "wdb-demo-2"
@@ -245,7 +232,8 @@ def selftest(script: Path) -> int:
             bad.append("boot in a worktree must name the folder as the worktree and state the Did not work rule")
         for need in ("This tool is the first command", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
                      "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0",
-                     "start_build_slice.py --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "commit_slice.py", "before your next tool call"):
+                     "start_build_slice.py --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "commit_slice.py", "before your next tool call",
+                     "`/fork`", "original session ID", "final verification", "check_gd_load.py` once the edits are complete", "One unit per session"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
@@ -270,32 +258,30 @@ def selftest(script: Path) -> int:
         if [g["what"] for g in got] != ["python tools/y.py"]:
             bad.append(f"failed steps after the last ask: only the RESULT FAIL one: {got}")
         # first run (not dry) writes the state; the second run says where the slice stands; --full reprints the card; a dry run always prints the card
-        code, out = run(clone)
-        if code != 0 or "IN A WORKTREE" not in out or not (clone / "_logs" / "slice-state.json").is_file():
+        code, out = run(clone, env="sess-1")
+        if code != 0 or "IN A WORKTREE" not in out or not (clone / "_logs" / "slice-state.json").is_file() or retry_lib.original(clone).get("session") != "sess-1":
             bad.append("the first run must print the card and write _logs/slice-state.json")
-        code, out = run(clone)
+        code, out = run(clone, env="sess-1")
+        (clone / ".godot" / "imported").mkdir(parents=True)
+        (clone / "_logs" / "shot-flow" / "f").mkdir(parents=True)
+        (clone / "_logs" / "shot-flow" / "f" / "flow.json").write_text("{}")
+        code, out = run(clone, env="sess-1")
         if code != 0 or "SLICE ALREADY STARTED" not in out or "Resuming at" not in out or "IN A WORKTREE" in out or "open_slice prompt not verified" not in out:
             bad.append("a second run must print SLICE ALREADY STARTED, the steps and the next one, not the card")
+        if "original session sess-1" not in out or "forked no" not in out or "`/fork`" not in out:
+            bad.append("a second run in the original session must name its id and resume at Gather (ending in /fork)")
+        code, out = run(clone, env="sess-2")
+        if "forked yes" not in out or "Prepare / Change / Prove / Complete" not in out or "(first run by session sess-1; this is sess-2)" not in out:
+            bad.append("a run in the forked peer session must say so and resume at Prepare / Change / Prove / Complete")
         code, out = run(clone, "--full")
         if code != 0 or "IN A WORKTREE" not in out or "SLICE ALREADY STARTED" in out:
             bad.append("--full must reprint the whole card")
         code, out = run(clone, "--dry-run")
         if "IN A WORKTREE" not in out:
             bad.append("a dry run must preview the card even when the slice started")
-        # checkpoint in the clone
-        code, out = run(clone, "--checkpoint")
-        if code == 0 or "NO SESSION ID" not in out or "Did not work: --checkpoint" not in out or "/session-info" not in out or "grok sessions list" not in out:
-            bad.append("--checkpoint in a clone with no id must fail with the Did not work line and where to get the id")
-        code, out = run(clone, "--checkpoint", "--dry-run", env="sess-1")
-        saved = retry_lib.state_path(clone)
-        if code != 0 or (saved and saved.is_file() and "sess-1" in saved.read_text(encoding="utf-8")):
-            bad.append("--checkpoint --dry-run must pass and save nothing")
-        code, out = run(clone, "--checkpoint", env="sess-2")
-        if code != 0 or "grok -r sess-2 --fork-session" not in out or "--cwd" in out or retry_lib.gather_for(clone).get("session") != "sess-2":
-            bad.append("--checkpoint must save and print `grok -r ID --fork-session` without --cwd")
-        code, out = run(clone)
-        if "checkpoint yes" not in out:
-            bad.append("the second run must show the checkpoint it finds")
+        rb = retry_lib.block(clone, "gate", ["SCRIPT ERROR: x"])
+        if "grok -r sess-1 --fork-session" not in rb or "--cwd" in rb or "--checkpoint" in rb:
+            bad.append("the RETRY block must fork the original session (the first run's id) without --cwd")
         # routes fixture: a door with two jobs is a survey (text ORDER, no baseline shot); a job is an implementation slice; the flow is created first, then no STEP 0
         (clone / "design").mkdir(exist_ok=True)
         routes = clone / "design" / "routes.yaml"
@@ -321,7 +307,7 @@ def selftest(script: Path) -> int:
         code, out = run(clone, area="", *())
         if code == 0 or "--door D" not in out or "doors: ui" not in out:
             bad.append("no --door/--job/--area must fail with the usage and the valid doors (so --help is not needed)")
-        # unit queue: a door with unit_queue is not surveyed; the first unit not done is the slice; --next moves on once the unit is committed
+        # unit queue: a door with unit_queue is not surveyed; the first unit not done is the slice; --unit-done marks it done (the next unit is a new session)
         (clone / "design" / "ui-pause.md").write_text("# Pause\n\n## Inventory tab\n- x\n", encoding="utf-8")
         routes.write_text(routes.read_text(encoding="utf-8") + '  ui.menu: "menu-flow"\nunit_queue:\n  ui: "ui.pause, ui.menu"\nunit_docs:\n  ui.pause: "design/ui-pause.md#Inventory tab"\nshot_states:\n  ui.menu: "open"\n', encoding="utf-8")
         (clone / "_logs" / "slice-state.json").unlink()
@@ -330,19 +316,12 @@ def selftest(script: Path) -> int:
         if code != 0 or "ORDER (survey)" in out or "ui.pause (1 of 2)" not in out or "design/ui-pause.md L3-4 (## Inventory tab)" not in out or st_units != ["ui.pause", "ui.menu"]:
             bad.append("a door with unit_queue must start its first unit (not a survey): the unit line, the doc line range, the units in the state")
         code, out = run(clone, "--door", "ui", area="")
-        if code != 0 or "SLICE ALREADY STARTED" not in out or "ui.pause is current (1 of 2)" not in out or "--next" not in out:
-            bad.append("a second run on a unit queue must say which unit is current and name --next")
-        code, out = run(clone, "--next", area="")
-        if code == 0 or "uncommitted" not in out:
-            bad.append("--next with the unit's changes uncommitted must fail and advance nothing")
-        git(clone, "add", "-A")
-        git(clone, "commit", "-qm", "unit")
-        code, out = run(clone, "--next", area="")
-        if code != 0 or "ui.menu (2 of 2)" not in out or "done: ui.pause" not in out or "state open" not in out or "RULES: unchanged" not in out or "IN A WORKTREE" in out:
-            bad.append("--next must mark the unit done and print the next unit's card (its flow state included)")
-        code, out = run(clone, "--next", area="")
-        if code != 0 or "ALL UNITS DONE" not in out:
-            bad.append("--next after the last unit must say all units are done")
+        if code != 0 or "SLICE ALREADY STARTED" not in out or "ui.pause is current (1 of 2)" not in out or "--unit-done" not in out or "--next" in out:
+            bad.append("a second run on a unit queue must say which unit is current and name --unit-done (never --next)")
+        code, out = run(clone, "--unit-done", area="")
+        st = __import__("json").loads((clone / "_logs" / "slice-state.json").read_text(encoding="utf-8"))
+        if code != 0 or "UNIT DONE: ui.pause" not in out or "Next unit: ui.menu, in a NEW session" not in out or "IN A WORKTREE" in out or st.get("done") != ["ui.pause"] or st.get("unit") != "ui.pause":
+            bad.append("--unit-done must mark the unit done, name the next one for a new session and print no card")
         plain = Path(td) / "plain" / "worktrees" / "repos-demo" / "wdb-demo-3"
         plain.parent.mkdir(parents=True)
         git(Path(td), "clone", "-q", str(root), str(plain))
@@ -353,15 +332,21 @@ def selftest(script: Path) -> int:
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
 def retry_selftest() -> int:
-    """Save/lookup/block in a throwaway git repo: with session, without session, without base."""
+    """RETRY block in a throwaway git repo: with the original session recorded, without it, with a first-run --ref, without a base."""
+    import json
     def git(cwd: Path, *a: str) -> None:
         subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=cwd, check=True, capture_output=True)
+
+    def state(wt: Path, **kv: str) -> None:
+        (wt / "_logs").mkdir(exist_ok=True)
+        (wt / "_logs" / "slice-state.json").write_text(json.dumps(kv), encoding="utf-8")
 
     bad: list[str] = []
     with tempfile.TemporaryDirectory() as td:
         main = Path(td) / "main"
         main.mkdir()
         git(main, "init", "-q")
+        (main / ".gitignore").write_text("_logs/\n")
         (main / "a.txt").write_text("a\n")
         git(main, "add", "-A")
         git(main, "commit", "-qm", "a")
@@ -373,33 +358,20 @@ def retry_selftest() -> int:
         git(wt, "commit", "-qm", "b")
         red = ["SCRIPT ERROR: Parse Error: x"]
         no_ses = retry_lib.block(wt, "gate", red)
-        for need in ("NO CHECKPOINT", "git diff grok-build-w9", "--checkpoint", "Nothing is forked or started"):
+        for need in ("NO SESSION ID", "grok -r <original-session-id> --fork-session", "`/fork`", "git diff grok-build-w9", "Nothing is forked or started", "final verification"):
             if need not in no_ses:
                 bad.append(f"no-session block lacks {need!r}")
-        if "abc-123" in no_ses:
-            bad.append("no-session block names a session")
-        if not retry_lib.save_gather(main, "wdb-x-1", "abc-123", ""):
-            bad.append("save_gather wrote nothing")
-        other = Path(td) / "wdb-other"
-        git(main, "worktree", "add", "-q", "--detach", str(other), "grok-build-w9")
-        miss = retry_lib.block(other, "gate", red)
-        if "NO CHECKPOINT" not in miss or "abc-123" in miss:
-            bad.append("a worktree with no entry must say there is no checkpoint and name no other session")
-        retry_lib.save_gather(main, "label-only", "path-456", "", str(wt))
-        if "grok -r path-456 --fork-session" not in retry_lib.block(wt, "gate", red) or retry_lib.gather_for(wt).get("session") != "path-456":
-            bad.append("the saved path must win over the folder name")
-        retry_lib.save_gather(main, "label-only", "", "")
-        data = retry_lib._load(retry_lib.state_path(main))
-        data.pop("label-only", None)
-        retry_lib.state_path(main).write_text(__import__("json").dumps(data), encoding="utf-8")
+        state(wt, session="abc-123", ref="")
         with_ses = retry_lib.block(wt, "gate", red)
-        for need in ("grok -r abc-123 --fork-session", f"cd {wt}", "git diff grok-build-w9", "b.txt", "one diagnosis"):
+        for need in ("grok -r abc-123 --fork-session", f"cd {wt}", "git diff grok-build-w9", "b.txt", "one small corrective edit", "report the log path"):
             if need not in with_ses:
                 bad.append(f"session block lacks {need!r}")
-        if "--cwd" in with_ses or "CONFIRM" in with_ses:
-            bad.append("session block must not use --cwd or carry a CONFIRM note")
-        if retry_lib.save_gather(main, "wdb-x-2", "", "r"):
-            bad.append("empty session was saved")
+        if "--cwd" in with_ses or "checkpoint" in with_ses.lower() or "diagnosis" in with_ses:
+            bad.append("session block must not use --cwd, a checkpoint or the old one-diagnosis wording")
+        other = Path(td) / "wdb-other"
+        git(main, "worktree", "add", "-q", "--detach", str(other), "grok-build-w9")
+        if "abc-123" in retry_lib.block(other, "gate", red):
+            bad.append("another worktree must not name this worktree's session")
         (wt / "a.txt").write_text("edited\n")
         (wt / "new.txt").write_text("untracked\n")
         dirty = retry_lib.block(wt, "gate", red)
@@ -411,9 +383,9 @@ def retry_selftest() -> int:
         gone = retry_lib.block(wt, "gate", red)
         if "NO BASE" not in gone or "git diff" in gone:
             bad.append("no-base block wrong")
-        retry_lib.save_gather(main, "wdb-x-1", "abc-123", "my-ref")
+        state(wt, session="abc-123", ref="my-ref")
         if "git diff my-ref`" not in retry_lib.block(wt, "gate", red):
-            bad.append("saved ref not used as base")
+            bad.append("the first run's --ref must be the base")
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
