@@ -228,7 +228,7 @@ def start_block(root: Path, path: Path, queue: bool = False, restore: bool = Tru
         done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
         cur = next((u for u in units if u not in done), "")
         lines.append(f"Units, her order: {', '.join(units)}. Done: {', '.join(done) or 'none'}. Current: {cur or 'all done'}. "
-                     "One unit per session: at Complete `python tools/start_build_slice.py --unit-done` marks it done; the next unit is a new session (no new survey).")
+                     "Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot. At each unit's Complete `python tools/start_build_slice.py --unit-done` marks it done (no new survey).")
     for title in (() if queue else ("Chosen surfaces, in order", "Files and functions to touch", "Did not work", "Open questions")):  # a queue: those sections are in the first message already
         lines.append(f"{title}: " + " | ".join(l.strip().lstrip("-* ") for l in secs.get(title, "").splitlines() if l.strip()))
     bl = baselines(root, secs.get("Baselines for the chosen surface", ""))

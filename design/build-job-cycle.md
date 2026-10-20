@@ -46,7 +46,7 @@ Update docs and the task.
 Commit and push (`commit_slice.py` then plain `git push` to the week branch).  
 Present the user with any verification they still need to do and, when the task is not closed, the `grok -r <original-session-id> --fork-session` command.
 
-A session does one unit. Do not run `--next`.
+A session finishes the whole request when it fits; a unit queue records the rest (`--unit-done`) only when it cannot.
 
 
 Gather is planned `list_xref` plus planned `show_func` plus one `code_map.py row` when a live script is in the slice. `summarize_scripts` is not gather. `list_route` and `list_changed` stay outside the gather set (`list_route` is slice boot; `list_changed` is git inventory).
@@ -67,7 +67,7 @@ Change is one slice in a Grok worktree cut from the week branch `grok-build-w{N}
 
 **Read what you run.** Open stderr and every check result before you describe it; output you did not read is not harmless, and a passing check that does not cover the claim is not evidence of it.
 
-Commit, without waiting for a yes, with `python tools/commit_slice.py`: it needs a passing `run_build_gate.py --batch --visual JOB` after your last edit and prints the lines for the message; a gate you did not run is said in the final message (`Did not work: gate not run (why)`, `--gate-skipped`). At Prove, a visual change's shot flows run as `run_shot_flow.py --job J` (one call; flows another picked flow covers are skipped; shown and described), or `--visual JOB` on the gate adds them in the same call. Do not import, then smoke, then import.
+Commit, without waiting for a yes, with `python tools/commit_slice.py`: it needs a passing `run_build_gate.py --batch --visual JOB` after your last edit and prints the lines for the message; a gate you did not run is said in the final message (`Did not work: gate not run (why)`, `--gate-skipped`); a gate still red at Complete commits with `--red-gate LOGPATH` (marked `RED GATE:`; its `Red gate:` line opens the done notice). At Prove, a visual change's shot flows run as `run_shot_flow.py --job J` (one call; flows another picked flow covers are skipped; shown and described), or `--visual JOB` on the gate adds them in the same call. Do not import, then smoke, then import.
 
 Smokes at prove: the phases mapped to the door or job in `routes.yaml` `smokes` (printed by `list_route` and `start_build_slice`; `run_smokes.py --door D` or `--job door.job` runs them). A system the slice implements or changes gets its asserts updated in the mapped phase helper (`debug-smokes.md`), or a new assert there, in the same change job. Unit runners (run the runner; do not open smoke helpers just to pick the command):
 
@@ -130,7 +130,7 @@ Concurrent agents share catalog tools. They do not share logs: each worktree has
 
 ## Process notes (Build)
 
-- Unit-queue doors start with `--door` (not only `--job`) so the queue is armed. This session does not run `--next`.
+- Unit-queue doors start with `--door` (not only `--job`) so the queue is armed.
 - Follow the start-card ORDER: load/import check, baseline shot, restate, questions, then edit.
 - Prefer `code_map.py row` and targeted `show_func` / `list_xref` over open-ended searches.
 - Normalize fancy punctuation (curly quotes, ellipses) in lore lines on first data pass, or document the encoding.
@@ -140,5 +140,5 @@ Concurrent agents share catalog tools. They do not share logs: each worktree has
 - Visual review: load the review-shots-isolated skill and bring back only the text report.
 
 ## Session close (hard rules)
-- A session never moves to the next task or unit. The next flow starts the next one. Do not run `--next`.
+- A session never moves on to another task.
 - After Complete (done notice: prove folder shown, playtest confirmation required, recommended, or not needed; not a question): stop. Unfinished or red-gated work keeps its handoff notes in the same task file (status, what remains, rough edges, prove paths); that task is reopened next session.

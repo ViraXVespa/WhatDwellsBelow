@@ -107,7 +107,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         "and update the task. CHANGE: `python tools/check_gd_load.py` once the edits are complete. PROVE is final verification: at most one small corrective "
         "edit and one rerun; still red: stop and report the log path (the RETRY block names `grok -r <original-session-id> --fork-session`). COMPLETE: docs and "
         "the task (`task.py done ID`, or handoff notes plus that retry command), "
-        "`python tools/start_build_slice.py --unit-done` for a unit queue, commit, push, the done notice. One unit per session."]
+        "`python tools/start_build_slice.py --unit-done` for a unit queue, commit, push, the done notice. Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot."]
     return "\n".join(start + order + cycle + [
         ("EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
          "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. "
@@ -129,7 +129,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
          "Cleanup, docs, tasks, gates, `commit_slice.py`, and the plain push to the week branch all finish first (even on red gates). "
          "Only after that push lands do you open the prove folder, inform that the unit is done, and show the images. "
          "Say whether a playtest confirmation is required (look, sound, balance, or controls), recommended (feel, hitch, or timing the gates do not score), or not needed (a refactor, tool, doc, or test). "
-         "That notice is not a question. Never advance to the next unit or task. "
+         "That notice is not a question. Never move on to another task. "
          "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit or the push. "
          "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
     ])
@@ -233,7 +233,7 @@ def selftest(script: Path) -> int:
         for need in ("This tool is the first command", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
                      "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0",
                      "start_build_slice.py --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "commit_slice.py", "before your next tool call",
-                     "`/fork`", "original session ID", "final verification", "check_gd_load.py` once the edits are complete", "One unit per session"):
+                     "`/fork`", "original session ID", "final verification", "check_gd_load.py` once the edits are complete", "whole request in this session"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
@@ -273,6 +273,9 @@ def selftest(script: Path) -> int:
         code, out = run(clone, env="sess-2")
         if "forked yes" not in out or "Prepare / Change / Prove / Complete" not in out or "(first run by session sess-1; this is sess-2)" not in out:
             bad.append("a run in the forked peer session must say so and resume at Prepare / Change / Prove / Complete")
+        run(clone, "--full", env="sess-2")
+        if retry_lib.original(clone).get("session") != "sess-1":
+            bad.append("a --full run in the forked peer must not overwrite the original session id")
         code, out = run(clone, "--full")
         if code != 0 or "IN A WORKTREE" not in out or "SLICE ALREADY STARTED" in out:
             bad.append("--full must reprint the whole card")
@@ -280,7 +283,7 @@ def selftest(script: Path) -> int:
         if "IN A WORKTREE" not in out:
             bad.append("a dry run must preview the card even when the slice started")
         rb = retry_lib.block(clone, "gate", ["SCRIPT ERROR: x"])
-        if "grok -r sess-1 --fork-session" not in rb or "--cwd" in rb or "--checkpoint" in rb:
+        if "grok -r sess-1 --fork-session" not in rb or "end of its Gather" not in rb or "--cwd" in rb or "--checkpoint" in rb:
             bad.append("the RETRY block must fork the original session (the first run's id) without --cwd")
         # routes fixture: a door with two jobs is a survey (text ORDER, no baseline shot); a job is an implementation slice; the flow is created first, then no STEP 0
         (clone / "design").mkdir(exist_ok=True)
@@ -320,8 +323,20 @@ def selftest(script: Path) -> int:
             bad.append("a second run on a unit queue must say which unit is current and name --unit-done (never --next)")
         code, out = run(clone, "--unit-done", area="")
         st = __import__("json").loads((clone / "_logs" / "slice-state.json").read_text(encoding="utf-8"))
-        if code != 0 or "UNIT DONE: ui.pause" not in out or "Next unit: ui.menu, in a NEW session" not in out or "IN A WORKTREE" in out or st.get("done") != ["ui.pause"] or st.get("unit") != "ui.pause":
-            bad.append("--unit-done must mark the unit done, name the next one for a new session and print no card")
+        qt = clone / "design" / "tasks" / "ui-units.md"
+        if code != 0 or "UNIT DONE: ui.pause" not in out or "Next unit: ui.menu" not in out or "IN A WORKTREE" in out or st.get("done") != ["ui.pause"] or st.get("unit") != "ui.menu":
+            bad.append("--unit-done must mark the unit done, make the next one current and print no card")
+        if not qt.is_file() or "done: ui.pause" not in qt.read_text(encoding="utf-8") or "units: ui.pause, ui.menu" not in qt.read_text(encoding="utf-8") or st.get("task") != "ui-units" or "design/tasks/ui-units.md" not in out:
+            bad.append("--unit-done with units left and no task file must write design/tasks/ui-units.md (queue + done) and name it")
+        code, out = run(clone, "--door", "ui", "--full", area="")
+        if code != 0 or "ui.menu (2 of 2)" not in out:
+            bad.append("after --unit-done, `--door ui` must print the next unit's card in the same session")
+        (clone / "_logs" / "slice-state.json").unlink()
+        code, out = run(clone, "--door", "ui", area="", env="new-sess")
+        if retry_lib.original(clone).get("session") != "new-sess":
+            bad.append("a new session resuming from a task file runs its own Gather: it is the original for its unit")
+        if code != 0 or "ui.menu (2 of 2)" not in out:
+            bad.append("a new session on the door must resume the queue from design/tasks/ui-units.md, not unit 1")
         plain = Path(td) / "plain" / "worktrees" / "repos-demo" / "wdb-demo-3"
         plain.parent.mkdir(parents=True)
         git(Path(td), "clone", "-q", str(root), str(plain))

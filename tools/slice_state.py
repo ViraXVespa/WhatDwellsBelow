@@ -84,7 +84,7 @@ def next_step(st: dict, s: dict) -> str:
     if not s["forked"]:
         return f"Gather{unit}: restate, Q0 and her answers, the observable outcome and its signal; then tell her to run `/fork` and continue in the new peer session"
     tail = " (`python tools/start_build_slice.py --unit-done` updates the task's done: line)" if unit else ""
-    return f"Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; then the done notice and stop (one unit per session)"
+    return f"Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)"
 
 def short(root: Path, st: dict) -> str:
     """The SLICE ALREADY STARTED text for a later run."""
@@ -96,7 +96,7 @@ def short(root: Path, st: dict) -> str:
     other = f" (first run by session {st['session']}; this is {sid})" if st.get("session") and sid and sid != st["session"] else ""
     done = "; ".join(f"{k} {'yes' if v is True else 'no' if v is False else v}" for k, v in s.items())
     queue = (f"Units: {st.get('unit', '?')} is current ({(st['units'].index(st['unit']) + 1) if st.get('unit') in st['units'] else '?'} of {len(st['units'])}); done: {', '.join(st.get('done') or []) or 'none'}. "
-             "`--door D --full` reprints this unit's card; at Complete `--unit-done` marks it done (the next unit is a new session).\n") if st.get("units") else ""
+             "`--door D --full` reprints this unit's card; at Complete `--unit-done` marks it done (more units fit: `--door D` again; else a new session).\n") if st.get("units") else ""
     return (f"SLICE ALREADY STARTED: {area} ({st.get('mode', '?')} session), first run {clock(st.get('first_run', ''))}{by}{other}.\n" + queue +
             f"Steps found now: {done}.\n"
             f"Resuming at: {next_step(st, s)}.\n"

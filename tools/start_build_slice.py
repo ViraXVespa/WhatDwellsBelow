@@ -4,7 +4,7 @@ the first-message rules). A later run in the same worktree prints `SLICE ALREADY
 `GROK_SESSION_ID` is set in a session's tool environment; `grok sessions list` (current directory) and `/session-info` show it.
 
     python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--full] [--ref REF] [--dry-run]
-    python tools/start_build_slice.py --unit-done                                    (unit queue, at Complete: mark this unit done; the next unit is a new session)
+    python tools/start_build_slice.py --unit-done                                    (unit queue, at Complete: mark this unit done; a task file keeps the queue)
     python tools/start_build_slice.py --failed                                       (the Did not work lines for your next message, from this session's failed tool results)
     python tools/start_build_slice.py --handoff [--task ID] [--door D] [--job J] [--area A]   (survey session, after her answers to the first ask)
     python tools/start_build_slice.py --door D --from-handoff PATH                   (the fresh implementation session)
@@ -86,6 +86,26 @@ def unit_state_note(job: str, units: list[str]) -> str:
     state = unit_lib.job_state(load_routes(Path(__file__).resolve().parents[1]), job)
     return f" state {state}" if state else ""
 
+def queue_task(root: Path, st: dict, done: list[str]) -> str:
+    """Units remain and the slice has no task file: write design/tasks/<door>-units.md (queue + done) and refresh the README index. Returns its path."""
+    door = st.get("door", "") or "slice"
+    tid = f"{door}-units"
+    tp = task_lib.task_path(root, tid)
+    if not tp.is_file():
+        units = ", ".join(st.get("units") or [])
+        body = (f"area: {st.get('area') or door}\ndoor: {door}\nunits: {units}\ndone: {', '.join(done) or 'none'}\n\n"
+                "## Notes\nWritten by `start_build_slice.py --unit-done`, so a new session can resume the queue if the rest does not fit one session.")
+        text = task_lib.skeleton(tid, "build", f"{door} unit queue", "every unit in `units:` is done", handoff_lib.from_task_cmd(door, tid), [], "")
+        text = text.replace("\n\n## Notes\nnone yet", "\n" + body)
+        tp.parent.mkdir(parents=True, exist_ok=True)
+        tp.write_text(text, encoding="utf-8")
+        task_lib.write_index(root)
+    else:
+        task_lib.set_head(tp, "done", ", ".join(done) or "none")
+    st["task"] = tid
+    slice_state.save(root, st)
+    return f"{task_lib.TASKS_REL}/{tid}.md"
+
 def unit_done(root: Path, args) -> int:
     """--unit-done (Complete, before commit_slice.py): mark the slice's current unit done in the slice state and the task's done: line. Nothing moves on."""
     st = slice_state.load(root)
@@ -95,14 +115,19 @@ def unit_done(root: Path, args) -> int:
     if st.get("unit") and st["unit"] not in done:
         done.append(st["unit"])
     nxt = unit_lib.pick(st["units"], done)
-    st["done"] = done
+    cur = st.get("unit", "?")
+    st.update({"done": done, "unit": nxt or st.get("unit", ""), "job": nxt or st.get("job", "")})
     if not args.dry_run:
         slice_state.save(root, st)
     tp = task_lib.task_path(root, st["task"]) if st.get("task") else None
+    made = ""
     if tp and tp.is_file() and not args.dry_run:
         task_lib.set_head(tp, "done", ", ".join(done) or "none")
-    msg = (f"UNIT DONE: {st.get('unit', '?')}; done: {', '.join(done)}. " + (f"Next unit: {nxt}, in a NEW session (one unit per session); do not start it here. " if nxt else "All units are done. ")
-           + "Finish Complete: commit_slice.py, plain push, then the done notice, then stop.")
+    elif nxt and not args.dry_run:
+        made = queue_task(root, st, done)
+    msg = (f"UNIT DONE: {cur}; done: {', '.join(done)}. " + (f"Next unit: {nxt}. If the request still fits this session, Complete this unit (commit, push) and continue: `python tools/start_build_slice.py --door {st.get('door', 'D')} --full` prints its card. If it cannot fit, stop after Complete; a new session resumes the queue. " if nxt else "All units are done" + (f": close the task in this commit (`python tools/task.py done {st['task']}`). " if st.get("task") else ". "))
+           + (f"Queue recorded in the task file {made} (commit it with this unit); if the rest does not fit, a new session resumes it: `python tools/open_slice.py {st.get('door', 'D')} --task {Path(made).stem}`. " if made else "")
+           + "Complete this unit now: commit_slice.py, then plain push. The done notice follows the last unit this session does.")
     return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, route="unit-done")
 
 def main(argv: list[str] | None = None) -> int:
@@ -114,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--full", action="store_true", help="Reprint the whole start card in a slice that already started (a later run prints where the slice stands).")
     ap.add_argument("--failed", action="store_true", help="Print the `Did not work:` lines built from this session's failed tool results since your last ask.")
     ap.add_argument("--handoff", action="store_true", help="Survey session, after her answers to the first ask: write the handoff skeleton, or validate the filled one and print the open_slice command.")
-    ap.add_argument("--unit-done", dest="unit_done", action="store_true", help="Unit queue, at Complete (before commit_slice.py): mark the current unit done; the next unit is a new session.")
+    ap.add_argument("--unit-done", dest="unit_done", action="store_true", help="Unit queue, at Complete (before commit_slice.py): mark the current unit done; the queue is kept in a task file for a later session.")
     ap.add_argument("--from-handoff", default="", metavar="PATH", help="Fresh implementation session: print the compact start summary from this handoff file.")
     ap.add_argument("--from-task", dest="from_task", default="", metavar="ID", help="Resume a committed Build task: the summary from design/tasks/ID.md (no survey edits restored).")
     ap.add_argument("--task", default="", metavar="ID", help="With --handoff: the task id (default: the slice's task, else its door).")
@@ -153,6 +178,9 @@ def main(argv: list[str] | None = None) -> int:
     units: list[str] = []
     done: list[str] = []
     if kind and args.door.strip() and not args.job.strip() and not args.area.strip() and unit_lib.queue(load_routes(root), args.door.strip()):
+        qt = task_lib.task_path(root, f"{args.door.strip()}-units")
+        if not st and not args.from_handoff and qt.is_file():  # a queue --unit-done recorded: resume it, not unit 1
+            args.from_task, args.from_handoff = qt.stem, str(qt)
         try:
             head = handoff_lib.parse(Path(args.from_handoff).read_text(encoding="utf-8-sig"))[0] if args.from_handoff else {}
         except OSError:
