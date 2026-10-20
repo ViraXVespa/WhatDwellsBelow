@@ -5,13 +5,13 @@ Read when: difficulty, raid-timer, parity, polish
 
 ## Time targets
 
-- A brand-new player SHOULD be able to achieve their first successful extraction in 5–10 minutes.
+- A brand-new player SHOULD reach a first successful extraction quickly (target: tunables-world).
 - A competent player SHOULD be able to reach and clear floor 6 in roughly 5–10 hours of total play. This is a feel target, not a hard cap.
 - Skilled play SHOULD support significantly longer continuous runs.
 
 ## Death and learning curve
 
-- A competent player SHOULD reach consistent clears of the early loop within roughly 20–30 total dives. Exact number is a feel target, not a hard metric.
+- A competent player SHOULD reach consistent clears of the early loop within a modest number of dives (target: tunables-world). It is a feel target, not a hard metric.
 - Death MUST always feel like a fair consequence of player decisions or execution rather than randomness or hidden information.
 
 ## Difficulty progression

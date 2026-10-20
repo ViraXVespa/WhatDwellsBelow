@@ -39,6 +39,10 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to nearest multi-exit room |
+| Smallest floor | — | **24×24 cells, 6 rooms** | Floors never generate smaller than this, whatever the sliders say |
+| Boss room distance | — | **16 cells or half the floor side; 55 % of the farthest walk** | The boss is always a real trek from spawn |
+| Extraction Gate spacing | — | **28 cells, relaxed by 4 down to 8** | Gates spread across the whole floor before any cluster |
+| Hall travelers | — | **run ≥ 10 cells; one per 14–18 cells, ≥ 10 apart** | Lone corridor enemies between rooms |
 
 ## Enemies and combat level
 
@@ -55,6 +59,8 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | `flee_help` | 2 |
 | `boss_hp_mult` | 8 |
 | `cycle_hp` | 0.2 |
+| Normal enemy types (roster / per floor) | **12 / at least 5** |
+| Floor-1 full-clear target | **CL 17** (rooms + capped ambushes + capped pressure waves) |
 | `base_guards` | **5** |
 | `room_pack` | 3 |
 | `named_scale` / `named_hp` / `named_dmg` | 1.28 / 1.8 / 1.35 |
@@ -90,6 +96,7 @@ Roster HP: `enemies.gd`. CL 17 budget and rank multipliers: combat. Walk vs crys
 | Food HoT duration (Y) | 8 s | 8 | Same food does not restack |
 | Potion instant heal (Z) | 100 % max HP | 100 | Instant; distinct from food |
 | Snack cost / heal | 25 g | 25 / 22 | |
+| Ghost shop Artifacts on sale / bought per visit | 2–4 / 2 | 2–4 / 2 | `shop_stock_min`–`max`, `shop_buy_max` |
 | Artifact cost | — | 40 | |
 | Pawn gold | — | 8 | |
 
@@ -115,6 +122,11 @@ Live defaults are in `balance.gd` (single source). Code fallbacks in `forge_act.
 | `affix_flat_base` | 2.0 | Flat affix base before level |
 | `affix_flat_per_lv` | 0.35 | Flat per item level |
 | `affix_pct_per_lv` | 0.004 | Percent affix per item level (plus 0.02 floor) |
+| `affix_quality_min` / `max` | 0.5 / 1.0 | Dungeon Quality roll; also the Finish keep-filter range |
+| `affix_luck_min` / `max` | 0.75 / 1.25 | Dungeon Luck roll; also the Fortune keep-filter range |
+| `affix_white_quality` / `affix_white_luck` | 0.5 / 0.75 | Whites never roll |
+| `forge_luck_window` | 0.25 | Forged Luck spans this far below the analyzed peak (never under the Luck minimum) |
+| Forge quantity | 1–9 | Pieces per order |
 
 Roll rules and the holds cap: inventory (gear job).
 
@@ -129,9 +141,12 @@ Roll rules and the holds cap: inventory (gear job).
 | Look pinch gain | 1.15 | Debug slider. |
 | Look stick zoom / HUD / pan | 0.9 / 0.35 / 520 | Debug sliders. |
 | Map zoom range | 1.0 – 10.0 | Fit to 10×, independent of world camera. |
+| Floor Transport list grouping | 10 floors | Reached floors group by decades past ten |
+| Dungeon enter fade | 1.05 s | After the floor is ready |
 | Touch stick deadzone | 0.24 | Same magnitude idea as pad sticks. Debug Settings slider. |
 | Display mode | borderless | Desktop: windowed / borderless / exclusive. Web: `web_fullscreen` off until a gesture. |
 | Target first-extraction time | 5–10 min | New player on gamepad |
+| Target dives to steady early clears | 20–30 | Competent player; feel target |
 | Target floor-5 clear time | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |
 | Hitch budget | 1/60 s | Frame budget used by the hitch log |

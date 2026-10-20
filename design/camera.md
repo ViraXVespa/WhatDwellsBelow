@@ -7,10 +7,9 @@ Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/
 ## Camera (live 3D path)
 
 - Orthographic Camera3D
-- Fixed pitch approximately –58°
+- Fixed steep pitch
 - Camera height and ortho size calculated so that 64×64 sprites remain clearly readable
-- Player-adjustable zoom range 1.0–4.0 (persisted in save)
-- Default zoom 1.75
+- Player-adjustable zoom (persisted in save); range and default: tunables
 - Zoom applies live from Pause → Settings → Graphics (`App.set_zoom` + `camera_rig.follow`)
 - World zoom also applies live from mouse wheel, touch pinch (walk stick not claimed), and look-mode right-stick Y
 - Separate independent HUD scale setting (Settings → Graphics slider and look-mode right-stick X)

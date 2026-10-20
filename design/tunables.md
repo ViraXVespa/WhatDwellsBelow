@@ -137,6 +137,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Woodcutting hits per node | 8 | 8 | Range 6–10 |
 | Woodcutting time between hits | 1.2 s | 1.2 | |
 | Woodcutting base reward chance | ~32 % | 0.32 | Approximately 50 % lower than mining |
+| Pressure plate trigger radius | — | 0.7 m | How close the player steps to press it |
 | Skill gather / tool gather | — | 0.02 / 0.03 | per level / tool quality |
 | Mine nodes / wood nodes | — | 18 / 14 | |
 | Break count / gold / orb | — | 24 / 0.55 / 0.35 | |

@@ -11,7 +11,7 @@ Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 
 ## Fog of war
 
-- Reveal radius starts at a 5-tile baseline disk. Visited tiles stay revealed for the run.
+- Reveal is a small disk around the player (radius: tunables-world). Visited tiles stay revealed for the run.
 - Reveal disk, visited tiles, map occupancy, and boss-door freed cells stay coarse 1 m tiles.
 - 3D floor, wall, and prop meshes are not gated on fog. Streaming draws complete nearby chunks.
 - Large map overlay (View button) shows discovered tiles and important markers while the game continues running. Markers on unseen tiles stay hidden (`need_seen`).
@@ -20,8 +20,8 @@ Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 ## Extraction Gate limits
 
 - Maximum one ghost shop per floor.
-- Exactly twelve Extraction Gates per floor (tunable cap `max_clerks`, default 12).
-- Gate rooms MUST be spread across the floor. Separation starts at 28 cells and steps down by 4 until twelve candidate rooms are marked (floor 8). If the floor has fewer legal rooms, every legal room is marked.
+- A fixed number of Extraction Gates per floor (`max_clerks`: tunables-world).
+- Gate rooms MUST be spread across the floor. Spacing starts wide and relaxes step by step until enough candidate rooms are marked (tunables-world). If the floor has fewer legal rooms, every legal room is marked.
 
 Mail-legal goods and one-use visit rules: inventory.meta and interactables.
 
@@ -37,6 +37,6 @@ Prompt / confirm copy: interactables.
 
 - Boss doors show “PREPARE”, open on interact (linked doors together), free their cells and read “OPEN”. Stairs still wait for the boss kill.
 - `scenes/foundation.tscn` is the combat sandbox / smoke host, not the player hub.
-- Enter dungeon covers on the Floor Crystal press, waits until that cover has presented, then saves and changes scene; it fades 1.05s after the floor is ready.
+- Enter dungeon covers on the Floor Crystal press, waits until that cover has presented, then saves and changes scene; it fades in shortly after the floor is ready (tunables-world).
 - Floor boot stays light: gear UI, crystal UI and the large map load on first use; props, ambushes and extra crystals stream in on the pulse inside `STREAM_IN`. The Floor Guardian is a stream job.
 - Map dump and Placeholdia → Dungeon timing smokes: debug-smokes.

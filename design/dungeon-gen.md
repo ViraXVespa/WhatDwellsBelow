@@ -65,8 +65,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 
 ## Size and floor cycle
 
-`gen.gd` clamps to minimum 24×24 and at least 6 rooms.
-Boss room is a random room whose walk distance from spawn is at least max(`Rooms.min_boss_sep`, 0.55 × the farthest room's walk distance) and whose room distance is at least `Rooms.min_boss_sep` = max(16, max(w,h) * 0.5); with no such room, the farthest room.
+Floors have a smallest size and room count. The boss room is a random room far from spawn both on foot and as the crow flies; with no such room, the farthest room. Values: tunables-world, Dungeon generation.
 cycle_of(n)     = (n - 1) / 5
 loop_index(n)   = ((n - 1) % 5) + 1
 is_gate_master  = loop_index == 5

@@ -6,8 +6,7 @@ Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/th
 
 ## Enemy variety
 
-- Minimum of 12 different types of normal enemies.
-- At least 5 different types appear on each floor.
+- A roster of normal enemy types, with a minimum mix on every floor (counts: tunables-world).
 - Enemies MUST have varied attack patterns, movement types (hopping, walking, flying, etc.), and appearances so they feel distinct in combat.
 - Palette swaps and stat swaps between floors are used to increase perceived variety.
 - Enemies should use a variety of classic fantasy representations (slimes, goblins, orcs, etc.).
@@ -31,7 +30,7 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 
 ## Named monsters
 
-- Appear randomly at a rate of roughly once every 3 floors.
+- Appear randomly every few floors (named monster rate: tunables-world).
 - Slightly larger variants of their normal counterparts.
 - Name is randomly generated via a syllable-combination and randomization system.
 - Name appears beneath the enemy model in yellow text with a thin black border.
@@ -104,4 +103,4 @@ Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
 ## Add an enemy type (live files)
 
 One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, dmg, spd, range, def, size, arc; no hp), `scripts/data/balance/enemies.gd` (`IDS` plus the live row, the one source of hp; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through art_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family, or any 13th type even inside an existing family, is the User's call: ask (`ask_user_question`), never add one on your own. The Bot never adds enemy types.
-- Hall travelers: kind `hall`, one enemy on a corridor run of at least 10 cells, cadence 14–18 from the floor seed, skipped on ambush cells. Ambushes stay the surprise trap. Room packs are unchanged.
+- Hall travelers: kind `hall`, one enemy spaced along long corridor runs (spacing: tunables-world), placed from the floor seed and skipped on ambush cells. Ambushes stay the surprise trap. Room packs are unchanged.
