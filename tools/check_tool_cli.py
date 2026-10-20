@@ -289,6 +289,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.only and path.stem not in args.only:
             continue
         check_py(root, path, bad, tally)
+    bad += [f"{d}: root underscore folder without .gdignore (Godot would import and pack it; any agent_log run adds it)"
+            for d in agent_log.gdignore_underscore(root, fix=False)]
     smoke: dict = {}
     table: list[str] = []
     if args.smoke_run:

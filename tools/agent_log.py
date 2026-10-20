@@ -185,9 +185,23 @@ def agent_summary_path(job: str, root: Path | None = None) -> Path:
     d = agent_log_dir(job, root)
     return run_log_lib.latest(d) or d / run_log_lib.LEGACY
 
+def gdignore_underscore(root: Path | None = None, fix: bool = True) -> list[str]:
+    """Root `_*` folders (tool output: _logs, _out, _cache...) lacking .gdignore, so Godot never imports or packs
+    them. fix=True writes the empty file and returns []; check_tool_cli.py calls fix=False and fails on any."""
+    miss = []
+    for d in sorted(repo_root(root).glob("_*/")):
+        g = d / ".gdignore"
+        if not g.exists():
+            if fix:
+                g.touch()
+            else:
+                miss.append(d.name)
+    return miss
+
 def ensure_agent_log_dir(job: str, root: Path | None = None) -> Path:
     path = agent_log_dir(job, root)
     path.mkdir(parents=True, exist_ok=True)
+    gdignore_underscore(root)
     return path
 
 def run_path(job: str, root: Path, name: str) -> Path:

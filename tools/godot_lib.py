@@ -207,6 +207,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
     args = list(args)
     if "--path" not in args:
         args = ["--path", path] + args
+    agent_log.gdignore_underscore(root)  # root _* folders never enter an import or export
     lf = lock(root, path, lock_timeout, hold if hold > 0 else max(60, timeout + 30))
     t0 = time.monotonic()
     pid, status, code, timed_out, dkind = 0, "ERROR", -1, False, "none"
