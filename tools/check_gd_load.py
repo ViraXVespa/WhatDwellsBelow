@@ -7,7 +7,7 @@ week branch grok-build-w{N}, else HEAD. A script that does not compile, or that 
 Godot error lines that name it; every file is loaded even after the first failure. The editor import check does not load
 every script and a standalone `--script` parse has no autoloads, so neither stands in for this. Imports the project first
 when .godot/imported is missing. Summary: _logs/gd-load-check/; Godot's full stderr is saved next to it and the summary
-prints its leading lines and size, so read them. RESULT carries files= failed=. Small batches: run it after each edit pass.
+prints its leading lines and size, so read them. RESULT carries files= failed=. Run it once the unit's edits are complete (Change), and again in Prove.
 Also fails (nul=) on Godot text files under res:// holding a NUL byte or a UTF-16 BOM, on a .gd string escape that makes a
 NUL (\\u0000, \\x00), and on Godot's "Unicode parsing error ... Unexpected NUL" line. Also fails (d3d=) on a tracked texture
 .import with Detect 3D on (detect_3d/compress_to not 0): the editor would rewrite it on import (mipmaps, VRAM compression).

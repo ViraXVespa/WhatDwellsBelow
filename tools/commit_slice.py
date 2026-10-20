@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Commit the slice after her yes, only when the build gate ran after your last edit, or the skip is said out loud.
+"""Commit the slice at Complete (no wait for her yes), only when the build gate ran after your last edit, or the skip is said out loud.
 
     python tools/commit_slice.py [--message-file _logs/commit-msg.txt] [--gate-skipped "why"] [--dry-run]
 The gate is `python tools/run_build_gate.py --batch`, plus `--visual JOB` only when that job has a shot flow. This tool reads its newest summary in _logs/build-gate: it must end in
 `RESULT PASS` and be newer than every changed file. With no passing gate it stops (exit 1) and prints both ways forward. `--gate-skipped WHY`
 commits anyway and prints the line `Did not work: gate not run (WHY)` that opens your final message.
-Staged: every change, new `.import` sidecars included; sidecars Godot only modified (churn) are left out and counted. Nothing is pushed.
-Commit only after she said to commit.
+Staged: every change, new `.import` sidecars included; sidecars Godot only modified (churn) are left out and counted. Nothing is pushed: plain `git push` of the week branch follows, then the done notice.
 """
 from __future__ import annotations
 
@@ -80,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     if c.returncode:
         agent_log.fail("git commit failed: " + (c.stderr or c.stdout).strip()[:300])
     sha = git(root, "rev-parse", "--short", "HEAD").stdout.strip()
-    print(f"committed {sha}: {len(paths)} path(s); {len(churn)} modified .import sidecar(s) left uncommitted (Godot churn); not pushed")
+    print(f"committed {sha}: {len(paths)} path(s); {len(churn)} modified .import sidecar(s) left uncommitted (Godot churn); not pushed: plain `git push` now, then the done notice")
     if why:
         print(f"Did not work: gate not run ({args.gate_skipped.strip()})")
     return agent_log.emit_result("PASS", commit=sha, paths=len(paths), left_out=len(churn), gate="skipped" if why else "passed")

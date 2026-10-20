@@ -2,8 +2,8 @@
 
 A door that lists `unit_queue` in design/routes.yaml is worked one unit (one job) at a time, in the order listed. Which units are done is carried
 in the slice state (`_logs/slice-state.json`: units, done, unit) and in a handoff's `units:` / `done:` header lines. A unit's card prints only
-its own flow (with the shot state it cuts at), docs (path plus line range of the one section) and files; `start_build_slice.py --next` marks the
-current unit done and prints the next card without a new survey.
+its own flow (with the shot state it cuts at), docs (path plus line range of the one section) and files; `start_build_slice.py --unit-done` marks the
+current unit done at Complete; the next unit is a new session (one unit per session), started without a new survey.
 """
 from __future__ import annotations
 

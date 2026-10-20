@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         if head.get("units"):
             us = [u.strip() for u in head["units"].split(",") if u.strip()]
             dn = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
-            hand_note += f"; unit queue {len(us)} (done {len(dn)}), next = {next((u for u in us if u not in dn), 'none')}; the session walks it with start_build_slice.py --next"
+            hand_note += f"; unit queue {len(us)} (done {len(dn)}), next = {next((u for u in us if u not in dn), 'none')}; one unit per session (--unit-done at Complete)"
     if prompt.startswith("-") or len(prompt) > 30000:
         return end("BAD PROMPT: it must not start with '-' (grok would read a flag) and must fit on a command line. Shorten it or start blank.", "FAIL", route="bad-prompt")
     slug = re.sub(r"[^a-z0-9._-]+", "-", (area or "slice").lower()).strip("-")[:48].strip("-") or "slice"
