@@ -21,6 +21,6 @@ Read when: pause panels, fullscreen drape, play-menu
 | pinned parchment, offer cutouts | `design/ui-unit-quest-board.md` |
 | talk cycle, ask topics | `design/ui-unit-receptionist.md` |
 
-Remaining screens are units, worked in her order: `python tools/start_build_slice.py --door ui`, then `--next` after each is committed. Each unit job prints its own flow, docs and files.
+Remaining screens are units, worked in her order: `python tools/start_build_slice.py --door ui`, one unit per session (`--unit-done` at Complete). Each unit job prints its own flow, docs and files.
 
 Gear board layout / anvil tabs / slot plates live in gear_ui. ui.gear_entry only keeps the short UI entry sections.

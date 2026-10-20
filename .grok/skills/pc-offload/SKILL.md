@@ -64,8 +64,8 @@ Intercept (raw tool is a failed lookup, not a fallback):
    pictures she should see, handoff, commit_slice.py, merge-back) and the docs
    to read, the single source. A later
    run says where the slice stands. A door with a unit queue (ui) is worked one
-   unit at a time: start_build_slice.py --next after each committed unit prints the
-   next unit's card, no new survey. A committed task resumes with
+   unit per session: start_build_slice.py --unit-done at Complete marks it done;
+   the next unit is a new session, no new survey. A committed task resumes with
    start_build_slice.py --door D --from-task ID (task.py list). Only the User launches grok.
 
 Two compacts on the same slice: write the notes into the task file, commit, and push the branch, including live stills, so the next session can continue. She opens the next session. Then write the handoff (start_build_slice.py --handoff)

@@ -13,7 +13,7 @@ The lines above the first `## ` heading: `id` (the file name), `owner` (build, w
 
 - **Find / resume:** `python tools/task.py list [--owner X]`, then `python tools/task.py show ID`. Read that one file and run its `resume` line.
 - **Create:** Build's survey writes its handoff with `python tools/start_build_slice.py --handoff`; anything else uses `python tools/task.py new ID ...` (Web: its scratch calls `dp.task([...])`, which runs `task.py`). A Web park is a task with owner web (packet: `web-discuss.md`). Web and Bot create a task for another owner only when the User says so.
-- **Update:** keep the header true and the body current as the work moves: `python tools/task.py update ID --status S | --needs IDS | --section TITLE --body TEXT`. Build's `--next` updates `done` itself.
+- **Update:** keep the header true and the body current as the work moves: `python tools/task.py update ID --status S | --needs IDS | --section TITLE --body TEXT`. Build's `start_build_slice.py --unit-done` updates `done` itself.
 - **Finish:** in the change that completes it, `python tools/task.py done ID`: the file is deleted, dependants lose it from `needs`, and one line goes into the branch's changelog entry. Never mark a task done in place; there is no archive.
 
 ## Index

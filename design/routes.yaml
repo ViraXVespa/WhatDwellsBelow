@@ -431,7 +431,7 @@ shot_flows:
   ui.receptionist: "camp-receptionist-menu"
 
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. start_build_slice.py --door D picks the first
-# not done, `--next` moves on, and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
+# not done (one unit per session; `--unit-done` marks it done at Complete), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
 unit_queue:
   # Order of the ui units only. Done-state lives in the slice state (start_build_slice), so finished units stay listed.
   ui: "ui.controls, ui.anvil, ui.loadout, ui.extract, ui.ghost_shop, ui.recap, ui.quest_board, ui.receptionist"
