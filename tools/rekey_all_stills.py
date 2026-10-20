@@ -6,18 +6,17 @@
     python tools/rekey_all_stills.py --only assets/fx/arrow.png,assets/ui/gear/hatchet.png
 
     python tools/rekey_all_stills.py --out DIR --jobs 8      (review copy; live assets untouched)
-    python tools/rekey_all_stills.py --check --jobs 8        (approved rows only: each must reproduce live byte for byte)
+    python tools/rekey_all_stills.py --check --jobs 8        (determinism: two runs into temp folders, byte-identical)
     python tools/rekey_all_stills.py --record-fit REV        (store each still's fit geometry from live at REV)
 
 Reads the manifest, resolves each source under _src/sources, keys it (imglib.matte), mirrors manifest flip rows, and
 places it exactly like the live still it replaces (geom.fit_like: canvas, body size, bottom edge, centre x; one
 premultiplied box shrink, on a detected pixel grid when there is one), then applies the row's alpha policy once
 (manifest `alpha`: soft, crisp or hard; default soft for fx, crisp otherwise). Live
-art with no alpha (tiles, finished pictures) and the out-of-bounds stills are kept; a stale source is reported.
+art with no alpha (tiles, finished pictures) is kept and a stale source reported; a key that lost the subject keeps live
+(SOURCE_WINS rows are exempt from that guard). Every other still is rekeyed on every run.
 The placement reference is the manifest `fit` field ([W, H, x0, y0, x1, y1]: canvas and solid body box of the live
-still before any rekey), never the current live file, so a re-run reproduces its own output. Rows marked
-`approved` are stills Vira accepted: they stay as live (--rekey-approved shows what the current key would make), and
---check fails if a run would change one. DIR/_metrics.json records each keyed row's area/edge/halo/notch metrics
+still before any rekey), never the current live file, so a re-run reproduces its own output. DIR/_metrics.json records each keyed row's area/edge/halo/notch metrics
 against the exact area average of the same key.
 Check the result with python tools/rekey_check.py --new DIR.
 """
@@ -39,10 +38,6 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = ROOT / "_src"
 MANIFEST = SRC_ROOT / "manifest.json"
 
-FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/sprites/buildings/guild_reception.png",
-          "assets/sprites/buildings/stall.png", "assets/sprites/props/anvil.png", "assets/sprites/props/fence.png",
-          "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
-
 # live is wrong here (Vira, 2026-10-13): the plate wins even though it is other art than live
 SOURCE_WINS = ("assets/sprites/props/extract_gate_on.png",)
 
@@ -51,9 +46,6 @@ def _on_grey(im):
     bg = Image.new("RGBA", im.size, (128, 128, 128, 255))
     bg.alpha_composite(im.convert("RGBA"))
     return bg.convert("RGB")
-
-def frozen(rel: str) -> bool:
-    return any(rel == f or (f.endswith("/") and rel.startswith(f)) for f in FROZEN)
 
 def _fit_ref(fit, flip: bool):
     """Recorded geometry -> ((W, H), box); a flip row places against the mirrored box."""
@@ -108,12 +100,10 @@ def metrics(out, exact) -> dict:
             "halo": round(float((part & (ex > 24)).sum()) / max(1, int(part.sum())), 4),
             "notch": int(((ea >= 160) & (oa < 128)).sum()), "bump": int(((ea < 96) & (oa >= 128)).sum())}
 
-def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, include_frozen: bool = False,
-         fit=None, approved: bool = False, rekey_approved: bool = False, policy: str = "crisp") -> str:
+def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, fit=None, policy: str = "crisp") -> str:
     """Key one still from its plate and place it like the live still (geom.fit_like): same canvas, body size,
     bottom edge and centre. Live art with no alpha (tiles, finished pictures) has nothing to key: it is kept as is,
-    and a source that no longer matches it is reported STALE (the live file is the truth). Out-of-bounds stills
-    (FROZEN) are kept unless include_frozen."""
+    and a source that no longer matches it is reported STALE (the live file is the truth)."""
     live = ROOT / live_rel
     dest = (out / live_rel) if out else live
     src = matcher.resolve_source(live)
@@ -128,18 +118,11 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
             s = np.asarray(imgio.load(src).convert("RGB").resize(ref.size), np.float32)
             err = float(np.abs(s - np.asarray(ref.convert("RGB"), np.float32)).mean())
             why = f"STALE source (err {err:.1f})" if err > 6.0 else "opaque, nothing to key"
-        elif ref is not None and frozen(live_rel) and not include_frozen:
-            keep, why = True, "out of bounds"
         if keep:
             if not dry and dest != live:
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_bytes(live.read_bytes())
             return f"KEPT {live_rel} ({why})"
-        if approved and not rekey_approved and ref is not None:
-            if not dry and dest != live:
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_bytes(live.read_bytes())
-            return f"KEPT {live_rel} (approved)"
         raw = imgio.load(src).convert("RGBA")
         keyed = key.key_to_alpha(raw)
         pitch, gx, gy, conf = geom.detect_grid(raw)
@@ -204,10 +187,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bulk rekey stills from the manifest. Overwrites live PNGs.", writes=True)
     ap.add_argument("--out", default="", help="Write under this folder (same relative paths) instead of live assets/.")
     ap.add_argument("--jobs", type=int, default=1, help="Worker processes.")
-    ap.add_argument("--include-frozen", action="store_true", help="Also rekey the out-of-bounds stills (FROZEN).")
-    ap.add_argument("--check", action="store_true", help="Run into a temp folder; fail if an approved still differs from live.")
+    ap.add_argument("--check", action="store_true", help="Run twice into temp folders; fail unless the two runs are byte-identical.")
     ap.add_argument("--record-fit", default="", metavar="REV", help="Record each row's fit geometry from live at git REV into the manifest, then stop.")
-    ap.add_argument("--rekey-approved", action="store_true", help="Also rekey approved rows (default: they stay as live).")
     ap.add_argument("--only", default="", help="Comma-separated live paths to limit the run.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -221,27 +202,28 @@ def main(argv: list[str] | None = None) -> int:
     lines = ["Bulk rekey from manifest. Live PNGs are overwritten unless --dry-run."]
     wrote = skipped = failed = 0
     rows = [e for e in entries if e.get("live") and (not wanted or e["live"] in wanted)]
-    if args.check and not wanted:
-        rows = [e for e in rows if e.get("approved")]
     todo = [e["live"] for e in rows]
     flips = [bool(e.get("flip")) for e in rows]
-    incl = [bool(args.include_frozen)] * len(todo)
     fits = [e.get("fit") for e in rows]
-    apprs = [bool(e.get("approved")) for e in rows]
-    reap = [bool(args.rekey_approved)] * len(rows)
     pols = [policy_for(e["live"], e) for e in rows]
-    tmp = None
+    def run(out):
+        if args.jobs > 1:
+            from concurrent.futures import ProcessPoolExecutor
+            with ProcessPoolExecutor(args.jobs) as ex:
+                return list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, fits, pols, chunksize=4))
+        return [_one(t, args.dry_run, out, f, g, p) for t, f, g, p in zip(todo, flips, fits, pols)]
     if args.check:
         import tempfile
-        tmp = tempfile.TemporaryDirectory()
-        args.out = tmp.name
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            ra, rb = run(Path(a)), run(Path(b))
+            diff = [t for t in todo if (Path(a) / t).is_file() != (Path(b) / t).is_file()
+                    or ((Path(a) / t).is_file() and (Path(a) / t).read_bytes() != (Path(b) / t).read_bytes())]
+        bad = [r for r in ra if r.startswith("FAIL")] + [f"DIFF {t} (two runs differ)" for t in diff]
+        body = bad + [f"check rows={len(todo)} differ={len(diff)} failed={len(bad) - len(diff)}"]
+        return agent_log.finish("rekey-all-stills", root, "\n".join(body), "FAIL" if bad or ra != rb else "PASS", args=args,
+                                rows=len(todo), differ=len(diff))
     out = Path(args.out).resolve() if args.out else None
-    if args.jobs > 1:
-        from concurrent.futures import ProcessPoolExecutor
-        with ProcessPoolExecutor(args.jobs) as ex:
-            results = list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, incl, fits, apprs, reap, pols, chunksize=4))
-    else:
-        results = [_one(t, args.dry_run, out, f, i, g, a, r, p) for t, f, i, g, a, r, p in zip(todo, flips, incl, fits, apprs, reap, pols)]
+    results = run(out)
     kept, met = {}, {}
     for line in results:
         if line.startswith("WROTE") and " area=" in line:
@@ -261,17 +243,6 @@ def main(argv: list[str] | None = None) -> int:
         out.mkdir(parents=True, exist_ok=True)
         (out / "_kept.json").write_text(json.dumps(kept, indent=1), encoding="utf-8")
         (out / "_metrics.json").write_text(json.dumps(met, indent=1), encoding="utf-8")
-    drift = 0
-    if args.check:
-        appr = [e["live"] for e in rows if e.get("approved")]
-        for rel in appr:
-            a, b = out / rel, ROOT / rel
-            if not (a.is_file() and b.is_file() and a.read_bytes() == b.read_bytes()):
-                drift += 1
-                lines.append(f"DRIFT {rel} (a re-run would change this approved still)")
-        lines.append(f"check approved={len(appr)} drift={drift}")
-        failed += drift
-        tmp.cleanup()
     lines.append(f"done wrote={wrote} skipped={skipped} failed={failed}")
     status = "FAIL" if failed else "PASS"
     return agent_log.finish("rekey-all-stills", root, "\n".join(lines), status, args=args, wrote=wrote, skipped=skipped, failed=failed)

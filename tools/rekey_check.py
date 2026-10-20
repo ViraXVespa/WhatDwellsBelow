@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Full-set rekey quality check: a rekey output folder against the live assets and the _src source plates.
 
-    python tools/rekey_check.py --new DIR [--only a,b] [--strict]
+    python tools/rekey_check.py --new DIR [--only a,b]
 
 DIR holds the same relative paths as the live assets (tools/rekey_all_stills.py --out DIR). One row per manifest
 entry. Failure classes (each is counted):
@@ -21,8 +21,7 @@ entry. Failure classes (each is counted):
             keyed ones as reported in DIR/_kept.json by rekey_all_stills. Reported; the output must equal live.
   notch     2+ output pixels clear where that average is mostly paint (alpha >= 160) (DIR/_metrics.json)
   lost      the key lost the subject (paint on the plate's hue); the pipeline kept live (DIR/_kept.json)
-Rows that are out of bounds for the open-set pass (dummy, guild, guild_reception, stall, anvil, fence, pickaxe,
-male frames) are checked too and tagged frozen. Writes _logs/rekey-check/<stamp>.json.
+Writes _logs/rekey-check/<stamp>.json.
 """
 from __future__ import annotations
 
@@ -37,15 +36,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 
 ROOT = Path(__file__).resolve().parents[1]
-FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/sprites/buildings/guild_reception.png",
-          "assets/sprites/buildings/stall.png", "assets/sprites/props/anvil.png", "assets/sprites/props/fence.png",
-          "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
 # replaced art: slot_legs (new art from her jpg), extract_gate_on (live was wrong; the plate wins)
 NEW_ART = ("assets/ui/gear/slot_legs.png", "assets/sprites/props/extract_gate_on.png")
 CLASSES = ("canvas", "quality", "area", "edge", "halo", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost", "notch")
-
-def frozen(rel: str) -> bool:
-    return any(rel == f or (f.endswith("/") and rel.startswith(f)) for f in FROZEN)
 
 def rgba(p: Path) -> np.ndarray:
     return np.asarray(Image.open(p).convert("RGBA"), dtype=np.float32)
@@ -80,7 +73,7 @@ def mad(a: np.ndarray, b: np.ndarray) -> float:
 
 def check(rel: str, src: Path, new_p: Path, flip: bool) -> dict:
     live_p = ROOT / rel
-    row = {"live": rel, "frozen": frozen(rel), "fail": []}
+    row = {"live": rel, "fail": []}
     if not new_p.is_file():
         row["fail"].append("missing")
         return row
@@ -172,7 +165,6 @@ def main(argv=None) -> int:
     ap.add_argument("--new", required=True, help="Rekey output folder (rekey_all_stills.py --out).")
     ap.add_argument("--only", default="")
     ap.add_argument("--metrics", default="", help="Metrics file (default DIR/_metrics.json).")
-    ap.add_argument("--strict", action="store_true", help="FAIL on frozen rows too.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     man = json.loads((ROOT / "_src" / "manifest.json").read_text(encoding="utf-8"))
@@ -198,20 +190,17 @@ def main(argv=None) -> int:
             metric_fails(r, met[r["live"]])
     mirror_pairs([e for e in man["entries"] if e.get("live")], Path(args.new), {r["live"]: r for r in rows})
     counts = {c: 0 for c in CLASSES + ("missing",)}
-    counts_open = dict(counts)
     for r in rows:
         for c in set(r["fail"]):
             counts[c] += 1
-            if not r["frozen"]:
-                counts_open[c] += 1
     out = root / "_logs" / "rekey-check"
     out.mkdir(parents=True, exist_ok=True)
-    (out / "last.json").write_text(json.dumps({"counts": counts, "counts_open": counts_open, "rows": rows}, indent=1), encoding="utf-8")
-    body = [f"{len(rows)} rows. fails (all / not frozen):"] + [f"  {c}: {counts[c]} / {counts_open[c]}" for c in counts]
+    (out / "last.json").write_text(json.dumps({"counts": counts, "rows": rows}, indent=1), encoding="utf-8")
+    body = [f"{len(rows)} rows. fails:"] + [f"  {c}: {counts[c]}" for c in counts]
     for r in rows:
         if r["fail"]:
-            body.append(f"{'F ' if r['frozen'] else '  '}{r['live']}: {','.join(r['fail'])} edge={r.get('edge')} area={r.get('area')} err={r.get('err')} src_err={r.get('src_err', '')}")
-    bad = sum(counts.values()) if args.strict else sum(counts_open[c] for c in counts_open if c != "stale")
+            body.append(f"  {r['live']}: {','.join(r['fail'])} edge={r.get('edge')} area={r.get('area')} err={r.get('err')} src_err={r.get('src_err', '')}")
+    bad = sum(counts[c] for c in counts if c != "stale")
     return agent_log.finish("rekey-check", root, "\n".join(body), "FAIL" if bad else "PASS", args=args, **counts)
 
 if __name__ == "__main__":

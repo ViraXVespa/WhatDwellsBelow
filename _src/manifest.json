@@ -307,8 +307,7 @@
       "live": "assets/sprites/npcs/shopkeep.png",
       "source": "sources/assets/sprites/npcs/shopkeep.jpg",
       "origin": "_src/sources/assets/sprites/npcs/shopkeep.jpg",
-      "fit": [128, 128, 33, 6, 93, 123],
-      "approved": true
+      "fit": [128, 128, 33, 6, 93, 123]
     },
     {
       "live": "assets/sprites/npcs/vendor.png",
@@ -470,8 +469,7 @@
       "live": "assets/sprites/props/extract_gate_on.png",
       "source": "sources/assets/sprites/props/extract_gate_on.jpg",
       "origin": "_src/sources/assets/sprites/props/extract_gate_on.jpg",
-      "fit": [384, 244, 0, 0, 384, 244],
-      "approved": true
+      "fit": [384, 244, 0, 0, 384, 244]
     },
     {
       "live": "assets/sprites/props/fence.png",
@@ -508,8 +506,7 @@
       "alpha": "soft",
       "source": "sources/assets/sprites/props/hp_orb.jpg",
       "origin": "_src/sources/assets/sprites/props/hp_orb.jpg",
-      "fit": [128, 128, 8, 11, 120, 124],
-      "approved": true
+      "fit": [128, 128, 8, 11, 120, 124]
     },
     {
       "live": "assets/sprites/props/lever.png",
@@ -2128,8 +2125,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_left.png",
@@ -2145,8 +2141,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_right.png",
@@ -2162,8 +2157,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_left.png",
@@ -2179,8 +2173,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_right.png",
@@ -2196,8 +2189,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up.png",
@@ -2213,8 +2205,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_left.png",
@@ -2230,8 +2221,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_right.png",
@@ -2247,8 +2237,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_down.png",
@@ -2653,8 +2642,7 @@
       "loose": false,
       "opaque_side": 43,
       "cell": "",
-      "fit": [128, 128, 43, 5, 85, 123],
-      "approved": true
+      "fit": [128, 128, 43, 5, 85, 123]
     },
     {
       "live": "assets/sprites/player/female/idle_down_left.png",
@@ -7094,8 +7082,7 @@
       "loose": false,
       "opaque_side": 56,
       "cell": "",
-      "fit": [64, 64, 5, 1, 57, 64],
-      "approved": true
+      "fit": [64, 64, 5, 1, 57, 64]
     },
     {
       "live": "assets/ui/gear/head.png",
@@ -7110,8 +7097,7 @@
       "loose": false,
       "opaque_side": 52,
       "cell": "",
-      "fit": [64, 64, 7, 2, 57, 62],
-      "approved": true
+      "fit": [64, 64, 7, 2, 57, 62]
     },
     {
       "live": "assets/ui/gear/legs.png",
@@ -7132,8 +7118,7 @@
       "live": "assets/ui/gear/longbow.png",
       "source": "sources/assets/ui/gear/longbow.jpg",
       "origin": "_src/sources/assets/ui/gear/longbow.jpg",
-      "fit": [64, 64, 21, 4, 43, 59],
-      "approved": true
+      "fit": [64, 64, 21, 4, 43, 59]
     },
     {
       "live": "assets/ui/gear/moldy_bread.png",
@@ -7244,8 +7229,7 @@
       "loose": false,
       "opaque_side": 41,
       "cell": "",
-      "fit": [64, 64, 4, 1, 60, 63],
-      "approved": true
+      "fit": [64, 64, 4, 1, 60, 63]
     },
     {
       "live": "assets/ui/gear/slot_potion.png",
