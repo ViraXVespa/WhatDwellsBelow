@@ -8,14 +8,17 @@ export_credentials.cfg.uid
 # Commit-linked archive checkouts and Pages preview dumps
 .archive_worktrees/
 .archive_export_cache/
-_pages/
+/_pages/*
+!/_pages/.gdignore
 docs/
 
 # Local Copilot sweep notes (do not commit)
-_logs/
+/_logs/*
+!/_logs/.gdignore
 
 # Local scratch from asset processing
-_old/
+/_old/*
+!/_old/.gdignore
 _atk_*.jpg
 _inspect_*.jpg
 _rng*.jpg
@@ -42,11 +45,12 @@ _godot_*.err
 
 # Scratch Runners
 tools/_scratch.py
-/_old
 
 # Shot tooling hand-over folder (run_shot_flow.py --publish); Grok Build places files into assets/ when needed
-_out/
+/_out/*
+!/_out/.gdignore
 tools/__scratch.py
 
 # Downloaded model weights and tool caches (tools/imglib/scunet.py)
-_cache/
+/_cache/*
+!/_cache/.gdignore

@@ -107,6 +107,7 @@ SMOKE: dict[str, list] = {
 }
 ABS_ROOT_TOOLS = {"list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary", "check_shot_gaps", "run_shot_flow", "run_godot_import_check"}  # may print a WARN with an absolute path when the scanned root differs
 SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
+TRACKED_GDIGNORE = ("_cache", "_logs", "_old", "_out", "_pages", "_src")  # root tool folders present in every clone
 SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
 PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
@@ -291,6 +292,8 @@ def main(argv: list[str] | None = None) -> int:
         check_py(root, path, bad, tally)
     bad += [f"{d}: root underscore folder without .gdignore (Godot would import and pack it; any agent_log run adds it)"
             for d in agent_log.gdignore_underscore(root, fix=False)]
+    tracked = set(subprocess.run(["git", "ls-files", "-z", "--", "_*/.gdignore"], cwd=root, capture_output=True, text=True).stdout.split("\0"))
+    bad += [f"{d}/.gdignore: not tracked (fresh clones would lack it)" for d in TRACKED_GDIGNORE if f"{d}/.gdignore" not in tracked]
     smoke: dict = {}
     table: list[str] = []
     if args.smoke_run:
