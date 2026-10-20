@@ -12,6 +12,8 @@ const LayoutS := preload("res://scripts/world/camp/layout.gd")
 const Banner := preload("res://scripts/world/camp/banner.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
+const Hud := preload("res://scripts/world/camp/camp_hud.gd")
+const Spot := preload("res://scripts/world/camp/spot.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
@@ -136,48 +138,48 @@ func _step_player() -> void:
 	HitchLog.mark("hub_player")
 
 func _step_spot_crystal() -> void:
-	_add_spot("loadout_crystal", _layout.spot_pos("Crystal"))
+	Spot._add_spot(self, "loadout_crystal", _layout.spot_pos("Crystal"))
 	HitchLog.mark("hub_spot_crystal")
 
 func _step_spot_anvil() -> void:
-	_add_spot("anvil", _layout.spot_pos("Anvil"))
+	Spot._add_spot(self, "anvil", _layout.spot_pos("Anvil"))
 	HitchLog.mark("hub_spot_anvil")
 
 func _step_spot_board() -> void:
-	_add_spot("quest_board", _layout.spot_pos("Board"))
+	Spot._add_spot(self, "quest_board", _layout.spot_pos("Board"))
 	HitchLog.mark("hub_spot_board")
 
 func _step_spot_receptionist() -> void:
 	Banner._banner(self)
-	var rec: Node3D = _new_spot("receptionist", _layout.reception_pos())
+	var rec: Node3D = Spot._new_spot(self, "receptionist", _layout.reception_pos())
 	var rec_spr: Sprite3D = rec.get("spr") as Sprite3D
 	if rec_spr:
 		if rec_spr.texture:
 			rec_spr.pixel_size = 1.22 / float(maxi(1, rec_spr.texture.get_height()))
-			rec_spr.material_override = _bust_mat(rec_spr.texture)
+			rec_spr.material_override = Spot._bust_mat(rec_spr.texture)
 		rec_spr.position = Vector3(0.0, 0.0, 0.0)
 		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 		rec_spr.render_priority = 1
 	var rec_lab: Label3D = rec.get("label") as Label3D
 	if rec_lab:
 		rec_lab.position.y = 0.85
-	_tune_label(rec)
+	Spot._tune_label(rec)
 	HitchLog.mark("hub_spot_receptionist")
 
 func _step_spot_vendor() -> void:
-	var v: Node3D = _new_spot("vendor", _layout.spot_pos("Vendor"))
+	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
 	var v_lab: Label3D = v.get("label") as Label3D
 	if v_lab:
 		v_lab.position.y = 2.25
-	_tune_label(v)
+	Spot._tune_label(v)
 	HitchLog.mark("hub_spot_vendor")
 
 func _step_spot_dumpster() -> void:
-	_add_spot("dumpster", _layout.spot_pos("Dumpster"))
+	Spot._add_spot(self, "dumpster", _layout.spot_pos("Dumpster"))
 	HitchLog.mark("hub_spot_dumpster")
 
 func _step_spot_billboard() -> void:
-	_add_spot("billboard", _layout.spot_pos("Billboard"))
+	Spot._add_spot(self, "billboard", _layout.spot_pos("Billboard"))
 	LoadTiming.mark("camp_spots")
 	HitchLog.mark("hub_spot_billboard")
 
@@ -188,7 +190,7 @@ func _step_rest() -> void:
 		LoadTiming.note("camp_dummy", "deferred")
 	else:
 		ensure_dummy()
-	_hud()
+	Hud._hud(self)
 	_music()
 	var hold_wake: bool = (
 		App.present != null
@@ -288,74 +290,9 @@ func ensure_dummy() -> void:
 	Build.stamp_actor_blobs(self)
 	HitchLog.mark("hub_blobs")
 
-func _tune_label(host: Node3D) -> void:
-	if host == null or not ("label" in host) or host.label == null:
-		return
-	host.label.no_depth_test = true
-	host.label.render_priority = 8
-	host.label.outline_render_priority = 7
-	host.label.sorting_offset = 0.0
-
-func _add_spot(id: String, at: Vector3) -> void:
-	_tune_label(_new_spot(id, at))
-
-func _new_spot(id: String, at: Vector3) -> Node3D:
-	var SpotS: GDScript = load("res://scripts/world/interact.gd") as GDScript
-	var spot: Node3D = SpotS.new() as Node3D
-	spot.call("setup", id, at)
-	add_child(spot)
-	return spot
-
-func _bust_mat(tex: Texture2D) -> ShaderMaterial:
-	var sh := Shader.new()
-	sh.code = """
-shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_always;
-uniform sampler2D albedo_tex : source_color, filter_nearest;
-void fragment() {
-	vec4 c = texture(albedo_tex, UV);
-	if (UV.y > 0.50 || c.a < 0.1) {
-		discard;
-	}
-	ALBEDO = c.rgb;
-	ALPHA = 1.0;
-}
-"""
-	var mat := ShaderMaterial.new()
-	mat.shader = sh
-	mat.set_shader_parameter("albedo_tex", tex)
-	return mat
-
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):
 		App.music.play_hub()
-
-func _hud() -> void:
-	var layer := CanvasLayer.new()
-	hud = layer
-	add_child(layer)
-	var panel := ColorRect.new()
-	panel.color = Color(0.1, 0.08, 0.06, 0.82)
-	panel.position = Vector2(32, 28)
-	panel.size = Vector2(980, 150)
-	layer.add_child(panel)
-	hint = Label.new()
-	hint.position = Vector2(48, 40)
-	hint.size = Vector2(950, 80)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_font_size_override("font_size", 20)
-	hint.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
-	hint.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
-	hint.add_theme_constant_override("outline_size", 6)
-	layer.add_child(hint)
-	prompt = Label.new()
-	prompt.position = Vector2(48, 118)
-	prompt.size = Vector2(900, 40)
-	prompt.add_theme_font_size_override("font_size", 22)
-	prompt.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
-	prompt.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
-	prompt.add_theme_constant_override("outline_size", 6)
-	layer.add_child(prompt)
 
 func _strip_baked_env(n: Node) -> void:
 	if n == null:
