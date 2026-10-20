@@ -18,9 +18,9 @@ This is the current **product scope**; the User can change it. They do not ban G
 - Production / Gold quality on every system that ships.
 - Consistent 60 FPS minimum on target hardware.
 - No systems, skills, rarities, hub upgrades, or meta-progression beyond what this database explicitly requires.
-- The secret debug menu (including Save/Load profiles, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients, and recommended configurations) ships but stays hidden behind the documented input sequence.
+- The secret debug menu (including Save/Load profiles, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients, and recommended configurations) exists in debug builds only, hidden behind the documented input sequence. Release and web export presets exclude `scripts/debug/` from the PCK (`debug.md`).
 - The Automated Playtest / AI Player system exists so simulation, telemetry hooks, and recommended-config application are implemented *inside* the same live systems the player uses (combat, inventory, extraction, save, debug values). It is an integration requirement, not a parallel “AI game.” Keep programmatic impact low: one code path wherever practical. Medium bar uses capped_telemetry_set_on_the_debug (no open-ended analytics product).
-- The Animation Browser is a shipping debug page. Its *controls* exist in the secret debug menu from the first debug-menu implementation (Phase 7). The *full viewer* is a late-stage (Phase 9) Demo-Complete item and ships in the final product.
+- The Animation Browser is a debug-build page (excluded from release with the rest of `scripts/debug/`). Its *controls* exist in the secret debug menu from the first debug-menu implementation (Phase 7). The *full viewer* is a late-stage (Phase 9) Demo-Complete item, in debug builds.
 
 ## Demo-complete bar
 
