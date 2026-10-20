@@ -457,7 +457,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     if site.exists():
         shutil.rmtree(site)
     exp = subprocess.run(
-        [sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--out", str(site)],
+        [sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--debug", "--out", str(site)],
         cwd=str(root),
         capture_output=True,
         text=True,

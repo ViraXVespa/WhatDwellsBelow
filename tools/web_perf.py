@@ -3,7 +3,7 @@
 
   python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
-Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
+Serves --site (default docs; use a fresh `export_web.py --debug --out DIR`: hitch rows and wdb-playtest flows need the debug export, docs/ is release and may be stale) and replays flows from
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
@@ -14,6 +14,7 @@ compare runs on the same machine only. Not a numbered smoke.
 """
 from __future__ import annotations
 
+import re
 import json
 import statistics
 import sys
@@ -171,6 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     if not url:
         if not (site / "index.html").is_file():
             agent_log.fail("no exported site at %s (python tools/export_web.py --out DIR)" % args.site)
+        mode = "debug" if any(re.search(rb"scripts/debug/[A-Za-z0-9_/]+\.gdc", p.read_bytes()) for p in site.glob("*.pck")) else "release"
+        print("site_mode=%s%s" % (mode, "" if mode == "debug" else " (no hitch rows / wdb-playtest: export_web.py --debug --out DIR)"))
         srv = hitch_sink.serve(site, root)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
     shots = root / "_logs" / JOB

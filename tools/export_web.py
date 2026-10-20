@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Export the GitHub Pages build (Godot Web, no threads). Windows/Steam Godot or $GODOT_BIN.
 
-    python tools/export_web.py [--archives] [--out DIR] [--godot PATH]
+    python tools/export_web.py [--archives] [--out DIR] [--godot PATH] [--debug --out DIR]
+Release (preset Web) excludes scripts/debug/; --debug (preset Web Debug, debug template) keeps it, scratch --out only.
 Live-only writes docs/. The mip flip (enable_texture_mips.py) and the import only touch the export workspace: tracked
 .import files that were clean before the export are restored after it (any you were already editing are left alone).
 --archives writes a combined site to _pages/ (gitignored); archive pins are
@@ -27,14 +28,17 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--archives", action="store_true", help="Also export catalog archives into _pages/.")
     ap.add_argument("--godot", default="", help="Godot executable (default: GODOT_BIN / Steam / bot pin).")
     ap.add_argument("--out", default="", help="Export here instead of docs/ (scratch dir for web_perf; not committed).")
+    ap.add_argument("--debug", action="store_true", help="Debug export (preset 'Web Debug': debug template + scripts/debug/). Needs --out; docs/ ships release only.")
     ap.add_argument("--timeout-sec", type=int, default=900, help="Godot export timeout in seconds (default 900).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
+    if args.debug and (not args.out or args.archives):
+        agent_log.fail("--debug needs --out DIR (scratch); docs/ and _pages/ ship the release export only")
     exe = godot_lib.godot_exe(args.godot)
     out_dir = Path(args.out).resolve() if args.out else root / ("_pages" if args.archives else "docs")
     out_html = out_dir / "index.html"
     out_dir.mkdir(parents=True, exist_ok=True)
-    body, fail = [f"root=. out={agent_log.rel(root, out_dir)} archives={args.archives}"], ""
+    body, fail = [f"root=. out={agent_log.rel(root, out_dir)} archives={args.archives} mode={'debug' if args.debug else 'release'}"], ""
 
     def step(name: str, code: int) -> bool:
         body.append(f"{name} exit={code}")
@@ -51,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     print("Enabling 3D texture mipmaps on import...")
     steps = [lambda: step("texture_mips", py(str(TOOLS / "enable_texture_mips.py"), "--root", str(root))),
              lambda: godot("godot-import", "--headless", "--path", str(root), "--import"),
-             lambda: godot("godot-export", "--headless", "--path", str(root), "--export-release", "Web", str(out_html)),
+             lambda: godot("godot-export", "--headless", "--path", str(root), *(("--export-debug", "Web Debug") if args.debug else ("--export-release", "Web")), str(out_html)),
              lambda: step("postexport", py(str(TOOLS / "web_postexport.py"), str(out_dir)))]
     ok = True
     for i, s in enumerate(steps):
