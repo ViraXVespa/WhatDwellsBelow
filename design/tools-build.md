@@ -60,7 +60,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `check_shot_gaps.py` | UI states with no shot flow (`--changed`: new since a ref; at the END, FAIL for Bot and for a Build UI or theme prove: required per `routes.yaml` `shot_gaps`), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
 | `shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `run_shots.py` | WD | module docstring (no `--help`) | Y |
 | `show_func.py` | Extract one GDScript or Python declaration (`--path`, `--name`); prints the absolute root it read; a missing file or name prints a hint (`list_xref.py`). Summary: `show-func`. | D | `--help` | N |
-| `tunables.py` | `get` / `set` / `add` on a row of `design/tunables.md` and `tunables-world.md`; `set` needs exactly one hit. Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |
+| `tunables.py` | `get` / `set` / `add` on a row of `design/tunables.md`, `tunables-combat.md`, `tunables-world.md` or `tunables-economy.md`; `set` needs exactly one hit. Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |
 | `tunables_lib.py` | Tunables row parser used by the two tunables tools | D | module docstring (no `--help`) | N |
 | `wdb_scratch_server.py` | Token-protected local HTTP runner for web/chat scratch. User setup only. | WD | `--help` | N |
 | `web_postexport.py` | Stamp a Godot Web export. Cache id follows the binary, not the notes label | D | `--help` | N |
