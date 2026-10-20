@@ -10,7 +10,6 @@ const EDGE: Color = Tok.RULE
 const EDGE_H := 3
 const DIM_PLAIN := Color(0.03, 0.02, 0.02, 0.82)
 const PLATE_PLAIN := Color(0.13, 0.10, 0.08, 0.97)
-const EDGE_PLAIN := Color(0.55, 0.42, 0.22, 1)
 const EDGE_H_PLAIN := 8
 
 static func dim(parent: Node, color: Color = DIM) -> ColorRect:

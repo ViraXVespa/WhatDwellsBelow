@@ -1,6 +1,5 @@
 extends CanvasLayer
 
-const RecapBars := preload("res://scripts/ui/recap/bars.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const Ui := preload("res://scripts/ui/recap/recap_ui.gd")
 const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")

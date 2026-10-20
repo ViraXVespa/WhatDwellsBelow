@@ -2,7 +2,6 @@
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
-const Balance := preload("res://scripts/data/balance.gd")
 const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:

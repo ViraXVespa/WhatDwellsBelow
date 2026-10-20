@@ -10,7 +10,6 @@ const GUTTER: float = 34.0
 const BOTTOM: float = 52.0
 ## Bookmarks hang on the top of the paper. Text starts below that overlap.
 const TEXT_DROP: float = 18.0
-const KIND_ONE: int = 0
 const KIND_TWO: int = 1
 ## Share of the usable width given to the left sheet. The gap sits after it.
 const SETTINGS_LEFT: float = 0.34

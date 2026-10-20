@@ -9,10 +9,6 @@ const LayoutS := preload("res://scripts/world/camp/layout.gd")
 const ROOF_EAVE := 0.42
 const TILE_W := 3.2
 
-static func guild(host: Node3D) -> void:
-	guild_hall(host)
-	guild_wing(host)
-
 static func guild_hall(host: Node3D) -> void:
 	var lay: Node3D = LayoutS.of(host)
 	var hall_at: Vector3 = lay.hall_pos()

@@ -1,11 +1,8 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
 const ShopFrame: GDScript = preload("res://scripts/ui/progress_ui/shop_frame.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
-const Talk := preload("res://scripts/data/talk_lines.gd")
-const Cons := preload("res://scripts/data/progress_gear/consumable.gd")
 const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Affix := preload("res://scripts/data/affixes.gd")

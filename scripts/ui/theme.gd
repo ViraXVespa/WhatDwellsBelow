@@ -19,7 +19,6 @@ const RULE := Ink.RULE
 const RULE_QUIET := Ink.RULE_QUIET
 const DANGER := Ink.DANGER
 const DANGER_RULE: Color = Tok.DANGER_RULE
-const PROMPT_INK: Color = Tok.INK_SOFT
 const PROMPT_GOLD: Color = Tok.INK_SOFT
 const OUTLINE: Color = Tok.OUTLINE
 const PROMPT_OUTLINE: Color = Tok.OUTLINE
