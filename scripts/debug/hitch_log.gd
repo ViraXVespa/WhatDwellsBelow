@@ -66,8 +66,8 @@ static func enabled() -> bool:
 		_on = 1
 	return _on == 1
 
-static func set_mult(mult: float) -> void:
-	_mult = maxf(0.05, mult)
+static func set_mult(value: float) -> void:
+	_mult = maxf(0.05, value)
 
 static func mult() -> float:
 	return _mult if _mult > 0.0 else MULT
