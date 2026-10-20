@@ -37,6 +37,6 @@ Prompt / confirm copy: interactables.
 
 - Boss doors show “PREPARE”, open on interact (linked doors together), free their cells and read “OPEN”. Stairs still wait for the boss kill.
 - `scenes/foundation.tscn` is the combat sandbox / smoke host, not the player hub.
-- Enter dungeon covers on the Floor Crystal press, waits until that cover has presented, then saves and changes scene; it fades in shortly after the floor is ready (tunables-world).
+- Enter dungeon covers on the Floor Crystal press, waits until that cover has presented, then saves and changes scene; it fades in shortly after the floor is ready (tunables-economy).
 - Floor boot stays light: gear UI, crystal UI and the large map load on first use; props, ambushes and extra crystals stream in on the pulse inside `STREAM_IN`. The Floor Guardian is a stream job.
 - Map dump and Placeholdia → Dungeon timing smokes: debug-smokes.

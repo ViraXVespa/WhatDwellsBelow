@@ -8,7 +8,7 @@ Rules for forging. Rarity, affix, Analyze, duplicate and starter rules stay on t
 - The player picks rarity (green or blue). A rarity is available only after at least one piece of that type+rarity has been analyzed. White chests MUST NOT appear.
 - Weapon and tool slots show a **type selector** in the same submenu (Great Axe / Staff / Longbow, Pickaxe / Hatchet). Armor slots have one type and skip the row.
 - Item level uses the shared `step_row` stepper from 1 to the max analyzed level for that type.
-- **Quantity** uses the same stepper, up to the forge quantity cap (tunables-world). Cost and wait scale with quantity. Each finished piece grants smithing XP even if the player later discards the roll.
+- **Quantity** uses the same stepper, up to the forge quantity cap (tunables-economy). Cost and wait scale with quantity. Each finished piece grants smithing XP even if the player later discards the roll.
 - Output luck uses the analyzed peak for that type+rarity: from a window just below the peak up to the peak, never under the Luck minimum (`forge_luck_window`). Per-affix book luck is used when present.
 - Quality still starts random within its range, then is nudged up if smithing level is at or above the configured item level, and down if smithing is below it.
 - By default the bonus pool is every affix already analyzed for that type+rarity (plus Damage / Defense as allowed extras). The player may **lock** analyzed traits only. Green: 1 lock. Blue: 2 locks. A lock consumes one bonus slot and multiplies cost.

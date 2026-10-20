@@ -15,7 +15,7 @@ Read when: transport decades, warp silence, spur length
 - The entrance crystal is bound on arrival. Any other crystal is unbound until the player clears enemies in its area (`crystal_clear_r`) and interacts.
 - Bound crystals open the transport menu. They do not descend.
 - Local Transport Network unlocks when at least two crystals on the current floor are bound. Selecting a bound crystal teleports the player there and silences nearby spawn jobs.
-- Floor Transport Network unlocks when `prog.deepest` is greater than the current floor. It lists every reached floor. Past a set number of reachable floors, the list is grouped (1–10, 11–20, …; tunables-world). The current floor is disabled. Unreached floors in a decade folder stay disabled.
+- Floor Transport Network unlocks when `prog.deepest` is greater than the current floor. It lists every reached floor. Past a set number of reachable floors, the list is grouped (1–10, 11–20, …; tunables-economy). The current floor is disabled. Unreached floors in a decade folder stay disabled.
 - Floor hops land at the destination floor’s entrance crystal. Boss-defeated state is remembered per floor for the current run.
 - Activated crystals stay enemy-free at `crystal_arrive_r` so a hop does not drop the player into a pack.
 

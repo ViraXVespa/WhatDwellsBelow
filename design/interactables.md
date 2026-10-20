@@ -46,15 +46,15 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 - Appears on approximately one in three floors.
 - Always in a safe room.
-- Sells a few Artifacts, with a cap on how many the player may buy per visit (tunables-world).
-- Sells snacks at a fixed price (tunables-world).
+- Sells a few Artifacts, with a cap on how many the player may buy per visit (tunables-economy).
+- Sells snacks at a fixed price (tunables-economy).
 - Allows pawning of gear for a very low return.
 - Uses a distinct hopeful-but-eerie voice style (implementation may be text + SFX for the demo).
 - Distinct ghost / shopkeep sprite required.
 
 ## Shrine
 
-- On interaction grants a temporary damage buff (size and duration: tunables-world).
+- On interaction grants a temporary damage buff (size and duration: tunables-economy).
 - Buff MUST appear on the HUD with a visible timer.
 - One use per floor.
 

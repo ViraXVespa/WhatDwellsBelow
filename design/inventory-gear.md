@@ -46,7 +46,7 @@ Rules:
 - Green: primary plus 1 bonus from the slot family pool.
 - Blue: primary plus 2 bonuses from the slot family pool.
 - Values are rolled, not stamped as identical set stats. Two greens of the same template MUST be allowed to differ.
-- Dungeon roll: `{base(level, rarity)} * Quality * Luck` where Quality and Luck are random within their ranges (Anvil / affixes: tunables-world).
+- Dungeon roll: `{base(level, rarity)} * Quality * Luck` where Quality and Luck are random within their ranges (Anvil / affixes: tunables-economy).
 - Percent affixes keep fractional values. Flat affixes may show as ints when they land on a whole number.
 - Combat and the kit card read only the `affixes` rows when that list is present. Leftover flat keys on old saves (`atk_range`, `crit_chance`, `hp_on_hit`, and the old `crit` / `spd` / `gather` aliases) MUST NOT apply and MUST NOT appear on the card. `Roll.stamp` wipes those keys before writing a new roll.
 - Combat keys: `dmg`, `def`, `hp`, `crit_chance`, `crit_dmg`, `move_spd`, `atk_spd`, `atk_range`, `hp_on_hit`, `hp_on_kill`. Tools: `gather_spd`, `gather_pow`, `yield_chance`.

@@ -62,7 +62,10 @@ gates:
     when: numbers_change
   tunables_world:
     file: design/tunables-world.md
-    when: world_economy_or_ui_number_change
+    when: dungeon_or_enemy_number_change
+  tunables_economy:
+    file: design/tunables-economy.md
+    when: economy_anvil_or_ui_number_change
   web_discuss:
     file: design/web-discuss.md
     when: web_phase_2_discuss
