@@ -32,7 +32,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 import match_keyed_region as matcher
-from imglib import geom, imgio, key
+from imglib import geom, imgio, key, overlay
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = ROOT / "_src"
@@ -100,7 +100,8 @@ def metrics(out, exact) -> dict:
             "halo": round(float((part & (ex > 24)).sum()) / max(1, int(part.sum())), 4),
             "notch": int(((ea >= 160) & (oa < 128)).sum()), "bump": int(((ea < 96) & (oa >= 128)).sum())}
 
-def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, fit=None, policy: str = "crisp") -> str:
+def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, fit=None, policy: str = "crisp",
+         over=None) -> str:
     """Key one still from its plate and place it like the live still (geom.fit_like): same canvas, body size,
     bottom edge and centre. Live art with no alpha (tiles, finished pictures) has nothing to key: it is kept as is,
     and a source that no longer matches it is reported STALE (the live file is the truth)."""
@@ -133,6 +134,7 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
         fitted = geom.alpha_policy(exact, policy)
         if flip:
             fitted, exact = geom.flip(fitted), geom.flip(exact)
+        fitted = overlay.apply(fitted, over)  # manifest "overlay" (banner text): drawn after keying, every run
         # never trade live art for a key that lost the subject (paint on the plate's own hue, such as pink lettering
         # on a pink plate): keep live and report it
         if ref is not None:
@@ -205,13 +207,14 @@ def main(argv: list[str] | None = None) -> int:
     todo = [e["live"] for e in rows]
     flips = [bool(e.get("flip")) for e in rows]
     fits = [e.get("fit") for e in rows]
+    overs = [e.get("overlay") for e in rows]
     pols = [policy_for(e["live"], e) for e in rows]
     def run(out):
         if args.jobs > 1:
             from concurrent.futures import ProcessPoolExecutor
             with ProcessPoolExecutor(args.jobs) as ex:
-                return list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, fits, pols, chunksize=4))
-        return [_one(t, args.dry_run, out, f, g, p) for t, f, g, p in zip(todo, flips, fits, pols)]
+                return list(ex.map(_one, todo, [args.dry_run] * len(todo), [out] * len(todo), flips, fits, pols, overs, chunksize=4))
+        return [_one(t, args.dry_run, out, f, g, p, o) for t, f, g, p, o in zip(todo, flips, fits, pols, overs)]
     if args.check:
         import tempfile
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:

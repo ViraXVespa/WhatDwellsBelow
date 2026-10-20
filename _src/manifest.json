@@ -616,6 +616,7 @@
     },
     {
       "live": "assets/sprites/props/welcome_banner.png",
+      "overlay": {"lines": ["WELCOME TO", "PLACEHOLDIA!"], "box": [0.2, 0.4, 0.8, 0.68], "fill": [236, 214, 164], "centre": "cloth"},
       "source": "sources/assets/sprites/props/welcome_banner.jpg",
       "origin": "_src/sources/assets/sprites/props/welcome_banner.jpg",
       "mad": 8.75,
