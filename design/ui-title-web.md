@@ -39,17 +39,17 @@ Gamepad-first: first focus is the action button and MUST stay on a gate button f
 
 If the viewport is taller than wide, the card MUST say to rotate to landscape. Landscape lock is attempted from the same gesture (save_tech).
 
-## Live snapshot — title
+## Title card and Updates overlay
 
 `title.gd` builds the card and focus graph. `news.gd` builds the overlay.
 - Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered paper card sits behind the title and the buttons. Play is the primary weight. Updates and Archives are secondary. New changelog rows are bold dried-ink, not gold.
 Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
-## Live snapshot — web fullscreen gate
+## Web fullscreen gate wiring
 
 `scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
 
-## Live snapshot — loading bar (`loader.gd`)
+## Loading bar (`loader.gd`)
 
 `CanvasLayer` layer 110 on `App`. Survives scene changes. Title → Placeholdia uses `App.play_from_menu` → `AppFlow.play_from_menu_async`.
 

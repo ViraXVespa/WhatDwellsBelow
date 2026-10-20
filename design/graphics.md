@@ -1,6 +1,6 @@
 # Graphics
 
-Status: current plan + live snapshot
+Status: current plan
 Read when: cel-look owner, dual-palette atmosphere
 Code: `scripts/graphics/`
 

@@ -35,7 +35,7 @@ Code: `scripts/world/player.gd`, `player_anim.gd`, `anim_load.gd`, `anim_loco.gd
 - “Dispel” is ritual seppuku: the avatar draws a small knife, kneels, makes one abdominal cut, and collapses. That knife belongs to this clip. It is not an equipped overlay.
 - Death is a hit collapse to a downed hold. Death and “Dispel” both end on a downed body. Neither I2V paints blood. The engine draws a blood pool under that pose.
 
-## Live snapshot
+## Body, clips and loading
 
 `PLAYER_BODY = Vector3(0.42, 0.78, 0.32)`, `PLAYER_H = 1.55`, `MOVE_EPS = 0.12`, `WALK_FPS = 8`.  
 `App.character_type` is `"male"` or `"female"`.  

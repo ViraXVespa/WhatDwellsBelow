@@ -88,12 +88,3 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 See input for full behavior.
 
 Floating damage numbers show integer values only, hold, then fade.
-
-## Live snapshot (performance)
-
-- `Combat.enemies()` is reused for the current process frame.
-- Enemy line-of-sight uses the existing layer-1 ray. It is not recast every physics tick: `los_period` (default 0.12s), staggered by instance id, skipped farther than `atk_range + 4`, always refreshed inside strike range. Result cached on `los_ok` / `los_t`.
-- Pack separation stops after `sep_max` neighbors (default 6).
-- The idle aim-line mesh stays hidden until `update_line` turns it on so the default 1×1 cream box does not flash under the Placeholdia loader.
-
-Live numeric defaults are in the tunables gate.

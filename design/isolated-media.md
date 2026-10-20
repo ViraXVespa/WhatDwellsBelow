@@ -70,7 +70,3 @@ Placeholdia roofs sample the full `plaza_roof.png` in `mesh_mat.gd` `roof_mat` (
 ## Optional user config
 
 Not repo-owned. `%USERPROFILE%\.grok\config.toml` / `~/.grok/config.toml` may `[skills] disabled` unused bundled names (`resume-claude`, `resume-codex`, `resume-cursor`, `docx`, `pdf`, `pptx`) and may set `[compat.cursor]` / `[compat.claude]` / `[compat.codex]` cells to `false` when those vendor trees are unused. Do not disable `imagine` or `game-assets`. Catalog savings are small next to dropping the repo agent-rules file from a media turn.
-
-## Live snapshot
-
-`tools/run_isolated_grok.py` is the shipping runner. Isolated inspect prints `inspect=ok instructions=0` (no roster dump). Repo skills under `.grok/skills/` are CLI doors into this file. Reference ingest sessions are keyed in `~/.grok/wdb-iso/catalog.json`. After generate: `dest=ok|missing` and `modelCalls=` when usage.json exists.

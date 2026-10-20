@@ -1,6 +1,6 @@
 ﻿# Enemies
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: roster, AI, pressure
 Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/enemies.gd`  
 
@@ -89,7 +89,7 @@ No lingering corpses required.
 - Walk-over pickups (gold coins, HP orb, mana orb) each roll their own chance per kill, so a kill can drop nothing (`enemy_hit.gd` `roll_drops`, tunables.md Enemy drops). Bosses always drop gold. `scripts/debug/drop_stage.gd` stages them (flow `dungeon-pickups`) and the P3 smoke prints a 1000-kill `drop_sim`.
 - Floor Guardians and Gate Master always drop the special chest (guaranteed equipment that may include blue rarity + one Artifact) in addition to normal drops.
 
-## Live snapshot — roster (`roster.gd`)
+## Roster
 
 | Id | Family |
 |----|--------|
@@ -98,12 +98,6 @@ No lingering corpses required.
 | shaman, imp | mage |
 
 12 normal types. Named names use PRE / MID / SUF syllable arrays.
-
-Default HP (live): slime 48, goblin 64, orc 116, skeleton 72, bat 40, spider 56, archer 52, shaman 60, imp 44, wolf 68, beetle 104, wisp 36.
-
-Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, idle 24 s, no-reveal 22 s, pressure count 3 / radius 5 / cd 18, pressure waves 3. Wind-ups: melee 0.42, ranged 0.38, mage 0.55, recover 0.35.
-
-Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
 
 Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
 

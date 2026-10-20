@@ -30,7 +30,6 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Marker | Meaning |
 |--------|---------|
 | Current plan | The road we are building: what the game does today by design. The User can change it; `must` / `may` in a topic describe this plan. |
-| Live snapshot | What the current live path actually does |
 | Protocol | How agents work; its hard rules stay firm |
 
 ## Topic map
@@ -67,7 +66,6 @@ Per-build player notes for the **current series** are flat `design/changelog/{la
 
 - Keep one concern per file.
 - Put numbers in `tunables.md`, not buried in paragraphs.
-- Mark live-only behavior under **Live snapshot**.
 - Do not collapse `design/` into one document.
 - When live scripts are split, update `design/code-map.md` in the same slice.
 - Do not treat `design/reuse-map.md` as an owners encyclopedia. Web / chat writes that brief; Bot does not log extracts there.

@@ -29,7 +29,7 @@ Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `int
 - Chance to drop gold and/or an HP orb (walk-over pickup).
 - Clear smash VFX and SFX required.
 
-## Live snapshot — HP orbs
+## HP orbs
 
 Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at full HP, the orb stays on the ground and retries after a short wait.
 
@@ -74,7 +74,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 - Dead-end chests and puzzle chests may optionally contain Artifacts in addition to normal loot.
 - There is no open-chest sprite. A used chest (`chest`, `base_chest`, `puzzle_chest`) fades and tints in place and keeps the “Empty.” prompt for the rest of the floor.
 
-## Live snapshot — puzzle rooms
+## Puzzle rooms
 
 `props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first enters the 0.7 radius. `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
 
@@ -94,7 +94,7 @@ Lock and “deeper only”: dungeon.
 - Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
 - Interaction prompts MUST stay TV-readable and gamepad-first. Do not prefix world verbs with `A:`.
 
-## Live snapshot — interact prompts
+## Interact prompt strings
 
 World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open guardian`, `Step the plate`, `Pull lever`, `Open chest`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Used chests use text-only “Empty.” Stairs confirm is a second press; crystals never call `next_floor`.
 

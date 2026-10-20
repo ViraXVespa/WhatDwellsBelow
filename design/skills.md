@@ -1,6 +1,6 @@
 ﻿# Skills, XP, and combat level
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: XP, forging, formula
 Code: `scripts/data/progress.gd`, `scripts/data/progress_combat.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`  
 
@@ -77,7 +77,7 @@ After a single successful extraction and return to Placeholdia the player MUST b
 
 This is a required feel target. Concrete proxy: after one successful run the permanent skill levels or new forged item MUST be visible on the hub loadout/skills screens without external guidance.
 
-## Live snapshot — player CL formulas (`progress.gd`)
+## Player CL formulas (`progress.gd`)
 
 score(wpn, sty) = (lv(wpn) + lv(sty) + lv(def) + lv(hp)) / 4  
 melee_f  = score(axe, str)  

@@ -1,9 +1,9 @@
 # Dungeon — streaming
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance
 
-## Live snapshot — streaming
+## Streaming
 
 `dungeon_stream.gd` streams enemy jobs. `geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget.
 

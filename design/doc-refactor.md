@@ -31,7 +31,7 @@ Out: changing rules, tunables or player-facing meaning; rewriting `design/change
 ## Facade checklist
 
 - [ ] Job table covers every former top-level `##` cluster (or routes to an existing sibling topic such as `gear-ui.md`).
-- [ ] Preamble rules that apply to every job stay on the door; live snapshots travel with the matching sibling.
+- [ ] Preamble rules that apply to every job stay on the door.
 - [ ] Sibling bodies name no `design/*.md` paths (job targets stay on the door Job table and in `design/routes.yaml`).
 - [ ] No behavior or rule change.
 

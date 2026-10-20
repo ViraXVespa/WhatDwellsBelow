@@ -1,6 +1,6 @@
 ﻿# Camera and presentation
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: Camera3D, zoom, renderer, depth sorting
 Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
 
@@ -32,23 +32,3 @@ Prefer the Compatibility renderer for the final shippable build if it does not c
 World env palettes, ground lighting, wall volume, the light RT, and actor sprite shadows are not this door.
 
 Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See audio_visual and debug.
-
-## Live snapshot
-
-| Key | Value |
-|-----|-------|
-| `CAM_PITCH` | -58 |
-| `CAM_HEIGHT` | 14 |
-| `LOOK_LIFT` | 0.42 |
-| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 4.0 |
-| Default `cam_zoom` | 1.75 |
-| `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
-| `LOOK_WHEEL_STEP` | 0.08 |
-| `LOOK_PINCH_GAIN` | 1.15 |
-| `LOOK_STICK_ZOOM` / `LOOK_STICK_HUD` / `LOOK_STICK_PAN` | 0.9 / 0.35 / 520 |
-| `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 10.0 |
-| `TILE` / `PX` | 1.0 / 64 |
-
-`project.godot`: viewport 1920×1080 (the only source: code reads it via `Tunables.base_size()`), `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.
-
-Hub warmup (`warm.gd`): yard center from `camp_build.gd` slab + `GRASS_PAD`; `cam.size = max(span_x, span_z) * 1.25`. `apply_size` is unclamped. `restore_user` calls `apply_zoom(App.cam_zoom)`.

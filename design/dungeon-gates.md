@@ -1,6 +1,6 @@
 # Dungeon — gates, stairs, fog
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 
 ## Boss / guardian rules
@@ -33,7 +33,7 @@ Mail-legal goods and one-use visit rules: inventory.meta and interactables.
 
 Prompt / confirm copy: interactables.
 
-## Live snapshot — boss doors
+## Boss doors and enter cover
 
 `boss_door.gd`: collision + “PREPARE” label; interact opens; linked doors open together; door tweens up, disables collision, frees grid cells, label becomes “OPEN”. Stairs still wait for `App.notify_boss_dead()`.
 

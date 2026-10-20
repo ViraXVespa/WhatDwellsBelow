@@ -2,7 +2,7 @@
 
 Live outline fills per room and hall shape only. It does not run floor-wide missing-rim or hole-seal repair. rim_closed is not a pass gate.
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, deadend termini, unused stone, hug clearance, outline spans
 
 ## Overall structure
@@ -64,35 +64,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Each ambush job packs `ambush_pack_min`–`ambush_pack_max` enemies.
 - Pressure / idle / no-reveal wave cap: `pressure_waves` per floor. CL 17 budget: combat. BFS hallway spawn: enemies.
 
-## Live snapshot — size rebalance
-
-| Key | Live |
-|-----|------|
-| `gen_w` / `gen_h` | 432 / 432 |
-| `gen_rooms` | 128 |
-| `gen_room_min` / `gen_room_max` | 5 / 9 |
-| `gen_extra_loops` | 8 |
-| `hall_w_min` / `hall_w_mode` / `hall_w_max` | 2 / 3 / 4 |
-| `hall_w_interval` | 10 |
-| `hall_hug_gap_min` | 3 |
-| `hall_hug_gap` | 4 |
-| `fog_radius` | 5 |
-| `room_pack` | 3 |
-| `base_guards` | 5 |
-| `ambush_cap` | 40 |
-| `ambush_spacing` | 10 |
-| `ambush_pack_min` / `ambush_pack_max` | 1 / 2 |
-| `pressure_waves` | 3 |
-| `max_clerks` | 3 |
-| `ghost_shop_chance` | 0.33 |
-| `crystal_min_sep` | 56 |
-| `crystal_clear_r` | 12 |
-| `crystal_arrive_r` | 8 |
-| `crystal_extra_max` | 6 |
-| `crystal_place_chance` | 0.50 |
-| `crystal_deadend_sep` | 32 |
-| `crystal_cl_band` | 2 |
-| `crystal_deadend_len` | 28 |
+## Size and floor cycle
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `Rooms.min_boss_sep` = max(16, max(w,h) * 0.5).

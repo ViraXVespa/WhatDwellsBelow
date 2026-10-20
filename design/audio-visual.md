@@ -1,6 +1,6 @@
 ﻿# Audio, visual, splash
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: music, SFX, splash stills, presentation rules
 Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`, `tools/enable_texture_mips.py`, `.github/workflows/pages.yml`  
 

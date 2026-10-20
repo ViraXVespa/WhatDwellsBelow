@@ -1,4 +1,4 @@
-# Hub — yard chrome and live snapshot
+# Hub — yard chrome, load and buildings
 
 Status: current plan  
 Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay
@@ -30,7 +30,7 @@ Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience
 - Warm, hopeful, lightly comedic music and ambience (stand-in until final assets).
 - Lighting/mood contrasts with darker dungeon.
 
-## Live Snapshot
+## Load, warmup and buildings
 - Editor: opening `camp.tscn` realizes ground, buildings, roofs, awnings, and fence under an unsaved `Generated` node. Awning depth (hall 0.42, wing 0.36), slope, valance (fraction of wall height, 0.16) and roof `tile_w` / `uv_off` are Layout exports. Sliding `RoofHall` / `RoofWing` plus those UV offsets phases the shingles. Play does not persist `Generated`.
 - `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (ui). Floor Crystal **Enter dungeon** calls `present.cover_enter` (opaque cyan + caption) on the press, then `wait_painted` (0s always-timer + two `frame_post_draw`) so that sheet is on screen before save / close / scene change. Loadout pause must not block that wait. Do not hitch on the same stack as the cover — Compatibility will present the previous frame.
 - Title → Play: `loader.begin()` puts a near-opaque black sheet (`#000000` at alpha `0xFE`) over the viewport for the whole load. The 3D world still draws under it so WebGL can compile and upload. The player must not see the square pop or flicker.

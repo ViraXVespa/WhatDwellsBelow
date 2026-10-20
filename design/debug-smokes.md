@@ -1,10 +1,10 @@
-# Smoke tests (live snapshot)
+# Smoke tests
 
 Status: current plan  
 Read when: smoke phase coverage / how to run smokes / dedicated smoke CLI  
 Code: `scripts/debug/`  
 
-## Live snapshot — smoke tests (`smoke.gd`)
+## Smoke tests (`smoke.gd`)
 
 Coverage runner. User args: `--wdb-phaseN-smoke` for N = 1..9 (after `--`). Prints on `printerr`, then quits. No `smoke_*.tscn` scenes: phases attach from `boot` / foundation / dungeon / camp via `scripts/debug/smoke.gd`.
 

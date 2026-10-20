@@ -19,7 +19,7 @@ This menu contains:
 
 Live also opens with CLI `--wdb-debug`.
 
-### Live snapshot — menu chrome and Values
+### Menu chrome and Values
 
 Live path: `scripts/debug/debug_menu.gd`. This is current chrome, not a new system.
 

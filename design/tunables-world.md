@@ -1,6 +1,6 @@
 # Tunables: world, economy and UI
 
-Status: suggested starts + live snapshot  
+Status: suggested starts  
 Read when: the work changes a dungeon-gen, enemy, progression, anvil or UI-feel number  
 
 Same table shape and rules as the tunables door; `tools/tunables.py get|set|add --key KEY` reads both files.

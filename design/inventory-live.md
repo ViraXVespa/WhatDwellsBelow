@@ -1,9 +1,9 @@
-﻿# Inventory live snapshots
+﻿# Inventory sets and required slots
 
 Status: current plan  
-Read when: catalog sets or required slots live snapshot  
+Read when: catalog sets or required slots  
 
-## Live snapshot — catalog sets
+## Catalog sets
 
 Live set ids: `cinder`, `tide`, `root`, `ash`, `spark`, `bone`, `veil`, `iron`.
 
@@ -20,7 +20,7 @@ Live set ids: `cinder`, `tide`, `root`, `ash`, `spark`, `bone`, `veil`, `iron`.
 
 Pause inventory uses a 7-column bag grid and shows gold / ore / wood / cap.
 
-## Live snapshot — required slots
+## Required slots
 
 `Gear.ensure_required_slots` runs after new-progress `reset_meta`, save `from_meta`, and recap `lose_unextracted`. An empty or invalid weapon or tool slot takes the selected hold when `hold_pick` is in range for that slot; otherwise it takes the current starter (`pick_weapon` / `tool_type`). Head, body, legs, potion, and food are not filled by this path. `begin_run_loadout` uses the same weapon/tool rule so hub and dungeon match.
 
