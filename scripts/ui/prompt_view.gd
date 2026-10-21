@@ -174,9 +174,9 @@ static func _paint(host: Control, parts: Array, font_size: int, color: Color) ->
 			host.add_child(chip)
 			var tex: Texture2D = Prompts.texture_for(action)
 			if tex:
-				chip.add_child(_glyph(tex, font_size))
+				chip.add_child(_col(host, _glyph(tex, font_size)))
 			else:
-				chip.add_child(_lab(Prompts.chip_for(action), font_size, color))
+				chip.add_child(_col(host, _lab(Prompts.chip_for(action), font_size, color)))
 			if verb_text != "":
 				chip.add_child(_lab(verb_text, font_size, color, _journal_host(host)))
 		elif text != "":
@@ -205,7 +205,7 @@ static func _swap_glyphs(host: Control, font_size: int, color: Color) -> bool:
 			glyph = _lab(Prompts.chip_for(action), font_size, color)
 		c.remove_child(old)
 		old.queue_free()
-		c.add_child(glyph)
+		c.add_child(_col(host, glyph))
 		c.move_child(glyph, 0)
 	return true
 
@@ -242,3 +242,21 @@ static func _lab(text: String, font_size: int, color: Color, ink: bool = false) 
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
+
+## Fixed glyph column (host meta `glyph_col` px): lists of single chips keep their verbs aligned when one glyph is wide.
+static func _col(host: Control, glyph: Control) -> Control:
+	if host.has_meta("glyph_col"):
+		glyph.custom_minimum_size.x = maxf(glyph.custom_minimum_size.x, float(host.get_meta("glyph_col")))
+		if glyph is Label:
+			(glyph as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return glyph
+
+## Widest glyph among `actions` at `font_size` (for `glyph_col`).
+static func glyph_col(actions: Array, font_size: int) -> float:
+	var w := 0.0
+	for a: Variant in actions:
+		var tex: Texture2D = Prompts.texture_for(str(a))
+		if tex and tex.get_size().y > 0.0:
+			var h := float(maxi(font_size + 14, 28))
+			w = maxf(w, h * tex.get_size().x / tex.get_size().y)
+	return w

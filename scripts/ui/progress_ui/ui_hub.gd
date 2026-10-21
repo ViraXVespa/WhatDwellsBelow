@@ -50,10 +50,12 @@ static func rebuild_controls(ui) -> void:
 		["map_view", App.tr("controls.map_view")],
 		["target_lock", App.tr("ui_hub.target_lock")],
 	]
+	var col: float = PromptView.glyph_col(acts.map(func(p): return p[0]), 18)
 	for pair in acts:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
 		row.set_meta("prompt_tap", false)
+		row.set_meta("glyph_col", col)
 		PromptView.fill(row, [{"action": str(pair[0]), "verb": str(pair[1])}], 18, ThemeS.PAPER)
 		ui.box.add_child(row)
 	ui.focus_btn = ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui())
