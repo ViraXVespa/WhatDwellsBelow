@@ -16,7 +16,8 @@ The goal of this task is to update all of the menus to be high-quality, professi
 
 Follow the start-card ORDER: baseline shot + restate before any generation or edit.
 Load the review-shots-isolated skill; bring back only the text report. Do not view PNGs in the main session.
-First session works the crystal UI only. Deliver before/after shots, inform that the unit is done, and stop.
+Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Save to `design/refs/ui-png-art/mockups/<screen>.png`; later units build to them.
+Unit 2 works the crystal UI only. Deliver before/after shots, inform that the unit is done, and stop.
 Do not advance to the next area or task. Next flow starts the next slice.
 
 After approval:
