@@ -24,8 +24,8 @@ const TAP_BODY := """
 ## Baked wear sheet (tools/bake_ground_wear.py): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
 ## darkest texel is WEAR_DEPTH darker (ground_wear 0.22 -> about 5%).
 const WEAR_PATH := "res://assets/baked/ground_wear.png"
-const WEAR_PX_PER_M := 16.0
-const GROUND_WEAR_STAMP := "0655c72ef6bc37bc"
+const WEAR_PX_PER_M := 32.0
+const GROUND_WEAR_STAMP := "53a0e8143e252c4f"
 
 const TAP_MIX := "mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);\n"
 
