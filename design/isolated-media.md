@@ -27,17 +27,17 @@ Cost test: thin child system prompt + one media turn versus this thread’s the 
 
 ## Kind routing
 
-Load `imagine` and `game-assets`. The child reads the one reference for that kind, and no other `game-assets` reference.
+Load `imagine` and `game-assets` (`ui`: `imagine` only). The child reads the one reference for that kind, and no other `game-assets` reference.
 
 | `--kind` | Bundled skills | Imagine tool | WDB job |
 |---|---|---|---|
 | `tile` | `imagine`, `game-assets` (`tilesets.md`) | `image_gen` once | World tile / roof / ground / wall. Seamless. The child reads `tilesets.md` only. It does not retry or composite. The parent runs the 2×2 seam check. |
 | `character` | `imagine`, `game-assets` (`characters.md`) | `image_gen` for a new Bible / style candidate; `image_edit` after lock | Character still, facing variant, overlay-on-body. After lock, edit-chain from the locked Bible or body frame. |
 | `i2v` | `imagine`, `game-assets` (`animation.md`) | `image_to_video` from the staged seed; walk pins that seed as `first_frame` and `last_frame` via `reference_to_video` | One unit. The child reads `animation.md`. Prompt and seed from `tools/i2v_seeds.py`. No fixed 6s/10s clock. Child does not harvest or pack. |
-| `ui` | `imagine`, `game-assets` (`ui-icons.md`) | `image_gen` / `image_edit` | HUD / menu / icon stills. No text in the art. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
+| `ui` | `imagine`; style from the staged `ui-style.md` (the `ui-png-art` Locked style / Style sections) and its two style refs, plus `--copy` refs | `image_gen` / `image_edit` | Generic UI still: menu, screen, panel, HUD, mockup or ref; text allowed. Default `ui.png`; `--dest-name` may hold a subfolder (`mockups/title.png`), kept under `--out`. `--no-ui-style` skips the style. A small icon is a `ui` job whose brief says no text. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
 | `still` | `imagine`, `game-assets` (`assets.md`) | `image_gen` / `image_edit` | Fallback only. Prefer a tighter kind. The child reads `assets.md` only, not `animation.md`. |
 
-Locked Bibles (`assets/sprites/player/bible_locked_male.png`, `bible_locked_female.png`) are the style / identity source for later generation. `gdd_reference_bible.jpg` is layout-only. For `tile` / `ui` / `still`, Bibles are read-only style sheets — do not draw the character into the asset. For `character`, they are the identity lock.
+Locked Bibles (`assets/sprites/player/bible_locked_male.png`, `bible_locked_female.png`) are the style / identity source for later generation. `gdd_reference_bible.jpg` is layout-only. For `tile` / `ui` / `still` (with `--bible-style`), Bibles are read-only style sheets — do not draw the character into the asset. For `character`, they are the identity lock.
 
 Do not vendor bundled skill bodies into this repo. Point at them by name. `job.md` is what stops the child from opening every bundled specialist.
 

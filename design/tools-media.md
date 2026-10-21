@@ -47,7 +47,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
 | `rekey_check.py` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
-| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |
+| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job (`--kind ui`: generic UI still with the staged UI style; `--selftest` mocks grok) | D | `--help` | N |
 | `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
 | `sprite_pipeline.py` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
 
