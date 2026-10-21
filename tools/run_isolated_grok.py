@@ -18,6 +18,7 @@ Kinds (bundled specialist + Imagine tool):
   character  imagine + game-assets (characters.md)         image_gen (new Bible) / image_edit (after lock)
   i2v        imagine + game-assets (animation.md)          image_to_video from staged seed
   ui         imagine + staged UI style (ui-style.md here)   image_gen / image_edit; menus, screens, panels, mockups; text allowed
+  npc        imagine + game-assets (characters.md)         image_gen; redesign from --brief, --copy old sprite for size / pose
   still      imagine + game-assets (assets.md)             image_gen fallback; do not read animation.md
 
   python tools/run_isolated_grok.py --kind tile --dry-run --bible-style --keep
@@ -51,7 +52,8 @@ LOCKED_BIBLES = (
     REPO / "assets" / "sprites" / "player" / "bible_locked_male.png",
     REPO / "assets" / "sprites" / "player" / "bible_locked_female.png",
 )
-KINDS = ("tile", "character", "i2v", "ui", "still")
+KINDS = ("tile", "character", "i2v", "ui", "npc", "still")
+ASPECTS = ("1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3")
 # --kind ui stages the locked UI look: this section of the ui style doc as ui-style.md, plus the refs it names.
 UI_STYLE_DOC = REPO / "design" / "ui-style.md"
 UI_STYLE_SECTION = "## Generated art look"
@@ -62,6 +64,7 @@ DEFAULT_DEST = {
     "character": "still.png",
     "i2v": "clip.mp4",
     "ui": "ui.png",
+    "npc": "npc.png",
     "still": "still.png",
 }
 
@@ -70,6 +73,7 @@ REFERENCE = {
     "character": "characters.md",
     "i2v": "animation.md",
     "ui": "",
+    "npc": "characters.md",
     "still": "assets.md",
 }
 SKILLS = "`imagine` and `game-assets`"
@@ -94,6 +98,11 @@ STACK = {
         "Follow `ui-style.md` in this directory when it is staged. One media call, then copy the file into this directory.",
     ),
 
+    "npc": (
+        SKILLS,
+        "One NPC sprite still, redesigned from the brief. A staged sprite is the old version: match its framing, "
+        "pose, facing and body size only; do not keep its look. One `image_gen` call, then copy the file into this directory.",
+    ),
     "still": (
         SKILLS,
         "One still. One media call, then copy the file into this directory.",
@@ -113,6 +122,10 @@ DEFAULT_BRIEF = {
     "i2v": "",
     "ui": "One UI screen or panel still in the game's pixel-art style. Readable text where the layout needs it.",
 
+    "npc": (
+        "Full-body NPC, whole figure in frame with margin, on an opaque flat #FF00FF plate (no shadow on the plate). "
+        "Chunky SNES pixel-art finish matching the hub."
+    ),
     "still": "One still. Match the locked Bible palette and pixel-art finish when style sheets are staged.",
 }
 
@@ -124,6 +137,8 @@ def _which_grok(name: str) -> str | None:
     return shutil.which(name)
 
 def _style_lines(*, use_bibles: bool, kind: str, staged: bool = False) -> str:
+    if kind == "npc" and not use_bibles:
+        return "A staged sprite is the old version: framing, pose and body size only. The look comes from the brief."
     if not use_bibles and staged:
         return "No locked Bibles were staged. Use the staged images as style and layout references, not exact copies."
     if not use_bibles:
@@ -218,12 +233,16 @@ def build_job(
     ref_names: list[str] | None = None,
     keyframes: list[tuple[str, float]] | None = None,
     ingested: bool = False,
+    aspect: str = "",
 ) -> str:
     skills, specialist = STACK[kind]
     ref = REFERENCE[kind]
     still_note = " Do not read `animation.md`." if kind == "still" else ""
     body = brief.strip() if brief.strip() else DEFAULT_BRIEF[kind]
     brief_block = f"Brief:\n{body}\n\n" if body else ""
+    if aspect:
+        brief_block += (f"Aspect ratio {aspect}: pass `aspect_ratio: \"{aspect}\"` to the media call when it takes one; "
+                        f"either way the image is {aspect}.\n\n")
     i2v_block = ""
     if kind == "i2v":
         pin_lines = ""
@@ -527,6 +546,9 @@ def selftest() -> int:
     ui = build_job(kind="ui", brief="", use_bibles=False, dest_name="ui.png")
     for need, ok in (("ui allows text", "Text and labels are allowed" in ui), ("ui no icon rule", "No text in the art" not in ui),
                      ("ui no ui-icons.md", "ui-icons.md" not in ui), ("ui default dest", DEFAULT_DEST["ui"] == "ui.png"),
+                     ("aspect in brief", 'aspect_ratio: "16:9"' in build_job(kind="ui", brief="", use_bibles=False, dest_name="a.png", aspect="16:9")),
+                     ("npc no identity lock", "identity lock" not in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
+                     ("npc reads characters.md", "Read `characters.md` only" in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
                      ("style section", "No pink" in ui_style_text()), ("style refs", len(ui_style_refs(ui_style_text())) == 2)):
         if not ok:
             bad.append(need)
@@ -578,6 +600,7 @@ def main() -> None:
     p.add_argument("--pin-ends", action="store_true", help="Pin last_frame to the seed even if the prompt is not the walk wrapper.")
     p.add_argument("--no-pin-ends", action="store_true", help="Do not auto-pin a walk. One-shots stay on image_to_video.")
     p.add_argument("--no-ui-style", action="store_true", help="--kind ui: do not stage the locked UI look (design/ui-style.md) and its refs")
+    p.add_argument("--aspect", choices=ASPECTS, default="", help="Aspect ratio, written into the brief and passed to the media call when it takes one")
     p.add_argument("--skip-inspect", action="store_true", help="Skip the `grok inspect` isolation check.")
     p.add_argument(
         "--no-reuse",
@@ -705,6 +728,7 @@ def main() -> None:
                     ref_names=ref_names,
                     keyframes=keyframe_names,
                     ingested=ingested,
+                    aspect=args.aspect,
                 ),
             )
 

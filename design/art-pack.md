@@ -52,6 +52,8 @@ Full set: `python tools/rekey_all_stills.py --out DIR --jobs 8` writes a review 
 Golden set: `python tools/keytest.py` keys the truth mattes in `_src/truth` (nail, crack, lightning, tree, longbow, wisp, female idle) again from a drifting JPEG plate and checks alpha error, area, edge and halo (`keytest_expect.json`). The truth mattes come from the keyer and were reviewed once; `--make-truth` rewrites them only after the User accepts a new key.
 Re-runs: placement uses the manifest `fit` geometry ([W, H, x0, y0, x1, y1], recorded with `--record-fit REV`), not the current live file. Every run rekeys every still; the only pass-throughs are opaque live art, the lost-subject guard and `SOURCE_WINS`. `python tools/rekey_all_stills.py --check` (in the build gate) runs the set twice and fails unless the runs are byte-identical. A pass is numbers, not the User's yes.
 
+NPC redesign (new look, same slot): generate with `python tools/run_isolated_grok.py --kind npc --copy assets/sprites/npcs/NAME.png --brief "<her description>" --dest-name NAME.png --out _src/sources/assets/sprites/npcs`; point the manifest row's `source` / `origin` at that `.png`; add the live path to `SOURCE_WINS` (the new plate is other art than live); then `python tools/rekey_all_stills.py --only assets/sprites/npcs/NAME.png`. The row's `fit` keeps the old canvas, body box and bottom line, so the new sprite lands on the same pixel grid and spot.
+
 Do not nearest-upscale the plate before the key. That distorted the female face.
 
 `rekey_preview.py` fits the open set from `_src` the same way (blue composites). It needs the `_src` link.
