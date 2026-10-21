@@ -53,7 +53,8 @@ LOCKED_BIBLES = (
     REPO / "assets" / "sprites" / "player" / "bible_locked_female.png",
 )
 KINDS = ("tile", "character", "i2v", "ui", "npc", "still")
-ASPECTS = ("1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3")
+# image_gen / image_edit `aspect_ratio` values in the bundled imagine skill (grok-build skills/imagine/SKILL.md)
+ASPECTS = ("1:1", "16:9", "9:16", "4:3", "3:4")
 # --kind ui stages the locked UI look: this section of the ui style doc as ui-style.md, plus the refs it names.
 UI_STYLE_DOC = REPO / "design" / "ui-style.md"
 UI_STYLE_SECTION = "## Generated art look"
@@ -241,8 +242,8 @@ def build_job(
     body = brief.strip() if brief.strip() else DEFAULT_BRIEF[kind]
     brief_block = f"Brief:\n{body}\n\n" if body else ""
     if aspect:
-        brief_block += (f"Aspect ratio {aspect}: pass `aspect_ratio: \"{aspect}\"` to the media call when it takes one; "
-                        f"either way the image is {aspect}.\n\n")
+        brief_block += (f"Aspect ratio {aspect}: pass `aspect_ratio: \"{aspect}\"` to `image_gen`, or to `image_edit` with several images. "
+                        f"A single-image `image_edit` keeps its source's ratio, so for {aspect} from one source use `image_gen`.\n\n")
     i2v_block = ""
     if kind == "i2v":
         pin_lines = ""
@@ -600,7 +601,7 @@ def main() -> None:
     p.add_argument("--pin-ends", action="store_true", help="Pin last_frame to the seed even if the prompt is not the walk wrapper.")
     p.add_argument("--no-pin-ends", action="store_true", help="Do not auto-pin a walk. One-shots stay on image_to_video.")
     p.add_argument("--no-ui-style", action="store_true", help="--kind ui: do not stage the locked UI look (design/ui-style.md) and its refs")
-    p.add_argument("--aspect", choices=ASPECTS, default="", help="Aspect ratio, written into the brief and passed to the media call when it takes one")
+    p.add_argument("--aspect", choices=ASPECTS, default="", help="aspect_ratio for image_gen (and multi-image image_edit); single-image edits keep the source ratio")
     p.add_argument("--skip-inspect", action="store_true", help="Skip the `grok inspect` isolation check.")
     p.add_argument(
         "--no-reuse",
