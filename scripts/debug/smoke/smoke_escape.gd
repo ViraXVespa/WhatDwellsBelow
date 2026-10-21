@@ -141,7 +141,7 @@ static func run(host: Node) -> void:
 	var rc: Control = _chip(tree, "ui_accept")
 	var cb: Button = App.recap.get("cont_btn") as Button
 	# One Continue: the glyph sits on the button (touch-pressable), no separate Continue chip.
-	var recap_ok: bool = rb == null and rc == null and cb != null and cb.icon != null and cb.mouse_filter == Control.MOUSE_FILTER_STOP and cb.is_visible_in_tree()
+	var recap_ok: bool = rb == null and rc == null and cb != null and cb.get_meta("glyph", null) != null and cb.mouse_filter == Control.MOUSE_FILTER_STOP and cb.is_visible_in_tree()
 	printerr("P6: recap_no_back=" + str(recap_ok))
 	ok = ok and recap_ok
 	App.recap.set("open", false)

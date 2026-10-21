@@ -56,9 +56,10 @@ func _focus() -> void:
 
 func _process(delta: float) -> void:
 	if cont_btn and is_instance_valid(cont_btn):
-		var g: Texture2D = Prompts.texture_for("ui_accept")
-		if cont_btn.icon != g:
-			cont_btn.icon = g
+		var g: TextureRect = cont_btn.get_meta("glyph", null) as TextureRect
+		var t: Texture2D = Prompts.texture_for("ui_accept")
+		if g and g.texture != t:
+			g.texture = t
 	Flow.tick(self, delta)
 
 func skip_drain() -> void:

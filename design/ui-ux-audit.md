@@ -9,6 +9,7 @@ Gamepad-first check of the shot flows. H/M/L severity; [art] = the PNG items abo
 - All: H focus is pink on the crystal, extract and gate (slot outline, button underline) but gold on the title (FIXED: crystal skin glow token now gold; crystal_art studs stay with the art task); one focus style, no pink. [art+ux]
 - All: M prompt bars sit inside the panel, under it as unlabelled icons, or in the screen corner (crystal); one place, always labelled. [ux]
 - All: M pickers and dialogs open top-left of the screen, away from the slot (loadout, anvil, inventory, gate). [ux]
+- All: M fit content without scrolling where possible (size panels, columns/grids, or tabs/pages); scroll cues are the fallback for truly variable-length lists. [art][ux]
 - All: M six panel looks (parchment, book, crystal, teal gate, blue shop, green journal). [art]
 - All: M fixed-width tabs and buttons barely fit English (vendor header already overflows); no localization headroom. [ux]
 - [Pause](refs/ui-png-art/camp-pause-pages_01-settings-gameplay.jpg): M right page 80-90% empty; Patreon, Main Menu and Quit show one line, no button. [ux]

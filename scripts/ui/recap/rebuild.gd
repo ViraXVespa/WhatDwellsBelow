@@ -83,9 +83,7 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 	cont.set_meta("recap_continue", true)
 	cont.disabled = true
 	cont.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cont.icon = Prompts.texture_for("ui_accept")
-	cont.expand_icon = false
-	cont.add_theme_constant_override("icon_max_width", 28)
+	_glyph_label(cont)
 	host.footer.add_child(cont)
 	host.cont_btn = cont
 	host.focus_btn = first if first else cont
@@ -128,3 +126,30 @@ static func _line(host: CanvasLayer, text: String, font_px: int, col: Color) -> 
 	lab.custom_minimum_size = Vector2(host.sheet_rect.size.x, 0.0)
 	host.header.add_child(lab)
 	return lab
+
+## Accept glyph + "Continue" centred as one group on the button (the button text moves into the group).
+static func _glyph_label(cont: Button) -> void:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.set_anchors_preset(Control.PRESET_FULL_RECT)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 8)
+	var g: TextureRect = TextureRect.new()
+	g.texture = Prompts.texture_for("ui_accept")
+	g.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	g.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	g.custom_minimum_size = Vector2(26, 26)
+	g.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	g.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(g)
+	var lab: Label = Label.new()
+	lab.text = cont.text
+	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lab.add_theme_font_override("font", cont.get_theme_font("font"))
+	lab.add_theme_font_size_override("font_size", cont.get_theme_font_size("font_size"))
+	lab.add_theme_color_override("font_color", cont.get_theme_color("font_color"))
+	row.add_child(lab)
+	cont.custom_minimum_size.y = maxf(cont.get_combined_minimum_size().y, 34.0)
+	cont.text = ""
+	cont.add_child(row)
+	cont.set_meta("glyph", g)
