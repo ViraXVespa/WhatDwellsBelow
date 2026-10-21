@@ -21,7 +21,7 @@ Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (`--layers`): every
 The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again.
 
 ## Next
-The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. The next fix is whatever the moving fill adds on top of that still camera. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--layers` (`run_hub_bench.py --leg web --layers`) is the still-camera split; it does not score the 99% bar.
+The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--layers` (`run_hub_bench.py --leg web --layers`) is the still-camera split; it does not score the 99% bar.
 
 ## Notes from Vira
 That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.
