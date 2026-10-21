@@ -19,7 +19,7 @@ The first command's card prints the rules for the first message and every ask; f
 
 After a rejection the next step is a question, not an edit; after a second rejection of one thing offer "send me a reference" before more options. Generated source assets and their generators: isolated-media gate (`_src/`, `tools/`). Missing required assets fail loudly.
 
-**Finish a unit** that touched the tree, even on red gates or imperfect work: update affected design docs, code-map rows and tunables; close or update tasks (`python tools/task.py done ID`); `python tools/commit_slice.py`, then plain `git push origin grok-build-wN` (never main, never force). Only after the push lands: open the prove folder, say the unit is done and what is on each sheet, and say whether a playtest confirmation is required (look, sound, balance, controls), recommended (feel, hitch, timing the gates do not score) or not needed (refactor, tool, doc, test). That notice is not a question; never ask "Settled? commit?". Bad work is reverted or fixed by a new commit or a fresh session; a `--handoff` file is only for a survey that never implemented (unfinished work keeps its notes in the task: `build-job-cycle.md` Complete).
+**Finish a unit** that touched the tree, even on red gates or imperfect work: update affected design docs, code-map rows and tunables; close or update tasks (`python tools/task.py done ID`); `python tools/commit_slice.py`, then plain `git push origin grok-build-wN` (never main, never force). Only after the push lands: open the prove folder, say the unit is done and what is on each sheet, and say whether a playtest confirmation is required (look, sound, balance, controls), recommended (feel, hitch, timing the gates do not score) or not needed (refactor, tool, doc, test). That notice is not a question; never ask "Settled? commit?". Bad work is reverted or fixed by a new commit or a fresh session; a `--handoff` file is only for a survey that never implemented; unfinished work keeps notes in its task.
 
 ## First (once, before anything else)
 
@@ -29,7 +29,7 @@ New feature flow: `build-job-cycle.md`. A new system: plan it and ask every open
 
 ## Read
 
-Agents file once, then this file. Plan pair only if missing, then the named topic. Route first: read what the route card names, not sibling docs (`list_route.py --digest --door D`: headings with line numbers). A survey starts from text (`run_shot_flow.py --survey`, `list_route.py --digest --door D`: one line per doc); open a doc only for the unit she chose, a picture only for the unit being compared. Reading habits: `build-job-cycle.md`. Gather / Prepare / Change / Prove / Complete: `build-job-cycle.md`.
+Agents file once, then this file. Plan pair only if missing, then the named topic. Route first: read what the route card names, not sibling docs (`list_route.py --digest --door D`: headings with line numbers). A survey starts from text (`run_shot_flow.py --survey`, `list_route.py --digest --door D`: one line per doc); open a doc only for the unit she chose, a picture only for the unit being compared. Reading habits and Gather / Prepare / Change / Prove / Complete: `build-job-cycle.md`.
 
 Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py` (`--texts` for shot-flow words), not grep. Extract: `python tools/show_func.py --path <script> --name <func>`. No `python -c`.
 
@@ -41,7 +41,7 @@ Access and Just do / Ask first: `build-job-cycle.md`.
 
 ## Red prove, merge-back, other roles
 
-Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; prove is final verification (`tools.md` rule 10; job cycle in `build-job-cycle.md`); never merge into main. Bot notes: park with `python tools/task.py new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
+Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; prove is final verification (`tools.md` rule 10); never merge into main. Bot notes: park with `python tools/task.py new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
 
 ## After a job
 
