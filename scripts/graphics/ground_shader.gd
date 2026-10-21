@@ -48,6 +48,17 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
+// Integer hash of a whole cell index: the same corner gives the same value in every cell that shares it.
+// (fract(sin(x) * 43758.5453) amplified last-bit sin/dot differences on WebGL, so neighbour cells disagreed at their
+// shared corners and the wear/quilt tint showed as hard 4x4-tile boxes.)
+float cell_hash(vec2 c) {
+	uvec2 u = uvec2(ivec2(round(c)) + ivec2(32768));
+	uint h = u.x * 1597334677u ^ u.y * 3812015801u;
+	h = (h ^ (h >> 16u)) * 2246822519u;
+	h ^= h >> 13u;
+	return float(h >> 8u) / 16777216.0;
+}
+
 void fragment() {
 	vec2 xz = world_pos.xz;
 	float cell = max(hash_m, 0.001);
@@ -55,10 +66,10 @@ void fragment() {
 	vec2 qi = floor(q);
 	vec2 qf = fract(q);
 	qf = qf * qf * (3.0 - 2.0 * qf);
-	float h00 = fract(sin(dot(qi, vec2(127.1, 311.7))) * 43758.5453);
-	float h10 = fract(sin(dot(qi + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
-	float h01 = fract(sin(dot(qi + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-	float h11 = fract(sin(dot(qi + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+	float h00 = cell_hash(qi);
+	float h10 = cell_hash(qi + vec2(1.0, 0.0));
+	float h01 = cell_hash(qi + vec2(0.0, 1.0));
+	float h11 = cell_hash(qi + vec2(1.0, 1.0));
 	float h = mix(mix(h00, h10, qf.x), mix(h01, h11, qf.x), qf.y);
 	float nvar = max(variant_n, 1.0);
 	vec3 quilt_tint = vec3(1.0);
