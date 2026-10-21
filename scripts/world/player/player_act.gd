@@ -1,6 +1,6 @@
 extends Object
 
-const Smoke := preload("res://scripts/debug/smoke.gd")
+const Dbg := preload("res://scripts/app/dbg.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
 const Near := preload("res://scripts/world/player/near_interact.gd")
 const Ground := preload("res://scripts/world/player/ground.gd")
@@ -36,7 +36,7 @@ static func _float(host: Node, amount: int, crit: bool, glance: bool) -> void:
 	FloatS.spawn(host as Node3D, amount, crit, glance, 1.35)
 
 static func player_die(host: Node) -> void:
-	if Smoke.hold_player():
+	if Dbg.smoke_hold_player():
 		host.hp = host.max_hp
 		return
 	play_exit(host, "death", host.last_hit)

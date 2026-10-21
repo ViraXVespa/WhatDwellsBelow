@@ -7,7 +7,7 @@ week branch grok-build-w{N}, else HEAD. A script that does not compile, or that 
 Godot error lines that name it; every file is loaded even after the first failure. The editor import check does not load
 every script and a standalone `--script` parse has no autoloads, so neither stands in for this. Imports the project first
 when .godot/imported is missing. Summary: _logs/gd-load-check/; Godot's full stderr is saved next to it and the summary
-prints its leading lines and size, so read them. RESULT carries files= failed=. Small batches: run it after each edit pass.
+prints its leading lines and size, so read them. RESULT carries files= failed=. Run it once the unit's edits are complete (Change), and again in Prove.
 Also fails (nul=) on Godot text files under res:// holding a NUL byte or a UTF-16 BOM, on a .gd string escape that makes a
 NUL (\\u0000, \\x00), and on Godot's "Unicode parsing error ... Unexpected NUL" line. Also fails (d3d=) on a tracked texture
 .import with Detect 3D on (detect_3d/compress_to not 0): the editor would rewrite it on import (mipmaps, VRAM compression).
@@ -37,7 +37,6 @@ func _initialize() -> void:
 	quit(0)
 """
 
-
 def pick(root: Path, args) -> list[str]:
     if args.files:
         return [f.replace("\\", "/") for f in agent_log.split_list(args.files)]
@@ -48,7 +47,6 @@ def pick(root: Path, args) -> list[str]:
     names = out.splitlines() if code == 0 else []
     code, out = repo_lib.run_git(root, "ls-files", "--others", "--exclude-standard")
     return [n for n in dict.fromkeys(names + (out.splitlines() if code == 0 else [])) if n.endswith(".gd")]
-
 
 def selftest(timeout: int) -> int:
     import tempfile
@@ -70,10 +68,8 @@ def selftest(timeout: int) -> int:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
-
 TEXT_EXT = (".gd", ".tscn", ".tres", ".import", ".cfg", ".json", ".md", ".uid", ".godot", ".gdshader", ".csv", ".txt", ".svg")
 NUL_ESC = re.compile(r"\\(u0{4}|x00|U0{6})")
-
 
 def nul_scan(root: Path) -> list[str]:
     """Tracked Godot text files with a NUL byte or UTF-16 BOM, and .gd sources with a NUL string escape."""
@@ -89,7 +85,6 @@ def nul_scan(root: Path) -> list[str]:
             bad.append(f"NUL {rel}: string escape makes a NUL character (Godot logs 'Unexpected NUL')")
     return bad
 
-
 def d3d_scan(root: Path) -> list[str]:
     """Tracked texture .import files with Detect 3D on (project default is off: project.godot [importer_defaults])."""
     r = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "*.import"], capture_output=True)
@@ -98,7 +93,6 @@ def d3d_scan(root: Path) -> list[str]:
         if rel and (root / rel).is_file() and re.search(rb"^detect_3d/compress_to=[1-9]", (root / rel).read_bytes(), re.M):
             bad.append(f"D3D {rel}: detect_3d/compress_to must be 0 (Detect 3D rewrites the import)")
     return bad
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Load changed .gd files in the project; a parse or compile error fails.", json_out=True)
@@ -151,7 +145,6 @@ def main(argv: list[str] | None = None) -> int:
     body += ["    " + e[:200] for e in other[:8]]
     return agent_log.finish("gd-load-check", root, "\n".join(body), "FAIL" if bad or nul or d3d else "PASS", args=args, retry=("check_gd_load.py", body),
                             files=len(files), failed=len(bad), nul=len(nul), d3d=len(d3d), status_godot=r["status"])
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

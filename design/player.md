@@ -4,7 +4,6 @@ Status: current plan
 Read when: movement, collision, character select, eight-dir body
 Code: `scripts/world/player.gd`, `player_anim.gd`, `anim_load.gd`, `anim_loco.gd`, `facing.gd`  
 
-
 ## Character selection
 
 - On first load the player chooses a male or female character.
@@ -36,10 +35,11 @@ Code: `scripts/world/player.gd`, `player_anim.gd`, `anim_load.gd`, `anim_loco.gd
 - “Dispel” is ritual seppuku: the avatar draws a small knife, kneels, makes one abdominal cut, and collapses. That knife belongs to this clip. It is not an equipped overlay.
 - Death is a hit collapse to a downed hold. Death and “Dispel” both end on a downed body. Neither I2V paints blood. The engine draws a blood pool under that pose.
 
-## Live snapshot
+## Body, clips and loading
 
-`PLAYER_BODY = Vector3(0.42, 0.78, 0.32)`, `PLAYER_H = 1.55`, `MOVE_EPS = 0.12`, `WALK_FPS = 8`.  
-`App.character_type` is `"male"` or `"female"`.  
-Live `player_anim.gd` plays unarmed `idle` stills, a short `idle_to_walk`, looping `walk`, and a short stop (`walk_to_idle` or reversed `idle_to_walk` from `loc_foot`) from the locked Bible I2V harvest (`assets/sprites/player/{male,female}/`). Packer (`tools/pack_locomotion.py`) cuts start/stop as the last/first few frames around one self-similar stride loop. Basic attacks and specials are unarmed Down oneshot harvest (`tools/pack_oneshot.py`) for great-axe / staff / longbow on both genders (specials currently copy the attack Down strip); missing facings fall back to Down. **Those Down attack/special strips are placeholders.** Replace them at the next week’s first Grok Build session (User bringing a new I2V pipeline). `pack_oneshot.py` lock_x uses the 128 idle still, not the raw Bible cell. Basic attack frames play by `atk_t / duration`, not `atk_fps`. Gather / death / Dispel still use baked sheets. Equip overlays remain stats-adjacent carry art and do not replace the idle still. Engine blood pools for death / “Dispel” are not shipped.
+Body and move numbers: tunables. Character is male or female.
 
-Spawn loads idle stills (and equip overlays) for all eight facings. Walk / `idle_to_walk` / `walk_to_idle` for a facing load on the first stick that needs that facing (`PlayerAnimLoad.ensure_loco`). Down attack / special load on the first swing or gather (`ensure_attack`). Title → Play hub warmup (`PlayerAnim.warmup` / `warmup_texs`, driven from `AppFlow._warmup_hub`) applies whatever clips are already loaded — idle stills at spawn — while the body stays visible under the solid loader sheet. It does not hide the sprite. A tiny `move_and_slide` is restored to the spawn point so the first real stick is not the first physics or GPU use. Extract-wake does not run that pass.
+- Locomotion: unarmed idle stills, a short start, looping walk and a short stop, from the locked Bible I2V harvest (`assets/sprites/player/{male,female}/`, packed by `tools/pack_locomotion.py`).
+- Basic attacks and specials are unarmed Down oneshot strips (`tools/pack_oneshot.py`) for every weapon on both genders; specials copy the attack strip and missing facings fall back to Down. **Those Down strips are placeholders.** Replace them at the next week's first Grok Build session (User bringing a new I2V pipeline).
+- Attack frames play by attack progress, not a fixed fps. Gather / death / Dispel use baked sheets. Equip overlays are carry art and do not replace the idle still. No engine blood pools.
+- Loading: idle stills and overlays load at spawn for all eight facings; walk clips per facing on the first stick that needs it; attack / special on the first swing. Title → Play warmup draws the loaded stills under the loader sheet with the body visible, without uploading every walk frame. Extract-wake skips it.

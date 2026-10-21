@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: primary backup wipe, game_ver stamp, isolated AI profiles
 
-
 ## Save system
 
 - Save data is stored in browser `user://` (or equivalent platform-appropriate location).
@@ -62,8 +61,6 @@ Both are stored under isolated paths and follow the same primary + backup safety
 
 ## Archives
 
-The Archives browser MUST ship in the final demo and opens from the title card only. Selecting title “Play” always launches the live path. Catalog rows, isolation, and pin ritual: archives and the versioning gate. This system exists to support the Patreon development narrative and MUST not be removed.
-
-There is no in-game presentation-mode switcher. Desktop Play on a catalog row keeps the live instance alive (minimized) and restores it to title when the child process exits. Web Play is a same-tab redirect.
+Title-only browser, catalog, isolation and Play: archives.
 
 Pages live export of HEAD is required. Catalog pin exports are best-effort via `tools/export_archives.py` and MUST NOT fail the live Pages deploy. Frozen pins are cached by `{id}/{commit}` under `.archive_export_cache/` (gitignored). CI restores that cache across runs so unchanged pins are copied into `site/<pages_slug>/` instead of rebuilt. `tools/web_postexport.py` stays live-only.

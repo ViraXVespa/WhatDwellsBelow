@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: stamping a build, the week sequence, or the User named a pin or archive  
 
-
 ## Scheme
 
 `{epoch}.{series}.{patch}`

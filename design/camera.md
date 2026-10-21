@@ -1,17 +1,15 @@
 ﻿# Camera and presentation
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: Camera3D, zoom, renderer, depth sorting
 Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
-
 
 ## Camera (live 3D path)
 
 - Orthographic Camera3D
-- Fixed pitch approximately –58°
+- Fixed steep pitch
 - Camera height and ortho size calculated so that 64×64 sprites remain clearly readable
-- Player-adjustable zoom range 1.0–4.0 (persisted in save)
-- Default zoom 1.75
+- Player-adjustable zoom (persisted in save); range and default: tunables
 - Zoom applies live from Pause → Settings → Graphics (`App.set_zoom` + `camera_rig.follow`)
 - World zoom also applies live from mouse wheel, touch pinch (walk stick not claimed), and look-mode right-stick Y
 - Separate independent HUD scale setting (Settings → Graphics slider and look-mode right-stick X)
@@ -25,7 +23,7 @@ Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full P
 
 ## Archives
 
-The demo MUST ship with the Archives browser on the title card. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per archives. There is no in-pause presentation-mode switcher.
+Title-only Archives browser and its rules: archives.
 
 ## Renderer
 
@@ -33,23 +31,3 @@ Prefer the Compatibility renderer for the final shippable build if it does not c
 World env palettes, ground lighting, wall volume, the light RT, and actor sprite shadows are not this door.
 
 Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See audio_visual and debug.
-
-## Live snapshot
-
-| Key | Value |
-|-----|-------|
-| `CAM_PITCH` | -58 |
-| `CAM_HEIGHT` | 14 |
-| `LOOK_LIFT` | 0.42 |
-| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 4.0 |
-| Default `cam_zoom` | 1.75 |
-| `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
-| `LOOK_WHEEL_STEP` | 0.08 |
-| `LOOK_PINCH_GAIN` | 1.15 |
-| `LOOK_STICK_ZOOM` / `LOOK_STICK_HUD` / `LOOK_STICK_PAN` | 0.9 / 0.35 / 520 |
-| `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 10.0 |
-| `TILE` / `PX` | 1.0 / 64 |
-
-`project.godot`: viewport 1920×1080 (the only source: code reads it via `Tunables.base_size()`), `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.
-
-Hub warmup (`warm.gd`): yard center from `camp_build.gd` slab + `GRASS_PAD`; `cam.size = max(span_x, span_z) * 1.25`. `apply_size` is unclamped. `restore_user` calls `apply_zoom(App.cam_zoom)`.

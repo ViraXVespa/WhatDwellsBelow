@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: armor columns, plate icons, rarity wash, stepper neighbors  
 
-
 ## Layout
 
 Equipment is not a stack of full-width bars.

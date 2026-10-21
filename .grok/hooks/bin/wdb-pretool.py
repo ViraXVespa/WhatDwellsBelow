@@ -5,7 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-
 IMAGINE_TOOLS = {
     "image_gen",
     "image_edit",
@@ -18,14 +17,12 @@ GREP_TOOLS = {"grep", "Grep", "list_dir", "ListDir", "glob", "Glob"}
 READ_TOOLS = {"read_file", "Read", "ReadFile"}
 TREE_ROOTS = ("scripts", "design", "tools", "scenes")
 
-
 def out(decision: str, reason: str = "") -> int:
     payload = {"decision": decision}
     if reason:
         payload["reason"] = reason
     sys.stdout.write(json.dumps(payload) + "\n")
     return 0 if decision == "allow" else 2
-
 
 def load_event() -> dict:
     raw = sys.stdin.read()
@@ -35,7 +32,6 @@ def load_event() -> dict:
         return json.loads(raw)
     except json.JSONDecodeError:
         return {}
-
 
 def as_path(value: object) -> Path | None:
     if value is None:
@@ -48,7 +44,6 @@ def as_path(value: object) -> Path | None:
     except OSError:
         return None
 
-
 def find_repo(start: Path | None) -> Path | None:
     if start is None:
         return None
@@ -60,7 +55,6 @@ def find_repo(start: Path | None) -> Path | None:
         if (parent / "project.godot").is_file():
             return parent
     return None
-
 
 def is_isolated(cwd: Path | None, repo: Path | None) -> bool:
     if cwd is None:
@@ -80,14 +74,12 @@ def is_isolated(cwd: Path | None, repo: Path | None) -> bool:
     except ValueError:
         return True
 
-
 def tool_blob(event: dict) -> tuple[str, dict]:
     name = str(event.get("toolName") or event.get("tool_name") or event.get("tool") or "")
     inp = event.get("toolInput") or event.get("tool_input") or event.get("input") or {}
     if not isinstance(inp, dict):
         inp = {}
     return name, inp
-
 
 def input_paths(inp: dict) -> list[str]:
     found = []
@@ -96,7 +88,6 @@ def input_paths(inp: dict) -> list[str]:
         if val:
             found.append(str(val))
     return found
-
 
 def hits_tree(text: str, repo: Path | None) -> bool:
     low = text.replace("\\", "/").lower()
@@ -109,7 +100,6 @@ def hits_tree(text: str, repo: Path | None) -> bool:
                 return True
     return False
 
-
 def is_fat_log(text: str) -> bool:
     low = text.replace("\\", "/").lower()
     if "summary.txt" in low:
@@ -117,7 +107,6 @@ def is_fat_log(text: str) -> bool:
     if "/_logs/" not in low and not low.startswith("_logs/"):
         return False
     return low.endswith(".log") or low.endswith(".err") or "-out.log" in low or "-err.log" in low
-
 
 def main() -> int:
     event = load_event()
@@ -154,7 +143,6 @@ def main() -> int:
                 )
 
     return out("allow")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

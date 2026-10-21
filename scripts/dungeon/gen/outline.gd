@@ -1,7 +1,7 @@
 extends Object
 
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const FLOOR := 1
 
 static func _on_rim(grid: PackedByteArray, gw: int, gh: int, per: int, mid: Vector2, nrm: Vector2) -> bool:
@@ -143,8 +143,8 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	var raw_halls: Variant = data.get("halls", [])
 	if raw_halls is Array:
 		halls = raw_halls
-	LoadTiming.dmark("gen_outline_up")
-	LoadTiming.dmark("gen_outline_jag")
+	Dbg.lt_dmark("gen_outline_up")
+	Dbg.lt_dmark("gen_outline_jag")
 	var sw: int = w * per
 	var sh: int = h * per
 	var solid: PackedByteArray = PackedByteArray()
@@ -174,8 +174,8 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var hy1: float = float(int(hall["y1"]) + 1) * scale
 		_stamp_rect(solid, sw, sh, spans, grid, w, h, per, hx0, hy0, hx1, hy1, horiz, vert, true)
 		loops.append(_rect(hx0, hy0, hx1, hy1))
-	LoadTiming.dnote("outline_loops", str(loops.size()))
-	LoadTiming.dnote("outline_spans_n", str(spans.size()))
+	Dbg.lt_dnote("outline_loops", str(loops.size()))
+	Dbg.lt_dnote("outline_spans_n", str(spans.size()))
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
@@ -183,4 +183,4 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	data["solid_n"] = per
 	data["outline_spans"] = spans
 	data["outline_loops"] = loops
-	LoadTiming.dmark("gen_outline_spans")
+	Dbg.lt_dmark("gen_outline_spans")

@@ -1,6 +1,6 @@
 extends Object
 
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 static var _dungeon_packed: PackedScene = null
 
@@ -13,7 +13,7 @@ static func ensure_dungeon_packed(host: Node) -> PackedScene:
 	return _dungeon_packed
 
 static func begin_run(host: Node) -> void:
-	App.AppFlow.LoadTiming.dmark("begin_run")
+	App.Dbg.lt_dmark("begin_run")
 	host.floor_n = maxi(1, host.prog.start_floor)
 	host.run_seed = randi()
 	if host.run_seed == 0:
@@ -42,13 +42,15 @@ static func begin_run(host: Node) -> void:
 	host.shop_spent = 0
 	host.ui_open = false
 	host.prog.begin_run_loadout()
+	if not host.prog.quest_active.is_empty():
+		host.prog.quest_delved = true
 	host.weapon = str(host.prog.slots.weapon.get("weapon", "great_axe")) if not host.prog.slots.weapon.is_empty() else "great_axe"
 	if host.playtest == null or not bool(host.playtest.get("live_running")):
 		host.tel.reset("human", false)
 	host.go_dungeon()
 
 static func go_dungeon(host: Node) -> void:
-	App.AppFlow.LoadTiming.dmark("go_dungeon")
+	App.Dbg.lt_dmark("go_dungeon")
 	host.in_dungeon = true
 	host.interact_prompt = ""
 	host.get_tree().paused = false
@@ -56,9 +58,9 @@ static func go_dungeon(host: Node) -> void:
 		Engine.time_scale = 1.0
 	if host.music and host.music.has_method("play_dungeon") and str(host.music.get("kind")) != "dungeon":
 		host.music.play_dungeon()
-	App.AppFlow.LoadTiming.dmark("dungeon_music")
+	App.Dbg.lt_dmark("dungeon_music")
 	var packed: PackedScene = ensure_dungeon_packed(host)
-	App.AppFlow.LoadTiming.dmark("dungeon_packed")
+	App.Dbg.lt_dmark("dungeon_packed")
 	App.AppFlow.Leg.change_scene(host, packed, host.DUNGEON_SCENE)
 
 static func next_floor(host: Node) -> void:

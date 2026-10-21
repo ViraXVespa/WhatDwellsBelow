@@ -73,15 +73,12 @@ EXPECTED = (
     "iron_heart",
 )
 
-
 def key_still(src: Path) -> Image.Image:
     raw = imgio.load(src)
     return sp.key_to_alpha(raw)
 
-
 def fit_icon(keyed: Image.Image, canvas: int = CANVAS) -> Image.Image:
     return fit_box(keyed, canvas, PAD)
-
 
 def sources() -> list[Path]:
     found: list[Path] = []
@@ -89,7 +86,6 @@ def sources() -> list[Path]:
         if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}:
             found.append(path)
     return found
-
 
 def _check() -> None:
     missing: list[str] = []
@@ -104,7 +100,6 @@ def _check() -> None:
         print("missing " + ", ".join(missing))
         raise SystemExit(1)
     print(f"gear sources ok names={len(EXPECTED)}")
-
 
 def _run(args) -> None:
     if args.check:
@@ -127,10 +122,8 @@ def _run(args) -> None:
     if extra:
         print("extra sources: " + ", ".join(extra), flush=True)
 
-
 def _args(ap) -> None:
     ap.add_argument("--check", action="store_true", help="Fail if an expected gear icon has no _src plate or live png. Writes nothing.")
-
 
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer(
@@ -141,7 +134,6 @@ def main(argv: list[str] | None = None) -> int:
         globals(),
         add_args=_args,
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

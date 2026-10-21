@@ -25,10 +25,8 @@ ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
 OPT_FILE = "design/tasks/opt-*.md"
 
-
 def list_oversize(root: Path, floor: int) -> list[tuple[int, str]]:
     return gd_lib.sizes(root, floor)
-
 
 def parse_reuse_brief(root: Path) -> list[str]:
     path = root / REUSE_FILE
@@ -53,12 +51,10 @@ def parse_reuse_brief(root: Path) -> list[str]:
     lines = [ln.strip() for ln in prose.splitlines() if ln.strip()]
     return [" ".join(lines)] if lines else []
 
-
 def parse_opt_queue(root: Path) -> list[dict[str, str]]:
     """Bot opt items: the owner-bot task files design/tasks/opt-N.md (a done item is deleted)."""
     return [{"id": tid, "status": t.get("status", ""), "title": t.get("title", "")}
             for tid, t in sorted(task_lib.load(root).items()) if t.get("owner") == "bot" and tid.startswith("opt-")]
-
 
 def git_state(root: Path) -> dict[str, str]:
     _code, branch = repo_lib.run_git(root, "rev-parse", "--abbrev-ref", "HEAD")
@@ -72,7 +68,6 @@ def git_state(root: Path) -> dict[str, str]:
         "upstream": tracking if tracking and "fatal" not in tracking.lower() else "none",
         "worktree": dirty,
     }
-
 
 def run_load_graph(root: Path) -> str:
     script = _TOOLS / "check_load_graph.py"
@@ -91,7 +86,6 @@ def run_load_graph(root: Path) -> str:
     tail = err[0] if err else f"exit={proc.returncode}"
     return f"FAIL {tail}"
 
-
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser(
         "Print the Grok Bot punch list from live queues and file sizes.", json_out=True
@@ -103,7 +97,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Also check the allowlist on dirty paths and the load graph.",
     )
     return parser.parse_args(argv)
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
@@ -145,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     lines.append("")
     lines.append(f"reuse_brief count={len(brief)} file={REUSE_FILE}")
     if not brief:
-        lines.append("(empty — reuse job stops)")
+        lines.append("(empty - reuse job stops)")
     else:
         for idx, item in enumerate(brief, start=1):
             snippet = item if len(item) <= 140 else item[:137] + "..."
@@ -186,7 +179,6 @@ def main(argv: list[str] | None = None) -> int:
         "bot-status", root, "\n".join(lines), status, args=args,
         over10kb=len(ship), over5kb=len(sweep), brief=len(brief), opt_pending=len(pending_opts),
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

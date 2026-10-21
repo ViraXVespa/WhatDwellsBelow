@@ -9,27 +9,30 @@ const LayoutS := preload("res://scripts/world/camp/layout.gd")
 const ROOF_EAVE := 0.42
 const TILE_W := 3.2
 
-static func guild(host: Node3D) -> void:
+static func guild_hall(host: Node3D) -> void:
 	var lay: Node3D = LayoutS.of(host)
 	var hall_at: Vector3 = lay.hall_pos()
 	var hall_box: Vector3 = lay.hall_box
-	var wing_at: Vector3 = lay.wing_pos()
-	var wing_box: Vector3 = lay.wing_box
 	var hall_body: StaticBody3D = Util.box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
-	var wing_body: StaticBody3D = Util.box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
 	var hall_fit: Vector3 = Util.seat(hall_body, hall_box, "res://assets/sprites/buildings/guild.png")
-	var wing_fit: Vector3 = Util.seat(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png")
 	MeshS.wall_box(hall_body, hall_fit, Color(0.45, 0.32, 0.22))
 	Util._slide(hall_body, hall_fit)
+	Util.face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.32)
+	var hall_valance: float = hall_fit.y * lay.awning_valance("Hall")
+	awning(hall_body, hall_fit, lay.awning_depth("Hall"), lay.awning_slope("Hall"), hall_valance, 0.0, 0.0, 0.0)
+	MeshS.gable_on(hall_body, hall_fit, 0.0, 0.55, lay.tile_for("Hall"), lay.hall_uv_off)
+
+static func guild_wing(host: Node3D) -> void:
+	var lay: Node3D = LayoutS.of(host)
+	var wing_at: Vector3 = lay.wing_pos()
+	var wing_box: Vector3 = lay.wing_box
+	var wing_body: StaticBody3D = Util.box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
+	var wing_fit: Vector3 = Util.seat(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png")
 	MeshS.wall_box(wing_body, wing_fit, Color(0.5, 0.38, 0.28))
 	Util._slide(wing_body, wing_fit)
-	Util.face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.32)
 	Util.face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.32)
-	var hall_valance: float = hall_fit.y * lay.awning_valance("Hall")
 	var wing_valance: float = wing_fit.y * lay.awning_valance("Wing")
-	awning(hall_body, hall_fit, lay.awning_depth("Hall"), lay.awning_slope("Hall"), hall_valance, 0.0, 0.0, 0.0)
 	awning(wing_body, wing_fit, lay.awning_depth("Wing"), lay.awning_slope("Wing"), wing_valance, 0.0, 0.0, 0.0)
-	MeshS.gable_on(hall_body, hall_fit, 0.0, 0.55, lay.tile_for("Hall"), lay.hall_uv_off)
 	MeshS.gable_on(wing_body, wing_fit, 0.0, 0.48, lay.tile_for("Wing"), lay.wing_uv_off)
 static func awning(
 	body: Node3D,

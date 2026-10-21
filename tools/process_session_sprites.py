@@ -32,7 +32,6 @@ JOBS = [
     ("1.jpg", ROOT / "assets/sprites/props/mana_orb.png", ORB),
 ]
 
-
 def key_and_fit(src: Path, dest: Path, canvas: int) -> None:
     use = matcher.resolve_source(dest, src)
     if use is None:
@@ -44,7 +43,6 @@ def key_and_fit(src: Path, dest: Path, canvas: int) -> None:
     out.save(dest)
     print(f"wrote {dest.name} {out.size}")
 
-
 def _run() -> None:
     for name, dest, canvas in JOBS:
         src = SESSION / name
@@ -52,10 +50,8 @@ def _run() -> None:
             raise SystemExit(f"missing {src}")
         key_and_fit(src, dest, canvas)
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("process_session_sprites", "Key whatever-magenta Imagine stills and fit them into engine sprites.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

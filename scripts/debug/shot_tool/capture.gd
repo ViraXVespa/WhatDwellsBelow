@@ -84,7 +84,6 @@ static func _hide_label3d(n: Node) -> void:
 		_hide_label3d(n.get_child(i))
 		i += 1
 
-
 static func _kick_pose(host: Node) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")

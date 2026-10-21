@@ -6,7 +6,7 @@ binary only when the pin is missing. Editor playtest is out of scope.
 
   python tools/bot_smokes.py --doctor
   python tools/bot_smokes.py --setup
-  python tools/bot_smokes.py --phases 1,2,6
+  python tools/bot_smokes.py --phases 1,2,6 [--release]   (--release: run_release_smoke.py too)
   python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
   python tools/bot_smokes.py --for scripts/world/player.gd   (which phases load a file; runs nothing)
 """
@@ -42,7 +42,6 @@ STEAM_WIN = (
     "Godot Engine\\godot.windows.opt.tools.64.exe"
 )
 
-
 def pin_path() -> Path:
     env = os.environ.get("GODOT_BIN", "").strip()
     if env:
@@ -50,7 +49,6 @@ def pin_path() -> Path:
     if Path("/workspace").is_dir():
         return Path("/workspace/godot") / BIN_NAME
     return Path.home() / ".local" / "share" / "wdb-godot" / BIN_NAME
-
 
 def resolve_bin() -> Path | None:
     pin = pin_path()
@@ -60,7 +58,6 @@ def resolve_bin() -> Path | None:
     if steam.is_file():
         return steam
     return None
-
 
 def setup(pin: Path) -> Path:
     if pin.is_file():
@@ -89,7 +86,6 @@ def setup(pin: Path) -> Path:
     print(f"setup=installed\t{pin}")
     return pin
 
-
 def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = None) -> list[str]:
     args = [
         "--headless",
@@ -102,16 +98,14 @@ def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = 
     args.extend(["--", *(flags or [f"--wdb-phase{phase}-smoke"])])
     return args
 
-
 # Godot stderr lines that fail a phase. "SMOKE FAIL" is what a smoke check prints on a miss (e.g. smoke/marks_check.gd). A lambda whose captured node was freed runs with null (stale UI callback).
 FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index", "SMOKE FAIL")
 
 # Phase 6 also runs the hub menu open timing (scripts/debug/open_timing.gd): real title -> hub load, then every
-# menu's first and second open; fails when a first open stalls.
+# menu's first and second open; fails when a first open stalls on two runs in a row (one retry; see run_phase).
 OPEN_TIMING = ["--wdb-load-timing-smoke", "--wdb-open-timing"]
 # ...and the baked frame-art check (art_bake.gd): every committed assets/ui/frames PNG matches what the art code draws.
 FRAME_ART = ["--wdb-frame-art-check"]
-
 
 def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, tag: str = "", flags: list[str] | None = None) -> int:
     log_dir = root / "_logs" / "smokes"
@@ -134,19 +128,27 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
     print(f"{tag or f'P{phase}'}={'FAIL' if bad else 'PASS'}\texit={proc.returncode}")
     if bad and tag:
         print("\n".join(ln for ln in text.splitlines() if ln.startswith("OPEN:")))
+    if tag.startswith("open_timing"):
+        import bench_env
+        eng = next((ln[len("OPEN: env "):] for ln in text.splitlines() if ln.startswith("OPEN: env ")), "engine=unknown")
+        line = bench_env.env_line(godot=bench_env.godot_version(str(exe)), headless=True) + " engine: " + eng
+        (log_dir / f"{name}.env.txt").write_text(line + "\n", encoding="utf-8")
+        print(line)
     if phase == 6 and not tag:
         timing = run_phase(exe, root, 6, timeout, verbose, "open_timing", OPEN_TIMING)
+        if timing:
+            # One retry: a first-open stall from code (e.g. a font fallback) shows on every run; a lone
+            # one-sample spike on a shared box does not (seen ~1 in 8 headless runs, a different menu each time).
+            timing = run_phase(exe, root, 6, timeout, verbose, "open_timing_retry", OPEN_TIMING)
         art = run_phase(exe, root, 6, timeout, verbose, "frame_art", FRAME_ART)
         return max(1 if bad else 0, timing, art)
     return 1 if bad else 0
-
 
 def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
     """(warnscan areas, smoke phases) that load these files: bot_warnscan_lib.changed_areas is the one source."""
     from bot_warnscan_lib import changed_areas
     areas = changed_areas(files)
     return areas, sorted({int(a[1:]) for a in areas if re.fullmatch(r"p\d", a)})
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
@@ -159,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
+    p.add_argument("--release", action="store_true", help="Also run run_release_smoke.py (release mode: no debug code, title to dungeon). Alone: just that.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (end gate: a new UI state without a shot flow FAILS this run)")
     p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
@@ -189,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))
     pin = pin_path()
     found = resolve_bin()
-    if ns.doctor or (not ns.setup and not ns.phases):
+    if ns.doctor or (not ns.setup and not ns.phases and not ns.release):
         print(f"version={VERSION}")
         print(f"pin={pin}")
         print(f"bin={'missing' if found is None else found}")
@@ -199,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     exe = found
     if ns.setup or exe is None:
         exe = setup(pin)
-    if ns.flows and not ns.phases:
+    if (ns.flows or ns.release) and not ns.phases:
         ns.phases = "0"
     if not ns.phases:
         print(f"ready\t{exe}")
@@ -234,9 +237,12 @@ def main(argv: list[str] | None = None) -> int:
             rc = 1
             continue
         rc |= run_phase(exe, root, n, ns.timeout, ns.verbose)
+    if ns.release:
+        rrc = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "run_release_smoke.py"), "--root", str(root)], check=False).returncode
+        print(f"release={'PASS' if rrc == 0 else 'FAIL'}")
+        rc |= 1 if rrc else 0
     print(f"smokes={'PASS' if rc == 0 else 'FAIL'}")
     return agent_log.emit_result("PASS" if rc == 0 else "FAIL", phases=",".join(str(n) for n in phases))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -56,11 +56,10 @@ A unit is acceptable only when all of the following hold:
 - Feet plant on a stable baseline.
 - Packed walk loops; start/stop cuts are readable.
 - Readable `idle_to_walk` and `walk_to_idle` on every facing that has shipped those states.
-- Pixel-grid edges after cleanup. No anti-aliasing. No magenta lip.
+- Edges follow the manifest alpha policy (`crisp` default, `soft` for fx and soft rows, `hard` on request). No magenta lip.
 
 Failures:
 
 - Persistent identity or scale failure → return to Bible and re-lock only with User approval if style would change.
 - One bad facing → regenerate that unit only.
 - Harvest cuts fail but the clip is good → adjust pack points; do not silently invent a new I2V method.
-

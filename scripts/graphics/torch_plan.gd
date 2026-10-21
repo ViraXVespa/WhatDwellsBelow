@@ -8,6 +8,7 @@ const Gen := preload("res://scripts/dungeon/gen.gd")
 const Spans := preload("res://scripts/graphics/torch_plan/spans.gd")
 const Grid := preload("res://scripts/graphics/torch_plan/plan_grid.gd")
 
+const Hall := preload("res://scripts/graphics/torch_plan/hall.gd")
 static var _cache_key: String = ""
 static var _cache: Array[Dictionary] = []
 static var _room_ix: PackedInt32Array = PackedInt32Array()
@@ -121,12 +122,12 @@ static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Di
 		if hall_site.is_empty():
 			continue
 		var at: Vector2i = Vector2i(int(hall_site["fx"]), int(hall_site["fz"]))
-		if _taken(used, at):
+		if Hall._taken(used, at):
 			continue
 		used[at] = true
 		out.append(hall_site)
 	Grid._thin_arr(hall, mouth, map_w, map_h, hall_ix)
-	_hall_rhythm(host, hall, hall_ix, map_w, map_h, per, used, out)
+	Hall._hall_rhythm(host, hall, hall_ix, map_w, map_h, per, used, out)
 	var hi3: int = 0
 	while hi3 < hall_ix.size():
 		var i4: int = hall_ix[hi3]
@@ -141,13 +142,13 @@ static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Di
 		var exits: int = Grid._ring_exits_arr(hall, map_w, map_h, spot)
 		if exits != 1 and exits < 3:
 			continue
-		if _taken(used, spot):
+		if Hall._taken(used, spot):
 			continue
 		var spur: Dictionary = Spans._span_at(per, spot)
 		if spur.is_empty():
 			continue
 		var mounted: Vector2i = Vector2i(int(spur["fx"]), int(spur["fz"]))
-		if _taken(used, mounted):
+		if Hall._taken(used, mounted):
 			continue
 		used[mounted] = true
 		out.append(spur)
@@ -191,7 +192,7 @@ static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> A
 		if room_i >= 0 and lit[room_i] != 0:
 			continue
 		var at: Vector2i = Vector2i(fx, fz)
-		if _taken(used, at):
+		if Hall._taken(used, at):
 			continue
 		used[at] = true
 		out.append(site)
@@ -228,91 +229,3 @@ static func _span_list(host: Node) -> Array:
 	if raw is Array:
 		return raw
 	return []
-
-static func _hall_rhythm(_host: Node, hall: PackedByteArray, hall_ix: PackedInt32Array, map_w: int, map_h: int, per: int, used: Dictionary, out: Array[Dictionary]) -> void:
-	var seed_n := 1
-	if App != null:
-		seed_n = int(App.run_seed) * 17 + int(App.floor_n) * 31
-	var seen := PackedByteArray()
-	seen.resize(map_w * map_h)
-	seen.fill(0)
-	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-	var near: Dictionary = _near_grid(used)
-	var hi := 0
-	while hi < hall_ix.size():
-		var start_i: int = hall_ix[hi]
-		hi += 1
-		if start_i < 0 or start_i >= hall.size() or hall[start_i] == 0 or seen[start_i] != 0:
-			continue
-		var run: Array[Vector2i] = []
-		var stack: Array[int] = [start_i]
-		seen[start_i] = 1
-		while not stack.is_empty():
-			var cur: int = stack.pop_back()
-			var cy := int(float(cur) / float(map_w))
-			var cx := cur - cy * map_w
-			run.append(Vector2i(cx, cy))
-			for d in dirs:
-				var nx := cx + d.x
-				var ny := cy + d.y
-				if nx < 1 or ny < 1 or nx >= map_w - 1 or ny >= map_h - 1:
-					continue
-				var ni := ny * map_w + nx
-				if hall[ni] == 0 or seen[ni] != 0:
-					continue
-				seen[ni] = 1
-				stack.append(ni)
-		if run.size() < 8:
-			continue
-		var step := 7 + int(abs(seed_n + run[0].x * 13 + run[0].y * 29)) % 5
-		var phase := int(abs(seed_n + run[0].y * 7)) % step
-		var i2 := phase
-		while i2 < run.size():
-			var spot: Vector2i = run[i2]
-			i2 += step
-			if _taken(used, spot) or _lit_near(near, spot):
-				continue
-			var site: Dictionary = Spans._span_at(per, spot)
-			if site.is_empty():
-				continue
-			var mounted := Vector2i(int(site["fx"]), int(site["fz"]))
-			if _taken(used, mounted):
-				continue
-			used[mounted] = true
-			_mark_near(near, mounted)
-			out.append(site)
-
-## Hall cadence only fills dark stretches: no rhythm torch within HALL_GAP cells of another torch. Run order is a
-## flood fill, so index steps alone stacked torches beside the mouth and spur ones (742 vs 399 sites on floor 1 seed 42;
-## 44 lights in the 96x96 ring against the 24 cap, so the extra torches popped in as the ring moved).
-const HALL_GAP := 12
-
-static func _near_grid(used: Dictionary) -> Dictionary:
-	var g: Dictionary = {}
-	for c: Vector2i in used:
-		_mark_near(g, c)
-	return g
-
-static func _mark_near(g: Dictionary, c: Vector2i) -> void:
-	var k := Vector2i(floori(float(c.x) / HALL_GAP), floori(float(c.y) / HALL_GAP))
-	if not g.has(k):
-		g[k] = []
-	(g[k] as Array).append(c)
-
-static func _lit_near(g: Dictionary, c: Vector2i) -> bool:
-	var k := Vector2i(floori(float(c.x) / HALL_GAP), floori(float(c.y) / HALL_GAP))
-	for dy in range(-1, 2):
-		for dx in range(-1, 2):
-			for o: Vector2i in g.get(k + Vector2i(dx, dy), []):
-				if absi(o.x - c.x) + absi(o.y - c.y) <= HALL_GAP:
-					return true
-	return false
-
-static func _taken(used: Dictionary, cell: Vector2i) -> bool:
-	for z in range(-2, 3):
-		for x in range(-2, 3):
-			if absi(x) + absi(z) > 2:
-				continue
-			if used.has(cell + Vector2i(x, z)):
-				return true
-	return false

@@ -21,11 +21,9 @@ LEGACY = "summary.txt"
 STAMP_RE = re.compile(r"^(\d{8}-\d{6}(?:\+\d+)?)-(.+)$")
 _STAMPS: dict[tuple[str, str], str] = {}
 
-
 def stamp_of(name: str) -> str:
     m = STAMP_RE.match(name)
     return m.group(1) if m else ""
-
 
 def stamp_for(d: Path, job: str) -> str:
     """The stamp of this process's run of `job` in folder `d`; the first call reserves <stamp>-<job>.txt."""
@@ -49,15 +47,12 @@ def stamp_for(d: Path, job: str) -> str:
     _STAMPS[key] = stamp
     return stamp
 
-
 def run_path(d: Path, job: str, name: str) -> Path:
     """Path for a raw log or artifact of this run: <stamp>-<name> (never reused by a later run)."""
     return d / f"{stamp_for(d, job)}-{name}"
 
-
 def summary_path(d: Path, job: str) -> Path:
     return run_path(d, job, f"{job}.txt")
-
 
 def entries(d: Path) -> list[tuple[str, str, str, str]]:
     """Index rows (stamp, status, file, note) newest first; rows whose file is gone are dropped."""
@@ -72,7 +67,6 @@ def entries(d: Path) -> list[tuple[str, str, str, str]]:
                 rows.append((c[0], c[1], c[2], c[3]))
     return rows
 
-
 def latest(d: Path) -> Path | None:
     """Newest run's summary file, else a legacy summary.txt, else None."""
     rows = entries(d)
@@ -80,7 +74,6 @@ def latest(d: Path) -> Path | None:
         return d / rows[0][2]
     old = d / LEGACY
     return old if old.is_file() else None
-
 
 def prune(d: Path, keep: int = KEEP) -> int:
     """Delete stamped files of all but the `keep` newest stamps in `d`. Returns the number of files removed."""
@@ -94,7 +87,6 @@ def prune(d: Path, keep: int = KEEP) -> int:
             n += 1
     return n
 
-
 def record(d: Path, summary: Path, status: str, note: str = "", keep: int = KEEP) -> None:
     """Put a finished run at the top of index.txt, then prune to the newest `keep` runs."""
     _STAMPS.pop((str(d.resolve()), summary.name[len(stamp_of(summary.name)) + 1:-4]), None)  # next run gets a new stamp
@@ -106,14 +98,12 @@ def record(d: Path, summary: Path, status: str, note: str = "", keep: int = KEEP
     body += ["\t".join(r) for r in rows[:keep]]
     (d / INDEX).write_text("\n".join(body) + "\n", encoding="utf-8")
 
-
 def write_summary(d: Path, job: str, text: str, status: str = "INFO", note: str = "") -> Path:
     """Write this run's summary file (never an existing one), index it, prune. Returns its path."""
     p = summary_path(d, job)
     p.write_text(text.rstrip("\n") + "\n", encoding="utf-8")
     record(d, p, status, note)
     return p
-
 
 def clear(d: Path) -> int:
     """Weekly clear of one folder: stamped files, index.txt and a legacy summary.txt. Returns files removed."""
@@ -123,7 +113,6 @@ def clear(d: Path) -> int:
             f.unlink(missing_ok=True)
             n += 1
     return n
-
 
 def selftest(tmp: Path) -> list[str]:
     """Problems found (empty = ok). Writes 25 runs of a fake job into `tmp`."""

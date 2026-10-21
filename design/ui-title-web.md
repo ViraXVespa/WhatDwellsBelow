@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: title / play menu, web fullscreen gate, loader  
 
-
 ## Title / play menu
 
 `scripts/title.gd` is the play menu. Overlay body lives in `scripts/title/news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
@@ -40,29 +39,21 @@ Gamepad-first: first focus is the action button and MUST stay on a gate button f
 
 If the viewport is taller than wide, the card MUST say to rotate to landscape. Landscape lock is attempted from the same gesture (save_tech).
 
-## Live snapshot — title
+## Title card and Updates overlay
 
-`title.gd` builds the card and focus graph. `news.gd` builds the overlay.
-- Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered paper card sits behind the title and the buttons. Play is the primary weight. Updates and Archives are secondary. New changelog rows are bold dried-ink, not gold.
-Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
+- Backdrop `assets/ui/load_background.jpg` full-bleed, no global dim. A centered paper card holds the title and buttons. Play is primary; Updates and Archives are secondary. New changelog rows are bold dried-ink, not gold.
+- While Updates is open, the title buttons take no focus and Close is focused. Right stick and mouse wheel scroll the opaque overlay body.
 
-## Live snapshot — web fullscreen gate
+## Web fullscreen gate wiring
 
-`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
+Web boots into the gate while the session still needs it. Two themed buttons keep focus after the pad wakes, accept A / B / Start / Back, and the gate leaves to splash once fullscreen or standalone is true. `scripts/display_mode.gd` owns platform buckets, window modes, landscape lock, Esc hooks and the PWA prompt.
 
-## Live snapshot — loading bar (`loader.gd`)
+## Loading bar (`loader.gd`)
 
-`CanvasLayer` layer 110 on `App`. Survives scene changes. Title → Placeholdia uses `App.play_from_menu` → `AppFlow.play_from_menu_async`.
+One overlay on `App` (layer 110) survives scene changes and covers Title → Placeholdia.
 
-- `begin(heading, status)` shows the overlay at 0%.
-- `set_status(text)`
-- `set_progress(v)` marks a milestone really reached (capped at 99%); `stage(from, to)` starts a step: the bar eases to `from`, then creeps toward `to` while the step works; `stage_at(from, to, u)` is sub-progress inside a step. The shown value never goes back.
-- The fill and the % label draw the same value (label floored, 100% only from `finish()`).
-- `finish()` fills to 100%, hides, calls `App.wake_web_pad()`.
-- `?wdb-loader-trace` prints one `LOADTRACE` row per frame; `python tools/load_bars.py --site DIR` charts both bars cold and cached.
-
-Visual: full-viewport dim, a paper card, ink heading, status, percent, and a 720×20 ink fill on a brown track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
-
-Play → camp pacing: each step's share of the bar is its expected time (`scripts/ui/loader_weights.gd`: per-platform defaults measured on web and desktop, then this machine's last runs from `user://loader_steps.cfg`); the fps settle has time-based sub-progress. `python tools/load_bars.py --desktop` charts the desktop loader cold and warm. The camp build and the warm-up frame each block for about a second on web; the bar cannot redraw inside them, so it moves on right after.
-
-Web landing bar (`tools/web_shell.html`): one eased value draws the fill and the %; download bytes fill to 85%; after the last byte the page's main thread is blocked by wasm compile and engine start, so the % label steps aside and the fill eases toward 97% on the compositor (scaleX transition); it reads 100% only when the engine has started.
+- A step eases to its start, then creeps toward its end while it works. A milestone caps at 99%; only `finish()` shows 100%. The shown value never goes back, and the fill and % label always agree.
+- Each step's share of the bar is its expected time (per-platform defaults, then this machine's last runs). The camp build and warm-up frame block about a second on web, so the bar moves on right after them.
+- Visual: full-viewport dim, paper card, ink heading, status, percent, and a 720×20 ink fill on a brown track, centered on the visible rect.
+- Web landing bar (`tools/web_shell.html`): download fills to 85%; during wasm compile and engine start the fill eases toward 97% on the compositor; 100% only once the engine has started.
+- Diagnose with `?wdb-loader-trace` and `python tools/load_bars.py` (`--site DIR`, `--desktop`).

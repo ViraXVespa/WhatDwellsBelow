@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: pause menu layout / tabs / behavior  
 
-
 ## Pause menu
 
 The open pause is a journal binder (ui-theme). Settings is two sheets: the list is the shorter left sheet, and the open page is the wider right sheet, with leather between them. Inventory is two even sheets. Skills is two sheets with the split right of center, so the list is the wide sheet and the tip is the narrow one. A confirm is a slip on top. No center crease cuts a row. Bookmark tabs, ink, and the prompt footer stay.

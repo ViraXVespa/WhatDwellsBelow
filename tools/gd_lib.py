@@ -15,14 +15,12 @@ DECL = re.compile(
     r"^(?P<indent>\t*)(?:static\s+)?(?:func|const|var|class_name|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
 )
 
-
 def iter_gd(root: Path, *, sub: str = "scripts") -> list[Path]:
     """Live .gd files under root/sub (archives and worktrees skipped), sorted."""
     base = root / sub
     if not base.is_dir():
         return []
     return sorted(p for p in base.rglob("*.gd") if p.is_file() and p.relative_to(root).parts[0] not in SKIP_PARTS)
-
 
 def sizes(root: Path, lo: int = 0, hi: int | None = None) -> list[tuple[int, str]]:
     """(bytes, repo-relative path) of live .gd files with lo <= size < hi, largest first. One owner for every size listing."""
@@ -33,7 +31,6 @@ def sizes(root: Path, lo: int = 0, hi: int | None = None) -> list[tuple[int, str
             rows.append((n, p.relative_to(root).as_posix()))
     return sorted(rows, key=lambda r: (-r[0], r[1]))
 
-
 # Cluster-folder naming rule (design/refactor.md "Cluster folders"): helper `<stem>_<rest>.gd` lives at
 # `<dir>/<stem>/<name>.gd` with the repeated stem trimmed (`<rest>`), unless `<rest>` is generic or too short or collides
 # with another basename in the repo; then a qualifier is kept (last stem token, then more tokens, up to the full old name).
@@ -42,7 +39,6 @@ GENERIC = frozenset(
     "ui hub sub api ready near best late early step walk door draw kit norm make town bag req use meta prog roll geo quad span "
     "fold args pose rim spec emit dump set run stream bake val lock tick pack gate cells web desk pool anim chest prompt".split()
 )
-
 
 def helper_basenames(stem: str, keys: list[str], taken: set[str]) -> dict[str, str]:
     """{key: file basename without .gd} for helper keys (`<stem>_<rest>`) in cluster folder `<stem>/`.
@@ -72,7 +68,6 @@ def helper_basenames(stem: str, keys: list[str], taken: set[str]) -> dict[str, s
             break
     return {k: cand(k) for k in keys}
 
-
 def func_starts(text: str) -> list[tuple[str, int]]:
     """[(name, 1-based line)] for column-0 func / static func."""
     out: list[tuple[str, int]] = []
@@ -81,7 +76,6 @@ def func_starts(text: str) -> list[tuple[str, int]]:
         if m:
             out.append((m.group(2), i))
     return out
-
 
 def funcs_of(text: str) -> list[tuple[str, int, int, int]]:
     """[(name, start_line, end_line, utf8_bytes)] with each func ending where the next begins."""
@@ -93,10 +87,8 @@ def funcs_of(text: str) -> list[tuple[str, int, int, int]]:
         out.append((name, start, end, len("".join(lines[start - 1 : end]).encode("utf-8"))))
     return out
 
-
 def func_count(text: str, name: str) -> int:
     return sum(1 for n, _ in func_starts(text) if n == name)
-
 
 def func_span(text: str, name: str) -> tuple[int, int]:
     """0-based line range [start, end) of column-0 func `name`. ValueError if missing."""
@@ -108,7 +100,6 @@ def func_span(text: str, name: str) -> tuple[int, int]:
     while end < len(lines) and not RE_FUNC.match(lines[end]):
         end += 1
     return start, end
-
 
 def decl_span(lines: list[str], name: str) -> tuple[int, int] | None:
     """[start, end) of the first func/const/var/enum named `name` up to the next same-indent decl."""

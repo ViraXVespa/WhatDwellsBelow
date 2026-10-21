@@ -31,7 +31,6 @@ from agent_log import rel
 
 COMMANDS = ("selftest", "describe", "layout", "contrast", "grid", "zoom", "diff", "montage", "find", "halo", "rimclean", "motion")
 
-
 def _box(text: str) -> tuple[int, int, int, int]:
     try:
         x, y, w, h = (int(v) for v in text.replace(" ", "").split(","))
@@ -39,12 +38,10 @@ def _box(text: str) -> tuple[int, int, int, int]:
         agent_log.fail(f"bad box {text!r}: want X,Y,W,H in pixels (example 40,20,200,48)")
     return x, y, x + w, y + h
 
-
 def _need(args, n: int, what: str) -> list[str]:
     if len(args.paths) < n:
         agent_log.fail(f"{args.cmd} needs {what}")
     return args.paths
-
 
 def _save(im, path: str, dry: bool) -> str | None:
     if not path or dry:
@@ -52,7 +49,6 @@ def _save(im, path: str, dry: bool) -> str | None:
     from imglib import imgio
     imgio.save(im, path)
     return Path(path).as_posix()
-
 
 def run(args) -> tuple[str, list[str], dict]:
     from imglib import compare, imgio, key, look
@@ -152,12 +148,10 @@ def run(args) -> tuple[str, list[str], dict]:
         status = "INFO"
     return status, lines, kv
 
-
 def _box_corners(args):
     if not args.box:
         agent_log.fail("zoom needs --box X,Y,W,H")
     return _box(args.box[0])
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser(__doc__.split("\n\n")[0], writes=True, json_out=True)
@@ -188,7 +182,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

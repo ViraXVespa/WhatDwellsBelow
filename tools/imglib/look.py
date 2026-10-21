@@ -31,7 +31,6 @@ def describe(im: Image.Image, n_colors: int = 6) -> dict:
     out["margins"] = {"left": box[0], "top": box[1], "right": w - box[2], "bottom": h - box[3]} if box else None
     return out
 
-
 def fmt_describe(d: dict) -> str:
     pal = " ".join("#%02X%02X%02X:%s%%" % (c[0], c[1], c[2], p) for c, p in d["palette"])
     m = d["margins"]
@@ -49,24 +48,20 @@ def content_mask(im: Image.Image, thresh: float = 18.0) -> np.ndarray:
     rgb = np.ascontiguousarray(rgba[..., :3])
     return delta_e(rgb, background_refs(rgb, k=1)) > thresh
 
-
 def regions(im: Image.Image, merge: int = 6, min_area: int = 12, mask: np.ndarray | None = None) -> list:
     """Element boxes (l, t, r, b), merged within `merge` px, reading order (top then left)."""
     m = content_mask(im) if mask is None else mask
     bx = compare.boxes(m, merge=merge, limit=400, min_area=min_area)
     return sorted(bx, key=lambda b: (b[1] // max(4, merge * 2), b[0]))
 
-
 def _nested(a, b) -> bool:
     """One box fully inside the other (a panel and its contents): not an overlap."""
     return (a[0] <= b[0] and a[1] <= b[1] and a[2] >= b[2] and a[3] >= b[3]) or (b[0] <= a[0] and b[1] <= a[1] and b[2] >= a[2] and b[3] >= a[3])
-
 
 def _inter(a, b) -> int:
     w = min(a[2], b[2]) - max(a[0], b[0])
     h = min(a[3], b[3]) - max(a[1], b[1])
     return w * h if w > 0 and h > 0 else 0
-
 
 def layout(boxes: list, size: tuple[int, int], safe: float = 0.05, tol: int = 3) -> dict:
     """Layout facts for element boxes on a (w, h) screen."""
@@ -103,7 +98,6 @@ def layout(boxes: list, size: tuple[int, int], safe: float = 0.05, tol: int = 3)
             res["gaps"][name] = {"values": gaps[:20], "min": min(gaps), "max": max(gaps), "spread": max(gaps) - min(gaps)}
     return res
 
-
 def fmt_layout(boxes: list, res: dict, limit: int = 30) -> str:
     lines = [f"{res['count']} elements"]
     for i, b in enumerate(boxes[:limit]):
@@ -120,7 +114,6 @@ def fmt_layout(boxes: list, res: dict, limit: int = 30) -> str:
     for k, g in res["gaps"].items():
         lines.append(f"gaps {k}: min {g['min']} max {g['max']} spread {g['spread']} {g['values']}")
     return "\n".join(lines)
-
 
 def annotate(im: Image.Image, boxes: list, res: dict | None = None) -> Image.Image:
     """Boxes numbered on a copy: green ok, red off-screen/clipped, orange overlap."""
@@ -155,7 +148,6 @@ def contrast(im: Image.Image, box: tuple, large: bool = False) -> dict:
     need = 3.0 if large else 4.5
     return {"box": list(box), "bg": bg, "fg": fg, "ratio": round(r, 2), "need": need, "pass": r >= need}
 
-
 def fmt_contrast(c: dict) -> str:
     hx = lambda v: "none" if v is None else "#%02X%02X%02X" % v
     return f"box {c['box']} text {hx(c['fg'])} on {hx(c['bg'])} ratio {c['ratio']}:1 need {c['need']} -> {'PASS' if c['pass'] else 'FAIL'}" + (f" ({c['note']})" if c.get("note") else "")
@@ -172,7 +164,6 @@ def grid_overlay(im: Image.Image, step: int = 100, color=(255, 255, 0)) -> Image
         d.line((0, y, out.width, y), fill=color + (110,))
         d.text((2, y + 2), str(y), fill=color + (255,))
     return out
-
 
 def zoom(im: Image.Image, box: tuple, factor: int = 4, label: bool = True) -> Image.Image:
     crop = im.convert("RGBA").crop(box)
@@ -221,7 +212,6 @@ def rim(im: Image.Image) -> np.ndarray:
     clear = a < 8
     return (a >= 8) & dilate(clear, 1)
 
-
 def halo(im: Image.Image, hue: float = 310.0, hue_tol: float = 40.0) -> dict:
     """Colour bleed on a keyed picture's rim: share of rim pixels tinted with the plate hue, compared with the
     interior (pixels 3+ px inside), plus a count of leftover bright, saturated plate-coloured opaque pixels anywhere
@@ -241,12 +231,10 @@ def halo(im: Image.Image, hue: float = 310.0, hue_tol: float = 40.0) -> dict:
             "plate_like_px": int(plate_like.sum()), "plate_like_blobs": components(plate_like)[0],
             "mask": tint & r}
 
-
 def fmt_halo(d: dict) -> str:
     verdict = "CLEAN" if d["plate_like_px"] == 0 and d["halo_pct"] <= d["interior_tint_pct"] + 2.0 else "CHECK"
     return (f"rim {d['rim_px']} px | halo (plate-hue rim) {d['halo_px']} px = {d['halo_pct']}% vs interior {d['interior_tint_pct']}% | "
             f"leftover plate-coloured opaque {d['plate_like_px']} px in {d['plate_like_blobs']} blobs -> {verdict}")
-
 
 def edges(im: Image.Image) -> dict:
     """Edge density (share of pixels on a Canny edge); needs OpenCV."""
@@ -269,7 +257,6 @@ def motion(frames: list, tol: int = 8) -> dict:
     pcts = [r["changed_pct"] for r in rows]
     return {"frames": len(frames), "rows": rows, "static": sum(p == 0 for p in pcts), "max_pct": max(pcts, default=0.0),
             "mean_pct": round(sum(pcts) / max(1, len(pcts)), 3)}
-
 
 def fmt_motion(d: dict) -> str:
     lines = [f"{d['frames']} frames | static steps {d['static']}/{len(d['rows'])} | mean {d['mean_pct']}% max {d['max_pct']}%"]

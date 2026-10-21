@@ -25,7 +25,6 @@ from bot_smokes import VERSION as ENGINE_PIN
 CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
 
-
 SKILL_DIR = Path("/home/box/agent-data/workflows")
 SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".cfg", ".html", ".txt", ".shader", ".tres", ".uid")
 TICK = re.compile(r"`([^`\n]+)`")
@@ -34,14 +33,12 @@ NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previo
 ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI must equal bot_smokes.VERSION
 MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
 
-
 def _doc_files(root: Path, tracked: set[str]) -> list[Path]:
     out = [root / n for n in sorted(tracked) if n.endswith(".md") and (n.startswith("design/") or "/" not in n)
            and not n.startswith("design/changelog/")]
     if SKILL_DIR.is_dir():
         out += sorted(SKILL_DIR.glob("*/SKILL.md"))
     return out
-
 
 def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     git = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split("\n")
@@ -91,7 +88,6 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
     return bad, narr
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt (A=Y needs the path allowed; globs and ! denies count).", json_out=True)
     ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers instead of checking the catalog.")
@@ -104,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish("stale-refs", root, "\n".join(bad + narr + [head]), "FAIL" if bad else ("INFO" if narr else "PASS"),
                                 args=args, legacy=False, dead=len(bad), narration=len(narr))
     tools = root / "tools"
-    files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py"}
+    files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py" and not f.name.startswith(".")}  # dotfiles (.gdignore) are not tools
     globs = repo_lib.load_allowlist(root)
     allow = {n for n in files if repo_lib.allowed(f"tools/{n}", globs)}  # honours globs (`tools/*`), `!` denies and exact lines
     exact = {g[len("tools/"):] for g in globs if g.startswith("tools/") and not any(c in g for c in "*?[!")}
@@ -139,7 +135,6 @@ def main(argv: list[str] | None = None) -> int:
         bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
     return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args,
                             legacy=False, tools=len(files), rows=len(rows), problems=len(bad))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

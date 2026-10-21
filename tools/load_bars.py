@@ -48,14 +48,12 @@ SAMPLE = r"""
 })();
 """
 
-
 def _pct(text: str) -> float | None:
     t = text.strip().split("%")[0].split()[-1] if "%" in text else ""
     try:
         return float(t) / 100.0
     except ValueError:
         return None
-
 
 def run(page, url: str, timeout_s: int) -> dict:
     game: list[list] = []
@@ -80,7 +78,6 @@ def run(page, url: str, timeout_s: int) -> dict:
     web = [[r[0] + off, r[1], r[2], r[3], r[4]] for r in lb["rows"]]
     return {"web": web, "web_gone_ms": (lb.get("gone") or 0) + off, "game": game}
 
-
 def problems(run_: dict) -> list[str]:
     out = []
     for name, rows, fi, li in (("web", run_["web"], 1, 2), ("game", run_["game"], 2, 3)):
@@ -102,7 +99,6 @@ def problems(run_: dict) -> list[str]:
             g, at = max(gaps)
             out.append(f"{name}: longest frozen gap {g} ms at {at} ms") if g > 600 else None
     return out
-
 
 def chart(runs: dict, path: Path) -> None:
     from PIL import Image, ImageDraw
@@ -137,7 +133,6 @@ def chart(runs: dict, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     img.save(path)
 
-
 def desktop(root: Path, timeout_s: int) -> dict:
     import shutil
     import subprocess
@@ -164,7 +159,6 @@ def desktop(root: Path, timeout_s: int) -> dict:
         t0 = game[0][0] if game else 0
         runs[name] = {"web": [], "web_gone_ms": 0, "game": [[g[0] - t0] + g[1:] for g in game]}
     return runs
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Chart both loading bars (web landing + in-game) vs time, cold and cached.", json_out=True)
@@ -218,7 +212,6 @@ def main(argv: list[str] | None = None) -> int:
     srv.shutdown()
     return _report(root, args, runs)
 
-
 def _report(root: Path, args, runs: dict) -> int:
     out = root / "_logs" / "load-bars"
     out.mkdir(parents=True, exist_ok=True)
@@ -235,7 +228,6 @@ def _report(root: Path, args, runs: dict) -> int:
     bad = sum(1 for r in runs.values() for p in problems(r) if "longest" not in p)
     return agent_log.finish("load-bars", root, "\n".join(body + ["", f"chart {agent_log.rel(root, out / (args.tag + '.png'))}"]),
                             "FAIL" if bad else "PASS", args=args, problems=bad)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

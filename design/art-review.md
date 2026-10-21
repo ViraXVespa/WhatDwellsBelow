@@ -4,7 +4,6 @@ Status: current plan
 Read when: packing an Animation Browser brief, regen tree, or review ledger  
 Code: `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `scripts/debug/anim_browser.gd`
 
-
 The Animation Browser writes a local ledger at `tools/anim_review/review.json` (editor-only, gitignored). That file is not a game setting and is not part of `SaveStore`.
 
 CLI:

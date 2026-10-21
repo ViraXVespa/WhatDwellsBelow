@@ -49,7 +49,16 @@ static func dress_shelf(button: Button) -> void:
 	UiBuild.button_base(button)
 	UiBuild.ink_text(button)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	UiBuild.states(button, _shelf(0.92, 2), _shelf(0.98, 2), _shelf(0.62, 4), _shelf(0.98, 2), _shelf(0.5, 2))
+	UiBuild.states(button, _shelf(0.92, 2), _shelf(0.98, 2), _shelf(0.62, 4), _focus_ring(), _shelf(0.5, 2))
 
 static func _shelf(lift: float, foot: int) -> StyleBoxTexture:
 	return UiBuild.tex_box(Art.shelf(lift, foot), 8, 6, foot, false, 12, 6)
+
+## Gold focus ring (neutral skin glow), thicker than the default so it reads on the pale shelf.
+static func _focus_ring() -> StyleBoxFlat:
+	var r: StyleBoxFlat = ThemeS.BtnSkin.ring(ThemeS.BtnSkin.palette(BTN_SKIN)).duplicate()
+	r.set_border_width_all(4)
+	r.border_color = Color(0.93, 0.66, 0.16)
+	r.shadow_color = Color(1.0, 0.80, 0.30, 0.65)
+	r.shadow_size = 6
+	return r

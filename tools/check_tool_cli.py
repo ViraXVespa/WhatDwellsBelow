@@ -7,7 +7,8 @@ via agent_log. Libs (`*_lib.py`, agent_log's siblings without a main guard) are 
 
 `--smoke-run` also executes every tool in a throwaway copy of the repo (never the live tree): bad flag and bad
 `--root` must exit 2 with an `error:` line, and each SMOKE case (read-only or `--dry-run` args) must not crash,
-must end in a RESULT line, stay under the line budget, print ASCII and repo-relative paths, and (dry runs) leave
+must end in a RESULT line, stay under the line budget, print ASCII and repo-relative paths, have no console noise
+(debug/progress/banner lines, repeated lines, stderr on success), and (dry runs) leave
 the copy unchanged. The per-run table (rc, lines, seconds) goes to the summary file.
 """
 from __future__ import annotations
@@ -48,6 +49,8 @@ ADVISORY_PS1_OK = ("python",)
 # A case is an arg list, or (arg list, allowed exit codes) when a clean `error:` exit 2 is the right answer in the sandbox.
 _ERR = (0, 1, 2)
 SMOKE: dict[str, list] = {
+    "review_shots": [["--selftest"]],
+    "run_isolated_grok": [["--selftest"]],
     "agent_log": [["smoke-job"], ["--selftest"]],
     "anim_review_pack": [["--dry-run"]], "anim_review_regen": [["--dry-run"]], "anim_review_tree": [["--dry-run"]],
     "archive_prior_changelogs": [["--dry-run"]],
@@ -105,23 +108,39 @@ SMOKE: dict[str, list] = {
     "week_pin": [["--dry-run", "--id", "smoke", "--label", "l", "--desc", "d", "--commit", "abc"], ["--dry-run", "--web", "5"], ["--dry-run", "--build", "6"]],
     "week_start": [["--dry-run"]],
 }
-ABS_ROOT_TOOLS = {"list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary", "check_shot_gaps", "run_shot_flow", "run_godot_import_check"}  # print the absolute root they read
+ABS_ROOT_TOOLS = {"list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary", "check_shot_gaps", "run_shot_flow", "run_godot_import_check"}  # may print a WARN with an absolute path when the scanned root differs
 SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
+TRACKED_GDIGNORE = ("_cache", "_logs", "_old", "_out", "_pages", "_src")  # root tool folders present in every clone
 SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
-PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
+NOISE_PAT = re.compile(r"^(DEBUG|debug:|TRACE)|\r|\d+%\|| ={5,}|^-{10,}$")  # debug prints, progress bars, banners
+STDERR_OK = {"agent_log"}  # stems whose stderr on success is expected
 
+def console_noise(stem: str, rc: int, out: str, err: str) -> list[str]:
+    """Lines that are not the result, a needed status or an actionable error."""
+    found = []
+    lines = out.splitlines()
+    for i, ln in enumerate(lines):
+        if NOISE_PAT.search(ln):
+            found.append(f"noisy line {i + 1}: {ln.strip()[:60]!r}")
+            break
+    dup = [ln for i, ln in enumerate(lines[1:], 1) if ln.strip() and ln == lines[i - 1]]
+    if dup:
+        found.append(f"repeated line {dup[0].strip()[:60]!r}")
+    if rc == 0 and err.strip() and stem not in STDERR_OK:
+        found.append(f"stderr on success: {err.strip().splitlines()[0][:60]!r}")
+    return found
+
+PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
 
 def snapshot(root: Path) -> tuple:
     logs = root / "_logs"
     files = sorted((p.as_posix(), p.stat().st_mtime_ns) for p in logs.rglob("*") if p.is_file()) if logs.is_dir() else []
     return (tuple(repo_lib.git_changed(root) or ()), tuple(files))
 
-
 def classify(src: str) -> str:
     mods = set(re.findall(r"^\s*(?:import|from)\s+(\w+)", src, re.M))
     return "media" if mods & set(MEDIA_IMPORTS) else "ops"
-
 
 def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> None:
     name = path.stem
@@ -181,7 +200,6 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
     if snapshot(root) != before:
         bad.append(f"MUTATE  {path.name}: --help changed files")
 
-
 def make_sandbox(root: Path) -> Path:
     """Copy tracked + untracked-not-ignored files into a temp dir with its own git history."""
     sb = Path(tempfile.mkdtemp(prefix="wdb-smoke-"))
@@ -195,7 +213,6 @@ def make_sandbox(root: Path) -> Path:
     for cmd in (["init", "-q"], ["add", "-A"], ["commit", "-qm", "base"]):
         subprocess.run(git + cmd, cwd=sb, capture_output=True)
     return sb
-
 
 def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], table: list[str]) -> None:
     args, ok_codes = (case[0], case[1]) if isinstance(case, tuple) else (case, (0, 1))
@@ -231,10 +248,14 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         return
     if proc.returncode == 2 and "error:" in err:
         pass  # clean failure with a message
-    elif stem not in SMOKE_NO_RESULT and not last.startswith("RESULT ") and not last.startswith("{"):
+    elif stem not in SMOKE_NO_RESULT and proc.returncode != 0 and not last.startswith("RESULT ") and not last.startswith("{"):
+        # RESULT is required on stdout only when the run failed (exit != 0).
+        # On success an echo may already carry the useful lines, and finish() omits the RESULT line.
         bad.append(f"RESULT  {label}: last line is not RESULT")
     if lines > SMOKE_LINES.get(stem, SMOKE_MAX_LINES) and "--json" not in args:
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
+    for msg in console_noise(stem, proc.returncode, out, err):
+        bad.append(f"CONSOLE {label}: {msg}")
     if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
     if sb.as_posix() in out and "--doctor" not in args and stem not in ABS_ROOT_TOOLS:  # these print the absolute root they scanned / run from  # --doctor echoes the GODOT_BIN pin (a machine path)
@@ -245,7 +266,6 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
             bad.append(f"DRYRUN  {label}: changed files: {status.strip().splitlines()[0][:80]}")
             subprocess.run(["git", "checkout", "-q", "--", "."], cwd=sb)
             subprocess.run(["git", "clean", "-qfd"], cwd=sb)
-
 
 def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, list[str]]:
     sb = make_sandbox(root)
@@ -280,7 +300,6 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
             shutil.rmtree(sb, ignore_errors=True)
     return tools, runs, table
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
     ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable).")
@@ -294,6 +313,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.only and path.stem not in args.only:
             continue
         check_py(root, path, bad, tally)
+    bad += [f"{d}: root underscore folder without .gdignore (Godot would import and pack it; any agent_log run adds it)"
+            for d in agent_log.gdignore_underscore(root, fix=False)]
+    tracked = set(subprocess.run(["git", "ls-files", "-z", "--", "_*/.gdignore"], cwd=root, capture_output=True, text=True).stdout.split("\0"))
+    bad += [f"{d}/.gdignore: not tracked (fresh clones would lack it)" for d in TRACKED_GDIGNORE if f"{d}/.gdignore" not in tracked]
     smoke: dict = {}
     table: list[str] = []
     if args.smoke_run:
@@ -303,7 +326,6 @@ def main(argv: list[str] | None = None) -> int:
     status = "FAIL" if bad else "PASS"
     return agent_log.finish("tool-cli", root, "\n".join(lines + table), status, args=args, echo="\n".join(lines),
                             checked=tally["checked"], problems=len(bad), **smoke)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

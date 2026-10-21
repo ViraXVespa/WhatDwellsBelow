@@ -32,6 +32,8 @@ static func to_meta(p: Object) -> Dictionary:
 		"bank_items": p.bank_items.duplicate(true),
 		"quest_active": p.quest_active.duplicate(true),
 		"quests_offered": p.quests_offered.duplicate(true),
+		"quest_pinned": p.quest_pinned.duplicate(true),
+		"quest_delved": p.quest_delved,
 		"forge_count": p.forge_count,
 		"hold_pick": p.hold_pick.duplicate(),
 		"starters": starters_of(p),
@@ -71,6 +73,12 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 	var qo: Variant = d.get("quests_offered", [])
 	if qo is Array:
 		p.quests_offered = (qo as Array).duplicate(true)
+	var qp: Variant = d.get("quest_pinned", [])
+	if qp is Array:
+		p.quest_pinned = (qp as Array).duplicate(true)
+	else:
+		p.quest_pinned = []
+	p.quest_delved = bool(d.get("quest_delved", false))
 	p.forge_count = int(d.get("forge_count", 0))
 	var hpicks: Variant = d.get("hold_pick", {})
 	if hpicks is Dictionary:

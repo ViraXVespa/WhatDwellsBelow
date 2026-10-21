@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: classic_2d entry, snapshot tags, week pins, the week-close archive workflow
 
-
 ## Selectable builds
 
 Title **Play** always launches live.

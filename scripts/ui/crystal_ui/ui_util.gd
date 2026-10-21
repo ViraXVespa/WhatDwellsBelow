@@ -1,7 +1,5 @@
 extends Object
 
-const Plate := preload("res://scripts/ui/plate_chrome.gd")
-const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const CrystalArt: GDScript = preload("res://scripts/ui/progress_ui/crystal_art.gd")
 const CrystalFrame: GDScript = preload("res://scripts/ui/progress_ui/crystal_frame.gd")
 

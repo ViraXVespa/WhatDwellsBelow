@@ -1,7 +1,7 @@
 extends RefCounted
 
-const Smoke := preload("res://scripts/debug/smoke.gd")
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 static func _place() -> GDScript:
 	return load("res://scripts/world/dungeon_props/props_place.gd") as GDScript
 
@@ -37,7 +37,7 @@ static func ensure_world(host: Node) -> void:
 		_fac.place_one(host, "campfire", prefer)
 	if int(host.counts.get("shrine", 0)) < 1:
 		_fac.place_one(host, "shrine", prefer)
-	if int(host.counts.get("shop", 0)) < 1 and Smoke.phase(5):
+	if int(host.counts.get("shop", 0)) < 1 and Dbg.smoke_phase(5):
 		_fac.place_one(host, "shop", prefer)
 	if int(host.counts.get("puzzle", 0)) < 1:
 		var pr := {}
@@ -64,7 +64,7 @@ static func ensure_world(host: Node) -> void:
 			_place().spawn_puzzle(host, pr)
 
 static func _eager(host: Node) -> bool:
-	return bool(host.stream_all) or Smoke.phase(5)
+	return bool(host.stream_all) or Dbg.smoke_phase(5)
 
 static func _queue(host: Node, kind: String, cell: Vector2i, room: Dictionary = {}) -> void:
 	host.prop_jobs.append({"kind": kind, "cell": cell, "room": room, "state": "pending"})

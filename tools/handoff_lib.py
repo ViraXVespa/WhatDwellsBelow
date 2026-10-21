@@ -5,8 +5,8 @@ defaults to the door), and stops.
 `python tools/start_build_slice.py --handoff` writes the skeleton, then validates the filled file and prints the one command she runs from the
 main checkout: `python tools/open_slice.py AREA --prompt-file PATH`. The file becomes the first message of a NEW session, whose first command
 `start_build_slice.py --door D --from-handoff PATH` prints a compact start summary and points the file's first command at `--from-task ID`, so
-the committed task resumes from any checkout. This is not the checkpoint: `--checkpoint` saves the id of an
-implementation session so a red prove can fork it; the handoff moves a survey into a fresh implementation session.
+the committed task resumes from any checkout. It is not the retry point (that is the implementation session's original session ID,
+forked after `/fork` at the end of Gather); the handoff moves a survey into a fresh implementation session.
 The fresh worktree is cut from the week branch, so survey-session edits to shot-flow files and the routes.yaml mapping are saved to
 `_logs/handoff/survey-edits/` (the task file with them) and put back by `--from-handoff` (a file that differs is only listed when the week branch moved).
 """
@@ -35,7 +35,6 @@ SECTIONS = [
     ("Open questions", "<fill or none>"),
 ]
 
-
 def task_id(root: Path, task: str = "") -> str:
     """The handoff's task id: given, else the slice state's task, else its door."""
     if task:
@@ -46,10 +45,8 @@ def task_id(root: Path, task: str = "") -> str:
         st = {}
     return str(st.get("task") or st.get("door") or "")
 
-
 def handoff_path(root: Path, task: str = "") -> Path:
     return task_lib.task_path(root, task_id(root, task) or "handoff")
-
 
 def edits_dir(handoff: Path) -> Path:
     """Where a handoff's survey edits live: <survey root>/_logs/handoff/survey-edits (an old _logs handoff kept them beside itself)."""
@@ -57,18 +54,15 @@ def edits_dir(handoff: Path) -> Path:
         return handoff.parents[2] / EDITS_REL
     return handoff.parent / "survey-edits"
 
-
 def from_task_cmd(door: str, tid: str, job: str = "") -> str:
     """User starts with open_slice; Build resumes with start_build_slice --job door.job."""
     if job and "." in job:
         return f"python tools/open_slice.py {job} --task {tid}"
     return f"python tools/open_slice.py {door or '<door>'} --task {tid}"
 
-
 def _git(root: Path, *a: str) -> str:
     p = subprocess.run(["git", *a], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return p.stdout.strip() if p.returncode == 0 else ""
-
 
 def skeleton(root: Path, area: str, door: str, job: str, session: str = "", units: list[str] | None = None, done: list[str] | None = None, task: str = "") -> str:
     path = handoff_path(root, task)
@@ -85,7 +79,6 @@ def skeleton(root: Path, area: str, door: str, job: str, session: str = "", unit
     for title, hint in SECTIONS:
         body += [f"## {title}", hint, ""]
     return "\n".join(head + body)
-
 
 def parse(text: str) -> tuple[dict[str, str], dict[str, str]]:
     """(header key -> value, section title -> body)"""
@@ -104,7 +97,6 @@ def parse(text: str) -> tuple[dict[str, str], dict[str, str]]:
             secs[cur] += line + "\n"
     return head, {k: v.strip() for k, v in secs.items()}
 
-
 def baselines(root: Path, body: str) -> list[tuple[str, bool, str]]:
     """(path, exists, note) per non-empty line of the baselines section; the note follows ' - ' or an em dash."""
     out = []
@@ -117,7 +109,6 @@ def baselines(root: Path, body: str) -> list[tuple[str, bool, str]]:
         q = Path(p)
         out.append((p, (q if q.is_absolute() else root / q).is_file(), note))
     return out
-
 
 def code_names(root: Path, body: str) -> list[str]:
     """Problems with `path: name, name` lines of the Files and functions section: the file must exist, and each plain identifier listed must be in it (a func, const or var)."""
@@ -136,7 +127,6 @@ def code_names(root: Path, body: str) -> list[str]:
             if re.fullmatch(r"[A-Za-z_]\w*", name) and not re.search(r"\b%s\b" % re.escape(name), src):
                 bad.append(f"Files and functions: {m.group(1)} has no {name}")
     return bad
-
 
 def check(root: Path, text: str) -> list[str]:
     """Problems that stop the handoff from being ready."""
@@ -165,7 +155,6 @@ def check(root: Path, text: str) -> list[str]:
             bad.append(f"baseline has no one-line description: {p}")
     return bad
 
-
 def survey_edits(root: Path) -> list[str]:
     """Changed or new paths outside _logs/ (what the fresh worktree will not have)."""
     p = subprocess.run(["git", "status", "--porcelain=v1", "-uall"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -179,12 +168,10 @@ def survey_edits(root: Path) -> list[str]:
             paths.append(p)
     return paths
 
-
 def sidecars(paths: list[str]) -> tuple[list[str], int]:
     """(paths without Godot `.import` sidecars, how many sidecars there were): the sidecars are import churn, so they are counted, not listed."""
     keep = [p for p in paths if not p.endswith(".import")]
     return keep, len(paths) - len(keep)
-
 
 def save_edits(root: Path) -> tuple[list[str], list[str]]:
     """Copy the carried survey edits (the task file too) to _logs/handoff/survey-edits; returns (saved, not_carried)."""
@@ -203,7 +190,6 @@ def save_edits(root: Path) -> tuple[list[str], list[str]]:
     if saved:
         (dest / "base.txt").write_text(_git(root, "rev-parse", "HEAD") + "\n", encoding="utf-8")
     return saved, other
-
 
 def restore_edits(handoff: Path, root: Path) -> list[str]:
     """Put the saved survey edits into this (fresh) worktree: new files always; a file that exists is replaced only when HEAD is the survey's base."""
@@ -225,10 +211,8 @@ def restore_edits(handoff: Path, root: Path) -> list[str]:
             lines.append(f"DIFFERS, not copied (the week branch moved since the survey): {rel}; the survey's copy is {f}")
     return lines
 
-
 def command(root: Path, area: str, path: Path) -> str:
     return f'python tools/open_slice.py {area} --prompt-file "{path}"'
-
 
 def start_block(root: Path, path: Path, queue: bool = False, restore: bool = True) -> list[str]:
     """What a fresh session prints for --from-handoff: where it came from and what to open; the full text is already its first message."""
@@ -237,25 +221,34 @@ def start_block(root: Path, path: Path, queue: bool = False, restore: bool = Tru
     except OSError as exc:
         return [f"HANDOFF: cannot read {path} ({exc}). Ask the User; do not re-run the survey."]
     head, secs = parse(text)
-    lines = [f"HANDOFF from {path}: survey done. area={head.get('area', '')} door={head.get('door', '')} job={head.get('job', '')}",
-             "Do not re-run the survey and do not open pictures other than the baselines below. Q0 answers, decisions and the ledger are in the handoff; they stand."]
-    if head.get("units"):
-        units = [u.strip() for u in head["units"].split(",") if u.strip()]
-        done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
-        cur = next((u for u in units if u not in done), "")
+    units = [u.strip() for u in head.get("units", "").split(",") if u.strip()]
+    done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
+    cur = next((u for u in units if u not in done), "")
+    survey = restore and text.lstrip().startswith("# Handoff:")  # a fresh session straight from a survey's --handoff
+    where = f"area={head.get('area', '')} door={head.get('door', '')} job={head.get('job', '')}"
+    if survey:
+        lines = [f"HANDOFF from {path}: survey done. {where}",
+                 "Do not re-run the survey and do not open pictures other than the baselines below. Q0 answers, decisions and the ledger are in the handoff; they stand."]
+    elif units:
+        pos = f"unit {units.index(cur) + 1} of {len(units)} ({cur})" if cur else f"all {len(units)} units done"
+        lines = [f"RESUMING UNIT QUEUE from task {path.stem} ({path}): {pos}. {where}",
+                 "Its decisions and notes stand; finished units are not redone. Open only the baselines below."]
+    else:
+        lines = [f"RESUMING TASK {path.stem} ({path}). {where}",
+                 "Its decisions and notes stand; do not re-run a survey. Open only the baselines below."]
+    if units:
         lines.append(f"Units, her order: {', '.join(units)}. Done: {', '.join(done) or 'none'}. Current: {cur or 'all done'}. "
-                     "After a unit is committed and shown, `python tools/start_build_slice.py --next` prints the next unit's card (no new survey).")
+                     "Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot. At each unit's Complete `python tools/start_build_slice.py --unit-done` marks it done (no new survey).")
     for title in (() if queue else ("Chosen surfaces, in order", "Files and functions to touch", "Did not work", "Open questions")):  # a queue: those sections are in the first message already
         lines.append(f"{title}: " + " | ".join(l.strip().lstrip("-* ") for l in secs.get(title, "").splitlines() if l.strip()))
     bl = baselines(root, secs.get("Baselines for the chosen surface", ""))
     lines.append("Open these baselines (only these): " + ("; ".join(f"{p}{'' if ok else ' (MISSING: re-shoot it)'} - {n}" for p, ok, n in bl)
                                                            or "none listed (the Baselines section names the flows to shoot)"))
     lines += restore_edits(path, root) if restore else []
-    bad = check(root, text)
+    bad = check(root, text) if text.lstrip().startswith("# Handoff:") else []
     if bad:
         lines.append("HANDOFF problems: " + "; ".join(bad))
     return lines
-
 
 def selftest(script: Path) -> list[str]:
     """Handoff cases for start_build_slice.py --selftest; returns the failures."""
@@ -356,7 +349,7 @@ def selftest(script: Path) -> list[str]:
         if not (fresh / "tools" / "shot-flows" / "new-flow.json").is_file() or not (fresh / "design" / "tasks" / "ui.md").is_file():
             bad.append("the survey's flow file and task file must exist in the fresh worktree")
         code, out = run(fresh, "--door", "ui", "--from-task", "ui", "--dry-run")
-        if code != 0 or "HANDOFF from" not in out or "restored" in out:
+        if code != 0 or "RESUMING TASK ui" not in out or "HANDOFF from" in out or "survey done" in out or "restored" in out:
             bad.append(f"--from-task ID must print the summary from design/tasks/ID.md without restoring survey edits (code={code})")
         code, out = run(fresh, "--door", "ui", "--from-task", "nope", "--dry-run")
         if code == 0:

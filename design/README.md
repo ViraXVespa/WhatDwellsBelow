@@ -7,7 +7,7 @@ This folder is the documentation database for humans and agents.
 It is not one design monolith. It is not a boot file.
 Never open `notes/` from an agent path.
 
-`docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`, not stored in `docs/` on `main`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
+Pages is built in CI (`.github/workflows/pages.yml`); local exports go to untracked `_out/web/`. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
 
 `_logs/` holds local agent tool summaries (and optional Bot sweep notes). It is gitignored. Do not store design there and do not commit it. Tool catalog: `design/tools.md` (Build runner habits: `design/pc-offload.md`).
 
@@ -17,7 +17,7 @@ Boot and path procedure live in `AGENTS.md` and that path’s session file.
 
 This file is the **topic index** only. Do not open this file’s topic table “for context.” Live-path rows stay on the code map when a live file is needed. Routing edges: load-graph sketch when the User names routing work.
 
-Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update matching file in the same slice. After a live script split, update the live code map in the same slice.
+Open only the topic files that match the requested work. Numbers: `design/tunables.md`. After a behavior change, update matching file in the same slice. After a live script split, update the live code map in the same slice.
 
 Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 
@@ -30,7 +30,6 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Marker | Meaning |
 |--------|---------|
 | Current plan | The road we are building: what the game does today by design. The User can change it; `must` / `may` in a topic describe this plan. |
-| Live snapshot | What the current live path actually does |
 | Protocol | How agents work; its hard rules stay firm |
 
 ## Topic map
@@ -63,12 +62,10 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Suggested starts + live defaults | `tunables.md` |
 Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
 
-
 ## House rules for editing these files
 
 - Keep one concern per file.
 - Put numbers in `tunables.md`, not buried in paragraphs.
-- Mark live-only behavior under **Live snapshot**.
 - Do not collapse `design/` into one document.
 - When live scripts are split, update `design/code-map.md` in the same slice.
 - Do not treat `design/reuse-map.md` as an owners encyclopedia. Web / chat writes that brief; Bot does not log extracts there.

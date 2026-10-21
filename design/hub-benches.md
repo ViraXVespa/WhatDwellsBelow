@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: ore-for-gold stall, dumpster flavor, plaza_tarp host
 
-
 ## Anvil
 - Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.
 - Potion and Food slots are disabled on this board.

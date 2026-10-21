@@ -21,6 +21,8 @@ const ARTS: Array[String] = [
 	"res://scripts/ui/progress_ui/crystal_art.gd",
 	"res://scripts/ui/progress_ui/extract_art.gd",
 	"res://scripts/ui/progress_ui/shop_art.gd",
+	"res://scripts/ui/progress_ui/receptionist_art.gd",
+	"res://scripts/ui/progress_ui/guide_art.gd",
 ]
 
 ## True while baking: pictures are drawn in code instead of loaded.

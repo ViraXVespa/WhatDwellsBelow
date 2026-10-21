@@ -15,7 +15,7 @@ records trust for the source checkout, and the new session then loads no Agents.
 With AREA (a routes.yaml door, door.job, or a free name) the area is resolved first; a visual slice with no shot_flows prints a STEP 0
 note (creating the flow is the first job step, not a stop) and the launch continues. Without AREA there are no checks: Build runs
 start_build_slice.py inside the worktree.
---task ID reads design/tasks/ID.md: with no prompt given it writes a short first message (the start command for AREA, then `task.py show ID`; read that file whole).
+--task ID reads design/tasks/ID.md (AREA defaults to its `resume:` line): with no prompt given it writes a short first message (`start_build_slice.py --job|--door AREA --task ID`, then `task.py show ID`; read that file whole).
 `_src` is in the repo, so the worktree already has it. `needs-local` is retired: a task that still sets it fails loudly and nothing is linked.
 This is the only tool that launches grok for a Build slice (the isolated-media runner is the other launcher, under its own gate).
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
@@ -40,26 +40,21 @@ import task_lib
 
 BANNED = ("--fork-session", "--max-turns", "--prompt-file", "-p")
 
-
 def show(argv: list[str]) -> str:
     import shlex
 
     return subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
 
-
 def create_argv(grok: str, name: str, ref: str) -> list[str]:
     return [grok, "worktree", "create", name, "--ref", ref]
-
 
 def session_argv(grok: str, wt: str, prompt: str) -> list[str]:
     """Trust this folder. `grok --worktree --trust` trusts the source checkout, not the new one."""
     return [grok, "--cwd", wt, "--trust"] + ([prompt] if prompt else [])
 
-
 def task_prompt(tid: str, path: str, area: str) -> str:
-    start = (f"python tools/start_build_slice.py {'--job' if '.' in area else '--door'} {area}, then " if area else "") + f"python tools/task.py show {tid}"
+    start = f"python tools/start_build_slice.py {task_lib.start_flag(area)} {area} --task {tid}, then python tools/task.py show {tid}"
     return f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole."
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Start grok in a new worktree from the week branch (user-run launcher).", writes=True)
@@ -101,6 +96,11 @@ def main(argv: list[str] | None = None) -> int:
             return end(f"NO TASK {args.task}: open tasks are `python tools/task.py list`.", "FAIL", route="no-task")
         if task_lib.split(t.get("needs-local", "")):
             return end("DO NOT LINK: needs-local is retired. _src is in the repo, so a worktree already has it. Remove needs-local from the task and rerun.", "FAIL", route="no-link")
+        if not area:
+            area = task_lib.resume_area(t)
+            if not area:
+                return end(f"NO AREA for task {args.task}: its `resume:` line names no door or door.job (`python tools/task.py check`).", "FAIL", route="no-area")
+            _, _, _, note = slice_lib.slice_check(root, area)
         prompt = prompt or task_prompt(args.task.strip(), t["path"], area)
         if subprocess.run(["git", "cat-file", "-e", f"{ref}:{t['path']}"], cwd=root, capture_output=True).returncode != 0:
             note = (note + "\n" if note else "") + f"WARN: {t['path']} is not on {ref}, so the new worktree will not have it. Merge main into {ref} first, or pass --ref."
@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         if head.get("units"):
             us = [u.strip() for u in head["units"].split(",") if u.strip()]
             dn = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
-            hand_note += f"; unit queue {len(us)} (done {len(dn)}), next = {next((u for u in us if u not in dn), 'none')}; the session walks it with start_build_slice.py --next"
+            hand_note += f"; unit queue {len(us)} (done {len(dn)}), next = {next((u for u in us if u not in dn), 'none')}; finish what fits, --unit-done after each unit"
     if prompt.startswith("-") or len(prompt) > 30000:
         return end("BAD PROMPT: it must not start with '-' (grok would read a flag) and must fit on a command line. Shorten it or start blank.", "FAIL", route="bad-prompt")
     slug = re.sub(r"[^a-z0-9._-]+", "-", (area or "slice").lower()).strip("-")[:48].strip("-") or "slice"
@@ -154,7 +154,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: launch failed ({exc}). Copy and run: {show(cmd)}", file=sys.stderr)
         return 1
     return 0
-
 
 def selftest(script: Path) -> int:
     """Dry-run cases in a throwaway repo; the one non-dry case runs with an empty PATH, so grok cannot start."""
@@ -243,7 +242,6 @@ def selftest(script: Path) -> int:
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

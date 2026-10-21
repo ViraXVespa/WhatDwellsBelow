@@ -6,7 +6,6 @@ const Binds := preload("res://scripts/input/binds.gd")
 const Table := preload("res://scripts/input/binds/table.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Pad := preload("res://scripts/input/pad.gd")
-const BindsPage := preload("res://scripts/ui/binds_page.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 

@@ -8,7 +8,7 @@ is fine. --headless (or no display and no xvfb-run) forces the headless driver. 
 (day gradient, cast skirts, blur: all CPU), saved as is. shadow_px=0 is a FAIL in either mode (no box cast: the Layout
 did not realize). After a bake, review the shots, then paste RESULT stamp= into HUB_BAKE_STAMP (hub_bake.gd): the game
 loads only a png with that stamp and crashes at the hub otherwise (check_hub_bake.py is the no-Godot check).
-Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
+Then bakes assets/baked/ground_wear.png (bake_ground_wear.py; same bytes each run). Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
 Summary: _logs/bake-camp/<stamp>-bake-camp.txt; RESULT carries clean=, shadow_px=, stamp=, display=.
 """
 from __future__ import annotations
@@ -22,7 +22,6 @@ import agent_log
 import godot_lib
 
 GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"]
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
@@ -43,6 +42,9 @@ def main(argv: list[str] | None = None) -> int:
     stamps = [m.group(1) for h in hits for m in [re.search(r"stamp=([0-9a-f]+)", h)] if m]
     stamp = stamps[-1] if stamps else "none"
     clean = r["status"] == "EXIT=0" and not hard
+    import bake_ground_wear
+    if bake_ground_wear.main(["--root", str(root)]) != 0:
+        clean = False
     status = "PASS" if clean else "FAIL"
     if clean and shadow == 0:
         status = "FAIL"
@@ -50,7 +52,6 @@ def main(argv: list[str] | None = None) -> int:
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("bake-camp", root, "\n".join(body), status, args=args,
                             clean=str(clean).lower(), shadow_px=shadow, stamp=stamp, display=kind)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

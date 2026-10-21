@@ -1,8 +1,9 @@
 extends Object
 
 ## Hub menus open in one frame. Two parts, both before the hub loader lifts:
-## start() (title screen, then Play): a worker thread loads every object frame's baked art PNGs once (cached by
-##   each *_art.gd) and the progress panel scripts load threaded.
+## start() (title screen, then Play): every object frame's baked art PNG and the progress panel scripts load
+##   threaded (ResourceLoader; a load() inside a WorkerThreadPool task leaks its load token at exit), and wait()
+##   builds each frame skin once on the main thread from those cached PNGs (cached by each *_art.gd).
 ## finish(scene): makes the hub's menu host, then opens the heavy menus once under the solid loader so fonts,
 ##   frame art and the gear board are on the GPU, and closes them without saving or sounds.
 ## A new menu, tab or object frame: add its row to open_timing.gd first; if its first open is over the budget,
@@ -14,18 +15,28 @@ const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const HOST_PATH := "res://scripts/ui/progress_ui.gd"
 const FRAME_SET := "res://scripts/ui/progress_ui/frame_set.gd"
 
+const ART_DIR := "res://assets/ui/frames/"
+
 static var _task: int = -1
+static var _art: PackedStringArray = PackedStringArray()
 
 static func start() -> void:
 	if _task != -1:
 		return
-	ResourceLoader.load_threaded_request(HOST_PATH)
 	BtnSkin.prewarm()
-	## Web builds have no threads: the art is drawn by finish(), still behind the loader.
+	## A nothreads web export never finishes load_threaded_request: status stays
+	## IN_PROGRESS and load_threaded_get spins on the main thread. finish() draws
+	## the art on that build, still behind the loader. Desktop loads the PNGs threaded.
 	if not OS.has_feature("threads"):
 		_task = -2
 		return
-	_task = WorkerThreadPool.add_task(_draw_art, true, "ui art")
+	ResourceLoader.load_threaded_request(HOST_PATH)
+	for dir: String in ResourceLoader.list_directory(ART_DIR):
+		for f: String in ResourceLoader.list_directory(ART_DIR + dir):
+			if f.ends_with(".png"):
+				_art.append(ART_DIR + dir + f)
+				ResourceLoader.load_threaded_request(_art[-1])
+	_task = 1
 
 static func _draw_art() -> void:
 	var skins: Array = (load(FRAME_SET) as GDScript).get("SKINS")
@@ -36,8 +47,16 @@ static func _draw_art() -> void:
 
 static func wait() -> void:
 	if _task >= 0:
-		WorkerThreadPool.wait_for_task_completion(_task)
+		var held: Array[Resource] = []
+		for p: String in _art:
+			if ResourceLoader.load_threaded_get_status(p) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+				held.append(ResourceLoader.load_threaded_get(p))
+		_art.clear()
+		_draw_art()
 		_task = -2
+	if not OS.has_feature("threads"):
+		ResourceLoader.load(HOST_PATH)
+		return
 	if ResourceLoader.load_threaded_get_status(HOST_PATH) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
 		ResourceLoader.load_threaded_get(HOST_PATH)
 

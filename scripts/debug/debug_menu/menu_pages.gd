@@ -39,6 +39,7 @@ static func page_anim(host) -> void:
 	host.root_box.add_child(host._btn("Open Animation Browser", func(): open_anim(host)))
 
 static func open_anim(_host) -> void:
+	App.ensure_anim_browser()
 	if App.anim_browser and App.anim_browser.has_method("open_browser"):
 		App.anim_browser.open_browser()
 

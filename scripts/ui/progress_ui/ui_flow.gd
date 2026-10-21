@@ -1,5 +1,6 @@
 extends Object
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
@@ -10,7 +11,10 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
+const ScrollBox: GDScript = preload("res://scripts/ui/scroll_box.gd")
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
+const ScrollCue: GDScript = preload("res://scripts/ui/scroll_cue.gd")
+const Reception := preload("res://scripts/ui/progress_ui/receptionist.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -27,8 +31,11 @@ static func _ready(host: CanvasLayer) -> void:
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.add_theme_constant_override("separation", 8)
 	scroll.add_child(host.box)
+	ScrollCue.attach(scroll)
+	ScrollBox.make_tip(host)
 
 static func close_ui(host: CanvasLayer) -> void:
+	Dbg.hitch("ui_close_" + str(host.mode))
 	if host.mode == "extract" and host.extract_mailed and host.extract_spot and is_instance_valid(host.extract_spot) and host.extract_spot.has_method("mark_spent"):
 		host.extract_spot.mark_spent()
 	host.extract_spot = null
@@ -162,7 +169,10 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 			host._st(App.tr("common.forge_cancelled_materials_stay_s"))
 		else:
 			App.sfx("ui_cancel")
-			host.close_ui()
+			if (str(host.mode) == "receptionist" or str(host.mode) == "guide") and Reception.back(host):
+				pass
+			else:
+				host.close_ui()
 		host.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		host.get_viewport().set_input_as_handled()

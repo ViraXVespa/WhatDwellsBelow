@@ -3,13 +3,13 @@
 Status: current plan  
 Read when: Analyze Forge bumpers, verbs, deferred teardown, script map  
 
-
 ## Anvil tabs
 
 - Analyze / Forge tabs sit in the Anvil footer.
 - The current tab is **highlighted**, not disabled. Match the pause tab: deeper paper and an ink underline (`anvil_view` paint-on).
 - LB / RB (and the on-screen tab glyphs) cycle Analyze ↔ Forge.
 - Switching tabs rebuilds the board and clears the forge draft (type, rarity, level, locks, pending roll, in-flight job). It does not call a missing helper to do that rebuild — the host `_rebuild_anvil` + `_show` path is the refresh.
+- `ui.tab` may be a string (`analyze` / `forge`) on Anvil; `tip.gd` placement MUST NOT `int()` that field.
 
 ## Slot actions
 
@@ -31,21 +31,3 @@ Weapon and tool cannot be dropped, destroyed, or emptied. Mouse click MUST NOT a
 ## Focus and pause
 
 Both hosts MUST pause the tree while open so Esc cannot fall through. While the submenu is open, background controls lose focus. Clicks and confirm on submenu rows MUST reach those buttons; the host MUST NOT mark every event handled just because the submenu is open. Teardown of the submenu is deferred so a row is not freed mid-`pressed`. Rebuilds MUST restore the last Forge control (`forge_focus` / current rarity) and MUST NOT snap to Green when the player is on Blue. Salvage checkbox rebuilds MUST restore focus on that checkbox, not the top of Pause.
-
-## Live snapshot — scripts
-
-- `menu_pad.gd` — shared confirm / back / tab / stats-page classifiers
-- `step_row.gd` — shared minus / value / plus stepper (Floor Crystal level, Forge item level, Forge quantity)
-- `gear_board.gd` — board facade: doll layout, bag grid, pending kit apply; Anvil disables potion / food
-- `board_build.gd` — title, stats card, slot / bag cell widgets
-- `gear_icons.gd` — icon paths, rarity fill, risk border
-- `floor.gd` — loadout floor row, stepper disable / neighbors, Enter-first focus
-- `tip.gd` — flyout host and placement. `ui.tab` may be a string (`analyze` / `forge`) on Anvil; placement MUST NOT `int()` that field
-- `board_text.gd` — slot / item labels, tooltip copy; option lists via `opts.gd`
-- `stats.gd` — paged stats card copy via `gear_stat`
-- `board_act.gd` — drop / destroy / paging / enter / input; Forge Back routes to cancel / keep-old
-- `board_sub.gd` — re-equip and Anvil Analyze lists; Forge tab hands the body to `anvil_forge.gd`
-- `anvil.gd` — Analyze apply; tab cycle
-- `anvil_view.gd` — Analyze / Forge tab chrome and short footer copy
-- `anvil_forge.gd` — Forge configurator, work bar, results pick-three
-- Pause tab 1 (Inventory) and `progress_ui` loadout/inv/anvil all call `Board.build`

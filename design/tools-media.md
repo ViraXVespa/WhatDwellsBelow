@@ -16,6 +16,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `anim_review_tree.py` | Build a wiped I2V test tree for every Regenerate clip in review.json | D | `--help` | N |
 | `attack_keyframes.py` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
 | `attack_keyframes_log.json` | Sidecar data for the tool of the same stem | D | - | N |
+| `bible_normalize.py` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
 | `bible_prompt.py` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
 | `gen_prompt_glyphs.py` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
 | `harvest_walk.py` | Extract evenly spaced walk frames from I2V clips (Section 19) | D | `--help` | N |
@@ -40,13 +41,13 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `process_sprites.py` | process_sprites.py | D | `--help` | N |
 | `process_world.py` | process_world.py | D | `--help` | N |
 | `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
-| `keytest.py` | Retired. `assets/keytest` is gone; source plates live under `_src`. Not in the batch gate. | BD | `--help` | N |
-| `keytest_expect.json` | Old expected numbers for `assets/keytest`. Kept beside the retired checker. | D | - | N |
+| `keytest.py` | Golden-set keying regression: truth mattes in `_src/truth` keyed again from a drifting JPEG plate (alpha error, area, edge, halo, interior detail, repeat); sheets in `_logs/keytest/`. Summary: `keytest`. | BD | `--help` | N |
+| `keytest_expect.json` | Limits for `keytest.py` (`default` plus per-name overrides). | D | - | N |
 | `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
-| `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: approved rows reproduce live). Summary: `rekey-all-stills`. | D | `--help` | N |
+| `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
 | `rekey_check.py` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
-| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |
+| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job (`--kind ui`: generic UI still with the staged UI style; `--kind npc`: NPC redesign; `--aspect`; `--selftest` mocks grok) | D | `--help` | N |
 | `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
 | `sprite_pipeline.py` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
 
@@ -58,13 +59,17 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 |---|---|---|---|---|
 | `img_inspect.py` | Programmatic eyes, text facts plus optional PNG: `describe`, `layout` (off-screen, clipped, overlap, safe area, alignment, gaps; `--box` for node rects), `contrast` (WCAG per `--box`), `grid`, `zoom`, `diff` (heatmap, regions, `--mask`, `--max-ratio`), `montage`, `find` (template), `halo` (rim tint, leftover plate), `rimclean` (re-key a rim with `--refs`), `motion` (frame to frame), `selftest` | BWD | `--help` | N |
 | `requirements.txt` | Pip deps for the image tools | BWD | - | Y |
+| `requirements-ml.txt` | Optional torch + einops for the `bible_normalize.py` denoise (`imglib/scunet.py`) | D | - | N |
 
 | Module | Owns |
 |---|---|
 | `imglib/imgio.py` | `load` / `save`, numpy round trip, `MAGENTA`, `hex_of` (named `imgio`, not `io`, to keep stdlib names free) |
-| `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis` (crop, then scale to a width or height) |
+| `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis`, `fit_like`; `resize_rgba` (nearest up, one premultiplied box down), `shrink_art` (box edge band, exact interior), `alpha_policy` (soft / crisp / hard), `detect_grid` |
 | `imglib/color.py` | Lab distance, hue, `background_refs`, `palette`, WCAG `contrast_ratio` |
 | `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `strip_rim`; `key_to_alpha` / `punch` call `matte` |
-| `imglib/matte.py` | the staged keyer: chroma denoise, per-image plate, trimap (background / ring / glow / solid), unmix, edge despill; `key(im, debug=DIR)` dumps each stage |
+| `imglib/band.py` | edge band for `shrink_art`: 2 px, wider along a detected glow ramp |
+| `imglib/overlay.py` | post-key pixel text (5x7 font); manifest `"overlay"` rows (the welcome banner) are drawn by `rekey_all_stills` every run, centred on the detected cloth |
+| `imglib/matte.py` | the keyer: clean plate B(x), trimap, one alpha solve, decontaminate F = (I - (1-a)B)/a; `key(im, debug=DIR)` dumps each stage |
 | `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
 | `imglib/look.py` | the `img_inspect.py` checks as functions |
+| `imglib/scunet.py` | Optional SCUNet denoiser (vendored cszn/SCUNet, Apache-2.0); weights downloaded to `_cache/models/` with pinned sha256; needs `requirements-ml.txt` |

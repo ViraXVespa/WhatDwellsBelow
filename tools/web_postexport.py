@@ -24,7 +24,6 @@ DATA_FETCH = (
     "}});\n"
 )
 
-
 def _label(root: pathlib.Path) -> str:
     path = root / "scripts" / "data" / "version.json"
     if not path.is_file():
@@ -35,7 +34,6 @@ def _label(root: pathlib.Path) -> str:
         return "dev"
     label = str(data.get("label") or "").strip()
     return label if label else "dev"
-
 
 def _binary_id(out_dir: pathlib.Path) -> str:
     digest = hashlib.sha256()
@@ -51,10 +49,8 @@ def _binary_id(out_dir: pathlib.Path) -> str:
         return digest.hexdigest()[:16]
     return _label(pathlib.Path(__file__).resolve().parents[1])
 
-
 def _assign_build_id(build_id: str) -> str:
     return "window.__wdbBuildId=%s;" % json.dumps(build_id)
-
 
 def _ensure_notes_script(html: str) -> str:
     if "data/notes.js" in html:
@@ -63,7 +59,6 @@ def _ensure_notes_script(html: str) -> str:
     if "</head>" in html:
         return html.replace("</head>", hook + "</head>", 1)
     return hook + html
-
 
 def _patch_html(html: str, build_id: str) -> str:
     q = "?v=%s" % build_id
@@ -105,7 +100,6 @@ def _patch_html(html: str, build_id: str) -> str:
             html = hook + html
     return _ensure_notes_script(html)
 
-
 def _patch_sw(text: str, build_id: str) -> str:
     nxt = "WDB_%s" % build_id
     patched, n = re.subn(
@@ -129,10 +123,8 @@ def _patch_sw(text: str, build_id: str) -> str:
         text = DATA_FETCH + text
     return text
 
-
 # Music the browser streams itself (scripts/audio/web_music.gd); export_presets.cfg keeps them out of the pck.
 MUSIC = ("assets/audio/music_dungeon.mp3", "assets/audio/music_hub.wav")
-
 
 def _copy_music(out_dir: pathlib.Path, root: pathlib.Path) -> None:
     dst = out_dir / "music"
@@ -142,7 +134,6 @@ def _copy_music(out_dir: pathlib.Path, root: pathlib.Path) -> None:
         if not src.is_file():
             raise SystemExit("web_postexport: missing music %s (the web build plays it from music/)" % rel)
         (dst / src.name).write_bytes(src.read_bytes())
-
 
 def stamp(out_dir: pathlib.Path, root: pathlib.Path, notes_only: bool = False) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -175,7 +166,6 @@ def stamp(out_dir: pathlib.Path, root: pathlib.Path, notes_only: bool = False) -
     print("web_postexport %s -> %s" % (out_dir, build_id))
     return build_id
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Stamp a Godot Web export (cache id follows the binary).", writes=True)
     ap.add_argument("export_dir", help="Godot web export directory")
@@ -188,7 +178,6 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.emit_result("PASS", dry_run=True)
     stamp(out_dir, root, notes_only=args.notes_only)
     return agent_log.emit_result("PASS", notes_only=args.notes_only)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

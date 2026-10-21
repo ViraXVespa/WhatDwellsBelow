@@ -4,7 +4,6 @@ Status: current plan
 Read when: animation browser debug page  
 Code: `scripts/debug/`  
 
-
 ## Animation Browser (secret debug page)
 
 Purpose: let the User review player and enemy animation states so art and facing can be checked without playing a full run.
@@ -78,9 +77,3 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 Keyboard / mouse MUST have equivalents for every action (arrow keys for list columns, Q/E or LB/RB for model, mouse wheel for the animation list, Y for review cycle, X for play/pause). Exact bindings MAY be invented at implementation time and MUST appear in the rebinding screen. Notes require a keyboard; there is no on-screen keyboard.
 
 Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at implementation time so long as the requirements above are met.
-
-### Live snapshot — review chrome
-
-- Facade: `scripts/debug/anim_browser.gd`
-- Review helper: `scripts/debug/anim_browser/review.gd`
-- Ledger: `scripts/debug/anim_review.gd`

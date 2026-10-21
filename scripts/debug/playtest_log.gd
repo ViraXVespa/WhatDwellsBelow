@@ -5,7 +5,7 @@ extends Object
 
 const PlaytestLogUtil := preload("res://scripts/debug/playtest_log/log_util.gd")
 const Core := preload("res://scripts/debug/playtest_log/log_core.gd")
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 # Facade aliases — callers still use PlaytestLog.started / .file_name / etc.
 static var events: Array:

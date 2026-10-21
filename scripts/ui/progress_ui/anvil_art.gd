@@ -118,4 +118,3 @@ static func _edge(img: Image) -> void:
 				mark.append(Vector2i(x, y))
 	for p: Vector2i in mark:
 		img.set_pixel(p.x, p.y, IRON_DARK)
-

@@ -29,7 +29,6 @@ import repo_lib
 DEFAULT_OVER_KB = bot_gate_lib.SHIP_BYTES // 1000
 SWEEP_OVER_KB = bot_gate_lib.SWEEP_BYTES / 1000
 
-
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Check live scripts/**/*.gd: basenames unique repo-wide.", json_out=True)
     bot_gate_lib.add_flag(parser)
@@ -52,7 +51,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument("--selftest", action="store_true", help="Check the deleted-path skip, dupes and the Bot checks in a throwaway repo.")
     return parser.parse_args(argv)
-
 
 def selftest() -> list[str]:
     """Run main() in a temp repo: deleted --path skipped, dupes still fail, a directory --path exits 2, Bot cap still bites."""
@@ -88,7 +86,6 @@ def selftest() -> list[str]:
         if code != 1 or "DUPE" not in out:
             bad.append(f"dupe next to a deleted path: exit={code}, want 1 with DUPE")
     return bad
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
@@ -173,7 +170,6 @@ def main(argv: list[str] | None = None) -> int:
     if bot:
         kv.update(over=len(over), limit=limit)
     return agent_log.finish("script-cap", root, "\n".join(lines), "FAIL" if over or dupes else "PASS", args=args, **kv)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -28,6 +28,8 @@ static func reset_meta(p: Object) -> void:
 	p.next_uid = 1
 	p.quests_offered = []
 	p.quest_active = {}
+	p.quest_pinned = []
+	p.quest_delved = false
 	p.forge_count = 0
 	p.hold_pick.clear()
 	p._clear_mailed()

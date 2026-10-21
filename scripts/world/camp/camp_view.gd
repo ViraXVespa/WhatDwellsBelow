@@ -28,6 +28,7 @@ static func fence_run(host: Node3D, pos: Vector3, box_size: Vector3, along_x: bo
     body.collision_layer = 1
     body.position = pos
     host.add_child(body)
+    body.add_to_group("hub_fence")
     var cs := CollisionShape3D.new()
     var sh := BoxShape3D.new()
     sh.size = box_size

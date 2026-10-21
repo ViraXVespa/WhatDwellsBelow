@@ -3,7 +3,7 @@
 ## Postcard shot CLI arg readers. Leaf module.
 
 const FLAG := "--wdb-shot"
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 static var _cached: int = -1
 

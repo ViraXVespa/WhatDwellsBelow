@@ -18,7 +18,6 @@ import agent_log
 import godot_lib
 from load_routes import SMOKE_PHASES, check_route, load_routes, smoke_phases
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run Godot phase smokes (--wdb-phaseN-smoke).", json_out=True)
     ap.add_argument("--phases", nargs="+", default=[",".join(map(str, SMOKE_PHASES))], help="Phase numbers, 1,2,6 or 1 2 6.")
@@ -63,7 +62,6 @@ def main(argv: list[str] | None = None) -> int:
                                   "--changed", "--advisory", "--root", str(root)], check=False)
             body += [f"--- shot gaps advisory exit={adv.returncode} (mid-slice print; the END gate run_build_gate.py is required) ---", ""]
     return agent_log.finish("smokes", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(f"run_smokes.py phases {','.join(map(str, phases))}", body), fail_signals=fail)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

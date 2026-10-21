@@ -22,7 +22,6 @@ except ImportError as exc:  # pragma: no cover
     ) from exc
 HAVE_CV2 = True
 
-
 def require_cv2(what: str) -> None:
     """Raise SystemExit with an install hint when OpenCV is missing."""
     if not HAVE_CV2:

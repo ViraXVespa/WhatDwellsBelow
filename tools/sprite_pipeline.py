@@ -19,19 +19,15 @@ WAND_DIST = key.WAND_DIST
 TIGHT_DIST = key.TIGHT_DIST
 MATTE_CUT = key.MATTE_CUT
 
-
 def _dist(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
     return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
-
 
 def _as_rgba(im: Image.Image) -> np.ndarray:
     return imgio.to_np(im)
 
-
 def key_to_alpha(im: Image.Image) -> Image.Image:
     """Staged plate key (imglib.matte through imglib.key.key_to_alpha)."""
     return key.key_to_alpha(im)
-
 
 def range_key(im: Image.Image) -> Image.Image:
     """Bible / seed path: wand the outside, flatten that region to exact #FF00FF."""
@@ -40,14 +36,11 @@ def range_key(im: Image.Image) -> Image.Image:
     arr[arr[:, :, 3] == 0] = np.array(MAGENTA, dtype=np.uint8)
     return Image.fromarray(arr, "RGBA")
 
-
 def flatten_magenta_to_alpha(im: Image.Image) -> Image.Image:
     return key_to_alpha(im)
 
-
 def split_equal_3x3(im: Image.Image) -> list[Image.Image]:
     return geom.grid_split(im, 3, 3)
-
 
 CELL_NAMES = [
     "up_left",
@@ -61,7 +54,6 @@ CELL_NAMES = [
     "down_right",
 ]
 
-
 def fit_canvas(
     im: Image.Image,
     canvas: int = CANVAS,
@@ -72,7 +64,6 @@ def fit_canvas(
         im = flatten_magenta_to_alpha(im)
     return geom.fit_box(im, canvas, PAD, oy=lambda nh: max(0, min(canvas - nh, canvas - nh - 2 if baseline is None else baseline - nh)))
 
-
 def foot_baseline(im: Image.Image) -> int:
     arr = np.asarray(im.convert("RGBA"))
     rows = np.any(arr[:, :, 3] > 8, axis=1)
@@ -80,7 +71,6 @@ def foot_baseline(im: Image.Image) -> int:
     if idx.size == 0:
         return arr.shape[0]
     return int(idx[-1] + 1)
-
 
 def lock_baselines(frames: list[Image.Image]) -> list[Image.Image]:
     bases = [foot_baseline(f) for f in frames]
@@ -96,7 +86,6 @@ def lock_baselines(frames: list[Image.Image]) -> list[Image.Image]:
         locked.append(out)
     return locked
 
-
 def quantize_palette(im: Image.Image, colors: int = 24) -> Image.Image:
     rgba = im.convert("RGBA")
     alpha = rgba.getchannel("A")
@@ -110,7 +99,6 @@ def quantize_palette(im: Image.Image, colors: int = 24) -> Image.Image:
     arr[a < 16] = 0
     return Image.fromarray(arr, "RGBA")
 
-
 def extract_seeds(src: Path, dest_dir: Path) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
     im = range_key(Image.open(src))
@@ -121,7 +109,6 @@ def extract_seeds(src: Path, dest_dir: Path) -> dict:
         cell.save(p)
         out[name] = str(p)
     return out
-
 
 def composite_bible(cell_paths: dict[str, Path], dest: Path, cell: int = 256) -> None:
     sheet = Image.new("RGBA", (cell * 3, cell * 3), MAGENTA)
@@ -136,7 +123,6 @@ def composite_bible(cell_paths: dict[str, Path], dest: Path, cell: int = 256) ->
         sheet.paste(bg, (col * cell, row * cell))
     dest.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(dest)
-
 
 def write_palette(im: Image.Image, dest: Path) -> None:
     arr = np.asarray(im.convert("RGBA"))
@@ -157,7 +143,6 @@ def write_palette(im: Image.Image, dest: Path) -> None:
         colors.append([int((v >> 16) & 255), int((v >> 8) & 255), int(v & 255)])
     dest.write_text(json.dumps({"colors": colors}, indent=2))
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Sprite pipeline: seeds | key (matte + 128 fit) | matte | flatten.")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -176,7 +161,6 @@ def main(argv: list[str] | None = None) -> int:
         fn(Image.open(args.src)).save(args.dest)
         print("wrote " + args.dest.as_posix())
     return agent_log.emit_result("PASS", cmd=args.cmd)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

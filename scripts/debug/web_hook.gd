@@ -5,7 +5,7 @@ extends Object
 ## window.wdbZoom(z) sets the camera zoom (App.set_zoom, 1.0-4.0) for close-up shots.
 ## window.wdbEnter() takes the player's own way in (App.enter_dungeon: cover, load, reveal). Pair with ?wdb-seed=42 for a fixed floor. Without the URL flag nothing is registered.
 
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 static var _cb: JavaScriptObject = null
 static var _enter_cb: JavaScriptObject = null

@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: consciousness-transfer VFX, Dispel wake-up, deepest row
 
-
 ## Floor Crystal
 - Only enter-dungeon interactable.
 - Opens Loadout UI: select holds per slot (fallback to starter Great Axe + pickaxe or hatchet + potion), choose starting weapon, tool type (pickaxe or hatchet — locked for run), starting floor, **Enter dungeon**.

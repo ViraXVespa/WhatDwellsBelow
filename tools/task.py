@@ -21,7 +21,6 @@ import agent_log
 import md_format_lib as md
 import task_lib
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List, show, create, finish and check the task files in design/tasks/.", writes=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -45,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     up.add_argument("--section", default="", help="Section title to replace, e.g. 'Open questions'.")
     up.add_argument("--body", default="")
     up.add_argument("--body-file", dest="body_file", default="")
-    dn = sub.add_parser("done", help="Finish a task: delete it, unblock dependants, one changelog line.")
+    dn = sub.add_parser("done", help="Finish a task: delete it, unblock dependants, one changelog line (skipped on grok-build-w* branches).")
     dn.add_argument("id")
     dn.add_argument("--changelog", default="", help="Changelog file for the line (default: the newest design/changelog entry main does not have).")
     sub.add_parser("index", help="Regenerate the README index.")
@@ -109,7 +108,9 @@ def main(argv: list[str] | None = None) -> int:
         if branch.startswith("grok-build-w"):
             # Build path: no changelog
             return end("\n".join(task_lib.done(root, args.id, None, dry)), "PASS", id=args.id, changed=0 if dry else 1)
-        log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root, create=True)
+        log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root, create=not dry)
+        if log is None and dry:
+            return end("\n".join(task_lib.done(root, args.id, None, dry) + ["changelog: would add one line to a new entry"]), "PASS", id=args.id, changed=0)
         if log is None:
             print("error: could not resolve or create changelog", file=sys.stderr)
             return end("", "FAIL", error="no-changelog")
@@ -119,7 +120,6 @@ def main(argv: list[str] | None = None) -> int:
         return end("index " + ("refreshed" if changed else "already current"), "PASS", changed=int(changed))
     bad = task_lib.fails(root)
     return end("\n".join(f"- {b}" for b in bad) or "tasks ok", "FAIL" if bad else "PASS", tasks=len(tasks), problems=len(bad))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

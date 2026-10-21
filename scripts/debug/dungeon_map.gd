@@ -6,7 +6,7 @@ extends Object
 
 const FLAG := "--wdb-dungeon-map-smoke"
 const Dump := preload("res://scripts/debug/dungeon_map/map_dump.gd")
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 
 static var _cached := -1
 

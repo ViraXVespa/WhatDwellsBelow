@@ -4,13 +4,13 @@ Status: current plan
 Read when: Pages builds, catalog pins
 Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui/ui_view.gd`, `scripts/ui/archives_ui/ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu/split_menu_view.gd`, `scripts/ui/split_menu/chrome.gd`, `scripts/data/archives/archives_catalog.gd`, `scripts/data/archives/launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`  
 
-
 ## Core rule
 
 Archived builds are **pinned git commits**, not folders copied into the live tree.
 
 - Do not copy snapshot projects into `archives/` or onto the live path.
 - Do not back-port live changes into a pinned commit.
+- The Archives browser MUST ship in the demo (Patreon development narrative) and opens from the title card only; Pause MUST NOT open it and there is no presentation-mode switcher. Title Play always launches the live path.
 - Do not create a new archive unless the User explicitly asks, except the standing Grok Build week pins in the versioning gate.
 
 `scripts/data/archive_catalog.json` is the catalog. Slim museum markdown that is **not** in a pin lives under `archives/docs/<id>/`.

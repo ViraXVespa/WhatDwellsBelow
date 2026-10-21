@@ -19,7 +19,7 @@ The Bot's doc size targets live in `grok-bot-docs.md`; `tools/list_oversize_docs
 ## Scope
 
 In: topic files under `design/*.md`; protocol-family updates the split needs (the Bot Job file, this file, `design/README.md` index rows, `design/code-map.md` only if a script path must stay accurate); one `design/changelog/{label}.md` per shipping PR.
-Out: changing rules, tunables or player-facing meaning; rewriting `design/changelog/**` history (archiving: `design/versioning.md`); the `docs/` Pages tree; mixing a doc sweep into a live script size sweep without User go; treating a sibling list as a file the agent must open.
+Out: changing rules, tunables or player-facing meaning; rewriting `design/changelog/**` history (archiving: `design/versioning.md`); the `_pages/` Pages site (untracked); mixing a doc sweep into a live script size sweep without User go; treating a sibling list as a file the agent must open.
 
 ## Pass order
 
@@ -31,8 +31,9 @@ Out: changing rules, tunables or player-facing meaning; rewriting `design/change
 ## Facade checklist
 
 - [ ] Job table covers every former top-level `##` cluster (or routes to an existing sibling topic such as `gear-ui.md`).
-- [ ] Preamble rules that apply to every job stay on the door; live snapshots travel with the matching sibling.
+- [ ] Preamble rules that apply to every job stay on the door.
 - [ ] Sibling bodies name no `design/*.md` paths (job targets stay on the door Job table and in `design/routes.yaml`).
+- [ ] No cross-reference footer fields (load-graph bans them).
 - [ ] No behavior or rule change.
 
 ## Token rules

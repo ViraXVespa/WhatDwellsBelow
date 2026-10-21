@@ -29,7 +29,6 @@ FILES = {
 
 CANVAS = 128
 
-
 def key_and_fit(src: Path, dest: Path) -> None:
     use = matcher.resolve_source(dest, src)
     if use is None:
@@ -56,15 +55,12 @@ def key_and_fit(src: Path, dest: Path) -> None:
     canvas.save(dest)
     print(f"wrote {dest} from {src.name} bbox={bbox} -> {nw}x{nh}")
 
-
 def _run() -> None:
     for name, src in FILES.items():
         key_and_fit(src, OUT / f"{name}.png")
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("process_sprites", 'Key numbered _src stills (1.jpg ...) into engine sprites.', _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

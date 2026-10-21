@@ -16,7 +16,6 @@ import godot_lib
 from load_routes import SMOKE_PHASES
 from run_build_gate import child
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Import check, then optional phase smokes.", json_out=True)
     ap.add_argument("--with-smokes", action="store_true", help="Also run the headless smoke phases.")
@@ -48,7 +47,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         body += ["--- smokes skipped (pass --with-smokes to run) ---", ""]
     return agent_log.finish("post-split-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=("run_post_split_gate.py", body), fail_signals=fail)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

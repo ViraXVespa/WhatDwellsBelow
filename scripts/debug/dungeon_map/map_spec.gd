@@ -29,7 +29,7 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 			shop_rooms += 1
 		elif k == "puzzle":
 			puzzle_rooms += 1
-	var want_gates: int = maxi(1, mini(3, int(App.bal.get("max_clerks"))))
+	var want_gates: int = maxi(1, int(App.bal.get("max_clerks")))
 	fail += Util._spec(lines, "rooms_min", rooms.size() >= 6, "n=%d want>=6" % rooms.size())
 	fail += Util._spec(lines, "spawn_room", spawn_n == 1, "n=%d" % spawn_n)
 	fail += Util._spec(lines, "boss_room", boss_n == 1, "n=%d" % boss_n)

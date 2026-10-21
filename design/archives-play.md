@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: worktree minimize, Godot child restore, slug copyhit
 
-
 ## Play
 
 **Web:** loader overlay, then same-tab redirect to the catalog `pages_url` (`JavaScriptBridge` `location` assign). Do not `OS.shell_open` a new tab. The browser Back button returns to the live title. The archive is a pre-exported Godot Web build under GitHub Pages. Never spawn Godot or checkout in the browser.
@@ -18,7 +17,7 @@ Cached worktree + existing import: short “Opening snapshot…” beat, no re-i
 
 Live site root is the current HEAD export. Each archive is `https://viraxvespa.github.io/WhatDwellsBelow/<pages_slug>/`.
 
-Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built in CI from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Do not store those notes inside the Godot `docs/` export tree on `main`.
+Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built in CI from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Never commit web exports.
 
 GitHub Actions (`.github/workflows/pages.yml`) always exports HEAD. That live export is fatal: if it fails, Pages does not deploy.
 

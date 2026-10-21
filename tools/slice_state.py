@@ -4,7 +4,7 @@ The first run in a worktree writes `_logs/slice-state.json` (under _logs/, so it
 open_slice.py started the session with (the prompt's length and time, read from the session's prompt_history.jsonl). Every later run prints
 `SLICE ALREADY STARTED` with the steps found on disk and the next one; `--full` prints the whole start card again. Steps are read from the
 tree and the git common dir at the time of the run, never kept as a claim: import (.godot/imported), baseline shots (_logs/shot-flow),
-checkpoint (retry_lib), handoff (the task file design/tasks/ID.md).
+the original session id (the reset point a red prove's retry forks), handoff (the task file design/tasks/ID.md).
 """
 from __future__ import annotations
 
@@ -14,15 +14,12 @@ import os
 from pathlib import Path
 
 import handoff_lib
-import retry_lib
 import session_lib
 
 REL = "_logs/slice-state.json"
 
-
 def path(root: Path) -> Path:
     return root / REL
-
 
 def load(root: Path) -> dict:
     try:
@@ -31,10 +28,8 @@ def load(root: Path) -> dict:
     except (OSError, ValueError):
         return {}
 
-
 def now() -> str:
     return dt.datetime.now().astimezone().isoformat(timespec="seconds")
-
 
 def clock(iso: str) -> str:
     """'17:23' (local clock) from an ISO time, or '?'."""
@@ -43,10 +38,9 @@ def clock(iso: str) -> str:
     except ValueError:
         return "?"
 
-
-def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None, units: list[str] | None = None, done: list[str] | None = None) -> dict:
+def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None, units: list[str] | None = None, done: list[str] | None = None, ref: str = "") -> dict:
     """The state a first run records. A door worked as a unit queue also carries the ordered units, which are done and the current one (the job)."""
-    st = {"v": 1, "first_run": now(), "door": door, "job": job, "area": area, "mode": mode, "session": os.environ.get("GROK_SESSION_ID", "")}
+    st = {"v": 1, "first_run": now(), "door": door, "job": job, "area": area, "mode": mode, "session": os.environ.get("GROK_SESSION_ID", ""), "ref": ref}
     if units:
         st.update({"units": units, "done": done or [], "unit": job})
     pf = session_lib.prompt_facts(sdir)
@@ -54,24 +48,26 @@ def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None
         st["prompt"] = pf
     return st
 
-
 def save(root: Path, st: dict) -> None:
     p = path(root)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(st, indent=1) + "\n", encoding="utf-8")
 
-
-def steps(root: Path) -> dict:
-    """Steps seen on disk right now: door run (the state file itself), import, baseline shots, checkpoint, handoff ('none' | 'skeleton' | 'ready')."""
+def steps(root: Path, st: dict | None = None) -> dict:
+    """Steps seen now: door run (the state file itself), import, baseline shots, original session (recorded id), forked (this session is not it), handoff ('none' | 'skeleton' | 'ready')."""
     hp = handoff_lib.handoff_path(root)
     ho = "none"
-    if hp.is_file():
+    if hp.is_file() and hp.read_text(encoding="utf-8-sig").lstrip().startswith("# Handoff:"):
         ho = "skeleton" if handoff_lib.check(root, hp.read_text(encoding="utf-8-sig")) else "ready"
     shots = root / "_logs" / "shot-flow"
     return {"door run": True, "import": (root / ".godot" / "imported").is_dir(),
             "baseline shots": shots.is_dir() and any(shots.glob("*/flow.json")),
-            "checkpoint": bool(retry_lib.gather_for(root).get("session")), "handoff": ho}
+            "original session": (st or {}).get("session") or "not recorded", "forked": _forked(st or {}), "handoff": ho}
 
+def _forked(st: dict) -> bool:
+    """True when this session is not the one that ran the first card (the User ran `/fork` at the end of Gather)."""
+    sid = os.environ.get("GROK_SESSION_ID", "")
+    return bool(st.get("session") and sid and sid != st["session"])
 
 def next_step(st: dict, s: dict) -> str:
     if st.get("mode") == "survey":
@@ -84,14 +80,15 @@ def next_step(st: dict, s: dict) -> str:
         return "`python tools/check_gd_load.py` and `python tools/run_godot_import_check.py`"
     if not s["baseline shots"]:
         return "the baseline (the handoff's PNGs, else shoot the flows), look at it, `python tools/show_png.py`, then the restate and Q0"
-    if st.get("units"):
-        return f"the unit in hand ({st.get('unit', '')}): edit, prove, commit_slice.py, then `python tools/start_build_slice.py --next` (message first)"
-    return "the unit in hand: edit, prove, then the next ask (message first)"
-
+    unit = f" ({st['unit']})" if st.get("units") and st.get("unit") else ""
+    if not s["forked"]:
+        return f"Gather{unit}: restate, Q0 and her answers, the observable outcome and its signal; then tell her to run `/fork` and continue in the new peer session"
+    tail = " (`python tools/start_build_slice.py --unit-done` updates the task's done: line)" if unit else ""
+    return f"Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)"
 
 def short(root: Path, st: dict) -> str:
     """The SLICE ALREADY STARTED text for a later run."""
-    s = steps(root)
+    s = steps(root, st)
     area = st.get("job") or st.get("door") or st.get("area") or "?"
     pf = st.get("prompt") or {}
     by = f"; opened by open_slice at {clock(pf.get('time', ''))} with a prompt of {pf['chars']} chars" if pf.get("chars") is not None else "; open_slice prompt not verified"
@@ -99,7 +96,8 @@ def short(root: Path, st: dict) -> str:
     other = f" (first run by session {st['session']}; this is {sid})" if st.get("session") and sid and sid != st["session"] else ""
     done = "; ".join(f"{k} {'yes' if v is True else 'no' if v is False else v}" for k, v in s.items())
     queue = (f"Units: {st.get('unit', '?')} is current ({(st['units'].index(st['unit']) + 1) if st.get('unit') in st['units'] else '?'} of {len(st['units'])}); done: {', '.join(st.get('done') or []) or 'none'}. "
-             "`--door D --full` reprints this unit's card; `--next` marks it done and prints the next.\n") if st.get("units") else ""
+             + (f"`--job {st.get('job')} --task {st.get('task')} --full` reprints this unit's card" if st.get("task_units") else "`--door D --full` reprints this unit's card")
+             + "; at Complete `--unit-done` marks it done (more units fit: the same start command again; else a new session).\n") if st.get("units") else ""
     return (f"SLICE ALREADY STARTED: {area} ({st.get('mode', '?')} session), first run {clock(st.get('first_run', ''))}{by}{other}.\n" + queue +
             f"Steps found now: {done}.\n"
             f"Resuming at: {next_step(st, s)}.\n"

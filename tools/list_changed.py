@@ -20,7 +20,6 @@ import repo_lib
 
 DEFAULT_SCOPE = ["scripts", "scenes", "tools", "design", ".grok/skills", ".cursor/skills"]
 
-
 def history(root: Path, args: argparse.Namespace, where: str) -> int:
     paths = [p.replace("\\", "/").strip("/") for p in agent_log.split_list(args.history)]
     missing = [p for p in paths if not (root / p).exists()]
@@ -45,7 +44,6 @@ def history(root: Path, args: argparse.Namespace, where: str) -> int:
         body += ["", "newer=same (same commit time): ask if the subjects do not settle it"]
     echo = "\n".join(body)
     return agent_log.finish("changed", root, "\n".join(body), "INFO", args=args, echo=echo, newer=verdict, paths=len(paths))
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List git-changed paths in scope with sizes.", json_out=True)
@@ -90,7 +88,6 @@ def main(argv: list[str] | None = None) -> int:
     if len(rows) > 30:
         echo.append(f"... +{len(rows) - 30} more (see summary)")
     return agent_log.finish("changed", root, "\n".join(body), "INFO", args=args, echo="\n".join(echo), count=len(rows))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -82,7 +82,6 @@ CELL_NAMES = (
 FIGURE_BASES = {"full", "center", "mid"}
 OLD_SKIP = {"sidecars", "src_notes"}
 
-
 def _posix(path: Path) -> str:
     try:
         rel = path.resolve().relative_to(ROOT.resolve())
@@ -90,16 +89,13 @@ def _posix(path: Path) -> str:
     except ValueError:
         return path.resolve().as_posix()
 
-
 def is_glyph(live: str) -> bool:
     text = live.replace("\\", "/")
     return text.startswith("assets/ui/prompts/") or "/ui/prompts/" in text
 
-
 def is_player(live: str) -> bool:
     text = live.replace("\\", "/")
     return text.startswith("assets/sprites/player/") or "/sprites/player/" in text
-
 
 def load_rgba(path: Path, max_side: int = MAX_SIDE) -> tuple[np.ndarray, int, int]:
     """Return a capped RGBA array, opaque short side, and opaque pixel count."""
@@ -119,7 +115,6 @@ def load_rgba(path: Path, max_side: int = MAX_SIDE) -> tuple[np.ndarray, int, in
         )
         full = np.asarray(im)
     return full, side, pixels
-
 
 def looks_finished_sprite(path: Path) -> bool:
     """Small transparent outputs are already keyed sprites, not remap inputs."""
@@ -141,7 +136,6 @@ def looks_finished_sprite(path: Path) -> bool:
         return False
     return float((alpha < 16).mean()) > 0.12
 
-
 def key_flat(arr: np.ndarray) -> np.ndarray:
     """Knock out a magenta plate and its pink lip. Clear RGB too, so a later resize cannot bleed pink.
 
@@ -161,7 +155,6 @@ def key_flat(arr: np.ndarray) -> np.ndarray:
         out[(alpha < 16) | (dist_mag <= 48.0)] = 0
     return plate_key.strip_rim(out)
 
-
 def key_pipeline(path: Path) -> np.ndarray:
     sys.path.insert(0, str(ROOT / "tools"))
     import sprite_pipeline as sp  # noqa: E402
@@ -178,7 +171,6 @@ def key_pipeline(path: Path) -> np.ndarray:
         )
     return np.asarray(keyed)
 
-
 def opaque_crop(arr: np.ndarray) -> np.ndarray:
     mask = arr[:, :, 3] >= 16
     ys, xs = np.where(mask)
@@ -186,14 +178,12 @@ def opaque_crop(arr: np.ndarray) -> np.ndarray:
         return arr[:1, :1]
     return arr[ys.min() : ys.max() + 1, xs.min() : xs.max() + 1]
 
-
 def opaque_side(arr: np.ndarray) -> int:
     mask = arr[:, :, 3] >= 16
     ys, xs = np.where(mask)
     if xs.size == 0:
         return 0
     return int(min(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1))
-
 
 def to_grid(arr: np.ndarray, side: int = GRID) -> tuple[np.ndarray, np.ndarray]:
     if arr.size == 0 or arr.shape[0] < 1 or arr.shape[1] < 1:
@@ -204,14 +194,12 @@ def to_grid(arr: np.ndarray, side: int = GRID) -> tuple[np.ndarray, np.ndarray]:
     grid = np.asarray(im)
     return grid[:, :, :3].astype(np.float32), grid[:, :, 3] >= 16
 
-
 def inner_crop(arr: np.ndarray, frac: float = 0.72) -> np.ndarray:
     h, w = arr.shape[:2]
     margin = (1.0 - frac) / 2.0
     x0, y0 = int(w * margin), int(h * margin)
     x1, y1 = max(x0 + 1, int(w * (1.0 - margin))), max(y0 + 1, int(h * (1.0 - margin)))
     return arr[y0:y1, x0:x1]
-
 
 def _windows(arr: np.ndarray) -> list[tuple[str, np.ndarray]]:
     h, w = arr.shape[:2]
@@ -236,7 +224,6 @@ def _windows(arr: np.ndarray) -> list[tuple[str, np.ndarray]]:
                 specs.append((name, arr[row * ch : (row + 1) * ch, col * cw : (col + 1) * cw]))
     return specs
 
-
 def candidate_grids(arr: np.ndarray) -> list[tuple[str, np.ndarray, np.ndarray, str]]:
     keyed = key_flat(arr)
     opaque = float((keyed[:, :, 3] >= 16).mean())
@@ -246,7 +233,6 @@ def candidate_grids(arr: np.ndarray) -> list[tuple[str, np.ndarray, np.ndarray, 
     if opaque < 0.45:
         windows = [item for item in windows if item[0] == "full" or item[0].startswith("cell_")]
     return _grids_from_parts(windows)
-
 
 def score_batch(
     live_rgb: np.ndarray,
@@ -264,7 +250,6 @@ def score_batch(
     mad = np.where(count > 0, mad, 999.0)
     return mad, agree, overlap
 
-
 def area_ok(agree: float, pixels: int, agree_min: float, min_side: int = MIN_SIDE) -> bool:
     """Agreeing area must cover min_side squared, or most of a small sprite."""
     if agree < agree_min:
@@ -275,11 +260,9 @@ def area_ok(agree: float, pixels: int, agree_min: float, min_side: int = MIN_SID
     small_floor = 40 if min_side < MIN_SIDE else 160
     return pixels >= small_floor
 
-
 def loose_windows_ok(live: str) -> bool:
     text = live.replace("\\", "/")
     return "/tiles/" in text or "/ui/" in text
-
 
 def accept_score(
     kind: str,
@@ -310,10 +293,8 @@ def accept_score(
         return False
     return mad <= FIGURE_MAD and agree >= FIGURE_AGREE and overlap >= FIGURE_OVERLAP
 
-
 def _grids_from_keyed(arr: np.ndarray) -> list[tuple[str, np.ndarray, np.ndarray, str]]:
     return _grids_from_parts(_windows(arr))
-
 
 def _grids_from_parts(parts: list[tuple[str, np.ndarray]]) -> list[tuple[str, np.ndarray, np.ndarray, str]]:
     out: list[tuple[str, np.ndarray, np.ndarray, str]] = []
@@ -325,7 +306,6 @@ def _grids_from_parts(parts: list[tuple[str, np.ndarray]]) -> list[tuple[str, np
         out.append((name, rgb, mask, kind))
         out.append((name + "/flip", np.flip(rgb, axis=1).copy(), np.flip(mask, axis=1).copy(), kind))
     return out
-
 
 def score_pair(live: Path, src: Path, pipeline: bool = False) -> dict:
     live_arr, side, pixels = load_rgba(live, 160)
@@ -363,7 +343,6 @@ def score_pair(live: Path, src: Path, pipeline: bool = False) -> dict:
             best = row
     return best or {"mad": 999.0, "agree": 0.0, "overlap": 0.0, "window": "", "accept": False, "opaque_side": side}
 
-
 def _iso_roots() -> list[Path]:
     roots: list[Path] = []
     sessions = agent_log.grok_sessions()
@@ -378,7 +357,6 @@ def _iso_roots() -> list[Path]:
                 roots.append(child)
     return roots
 
-
 def _is_copy_only(path: Path) -> bool:
     text = str(path).lower()
     if "wdb-iso" in text or _under(path, OLD_ROOT):
@@ -389,13 +367,11 @@ def _is_copy_only(path: Path) -> bool:
     except ValueError:
         return False
 
-
 def _skip_old_meta(path: Path) -> bool:
     if not _under(path, OLD_ROOT):
         return False
     rel = path.resolve().relative_to(OLD_ROOT.resolve())
     return bool(rel.parts) and rel.parts[0] in OLD_SKIP
-
 
 def iter_files(root: Path, exts: set[str]) -> list[Path]:
     if not root.exists():
@@ -405,7 +381,6 @@ def iter_files(root: Path, exts: set[str]) -> list[Path]:
         if path.is_file() and path.suffix.lower() in exts and not _skip_old_meta(path):
             found.append(path)
     return found
-
 
 def collect_inputs() -> tuple[list[Path], list[Path]]:
     images: list[Path] = []
@@ -432,7 +407,6 @@ def collect_inputs() -> tuple[list[Path], list[Path]]:
             images.append(sheet)
     return images, videos
 
-
 def collect_lives() -> list[Path]:
     lives: list[Path] = []
     assets = ROOT / "assets"
@@ -444,7 +418,6 @@ def collect_lives() -> list[Path]:
             continue
         lives.append(path)
     return lives
-
 
 def _window_rank(window: str) -> tuple[int, int]:
     flip = 1 if window.endswith("/flip") else 0
@@ -461,11 +434,9 @@ def _window_rank(window: str) -> tuple[int, int]:
         rank = 4
     return rank, flip
 
-
 def _same_stem(origin: Path, live: str) -> bool:
     """True when the source file name is the live asset name."""
     return origin.stem.lower() == Path(live).stem.lower()
-
 
 def _better(new: dict, old: dict) -> bool:
     if new["mad"] + 1.5 < old["mad"]:
@@ -473,7 +444,6 @@ def _better(new: dict, old: dict) -> bool:
     if old["mad"] + 1.5 < new["mad"]:
         return False
     return _window_rank(new["window"]) < _window_rank(old["window"])
-
 
 def _origin_rank(path: Path) -> int:
     text = str(path)
@@ -491,7 +461,6 @@ def _origin_rank(path: Path) -> int:
         return 1
     except ValueError:
         return 0
-
 
 def prepare_lives(paths: list[Path]) -> dict:
     rels: list[str] = []
@@ -533,7 +502,6 @@ def prepare_lives(paths: list[Path]) -> dict:
         "glyph": np.asarray(glyph, dtype=bool),
         "player": np.asarray(player, dtype=bool),
     }
-
 
 def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], list[dict | None]]:
     count = len(lives["rels"])
@@ -634,7 +602,6 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
     print(f"scored {n}/{n}", flush=True)
     return best, near
 
-
 def related_videos(origins: list[Path], videos: list[Path]) -> list[Path]:
     harvest_dirs: set[str] = set()
     oneshot_keys: set[str] = set()
@@ -665,17 +632,14 @@ def related_videos(origins: list[Path], videos: list[Path]) -> list[Path]:
             kept.append(video)
     return kept
 
-
 def _primary(rows: list[dict]) -> dict:
     def sort_key(row: dict) -> tuple:
         return (row["flip"], row["mad"], len(row["live"]), row["live"])
 
     return sorted(rows, key=sort_key)[0]
 
-
 def _dest_for(origin: Path, live: str) -> str:
     return (Path("sources") / Path(live).with_suffix(origin.suffix)).as_posix()
-
 
 def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], videos: list[Path]) -> dict:
     by_origin: dict[Path, list[dict]] = {}
@@ -740,7 +704,6 @@ def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], vi
 
     return {"sources": sources, "videos": video_plan, "unmatched": unmatched}
 
-
 def archive_candidates(origin: str) -> list[Path]:
     """Paths where a moved non-match, or an already-archived origin, can sit."""
     text = origin.replace("\\", "/")
@@ -768,13 +731,11 @@ def archive_candidates(origin: str) -> list[Path]:
         out.append(OLD_ROOT / "other" / name)
     return out
 
-
 def resolve_origin(origin: str) -> Path | None:
     for cand in archive_candidates(origin):
         if cand.is_file():
             return cand
     return None
-
 
 def archived_posix(origin: str) -> str | None:
     """Where a moved non-match landed under _old, if it is still there."""
@@ -782,7 +743,6 @@ def archived_posix(origin: str) -> str | None:
     if found is None or not _under(found, OLD_ROOT):
         return None
     return found.resolve().relative_to(ROOT.resolve()).as_posix()
-
 
 def _archive_rel(path: Path) -> Path:
     resolved = path.resolve()
@@ -797,13 +757,11 @@ def _archive_rel(path: Path) -> Path:
             continue
     return Path("other") / path.name
 
-
 def _move_file(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
         raise SystemExit(f"refusing to overwrite {dest}")
     shutil.move(str(src), str(dest))
-
 
 def _copy_file(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -811,13 +769,11 @@ def _copy_file(src: Path, dest: Path) -> None:
         raise SystemExit(f"refusing to overwrite {dest}")
     shutil.copy2(src, dest)
 
-
 def _sidecar(path: Path) -> Path | None:
     side = Path(str(path) + ".import")
     if side.is_file():
         return side
     return None
-
 
 def _manifest_entries(plan: dict) -> list[dict]:
     entries = []
@@ -841,7 +797,6 @@ def _manifest_entries(plan: dict) -> list[dict]:
                 }
             )
     return entries
-
 
 def organize(plan: dict) -> dict:
     kept_images = {item["origin"].resolve() for item in plan["sources"]}
@@ -935,10 +890,8 @@ def organize(plan: dict) -> dict:
         gdignore.write_text("", encoding="utf-8")
     return {"archived": archived, "notes": notes, "entries": len(entries)}
 
-
 def live_stem(rel: str) -> str:
     return Path(rel).stem.lower()
-
 
 def placed_by_stem(stem: str) -> list[Path]:
     root = SRC_ROOT / "sources"
@@ -949,7 +902,6 @@ def placed_by_stem(stem: str) -> list[Path]:
         if path.is_file() and path.suffix.lower() in IMAGE_EXT and path.stem.lower() == stem:
             found.append(path)
     return found
-
 
 def candidates_for_unmatched(item: dict) -> list[Path]:
     """Archived _old file for this live, plus a placed source with the same stem."""
@@ -976,7 +928,6 @@ def candidates_for_unmatched(item: dict) -> list[Path]:
         add(path)
     return found
 
-
 def _fill_entry(live: str, origin: Path, dest: str, row: dict, opaque_side: int) -> dict:
     base = str(row.get("window", "")).split("/")[0]
     return {
@@ -993,7 +944,6 @@ def _fill_entry(live: str, origin: Path, dest: str, row: dict, opaque_side: int)
         "opaque_side": opaque_side,
         "cell": base[len("cell_") :] if base.startswith("cell_") else "",
     }
-
 
 def fill_missing(what_if: bool) -> dict:
     """Copy this live's archived _old file, or a same-stem placed source. Never move."""
@@ -1060,7 +1010,6 @@ def fill_missing(what_if: bool) -> dict:
     print(f"fill {'plan' if what_if else 'wrote'} {len(filled_rels)} left {len(still)}")
     return {"filled": len(filled_rels), "unmatched": len(still)}
 
-
 def summarize(plan: dict) -> str:
     lines = []
     matched = sum(len(item["lives"]) for item in plan["sources"])
@@ -1092,9 +1041,7 @@ def summarize(plan: dict) -> str:
             break
     return "\n".join(lines)
 
-
 _SOURCE_INDEX: dict[str, Path] | None = None
-
 
 def source_index() -> dict[str, Path]:
     """Live asset path -> unkeyed file under _src/sources. First manifest row wins."""
@@ -1112,14 +1059,12 @@ def source_index() -> dict[str, Path]:
         _SOURCE_INDEX = index
     return _SOURCE_INDEX
 
-
 def source_for(live: str) -> Path | None:
     """Absolute unkeyed source for a live asset path, or None when the manifest has no row."""
     text = live.replace("\\", "/")
     if text.startswith("./"):
         text = text[2:]
     return source_index().get(text)
-
 
 def resolve_source(dest: Path, fallback: Path | None = None) -> Path | None:
     """Manifest source when that file is on disk, otherwise an existing fallback path."""
@@ -1133,7 +1078,6 @@ def resolve_source(dest: Path, fallback: Path | None = None) -> Path | None:
     if fallback is not None and fallback.is_file():
         return fallback
     return None
-
 
 def self_test() -> None:
     axe = ROOT / "assets" / "ui" / "gear" / "head.png"
@@ -1166,7 +1110,6 @@ def self_test() -> None:
         raise SystemExit(f"self-test: pink lip survived key_flat {keyed[30, 15].tolist()} body {keyed[20, 20].tolist()} corner {keyed[0, 0].tolist()}")
     print("self-test ok")
 
-
 def _mirrored_source(live_rel: str) -> Path | None:
     """Return the path-mirrored plate under _src/sources if it exists."""
     base = Path("sources") / Path(live_rel)
@@ -1175,7 +1118,6 @@ def _mirrored_source(live_rel: str) -> Path | None:
         if candidate.is_file():
             return candidate
     return None
-
 
 def update_manifest() -> None:
     """Light refresh that prefers path-mirrored plates.
@@ -1246,7 +1188,6 @@ def update_manifest() -> None:
     manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(f"updated kept={len(kept)} mirrored={mirrored} dropped={dropped} added={added} unmatched={len(unmatched)}")
 
-
 def main() -> None:
     parser = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments). Session store: $WDB_GROK_SESSIONS (default C:\\Users\\Vira\\.grok\\sessions).", description="Match keyed source regions to live assets.")
     parser.add_argument("live", nargs="?", type=Path, help="Live sprite PNG to patch.")
@@ -1309,10 +1250,8 @@ def main() -> None:
     stats = organize(plan)
     print(f"organized archived={stats['archived']} notes={stats['notes']} entries={stats['entries']}", flush=True)
 
-
 def matched_count(plan: dict) -> int:
     return sum(len(item["lives"]) for item in plan["sources"])
-
 
 if __name__ == "__main__":
     main()

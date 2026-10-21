@@ -1,10 +1,10 @@
 extends Node3D
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 
@@ -24,7 +24,7 @@ func _ready() -> void:
 	add_child(player)
 	_dummies()
 	_hud()
-	Smoke.attach_foundation(self)
+	Dbg.smoke_attach("foundation", self)
 
 func _process(delta: float) -> void:
 	frame_acc += delta

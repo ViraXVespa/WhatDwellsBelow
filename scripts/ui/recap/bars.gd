@@ -5,6 +5,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
+const Journal: GDScript = preload("res://scripts/ui/pause_menu/journal_page.gd")
 
 const COL_PERM := Color(0.72, 0.56, 0.28)
 const COL_GAIN := Color(0.46, 0.78, 0.42)
@@ -50,8 +51,21 @@ static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	shell.add_child(inner)
 	shell.set_meta("skill_id", id)
 	shell.set_meta("skill_kind", kind)
-	TipHover.attach(shell, host, id, kind, paint_tip, SkillRow.hl)
+	TipHover.attach(shell, host, id, kind, paint_tip, _hl)
+	_hl(shell, false)
 	return {"wrap": shell, "lab": lab, "base": base, "gain": gain}
+
+static func _hl(row: Control, on: bool) -> void:
+	SkillRow.hl(row, on)
+	if not row is PanelContainer:
+		return
+	var sb: StyleBox = (row as PanelContainer).get_theme_stylebox("panel")
+	if not sb is StyleBoxFlat:
+		return
+	var flat: StyleBoxFlat = (sb as StyleBoxFlat).duplicate()
+	flat.content_margin_top = 4
+	flat.content_margin_bottom = 4
+	(row as PanelContainer).add_theme_stylebox_override("panel", flat)
 
 static func tip_lv(host: Node, id: String, kind: String) -> int:
 	var start := float(host.perm0.get(id, 0.0))
@@ -64,10 +78,20 @@ static func tip_lv(host: Node, id: String, kind: String) -> int:
 static func paint_tip(host: Node) -> void:
 	if not TipHover.live(host):
 		return
+	var sheet: Rect2 = host.tip_sheet
+	if sheet.size.x < 8.0:
+		return
 	host.tip_lab.text = ThemeS.skill_tip(host.tip_id, tip_lv(host, host.tip_id, host.tip_kind))
-	var w := 404.0
-	host.tip_lab.custom_minimum_size = Vector2(w - 24.0, 0.0)
-	TipHover.place_below(host, host.tip_from, w, maxf(80.0, host.tip_lab.get_minimum_size().y + 20.0))
+	host.tip_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	host.tip_lab.add_theme_font_override("font", ThemeS.ink_font())
+	host.tip_lab.add_theme_constant_override("outline_size", 0)
+	var w: float = sheet.size.x - 36.0
+	host.tip_lab.custom_minimum_size = Vector2(w - 28.0, 0.0)
+	var h: float = maxf(120.0, host.tip_lab.get_minimum_size().y + 28.0)
+	host.tip_host.position = Vector2(sheet.position.x + 18.0, sheet.position.y + Journal.TEXT_DROP + 8.0)
+	host.tip_host.size = Vector2(w, h)
+	host.tip_host.visible = true
+	host.tip_host.z_index = 4
 
 static func set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
 	fill.anchor_left = clampf(left_r, 0.0, 1.0)

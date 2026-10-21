@@ -21,7 +21,6 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import bot_gate_lib
 
-
 def _rows(path: Path) -> list[dict]:
     out = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -31,10 +30,8 @@ def _rows(path: Path) -> list[dict]:
             pass
     return out
 
-
 def _text(v: object) -> str:
     return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
-
 
 def _kind(path: str) -> str:
     p = path.replace("\\", "/").lower()
@@ -51,7 +48,6 @@ def _kind(path: str) -> str:
     if p.endswith((".gd", ".py", ".json", ".yaml", ".tscn")):
         return "code"
     return "other"
-
 
 def audit(rows: list[dict]) -> dict:
     calls: dict[str, tuple[int, str, dict]] = {}
@@ -92,7 +88,6 @@ def audit(rows: list[dict]) -> dict:
     return {"first_ask_row": first_ask, "reads": reads, "xref": xref, "order": order,
             "calls_before_ask": sum(1 for v in calls.values() if v[0] <= first_ask)}
 
-
 def report(res: dict) -> list[str]:
     reads = res["reads"]
     by: dict[str, list[int]] = {}
@@ -109,7 +104,6 @@ def report(res: dict) -> list[str]:
     lines += [f"  row {r['row']}  {r['kind']}  {r['chars']}  {r['path']}" for r in sorted(unused, key=lambda r: -r["chars"])]
     return lines
 
-
 def selftest() -> int:
     def call(i: str, name: str, **a: object) -> dict:
         return {"type": "assistant", "content": "", "tool_calls": [{"id": i, "name": name, "arguments": json.dumps(a)}]}
@@ -123,7 +117,6 @@ def selftest() -> int:
     ok = res["first_ask_row"] == 6 and unused == ["C:\\x\\design\\ui-hud.md"] and any("ui-hud.md" in ln for ln in report(res))
     print("" if ok else "FAIL the audit must flag exactly the doc that was read and never named again")
     return agent_log.emit_result("PASS" if ok else "FAIL", None, cmd="selftest", problems=0 if ok else 1)
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bot-only audit of one Grok Build session's reads before its first ask.")
@@ -142,7 +135,6 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail(f"no chat_history.jsonl at {path}; pass --session DIR or --file PATH")
     lines = report(audit(_rows(path)))
     return agent_log.finish("bot-load-audit", root, "\n".join(lines), "INFO", args=args, echo="\n".join(lines[:60]), reads=len(lines))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -1,6 +1,6 @@
 extends Object
 
-## One spatial field shader. Albedo is world xz. Light is the buffer RT.
+## One spatial field shader. Albedo is world xz. Wear is a baked tileable sheet. Light is the buffer RT.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -21,6 +21,12 @@ const TAP_BODY := """
 	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
 	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
 """
+## Baked wear sheet (tools/bake_ground_wear.py): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
+## darkest texel is WEAR_DEPTH darker (ground_wear 0.22 -> about 5%).
+const WEAR_PATH := "res://assets/baked/ground_wear.png"
+const WEAR_PX_PER_M := 32.0
+const GROUND_WEAR_STAMP := "53a0e8143e252c4f"
+
 const TAP_MIX := "mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);\n"
 
 static var _sh: Shader
@@ -31,14 +37,15 @@ static func shader() -> Shader:
 	var sh := Shader.new()
 	sh.code = """
 shader_type spatial;
+#define WEAR_DEPTH 0.22
 render_mode unshaded;
 uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
-uniform float hash_m = 4.0;
-uniform float variant_n = 3.0;
+uniform sampler2D wear_tex : filter_nearest, repeat_enable;
+uniform float wear_uv = 0.03125;
 uniform float wear = 0.0;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
@@ -48,28 +55,13 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
+
 void fragment() {
 	vec2 xz = world_pos.xz;
-	float cell = max(hash_m, 0.001);
-	vec2 q = xz / cell;
-	vec2 qi = floor(q);
-	vec2 qf = fract(q);
-	qf = qf * qf * (3.0 - 2.0 * qf);
-	float h00 = fract(sin(dot(qi, vec2(127.1, 311.7))) * 43758.5453);
-	float h10 = fract(sin(dot(qi + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
-	float h01 = fract(sin(dot(qi + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-	float h11 = fract(sin(dot(qi + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-	float h = mix(mix(h00, h10, qf.x), mix(h01, h11, qf.x), qf.y);
-	float nvar = max(variant_n, 1.0);
-	vec3 quilt_tint = vec3(1.0);
-	if (nvar > 1.5) {
-		float pick = h;
-		quilt_tint = mix(vec3(0.98), vec3(1.02), pick);
-	}
 	vec2 uv = xz * uv_scale + uv_off;
 	vec3 c = texture(albedo_tex, uv).rgb;
-	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
-""" + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * quilt_tint * worn * lit;
+	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
+""" + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * worn * lit;
 }
 """
 	_sh = sh
@@ -81,27 +73,21 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	var albedo: Texture2D = albedo_tex(tex_path, fallback)
 	var px: float = float(maxi(albedo.get_width(), 1))
 	var density: float = T.GROUND_PX_PER_M
-	var hash_m: float = T.GROUND_HASH_M
-	var variants: float = T.GROUND_VARIANTS
 	var wear: float = 0.0
 	if not Engine.is_editor_hint() and App.get("bal") != null:
 		density = App.bal.getv("ground_px_per_m")
 		if density < 1.0:
 			density = T.GROUND_PX_PER_M
-		hash_m = App.bal.getv("ground_hash_m")
-		if hash_m < 1.0:
-			hash_m = T.GROUND_HASH_M
-		variants = App.bal.getv("ground_variants")
-		if variants < 1.0:
-			variants = T.GROUND_VARIANTS
 		wear = App.bal.getv("ground_wear")
 	var repeats: float = density / px
 	mat.set_shader_parameter("albedo_tex", albedo)
 	mat.set_shader_parameter("uv_scale", Vector2(repeats, repeats))
 	mat.set_shader_parameter("uv_off", Vector2.ZERO)
 	mat.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
-	mat.set_shader_parameter("hash_m", hash_m)
-	mat.set_shader_parameter("variant_n", variants)
+	var wt: Texture2D = load(WEAR_PATH) as Texture2D
+	mat.set_shader_parameter("wear_tex", wt)
+	if wt != null:
+		mat.set_shader_parameter("wear_uv", WEAR_PX_PER_M / float(maxi(wt.get_width(), 1)))
 	mat.set_shader_parameter("wear", wear)
 	LightRt.bind(mat)
 	return mat

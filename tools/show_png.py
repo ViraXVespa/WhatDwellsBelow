@@ -28,16 +28,13 @@ from imglib import compare
 EXT = re.compile(r"^(.*?\.(?:png|jpe?g|webp|gif|bmp))(?:=(.*))?$", re.I)
 SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 
-
 def split_item(item: str) -> tuple[str, str]:
     m = EXT.match(item)
     return (m.group(1), (m.group(2) or "").strip()) if m else (item, "")
 
-
 def sanitize(name: str) -> str:
     cleaned = SAFE.sub("-", name.strip()).strip(".-")
     return (cleaned or "sheet")[:40]
-
 
 def flow_key(path: Path) -> str | None:
     parts = [p.lower() for p in path.parts]
@@ -48,21 +45,24 @@ def flow_key(path: Path) -> str | None:
         return None
     return path.parts[i + 1]
 
-
 def open_files(paths: list[Path], native: bool | None = None) -> int:
-    """Open the first file only. Returns how many were opened (0 when there is no viewer)."""
+    """Open the first file in Photos via the ms-photos URI.
+    Gives the app proper folder context so navigation/scrolling works.
+    """
     if native is None:
         native = os.name == "nt"
     if not native or not paths:
         return 0
+    target = paths[0].resolve()
+    # ms-photos URI (works even with spaces; no percent-encoding needed on recent Photos)
+    uri = f"ms-photos:viewer?fileName={target}"
     try:
-        os.startfile(str(paths[0]))  # type: ignore[attr-defined]
-        time.sleep(0.4)
+        subprocess.run(["cmd", "/c", "start", "", uri], check=False, shell=False)
+        time.sleep(0.6)
         return 1
-    except (OSError, AttributeError):
-        print(f"WARN: could not open {paths[0]}")
+    except (OSError, FileNotFoundError):
+        print(f"WARN: could not open {target} in Photos")
         return 0
-
 
 def parse_groups(groups: list[list[str]], bare: list[str]) -> list[tuple[str, list[tuple[str, str]]]]:
     out: list[tuple[str, list[tuple[str, str]]]] = []
@@ -86,7 +86,6 @@ def parse_groups(groups: list[list[str]], bare: list[str]) -> list[tuple[str, li
         out.append((key, buckets[key]))
     return out
 
-
 def resolve_groups(groups: list[tuple[str, list[tuple[Path, str]]]]) -> list[tuple[str, list[tuple[Path, str]]]]:
     resolved = []
     missing = []
@@ -103,13 +102,11 @@ def resolve_groups(groups: list[tuple[str, list[tuple[Path, str]]]]) -> list[tup
         agent_log.fail("not a file: " + "; ".join(missing))
     return resolved
 
-
 def rel(path: Path) -> str:
     try:
         return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
     except ValueError:
         return path.as_posix()
-
 
 def stage(ask: str, groups: list[tuple[str, list[tuple[Path, str]]]], no_open: bool) -> tuple[int, int]:
     from PIL import Image
@@ -140,7 +137,6 @@ def stage(ask: str, groups: list[tuple[str, list[tuple[Path, str]]]], no_open: b
     print(f"{where}: {n} of {len(sheets)}")
     print(session_lib.failed_block())
     return n, len(sheets)
-
 
 def selftest() -> int:
     import tempfile
@@ -191,7 +187,6 @@ def selftest() -> int:
         print("FAIL " + item)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Stage prove sheets into one folder and open the first in Photos.")
     ap.add_argument("--ask", default="ask", help="Folder name under _logs/prove-view/.")
@@ -207,7 +202,6 @@ def main(argv: list[str] | None = None) -> int:
     groups = resolve_groups(parse_groups(args.group, args.items))
     opened, count = stage(args.ask, groups, args.no_open)
     return agent_log.emit_result("PASS", opened=opened, files=count)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -15,7 +15,6 @@ import agent_log
 
 SR = 22050
 
-
 def _write(path: Path, frames: list[int]) -> None:
     """Mono 16-bit wav from int samples; creates parent folders."""
     if agent_log.DRY_RUN:
@@ -29,16 +28,13 @@ def _write(path: Path, frames: list[int]) -> None:
         w.writeframes(b"".join(struct.pack("<h", f) for f in frames))
     print(f"wrote {path}")
 
-
 def write_wav(path: Path, samples: list[float], scale: int = 32000) -> None:
     """Clip to +-1.0 then scale (the p2/p9 sfx writer)."""
     _write(path, [int(max(-1.0, min(1.0, s)) * scale) for s in samples])
 
-
 def write_pcm(path: Path, samples: list[float]) -> None:
     """Scale by 32767 then clamp (the music/placeholder writer)."""
     _write(path, [max(-32767, min(32767, int(s * 32767))) for s in samples])
-
 
 def sine(freq: float, dur: float, vol: float = 0.35, decay: bool = True, power: float = 1.0) -> list[float]:
     """Sine with envelope (1 - t/dur) ** power. power 1.0 is the p2 linear fade, 0.7 the p9 one."""
@@ -50,7 +46,6 @@ def sine(freq: float, dur: float, vol: float = 0.35, decay: bool = True, power: 
         out.append(vol * env * math.sin(2 * math.pi * freq * t))
     return out
 
-
 def noise(dur: float, vol: float = 0.2, seed: float = 1) -> list[float]:
     """LCG noise with a linear fade. seed 0.0 (float) reproduces the p2 stream, ints the p9 one."""
     n = int(SR * dur)
@@ -61,7 +56,6 @@ def noise(dur: float, vol: float = 0.2, seed: float = 1) -> list[float]:
         out.append(vol * (1.0 - i / n) * ((x / 2**30) - 1.0))
     return out
 
-
 def mix(*parts: list[float]) -> list[float]:
     n = max(len(p) for p in parts)
     out = [0.0] * n
@@ -69,7 +63,6 @@ def mix(*parts: list[float]) -> list[float]:
         for i, s in enumerate(p):
             out[i] += s
     return out
-
 
 def mix_norm(*parts: list[float]) -> list[float]:
     """mix, then scale down when the peak passes 0.95 (placeholder music)."""

@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Advisory performance run of the EXPORTED web build in headless Chrome. Not a gate, except a flow `assert` breach (FAIL).
+"""Advisory performance run of the EXPORTED web build in headless Edge, or headless Chrome when Edge is not installed. Not a gate, except a flow `assert` breach (FAIL). Not an FPS reading.
 
   python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
-Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
+Serves --site (default _out/web; use a fresh `export_web.py --debug --out DIR`: hitch rows and wdb-playtest flows need the debug export, _out/web/ is release and may be stale) and replays flows from
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
 page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
 a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
---mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
+--mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Edge (or Chrome/Chromium when Edge is not installed); no browser download. Software GL:
 compare runs on the same machine only. Not a numbered smoke.
 """
 from __future__ import annotations
 
+import re
 import json
-import os
-import shutil
 import statistics
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -27,6 +27,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import bench_env
 import hitch_sink
 import web_perf_lib
 
@@ -38,7 +39,6 @@ UP = {"load_ms": (40, 1500), "init_ms": (50, 1000), "avg_frame_ms": (30, 5), "p9
 DOWN = {"avg_fps": (30, 3)}
 SCALAR = ("load_ms", "wall_ms", "wasm_dl_ms", "wasm_compile_ms", "pck_end_ms", "init_ms", "frames", "avg_fps", "avg_frame_ms",
           "p95_frame_ms", "max_frame_ms", "long_frames", "shot_excluded", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
-
 
 def median(runs: list[dict]) -> dict:
     rep = dict(runs[len(runs) // 2])
@@ -54,7 +54,6 @@ def median(runs: list[dict]) -> dict:
         rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
     return rep
 
-
 def diff(cur: dict, base: dict, pct: float | None) -> list[str]:
     out = []
     for table, sign in ((UP, 1), (DOWN, -1)):
@@ -66,7 +65,6 @@ def diff(cur: dict, base: dict, pct: float | None) -> list[str]:
             if d > floor and (b <= 0 or d * 100 / b > (lim if pct is None else pct)):
                 out.append("WORSE %s %s -> %s" % (k, b, a))
     return out
-
 
 def health(rep: dict) -> list[str]:
     """Playtester health for one run (flows with a play result or a waitplay step); a non-empty list = INVALID, never baselined."""
@@ -93,7 +91,6 @@ def health(rep: dict) -> list[str]:
         bad.append("INVALID frame stall %sms" % mx)
     return bad
 
-
 def stuck(flow: dict, shots: dict) -> list[str]:
     """expect_change: [[shot_a, shot_b], ...]; mean luminance within 10% means the flow stayed on that screen."""
     out = []
@@ -101,7 +98,6 @@ def stuck(flow: dict, shots: dict) -> list[str]:
         if shots.get(a, -1) >= 0 and shots.get(b, -1) >= 0 and abs(shots[a] - shots[b]) * 100 / max(shots[a], 1) < 10:
             out.append("STUCK shots %s and %s look the same (luminance %s vs %s): the flow did not change screens" % (a, b, shots[a], shots[b]))
     return out
-
 
 def check(flow: dict, rep: dict) -> list[str]:
     """Flow "assert": {"audio_gaps": max, "p95_frame_ms": max (phase "music" or the measured frames), ...}; a breach is ASSERT (exit 1)."""
@@ -116,7 +112,6 @@ def check(flow: dict, rep: dict) -> list[str]:
         if not isinstance(v, (int, float)) or v > lim:
             out.append("ASSERT %s=%s over %s" % (k, v, lim))
     return out
-
 
 def selftest() -> list[str]:
     """Offline checks of the report logic (no browser): flow asserts, baseline diff, uncapped launch flags."""
@@ -137,13 +132,18 @@ def selftest() -> list[str]:
         bad.append("frame pacing not uncapped")
     return bad
 
+REL_BASE = "tools/web-perf-release-baseline.json"
+HOOKS = ("wdb-playtest", "eval", "waitplay")  # in-game hooks (scripts/debug/web_hook.gd); a release export has none
+
+def hook_free(flow: dict) -> bool:
+    return not any(h in json.dumps(flow) for h in HOOKS)
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Chrome.", json_out=True)
-    ap.add_argument("--site", default="docs", help="Exported site dir (default docs; may be stale, export with export_web.py --out).")
+    ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Edge (Chrome if Edge is missing).", json_out=True)
+    ap.add_argument("--site", default="_out/web", help="Exported site dir (default _out/web; may be stale, export with export_web.py --out).")
     ap.add_argument("--url", default="", help="Test this URL instead of serving --site.")
     ap.add_argument("--flow", default="title-idle", help="Flow name(s), comma separated, or all (see %s)." % FLOWS)
-    ap.add_argument("--chrome", default=os.environ.get("CHROME_BIN", ""), help="Chrome/Chromium binary (default PATH).")
+    ap.add_argument("--chrome", default="", help="Force this browser binary. Default: Edge if installed, else Chrome/Chromium (CHROME_BIN or PATH).")
     ap.add_argument("--long-ms", type=float, default=50.0, help="A frame over this many ms is long (default 50).")
     ap.add_argument("--timeout-sec", type=int, default=120, help="Load timeout.")
     ap.add_argument("--width", type=int, default=1280, help="Viewport width in px (default 1280).")
@@ -155,6 +155,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--save-baseline", default="", help="Write this run's report here (merges flows into an existing file).")
     ap.add_argument("--max-worse-pct", type=float, default=None, help="One percent for every metric (default: per-metric table).")
     ap.add_argument("--strict", action="store_true", help="Exit 1 when a metric is WORSE or a flow is STUCK (default advisory).")
+    ap.add_argument("--release-ref", action="store_true", help="Release reference: export preset Web (no debug code) to _logs/web-perf-release/site "
+                    "(or use --site), run only flows with no in-game hook, mode=release in the report. Baseline: %s; never diff it against the debug one." % REL_BASE)
     ap.add_argument("--selftest", action="store_true", help="Offline checks of the report logic; no browser.")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
@@ -167,9 +169,28 @@ def main(argv: list[str] | None = None) -> int:
     for n in names:
         if n not in flows:
             agent_log.fail("unknown flow %s. flows: %s" % (n, ", ".join(sorted(flows))))
-    chrome = args.chrome or shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser") or ""
+    if args.release_ref:
+        hooked = [n for n in names if not hook_free(flows[n])]
+        if args.flow != "all" and hooked:
+            agent_log.fail("--release-ref: %s need in-game hooks (debug export only)" % ",".join(hooked))
+        names = [n for n in names if n not in hooked]
+        for b in (args.baseline, args.save_baseline):
+            if b and Path(b).name == "web-perf-baseline.json":
+                agent_log.fail("--release-ref: use %s (release and debug baselines are not comparable)" % REL_BASE)
+        if args.url:
+            agent_log.fail("--release-ref serves its own export (or --site DIR); no --url")
+        if args.site == "_out/web":
+            args.site = "_logs/web-perf-release/site"
+            print("exporting release (preset Web) -> %s" % args.site)
+            ex = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--out", str(root / args.site)], cwd=str(root))
+            if ex.returncode:
+                agent_log.fail("release export failed (see _logs/export-web)")
+    elif args.baseline and Path(args.baseline).name == Path(REL_BASE).name:
+        agent_log.fail("%s is the release reference: diff it only with --release-ref" % REL_BASE)
+    chrome, browser_kind = web_perf_lib.find_browser(args.chrome)
     if not chrome:
-        agent_log.fail("no Chrome/Chromium: pass --chrome or set CHROME_BIN")
+        agent_log.fail("no Edge or Chrome: pass --chrome or set CHROME_BIN")
+    print("browser=%s kind=%s" % (Path(chrome).name, browser_kind))
     try:
         import playwright  # noqa: F401
     except ImportError:
@@ -178,6 +199,10 @@ def main(argv: list[str] | None = None) -> int:
     if not url:
         if not (site / "index.html").is_file():
             agent_log.fail("no exported site at %s (python tools/export_web.py --out DIR)" % args.site)
+        mode = "debug" if any(re.search(rb"scripts/debug/[A-Za-z0-9_/]+\.gdc", p.read_bytes()) for p in site.glob("*.pck")) else "release"
+        if args.release_ref and mode != "release":
+            agent_log.fail("--release-ref: %s holds debug code (export_web.py without --debug)" % args.site)
+        print("site_mode=%s%s" % (mode, "" if mode == "debug" else " (no hitch rows / wdb-playtest: export_web.py --debug --out DIR)"))
         srv = hitch_sink.serve(site, root)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
     shots = root / "_logs" / JOB
@@ -205,7 +230,9 @@ def main(argv: list[str] | None = None) -> int:
     label = ""
     if (site / "build_id.txt").is_file():
         label = (site / "build_id.txt").read_text(encoding="utf-8").strip()
-    full = {"build_id": label, "site": args.site if not args.url else args.url, "chrome": Path(chrome).name,
+    env = bench_env.env_line(browser="%s %s" % (Path(chrome).name, bench_env._run([chrome, "--version"]) or "unknown"), renderer="gl_compatibility (web)",
+        vsync="browser rAF", cap="browser", resolution="%dx%d" % (args.width, args.height), headless=True)
+    full = {"mode": "release" if args.release_ref else "debug", "env": env, "build_id": label, "site": args.site if not args.url else args.url, "chrome": Path(chrome).name,
             "viewport": "%dx%d" % (args.width, args.height), "flows": reps}
     out = agent_log.run_path(JOB, root, "report.json")
     out.write_text(json.dumps(full, indent=1), encoding="utf-8")
@@ -219,6 +246,8 @@ def main(argv: list[str] | None = None) -> int:
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
     hard = 0
     lines, flags = ["build_id=%s chrome=%s viewport=%s report=%s" % (label, full["chrome"], full["viewport"], agent_log.rel(root, out))], 0
+    lines.append("mode=%s" % full["mode"])
+    lines.append(env)
     for n, r in reps.items():
         lines.append("flow %s" % n)
         lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]
@@ -246,7 +275,6 @@ def main(argv: list[str] | None = None) -> int:
     first = next(iter(reps.values()))
     return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flows=",".join(names), load_ms=first["load_ms"],
                             avg_fps=first["avg_fps"], heap_mb=first["heap_mb"], wasm_mb=first["wasm_mem_mb"], flagged=flags)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

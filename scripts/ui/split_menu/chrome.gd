@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
+const ScrollCue: GDScript = preload("res://scripts/ui/scroll_cue.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
@@ -91,6 +92,7 @@ static func _pane(host: Node, root: Control, meta: String) -> VBoxContainer:
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 10)
 	sc.add_child(box)
+	ScrollCue.attach(sc)
 	return box
 
 static func _anchor(n: Control, al: float, ar: float, at: float, ab: float, ol: float, oright: float, ot: float, ob: float) -> void:

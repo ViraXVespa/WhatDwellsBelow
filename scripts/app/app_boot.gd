@@ -1,9 +1,6 @@
 extends Object
 
-const DebugS := preload("res://scripts/debug/debug_menu.gd")
-const AnimS := preload("res://scripts/debug/anim_browser.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const WebHook := preload("res://scripts/debug/web_hook.gd")
+const Dbg := preload("res://scripts/app/dbg.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 
@@ -16,9 +13,12 @@ static func _ready(host: Node) -> void:
 	host.sfx_node = App.SfxS.new()
 	host.add_child(host.sfx_node)
 	host.tel = App.TelS.new()
-	host.playtest = App.PlayS.new()
-	host.add_child(host.playtest)
-	WebHook.register()
+	host.playtest = Dbg.make("playtest")
+	if host.playtest:
+		host.add_child(host.playtest)
+	var hook := Dbg.script("web_hook")
+	if hook:
+		hook.register()
 	host.pause_menu = App.PauseS.new()
 	host.add_child(host.pause_menu)
 	host.recap = App.RecapS.new()
@@ -37,35 +37,34 @@ static func _ready(host: Node) -> void:
 	host.add_child(host.touch_hud)
 	host.get_tree().node_added.connect(host._on_node_added)
 	host.get_tree().root.size_changed.connect(host.refresh_ui_text_scale)
-	if not App.Smoke.active():
+	if not Dbg.smoke_active():
 		App.Store.load_slot("live")
 	host.set_zoom(host.cam_zoom)
 	host.set_hud_scale(host.hud_scale)
 	host.refresh_ui_text_scale()
 	host.set_sprite_filter(host.sprite_filter, true)
 	App.Disp.apply_saved()
-	if App.Smoke.active() or "--wdb-debug" in OS.get_cmdline_user_args():
+	if Dbg.smoke_active() or "--wdb-debug" in OS.get_cmdline_user_args():
 		ensure_debug(host)
-		ensure_anim_browser(host)
 	else:
 		host.call_deferred("ensure_debug")
-		host.call_deferred("ensure_anim_browser")
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		host.call_deferred("_open_debug")
-	HitchLog.begin(host)
-	host.tree_exiting.connect(func(): HitchLog.close())
+	Dbg.hitch_begin(host)
 
 static func ensure_debug(host: Node) -> void:
 	if host.debug != null:
 		return
-	host.debug = DebugS.new()
-	host.add_child(host.debug)
+	host.debug = Dbg.make("debug_menu")
+	if host.debug:
+		host.add_child(host.debug)
 
 static func ensure_anim_browser(host: Node) -> void:
 	if host.anim_browser != null:
 		return
-	host.anim_browser = AnimS.new()
-	host.add_child(host.anim_browser)
+	host.anim_browser = Dbg.make("anim_browser")  # made on first open (debug menu), not at boot
+	if host.anim_browser:
+		host.add_child(host.anim_browser)
 
 static func hitstop(host: Node, sec: float) -> void:
 	if host.playtest and bool(host.playtest.get("live_running")):
@@ -79,7 +78,7 @@ static func hitstop(host: Node, sec: float) -> void:
 
 static func _process(host: Node, delta: float) -> void:
 	App.Pad.tick()
-	HitchLog.tick(host, delta)
+	Dbg.hitch_tick(host, delta)
 	DynRes.tick(host)
 	if host._in_world() and not host.ui_open:
 		var vp := host.get_viewport()

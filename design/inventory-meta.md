@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: artifacts/collections, extraction mailing, vendor restock  
 
-
 ## Artifacts and collections
 
 - Artifacts are obtained from the Ghost Shop, boss chests, and (optionally) dead-end or trap-room chests.

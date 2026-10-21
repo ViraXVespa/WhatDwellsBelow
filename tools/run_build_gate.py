@@ -5,7 +5,7 @@
     python tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
     python tools/run_build_gate.py --batch --visual ui.pause     (the job's shot flows in the same call; look at the frames, then show_png.py)
 --batch = import + restore `.import` churn + check_load_graph + the script-name check (duplicate
-basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + process_gear_icons --check (each expected gear icon has a plate under _src/sources) + rekey_all_stills --check (approved stills reproduce live) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). `assets/keytest` is retired. Run it once
+basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + process_gear_icons --check (each expected gear icon has a plate under _src/sources) + rekey_all_stills --check (two runs byte-identical) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). `assets/keytest` is retired. Run it once
 per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with read_summary.py --job build-gate.
 """
 from __future__ import annotations
@@ -20,13 +20,11 @@ import agent_log
 import bot_gate_lib
 import godot_lib
 
-
 def child(root: Path, script: str, job: str, *flags: str) -> tuple[int, list[str]]:
     p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / script), "--root", str(root), *flags],
                        cwd=root)
     s = agent_log.agent_summary_path(job, root)
     return p.returncode, (s.read_text(encoding="utf-8").splitlines() if s.is_file() else [])
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Post-slice gate: editor import check, load graph and script names.", json_out=True)
@@ -86,10 +84,14 @@ def main(argv: list[str] | None = None) -> int:
         body += [f"--- gear sources exit={code} ---"] + lines[-6:] + [""]
         fail += int(code != 0)
         if (root / "_src" / "manifest.json").is_file():
-            print("== rekey idempotence ==")
+            print("== rekey determinism ==")
             code, lines = child(root, "rekey_all_stills.py", "rekey-all-stills", "--check", "--jobs", "4")
-            body += [f"--- rekey idempotence exit={code} ---"] + lines[-4:] + [""]
+            body += [f"--- rekey determinism exit={code} ---"] + lines[-4:] + [""]
             fail += int(code != 0)
+        print("== release smoke (stripped) ==")
+        code, lines = child(root, "run_release_smoke.py", "release-smoke", "--modes", "stripped")
+        body += [f"--- release smoke exit={code} ---"] + lines[-4:] + [""]
+        fail += int(code != 0)
         print("== hub bake stamp ==")
         code, lines = child(root, "check_hub_bake.py", "hub-bake")
         body += [f"--- hub bake stamp exit={code} ---"] + lines[-3:] + [""]
@@ -119,7 +121,6 @@ def main(argv: list[str] | None = None) -> int:
         fail += int(code != 0 and sg == "required")
     what = "run_build_gate.py" + (" --batch" if args.batch else "")
     return agent_log.finish("build-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(what, body), fail_signals=fail)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

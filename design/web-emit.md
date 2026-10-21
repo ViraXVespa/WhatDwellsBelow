@@ -24,10 +24,8 @@ import doc_patch as dp
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
 def main() -> int:
     return dp.run_checker(ROOT)
-
 
 if __name__ == "__main__":
     rc = main()
@@ -39,7 +37,6 @@ if __name__ == "__main__":
 Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `task`, `run_checker`, `dump_job`) and the matching `doc_patch.py` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
 
 A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `run_shots.py` stays hidden. `--show` only when the User asks to see the window.
-
 
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
@@ -66,6 +63,9 @@ Web writes a Build brief only when the User asks for one, and only for work Web 
 
 ## Scratch helpers
 
+Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/task.py`. Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file. Extra header fields that `task.py new` does not emit may be added afterward with `ensure_line`.
+The scratch must call the matching prove runner (`dp.run_checker`, `dp.dump_job`, etc.) and base the RESULT line solely on the integer it returns. Do not print RESULT until the runner has returned. Do not hard-code PASS.
+
 Tool catalog (what each runner is, which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
 Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
@@ -84,6 +84,5 @@ Do not treat a page-tool summary as the live file.
 When not on a grok-build branch the scratch calls `doc_patch.write_changelog` by default.
 
 Changelog entries: bullets list every change; the Summary line is a brief overview of those changes. A later call may replace an existing Summary.
-
 
 Changelog label: if any design/changelog/*.md is dirty in the working tree, append to the highest of those; otherwise use next_label().

@@ -4,7 +4,6 @@ Status: current plan
 Read when: strike detection, dash, lock, juice, crits
 Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`  
 
-
 ## Weapon system
 
 The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.  
@@ -62,7 +61,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Triggers after sufficient kills in a short window (exact threshold tunable).
 - Effects while active:
   - Increased movement speed
-  - Stacking XP bonus (capped by `adrenaline_xp_max`, 2.0)
+  - Stacking XP bonus (capped; tunables-combat)
   - Flaming aura on the player
   - Continuous wooshing / crackling sound
 - Starts with a warcry.
@@ -77,24 +76,15 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 
 ## Combat level and threat
 
-- Each floor spans 20 combat levels: floor 1 is CL 1–20, floor 2 is 21–40, and so on (`enemy_cl_per_floor`).
+- Each floor spans a fixed band of combat levels, and each floor starts where the last ended (band width: tunables-world).
 - Enemy CL walk and pack HP: enemies (`Threat.level_at`).
-- Rank multipliers are shallow (`cl_dealt_up` 1.03, `cl_dealt_down` 0.97 and the matching received pair). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
-- Axe basic damage is 16 so the player does not outpace the floor-1 HP table.
-- Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near combat level 17. That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
-- Ambush and pressure kills grant XP. Wave count is capped per floor (`pressure_waves`, `ambush_cap`) so the CL 17 target stays measurable.
+- Rank multipliers are shallow (values: tunables-world). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
+- Axe basic damage stays low enough that the player does not outpace the floor-1 HP table (tunables-combat).
+- Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near the floor-1 combat-level target (tunables-world). That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
+- Ambush and pressure kills grant XP. Wave count is capped per floor (`pressure_waves`, `ambush_cap`) so that target stays measurable.
 
 ## Target-lock
 
 See input for full behavior.
 
 Floating damage numbers show integer values only, hold, then fade.
-
-## Live snapshot (performance)
-
-- `Combat.enemies()` is reused for the current process frame.
-- Enemy line-of-sight uses the existing layer-1 ray. It is not recast every physics tick: `los_period` (default 0.12s), staggered by instance id, skipped farther than `atk_range + 4`, always refreshed inside strike range. Result cached on `los_ok` / `los_t`.
-- Pack separation stops after `sep_max` neighbors (default 6).
-- The idle aim-line mesh stays hidden until `update_line` turns it on so the default 1×1 cream box does not flash under the Placeholdia loader.
-
-Live numeric defaults are in the tunables gate.

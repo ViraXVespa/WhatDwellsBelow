@@ -19,7 +19,6 @@ ROOT = Path(__file__).resolve().parent.parent
 IMG = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
 KEYS = ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
 
-
 def save(src: Path, dest: Path) -> None:
     use = matcher.resolve_source(ROOT / dest, src)
     if use is None:
@@ -29,7 +28,6 @@ def save(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     im.save(dest)
     print("wrote", dest)
-
 
 def _run() -> None:
     jobs = {
@@ -63,10 +61,8 @@ def _run() -> None:
                     src.save(p)
                     print("fill", p)
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("pack_p2_art", 'Key and fit Phase 2 equipment and fx stills from a Grok session into assets/sprites and assets/fx.', _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

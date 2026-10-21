@@ -44,7 +44,6 @@ import repo_lib
 DRY = False  # set by the CLI --dry-run; library callers may set dp.DRY = True
 EOL = "keep"  # keep | crlf | lf. keep = the existing file's line ending (CRLF for new files)
 
-
 def _gd_tabs(text: str) -> str:
     out: list[str] = []
     for line in text.splitlines(keepends=True):
@@ -54,7 +53,6 @@ def _gd_tabs(text: str) -> str:
             line = ("\t" * (spaces // 4)) + raw
         out.append(line)
     return "".join(out)
-
 
 def _py_ok(path: Path, text: str) -> None:
     if path.suffix != ".py":
@@ -84,7 +82,6 @@ def _py_ok(path: Path, text: str) -> None:
     if i >= len(lines) or not lines[i].startswith("from __future__ import"):
         raise SystemExit("FAIL  future import not first in %s" % path.as_posix())
 
-
 def _near(lines: list[str], needle: str) -> str:
     want = needle.strip()
     best = 0
@@ -104,10 +101,8 @@ def _near(lines: list[str], needle: str) -> str:
     shown = " | ".join(lines[j].strip() for j in range(lo, hi))
     return "line %d: %s" % (best + 1, shown)
 
-
 def func_count(text: str, name: str) -> int:
     return gd_lib.func_count(text, name)
-
 
 def repo_root(start: Path | None = None) -> Path:
     try:
@@ -115,19 +110,16 @@ def repo_root(start: Path | None = None) -> Path:
     except FileNotFoundError:
         raise SystemExit("FAIL  run from the WhatDwellsBelow repo root")
 
-
 def _shown(path: Path) -> str:
     try:
         return agent_log.rel(agent_log.repo_root(), path)
     except FileNotFoundError:
         return Path(path).as_posix()
 
-
 def read_text(path: Path) -> str:
     if not path.is_file():
         raise SystemExit(f"FAIL  missing {_shown(path)} (this op edits an existing file; `doc_patch.py write` creates one)")
     return md.read_text(path)
-
 
 def write_text(path: Path, text: str) -> None:
     if path.suffix == ".gd":
@@ -139,7 +131,6 @@ def write_text(path: Path, text: str) -> None:
     md.write_text(path, text, eol=EOL, mkdir=True)
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
-
 def _miss(where: str, old: str) -> str:
     try:
         where = Path(where).resolve().relative_to(Path.cwd()).as_posix()
@@ -148,10 +139,8 @@ def _miss(where: str, old: str) -> str:
     return (f"patch miss in {where}: {old[:96]!r} is not in the file. Copy the exact text "
             "(CRLF/BOM are handled); for a multi-line rewrite use `doc_patch.py replace-file`")
 
-
 def _variants(old: str) -> list[str]:
     return md.path_tick_variants(old)
-
 
 def replace_once(text: str, old: str, new: str, where: str) -> str:
     hit = md.replace_once_text(text, old, new, path=where)
@@ -161,7 +150,6 @@ def replace_once(text: str, old: str, new: str, where: str) -> str:
         print(f"  skip {where} (already applied)")
         return text
     raise SystemExit(_miss(where, old))
-
 
 def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
     if new in text:
@@ -175,15 +163,12 @@ def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
                 return text.replace(cand, new, 1)
     raise SystemExit(_miss(where, last))
 
-
-
 def func_span(text: str, name: str) -> tuple[int, int]:
     """Line range [start, end) for column-0 func name( / static func name(."""
     try:
         return gd_lib.func_span(text, name)
     except ValueError:
         raise SystemExit(f"FAIL  func {name} missing")
-
 
 def replace_func(path: Path, name: str, new_src: str) -> None:
     text = read_text(path)
@@ -193,7 +178,6 @@ def replace_func(path: Path, name: str, new_src: str) -> None:
     start, end = func_span(text, name)
     body = new_src if new_src.endswith("\n") else new_src + "\n"
     write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
-
 
 def upsert_func(path: Path, name: str, new_src: str) -> None:
     text = read_text(path)
@@ -212,7 +196,6 @@ def upsert_func(path: Path, name: str, new_src: str) -> None:
             at = i
     write_text(path, "".join(lines[:at]) + body + "".join(lines[at:]))
 
-
 def replace_block(path: Path, start_pred, end_pred, new_src: str) -> None:
     """Replace a line span. start_pred/end_pred are callables(line, index, lines)->bool."""
     text = read_text(path)
@@ -228,17 +211,14 @@ def replace_block(path: Path, start_pred, end_pred, new_src: str) -> None:
     body = new_src if new_src.endswith("\n") else new_src + "\n"
     write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
 
-
 def run_cmd(argv: list, cwd: Path | None = None):
     root = repo_root(cwd)
     proc = subprocess.run(list(argv), cwd=str(root))
     return proc.returncode, ""
 
-
 def patch_file(path: Path, old: str, new: str) -> None:
     text = replace_once(read_text(path), old, new, path.as_posix())
     write_text(path, text)
-
 
 def set_read_when(path: Path, value: str) -> None:
     text = read_text(path)
@@ -250,7 +230,6 @@ def set_read_when(path: Path, value: str) -> None:
         print(f"  skip {path.as_posix()} Read when (already applied)")
         return
     write_text(path, updated)
-
 
 def ensure_line(path: Path, line: str, after: str | None = None) -> None:
     text = read_text(path)
@@ -290,7 +269,6 @@ def drop_citations(path: Path, needles: list[str]) -> None:
         return
     write_text(path, "".join(keep))
 
-
 def drop_table_column(path: Path, header: str) -> None:
     text = read_text(path)
     lines = text.splitlines(keepends=True)
@@ -318,17 +296,13 @@ def drop_table_column(path: Path, header: str) -> None:
         return
     write_text(path, "".join(out))
 
-
 def _label_key(label: str) -> tuple[int, ...]:
     return tuple(int(x) for x in label.split("."))
-
 
 def highest_label(root: Path) -> str:
     """Highest x.y.z label among design/changelog/**/*.md (archive included); '' if none."""
     found = [p.stem for p in (root / "design" / "changelog").rglob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)]
     return max(found, key=_label_key) if found else ""
-
-
 
 def dirty_changelog_label(root: Path) -> str:
     """Highest x.y.z label among design/changelog/*.md that are dirty in the working tree; '' if none."""
@@ -362,7 +336,6 @@ def next_label(root: Path | None = None) -> str:
         label = ".".join(map(str, parts))
     return label
 
-
 def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
     line = f"Summary: {summary.strip()}"
     # Replace an existing Summary line if one is present; otherwise append.
@@ -372,7 +345,6 @@ def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
     if not text.endswith("\n"):
         text += "\n"
     return text + "\n" + line + "\n", True
-
 
 def write_changelog(root: Path, bullets: str | list[str], label: str | None = None, summary: str | None = None) -> Path:
     root = repo_root(root)
@@ -417,14 +389,12 @@ def write_changelog(root: Path, bullets: str | list[str], label: str | None = No
     write_text(path, body)
     return path
 
-
 def task(argv: list[str]) -> str:
     """Run `tools/task.py ARGV` (new / update / show / list / done) from a scratch; returns its output, raises on a non-zero exit."""
     p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "task.py"), *argv], capture_output=True, text=True, encoding="utf-8", errors="replace")
     if p.returncode != 0:
         raise RuntimeError(f"task.py {' '.join(argv)} failed:\n{p.stdout}{p.stderr}")
     return p.stdout
-
 
 def run_checker(root: Path | None = None) -> int:
     root = repo_root(root)
@@ -445,12 +415,10 @@ JOB_SCRIPTS = {
     "smokes": "run_smokes.py",
 }  # prove runners by job
 
-
 def out(text: str) -> None:
     text = str(text).replace("\ufeff", "").rstrip()
     sys.stdout.buffer.write((text + "\n").encode("utf-8", errors="replace"))
     sys.stdout.buffer.flush()
-
 
 def compile_broke(body: str) -> bool:
     low = body.lower()
@@ -460,7 +428,6 @@ def compile_broke(body: str) -> bool:
         or "failed to compile" in low
         or "failed to load script" in low
     )
-
 
 def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[int, str]:
     """Run a prove runner (tools/<stem>.py), print the run's newest summary body, return (rc, body)."""
@@ -503,14 +470,12 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
             body = body + "\n" + "\n".join(extra)
     return int(proc.returncode), body
 
-
 def _arg_text(inline: str | None, file: str | None, what: str) -> str:
     if file:
         return md.read_text(file)
     if inline is None:
         raise SystemExit(f"FAIL  need --{what} or --{what}-file")
     return inline.replace("\\n", "\n") if "\\n" in inline and "\n" not in inline else inline
-
 
 def _run_op(root: Path, op: dict) -> None:
     kind = op["op"]
@@ -534,7 +499,6 @@ def _run_op(root: Path, op: dict) -> None:
     else:
         raise SystemExit(f"FAIL  unknown op {kind!r} (replace, ensure-line, set-read-when, changelog, write, replace-file, replace-func, upsert-func)")
 
-
 def _write_cmd(root: Path, args: argparse.Namespace) -> None:
     body = base64.b64decode(args.b64) if args.b64 is not None else sys.stdin.buffer.read()
     if body.startswith(b"\xef\xbb\xbf"):
@@ -550,7 +514,6 @@ def _write_cmd(root: Path, args: argparse.Namespace) -> None:
     md.write_text(path, text, eol=EOL, bom=True if args.bom else None, mkdir=True)
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
-
 def replace_file(path: Path, body: str) -> tuple[int, int]:
     """Rewrite an existing file with `body`, keeping its BOM and line endings. Returns (lines added, lines removed)."""
     if not path.is_file():
@@ -564,7 +527,6 @@ def replace_file(path: Path, body: str) -> tuple[int, int]:
     write_text(path, body)
     return sum(added.values()), sum(gone.values())
 
-
 def _replace_file_cmd(root: Path, args: argparse.Namespace) -> tuple[int, int]:
     if args.from_file:
         body = md.read_text(args.from_file)
@@ -576,7 +538,6 @@ def _replace_file_cmd(root: Path, args: argparse.Namespace) -> tuple[int, int]:
         body = sys.stdin.buffer.read().decode("utf-8-sig")
     path = Path(args.file)
     return replace_file(path if path.is_absolute() else root / path, body)
-
 
 def main(argv: list[str] | None = None) -> int:
     global DRY, EOL
@@ -639,7 +600,6 @@ def main(argv: list[str] | None = None) -> int:
             return agent_log.emit_result("FAIL", cmd=args.cmd)
         raise
     return agent_log.emit_result("PASS", cmd=args.cmd, dry_run=DRY)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

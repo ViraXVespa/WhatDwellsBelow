@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source  
 
-
 ## Gear rules
 
 - White, green, and blue rarity appear in the demo.
@@ -43,11 +42,11 @@ Rules:
 
 - No duplicate affix id on the same item.
 - Damage or Defense MAY roll as a bonus affix even when it is already the primary. That is not a duplicate.
-- White: primary only. No bonus rolls. Quality is fixed at 0.5. Luck is fixed at 0.75. Whites are not part of Analyze / Forge.
+- White: primary only. No bonus rolls. Quality and Luck are fixed at the white values. Whites are not part of Analyze / Forge.
 - Green: primary plus 1 bonus from the slot family pool.
 - Blue: primary plus 2 bonuses from the slot family pool.
 - Values are rolled, not stamped as identical set stats. Two greens of the same template MUST be allowed to differ.
-- Dungeon roll: `{base(level, rarity)} * Quality * Luck` where Quality is `Random(0.5, 1.0)` and Luck is `Random(0.75, 1.25)`.
+- Dungeon roll: `{base(level, rarity)} * Quality * Luck` where Quality and Luck are random within their ranges (Anvil / affixes: tunables-economy).
 - Percent affixes keep fractional values. Flat affixes may show as ints when they land on a whole number.
 - Combat and the kit card read only the `affixes` rows when that list is present. Leftover flat keys on old saves (`atk_range`, `crit_chance`, `hp_on_hit`, and the old `crit` / `spd` / `gather` aliases) MUST NOT apply and MUST NOT appear on the card. `Roll.stamp` wipes those keys before writing a new roll.
 - Combat keys: `dmg`, `def`, `hp`, `crit_chance`, `crit_dmg`, `move_spd`, `atk_spd`, `atk_range`, `hp_on_hit`, `hp_on_kill`. Tools: `gather_spd`, `gather_pow`, `yield_chance`.
@@ -77,8 +76,8 @@ A mailed green/blue piece is a **duplicate** only when all of the following are 
 
 **Salvage spare gear** lives on the Gameplay settings page. Default **off**. When on, a **Keep bars** block appears with two sliders:
 
-- **Finish at least** — minimum Quality to keep a duplicate (range 0.50–1.00).
-- **Fortune at least** — minimum Luck to keep a duplicate (range 0.75–1.25).
+- **Finish at least** — minimum Quality to keep a duplicate (the Quality range).
+- **Fortune at least** — minimum Luck to keep a duplicate (the Luck range).
 
 A duplicate that meets **either** bar (Finish **or** Fortune) is kept. A duplicate that misses both is broken down for smithing XP. A new trait, a higher item level, or a luck roll that beats the book is never a duplicate and is never salvaged by this toggle.
 

@@ -1,9 +1,9 @@
 extends CanvasLayer
 
-const RecapBars := preload("res://scripts/ui/recap/bars.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const Ui := preload("res://scripts/ui/recap/recap_ui.gd")
 const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 const Flow := preload("res://scripts/ui/recap/recap_flow.gd")
 
 var open := false
@@ -29,10 +29,17 @@ var tip_lab: Label
 var tip_id := ""
 var tip_kind := ""
 var tip_from: Control = null
+var tip_sheet: Rect2 = Rect2()
+var sheet_rect: Rect2 = Rect2()
+var header: VBoxContainer
+var footer: VBoxContainer
+var cont_btn: Button
 
 func _ready() -> void:
-	set_meta("btn_skin", "neutral")
 	Ui.build(self)
+
+func _fit_sheet() -> void:
+	Ui.fit(self)
 
 func play(cond: String) -> void:
 	Flow.play(self, cond)
@@ -48,6 +55,12 @@ func _focus() -> void:
 		focus_btn.grab_focus()
 
 func _process(delta: float) -> void:
+	if cont_btn and is_instance_valid(cont_btn):
+		var g: TextureRect = cont_btn.get_meta("glyph", null) as TextureRect
+		var t: Texture2D = Prompts.texture_for("ui_accept")
+		if g and g.texture != t:
+			g.texture = t
+		_dim_continue()
 	Flow.tick(self, delta)
 
 func skip_drain() -> void:
@@ -58,3 +71,15 @@ func _finish() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	Flow.handle_unhandled(self, event)
+
+## Glyph + label follow the button's disabled look (theme font_disabled_color) during the XP drain.
+func _dim_continue() -> void:
+	var lab: Label = cont_btn.get_meta("glyph_lab", null) as Label
+	var g: TextureRect = cont_btn.get_meta("glyph", null) as TextureRect
+	if lab == null or g == null:
+		return
+	var off: bool = cont_btn.disabled
+	var col: Color = cont_btn.get_theme_color("font_disabled_color" if off else "font_color")
+	if lab.get_theme_color("font_color") != col:
+		lab.add_theme_color_override("font_color", col)
+	g.modulate = Color(1, 1, 1, maxf(0.35, col.a * 0.6)) if off else Color.WHITE

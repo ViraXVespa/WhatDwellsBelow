@@ -14,7 +14,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List a facade + stem-folder helpers by size (no body reads).", json_out=True)
     ap.add_argument("facade_pos", nargs="?", default="", help="Facade .gd path or cluster folder (same as --facade).")
@@ -48,7 +47,6 @@ def main(argv: list[str] | None = None) -> int:
     body = [f"root=. facade={agent_log.rel(root, full)}", f"stem={stem} dir={agent_log.rel(root, full.parent)}",
             f"siblings={len(sibs)}", ""] + [f"{agent_log.rel(root, p)} bytes={p.stat().st_size}" for p in sibs]
     return agent_log.finish("facade-cluster", root, "\n".join(body), "INFO", args=args, siblings=len(sibs), total_bytes=total)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

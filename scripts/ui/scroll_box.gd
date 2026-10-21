@@ -6,6 +6,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const ScrollCue: GDScript = preload("res://scripts/ui/scroll_cue.gd")
 
 static func build(host: CanvasLayer, pos: Vector2, size: Vector2, sep: int) -> void:
 	host.scroll = ScrollContainer.new()
@@ -21,6 +22,7 @@ static func build(host: CanvasLayer, pos: Vector2, size: Vector2, sep: int) -> v
 	host.box.custom_minimum_size = Vector2(1400, 0)
 	host.box.add_theme_constant_override("separation", sep)
 	host.scroll.add_child(host.box)
+	ScrollCue.attach(host.scroll)
 	make_tip(host)
 
 static func make_tip(host: CanvasLayer) -> void:

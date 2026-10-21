@@ -4,22 +4,21 @@ Status: current plan
 Read when: gathering swings, shops, shrines, puzzles, extract-wells
 Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `props_place.gd`, `floor_crystal.gd`, `net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
 
-
 ## Mining nodes
 
-- Nodes have a small number of hits (baseline 3–5).
+- Nodes have a small number of hits.
 - Player approaches and interacts; gathering animation plays while stationary.
-- Every 2.4 seconds the node takes one hit and a reward is rolled immediately.
+- At a steady interval the node takes one hit and a reward is rolled immediately.
 - Reward chance and quality are influenced by Mining level, pickaxe quality, and node type.
 - No progress bar is shown.
 - Node is destroyed after its hit count is exhausted.
 
 ## Wood nodes
 
-- Nodes have a higher number of hits (baseline 6–10).
+- Nodes have more hits than mining nodes.
 - Player approaches and interacts; gathering animation plays while stationary.
-- Every 1.2 seconds the node takes one hit and a reward is rolled immediately.
-- Successful gather rate is approximately 50 % lower than mining nodes.
+- Hits come faster than mining, but each succeeds less often.
+- Hit counts, intervals and reward chances: tunables-combat, Gathering.
 - Reward chance and quality are influenced by Woodcutting level, hatchet quality, and node type.
 - No progress bar is shown.
 - Node is destroyed after its hit count is exhausted.
@@ -30,7 +29,7 @@ Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `int
 - Chance to drop gold and/or an HP orb (walk-over pickup).
 - Clear smash VFX and SFX required.
 
-## Live snapshot — HP orbs
+## HP orbs
 
 Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at full HP, the orb stays on the ground and retries after a short wait.
 
@@ -47,15 +46,15 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 - Appears on approximately one in three floors.
 - Always in a safe room.
-- Sells 2–4 Artifacts (player may buy a maximum of two per visit).
-- Sells snacks at a fixed price (baseline 25 g).
+- Sells a few Artifacts, with a cap on how many the player may buy per visit (tunables-economy).
+- Sells snacks at a fixed price (tunables-economy).
 - Allows pawning of gear for a very low return.
 - Uses a distinct hopeful-but-eerie voice style (implementation may be text + SFX for the demo).
 - Distinct ghost / shopkeep sprite required.
 
 ## Shrine
 
-- On interaction grants a temporary damage buff (+20 % baseline, 45 s duration).
+- On interaction grants a temporary damage buff (size and duration: tunables-economy).
 - Buff MUST appear on the HUD with a visible timer.
 - One use per floor.
 
@@ -71,13 +70,13 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 - If the room cannot hold the full kit, shrink it. Order: paired gate, then plate **or** lever (never both), then a visible chest, then a hidden chest plus an adjacent cracked wall. Skip a later piece rather than placing outside the room.
 - A room gets one activator: a pressure plate **or** a lever, chosen at spawn. Both toggle the paired gate on a rising edge and latch it. Stepping off a plate does not close the gate. Stepping on again toggles it closed.
 - Plate prompt verb is “Step the plate”. Lever prompt verb is “Pull lever”.
-- Cracked walls have higher HP than normal breakables (suggested start: 8). Breaking one reveals its linked hidden chest.
+- Cracked walls take more hits than normal breakables (Crack HP: tunables-combat). Breaking one reveals its linked hidden chest.
 - Dead-end chests and puzzle chests may optionally contain Artifacts in addition to normal loot.
 - There is no open-chest sprite. A used chest (`chest`, `base_chest`, `puzzle_chest`) fades and tints in place and keeps the “Empty.” prompt for the rest of the floor.
 
-## Live snapshot — puzzle rooms
+## Puzzle rooms
 
-`props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first enters the 0.7 radius. `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
+`props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first steps inside its trigger radius (tunables-combat). `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
 
 ## Stairs
 
@@ -95,7 +94,7 @@ Lock and “deeper only”: dungeon.
 - Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
 - Interaction prompts MUST stay TV-readable and gamepad-first. Do not prefix world verbs with `A:`.
 
-## Live snapshot — interact prompts
+## Interact prompt strings
 
 World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open guardian`, `Step the plate`, `Pull lever`, `Open chest`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Used chests use text-only “Empty.” Stairs confirm is a second press; crystals never call `next_floor`.
 

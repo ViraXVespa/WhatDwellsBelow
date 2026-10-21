@@ -24,7 +24,6 @@ PLATE_HUE = 310.0
 RIM_HUE_WIDTH = 40.0
 RIM_SPILL_MIN = 8
 
-
 def components(mask: np.ndarray):
     """8-connected labels of a bool mask: (count, labels int32, areas list indexed by label, border-touch set)."""
     h, w = mask.shape
@@ -54,14 +53,12 @@ def components(mask: np.ndarray):
     edge = np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]])
     return n - 1, lab, areas, set(int(v) for v in np.unique(edge) if v)
 
-
 def flood_border(accept: np.ndarray) -> np.ndarray:
     """8-connected flood from the border through `accept` (H x W bool). Returns a uint8 H x W mask."""
     n, lab, _areas, touch = components(accept.astype(bool))
     if n == 0 or not touch:
         return np.zeros(accept.shape, dtype=np.uint8)
     return np.isin(lab, np.fromiter(touch, dtype=np.int32)).astype(np.uint8)
-
 
 def fill_pockets(mask: np.ndarray, dist: np.ndarray, pocket_dist: float, pocket_frac: float, tight_dist: float) -> int:
     """Grab enclosed chroma islands the border wand cannot reach (sets them in `mask`, a bool/uint8 H x W).
@@ -84,7 +81,6 @@ def fill_pockets(mask: np.ndarray, dist: np.ndarray, pocket_dist: float, pocket_
             added += areas[i]
     return added
 
-
 def dilate(mask: np.ndarray, radius: int) -> np.ndarray:
     """Chebyshev dilation of a bool mask by `radius` pixels."""
     if radius <= 0:
@@ -103,7 +99,6 @@ def dilate(mask: np.ndarray, radius: int) -> np.ndarray:
         out = nxt
     return out
 
-
 def _fill_speckle(accept: np.ndarray, loose: np.ndarray, max_area: int = 3) -> np.ndarray:
     """Close JPEG speckle: non-plate specks of at most `max_area` px inside the plate join it when most of
     their pixels are still plate-ish (`loose`). Thin features (outlines, antennae) are long and dark dots or
@@ -116,7 +111,6 @@ def _fill_speckle(accept: np.ndarray, loose: np.ndarray, max_area: int = 3) -> n
     fill = [i for i in small if share[i] >= 0.5 * areas[i]]
     return accept | np.isin(lab, np.array(fill, dtype=np.int32)) if fill else accept
 
-
 def rgb_dist(rgb: np.ndarray, refs) -> np.ndarray:
     """Euclidean RGB distance of every pixel to the nearest of `refs`. H x W float32."""
     out = None
@@ -125,7 +119,6 @@ def rgb_dist(rgb: np.ndarray, refs) -> np.ndarray:
         v = np.sqrt((d * d).sum(axis=-1).astype(np.float32))
         out = v if out is None else np.minimum(out, v)
     return out
-
 
 def hue_band(rgb: np.ndarray, refs, hue_tol: float = 14.0, sat_min: float = 0.50, val_min: float = 0.40) -> np.ndarray:
     """Pixels whose hue is near a reference hue and that are saturated and bright enough: plate shades that
@@ -138,7 +131,6 @@ def hue_band(rgb: np.ndarray, refs, hue_tol: float = 14.0, sat_min: float = 0.50
             continue
         hit |= hue_gap(h, float(rh[0, 0])) <= hue_tol
     return hit & (s >= sat_min) & (v >= val_min)
-
 
 def plate_mask(rgb: np.ndarray, refs=None, alpha: np.ndarray | None = None, tol: float = LAB_TOL, rgb_wand: float = 0.0,
                pocket_frac: float = POCKET_FRAC, tight: float = 12.0, extra: np.ndarray | None = None):
@@ -163,7 +155,6 @@ def plate_mask(rgb: np.ndarray, refs=None, alpha: np.ndarray | None = None, tol:
     fill_pockets(m8, d, tol * 1.25, pocket_frac, tight)
     return m8.astype(bool), refs, d
 
-
 def plate_amount(rgb: np.ndarray, refs) -> tuple[np.ndarray, np.ndarray]:
     """GIMP colour-to-alpha plate mix against the nearest reference. Returns (amount 0-1, reference per pixel)."""
     dists = np.stack([delta_e(rgb, [r]) for r in refs])
@@ -180,7 +171,6 @@ def plate_amount(rgb: np.ndarray, refs) -> tuple[np.ndarray, np.ndarray]:
         alpha = np.maximum(alpha, ch)
     return np.clip(1.0 - alpha, 0.0, 1.0), pick
 
-
 def plate_border_refs(rgb: np.ndarray):
     """Magenta-plate colours from the border, or None when that border is not a plate.
 
@@ -195,7 +185,6 @@ def plate_border_refs(rgb: np.ndarray):
     if hit < 16 or hit / float(max(1, samples.shape[0])) < 0.05:
         return None
     return background_refs(rgb, hue=PLATE_HUE, hue_tol=36.0, sat_min=0.40, val_min=0.28)
-
 
 def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, min_amount: float = 0.72, edge: int = 4,
                 edge_min: float = 0.04, pocket_frac: float = POCKET_FRAC):
@@ -259,7 +248,6 @@ def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, 
     }
     return Image.fromarray(arr, "RGBA"), Image.fromarray(vis, "RGBA"), info
 
-
 def looks_like_plate(rgb) -> bool:
     """True when one RGB colour is the magenta plate (near #FF00FF or the same hue)."""
     pix = np.array(rgb, dtype=np.uint8).reshape(1, 1, 3)
@@ -267,7 +255,6 @@ def looks_like_plate(rgb) -> bool:
         return True
     h, s, v = hsv(pix)
     return bool(float(hue_gap(h, 300.0)[0, 0]) <= 28.0 and float(s[0, 0]) >= 0.35 and float(v[0, 0]) >= 0.35)
-
 
 def strip_rim(arr: np.ndarray, hue_width: float = RIM_HUE_WIDTH, passes: int = 12) -> np.ndarray:
     """Delete a chroma lip on the matte edge. Interior cloth (maroon, skin, green) stays.
@@ -298,12 +285,10 @@ def strip_rim(arr: np.ndarray, hue_width: float = RIM_HUE_WIDTH, passes: int = 1
         arr[hit] = 0
     return arr
 
-
 def key_to_alpha(im: Image.Image, plate=None) -> Image.Image:
     """Key an opaque magenta-plate picture with the staged keyer (imglib.matte). `plate` pins the plate RGB."""
     from . import matte
     return matte.key(im, plate=plate)[0]
-
 
 def punch(im: Image.Image) -> Image.Image:
     """Same as key_to_alpha (kept for the pack tools)."""

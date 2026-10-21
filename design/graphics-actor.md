@@ -1,6 +1,6 @@
 # Graphics actor
 
-Status: current plan + live snapshot
+Status: current plan
 Read when: billboard-alpha squash quads, player yard-mannequin foes, source-offset
 
 Y-billboard frames stay nearest stickers. Multiply the sprite by the RT sample at the actor's feet so characters take the light.

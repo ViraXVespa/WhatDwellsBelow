@@ -16,7 +16,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run an agent python script and clean up its ephemeral copy.")
     ap.add_argument("--script", required=True, help="Python source file to run as an agent script.")
@@ -51,7 +50,6 @@ def main(argv: list[str] | None = None) -> int:
     rc = agent_log.finish("agent-py", root, "\n".join(body), "PASS" if p.returncode == 0 else "FAIL", args=args,
                           exit=p.returncode, cleaned=cleaned)
     return p.returncode or rc
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

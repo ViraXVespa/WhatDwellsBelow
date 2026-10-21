@@ -44,29 +44,6 @@ static func sticker(pressed: bool) -> Texture2D:
 			img.set_pixel(x, y, px)
 	return UiBuild.keep(_images, key, img)
 
-static func flap(lift: float, foot: int) -> Texture2D:
-	var key: String = "flap-%d-%d" % [int(round(lift * 100.0)), foot]
-	if ArtBake.hit(_images, ART, key):
-		return _images[key]
-	var w: int = 96
-	var h: int = 28
-	var img: Image = Image.create(w, h + foot, false, Image.FORMAT_RGBA8)
-	var face: Color = STEEL.lerp(Color(0.82, 0.84, 0.82, 1), lift)
-	for y: int in h:
-		for x: int in w:
-			var px: Color = face
-			if y % 4 == 0:
-				px = px.lerp(STEEL_DARK, 0.18)
-			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
-				px = px.lerp(ThemeS.INK, 0.45)
-			img.set_pixel(x, y, px)
-	_bolt(img, 10, 13)
-	_bolt(img, w - 11, 13)
-	for y: int in foot:
-		for x: int in w:
-			img.set_pixel(x, h + y, ThemeS.INK)
-	return UiBuild.keep(_images, key, img)
-
 static func lid() -> Texture2D:
 	if ArtBake.hit(_images, ART, "lid"):
 		return _images["lid"]
@@ -256,4 +233,3 @@ static func _bolt(img: Image, cx: int, cy: int) -> void:
 	UiBuild.dot(img, cx, cy, 2, HUB.lerp(STEEL_DARK, 0.2))
 	if cx >= 0 and cy >= 0 and cx < img.get_width() and cy < img.get_height():
 		img.set_pixel(cx, cy, STEEL_DARK)
-

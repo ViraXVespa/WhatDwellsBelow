@@ -8,7 +8,6 @@ Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKI
 This file is the Imagine **gate**. It is not an art-pipeline job. Grok Build must load it before any `image_gen`, `image_edit`, or `image_to_video` call.
 CLI-only. Web / chat and Grok Bot do not run Imagine and do not spawn this runner.
 
-
 ## Default
 
 Isolate. Do not call Imagine in the game-repo cwd unless a row in **In-session exceptions** matches. Project hook `.grok/hooks/wdb-pretool.json` denies Imagine/I2V when cwd is this repo.
@@ -28,17 +27,18 @@ Cost test: thin child system prompt + one media turn versus this thread’s the 
 
 ## Kind routing
 
-Load `imagine` and `game-assets`. The child reads the one reference for that kind, and no other `game-assets` reference.
+Load `imagine` and `game-assets` (`ui`: `imagine` only). The child reads the one reference for that kind, and no other `game-assets` reference.
 
 | `--kind` | Bundled skills | Imagine tool | WDB job |
 |---|---|---|---|
 | `tile` | `imagine`, `game-assets` (`tilesets.md`) | `image_gen` once | World tile / roof / ground / wall. Seamless. The child reads `tilesets.md` only. It does not retry or composite. The parent runs the 2×2 seam check. |
 | `character` | `imagine`, `game-assets` (`characters.md`) | `image_gen` for a new Bible / style candidate; `image_edit` after lock | Character still, facing variant, overlay-on-body. After lock, edit-chain from the locked Bible or body frame. |
 | `i2v` | `imagine`, `game-assets` (`animation.md`) | `image_to_video` from the staged seed; walk pins that seed as `first_frame` and `last_frame` via `reference_to_video` | One unit. The child reads `animation.md`. Prompt and seed from `tools/i2v_seeds.py`. No fixed 6s/10s clock. Child does not harvest or pack. |
-| `ui` | `imagine`, `game-assets` (`ui-icons.md`) | `image_gen` / `image_edit` | HUD / menu / icon stills. No text in the art. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
+| `ui` | `imagine`; style from the staged `ui-style.md` (the ui style doc's Generated art look section) and the refs it names, plus `--copy` refs | `image_gen` / `image_edit` | Generic UI still: menu, screen, panel, HUD, mockup or ref; text allowed. Default `ui.png`; `--dest-name` may hold a subfolder (`mockups/title.png`), kept under `--out`. `--no-ui-style` skips the style. A small icon is a `ui` job whose brief says no text. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
+| `npc` | `imagine`, `game-assets` (`characters.md`) | `image_gen` | NPC sprite redesign from `--brief`; `--copy` the old sprite for framing, pose and size only (no identity lock). Opaque #FF00FF plate, default `npc.png`. Then the pack doc's NPC redesign rekey. |
 | `still` | `imagine`, `game-assets` (`assets.md`) | `image_gen` / `image_edit` | Fallback only. Prefer a tighter kind. The child reads `assets.md` only, not `animation.md`. |
 
-Locked Bibles (`assets/sprites/player/bible_locked_male.png`, `bible_locked_female.png`) are the style / identity source for later generation. `gdd_reference_bible.jpg` is layout-only. For `tile` / `ui` / `still`, Bibles are read-only style sheets — do not draw the character into the asset. For `character`, they are the identity lock.
+Locked Bibles (`assets/sprites/player/bible_locked_male.png`, `bible_locked_female.png`) are the style / identity source for later generation. `gdd_reference_bible.jpg` is layout-only. For `tile` / `ui` / `still` (with `--bible-style`), Bibles are read-only style sheets — do not draw the character into the asset. For `character`, they are the identity lock.
 
 Do not vendor bundled skill bodies into this repo. Point at them by name. `job.md` is what stops the child from opening every bundled specialist.
 
@@ -55,7 +55,7 @@ Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 - Inspect proof is one line: `inspect=ok instructions=0`. The runner does not forward the skill roster. If inspect still names WhatDwellsBelow the repo agent-rules file, or instructions ≠ 0, refuse to generate.
 - Child flags: `grok --prompt-file job.md --cwd <scratch> --verbatim --max-turns 8 --disable-web-search --no-subagents --always-approve --output-format plain`
 - Reuse: first run is ingest (`ingest.md`, `--output-format json`) then generate. Later runs with the same key `--resume <ingest_session> --fork-session` so the ingest session stays at “after the reads.” CLI has no `rewind`; fork-from-ingest is the token win. There is no `--no-memory` flag. Do not invent one.
-- `job.md` orders one media call, copy the Imagine output into scratch as the dest filename, then stop. `job.md` names the one `game-assets` reference for the kind. Do not tell the child to open the other references, composite, or retry. After a cache hit, tell it the references are already in the conversation.
+- `job.md` orders one media call, copy the Imagine output into scratch as the dest filename, then stop. Reference images are style references, not exact copies, unless the User says otherwise. `job.md` names the one `game-assets` reference for the kind. Do not tell the child to open the other references, composite, or retry. After a cache hit, tell it the references are already in the conversation.
 - Results copied to `--out` exclude staged inputs (`job.md`, Bibles, `--copy`, seed, prompt file).
 
 Durable source assets produced by the runner (or by Build) are then placed under `_src/` using the same relative path they will occupy under `assets/`. Any generator script written for the job is saved under `tools/` (extend an existing tool when one owns the output).
@@ -71,7 +71,3 @@ Placeholdia roofs sample the full `plaza_roof.png` in `mesh_mat.gd` `roof_mat` (
 ## Optional user config
 
 Not repo-owned. `%USERPROFILE%\.grok\config.toml` / `~/.grok/config.toml` may `[skills] disabled` unused bundled names (`resume-claude`, `resume-codex`, `resume-cursor`, `docx`, `pdf`, `pptx`) and may set `[compat.cursor]` / `[compat.claude]` / `[compat.codex]` cells to `false` when those vendor trees are unused. Do not disable `imagine` or `game-assets`. Catalog savings are small next to dropping the repo agent-rules file from a media turn.
-
-## Live snapshot
-
-`tools/run_isolated_grok.py` is the shipping runner. Isolated inspect prints `inspect=ok instructions=0` (no roster dump). Repo skills under `.grok/skills/` are CLI doors into this file. Reference ingest sessions are keyed in `~/.grok/wdb-iso/catalog.json`. After generate: `dest=ok|missing` and `modelCalls=` when usage.json exists.

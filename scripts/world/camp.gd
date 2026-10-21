@@ -1,16 +1,18 @@
 @tool
 extends Node3D
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const View := preload("res://scripts/world/camp/camp_view.gd")
-const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const Warm := preload("res://scripts/world/camp/warm.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
 const Banner := preload("res://scripts/world/camp/banner.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
+const Hud := preload("res://scripts/world/camp/camp_hud.gd")
+const Spot := preload("res://scripts/world/camp/spot.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
@@ -19,19 +21,66 @@ var hint: Label
 var prompt: Label
 var _layout: Node3D
 var _editor_hooked: bool = false
+var build_done: bool = false
 
 func _ready() -> void:
+	Dbg.hitch("camp_enter")
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
+	Dbg.hitch("camp_layout")
 	if Engine.is_editor_hint():
 		_hook_editor()
 		Build.realize_editor(self, _layout)
+		build_done = true
 		return
+	# Title -> Placeholdia keeps the loader up. Spread the build so one frame is not the whole camp.
+	# A dungeon return does not set _menu_loading and still builds in this call.
+	if bool(App.get("_menu_loading")):
+		await _run_paced(_build_steps())
+	else:
+		for step: Callable in _build_steps():
+			step.call()
+
+func _build_steps() -> Array[Callable]:
+	var steps: Array[Callable] = [
+		_step_env,
+		_step_light,
+		_step_ground,
+		_step_hall,
+		_step_wing,
+		_step_stall,
+		_step_fence,
+		_step_player,
+		_step_spot_crystal,
+		_step_spot_anvil,
+		_step_spot_board,
+		_step_spot_receptionist,
+		_step_spot_vendor,
+		_step_spot_dumpster,
+		_step_spot_billboard,
+		_step_rest,
+	]
+	return steps
+
+func _run_paced(steps: Array[Callable]) -> void:
+	var i: int = 0
+	while i < steps.size():
+		var step: Callable = steps[i]
+		step.call()
+		i += 1
+		if i < steps.size():
+			await get_tree().process_frame
+
+func _step_env() -> void:
 	App.in_dungeon = false
+	Dbg.hitch("layout_tree")
 	Talk.on_hub_entry()
-	LoadTiming.mark("camp_enter")
+	Dbg.lt_mark("camp_enter")
 	Build.world(self)
-	LoadTiming.mark("camp_world")
+	Dbg.lt_mark("camp_world")
+	Dbg.hitch("hub_env")
+
+func _step_light() -> void:
 	LightRt.prepare_hub(
 		int(_layout.aabb_x0()),
 		int(_layout.aabb_z0()),
@@ -42,35 +91,105 @@ func _ready() -> void:
 	)
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	LightRt.rebind_tree(self)
-	LoadTiming.mark("camp_light")
+	Dbg.lt_mark("camp_light")
+	Dbg.hitch("hub_light")
+
+func _step_ground() -> void:
 	var gen: Node3D = Build.generated(self)
 	if gen.get_child_count() > 0:
 		Build.clear_generated(self)
 		gen = Build.generated(self)
-	LoadTiming.note("camp_geo", "build")
+	Dbg.lt_note("camp_geo", "build")
 	Build.ground(gen)
-	LoadTiming.mark("camp_ground")
-	Build.buildings(gen)
+	Dbg.lt_mark("camp_ground")
+	Dbg.hitch("hub_ground")
+
+func _step_hall() -> void:
+	Build.hall(Build.generated(self))
+	Dbg.hitch("hub_hall")
+
+func _step_wing() -> void:
+	Build.wing(Build.generated(self))
+	Dbg.hitch("hub_wing")
+
+func _step_stall() -> void:
+	var gen: Node3D = Build.generated(self)
+	Build.stall(gen)
 	Build.strip_building_cubes(gen)
 	Build.quiet_shadows(gen)
-	LoadTiming.mark("camp_buildings")
+	Dbg.lt_mark("camp_buildings")
+	Dbg.hitch("hub_stall")
+
+func _step_fence() -> void:
+	var gen: Node3D = Build.generated(self)
 	View.fence(gen)
-	LoadTiming.mark("camp_fence")
+	Dbg.lt_mark("camp_fence")
+	Dbg.hitch("hub_fence")
+
+func _step_player() -> void:
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D
 	player.position = _layout.spot_pos("Spawn")
 	add_child(player)
 	if player.body:
 		player.body.render_priority = 18
-	LoadTiming.mark("camp_player")
-	_spots()
-	LoadTiming.mark("camp_spots")
+	Dbg.lt_mark("camp_player")
+	Dbg.hitch("hub_player")
+
+func _step_spot_crystal() -> void:
+	Spot._add_spot(self, "loadout_crystal", _layout.spot_pos("Crystal"))
+	Dbg.hitch("hub_spot_crystal")
+
+func _step_spot_anvil() -> void:
+	Spot._add_spot(self, "anvil", _layout.spot_pos("Anvil"))
+	Dbg.hitch("hub_spot_anvil")
+
+func _step_spot_board() -> void:
+	Spot._add_spot(self, "quest_board", _layout.spot_pos("Board"))
+	Dbg.hitch("hub_spot_board")
+
+func _step_spot_receptionist() -> void:
+	Banner._banner(self)
+	var rec: Node3D = Spot._new_spot(self, "receptionist", _layout.reception_pos())
+	var rec_spr: Sprite3D = rec.get("spr") as Sprite3D
+	if rec_spr:
+		if rec_spr.texture:
+			rec_spr.pixel_size = 1.22 / float(maxi(1, rec_spr.texture.get_height()))
+			rec_spr.material_override = Spot._bust_mat(rec_spr.texture)
+		rec_spr.position = Vector3(0.0, 0.0, 0.0)
+		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+		rec_spr.render_priority = 1
+	var rec_lab: Label3D = rec.get("label") as Label3D
+	if rec_lab:
+		rec_lab.position.y = 0.85
+	Spot._tune_label(rec)
+	Dbg.hitch("hub_spot_receptionist")
+
+func _step_spot_vendor() -> void:
+	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
+	var v_lab: Label3D = v.get("label") as Label3D
+	if v_lab:
+		v_lab.position.y = 2.25
+	Spot._tune_label(v)
+	Dbg.hitch("hub_spot_vendor")
+
+func _step_spot_dumpster() -> void:
+	Spot._add_spot(self, "dumpster", _layout.spot_pos("Dumpster"))
+	Dbg.hitch("hub_spot_dumpster")
+
+func _step_spot_billboard() -> void:
+	Spot._add_spot(self, "billboard", _layout.spot_pos("Billboard"))
+	Dbg.lt_mark("camp_spots")
+	Dbg.hitch("hub_spot_billboard")
+
+func _step_rest() -> void:
 	Build.stamp_actor_blobs(self)
+	Dbg.hitch("hub_blobs")
 	if bool(App.get("_menu_loading")) or App.wake_pending:
-		LoadTiming.note("camp_dummy", "deferred")
+		Dbg.lt_note("camp_dummy", "deferred")
 	else:
 		ensure_dummy()
-	_hud()
+	Hud._hud(self)
 	_music()
 	var hold_wake: bool = (
 		App.present != null
@@ -91,19 +210,19 @@ func _ready() -> void:
 			App.present.play_wake()
 		call_deferred("ensure_dummy")
 		App.prog.roll_quests(true)
-		var r := App.prog.restock()
+		var r: String = App.prog.restock()
 		if r != "":
 			App.toast(r)
-	var Smoke: GDScript = load("res://scripts/debug/smoke.gd") as GDScript
 	if (
-		not Smoke.phase(8)
+		not Dbg.smoke_phase(8)
 		and not (App.playtest and bool(App.playtest.get("live_running")))
 		and not bool(App.get("_menu_loading"))
 	):
 		App.save_now()
-	if Smoke.phase(6):
+	if Dbg.smoke_phase(6):
 		ensure_ui()
-	Smoke.attach_camp(self)
+	Dbg.smoke_attach("camp", self)
+	build_done = true
 func _hook_editor() -> void:
 	if _editor_hooked:
 		return
@@ -122,11 +241,11 @@ func world_ui() -> Node:
 func ensure_ui() -> void:
 	if ui != null:
 		return
-	LoadTiming.mark("camp_ui_begin")
+	Dbg.lt_mark("camp_ui_begin")
 	var UiS: GDScript = load("res://scripts/ui/progress_ui.gd") as GDScript
 	ui = UiS.new()
 	add_child(ui)
-	LoadTiming.mark("camp_ui")
+	Dbg.lt_mark("camp_ui")
 
 func warmup() -> void:
 	Warm.frame(self)
@@ -167,112 +286,11 @@ func ensure_dummy() -> void:
 	dummy = n
 	add_child(n)
 	Build.stamp_actor_blobs(self)
-
-func _tune_label(host: Node3D) -> void:
-	if host == null or not ("label" in host) or host.label == null:
-		return
-	host.label.no_depth_test = true
-	host.label.render_priority = 8
-	host.label.outline_render_priority = 7
-	host.label.sorting_offset = 0.0
-
-func _spots() -> void:
-	Banner._banner(self)
-	var SpotS: GDScript = load("res://scripts/world/interact.gd") as GDScript
-	var c: Node3D = SpotS.new()
-	var crystal: Vector3 = _layout.spot_pos("Crystal")
-	c.call("setup", "loadout_crystal", crystal)
-	add_child(c)
-	_tune_label(c)
-	var a: Node3D = SpotS.new()
-	a.call("setup", "anvil", _layout.spot_pos("Anvil"))
-	add_child(a)
-	_tune_label(a)
-	var q: Node3D = SpotS.new()
-	q.call("setup", "quest_board", _layout.spot_pos("Board"))
-	add_child(q)
-	_tune_label(q)
-	var rec: Node3D = SpotS.new()
-	rec.call("setup", "receptionist", _layout.reception_pos())
-	add_child(rec)
-	var rec_spr: Sprite3D = rec.get("spr") as Sprite3D
-	if rec_spr:
-		if rec_spr.texture:
-			rec_spr.pixel_size = 1.22 / float(maxi(1, rec_spr.texture.get_height()))
-			rec_spr.material_override = _bust_mat(rec_spr.texture)
-		rec_spr.position = Vector3(0.0, 0.0, 0.0)
-		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		rec_spr.render_priority = 1
-	var rec_lab: Label3D = rec.get("label") as Label3D
-	if rec_lab:
-		rec_lab.position.y = 0.85
-	_tune_label(rec)
-	var v: Node3D = SpotS.new()
-	v.call("setup", "vendor", _layout.spot_pos("Vendor"))
-	add_child(v)
-	var v_lab: Label3D = v.get("label") as Label3D
-	if v_lab:
-		v_lab.position.y = 2.25
-	_tune_label(v)
-	var d: Node3D = SpotS.new()
-	d.call("setup", "dumpster", _layout.spot_pos("Dumpster"))
-	add_child(d)
-	_tune_label(d)
-	var b: Node3D = SpotS.new()
-	b.call("setup", "billboard", _layout.spot_pos("Billboard"))
-	add_child(b)
-	_tune_label(b)
-
-func _bust_mat(tex: Texture2D) -> ShaderMaterial:
-	var sh := Shader.new()
-	sh.code = """
-shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_always;
-uniform sampler2D albedo_tex : source_color, filter_nearest;
-void fragment() {
-	vec4 c = texture(albedo_tex, UV);
-	if (UV.y > 0.50 || c.a < 0.1) {
-		discard;
-	}
-	ALBEDO = c.rgb;
-	ALPHA = 1.0;
-}
-"""
-	var mat := ShaderMaterial.new()
-	mat.shader = sh
-	mat.set_shader_parameter("albedo_tex", tex)
-	return mat
+	Dbg.hitch("hub_blobs")
 
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):
 		App.music.play_hub()
-
-func _hud() -> void:
-	var layer := CanvasLayer.new()
-	hud = layer
-	add_child(layer)
-	var panel := ColorRect.new()
-	panel.color = Color(0.1, 0.08, 0.06, 0.82)
-	panel.position = Vector2(32, 28)
-	panel.size = Vector2(980, 150)
-	layer.add_child(panel)
-	hint = Label.new()
-	hint.position = Vector2(48, 40)
-	hint.size = Vector2(950, 80)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_font_size_override("font_size", 20)
-	hint.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
-	hint.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
-	hint.add_theme_constant_override("outline_size", 6)
-	layer.add_child(hint)
-	prompt = Label.new()
-	prompt.position = Vector2(48, 118)
-	prompt.size = Vector2(900, 40)
-	prompt.add_theme_font_size_override("font_size", 22)
-	prompt.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
-	prompt.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
-	prompt.add_theme_constant_override("outline_size", 6)
-	layer.add_child(prompt)
 
 func _strip_baked_env(n: Node) -> void:
 	if n == null:

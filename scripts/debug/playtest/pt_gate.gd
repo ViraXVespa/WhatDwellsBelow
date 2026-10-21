@@ -5,7 +5,7 @@ extends Object
 
 const Goals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
-const CliArgs := preload("res://scripts/debug/cli_args.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const FAST_FLAG := "--wdb-pt-fast"  # the only way to get a scale above 1.0
 const REPEAT_FLAG := "--wdb-pt-repeat"  # opt-in exact repeats: the global RNG is reseeded before every think
 const GATE_MAX := 15.0  # s on a soft gate (paused / transition / loading) before acting anyway, so a stuck overlay cannot stall a run

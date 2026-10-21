@@ -11,7 +11,7 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - On purpose separate: HUD draw alphas (`touch_hud/hud_draw.gd` builds on tokens), the title / splash / fs-gate / loader / prompt / hud local label twins. Merge one only on her word.
 
 ## Control skins (`scripts/ui/btn_skin.gd`)
-- Outside the pause journal, buttons, tabs and gear slots wear a skin from `ui_tokens.gd` `SKINS`: `neutral` (hub cream-plate menus, ghost shop, anvil, recap), `title` (title card, news, archives: also turns ink labels and plates dark), `crystal` (loadout crystal, dungeon floor crystal, extraction gate).
+- Outside the pause journal, buttons, tabs and gear slots wear a skin from `ui_tokens.gd` `SKINS`: `neutral` (hub cream-plate menus, ghost shop, anvil), `title` (title card, news, archives: also turns ink labels and plates dark), `crystal` (loadout crystal, dungeon floor crystal, extraction gate). Death recap uses the pause Skills journal (two sheets, `SKILLS_LEFT`) and leaves `btn_skin` unset, so its buttons stay paper.
 - A host names its skin with meta `btn_skin` or a `btn_skin()` method; the progress panel asks its open frame (`BTN_SKIN` const on the frame script, else `neutral`). No skin found = paper (the journal).
 - `ThemeS.btn`, `paint_tab`, `paint_plate`, `lab` and `Plate.plate` / `edge` register the control; it is restyled on entering the tree. Frame-dressed buttons (`UiBuild.button_base`) keep their frame look.
 - The gear board stats card ("Bonuses" pager) takes the host skin too (`BtnSkin.card`); crystal has one button look (primary = secondary), so the loadout matches the transport pages.
@@ -47,7 +47,14 @@ A skin is a script with static hooks:
 Add a frame: write `<object>_frame.gd` (+ `<object>_art.gd` for code-drawn pictures), list it in `frame_set.gd`, set the host `mode` when it opens. A frame takes the hooks it needs and adds its own pieces; it need not look like another.
 First open: `ui_warm.gd` loads every listed skin's art on a worker from the title screen and opens the heavy menus once behind the hub loader. A new menu or frame gets a row in `scripts/debug/open_timing.gd` (pause tabs are timed from `TABS`), and a warm step if its first open is over budget.
 
-Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake_frame_art.py` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake_frame_art.py --check` (also in `bot_smokes.py` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is listed in the W7 button-style audit for her.
+Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake_frame_art.py` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake_frame_art.py --check` (also in `bot_smokes.py` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is the open task `ui-png-art`.
+
+## Generated art look
+Locked look for generated UI art (her call, `ui-png-art`); `run_isolated_grok.py --kind ui` stages this section and the refs below.
+- Pixel-art feel of the title-screen background + professionalism of the Journal UI.
+- No pink. Gamepad-first, readable at a glance. 9-slice where a panel or button stretches.
+- Outside the pause journal, every screen keeps the game's pixel-art style and reads as one system.
+- Style refs (look and finish only, not layouts): `design/refs/ui-style/title-background.png`, `design/refs/ui-style/journal-ui.png`.
 
 ## Web export (flagged, not changed)
 - `journal_page._tex_at` loads `res://assets/ui/journal/paper.png` and `leather.png` with `load()` so the imported textures ship in the web pack. A missing page texture errors; it does not cache an empty image.

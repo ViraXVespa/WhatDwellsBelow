@@ -106,7 +106,6 @@ BANNED = (
     "his left",
 )
 
-
 RESUME_COMMANDS = """# Attack keyframe pipeline — run these yourself
 # 1. See parked beat + print the live Imagine-edit prompt:
 python tools/attack_keyframes.py --resume
@@ -123,13 +122,11 @@ python tools/attack_keyframes.py --beats --action attack_great_axe
 # Do not generate a male-right or female-right sheet.
 """
 
-
 def _grip(gender: str) -> dict[str, str]:
     g = gender.lower().strip()
     if g not in GRIP:
         raise SystemExit(f"gender must be male or female, got {gender!r}")
     return dict(GRIP[g])
-
 
 def build_still_prompt(
     *,
@@ -168,7 +165,6 @@ def build_still_prompt(
         )
     return preamble + body
 
-
 def load_log() -> dict:
     if not LOG.is_file():
         return {
@@ -188,10 +184,8 @@ def load_log() -> dict:
         }
     return json.loads(LOG.read_text(encoding="utf-8"))
 
-
 def save_log(data: dict) -> None:
     LOG.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-
 
 def print_resume() -> None:
     data = load_log()
@@ -208,7 +202,6 @@ def print_resume() -> None:
             beat=str(r.get("beat", "coil")),
         )
     )
-
 
 def main() -> None:
     p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", description=__doc__)
@@ -259,7 +252,6 @@ def main() -> None:
             beat=args.beat,
         )
     )
-
 
 if __name__ == "__main__":
     main()

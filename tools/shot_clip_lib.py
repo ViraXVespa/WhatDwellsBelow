@@ -9,7 +9,6 @@ import subprocess
 import time
 from pathlib import Path
 
-
 def clipboard_png(png: Path) -> str:
     if os.name != 'nt' or not png.is_file():
         return 'skip'
@@ -104,7 +103,6 @@ def clipboard_png(png: Path) -> str:
     print('clip_px=%dx%d dib_bytes=%d' % (tw, th, total))
     time.sleep(0.5)
     return 'ok' if placed else 'fail'
-
 
 def open_png(png: Path) -> str:
     if not png.is_file():

@@ -35,7 +35,6 @@ from agent_log import rel
 
 CFG = "tools/shot-flows/states.json"
 
-
 def _text_at(root: Path, ref: str, path: str) -> str:
     if not ref:
         p = root / path
@@ -43,14 +42,12 @@ def _text_at(root: Path, ref: str, path: str) -> str:
     r = subprocess.run(["git", "show", f"{ref}:{path}"], cwd=root, capture_output=True, text=True, errors="replace")
     return r.stdout if r.returncode == 0 else ""
 
-
 def _files_at(root: Path, ref: str, glob: str) -> list[str]:
     if not ref:
         return sorted(rel(root, p) for p in root.glob(glob) if p.is_file())
     r = subprocess.run(["git", "ls-tree", "-r", "--name-only", ref], cwd=root, capture_output=True, text=True)
     pat = re.compile("^" + re.escape(glob).replace(r"\*", "[^/]*") + "$")
     return sorted(f for f in r.stdout.splitlines() if pat.match(f))
-
 
 def find_states(root: Path, cfg: dict, ref: str = "") -> dict[str, str]:
     """state id -> source file, from the working tree (ref='') or from a git ref."""
@@ -61,7 +58,6 @@ def find_states(root: Path, cfg: dict, ref: str = "") -> dict[str, str]:
             for m in rx.finditer(_text_at(root, ref, f)):
                 out.setdefault(str(src.get("prefix", "")) + m.group(1), f)
     return out
-
 
 def derived_cover(steps: list) -> set[str]:
     cov: set[str] = set()
@@ -75,11 +71,9 @@ def derived_cover(steps: list) -> set[str]:
         cov |= derived_cover(s.get("steps", []))
     return cov
 
-
 def count_ops(steps: list, op: str) -> int:
     return sum((1 if isinstance(s, dict) and s.get("op") == op else 0) + (count_ops(s.get("steps", []), op) if isinstance(s, dict) else 0)
                for s in steps)
-
 
 def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
     probs = []
@@ -110,7 +104,6 @@ def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
                 elif hashlib.sha256(f.read_bytes()).hexdigest() != row["sha256"]:
                     probs.append(f"{name}: published {row['file']} differs from shots.json (edited by hand?)")
     return probs
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Report UI states with no shot flow, new states in this diff, and flow/published-shot problems.",
@@ -159,7 +152,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

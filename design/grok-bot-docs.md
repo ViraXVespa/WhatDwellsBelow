@@ -7,9 +7,9 @@ For **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.
 
 ## Mandate
 
-Split fat topic `design/*.md` files to the art_pipeline door + siblings layout, or trim them for signal-to-noise (below). Pass order and facade checklist: `design/doc-refactor.md`. Caps (Bot-only): a door stays under 4KB (Job table and rules, no live-snapshot dumps), a sibling under 8KB (one job cluster; split again if one `##` section dominates), hard stop ~12KB: do not leave a touched topic file above it if a legal split exists. Rank over ~12KB first, then over ~8KB. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
+Split fat topic `design/*.md` files to the art_pipeline door + siblings layout, or trim them for signal-to-noise (below). Pass order and facade checklist: `design/doc-refactor.md`. Caps (Bot-only): a door stays under 4KB (Job table and rules), a sibling under 8KB (one job cluster; split again if one `##` section dominates), hard stop ~12KB: do not leave a touched topic file above it if a legal split exists. Rank over ~12KB first, then over ~8KB. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
 
-Out of scope: rewriting `design/changelog/**` history, `docs/` Pages export, mixing this sweep into a live script size sweep without User go, inventing systems.
+Scope (in / out): `design/doc-refactor.md`. No inventing systems.
 
 ## Read set
 
@@ -21,8 +21,8 @@ Do not concatenate all siblings into context. Do not open the staged reuse brief
 
 ## Pass
 
-1. Inventory: `python tools/list_oversize_docs.py` (skips `design/changelog/`). Rank over ~12KB, then over ~8KB. Show worklist.
-2. Split named first. Move existing prose. Fix links and README index rows. Update `design/code-map.md` only if a script path in a row must stay accurate. The Job table must cover every former top-level `##` cluster (or route to an existing sibling topic). Live snapshots travel with the matching sibling, not the door. No `See also` fields (load-graph bans them). Grep for stale "read the whole of X" wording; point at the Job table.
+1. Inventory: `python tools/list_oversize_docs.py` (skips `design/changelog/`), ranked as above. Show worklist.
+2. Split named first, per the `design/doc-refactor.md` pass order and facade checklist.
 3. One `design/changelog/{label}.md` for the PR (always; `versioning-log.md` rule).
 4. `python tools/check_tool_docs.py --stale-refs --narration` (dead paths and identifiers fail; narration lines are advisory: rewrite in present tense or delete). Prove: `BOT.md`.
 

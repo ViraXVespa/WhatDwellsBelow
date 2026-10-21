@@ -17,11 +17,9 @@ OUT = ROOT / "assets" / "audio"
 SR = al.SR
 WRITTEN: list[str] = []
 
-
 def write_wav(path: Path, samples: list[float]) -> None:
     al.write_pcm(path, samples)
     WRITTEN.append(path.name)
-
 
 def env(i: int, n: int, attack: float = 0.01, release: float = 0.08) -> float:
     t = i / SR
@@ -31,7 +29,6 @@ def env(i: int, n: int, attack: float = 0.01, release: float = 0.08) -> float:
     if t > dur - release and release > 0:
         r = max(0.0, (dur - t) / release)
     return a * r
-
 
 def tone(freq: float, dur: float, amp: float = 0.18, kind: str = "tri") -> list[float]:
     n = int(SR * dur)
@@ -47,9 +44,7 @@ def tone(freq: float, dur: float, amp: float = 0.18, kind: str = "tri") -> list[
         out.append(v * amp * env(i, n))
     return out
 
-
 mix = al.mix_norm
-
 
 def pad(samples: list[float], dur: float) -> list[float]:
     n = int(SR * dur)
@@ -57,11 +52,9 @@ def pad(samples: list[float], dur: float) -> list[float]:
         return samples[:n]
     return samples + [0.0] * (n - len(samples))
 
-
 def note(freq: float, start: float, dur: float, amp: float, kind: str = "tri") -> list[float]:
     head = [0.0] * int(SR * start)
     return pad(head + tone(freq, dur, amp, kind), start + dur + 0.02)
-
 
 def loop_hub() -> None:
     # Warm, hopeful, a bit jokey — major pentatonic, not grand.
@@ -79,7 +72,6 @@ def loop_hub() -> None:
     )
     write_wav(OUT / "music_hub.wav", pad(bars, 4.0))
 
-
 def loop_dungeon() -> None:
     # Low, tense, career-hazard — not horror stingers.
     bars = mix(
@@ -92,7 +84,6 @@ def loop_dungeon() -> None:
     )
     write_wav(OUT / "music_dungeon.wav", pad(bars, 4.2))
 
-
 def sfx() -> None:
     write_wav(OUT / "sfx_hit.wav", mix(tone(420, 0.07, 0.22, "sq"), tone(180, 0.09, 0.12, "noise")))
     write_wav(OUT / "sfx_slam.wav", mix(tone(90, 0.18, 0.28, "sq"), tone(50, 0.22, 0.18, "noise")))
@@ -104,16 +95,13 @@ def sfx() -> None:
     write_wav(OUT / "sfx_level.wav", mix(tone(392, 0.12, 0.14), note(523, 0.10, 0.16, 0.12), note(659, 0.22, 0.20, 0.12)))
     write_wav(OUT / "sfx_hurt.wav", mix(tone(180, 0.11, 0.2, "sq"), tone(90, 0.14, 0.12, "noise")))
 
-
 def _run() -> None:
     loop_hub()
     loop_dungeon()
     sfx()
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("make_placeholder_audio", "Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

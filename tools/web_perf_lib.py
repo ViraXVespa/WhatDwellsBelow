@@ -1,6 +1,8 @@
 """Browser side of tools/web_perf.py: init script, flow replay, one measured page load. Advisory; see web_perf.py."""
 from __future__ import annotations
 
+import os
+import shutil
 import statistics
 import time
 from pathlib import Path
@@ -51,6 +53,41 @@ PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt"
         "think_ms", "think_max_ms", "think_n", "phys_ms", "gate_s", "gate_over", "unstick_n", "stuck_max", "time_scale")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
 
+def find_browser(explicit: str = "") -> tuple[str, str]:
+    """Edge first. Chrome/Chromium is the fallback for a PC that has no Edge (the Grok Bot) and for CHROME_BIN.
+
+    Returns (path, kind) with kind 'edge' or 'chrome'. An empty path means neither is installed.
+    --chrome / explicit wins. CHROME_BIN does not skip Edge.
+    """
+    if explicit:
+        kind = "edge" if "edge" in Path(explicit).name.lower() else "chrome"
+        return explicit, kind
+    for name in ("msedge", "microsoft-edge"):
+        found = shutil.which(name)
+        if found:
+            return found, "edge"
+    for env in ("PROGRAMFILES", "PROGRAMFILES(X86)"):
+        root = os.environ.get(env, "")
+        if root == "":
+            continue
+        cand = Path(root) / "Microsoft" / "Edge" / "Application" / "msedge.exe"
+        if cand.is_file():
+            return str(cand), "edge"
+    chrome_env = os.environ.get("CHROME_BIN", "")
+    if chrome_env and Path(chrome_env).is_file():
+        return chrome_env, "chrome"
+    for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "chrome"):
+        found = shutil.which(name)
+        if found:
+            return found, "chrome"
+    for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+        root = os.environ.get(env, "")
+        if root == "":
+            continue
+        cand = Path(root) / "Google" / "Chrome" / "Application" / "chrome.exe"
+        if cand.is_file():
+            return str(cand), "chrome"
+    return "", ""
 
 def _lum(png: bytes) -> float:
     try:
@@ -60,7 +97,6 @@ def _lum(png: bytes) -> float:
         return round(ImageStat.Stat(Image.open(io.BytesIO(png)).convert("L")).mean[0], 1)
     except ImportError:
         return -1.0
-
 
 def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
     """Replay steps. Returns ({shot name: mean luminance 0-255, -1 without Pillow}, {settle mark: ms}); web_perf.py flags expect_change pairs that look alike (stuck menu)."""
@@ -110,7 +146,6 @@ def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
                 page.keyboard.up(k)
     return shots, marks
 
-
 def _load_marks(lines: list[str]) -> list[list]:
     """`LOAD: mark=ID t=T dt=D vram=V` lines the engine prints under ?wdb-load-timing-smoke (hub) or ?wdb-dungeon-load-timing-smoke -> [id, t, dt, vram, wasm_mb]."""
     out = []
@@ -119,7 +154,6 @@ def _load_marks(lines: list[str]) -> list[list]:
         if "mark" in kv:
             out.append([kv["mark"], int(kv.get("t", 0)), int(kv.get("dt", 0)), int(kv.get("vram", 0)), int(kv.get("wasm", 0))])
     return out
-
 
 def _drop_shots(fs: list[float], ends: list[float], sw: list[list[float]]) -> tuple[list[float], int]:
     """A page screenshot stalls rAF as it returns: drop the frame spanning each shot's end, plus the next frame when it is over 100 ms (the settle)."""
@@ -135,14 +169,12 @@ def _drop_shots(fs: list[float], ends: list[float], sw: list[list[float]]) -> tu
         keep.append(d)
     return keep, n
 
-
 def _stats(fs: list[float], long_ms: float) -> dict:
     fs = sorted(fs) or [0.0]
     n = len(fs)
     return {"frames": n, "avg_fps": round(1000 / statistics.mean(fs), 1) if fs[-1] else 0,
             "avg_frame_ms": round(statistics.mean(fs), 1), "p95_frame_ms": round(fs[max(int(n * 0.95) - 1, 0)], 1),
             "max_frame_ms": round(fs[-1], 1), "long_frames": sum(1 for x in fs if x > long_ms)}
-
 
 def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s: int, size: tuple[int, int], out: Path,
             tag: str, mbps: float = 0.0, query: str = "", audio: bool = False, vsync: bool = False) -> dict:

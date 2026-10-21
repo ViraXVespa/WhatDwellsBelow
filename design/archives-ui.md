@@ -1,8 +1,7 @@
 # Archives — browser UI
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: split chevron, Documents reader, dim inactive columnstack
-
 
 ## Archives browser UI
 
@@ -23,10 +22,4 @@ Two columns. Only one column is active.
 
 Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
-List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1–3), Grok Web Results (Week 1–3), Grok Build Results (Week 4) once that pin exists, and any week pins added by the ritual above. Videos do not exist; the Video button stays disabled until they do.
-
-## Live snapshot
-
-`archives_ui.gd` is the facade and split host. `ui_view.gd` still owns archive-only panels. `ui_act.gd` handles Play, docs fetch, and video. Column focus / dim / chevron come from `split_menu_view.gd`.
-
-Pages CI exports live HEAD first, then runs `tools/export_archives.py` against the catalog. Failed pins stay in the catalog and in the Archives browser; their Pages URL may 404 until that SHA imports cleanly under the CI Godot and lands in `.archive_export_cache/`.
+List MUST include every catalog row (archives catalog). Videos do not exist; the Video button stays disabled until they do.

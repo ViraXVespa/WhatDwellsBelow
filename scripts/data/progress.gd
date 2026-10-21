@@ -40,6 +40,8 @@ var root := 0
 var bank_items: Array = []
 var quests_offered: Array = []
 var quest_active: Dictionary = {}
+var quest_pinned: Array = []
+var quest_delved: bool = false
 var forge_count := 0
 var hold_pick: Dictionary = {}
 var mailed_gold := 0
@@ -186,8 +188,8 @@ func spend_mana(n: float) -> bool:
 func tick_mana(delta: float) -> void:
 	CombatP.tick_mana(self, delta)
 
-func food_mana(food_id: String) -> float:
-	return CombatP.food_mana(self, food_id)
+func food_mana(food_key: String) -> float:
+	return CombatP.food_mana(self, food_key)
 
 func style_lv() -> int:
 	return maxi(1, int(round(style_lv_f())))

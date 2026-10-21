@@ -11,7 +11,6 @@ import md_format_lib as md
 KEY_RE = re.compile(r"`([^`]+)`")
 SLASH_RE = re.compile(r"\s*/\s*")
 
-
 @dataclass
 class Hit:
     key_cell: str
@@ -22,10 +21,8 @@ class Hit:
     live_col: int
     n_cols: int
 
-
 def _cells(line: str) -> list[str]:
     return [c.strip() for c in line.strip().strip("|").split("|")]
-
 
 def _aliases(key_cell: str) -> list[str]:
     out: list[str] = []
@@ -49,7 +46,6 @@ def _aliases(key_cell: str) -> list[str]:
         add(part)
     add(key_cell)
     return out
-
 
 def parse_hits(text: str) -> list[Hit]:
     hits: list[Hit] = []
@@ -105,10 +101,8 @@ def parse_hits(text: str) -> list[Hit]:
         )
     return hits
 
-
 def _norm(token: str) -> str:
     return token.strip().strip("`").lower()
-
 
 def find_hits(hits: list[Hit], needle: str) -> list[Hit]:
     want = _norm(needle)
@@ -123,7 +117,6 @@ def find_hits(hits: list[Hit], needle: str) -> list[Hit]:
     # Code keys (move_speed) vs prose rows ("Base move speed"): every key token appears in an alias.
     toks = {t.rstrip("s") for t in re.split(r"[^a-z0-9]+", needle.lower()) if t}
     return [h for h in hits if toks and any(toks <= {t.rstrip("s") for t in re.split(r"[^a-z0-9]+", a.lower()) if t} for a in h.aliases)]
-
 
 def set_live_cell(line: str, live_col: int, value: str) -> str:
     nl = ""
@@ -140,7 +133,6 @@ def set_live_cell(line: str, live_col: int, value: str) -> str:
     cells[live_col] = value
     return "| " + " | ".join(cells) + " |" + nl
 
-
 def format_hit(hit: Hit) -> list[str]:
     return [
         "key_cell=%s" % hit.key_cell,
@@ -149,7 +141,6 @@ def format_hit(hit: Hit) -> list[str]:
         "aliases=%s" % ", ".join(hit.aliases),
         "line=%d" % (hit.index + 1),
     ]
-
 
 def insert_row(lines: list[str], after: "Hit", key_cell: str, live: str) -> list[str]:
     """New row after `after` in the same table: key cell, Live cell, every other cell `-` (fill by hand)."""

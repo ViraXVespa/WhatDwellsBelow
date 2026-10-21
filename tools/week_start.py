@@ -27,7 +27,6 @@ import week_pin
 
 TOOLS = Path(__file__).resolve().parent
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Human-only week start: seed version, week branch, changelog archive, catch-up pins, gc, clean.", writes=True, json_out=True)
     args = ap.parse_args(argv)
@@ -146,7 +145,6 @@ def main(argv: list[str] | None = None) -> int:
     bad = "error" in (arch, gc, clean, br)
     return agent_log.finish("week-start", root, "\n".join(out), "FAIL" if bad else "PASS", args=args, echo="", catchup_pins=catch,
                             seed=seed, branch=br, archive=arch, gc=gc, locks_deleted=0 if dry else len(locks), clean=clean, dry_run=dry)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

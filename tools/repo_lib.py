@@ -14,7 +14,6 @@ from pathlib import Path
 ALLOW_FILE = "tools/bot_allow.txt"
 VERSION_FILE = "scripts/data/version.json"
 
-
 def run_git(root: Path, *args: str) -> tuple[int, str]:
     """(returncode, stdout or stderr). 127 when git is missing."""
     try:
@@ -23,7 +22,6 @@ def run_git(root: Path, *args: str) -> tuple[int, str]:
         return 127, "git-not-found"
     out = (proc.stdout or "").rstrip()
     return proc.returncode, out if out else (proc.stderr or "").rstrip()
-
 
 def git_changed(root: Path, *pathspec: str, untracked: bool = True) -> list[str] | None:
     """Repo-relative POSIX paths from `git status --porcelain`. None if git fails."""
@@ -44,7 +42,6 @@ def git_changed(root: Path, *pathspec: str, untracked: bool = True) -> list[str]
             paths.append(rel.strip('"').replace("\\", "/"))
     return paths
 
-
 def load_allowlist(root: Path) -> list[str]:
     """Globs from tools/bot_allow.txt (comments stripped, `!` negations kept)."""
     path = root / ALLOW_FILE
@@ -57,7 +54,6 @@ def load_allowlist(root: Path) -> list[str]:
             out.append(raw)
     return out
 
-
 def allowed(rel: str, globs: list[str]) -> bool:
     posix = rel.replace("\\", "/")
     for pattern in globs:
@@ -69,10 +65,8 @@ def allowed(rel: str, globs: list[str]) -> bool:
             return True
     return False
 
-
 def read_version(root: Path) -> dict:
     return json.loads((root / VERSION_FILE).read_text(encoding="utf-8-sig"))
-
 
 def week_branch(root: Path) -> str:
     """Current week branch grok-build-w{N}: the highest N among local grok-build-w* branches that match the
@@ -86,16 +80,13 @@ def week_branch(root: Path) -> str:
     keep = [n for n in names if int(n.rsplit("w", 1)[1]) == series or run_git(root, "merge-base", "--is-ancestor", n, "HEAD")[0] == 0]
     return max(keep, key=lambda n: int(n.rsplit("w", 1)[1]), default="")
 
-
 def next_label(root: Path) -> str:
     """Baked version.json epoch.series.(patch+1). Stamp commits are ignored."""
     v = read_version(root)
     return f"{int(v['epoch'])}.{int(v['series'])}.{int(v['patch']) + 1}"
 
-
 def changelog_dir(root: Path) -> Path:
     return root / "design" / "changelog"
-
 
 def under(path: Path, root: Path) -> bool:
     """True when `path` resolves inside `root`."""
@@ -104,7 +95,6 @@ def under(path: Path, root: Path) -> bool:
         return True
     except ValueError:
         return False
-
 
 def write_text_nl(path: Path, text: str) -> None:
     """Write UTF-8 text with a trailing newline, creating parent folders."""

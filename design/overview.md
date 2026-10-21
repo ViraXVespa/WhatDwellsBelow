@@ -4,7 +4,6 @@ Status: current plan
 Read when: scoping inclusion, pillar prose, vision copy
 Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`  
 
-
 ## 1. Overview and vision
 
 **Game Title**

@@ -1,14 +1,12 @@
 ﻿# Enemies
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: roster, AI, pressure
 Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/enemies.gd`  
 
-
 ## Enemy variety
 
-- Minimum of 12 different types of normal enemies.
-- At least 5 different types appear on each floor.
+- A roster of normal enemy types, with a minimum mix on every floor (counts: tunables-world).
 - Enemies MUST have varied attack patterns, movement types (hopping, walking, flying, etc.), and appearances so they feel distinct in combat.
 - Palette swaps and stat swaps between floors are used to increase perceived variety.
 - Enemies should use a variety of classic fantasy representations (slimes, goblins, orcs, etc.).
@@ -32,7 +30,7 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 
 ## Named monsters
 
-- Appear randomly at a rate of roughly once every 3 floors.
+- Appear randomly every few floors (named monster rate: tunables-world).
 - Slightly larger variants of their normal counterparts.
 - Name is randomly generated via a syllable-combination and randomization system.
 - Name appears beneath the enemy model in yellow text with a thin black border.
@@ -87,10 +85,10 @@ No lingering corpses required.
 
 - XP and gold amounts scale with floor and role.
 - Gear drop chance and rarity (white / green / blue) are tunable.
-- Walk-over pickups (gold coins, HP orb, mana orb) each roll their own chance per kill, so a kill can drop nothing (`enemy_hit.gd` `roll_drops`, tunables.md Enemy drops). Bosses always drop gold. `scripts/debug/drop_stage.gd` stages them (flow `dungeon-pickups`) and the P3 smoke prints a 1000-kill `drop_sim`.
+- Walk-over pickups (gold coins, HP orb, mana orb) each roll their own chance per kill, so a kill can drop nothing (`enemy_hit.gd` `roll_drops`, tunables-combat Enemy drops). Bosses always drop gold. `scripts/debug/drop_stage.gd` stages them (flow `dungeon-pickups`) and the P3 smoke prints a 1000-kill `drop_sim`.
 - Floor Guardians and Gate Master always drop the special chest (guaranteed equipment that may include blue rarity + one Artifact) in addition to normal drops.
 
-## Live snapshot — roster (`roster.gd`)
+## Roster
 
 | Id | Family |
 |----|--------|
@@ -100,15 +98,9 @@ No lingering corpses required.
 
 12 normal types. Named names use PRE / MID / SUF syllable arrays.
 
-Default HP (live): slime 48, goblin 64, orc 116, skeleton 72, bat 40, spider 56, archer 52, shaman 60, imp 44, wolf 68, beetle 104, wisp 36.
-
-Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, idle 24 s, no-reveal 22 s, pressure count 3 / radius 5 / cd 18, pressure waves 3. Wind-ups: melee 0.42, ranged 0.38, mage 0.55, recover 0.35.
-
-Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
-
 Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
 
 ## Add an enemy type (live files)
 
 One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, dmg, spd, range, def, size, arc; no hp), `scripts/data/balance/enemies.gd` (`IDS` plus the live row, the one source of hp; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through art_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family, or any 13th type even inside an existing family, is the User's call: ask (`ask_user_question`), never add one on your own. The Bot never adds enemy types.
-- Hall travelers: kind `hall`, one enemy on a corridor run of at least 10 cells, cadence 14–18 from the floor seed, skipped on ambush cells. Ambushes stay the surprise trap. Room packs are unchanged.
+- Hall travelers: kind `hall`, one enemy spaced along long corridor runs (spacing: tunables-world), placed from the floor seed and skipped on ambush cells. Ambushes stay the surprise trap. Room packs are unchanged.

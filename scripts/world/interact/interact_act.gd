@@ -2,6 +2,7 @@
 
 ## Interaction handlers for world interactables.
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const InteractFx := preload("res://scripts/world/interact/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact/interact_prompt.gd")
 
@@ -18,26 +19,31 @@ static func interact(host: Node3D, who: Node) -> String:
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_loadout"):
 			ui.open_loadout()
+		Dbg.hitch("ui_open_loadout")
 		return App.tr("interact_act.choose_your_loadout")
 	if host.kind == "anvil":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_anvil"):
 			ui.open_anvil()
+		Dbg.hitch("ui_open_anvil")
 		return App.tr("interact_act.the_anvil_waits")
 	if host.kind == "quest_board":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_quest"):
 			ui.open_quest()
+		Dbg.hitch("ui_open_quest")
 		return App.tr("interact_act.the_guild_has_work")
 	if host.kind == "receptionist":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_receptionist"):
 			ui.open_receptionist()
+		Dbg.hitch("ui_open_receptionist")
 		return App.tr("interact_act.the_guild_has_work")
 	if host.kind == "vendor":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_vendor"):
 			ui.open_vendor()
+		Dbg.hitch("ui_open_vendor")
 		return App.tr("interact_act.wares_in_the_sun")
 	if host.kind == "dumpster":
 		var ui := ui_node(host)

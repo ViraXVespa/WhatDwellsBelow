@@ -2,8 +2,8 @@
 
 A door that lists `unit_queue` in design/routes.yaml is worked one unit (one job) at a time, in the order listed. Which units are done is carried
 in the slice state (`_logs/slice-state.json`: units, done, unit) and in a handoff's `units:` / `done:` header lines. A unit's card prints only
-its own flow (with the shot state it cuts at), docs (path plus line range of the one section) and files; `start_build_slice.py --next` marks the
-current unit done and prints the next card without a new survey.
+its own flow (with the shot state it cuts at), docs (path plus line range of the one section) and files; `start_build_slice.py --unit-done` marks the
+current unit done at Complete (and writes a `<door>-units` task file when units remain without one); the next unit runs in this session when it fits, else a new session resumes the queue.
 """
 from __future__ import annotations
 
@@ -12,25 +12,20 @@ from pathlib import Path
 
 from load_routes import job_read_when, shot_flows
 
-
 def _map(data: dict, key: str) -> dict:
     raw = data.get(key)
     return raw if isinstance(raw, dict) else {}
 
-
 def split(text: str, sep: str = ",") -> list[str]:
     return [x.strip() for x in str(text or "").split(sep) if x.strip()]
-
 
 def queue(data: dict, door: str) -> list[str]:
     """The door's ordered unit jobs (door.job ids); empty when the door has no unit queue."""
     return split(_map(data, "unit_queue").get(door, ""))
 
-
 def job_state(data: dict, job: str) -> str:
     """The top-level shot a unit's flow is cut at ('' = the whole flow)."""
     return str(_map(data, "shot_states").get(job, "")).strip()
-
 
 def section(root: Path, spec: str) -> str:
     """'path L7-15 (## Heading)' for a `path#Heading` entry; 'path (all, N lines)' for a bare path."""
@@ -54,11 +49,9 @@ def section(root: Path, spec: str) -> str:
             return f"{path.strip()} L{start}-{n - 1} ({'#' * level} {head.strip()})"
     return f"{path.strip()} L{start}-{len(lines)} ({'#' * level} {head.strip()})" if start else f"{path.strip()}#{head.strip()} (HEADING NOT FOUND)"
 
-
 def pick(units: list[str], done: list[str]) -> str:
     """The first unit not done ('' when all are)."""
     return next((u for u in units if u not in done), "")
-
 
 def plan(data: dict, door: str, st: dict, head: dict | None = None) -> tuple[list[str], list[str]]:
     """(units, done): this worktree's slice state first, then a handoff's header, then the door's queue from the start."""
@@ -67,7 +60,6 @@ def plan(data: dict, door: str, st: dict, head: dict | None = None) -> tuple[lis
     if head and head.get("units"):
         return split(head["units"]), [d for d in split(head.get("done", "")) if d != "none"]
     return queue(data, door), []
-
 
 def lines(root: Path, data: dict, job: str, units: list[str] | None = None, done: list[str] | None = None) -> list[str]:
     """The unit block of a card: position in the queue, its flow and state, its docs (line ranges) and files. Empty for a job with no unit entries."""
@@ -90,7 +82,6 @@ def lines(root: Path, data: dict, job: str, units: list[str] | None = None, done
     if job in files:
         out.append("files\t" + str(files[job]) + "  (show_func.py / code_map.py row, not whole files)")
     return out
-
 
 def unit_fails(root: Path, data: dict) -> list[str]:
     """Lint for check_load_graph.py: queue ids are jobs of their door, doc sections and files exist, every unit has a real flow, each state is a top-level shot of it."""

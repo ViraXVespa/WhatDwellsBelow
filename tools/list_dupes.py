@@ -34,7 +34,6 @@ LOCAL = re.compile(r"^\s*(?:var|for)\s+(\w+)")
 TRIVIAL = re.compile(r"^(pass|return|return null|return false|return true|else:|\)|\]|\})$")
 HEADER = re.compile(r"^(const |@|extends |class_name |import |from |static var |var \w+(:\s*\w+)?\s*(:=|=)\s*preload)")
 
-
 def strip_comment(line: str) -> str:
     q = ""
     for i, ch in enumerate(line):
@@ -47,14 +46,11 @@ def strip_comment(line: str) -> str:
             return line[:i].rstrip()
     return line.rstrip()
 
-
 STR = re.compile(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'')
 NUM = re.compile(r"(?<![\w.])\d+(?:\.\d+)?\b")
 
-
 def mask(s: str) -> str:
     return NUM.sub("N", STR.sub('"S"', s))
-
 
 def code_lines(text: str) -> list[tuple[int, str]]:
     """[(1-based line, line with trailing comment/space removed)] for non-blank, non-comment lines."""
@@ -64,7 +60,6 @@ def code_lines(text: str) -> list[tuple[int, str]]:
         if s.strip():
             out.append((n, s))
     return out
-
 
 def gd_funcs(text: str) -> list[dict]:
     lines = text.splitlines()
@@ -81,7 +76,6 @@ def gd_funcs(text: str) -> list[dict]:
         res.append({"name": name, "start": start, "end": end, "lines": body})
     return res
 
-
 def gd_shape(fn: dict) -> str:
     sig = fn["lines"][0][1]
     params = re.findall(r"\b(\w+)\s*(?::[^,)=]*)?(?:=[^,)]*)?[,)]", sig[sig.index("(") + 1:]) if "(" in sig else []
@@ -97,10 +91,8 @@ def gd_shape(fn: dict) -> str:
         out.append(IDENT.sub(lambda m: names.get(m.group(0), m.group(0)), s))
     return "\n".join(out)
 
-
 def gd_exact(fn: dict) -> str:
     return "\n".join(s for _, s in fn["lines"][1:])
-
 
 class Norm(ast.NodeTransformer):
     def __init__(self) -> None:
@@ -118,7 +110,6 @@ class Norm(ast.NodeTransformer):
         if isinstance(node.ctx, ast.Store) or node.id in self.m:
             node.id = self._n(node.id)
         return node
-
 
 def py_funcs(text: str) -> list[dict]:
     try:
@@ -139,14 +130,12 @@ def py_funcs(text: str) -> list[dict]:
                     "exact": "\n".join(s for _, s in lines[1:]), "shape": dump})
     return out
 
-
 def collect(root: Path, lang: str) -> dict[str, list[Path]]:
     files: dict[str, list[Path]] = {"gd": [], "py": []}
     for kind, sub, pat in (("gd", "scripts", "*.gd"), ("py", "tools", "*.py")):
         if lang in (kind, "all"):
             files[kind] = sorted(p for p in (root / sub).rglob(pat) if not SKIP & set(p.relative_to(root).parts))
     return files
-
 
 def build(root: Path, lang: str, min_lines: int, min_block: int):
     funcs: list[dict] = []
@@ -172,7 +161,6 @@ def build(root: Path, lang: str, min_lines: int, min_block: int):
                 wins[hashlib.md5("\n".join(w).encode()).hexdigest()].append((rel, i))
     return funcs, wins, seqs
 
-
 def func_groups(funcs: list[dict]) -> list[dict]:
     out, seen = [], set()
     for kind in ("exact", "shape", "near"):
@@ -189,10 +177,8 @@ def func_groups(funcs: list[dict]) -> list[dict]:
                         "where": ["%s:%d-%d %s" % (f["file"], f["start"], f["end"], f["name"]) for f in fs]})
     return out
 
-
 def _hash(seq, i, k):
     return hashlib.md5("\n".join(mask(s) for _, s in seq[i:i + k]).encode()).hexdigest()
-
 
 def block_groups(wins, seqs, min_block: int) -> list[dict]:
     out, done = [], set()
@@ -218,13 +204,11 @@ def block_groups(wins, seqs, min_block: int) -> list[dict]:
                     "score": (len(occ) - 1) * n, "where": ["%s:%d-%d" % s for s in spans]})
     return out
 
-
 def _overlap(spans) -> bool:
     by: dict[str, list[tuple[int, int]]] = defaultdict(list)
     for r, a, b in spans:
         by[r].append((a, b))
     return any(x[1] >= y[0] for v in by.values() for x, y in zip(sorted(v), sorted(v)[1:]))
-
 
 def drop_inside_funcs(blocks: list[dict], fgroups: list[dict]) -> list[dict]:
     """Drop a block clone whose every copy sits inside a function already reported as an exact/shape/near group."""
@@ -244,7 +228,6 @@ def drop_inside_funcs(blocks: list[dict], fgroups: list[dict]) -> list[dict]:
         if inside < len(b["where"]):
             keep.append(b)
     return keep
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Find duplicated functions and code blocks (exact, same-shape, block clones).", json_out=True)
@@ -276,7 +259,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("\n".join(lines + [res]))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

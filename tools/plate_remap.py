@@ -30,7 +30,6 @@ KEY = imgio.MAGENTA
 KEY_HEX = imgio.MAGENTA_HEX
 POCKET_FRAC = key.POCKET_FRAC
 
-
 def remap(
     im: Image.Image,
     wand_dist: float = 48.0,
@@ -42,7 +41,6 @@ def remap(
 ) -> tuple[Image.Image, Image.Image, dict]:
     """Returns (remapped RGBA, debug mask, info). See imglib.key.remap_plate."""
     return key.remap_plate(im, tol=tol, wand_dist=wand_dist, min_amount=min_amount, edge=edge, edge_min=edge_min, pocket_frac=pocket_frac)
-
 
 def main() -> None:
     p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).",
@@ -67,7 +65,6 @@ def main() -> None:
     if args.mask:
         imgio.save(vis, args.mask)
     print(json.dumps(info, indent=2))
-
 
 if __name__ == "__main__":
     main()

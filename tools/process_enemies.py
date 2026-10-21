@@ -17,7 +17,6 @@ from imglib import key as plate_key
 ROOT = Path(__file__).resolve().parent.parent
 CANVAS = 128
 
-
 def key_and_fit(src: Path, dest: Path, flip: bool = False) -> None:
     use = matcher.resolve_source(dest, src)
     if use is None:
@@ -30,7 +29,6 @@ def key_and_fit(src: Path, dest: Path, flip: bool = False) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(dest)
     print("wrote", dest)
-
 
 def _run() -> None:
     jobs = [
@@ -55,10 +53,8 @@ def _run() -> None:
         dest = ROOT / "assets" / "sprites" / "enemies" / role / f"{pose}_{facing}.png"
         key_and_fit(src, dest, flip=flip)
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("process_enemies", 'Key the _src enemy stills into the live enemy sprites.', _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

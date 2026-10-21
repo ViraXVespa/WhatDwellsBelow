@@ -35,7 +35,7 @@ static func play(host: CanvasLayer, cond: String) -> void:
 		host.targets[id] = 0.0
 		host.gain_now[id] = 0.0
 	Rebuild.rebuild(host, cond)
-	PromptView.footer(host, [{"action": "ui_accept", "verb": "continue"}, {"action": "ui_cancel", "hide": true}])
+	PromptView.footer(host, [{"action": "ui_accept", "verb": "continue", "hide": true}, {"action": "ui_cancel", "hide": true}])
 	host.set_process(true)
 
 static func tick(host: CanvasLayer, delta: float) -> void:
@@ -62,6 +62,9 @@ static func tick(host: CanvasLayer, delta: float) -> void:
 		RecapBars.refresh(host)
 
 static func continue_btn(host: CanvasLayer) -> Button:
+	var held: Button = host.cont_btn
+	if held != null and is_instance_valid(held):
+		return held
 	for n in host.box.get_children():
 		if n is Button and bool(n.get_meta("recap_continue", false)):
 			return n

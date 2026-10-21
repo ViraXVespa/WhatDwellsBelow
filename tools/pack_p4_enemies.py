@@ -29,15 +29,11 @@ KEYS = [
     "up_right",
 ]
 
-
 def key_bg(im: Image.Image) -> Image.Image:
     return plate_key.punch(im)
 
-
 def fit_local(im: Image.Image) -> Image.Image:
     return fit_box(im, CANVAS, PAD, oy=lambda nh: max(0, min(CANVAS - nh, CANVAS - nh - 2)))
-
-
 
 def pack_one(src: Path, dest_dir: Path) -> Path:
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +49,6 @@ def pack_one(src: Path, dest_dir: Path) -> Path:
         else:
             out.save(p)
     return down
-
 
 def _run(img: Path, dest_root: Path) -> int:
     mapping = {
@@ -83,7 +78,6 @@ def _run(img: Path, dest_root: Path) -> int:
         packed += 1
     return packed
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Pack the Phase 4 enemy stills (21.jpg..34.jpg) into per-type sprite folders.")
     ap.add_argument("image_dir", type=Path, help="Folder holding 21.jpg .. 34.jpg")
@@ -91,7 +85,6 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     packed = _run(args.image_dir, args.dest_root)
     return agent_log.emit_result("PASS" if packed else "FAIL", packed=packed)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -79,14 +79,12 @@ HINTS = [
      "Script does not compile: fix the line named in `site`."),
 ]
 
-
 def norm(s: str) -> str:
     s = re.sub(r"0x[0-9a-fA-F]+", "0x", s)
     s = re.sub(r"^(Orphan StringName:) .* (\(static:)", r"\1 <name> \2", s)
     s = re.sub(r":\d{6,}\b", ":ID", s)
     s = re.sub(r"\b\d+(?:\.\d+)?\b", "N", s)
     return re.sub(r"\s+", " ", s).strip()
-
 
 @dataclass
 class Finding:
@@ -106,14 +104,12 @@ class Finding:
     def key(self) -> tuple[str, str, str]:
         return (self.kind, self.norm, self.site)
 
-
 def _kind(tag: str, msg: str) -> str:
     text = f"{tag} {msg}"
     for kind, rx in KIND_RULES:
         if rx.search(text):
             return kind
     return "error"
-
 
 def _site(cont: list[str]) -> str:
     for line in cont:
@@ -126,14 +122,12 @@ def _site(cont: list[str]) -> str:
             return m.group(1)
     return ""
 
-
 def hint_for(f: Finding) -> str:
     text = f.norm
     for rx, hint in HINTS:
         if re.search(rx, text):
             return hint
     return ""
-
 
 def parse_stream(text: str, area: str, stream: str) -> list[Finding]:
     """One Finding (count=1) per logged event. merge() de-duplicates."""
@@ -171,7 +165,6 @@ def parse_stream(text: str, area: str, stream: str) -> list[Finding]:
         i = j
     return out
 
-
 def merge(into: dict, found: list[Finding], run: int = 1) -> None:
     for f in found:
         for a in f.areas:
@@ -189,11 +182,9 @@ def merge(into: dict, found: list[Finding], run: int = 1) -> None:
             if s not in cur.samples and len(cur.samples) < 3:
                 cur.samples.append(s)
 
-
 def run_failure(area: str, what: str) -> Finding:
     f = Finding("run-fail", what, norm(what), "", [], 1, {area: 1}, f"{area} runner")
     return f
-
 
 def flake_label(f: Finding, ran: dict[str, int]) -> str:
     """'stable' = logged in every run of every re-run area; else 'flaky <area> n/m' (worst area). '' when no area it hit was re-run.
@@ -205,7 +196,6 @@ def flake_label(f: Finding, ran: dict[str, int]) -> str:
     area, rs = min(multi.items(), key=lambda kv: len(kv[1]) / ran[kv[0]])
     return "stable" if len(rs) >= ran[area] else f"flaky {area} {len(rs)}/{ran[area]}"
 
-
 def mode_label(f: Finding) -> str:
     """'gui-only' / 'headless-only' when both renderers ran (area tags ending @gui are the real renderer)."""
     gui = [a for a in f.areas if a.endswith("@gui")]
@@ -214,7 +204,6 @@ def mode_label(f: Finding) -> str:
     if not gui:
         return "headless-only"
     return ""
-
 
 # Quick mode (--changed): path prefix -> areas that load that code. Longest prefix wins; unmapped
 # scripts/scenes/project files fall back to QUICK_DEFAULT. static (compile everything) always runs.
@@ -234,7 +223,6 @@ CHANGED_MAP = [
 ]
 QUICK_DEFAULT = ["p1", "p3", "p7"]
 CODE_PREFIXES = ("scripts/", "scenes/", "project.godot", "assets/shaders/")
-
 
 def changed_areas(paths: list[str]) -> list[str]:
     """Areas for a list of changed repo paths (posix). Only static when nothing code-like changed."""

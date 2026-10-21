@@ -3,6 +3,7 @@ extends Node
 ## Bitter in the dungeon: full intro (including two-measure fade-in) once,
 ## then loop from measure 10 beat 1 (~15.52s on the supplied master).
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 var player: AudioStreamPlayer
 var kind := ""
 var passed_intro := false
@@ -24,7 +25,6 @@ func _ready() -> void:
 	player.finished.connect(_on_finished)
 	_apply_vol()
 
-const LT := preload("res://scripts/debug/load_timing.gd")
 
 func _dungeon_path() -> String:
 	var path := "res://assets/audio/music_dungeon.mp3"
@@ -47,19 +47,19 @@ func play_dungeon() -> void:
 	if web:
 		web.play(WEB_DUNGEON, loop_offset())
 		_apply_vol()
-		LT.dmark("music_play")
+		Dbg.lt_dmark("music_play")
 		return
 	if _dungeon_path() == "":
 		return
 	preload_dungeon()
 	var s: Resource = _dungeon_stream
-	LT.dmark("music_load")
+	Dbg.lt_dmark("music_load")
 	if s is AudioStreamMP3:
 		(s as AudioStreamMP3).loop = false
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)
-	LT.dmark("music_play")
+	Dbg.lt_dmark("music_play")
 
 func play_hub() -> void:
 	kind = "hub"

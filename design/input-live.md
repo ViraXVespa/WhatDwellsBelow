@@ -1,10 +1,9 @@
-﻿# Input live snapshots
+﻿# Input defaults and web pad
 
 Status: current plan  
-Read when: live snapshot for binds or web_pad  
+Read when: default binds or web_pad  
 
-
-## Live snapshot — defaults (`scripts/input/binds/table.gd`)
+## Defaults (`scripts/input/binds/table.gd`)
 
 `table.gd` is the only place defaults are written; this table mirrors it. Every row is rebindable on Pause → Settings → Controls.
 
@@ -37,7 +36,7 @@ The target-lock key (Q) pages stats only while a gear board is open; during game
 Y is `gear_tip` in the live map. The Animation Browser reuses that action for review-state cycle while the viewer is open.
 X is `gear_drop` in the live map. The Animation Browser reuses that action for play/pause while the viewer is open.
 
-## Live snapshot — web gamepad (`web_pad.gd`)
+## Web gamepad (`web_pad.gd`)
 
 Web builds on GitHub Pages do not get a reliable Godot joypad. When `OS.has_feature("web")`, `scripts/web_pad.gd` reads `navigator.getGamepads()` through `JavaScriptBridge`.
 

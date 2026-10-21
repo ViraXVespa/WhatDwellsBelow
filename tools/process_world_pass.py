@@ -17,8 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
-from imglib import geom, imgio, key as plate_key  # noqa: E402
-from gen_prompt_glyphs import FONT  # noqa: E402  (single home for the pixel font)
+from imglib import geom, imgio, key as plate_key, overlay  # noqa: E402
 
 SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
 TILES = ROOT / "assets" / "tiles"
@@ -35,16 +34,13 @@ QUADS = {
     "br": (0.5, 0.5, 1.0, 1.0),
 }
 
-
 def load(name: str) -> Image.Image:
     return imgio.load(SESSION / name)
-
 
 def crop_frac(im: Image.Image, frac: tuple[float, float, float, float]) -> Image.Image:
     w, h = im.size
     x0, y0, x1, y1 = frac
     return im.crop((int(w * x0), int(h * y0), int(w * x1), int(h * y1)))
-
 
 def make_seamless(im: Image.Image, blend: int = 10) -> Image.Image:
     rgb = im.convert("RGB")
@@ -66,7 +62,6 @@ def make_seamless(im: Image.Image, blend: int = 10) -> Image.Image:
     arr = np.roll(arr, -(h // 2), axis=0)
     return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
 
-
 def tile_out(src: str, dest: Path, size: int = 128, quad: str | None = None) -> None:
     im = load(src)
     if quad:
@@ -86,7 +81,6 @@ def tile_out(src: str, dest: Path, size: int = 128, quad: str | None = None) -> 
     canvas.save(CHECK / f"{dest.stem}_2x2.png")
     print("tile", dest.name, im.size)
 
-
 def key_sprite(im: Image.Image) -> Image.Image:
     im = im.convert("RGBA")
     rgb = np.array(im)[:, :, :3]
@@ -102,7 +96,6 @@ def key_sprite(im: Image.Image) -> Image.Image:
     arr[keyed] = 0
     return Image.fromarray(plate_key.strip_rim(arr), "RGBA")
 
-
 def sprite_out(src: str, dest: Path, canvas: int = 128, quad: str | None = None) -> None:
     im = load(src)
     if quad:
@@ -112,7 +105,6 @@ def sprite_out(src: str, dest: Path, canvas: int = 128, quad: str | None = None)
     dest.parent.mkdir(parents=True, exist_ok=True)
     out.save(dest)
     print("sprite", dest.name, out.size)
-
 
 def wide_out(src: str, dest: Path, max_w: int, quad: str | None = None, key_black: bool = False) -> None:
     im = load(src)
@@ -135,39 +127,6 @@ def wide_out(src: str, dest: Path, max_w: int, quad: str | None = None, key_blac
     resized.save(dest)
     print("wide", dest.name, resized.size)
 
-
-GLYPH_GAP = 2  # columns between glyphs; banner_out layout and blit_line share it
-_BLANK = ["00000"] * 7
-
-
-def blit_line(
-    im: Image.Image,
-    text: str,
-    x0: int,
-    y0: int,
-    scale: int,
-    fill: tuple[int, int, int, int],
-) -> None:
-    px = im.load()
-    shadow = (48, 28, 16, 255)
-    gw, gap = 5, GLYPH_GAP
-    for i, ch in enumerate(text):
-        rows = FONT.get(ch, _BLANK)
-        bx = x0 + i * (gw + gap) * scale
-        for gy, row in enumerate(rows):
-            for gx, bit in enumerate(row):
-                if bit != "1":
-                    continue
-                for oy in range(scale):
-                    for ox in range(scale):
-                        x = bx + gx * scale + ox
-                        y = y0 + gy * scale + oy
-                        if 0 <= x + 1 < im.size[0] and 0 <= y + 1 < im.size[1]:
-                            px[x + 1, y + 1] = shadow
-                        if 0 <= x < im.size[0] and 0 <= y < im.size[1]:
-                            px[x, y] = fill
-
-
 def cloth_box(im: Image.Image) -> tuple[int, int, int, int]:
     arr = np.array(im)
     a = arr[:, :, 3] > 16
@@ -183,39 +142,16 @@ def cloth_box(im: Image.Image) -> tuple[int, int, int, int]:
         return bbox
     return (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
 
+# the banner text; the same spec is the manifest row's "overlay", which rekey_all_stills applies
+BANNER_OVERLAY = {"lines": ["WELCOME TO", "PLACEHOLDIA!"], "box": [0.2, 0.4, 0.8, 0.68], "fill": [236, 214, 164], "centre": "cloth"}
 
 def banner_out() -> None:
     dest = PROPS / "welcome_banner.png"
     keyed = key_sprite(load("14.jpg"))
     out = geom.fit_axis(keyed, width=512, empty="whole")
-    w, h = out.size
-    cx0 = int(w * 0.20)
-    cy0 = int(h * 0.40)
-    cx1 = int(w * 0.80)
-    cy1 = int(h * 0.68)
-    pad_x = max(8, int((cx1 - cx0) * 0.08))
-    pad_y = max(6, int((cy1 - cy0) * 0.12))
-    inner_w = max(8, cx1 - cx0 - pad_x * 2)
-    inner_h = max(8, cy1 - cy0 - pad_y * 2)
-    lines = ["WELCOME TO", "PLACEHOLDIA!"]
-    gw, gh, gap, lh = 5, 7, GLYPH_GAP, 2
-    longest = max(len(line) for line in lines)
-    line_w = longest * (gw + gap) - gap
-    block_h = len(lines) * gh + (len(lines) - 1) * lh
-    px = max(2, min(inner_w // line_w, inner_h // block_h))
-    total_w = line_w * px
-    total_h = block_h * px
-    bx = cx0 + pad_x + (inner_w - total_w) // 2
-    by = cy0 + pad_y + (inner_h - total_h) // 2
-    fill = (236, 214, 164, 255)
-    for i, line in enumerate(lines):
-        lw = (len(line) * (gw + gap) - gap) * px
-        lx = bx + (total_w - lw) // 2
-        ly = by + i * (gh + lh) * px
-        blit_line(out, line, lx, ly, px, fill)
+    out = overlay.apply(out, BANNER_OVERLAY)
     out.save(dest)
-    print("banner", dest.name, out.size, "cloth", (cx0, cy0, cx1, cy1), "px", px)
-
+    print("banner", dest.name, out.size)
 
 def recut_sprites() -> None:
     sprite_out("18.jpg", PROPS / "anvil.png")
@@ -242,7 +178,6 @@ def recut_sprites() -> None:
     sprite_out("37.jpg", NPCS / "vendor.png", canvas=160)
     sprite_out("39.jpg", NPCS / "shopkeep.png", canvas=160)
 
-
 def mix_path() -> None:
     dirt = imgio.load(TILES / "plaza_ground.png", "RGB")
     cobble = imgio.load(TILES / "plaza_path.png", "RGB")
@@ -257,13 +192,9 @@ def mix_path() -> None:
     canvas.save(CHECK / "plaza_path_2x2.png")
     print("path mix", mixed.size)
 
-
 def _run() -> None:
-    tile_out("3.jpg", TILES / "plaza_grass.png")
     tile_out("7.jpg", TILES / "plaza_ground.png")
-    tile_out("11.jpg", TILES / "plaza_ground_b.png")
     tile_out("10.jpg", TILES / "plaza_path.png")
-    tile_out("9.jpg", TILES / "plaza_wall.png", quad="tr")
     tile_out("8.jpg", TILES / "plaza_roof.png")
     tile_out("4.jpg", TILES / "foundation_floor.png", quad="tl")
     tile_out("6.jpg", TILES / "foundation_wall.png")
@@ -278,10 +209,8 @@ def _run() -> None:
     wide_out("15.jpg", BLD / "stall.png", 512, key_black=True)
     banner_out()
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("process_world_pass", "Key and install the Placeholdia / dungeon art pass stills.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

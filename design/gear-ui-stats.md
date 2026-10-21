@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: kit deltas, combat totals, hover highlight, Y preview  
 
-
 ## Stats card
 
 Pages, in order:

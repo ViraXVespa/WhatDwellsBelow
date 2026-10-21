@@ -56,7 +56,6 @@ NAMES = (
     "iron_heart",
 )
 
-
 def _bands(mask: np.ndarray) -> list[tuple[int, int]]:
     spans: list[tuple[int, int]] = []
     start = None
@@ -69,7 +68,6 @@ def _bands(mask: np.ndarray) -> list[tuple[int, int]]:
     if start is not None:
         spans.append((start, len(mask)))
     return spans
-
 
 def _cells(im: Image.Image) -> list[Image.Image]:
     rgb = np.asarray(im.convert("RGBA"))[:, :, :3]
@@ -86,7 +84,6 @@ def _cells(im: Image.Image) -> list[Image.Image]:
         raise SystemExit(f"cells {len(out)} names {len(NAMES)}")
     return out
 
-
 def _save(path: Path, im: Image.Image) -> None:
     if agent_log.DRY_RUN:
         print(f"would write {path.relative_to(ROOT).as_posix()}")
@@ -94,7 +91,6 @@ def _save(path: Path, im: Image.Image) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     im.save(path)
     print(f"wrote {path.relative_to(ROOT).as_posix()}")
-
 
 def _ensure_sheet() -> None:
     if SHEET.is_file():
@@ -107,7 +103,6 @@ def _ensure_sheet() -> None:
     SHEET.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(LOG_SHEET, SHEET)
     print(f"wrote {SHEET.relative_to(ROOT).as_posix()}")
-
 
 def _manifest(names: tuple[str, ...]) -> None:
     if not MANIFEST.is_file():
@@ -140,7 +135,6 @@ def _manifest(names: tuple[str, ...]) -> None:
     MANIFEST.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(f"wrote _src/manifest.json added={added}")
 
-
 def _run() -> None:
     _ensure_sheet()
     if agent_log.DRY_RUN and not SHEET.is_file():
@@ -155,7 +149,6 @@ def _run() -> None:
         _save(LIVE / f"{name}.png", fit_box(sp.key_to_alpha(cell), 64, 2))
     _manifest(NAMES)
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer(
         "slice_shop_icons",
@@ -164,7 +157,6 @@ def main(argv: list[str] | None = None) -> int:
         argv,
         globals(),
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

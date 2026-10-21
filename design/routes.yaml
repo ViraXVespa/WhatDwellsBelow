@@ -21,9 +21,16 @@ indexes:
   graph: design/load-graph.md
 
 notes_exempt:
+  - design/build-simulation.md
   - design/reuse-map.md
   - design/tasks/README.md
   - design/refs/README.md
+  - design/benchmarks/frame-time.md
+  - design/benchmarks/menu-open.md
+  - design/benchmarks/web-perf.md
+  - design/benchmarks/hub-bench.md
+  - design/benchmarks/desktop-release.md
+  - design/ui-ux-audit.md
 
 
 parked_jobs:
@@ -48,14 +55,23 @@ skills:
   i2v_isolated: .grok/skills/i2v-isolated/SKILL.md
   pc_offload: .grok/skills/pc-offload/SKILL.md
   shot_tool: .grok/skills/shot-tool/SKILL.md
+  list_xref: .grok/skills/list-xref/SKILL.md
+  show_func: .grok/skills/show-func/SKILL.md
+  review_shots_isolated: .grok/skills/review-shots-isolated/SKILL.md
 
 gates:
   tunables:
     file: design/tunables.md
     when: numbers_change
+  tunables_combat:
+    file: design/tunables-combat.md
+    when: combat_gathering_drop_or_consumable_number_change
   tunables_world:
     file: design/tunables-world.md
-    when: world_economy_or_ui_number_change
+    when: dungeon_or_enemy_number_change
+  tunables_economy:
+    file: design/tunables-economy.md
+    when: economy_anvil_or_ui_number_change
   web_discuss:
     file: design/web-discuss.md
     when: web_phase_2_discuss
@@ -251,6 +267,7 @@ doors:
       persist: design/save-tech-persist.md
       web: design/save-tech-web.md
       runtime: design/save-tech-runtime.md
+      benchmarks: design/benchmarks/README.md
   feel:
     file: design/feel.md
     read_when: "difficulty, raid-timer, parity, polish"
@@ -339,6 +356,7 @@ job_read_when:
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
   save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
+  save_tech.benchmarks: "benchmark records, open_timing, fps_pct, hitch timings"
   archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
   archives.play: "worktree minimize, Godot child restore, slug copyhit"
   archives.ui: "split chevron, Documents reader, dim inactive columnstack"
@@ -416,7 +434,7 @@ shot_flows:
   ui.receptionist: "camp-receptionist-menu"
 
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. start_build_slice.py --door D picks the first
-# not done, `--next` moves on, and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
+# not done (`--unit-done` marks it done at Complete; a `<door>-units` task keeps the queue), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
 unit_queue:
   # Order of the ui units only. Done-state lives in the slice state (start_build_slice), so finished units stay listed.
   ui: "ui.controls, ui.anvil, ui.loadout, ui.extract, ui.ghost_shop, ui.recap, ui.quest_board, ui.receptionist"
@@ -442,7 +460,7 @@ unit_files:
   ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop; scripts/ui/gear_icons.gd; scripts/ui/item_board.gd"
   ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play; scripts/ui/recap/bars.gd; scripts/ui/tip_hover.gd; scripts/ui/pause_skills.gd; scripts/ui/pause_menu/journal_page.gd; scripts/ui/journal_spread.gd"
   ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd; scripts/ui/pause_menu.gd: TABS; scripts/ui/pause_menu/menu_flow.gd; scripts/ui/pause_menu/pause_menu_view.gd; scripts/ui/tip_hover.gd"
-  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/world/interact/interact_act.gd: interact; scripts/data/talk_lines.gd; tools/tutorial_shots.py"
+  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/ui/progress_ui/receptionist.gd: rebuild, back; scripts/ui/progress_ui/receptionist_frame.gd: spec, build, place; scripts/ui/progress_ui/receptionist_art.gd: body, speech, bust; scripts/ui/progress_ui/guide_frame.gd: spec, build, place; scripts/ui/progress_ui/guide_art.gd: body; scripts/data/tutorial_pages.gd: page_of, shot_tex; scripts/data/talk_lines.gd: line_key, commit_once; scripts/world/interact/interact_act.gd: interact; tools/tutorial_shots.py"
 
 # A unit that is one state of a shared flow: the job's flow, cut after that top-level shot (run_shot_flow.py --job J re-shoots only it).
 shot_states:

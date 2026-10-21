@@ -126,38 +126,10 @@
       "cell": ""
     },
     {
-      "live": "assets/tiles/plaza_grass.png",
-      "source": "sources/assets/tiles/plaza_grass.jpg",
-      "origin": "_src/sources/assets/tiles/plaza_grass.jpg",
-      "mad": 1.53,
-      "agree": 0.999,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
-      "cell": ""
-    },
-    {
       "live": "assets/tiles/plaza_ground.png",
       "source": "sources/assets/tiles/plaza_ground.jpg",
       "origin": "_src/sources/assets/tiles/plaza_ground.jpg",
       "mad": 0.78,
-      "agree": 1.0,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
-      "cell": ""
-    },
-    {
-      "live": "assets/tiles/plaza_ground_b.png",
-      "source": "sources/assets/tiles/plaza_ground_b.jpg",
-      "origin": "_src/sources/assets/tiles/plaza_ground_b.jpg",
-      "mad": 0.72,
       "agree": 1.0,
       "overlap": 1.0,
       "flip": false,
@@ -207,20 +179,6 @@
       "kind": "figure",
       "loose": false,
       "opaque_side": 1024,
-      "cell": ""
-    },
-    {
-      "live": "assets/tiles/plaza_wall.png",
-      "source": "sources/assets/tiles/plaza_wall.png",
-      "origin": "_src/sources/assets/tiles/plaza_wall.png",
-      "mad": 0.0,
-      "agree": 1.0,
-      "overlap": 1.0,
-      "flip": false,
-      "window": "full",
-      "kind": "figure",
-      "loose": false,
-      "opaque_side": 128,
       "cell": ""
     },
     {
@@ -307,8 +265,7 @@
       "live": "assets/sprites/npcs/shopkeep.png",
       "source": "sources/assets/sprites/npcs/shopkeep.jpg",
       "origin": "_src/sources/assets/sprites/npcs/shopkeep.jpg",
-      "fit": [128, 128, 33, 6, 93, 123],
-      "approved": true
+      "fit": [128, 128, 33, 6, 93, 123]
     },
     {
       "live": "assets/sprites/npcs/vendor.png",
@@ -470,8 +427,7 @@
       "live": "assets/sprites/props/extract_gate_on.png",
       "source": "sources/assets/sprites/props/extract_gate_on.jpg",
       "origin": "_src/sources/assets/sprites/props/extract_gate_on.jpg",
-      "fit": [384, 244, 0, 0, 384, 244],
-      "approved": true
+      "fit": [384, 244, 0, 0, 384, 244]
     },
     {
       "live": "assets/sprites/props/fence.png",
@@ -505,10 +461,10 @@
     },
     {
       "live": "assets/sprites/props/hp_orb.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/props/hp_orb.jpg",
       "origin": "_src/sources/assets/sprites/props/hp_orb.jpg",
-      "fit": [128, 128, 8, 11, 120, 124],
-      "approved": true
+      "fit": [128, 128, 8, 11, 120, 124]
     },
     {
       "live": "assets/sprites/props/lever.png",
@@ -527,6 +483,7 @@
     },
     {
       "live": "assets/sprites/props/mana_orb.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/props/mana_orb.jpg",
       "origin": "_src/sources/assets/sprites/props/mana_orb.jpg",
       "fit": [128, 128, 11, 2, 116, 126]
@@ -659,6 +616,7 @@
     },
     {
       "live": "assets/sprites/props/welcome_banner.png",
+      "overlay": {"lines": ["WELCOME TO", "PLACEHOLDIA!"], "box": [0.2, 0.4, 0.8, 0.68], "fill": [236, 214, 164], "centre": "cloth"},
       "source": "sources/assets/sprites/props/welcome_banner.jpg",
       "origin": "_src/sources/assets/sprites/props/welcome_banner.jpg",
       "mad": 8.75,
@@ -2114,6 +2072,7 @@
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2125,11 +2084,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_left.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.49,
@@ -2141,11 +2100,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_down_right.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2157,11 +2116,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_left.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.49,
@@ -2173,11 +2132,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_right.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2189,11 +2148,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "_src/sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "mad": 8.29,
@@ -2205,11 +2164,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_left.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.49,
@@ -2221,11 +2180,11 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wisp/idle_up_right.png",
+      "alpha": "soft",
       "source": "sources/assets/sprites/enemies/wisp/idle_up.jpg",
       "origin": "tools/_src/img/32.jpg",
       "mad": 8.29,
@@ -2237,8 +2196,7 @@
       "loose": false,
       "opaque_side": 86,
       "cell": "",
-      "fit": [128, 128, 28, 2, 100, 119],
-      "approved": true
+      "fit": [128, 128, 28, 2, 100, 119]
     },
     {
       "live": "assets/sprites/enemies/wolf/idle_down.png",
@@ -2643,8 +2601,7 @@
       "loose": false,
       "opaque_side": 43,
       "cell": "",
-      "fit": [128, 128, 43, 5, 85, 123],
-      "approved": true
+      "fit": [128, 128, 43, 5, 85, 123]
     },
     {
       "live": "assets/sprites/player/female/idle_down_left.png",
@@ -7084,8 +7041,7 @@
       "loose": false,
       "opaque_side": 56,
       "cell": "",
-      "fit": [64, 64, 5, 1, 57, 64],
-      "approved": true
+      "fit": [64, 64, 5, 1, 57, 64]
     },
     {
       "live": "assets/ui/gear/head.png",
@@ -7100,8 +7056,7 @@
       "loose": false,
       "opaque_side": 52,
       "cell": "",
-      "fit": [64, 64, 7, 2, 57, 62],
-      "approved": true
+      "fit": [64, 64, 7, 2, 57, 62]
     },
     {
       "live": "assets/ui/gear/legs.png",
@@ -7122,8 +7077,7 @@
       "live": "assets/ui/gear/longbow.png",
       "source": "sources/assets/ui/gear/longbow.jpg",
       "origin": "_src/sources/assets/ui/gear/longbow.jpg",
-      "fit": [64, 64, 21, 4, 43, 59],
-      "approved": true
+      "fit": [64, 64, 21, 4, 43, 59]
     },
     {
       "live": "assets/ui/gear/moldy_bread.png",
@@ -7234,8 +7188,7 @@
       "loose": false,
       "opaque_side": 41,
       "cell": "",
-      "fit": [64, 64, 4, 1, 60, 63],
-      "approved": true
+      "fit": [64, 64, 4, 1, 60, 63]
     },
     {
       "live": "assets/ui/gear/slot_potion.png",
@@ -7855,36 +7808,6 @@
     },
     {
       "live": "assets/ui/frames/dumpster/body.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-34-4.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-40-1.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-55-2.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-64-8.png",
-      "best_mad": null,
-      "best_agree": null,
-      "best_origin": null
-    },
-    {
-      "live": "assets/ui/frames/dumpster/flap-72-3.png",
       "best_mad": null,
       "best_agree": null,
       "best_origin": null

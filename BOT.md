@@ -35,13 +35,13 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 ## Prove
 
 - python tools/check_script_cap.py --bot --git-changed
-- python tools/check_load_graph.py --bot
+- python tools/check_load_graph.py --bot (routes.yaml coverage; also run by `bot_status --prove`)
 - python tools/bot_status.py --bot --prove
 - python tools/code_map.py check (no new UNMAPPED for files you touched; older ones are expected)
 - python tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
-Proof rules (`prove.md`): one-line intended outcome first; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved"; look and sound stay unverified until the User confirms. Say plainly when a message or handoff to a worker did not arrive.
+Proof rules: the agents file. Say plainly when a message or handoff to a worker did not arrive.
 CI: .github/workflows/bot-gate.yml. Allowlist: tools/bot_allow.txt (default deny; deny lines first).
 Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. If the current truth is unclear, list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
 New `tools/` runners: only after the User approves one this session (`design/tools.md` rule 5). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.

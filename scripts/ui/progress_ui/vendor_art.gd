@@ -242,4 +242,3 @@ static func fill(col: Color) -> Texture2D:
 	var img: Image = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 	img.fill(col)
 	return UiBuild.keep(_images, key, img)
-

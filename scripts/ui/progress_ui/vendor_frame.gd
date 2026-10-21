@@ -8,6 +8,7 @@ const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/vendor_art.gd")
+const UiText: GDScript = preload("res://scripts/ui/ui_text.gd")
 
 const FRAME_POS: Vector2 = Vector2(390, 110)
 const FRAME_SIZE: Vector2 = Vector2(1140, 680)
@@ -83,6 +84,7 @@ static func prepare(host: CanvasLayer) -> void:
 	var bank: Label = chrome.get_node("stall_bank") as Label
 	title.text = App.tr("shop.vendor_stall")
 	bank.text = App.tr("shop.bank_g_ore_potions_and") % [App.bank_gold, App.bank_ore]
+	_fit(title, bank)
 	host.status = chrome.get_node("stall_status") as Label
 	host.status.text = ""
 
@@ -105,9 +107,18 @@ static func refresh_bank(host: CanvasLayer) -> void:
 	var bank: Label = chrome.get_node_or_null("stall_bank") as Label
 	if bank:
 		bank.text = App.tr("shop.bank_g_ore_potions_and") % [App.bank_gold, App.bank_ore]
+		_fit(chrome.get_node("stall_title") as Label, bank)
 
 static func _plank(lift: float, foot: int) -> StyleBoxTexture:
 	return UiBuild.tex_box(Art.grain(96, 28, lift, foot), 8, 6, foot, true, 16, 8)
 
 static func _shelf(lift: float, foot: int) -> StyleBoxTexture:
 	return UiBuild.tex_box(Art.shelf(lift, foot), 8, 6, foot, false, 12, 6)
+
+## Name board text stays inside the board (long locales or bank totals shrink instead of overflowing).
+static func _fit(title: Label, bank: Label) -> void:
+	for lab: Label in [title, bank]:
+		if not lab.has_meta("fit_px"):
+			lab.set_meta("fit_px", lab.get_theme_font_size("font_size"))
+		lab.add_theme_font_size_override("font_size", int(lab.get_meta("fit_px")))
+		UiText.fit_width(lab, NAME_W - 40.0, 14)

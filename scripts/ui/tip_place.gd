@@ -14,26 +14,21 @@ static func clamp_pos(pos: Vector2, sz: Vector2, view: Vector2, margin: float = 
 	out.y = clampf(out.y, margin, view.y - maxf(sz.y, 80.0) - margin)
 	return out
 
-## Prefer below the anchor; flip above if the tip would cross footer_top.
-static func place_flip_below(
-	host: Control,
-	anchor: Rect2,
-	footer_top: float,
-	width: float,
-	gap: float = 8.0,
-	x_min: float = 20.0,
-	x_max: float = 1900.0,
-) -> void:
-	var h: float = host.size.y
-	if h <= 0.0:
-		h = host.get_combined_minimum_size().y
-	var below: float = anchor.position.y + anchor.size.y + gap
-	var above: float = anchor.position.y - h - gap
-	var pos := Vector2(anchor.position.x + anchor.size.x - width, below)
-	if below + h > footer_top:
-		pos.y = above
-	if pos.x + width > x_max:
-		pos.x = x_max - width
-	if pos.x < x_min:
-		pos.x = x_min
-	host.position = pos
+## Put a popup panel beside its source control (right, else left), top-aligned with it, clamped on screen.
+## Runs a frame later so the panel has its real size. A missing source leaves the panel where it is.
+static func near(panel: Control, src: Control, gap: float = 12.0) -> void:
+	if panel == null or src == null or not is_instance_valid(src) or not src.is_inside_tree():
+		return
+	var src_r: Rect2 = src.get_global_rect()
+	defer_next_frame(panel.get_tree(), func():
+		if not is_instance_valid(panel) or not panel.is_inside_tree():
+			return
+		var view: Vector2 = panel.get_viewport().get_visible_rect().size
+		var sz: Vector2 = panel.size.max(panel.get_combined_minimum_size())
+		var x: float = src_r.end.x + gap
+		if x + sz.x > view.x - 16.0:
+			x = src_r.position.x - sz.x - gap
+		panel.global_position = clamp_pos(Vector2(x, src_r.position.y), sz, view)
+		var ui: Node = panel.get_parent()
+		if ui != null and ui.has_method("get") and ui.get("gear_tip_host") != null:
+			load("res://scripts/ui/gear_board/tip.gd").place_tip(ui))

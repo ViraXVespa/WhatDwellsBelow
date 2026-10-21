@@ -22,7 +22,6 @@ OUT = ROOT / "assets" / "3d"
 THRESH = 64
 FACINGS = ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"]
 
-
 def sample_bg(im: Image.Image) -> tuple:
     rgb = im.convert("RGB")
     w, h = rgb.size
@@ -30,13 +29,11 @@ def sample_bg(im: Image.Image) -> tuple:
     cols = [rgb.getpixel(p) for p in pts]
     return tuple(int(sum(c[i] for c in cols) / len(cols)) for i in range(3))
 
-
 def is_green(rgb, bg) -> bool:
     r, g, b = rgb
     if dist((r, g, b), bg) <= THRESH:
         return True
     return g > 140 and g > r + 36 and g > b + 36
-
 
 def key(im: Image.Image) -> Image.Image:
     im = im.convert("RGBA")
@@ -51,10 +48,8 @@ def key(im: Image.Image) -> Image.Image:
     arr[green] = 0
     return Image.fromarray(plate_key.strip_rim(arr), "RGBA")
 
-
 def fit(im: Image.Image, canvas: int, pad: int = 8) -> Image.Image:
     return fit_box(im, canvas, pad, resample=Image.Resampling.LANCZOS, to_int=int, empty_exit="empty after key")
-
 
 def sprite(name: str, dest: Path, canvas: int = 256) -> Image.Image:
     im = fit(key(imgio.load(SRC / name)), canvas)
@@ -63,17 +58,14 @@ def sprite(name: str, dest: Path, canvas: int = 256) -> Image.Image:
     print("sprite", dest.relative_to(ROOT))
     return im
 
-
 def copy_img(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, dest)
     print("copy", dest.relative_to(ROOT))
 
-
 def mirror_file(src: Path, dest: Path) -> None:
     geom.flip(imgio.load(src)).save(dest)
     print("mirror", dest.relative_to(ROOT))
-
 
 def tile(name: str, dest: Path, size: int = 128) -> None:
     im = imgio.load(SRC / name, "RGB")
@@ -87,7 +79,6 @@ def tile(name: str, dest: Path, size: int = 128) -> None:
     blended.save(dest)
     print("tile", dest.relative_to(ROOT))
 
-
 def preview_2x2(path: Path, dest: Path) -> None:
     t = imgio.load(path, "RGB")
     s = t.size[0]
@@ -98,7 +89,6 @@ def preview_2x2(path: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     out.save(dest)
     print("preview", dest.relative_to(ROOT))
-
 
 def fill_facings(folder: Path, prefix: str, have: dict, canvas_src: Path | None = None) -> None:
     """have: facing -> existing png path. Fill the rest from nearest cardinal."""
@@ -120,7 +110,6 @@ def fill_facings(folder: Path, prefix: str, have: dict, canvas_src: Path | None 
         src = have.get(src_key) or have.get("down")
         if src and Path(src).exists():
             copy_img(Path(src), dest)
-
 
 def _run() -> None:
     if OUT.exists():
@@ -265,10 +254,8 @@ def _run() -> None:
     )
     print("done")
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("process_gloam", "Key Imagine stills into assets/3d for the Gloam 3D view.", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

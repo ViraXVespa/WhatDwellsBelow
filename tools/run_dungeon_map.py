@@ -14,7 +14,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Dungeon generation map smoke.", json_out=True)
     ap.add_argument("--seed", type=int, default=42, help="Dungeon seed (default 42).")
@@ -45,7 +44,6 @@ def main(argv: list[str] | None = None) -> int:
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
     return agent_log.finish("dungeon-map", root, "\n".join(body), "FAIL" if fail else "PASS", args=args,
                             retry=("run_dungeon_map.py", body), fail_signals=fail, spec_fail=spec_fail, map_ok=str(has_ok))
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

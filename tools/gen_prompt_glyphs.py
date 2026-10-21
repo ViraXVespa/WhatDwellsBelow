@@ -87,23 +87,18 @@ FONT = {
     "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
 }
 
-
 def blank(w: int, h: int) -> Image.Image:
     return Image.new("RGBA", (w, h), CLEAR)
-
 
 def px(img: Image.Image, x: int, y: int, c) -> None:
     if 0 <= x < img.width and 0 <= y < img.height:
         img.putpixel((x, y), c)
 
-
 def fill_rect(img: Image.Image, x: int, y: int, w: int, h: int, c) -> None:
     ImageDraw.Draw(img).rectangle([x, y, x + w - 1, y + h - 1], fill=c)
 
-
 def outline_rect(img: Image.Image, x: int, y: int, w: int, h: int, c) -> None:
     ImageDraw.Draw(img).rectangle([x, y, x + w - 1, y + h - 1], outline=c)
-
 
 def stamp(img: Image.Image, text: str, cx: int, cy: int, scale: int = 2, col=GLYPH) -> None:
     glyphs = []
@@ -128,7 +123,6 @@ def stamp(img: Image.Image, text: str, cx: int, cy: int, scale: int = 2, col=GLY
                         px(img, x + col_i * scale + ox, y0 + row * scale + oy, col)
         x += 6 * scale
 
-
 def key_body(w: int, h: int) -> Image.Image:
     img = blank(w, h)
     fill_rect(img, 1, 1, w - 2, h - 2, FACE)
@@ -137,16 +131,13 @@ def key_body(w: int, h: int) -> Image.Image:
     fill_rect(img, 3, h - 4, w - 6, 2, EDGE)
     return img
 
-
 def wide_key(label: str, w: int = 52, h: int = 28, scale: int = 2) -> Image.Image:
     img = key_body(w, h)
     stamp(img, label, w // 2, h // 2 - 1, scale)
     return img
 
-
 def letter_key(label: str) -> Image.Image:
     return wide_key(label, 28, 28)
-
 
 def arrow_key(direction: str) -> Image.Image:
     img = key_body(28, 28)
@@ -165,12 +156,10 @@ def arrow_key(direction: str) -> Image.Image:
         fill_rect(img, 7, 11, 9, 4, INK)
     return img
 
-
 def space_key() -> Image.Image:
     img = wide_key("", 72, 24)
     fill_rect(img, 14, 11, 44, 3, INK)
     return img
-
 
 def _mouse_hot(which: str, col, inflate: int = 0) -> Image.Image:
     w, h = 41, 60
@@ -197,7 +186,6 @@ def _mouse_hot(which: str, col, inflate: int = 0) -> Image.Image:
         d.ellipse([14 - inflate, 6 - inflate, 26 + inflate, 24 + inflate], fill=col)
     return layer
 
-
 def mouse(which: str) -> Image.Image:
     w, h = 41, 60
     img = blank(w, h)
@@ -215,7 +203,6 @@ def mouse(which: str) -> Image.Image:
         d.rounded_rectangle([16, 8, 24, 22], radius=3, fill=MOUSE_HOT, outline=INK)
     return img
 
-
 def pad_round(letter: str, col) -> Image.Image:
     w = h = 32
     img = blank(w, h)
@@ -223,7 +210,6 @@ def pad_round(letter: str, col) -> Image.Image:
     d.ellipse([1, 1, w - 2, h - 2], fill=col, outline=PAD_EDGE)
     stamp(img, letter, w // 2, h // 2, 2, INK)
     return img
-
 
 def pad_trigger(label: str, right: bool) -> Image.Image:
     w, h = 40, 32
@@ -237,7 +223,6 @@ def pad_trigger(label: str, right: bool) -> Image.Image:
     stamp(img, label, w // 2 + (2 if right else -2), h // 2 + 2, 2, PAD_LIT)
     return img
 
-
 def pad_bumper(label: str) -> Image.Image:
     w, h = 44, 20
     img = blank(w, h)
@@ -245,7 +230,6 @@ def pad_bumper(label: str) -> Image.Image:
     d.rounded_rectangle([1, 1, w - 2, h - 2], radius=4, fill=PAD, outline=PAD_EDGE)
     stamp(img, label, w // 2, h // 2, 2, PAD_LIT)
     return img
-
 
 def stick(label: str) -> Image.Image:
     w = h = 40
@@ -256,7 +240,6 @@ def stick(label: str) -> Image.Image:
     d.ellipse([16, 16, 23, 23], fill=PAD_LIT)
     stamp(img, label, w // 2, 34, 1, PAD_LIT)
     return img
-
 
 def _chevron(img: Image.Image, lit: str) -> None:
     if lit == "up":
@@ -274,7 +257,6 @@ def _chevron(img: Image.Image, lit: str) -> None:
     d = ImageDraw.Draw(img)
     d.polygon(pts_o, fill=CHEV_O)
     d.polygon(pts_y, fill=CHEV_Y)
-
 
 def dpad(lit: str) -> Image.Image:
     w = h = 45
@@ -299,7 +281,6 @@ def dpad(lit: str) -> Image.Image:
     _chevron(img, lit)
     return img
 
-
 def menu_btn() -> Image.Image:
     w, h = 40, 24
     img = blank(w, h)
@@ -308,7 +289,6 @@ def menu_btn() -> Image.Image:
     for y in (7, 11, 15):
         fill_rect(img, 12, y, 16, 2, PAD_LIT)
     return img
-
 
 def view_btn() -> Image.Image:
     w, h = 40, 24
@@ -319,17 +299,14 @@ def view_btn() -> Image.Image:
     d.rectangle([16, 9, 28, 19], outline=PAD_LIT)
     return img
 
-
 def save(img: Image.Image, folder: str, name: str) -> None:
     dest = ROOT / folder
     dest.mkdir(parents=True, exist_ok=True)
     img.save(dest / f"{name}.png")
 
-
 def save_aliases(img: Image.Image, folder: str, names: list[str]) -> None:
     for name in names:
         save(img, folder, name)
-
 
 def _run() -> None:
     ROOT.mkdir(parents=True, exist_ok=True)
@@ -381,10 +358,8 @@ def _run() -> None:
             p.unlink()
     print("wrote", ROOT)
 
-
 def main(argv: list[str] | None = None) -> int:
     return agent_log.run_writer("gen_prompt_glyphs", "Chunky pixel prompt glyphs. Run from repo root:", _run, argv, globals())
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

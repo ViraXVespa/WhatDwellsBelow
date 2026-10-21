@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import run_log_lib
 
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Print a job's run index and newest summary, or a repo file.")
     ap.add_argument("job_pos", nargs="?", default="", help="Job name (same as --job).")
@@ -60,7 +59,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     sys.stdout.write(full.read_text(encoding="utf-8", errors="replace"))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

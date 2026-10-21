@@ -43,32 +43,31 @@ RENDER_METHOD = "gl_compatibility"
 SCREENS = ("title", "splash", "fs_gate")
 FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height", "fixed_fps")
 
-
 def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
-    """Hide only windows belonging to the given Godot PID (off-screen + taskbar strip)."""
+    """PID-only off-screen + taskbar strip. No title read, no print."""
     try:
         user32 = ctypes.windll.user32
-        SW_HIDE = 0
         GWL_EXSTYLE = -20
         WS_EX_TOOLWINDOW = 0x00000080
         WS_EX_APPWINDOW = 0x00040000
+        SWP_NOSIZE = 0x0001
+        SWP_NOZORDER = 0x0004
         WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
 
         def enum_cb(hwnd, lparam):
             proc_id = ctypes.c_ulong()
             user32.GetWindowThreadProcessId(hwnd, ctypes.byref(proc_id))
-            if proc_id.value == pid:
-                user32.ShowWindow(hwnd, SW_HIDE)
-                ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-                user32.SetWindowLongW(hwnd, GWL_EXSTYLE, (ex | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
-                user32.SetWindowPos(hwnd, None, -32000, -32000, 0, 0, 0x0001 | 0x0002)
-                return False
+            if proc_id.value != pid:
+                return True
+            ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, (ex | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
+            user32.SetWindowPos(hwnd, None, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER)
             return True
 
         cb = WNDENUMPROC(enum_cb)
         while not stop_event.is_set():
             user32.EnumWindows(cb, 0)
-            time.sleep(0.01)
+            time.sleep(0.001)
     except Exception:
         pass
 
@@ -79,7 +78,6 @@ def _load_recipe(root: Path, name: str) -> dict:
     if not isinstance(rec, dict) or not rec.get("frames"):
         raise SystemExit("FAIL unknown shot recipe " + name)
     return rec
-
 
 def _recipe_poses(rec: dict) -> str:
     bits: list[str] = []
@@ -96,7 +94,6 @@ def _recipe_poses(rec: dict) -> str:
         bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face))
     return ";".join(bits)
 
-
 def _out_dir(root: Path) -> Path:
     try:
         return agent_log.ensure_agent_log_dir(JOB, root)
@@ -104,7 +101,6 @@ def _out_dir(root: Path) -> Path:
         fallback = root / "_logs" / JOB
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
-
 
 def _extra_flags(args: argparse.Namespace) -> list[str]:
     extra = [
@@ -130,7 +126,6 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         extra.append("--wdb-shot-nopix=1")
     return extra
 
-
 def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int, poses: str) -> list[str]:
     head = (["--headless", "--display-driver", "headless", "--audio-driver", "Dummy"] if args.no_pixels else
             ["--audio-driver", "Dummy", "--rendering-method", RENDER_METHOD, "--rendering-driver", RENDER_DRIVER])
@@ -151,7 +146,6 @@ def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int,
         godot_args.append("--wdb-shot-poses=" + poses)
     return godot_args
 
-
 def _log_lines(logs: list[Path], keep) -> list[str]:
     hits: list[str] = []
     for path in logs:
@@ -159,15 +153,12 @@ def _log_lines(logs: list[Path], keep) -> list[str]:
             hits += [ln for ln in path.read_text(encoding="utf-8", errors="replace").splitlines() if keep(ln)]
     return hits
 
-
 def _shot_lines(logs: list[Path]) -> list[str]:
     return _log_lines(logs, lambda ln: ln.startswith("SHOT:"))
-
 
 def _error_lines(logs: list[Path]) -> list[str]:
     needles = ("SCRIPT ERROR:", "Parse Error", "Compile Error", "ERROR: Failed to")
     return _log_lines(logs, lambda ln: any(n in ln for n in needles))
-
 
 def _png_info(png: Path) -> tuple[int, int, int]:
     if not png.is_file():
@@ -179,7 +170,6 @@ def _png_info(png: Path) -> tuple[int, int, int]:
         height = int.from_bytes(data[20:24], "big")
     return len(data), width, height
 
-
 def _band(ok: bool, nbytes: int, width: int, height: int) -> str:
     if not ok or nbytes <= 0 or width <= 0 or height <= 0:
         return "fail"
@@ -187,12 +177,10 @@ def _band(ok: bool, nbytes: int, width: int, height: int) -> str:
         return "warn"
     return "good"
 
-
 def apply_flow_header(args: argparse.Namespace, header: dict, given: set[str]) -> None:
     for key in FLOW_KEYS:
         if key in header and key not in given:
             setattr(args, key, str(header[key]) if key in ("px", "pz") else type(getattr(args, key))(header[key]))
-
 
 def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict:
     from PIL import Image
@@ -245,7 +233,6 @@ def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict
             "seam_pairs": len(means), "seam_mean_diff": round(sum(means) / max(1, len(means)), 3),
             "seam_worst_pair": round(max(means, default=0.0), 3), "seam_pairs_over_4": sum(m > 4 for m in means), "seam_bad_px": bad_px}
 
-
 def build_parser() -> argparse.ArgumentParser:
     p = agent_log.std_parser("Capture a play-camera postcard, or run a scripted shot flow (--steps).",
                              writes=True, json_out=True)
@@ -278,7 +265,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--taskbar", type=int, default=0, help=argparse.SUPPRESS)
     return p
 
-
 def setup_full_map(args: argparse.Namespace, root: Path) -> None:
     args.scene, args.hud, args.no_pixels = "dungeon", 0, False
     args.zoom = 1.0
@@ -295,7 +281,6 @@ def setup_full_map(args: argparse.Namespace, root: Path) -> None:
     (tiles / "full-map-flow.json").write_text(json.dumps(flow, indent=1), encoding="utf-8")
     args.steps, args.frames_dir = str(tiles / "full-map-flow.json"), str(tiles)
     args.timeout_sec = max(args.timeout_sec, 900)
-
 
 def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None) -> dict:
     given = given or set()
@@ -385,7 +370,6 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
                w=width, h=height, lines=shot_hits, errors=err_hits, flow=flow, ok=ok)
     return res
 
-
 def main(argv: list[str] | None = None) -> int:
     p = build_parser()
     argv = list(sys.argv[1:] if argv is None else argv)
@@ -438,7 +422,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         sys.stdout.write("\n".join(lines + [result]) + "\n")
     return 0 if res["band"] != "fail" else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

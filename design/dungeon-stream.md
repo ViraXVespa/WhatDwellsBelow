@@ -1,21 +1,15 @@
 # Dungeon — streaming
 
-Status: current plan + live snapshot  
+Status: current plan  
 Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance
 
-## Live snapshot — streaming
+## Streaming
 
-`dungeon_stream.gd` streams enemy jobs. `geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget.
+Enemy jobs and floor/wall geometry both stream around the player so a whole floor stays inside the 60 FPS budget.
 
 Stream instances gen's published runs. Ribbon boxes fire when those runs exist, not only when the outlined flag is set. WallRects.merge collision is fallback for chunks with no runs. It does not derive a wall, a lip, or a silhouette. Floor edge, wall ribbon recipe, and BoxShapes on a slant follow the same published origin, delta, and normal. Interior floor may stay merged rects. Do not clip 4-connected cells to invent an edge. Do not call WallRects.merge on wall_cells to build a stair lip. Wall collision is BoxShape on void that touches that bounded solid, flush with the published run, not a 1 m slab and not a second staircase.
 
-| Constant | Cells | Meaning |
-|----------|-------|---------|
-| `STREAM_IN` | 28 | Pending enemy job becomes live |
-| `STREAM_OUT` | 42 | Live job despawns if not in combat |
-| `CHUNK` | 32 | Geometry job size |
-| `RING_IN` / `RING_OUT` | 1 / 2 | Geo chunks kept around the player |
-| `PER_FRAME` | 3 | Neighbor geo chunks built per follow after the current chunk. The first two frames build 1 so boot does not trip a burst. |
+Stream radii and chunk sizes: tunables-world, Dungeon generation.
 
 Job states: `pending`, `live`, `cleared`. Do not stream out an enemy the player is fighting.
 Geometry jobs never go `cleared`; they sleep back to `pending`.

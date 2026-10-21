@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 80 lines)."""
+"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 20 lines)."""
 from __future__ import annotations
 
 import re
@@ -13,8 +13,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import gd_lib
 
-MAX_LINES = 80
-
+MAX_LINES = 20
 
 def py_span(lines: list[str], name: str) -> tuple[int, int] | None:
     """[start, end) of a column-0 Python def, up to the next column-0 def or class."""
@@ -33,14 +32,12 @@ def py_span(lines: list[str], name: str) -> tuple[int, int] | None:
             break
     return start, end
 
-
 def declared_names(lines: list[str], python: bool) -> list[str]:
     if python:
         found = [m.group(1) for ln in lines if (m := re.match(r"^(?:async\s+)?def\s+(\w+)\s*\(", ln))]
     else:
         found = [m.group(1) for ln in lines if (m := re.match(r"(?:static\s+)?(?:func|const|var|signal|enum)\s+(\w+)", ln))]
     return sorted(set(found))
-
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Extract one GDScript or Python declaration.", json_out=True)
@@ -78,7 +75,6 @@ def main(argv: list[str] | None = None) -> int:
     out = head + [f"lines={start + 1}-{start + len(chunk)} of {len(body)}", f"truncated={truncated}", ""] + chunk
     return agent_log.finish("show-func", root, "\n".join(out), "PASS", args=args,
                             lines=len(chunk), truncated=truncated)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

@@ -39,7 +39,6 @@ I2V_ACTIONS = (
 )
 PACK_ANIMS = ("walk", "idle_to_walk", "walk_to_idle")
 
-
 def load_review(path: Path = REVIEW_PATH) -> dict:
     if not path.is_file():
         return {"v": 1, "clips": {}}
@@ -51,13 +50,11 @@ def load_review(path: Path = REVIEW_PATH) -> dict:
         clips = {}
     return {"v": int(data.get("v", 1) or 1), "clips": clips}
 
-
 def parse_key(key: str) -> tuple[str, str, str]:
     parts = str(key).split("/")
     if len(parts) != 3:
         return ("", "", "")
     return parts[0], parts[1], parts[2]
-
 
 def clip_rows(review: dict | None = None) -> list[dict]:
     review = review if review is not None else load_review()
@@ -85,7 +82,6 @@ def clip_rows(review: dict | None = None) -> list[dict]:
         )
     return rows
 
-
 def i2v_action(anim: str) -> str:
     name = str(anim).strip().lower().replace("-", "_")
     if name.startswith("atk_"):
@@ -105,18 +101,15 @@ def i2v_action(anim: str) -> str:
         return head
     return name
 
-
 def is_pack_anim(anim: str) -> bool:
     name = str(anim)
     return name in PACK_ANIMS or name.startswith("walk")
-
 
 def player_dir(model: str) -> Path | None:
     gender = PLAYER_IDS.get(model)
     if not gender:
         return None
     return PLAYER_SPRITE / gender
-
 
 def _seq(base: Path, prefix: str, facing: str) -> list[Path]:
     out: list[Path] = []
@@ -128,7 +121,6 @@ def _seq(base: Path, prefix: str, facing: str) -> list[Path]:
         out.append(p)
         i += 1
     return out
-
 
 def frame_paths(model: str, facing: str, anim: str) -> list[Path]:
     base = player_dir(model)
@@ -157,13 +149,11 @@ def frame_paths(model: str, facing: str, anim: str) -> list[Path]:
             return found
     return []
 
-
 def write_text(path: Path, body: str, dry: bool = False) -> None:
     if dry:
         print(f"would write {agent_log.rel(ROOT, path)}")
         return
     md.write_text(path, body, mkdir=True)
-
 
 def set_root(root: Path) -> None:
     """Point every module path at another repo root (the tools' --root)."""
@@ -173,7 +163,6 @@ def set_root(root: Path) -> None:
     g["REVIEW_PATH"] = g["REVIEW_DIR"] / "review.json"
     g["PLAYER_SPRITE"] = root / "assets" / "sprites" / "player"
     g["BIBLE"] = {"male": g["PLAYER_SPRITE"] / "bible_locked_male.png", "female": g["PLAYER_SPRITE"] / "bible_locked_female.png"}
-
 
 def brief_args(ap: argparse.ArgumentParser, stem: str | None = None, argv: list[str] | None = None) -> argparse.Namespace:
     """Add --review (and --out-md/--out-json when stem is set), parse, apply --root. Paths may lie outside the repo."""
@@ -191,13 +180,11 @@ def brief_args(ap: argparse.ArgumentParser, stem: str | None = None, argv: list[
         args.out_json = args.out_json or REVIEW_DIR / f"{stem}.json"
     return args
 
-
 def load_with_missing(path: Path) -> tuple[dict, list[str]]:
     """(review, missing notes): an absent file gives an empty review and one note."""
     if not path.is_file():
         return {"v": 1, "clips": {}}, [f"no review file at {agent_log.rel(ROOT, path)}"]
     return load_review(path), []
-
 
 def add_missing(lines: list[str], missing: list[str]) -> None:
     """Append the Missing review store section when there are notes."""
@@ -206,7 +193,6 @@ def add_missing(lines: list[str], missing: list[str]) -> None:
         for line in missing:
             lines.append(f"- {line}")
         lines.append("")
-
 
 def write_brief(args: argparse.Namespace, body: str, payload: dict) -> None:
     dry = bool(getattr(args, "dry_run", False))

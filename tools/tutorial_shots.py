@@ -10,7 +10,6 @@ copies the staged PNGs to the manifest's dest. Re-run after a UI change to refre
 """
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import re
@@ -19,15 +18,30 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log  # noqa: E402
+
+ROOT = _TOOLS.parent
 MANIFEST = ROOT / "tools" / "tutorial_shots.json"
 FLOWS = ROOT / "tools" / "shot-flows"
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
-
 def load() -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
+def _shot_names(steps: list) -> list[str]:
+    names: list[str] = []
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+        if step.get("op") == "shot":
+            names.append(step.get("name"))
+        if step.get("op") == "repeat":
+            names.extend(_shot_names(step.get("steps", [])))
+    return names
 
 def check(man: dict) -> list[str]:
     bad: list[str] = []
@@ -40,11 +54,10 @@ def check(man: dict) -> list[str]:
         if not flow.is_file():
             bad.append(f"{tid}: no flow {row.get('flow')}")
             continue
-        shots = [s.get("name") for s in json.loads(flow.read_text(encoding="utf-8")).get("steps", []) if s.get("op") == "shot"]
+        shots = _shot_names(json.loads(flow.read_text(encoding="utf-8")).get("steps", []))
         if row.get("shot") not in shots:
             bad.append(f"{tid}: flow {row['flow']} has no shot {row.get('shot')} (has {shots})")
     return bad
-
 
 def run(man: dict, out: Path) -> list[str]:
     bad: list[str] = []
@@ -68,12 +81,14 @@ def run(man: dict, out: Path) -> list[str]:
     (out / "tutorial_shots.json").write_text(json.dumps({"dest": man["dest"], "topics": rows}, indent=2) + "\n", encoding="utf-8")
     return bad
 
-
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    global ROOT, MANIFEST, FLOWS
+    ap = agent_log.std_parser(__doc__.splitlines()[0])
     ap.add_argument("--run", action="store_true", help="shoot the flows and stage PNGs in --out")
     ap.add_argument("--out", default="_out/tutorial", help="staging dir (never under assets/)")
     a = ap.parse_args(argv)
+    ROOT = agent_log.resolve_root(a)
+    MANIFEST, FLOWS = ROOT / "tools" / "tutorial_shots.json", ROOT / "tools" / "shot-flows"
     man = load()
     bad = check(man)
     out = (ROOT / a.out).resolve()
@@ -84,10 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     for b in bad:
         print("problem", b)
     n = len(man.get("topics", {}))
-    staged = f" staged={a.out} dest={man.get('dest')}" if a.run and not bad else ""
-    print(f"RESULT {'FAIL' if bad else 'PASS'} topics={n} problems={len(bad)}{staged}")
-    return 1 if bad else 0
-
+    extra = {"staged": a.out, "dest": man.get("dest")} if a.run and not bad else {}
+    return agent_log.emit_result("FAIL" if bad else "PASS", topics=n, problems=len(bad), **extra)
 
 if __name__ == "__main__":
     sys.exit(main())

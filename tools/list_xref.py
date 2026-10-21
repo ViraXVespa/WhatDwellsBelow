@@ -24,11 +24,9 @@ import gd_lib
 
 SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git"}
 
-
 def BOT_DOCS(rel: str) -> bool:
     """The Bot's own docs are not Build's search scope."""
     return rel == "BOT.md" or (rel.startswith("design/grok-bot-") and rel.endswith(".md"))
-
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Text search over scripts/scenes/tools/design.", json_out=True)
@@ -106,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
         if not hits:
             agent_log.fail("no hits in %s for %r; files with hits: %s" % (", ".join(expand), pattern, ", ".join(sorted(by_file)) or "none"))
     mode = "regex" if args.regex else "simple"
-    where = f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
+    where = ""  # cwd_scan_root already returns "" or a WARN-only line
     body = [f"{where} pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
             f"scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
@@ -127,7 +125,6 @@ def main(argv: list[str] | None = None) -> int:
         echo += "\nnext: no match; try a shorter pattern or --regex (search is case-insensitive over scripts scenes tools design)"
     return agent_log.finish("xref", root, "\n".join(body), "INFO", args=args, echo=echo, files=len(files_hit),
                             hits=len(hits), scanned=scanned, truncated=trunc)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

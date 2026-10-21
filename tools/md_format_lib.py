@@ -14,12 +14,10 @@ TICK_RE = re.compile(r"`([^`]+)`")
 
 _FOUR_SPACES = "    "
 
-
 def is_gdscript_path(path: Path | str | None) -> bool:
     if path is None:
         return False
     return Path(str(path)).suffix.lower() == ".gd"
-
 
 def leading_spaces_to_tabs(text: str) -> str:
     """Map each leading run of four spaces to one tab. Mid-line spaces stay."""
@@ -34,12 +32,10 @@ def leading_spaces_to_tabs(text: str) -> str:
         out.append(("\t" * n) + line[i:])
     return "\n".join(out)
 
-
 def maybe_gd_indent(text: str, path: Path | str | None) -> str:
     if is_gdscript_path(path):
         return leading_spaces_to_tabs(text)
     return text
-
 
 def posix(rel: str) -> str:
     p = rel.replace("\\", "/").strip()
@@ -47,28 +43,22 @@ def posix(rel: str) -> str:
         p = p[2:]
     return p.lstrip("/")
 
-
 def tick_wrap(token: str) -> str:
     return f"`{posix(token)}`"
-
 
 def tick_tokens(text: str) -> list[str]:
     return [posix(t) for t in TICK_RE.findall(text) if posix(t)]
 
-
 def force_lf(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
-
 
 def ensure_trailing_newline(text: str) -> str:
     if not text.endswith("\n"):
         return text + "\n"
     return text
 
-
 def force_crlf(text: str) -> str:
     return force_lf(text).replace("\n", "\r\n")
-
 
 def write_utf8(path: Path, text: str, *, mkdir: bool = False) -> None:
     """UTF-8 text write with CRLF newlines and a trailing newline."""
@@ -79,7 +69,6 @@ def write_utf8(path: Path, text: str, *, mkdir: bool = False) -> None:
 
 def write_lines(path: Path, lines: list[str], *, mkdir: bool = False) -> None:
     write_utf8(path, "\n".join(lines), mkdir=mkdir)
-
 
 def path_tick_variants(old: str) -> list[str]:
     """Candidate spellings for replace-once, including design-path tick variants."""
@@ -100,7 +89,6 @@ def path_tick_variants(old: str) -> list[str]:
     add(tickless)
     add(re.sub(r"(design/[\w./-]+\.md)", r"`\1`", tickless))
     return out
-
 
 def replace_once_text(
     text: str, old: str, new: str, *, path: Path | str | None = None
@@ -131,7 +119,6 @@ def split_marker_block(text: str, begin: str, end: str) -> tuple[str, str, str] 
     j_end = j + len(end)
     return text[:i], text[i:j_end], text[j_end:]
 
-
 def splice_marker_block(text: str, begin: str, end: str, new_block: str) -> str | None:
     """Replace the marked region (begin..end inclusive) with new_block."""
     parts = split_marker_block(text, begin, end)
@@ -139,7 +126,6 @@ def splice_marker_block(text: str, begin: str, end: str, new_block: str) -> str 
         return None
     prefix, _mid, suffix = parts
     return prefix + new_block + suffix
-
 
 def rewrite_table_row(file_lines: list[str], index: int, new_line: str) -> None:
     """Replace one table row in place, preserving the original line ending."""
@@ -152,14 +138,12 @@ def rewrite_table_row(file_lines: list[str], index: int, new_line: str) -> None:
         nl = ""
     file_lines[index] = new_line.rstrip("\r\n") + nl
 
-
 def join_lines_keep_trailing(raw: str, file_lines: list[str]) -> str:
     """Join mutated keepends lines; restore a trailing newline if raw had one."""
     text = "".join(file_lines)
     if raw.endswith("\n") and not text.endswith("\n"):
         text += "\n"
     return text
-
 
 def detect_eol(raw: bytes | str) -> str:
     """CRLF if the first line break is CRLF, else LF."""
@@ -168,7 +152,6 @@ def detect_eol(raw: bytes | str) -> str:
         return "\r\n" if i > 0 and raw[i - 1:i] == b"\r" else "\n"
     i = raw.find("\n")
     return "\r\n" if i > 0 and raw[i - 1] == "\r" else "\n"
-
 
 def read_text(path: Path | str, *, with_meta: bool = False):
     """Decode UTF-8 (BOM stripped), return LF text. with_meta -> (text, eol, bom)."""
@@ -180,7 +163,6 @@ def read_text(path: Path | str, *, with_meta: bool = False):
     if with_meta:
         return text, detect_eol(raw), bom
     return text
-
 
 def write_text(
     path: Path | str,
@@ -207,3 +189,24 @@ def write_text(
         path.parent.mkdir(parents=True, exist_ok=True)
     data = text.encode("utf-8")
     path.write_bytes((b"\xef\xbb\xbf" if bom else b"") + data)
+
+def collapse_blanks(text: str) -> str:
+    """Collapse runs of 2+ blank lines to a single blank line. Leading and trailing blanks are dropped.
+    Preserves the content of non-blank lines. Callers that need BOM/EOL kept should use write_text after."""
+    lines = force_lf(text).split("\n")
+    out: list[str] = []
+    blank = 0
+    for line in lines:
+        if line.strip() == "":
+            blank += 1
+            if blank == 1 and out:
+                out.append("")
+            continue
+        blank = 0
+        out.append(line)
+    while out and out[-1] == "":
+        out.pop()
+    text = "\n".join(out)
+    if text and not text.endswith("\n"):
+        text += "\n"
+    return text

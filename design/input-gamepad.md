@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: gamepad layout, look mode, or universal menus  
 
-
 ## Target platforms
 
 - PC (primary)

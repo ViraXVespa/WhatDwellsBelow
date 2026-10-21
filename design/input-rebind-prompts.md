@@ -3,7 +3,6 @@
 Status: current plan  
 Read when: rebinding, on-screen prompts, or aim-line  
 
-
 ## Rebinding
 
 Pause → Settings → Controls.

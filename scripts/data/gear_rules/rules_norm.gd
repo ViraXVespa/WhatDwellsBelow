@@ -157,17 +157,3 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	App.sfx("potion")
 	App.toast(App.tr("rules_norm.potion_instant"))
 	return App.tr("rules_norm.potion")
-
-static func refill_potion(p: Object) -> void:
-	var it: Dictionary = p.slots.get("potion", {})
-	if it.is_empty():
-		return
-	var mx: int = int(it.get("charge_max", 0))
-	if mx <= 0:
-		mx = int(it.get("charges", 2))
-		if mx <= 0:
-			mx = 2
-		it.charge_max = mx
-	it.charges = mx
-	it.stack = 1
-	p.slots["potion"] = it

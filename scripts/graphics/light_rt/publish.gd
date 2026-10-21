@@ -2,9 +2,9 @@ extends Object
 
 ## Dungeon light ring maintain and publish. State stays on light_rt.gd.
 
+const Dbg := preload("res://scripts/app/dbg.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")
 const Plan := preload("res://scripts/graphics/torch_plan.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 ## Walking restamps run in units of at most this many microseconds per frame (the first stamp, under the cover, runs whole).
@@ -34,20 +34,17 @@ static func maintain(host: Node) -> void:
 	var need_stamp: bool = key != rt._knob or rect != rt._rect
 	if not need_plan and not need_stamp and not need_torch:
 		return
-	var LoadTiming: GDScript = load("res://scripts/debug/load_timing.gd") as GDScript
 	if need_plan:
 		rt._sites = Plan.build(host, rt._props, rect if entering else Rect2i())
 		rt._plan_partial = entering
-		HitchLog.mark("light_plan")
-		if LoadTiming:
-			LoadTiming.dnote("light_kind", "plan")
+		Dbg.hitch("light_plan")
+		Dbg.lt_dnote("light_kind", "plan")
 		rt._planned = true
 		rt._plan_dirty = false
 		return
 	if need_stamp:
-		HitchLog.mark("light_stamp")
-		if LoadTiming:
-			LoadTiming.dnote("light_kind", "stamp")
+		Dbg.hitch("light_stamp")
+		Dbg.lt_dnote("light_kind", "stamp")
 		rt._rect = rect
 		rt._knob = key
 		var job: RefCounted = _begin_dungeon(host, rect)
@@ -58,9 +55,8 @@ static func maintain(host: Node) -> void:
 			rt._job = job
 			_advance()
 		return
-	HitchLog.mark("light_refill")
-	if LoadTiming:
-		LoadTiming.dnote("light_kind", "refill")
+	Dbg.hitch("light_refill")
+	Dbg.lt_dnote("light_kind", "refill")
 	rt._live = live
 	_refill(host)
 ## Under the cover, before the reveal: the entering plan only covered the first ring; build the whole floor's plan
@@ -72,7 +68,7 @@ static func finish_plan(host: Node) -> void:
 	rt._sites = Plan.build(host, rt._props, Rect2i())
 	rt._plan_partial = false
 	rt._plan_dirty = false
-	HitchLog.mark("light_plan_full")
+	Dbg.hitch("light_plan_full")
 
 static func _begin_dungeon(host: Node, rect: Rect2i) -> RefCounted:
 	var x0: int = rect.position.x
@@ -117,10 +113,10 @@ static func _commit(job: RefCounted) -> void:
 		rt._gpu = ImageTexture.create_from_image(rt._img)
 	else:
 		rt._gpu.set_image(rt._img)
-	HitchLog.mark("light_gpu")
+	Dbg.hitch("light_gpu")
 	rt.tex = rt._gpu
 	rt._push()
-	HitchLog.mark("light_push")
+	Dbg.hitch("light_push")
 
 static func _ring_rect(host: Node) -> Rect2i:
 	var rt: Variant = load(RT_PATH)

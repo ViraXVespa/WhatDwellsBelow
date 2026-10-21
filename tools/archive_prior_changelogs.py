@@ -30,7 +30,6 @@ import repo_lib
 
 LABEL_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
-
 def load_version(root: Path) -> tuple[int, int, str]:
     if not (root / repo_lib.VERSION_FILE).is_file():
         return 0, 3, "0.3.0"
@@ -38,7 +37,6 @@ def load_version(root: Path) -> tuple[int, int, str]:
     epoch = int(ver.get("epoch", 0))
     series = int(ver.get("series", 0))
     return epoch, series, str(ver.get("label", f"{epoch}.{series}.0"))
-
 
 def main() -> int:
     ap = agent_log.std_parser("Move prior-series design/changelog/*.md into archive/<epoch>.<series>/.", writes=True, json_out=True)
@@ -90,7 +88,6 @@ def main() -> int:
         moved += 1
 
     return agent_log.finish("changelog-archive", ROOT, "\n".join(lines), "PASS", args=args, moved=moved, skipped=skipped, dry_run=args.dry_run)
-
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

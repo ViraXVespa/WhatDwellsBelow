@@ -123,7 +123,7 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 	Icons.fit_btn(b, Icons.tex_for_slot(slot, it))
 	_paint_item_btn(b, it)
 	if Text.has_unseen(slot):
-		b.text = "▸"
+		b.text = "›"
 		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		b.add_theme_font_size_override("font_size", 18)
 		b.add_theme_color_override("font_color", ThemeS.INK)

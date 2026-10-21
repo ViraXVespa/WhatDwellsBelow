@@ -87,10 +87,7 @@ func show_hp(hp: float, max_hp: float, combat_lv: int = 0, sticky: bool = false)
 	if _spr == null:
 		return
 	_spr.position.y = _lift()
-	var old: Texture2D = _spr.texture
 	_spr.texture = _paint(hp, max_hp)
-	if old != null and old != _spr.texture and is_instance_valid(old):
-		old.unreference()
 	_spr.visible = true
 	_spr.modulate.a = 1.0
 	_place_lv(1.0)
