@@ -143,6 +143,7 @@ static func _place_now(ui: CanvasLayer) -> void:
 	if pos.y + sz.y > view.y - 16.0:
 		pos.y = rr.position.y - sz.y - 8.0
 	pos = _off_stats_head(ui, pos, sz, rr)
+	pos = _off_sub(ui, pos, sz, view)
 	host.global_position = TipPlace.clamp_pos(pos, sz, view)
 
 ## Keep the tip off the "Bonuses from this kit" header row: above the slot if it fits, else under the header.
@@ -158,3 +159,19 @@ static func _off_stats_head(ui: CanvasLayer, pos: Vector2, sz: Vector2, rr: Rect
 	if up >= 16.0:
 		return Vector2(pos.x, up)
 	return Vector2(pos.x, hr.end.y + 6.0)
+
+## Keep the tip off the open slot picker: beside it (left, else right), else above/below it.
+static func _off_sub(ui: CanvasLayer, pos: Vector2, sz: Vector2, view: Vector2) -> Vector2:
+	var p: Control = ui.get_node_or_null("gear_sub_panel") as Control
+	if p == null or not p.is_visible_in_tree():
+		return pos
+	var pr: Rect2 = p.get_global_rect()
+	if not Rect2(pos, sz).intersects(pr):
+		return pos
+	if pr.position.x - sz.x - 8.0 >= 16.0:
+		return Vector2(pr.position.x - sz.x - 8.0, pos.y)
+	if pr.end.x + 8.0 + sz.x <= view.x - 16.0:
+		return Vector2(pr.end.x + 8.0, pos.y)
+	if pr.position.y - sz.y - 8.0 >= 16.0:
+		return Vector2(pos.x, pr.position.y - sz.y - 8.0)
+	return Vector2(pos.x, pr.end.y + 8.0)
