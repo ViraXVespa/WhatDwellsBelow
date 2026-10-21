@@ -116,6 +116,44 @@ def write_index(root: Path, dry: bool = False) -> bool:
         md.write_text(p, new, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
     return True
 
+OPEN_RE = re.compile(r"^python tools/open_slice\.py (\S+) --task (\S+)$")
+FROM_RE = re.compile(r"^python tools/start_build_slice\.py --(door|job) (\S+) --from-task (\S+)$")
+
+def start_flag(area: str) -> str:
+    """The start_build_slice.py flag for a resume area: --job for door.job, --door for a door."""
+    return "--job" if "." in area else "--door"
+
+def resume_area(t: dict[str, str]) -> str:
+    """The door or door.job a Build task's `resume:` line names ('' when it names none)."""
+    r = t.get("resume", "").strip()
+    m = OPEN_RE.match(r)
+    if m:
+        return m.group(1)
+    m = FROM_RE.match(r)
+    return m.group(2) if m else ""
+
+def resume_fails(root: Path, tid: str, t: dict[str, str]) -> list[str]:
+    """A Build task's resume line: `python tools/open_slice.py AREA --task ID` (her launch) or a handoff's
+    `python tools/start_build_slice.py --door D|--job D.J --from-task ID`; AREA a routes.yaml door or door.job; units/done coherent."""
+    from load_routes import check_route, load_routes
+    where, r, out = t["path"], t.get("resume", "").strip(), []
+    m, f = OPEN_RE.match(r), FROM_RE.match(r)
+    if not (m or f):
+        return [f"{where}: Build `resume:` must be `python tools/open_slice.py AREA --task {tid}` (AREA a door or door.job)"]
+    area, rid = (m.group(1), m.group(2)) if m else (f.group(2), f.group(3))
+    if rid != tid:
+        out.append(f"{where}: `resume:` names task {rid}, not {tid}")
+    if f and (f.group(1) == "job") != ("." in area):
+        out.append(f"{where}: `resume:` passes --{f.group(1)} {area}: use {start_flag(area)} for {'a door.job' if '.' in area else 'a door'}")
+    bad = check_route(load_routes(root), "" if "." in area else area, area if "." in area else "")
+    if bad:
+        out.append(f"{where}: `resume:` {bad}")
+    units = split(t.get("units", ""))
+    done = [d for d in split(t.get("done", "")) if d != "none"]
+    if [d for d in done if d not in units]:
+        out.append(f"{where}: `done:` names units not in `units:`")
+    return out
+
 def fails(root: Path) -> list[str]:
     """Lint for check_load_graph.py and `task.py check`."""
     out: list[str] = []
@@ -141,6 +179,8 @@ def fails(root: Path) -> list[str]:
         for key in ("done-when", "resume"):
             if not t.get(key) or FILL in t.get(key, ""):
                 out.append(f"{where}: `{key}:` is empty or unfilled")
+        if t.get("owner") == "build" and t.get("resume") and FILL not in t.get("resume", ""):
+            out += resume_fails(root, tid, t)
         needs = split(t.get("needs", ""))
         for n in needs:
             if n not in tasks:

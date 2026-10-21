@@ -106,17 +106,33 @@ def queue_task(root: Path, st: dict, done: list[str]) -> str:
     slice_state.save(root, st)
     return f"{task_lib.TASKS_REL}/{tid}.md"
 
+def task_units(root: Path, args, st: dict) -> tuple[list[str], list[str], str]:
+    """--task ID (not --handoff): the task's own `units:` header (plain labels, no dots) is this slice's queue. Done: the slice state, else the task's `done:`."""
+    tid = args.task.strip()
+    if not tid or args.handoff or args.from_task:
+        return [], [], ""
+    t = task_lib.load(root).get(tid)
+    if t is None:
+        agent_log.fail(f"no task {tid}; open tasks: `python tools/task.py list`")
+    units = task_lib.split(t.get("units", ""))
+    if not units or any("." in u for u in units):
+        return [], [], ""
+    done = list(st.get("done") or []) if st.get("task_units") and st.get("task") == tid else [d for d in task_lib.split(t.get("done", "")) if d != "none"]
+    return units, done, unit_lib.pick(units, done)
+
 def unit_done(root: Path, args) -> int:
     """--unit-done (Complete, before commit_slice.py): mark the slice's current unit done in the slice state and the task's done: line. Nothing moves on."""
     st = slice_state.load(root)
     if not st.get("units"):
-        agent_log.fail("no unit queue in this slice. Start one with `python tools/start_build_slice.py --door ui` (a door with unit_queue in routes.yaml).")
+        agent_log.fail("no unit queue in this slice. Start one with `--door D` (a door with unit_queue in routes.yaml) or `--task ID` (a task whose header lists `units:`).")
     done = list(st.get("done") or [])
     if st.get("unit") and st["unit"] not in done:
         done.append(st["unit"])
     nxt = unit_lib.pick(st["units"], done)
     cur = st.get("unit", "?")
-    st.update({"done": done, "unit": nxt or st.get("unit", ""), "job": nxt or st.get("job", "")})
+    st.update({"done": done, "unit": nxt or st.get("unit", "")})
+    if not st.get("task_units"):
+        st["job"] = nxt or st.get("job", "")
     if not args.dry_run:
         slice_state.save(root, st)
     tp = task_lib.task_path(root, st["task"]) if st.get("task") else None
@@ -125,7 +141,7 @@ def unit_done(root: Path, args) -> int:
         task_lib.set_head(tp, "done", ", ".join(done) or "none")
     elif nxt and not args.dry_run:
         made = queue_task(root, st, done)
-    msg = (f"UNIT DONE: {cur}; done: {', '.join(done)}. " + (f"Next unit: {nxt}. If the request still fits this session, Complete this unit (commit, push) and continue: `python tools/start_build_slice.py --door {st.get('door', 'D')} --full` prints its card. If it cannot fit, stop after Complete; a new session resumes the queue. " if nxt else "All units are done" + (f": close the task in this commit (`python tools/task.py done {st['task']}`). " if st.get("task") else ". "))
+    msg = (f"UNIT DONE: {cur}; done: {', '.join(done)}. " + (f"Next unit: {nxt}. If the request still fits this session, Complete this unit (commit, push) and continue: `python tools/start_build_slice.py {('--job ' + st['job']) if st.get('task_units') and st.get('job') else '--door ' + st.get('door', 'D')} --full` prints its card{(' (with --task ' + st['task'] + ')') if st.get('task_units') else ''}. If it cannot fit, stop after Complete; a new session resumes the queue. " if nxt else "All units are done" + (f": close the task in this commit (`python tools/task.py done {st['task']}`). " if st.get("task") else ". "))
            + (f"Queue recorded in the task file {made} (commit it with this unit); if the rest does not fit, a new session resumes it: `python tools/open_slice.py {st.get('door', 'D')} --task {Path(made).stem}`. " if made else "")
            + "Complete this unit now: commit_slice.py, then plain push. The done notice follows the last unit this session does.")
     return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, route="unit-done")
@@ -142,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--unit-done", dest="unit_done", action="store_true", help="Unit queue, at Complete (before commit_slice.py): mark the current unit done; the queue is kept in a task file for a later session.")
     ap.add_argument("--from-handoff", default="", metavar="PATH", help="Fresh implementation session: print the compact start summary from this handoff file.")
     ap.add_argument("--from-task", dest="from_task", default="", metavar="ID", help="Resume a committed Build task: the summary from design/tasks/ID.md (no survey edits restored).")
-    ap.add_argument("--task", default="", metavar="ID", help="With --handoff: the task id (default: the slice's task, else its door).")
+    ap.add_argument("--task", default="", metavar="ID", help="The task this slice works (open_slice puts it in the first command): a `units:` header of plain labels is the slice's unit queue (--unit-done). With --handoff: the task id (default: the slice's task, else its door).")
     ap.add_argument("--selftest", action="store_true", help="Run the boot / unit / retry cases in a throwaway repo.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -190,6 +206,10 @@ def main(argv: list[str] | None = None) -> int:
         if not args.job:
             msg = f"ALL UNITS DONE for door {args.door}: {', '.join(units)}. Nothing is queued. Finished: `python tools/task.py done ID` in the last unit's commit; more to hand on: `python tools/start_build_slice.py --handoff`."
             return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, worktree=wt, route="units-done")
+    tunits, tdone, tcur = task_units(root, args, st)
+    if tunits and not tcur:
+        msg = f"ALL TASK UNITS DONE for {args.task}: {', '.join(tunits)}. Close it in this commit: `python tools/task.py done {args.task}`."
+        return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, worktree=wt, route="units-done")
     same = not st or not (args.door or args.job) or (st.get("door", ""), st.get("job", "")) == (args.door.strip(), args.job.strip())
     if st and same and not args.full and not args.dry_run:
         text = slice_state.short(root, st)
@@ -249,6 +269,8 @@ def main(argv: list[str] | None = None) -> int:
         first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done, args.ref)
         if st:
             first.update({k: st[k] for k in ("first_run", "session", "ref", "prompt", "task") if k in st})
+        if tunits:
+            first.update({"units": tunits, "done": tdone, "unit": tcur, "task": args.task.strip(), "task_units": True})
         if tid:
             first["task"] = tid
             local = task_lib.task_path(root, tid)
@@ -260,6 +282,11 @@ def main(argv: list[str] | None = None) -> int:
             f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/run_shot_flow.py --job J, one boot; UI states: tools/check_shot_gaps.py --changed)",
             "cycle=Gather (no code, no new tools; outcome + signal; then she runs /fork) > Prepare > Change (check_gd_load.py once the edits are complete) > Prove (final verification: compile check, the job's shot flows + UI load check if visual, run_build_gate --batch; one small corrective edit, one rerun) > Complete (docs, task, commit, push, done notice); build-job-cycle.md",
             slice_lib.merge_back_text(week or ref)]
+    if tunits:
+        unit_line = (f"unit={tcur} ({tunits.index(tcur) + 1} of {len(tunits)}, task {args.task.strip()}); done: {', '.join(tdone) or 'none'}. "
+                     "Work this unit only; at Complete, before commit_slice.py: `python tools/start_build_slice.py --unit-done`.")
+        card.append(unit_line)
+        hand.append(unit_line)
     body = card + ([warn] if warn else []) + ["", start, ""] + (hand + [""] if hand else []) + ([note, ""] if note else []) + (["--- route ---"] + route_lines + [""] if route_lines else [])
     if route == "ok":
         head = "\n".join(l for l in route_lines if not l.startswith(("Summary", "RESULT")))

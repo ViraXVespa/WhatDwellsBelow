@@ -5,6 +5,8 @@ owner: build
 status: open
 done-when: all in-game menu locations feel polished, complete, unified, and professional.
 resume: python tools/open_slice.py ui.style --task ui-png-art
+units: mockups, crystal
+done: none
 
 ## Source
 Bot screenshot survey of grok-build-w7 on 2026-10-11, judging where code-drawn UI looks flat. Not user requests, except the crystal background (hers).

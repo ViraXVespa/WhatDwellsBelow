@@ -57,7 +57,7 @@ def steps(root: Path, st: dict | None = None) -> dict:
     """Steps seen now: door run (the state file itself), import, baseline shots, original session (recorded id), forked (this session is not it), handoff ('none' | 'skeleton' | 'ready')."""
     hp = handoff_lib.handoff_path(root)
     ho = "none"
-    if hp.is_file():
+    if hp.is_file() and hp.read_text(encoding="utf-8-sig").lstrip().startswith("# Handoff:"):
         ho = "skeleton" if handoff_lib.check(root, hp.read_text(encoding="utf-8-sig")) else "ready"
     shots = root / "_logs" / "shot-flow"
     return {"door run": True, "import": (root / ".godot" / "imported").is_dir(),
@@ -96,7 +96,8 @@ def short(root: Path, st: dict) -> str:
     other = f" (first run by session {st['session']}; this is {sid})" if st.get("session") and sid and sid != st["session"] else ""
     done = "; ".join(f"{k} {'yes' if v is True else 'no' if v is False else v}" for k, v in s.items())
     queue = (f"Units: {st.get('unit', '?')} is current ({(st['units'].index(st['unit']) + 1) if st.get('unit') in st['units'] else '?'} of {len(st['units'])}); done: {', '.join(st.get('done') or []) or 'none'}. "
-             "`--door D --full` reprints this unit's card; at Complete `--unit-done` marks it done (more units fit: `--door D` again; else a new session).\n") if st.get("units") else ""
+             + (f"`--job {st.get('job')} --task {st.get('task')} --full` reprints this unit's card" if st.get("task_units") else "`--door D --full` reprints this unit's card")
+             + "; at Complete `--unit-done` marks it done (more units fit: the same start command again; else a new session).\n") if st.get("units") else ""
     return (f"SLICE ALREADY STARTED: {area} ({st.get('mode', '?')} session), first run {clock(st.get('first_run', ''))}{by}{other}.\n" + queue +
             f"Steps found now: {done}.\n"
             f"Resuming at: {next_step(st, s)}.\n"
