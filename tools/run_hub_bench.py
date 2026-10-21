@@ -10,6 +10,7 @@ Summary: _logs/hub-bench/<stamp>-hub-bench.txt.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -657,7 +658,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--leg", choices=("both", "desktop", "web"), default="both", help="Which walks to run (default both).")
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a walk.")
-    ap.add_argument("--isolate", action="store_true", help="Web only: stand at the dummy and time each hidden group. Does not score the 99 percent bar.")
+    ap.add_argument("--layers", dest="isolate", action="store_true", help="Web only: stand at the dummy and time each hidden layer group. Does not score the 99 percent bar.")
+    ap.add_argument("--isolate", dest="isolate", action="store_true", help=argparse.SUPPRESS)  # old name of --layers
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
