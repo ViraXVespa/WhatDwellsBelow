@@ -1,0 +1,3 @@
+#!/bin/sh
+# Default pre-commit check: doc routes coverage + load graph (about 0.5 s). Enable: git config core.hooksPath .githooks
+python3 tools/check_load_graph.py --root . >/dev/null 2>&1 || { python3 tools/check_load_graph.py --root . | tail -15; echo "pre-commit: check_load_graph failed (add new docs to design/routes.yaml)"; exit 1; }
