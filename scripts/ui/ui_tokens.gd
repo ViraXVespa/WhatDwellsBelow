@@ -47,9 +47,9 @@ const SKIN_NEUTRAL: Dictionary = {
 }
 const SKIN_TITLE: Dictionary = {
 	"fill": Color(0.13, 0.095, 0.075, 0.94), "hover": Color(0.22, 0.15, 0.10, 0.97), "press": Color(0.08, 0.06, 0.05, 0.97),
-	"off": Color(0.12, 0.10, 0.09, 0.7), "edge": Color(0.62, 0.47, 0.24), "edge_hi": Color(0.90, 0.72, 0.38),
-	"edge_off": Color(0.32, 0.27, 0.22, 0.8), "glow": Color(1.0, 0.86, 0.48), "word": Color(0.96, 0.90, 0.74),
-	"word_hi": Color(1.0, 0.97, 0.86), "word_off": Color(0.55, 0.50, 0.44), "primary_fill": Color(0.34, 0.13, 0.09, 0.96),
+	"off": Color(0.17, 0.14, 0.12, 0.88), "edge": Color(0.62, 0.47, 0.24), "edge_hi": Color(0.90, 0.72, 0.38),
+	"edge_off": Color(0.46, 0.39, 0.30, 0.95), "glow": Color(1.0, 0.86, 0.48), "word": Color(0.96, 0.90, 0.74),
+	"word_hi": Color(1.0, 0.97, 0.86), "word_off": Color(0.68, 0.63, 0.55), "primary_fill": Color(0.34, 0.13, 0.09, 0.96),
 	"primary_edge": Color(0.92, 0.72, 0.36), "danger_edge": Color(0.72, 0.30, 0.20), "danger_word": Color(1.0, 0.74, 0.64),
 	"slot": Color(0.84, 0.76, 0.62, 0.92), "slot_edge": Color(0.62, 0.47, 0.24), "radius": 3,
 	"words": [Color(0.96, 0.90, 0.74), Color(0.84, 0.76, 0.60), Color(0.66, 0.58, 0.46)],
