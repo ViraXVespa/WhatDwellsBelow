@@ -49,7 +49,7 @@ static func dress_shelf(button: Button) -> void:
 	UiBuild.button_base(button)
 	UiBuild.ink_text(button)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	UiBuild.states(button, _shelf(0.92, 2), _shelf(0.98, 2), _shelf(0.62, 4), _shelf(0.98, 2), _shelf(0.5, 2))
+	UiBuild.states(button, _shelf(0.92, 2), _shelf(0.98, 2), _shelf(0.62, 4), ThemeS.BtnSkin.ring(ThemeS.BtnSkin.palette(BTN_SKIN)), _shelf(0.5, 2))
 
 static func _shelf(lift: float, foot: int) -> StyleBoxTexture:
 	return UiBuild.tex_box(Art.shelf(lift, foot), 8, 6, foot, false, 12, 6)

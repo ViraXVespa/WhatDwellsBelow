@@ -58,7 +58,7 @@ const SKIN_TITLE: Dictionary = {
 const SKIN_CRYSTAL: Dictionary = {
 	"fill": Color(0.05, 0.24, 0.30, 0.90), "hover": Color(0.09, 0.36, 0.44, 0.95), "press": Color(0.03, 0.15, 0.19, 0.95),
 	"off": Color(0.12, 0.30, 0.35, 0.55), "edge": Color(0.36, 0.80, 0.90), "edge_hi": Color(0.70, 0.98, 1.0),
-	"edge_off": Color(0.30, 0.58, 0.66, 0.8), "glow": Color(1.0, 0.45, 0.75), "ring": 3, "word": Color(0.88, 1.0, 1.0),
+	"edge_off": Color(0.30, 0.58, 0.66, 0.8), "glow": Color(1.0, 0.84, 0.42), "ring": 3, "word": Color(0.88, 1.0, 1.0),
 	"word_hi": Color(1.0, 1.0, 1.0), "word_off": Color(0.80, 0.92, 0.94), "primary_fill": Color(0.05, 0.24, 0.30, 0.90),
 	"primary_edge": Color(0.36, 0.80, 0.90), "danger_edge": Color(0.93, 0.30, 0.30), "danger_word": Color(1.0, 0.78, 0.78),
 	"slot": Color(0.86, 0.98, 1.0, 0.85), "slot_edge": Color(0.20, 0.62, 0.74), "radius": 3,

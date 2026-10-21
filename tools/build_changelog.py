@@ -105,6 +105,8 @@ def main() -> int:
                 continue
             if not parsed["label"].startswith(prefix):
                 continue
+            if not parsed["points"]:  # agent-only release: nothing for players
+                continue
             entries.append(parsed)
     entries.sort(key=lambda e: ver_tuple(e["label"]), reverse=True)
     payload = {

@@ -142,4 +142,19 @@ static func _place_now(ui: CanvasLayer) -> void:
 			pos.x = rr.position.x - sz.x - 12.0
 	if pos.y + sz.y > view.y - 16.0:
 		pos.y = rr.position.y - sz.y - 8.0
+	pos = _off_stats_head(ui, pos, sz, rr)
 	host.global_position = TipPlace.clamp_pos(pos, sz, view)
+
+## Keep the tip off the "Bonuses from this kit" header row: above the slot if it fits, else under the header.
+static func _off_stats_head(ui: CanvasLayer, pos: Vector2, sz: Vector2, rr: Rect2) -> Vector2:
+	var mid: Control = ui.get("gear_stats_title") as Control
+	if mid == null or not is_instance_valid(mid) or not mid.is_visible_in_tree():
+		return pos
+	var row: Control = mid.get_parent_control() if mid.get_parent_control() else mid
+	var hr: Rect2 = row.get_global_rect()
+	if not Rect2(pos, sz).intersects(hr):
+		return pos
+	var up: float = rr.position.y - sz.y - 8.0
+	if up >= 16.0:
+		return Vector2(pos.x, up)
+	return Vector2(pos.x, hr.end.y + 6.0)

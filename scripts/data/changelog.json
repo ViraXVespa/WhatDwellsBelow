@@ -3,81 +3,6 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
-			"label": "0.7.7",
-			"points": [
-				{
-					"text": "Reassigned rekey-assets from Build to Bot (owner, resume, index)."
-				},
-				{
-					"text": "Bot docs now allow User-named art-pipeline / rekey / stills work when the task assigns it."
-				},
-				{
-					"text": "web-emit.md notes the checker example and the full prove suite."
-				}
-			],
-			"summary": "Task ownership and Bot scope docs for rekey-assets."
-		},
-		{
-			"label": "0.7.6",
-			"points": [
-				{
-					"text": "Split ui-png-art Process / Review into a short sequencing section and a separate Style subsection."
-				},
-				{
-					"text": "Style subsection now holds the pixel-art + Journal targets and the two resized reference links."
-				},
-				{
-					"text": "Removed restated sentences that already appeared in Intent or Items."
-				}
-			],
-			"summary": "ui-png-art task reorganized so process rules and style constraints are separate and non-redundant."
-		},
-		{
-			"label": "0.7.5",
-			"points": [
-				{
-					"text": "Restored early-hide watcher in tools/run_shots.py that matches by process ID so only the shot Godot window is hidden."
-				},
-				{
-					"text": "Window is moved off-screen and given WS_EX_TOOLWINDOW so it does not appear in the taskbar; other Godot instances are left alone."
-				},
-				{
-					"text": "Shot window is forced borderless at 1920\u00d71080 so the client area is not reduced by the title bar."
-				},
-				{
-					"text": "Journal UI reference re-captured at scale 50 into design/refs/ui-png-art/journal-ui.png."
-				},
-				{
-					"text": "Resized existing .jpg survey refs in design/refs/ui-png-art/ to a context-friendly size."
-				},
-				{
-					"text": "Fixed doc_patch._ensure_summary so a later call can replace an existing Summary line."
-				}
-			],
-			"summary": "Shot window now hides immediately by PID (no taskbar flash, no effect on other Godot instances); journal ref and survey jpgs resized; changelog summary can be updated."
-		},
-		{
-			"label": "0.7.4",
-			"points": [
-				{
-					"text": "Finished task crystal-frame-pink: Crystal frame studs: stop deriving from the mis-keyed pink."
-				},
-				{
-					"text": "Folded crystal-frame-pink into ui-png-art: the four pink diamond studs are to be removed (erroneous keying leftover, no pink intended)."
-				}
-			],
-			"summary": "Finished task crystal-frame-pink: Crystal frame studs: stop deriving from the mis-keyed pink."
-		},
-		{
-			"label": "0.7.3",
-			"points": [
-				{
-					"text": "Updated UI rework task for more reliable results."
-				}
-			],
-			"summary": "ui-png-art task updated."
-		},
-		{
 			"label": "0.7.2",
 			"points": [
 				{
@@ -100,27 +25,9 @@
 				},
 				{
 					"text": "Crystal map: free previous AtlasTexture on every aim to stop leaks."
-				},
-				{
-					"text": "Finished task bug-sweep-combined: Bug sweep findings."
 				}
 			],
-			"summary": "Completed bug-sweep-combined task."
-		},
-		{
-			"label": "0.7.1",
-			"points": [
-				{
-					"text": "Cleaned leftover notes about the old needs-local source-plate linking from the task and tools docs. _src remains the live durable-source folder."
-				},
-				{
-					"text": "Updated web sessions protocols to emit changelogs when appropriate."
-				},
-				{
-					"text": "Added .gdignore files to improve Godot import speeds."
-				}
-			],
-			"summary": "Documentation housekeeping."
+			"summary": "Bug fixes for combat leaks, collisions, the boss door and the anvil."
 		},
 		{
 			"label": "0.7.0",
@@ -154,18 +61,9 @@
 				},
 				{
 					"text": "Torches: hall cadence fills only dark stretches; light cap raised so the ring lights every torch. Dungeon arrival builds the full light plan under the cover."
-				},
-				{
-					"text": "Texture import: Detect 3D off so .import files stop rewriting; hub ground and wall sheets Lossless with nearest-mipmap sampling."
-				},
-				{
-					"text": "Asset rekey pipeline overhauled: cell-median shrink with hard-edge snap, idempotent fit against pre-rekey geometry, soft/notch fixes, approved stills written, stale tile plates replaced with lossless copies."
-				},
-				{
-					"text": "Warnings swept to zero. Various protocol, sweep, and build-docs cleanups."
 				}
 			],
-			"summary": "Week 7 Grok Build snapshot. Metal HUD with mana and a danger gem, potions and food persist between dives, ghost shop and vendor got their own fronts and icons, loading and lighting cleaned up, and the rekey pipeline hardened."
+			"summary": "Metal HUD with mana and a danger gem, potions and food persist between dives, ghost shop and vendor got their own fronts and icons, loading and lighting cleaned up."
 		}
 	]
 }
