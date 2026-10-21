@@ -153,3 +153,4 @@ static func _glyph_label(cont: Button) -> void:
 	cont.text = ""
 	cont.add_child(row)
 	cont.set_meta("glyph", g)
+	cont.set_meta("glyph_lab", lab)
