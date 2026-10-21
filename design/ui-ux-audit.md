@@ -6,7 +6,7 @@ Read when: working the ui-png-art task or any menu layout, focus or prompt chang
 ## 2026-10-20, grok-build-w8 shots
 Gamepad-first check of the shot flows. H/M/L severity; [art] = the PNG items above cover it, [ux] = layout/UX work. Refs live in `refs/ui-png-art/`.
 - All: H text floor is 14 px (flows assert `min_font` 14); most copy is 14-18 px at 1080p, under the ~24 px couch norm and smaller on web. [ux]
-- All: H focus is pink on the crystal, extract and gate (slot outline, button underline) but gold on the title (FIXED: crystal skin glow token now gold; crystal_art studs stay with the art task); one focus style, no pink. [art+ux]
+- All: H focus is pink on the crystal, extract and gate (slot outline, button underline) but gold on the title (FIXED: crystal skin glow token now gold; the crystal studs go when ui-png-art Unit 2 replaces the frame); one focus style, no pink. [art+ux]
 - All: M prompt bars sit inside the panel, under it as unlabelled icons, or in the screen corner (crystal); one place, always labelled. [ux]
 - All: M FIXED pickers open beside their slot, clamped on-screen (loadout, anvil, inventory; gate confirm is a centred modal). [ux]
 - All: M fit content without scrolling where possible (size panels, columns/grids, or tabs/pages); scroll cues are the fallback for truly variable-length lists. [art][ux]
