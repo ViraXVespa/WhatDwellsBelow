@@ -31,6 +31,7 @@ Gamepad-first check of the shot flows. H/M/L severity; [art] = the PNG items abo
 - [Gate dialog](refs/ui-png-art/dungeon-gate-popups_02-gate-pick.jpg): L confirm is a centred modal over the panel (not a slot picker; kept). [ux]
 - [Ghost shop](refs/ui-png-art/dungeon-gate-shop_02-shop.jpg): H FIXED gold focus ring on rows (4 px, glow); scroll cue for the clipped Leave row. [ux]
 - [Recap](refs/ui-png-art/camp-recap_01-recap.jpg): H XP lists run under the Continue bar; footer text overlaps it; Continue shown twice (FIXED: the A glyph sits on the Continue button; no separate chip). [ux]
+- [Camp HUD bar](refs/ui-png-art/camp-hud-bar.jpg): M flat dark strip of small plain text; no art, verbs read as a run-on line. [art+ux]
 - [HUD](refs/ui-png-art/dungeon-hud-states_01-hud-default.jpg): M tiny labels on a busy dashed frame; toast is bare small yellow text. [art+ux]
 - [Large map](refs/ui-png-art/dungeon-map-crystal_01-large-map.jpg): M off-centre black square, no frame or legend. [art+ux]
 - [Holds](refs/ui-png-art/camp-overlays_02-wake-hold.jpg): L flat full-screen beige or cyan fill with outlined text. [art]

@@ -16,7 +16,7 @@ The goal of this task is to update all of the menus to be high-quality, professi
 
 Follow the start-card ORDER: baseline shot + restate before any generation or edit.
 Load the review-shots-isolated skill; bring back only the text report. Do not view PNGs in the main session.
-Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Save to `design/refs/ui-png-art/mockups/<screen>.png`; later units build to them.
+Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, camp HUD bar, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Save to `design/refs/ui-png-art/mockups/<screen>.png`; later units build to them.
 Unit 2 works the crystal UI only. Deliver before/after shots, inform that the unit is done, and stop.
 Do not advance to the next area or task. Next flow starts the next slice.
 
@@ -57,6 +57,7 @@ Style references (resized):
 - "Bonuses from this kit" panel: dark flat box -> inset plaque 9-slice 96. Low.
 - Controls sign: flat black fill, plain Leave -> chalkboard 512x512 tileable, chalk button 9-slice. Low. Ref [camp-billboard-controls_01-controls](../refs/ui-png-art/camp-billboard-controls_01-controls.jpg).
 - Tooltips: dark box, 1 px outline -> inked frame with tail 9-slice 48. Low. Ref [camp-gear-popups_01-loadout-tip](../refs/ui-png-art/camp-gear-popups_01-loadout-tip.jpg).
+- Camp HUD bar: flat dark strip of plain text (bank, verbs, talk hint) -> framed plaque 9-slice 96 with resource chips. Med. Ref [camp-hud-bar](../refs/ui-png-art/camp-hud-bar.jpg).
 - World labels (VENDOR, ENTRANCE CRYSTAL): bare outlined text -> small banner 9-slice 96x32. Low.
 
 ## Keep code
