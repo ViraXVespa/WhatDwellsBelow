@@ -1,69 +1,57 @@
 {
-	"series": "0.7",
+	"series": "0.8",
 	"generated_from": "design/changelog",
 	"entries": [
 		{
-			"label": "0.7.2",
+			"label": "0.8.0",
 			"points": [
 				{
-					"text": "Fixed a memory leak from enemy health bars and attack warnings."
+					"text": "Quest board uses pinned posters. Pause gained a Quest tab between Inventory and Skills. Taking an offer lifts its poster into the tab; cancel or complete rolls new ones."
 				},
 				{
-					"text": "Hopping and flying enemies now rise off the ground instead of staying pinned to it."
+					"text": "Death recap uses the Skills journal layout: two paper sheets, XP columns and drain on the wide sheet, skill tip on the narrow one."
 				},
 				{
-					"text": "Player and enemy hitboxes now match their height and feet."
+					"text": "Receptionist Talk and Ask? replace the old guild task list. Talk has a once-only first line then a rotating line; Ask? opens How-to-Play pages with baked screenshots."
 				},
 				{
-					"text": "An opened boss door no longer offers an interact prompt."
+					"text": "Crystal loadout and other code-drawn UI are moving to generated PNG art. New crystal frame work landed, UI style is locked in ui-style.md, mockups exist for the major screens, and isolated media has a generic UI kind."
 				},
 				{
-					"text": "Anvil: switching tabs mid-forge cancels the forge so the materials you paid are not lost."
+					"text": "Receptionist redesign started: the bust is a clipped version of the existing sprite, with the young goth/metal guild-clerk design and NPC rekey recipe ready. Talk portraits can follow the same look."
 				},
 				{
-					"text": "Anvil analyze: shows the result and stays open so you can analyze more items."
+					"text": "Ground wear is now a small baked tileable sheet sampled once, instead of a runtime hash. Web and desktop shade the same cells."
 				},
 				{
-					"text": "Fixed a memory leak when aiming on the crystal map."
+					"text": "Global rekey was rebuilt (clean plate, trimap, one alpha solve) and preserves pixel-art interiors past a glow-aware edge band. Tree, slot, vendor crate/pot, and arrow art were re-baked. Bibles were locked."
+				},
+				{
+					"text": "Welcome banner text is restored and centered on the cloth via an overlay."
+				},
+				{
+					"text": "Recap Continue button keeps its glyph and label as one group and dims correctly while XP drains. The footer chip is hidden."
+				},
+				{
+					"text": "Gear tips step aside from open slot pickers so they no longer overlap the anvil. Pickers open beside their slot and stay on-screen. Camp HUD hides while camp menus are open. Vendor header shrinks to fit its board. Controls glyphs share one column."
+				},
+				{
+					"text": "Ghost shop shelf rows have a thicker gold focus ring. Scroll cues appear on clipped lists. Crystal focus is gold (no pink). Updates shows player notes only. Title disabled buttons stay readable."
+				},
+				{
+					"text": "Debug scripts stay out of release and web exports. Release smoke and the build gate run the stripped path. Root `_` folders are ignored; local exports go to `_out/web`."
+				},
+				{
+					"text": "Hub performance benches record real frame time, layer capture, and measurable done-when criteria. Desktop-release timing tools were added. The ending-fill hitch on web remains under investigation."
+				},
+				{
+					"text": "Isolated media tools gained aspect ratios, a real review gate, and NPC/UI kinds. Build-cycle docs, prove rules, unit queues, first-command path, and load-graph coverage were tightened."
+				},
+				{
+					"text": "Size splits, leak fixes, dead-code drops, and export hygiene landed so the next week starts from a cleaner tree."
 				}
 			],
-			"summary": "Bug fixes for combat leaks, collisions, the boss door and the anvil."
-		},
-		{
-			"label": "0.7.0",
-			"points": [
-				{
-					"text": "Metal HUD strip with a mana bar under HP and a threat gem on the right. A special does not start when mana is short. Orbs, potions, and food restore mana. Settings can hide the gem."
-				},
-				{
-					"text": "Hold potions and food between dives. The stall sells three different potions each visit and food you can stack or buy as a new kind. Placeholdia keeps up to three potions and six kinds of food. One potion and one food stack go Below with you. The dumpster has moldy bread on a fresh save (and another if you took the last one). Vendor rows are pale price tags; the stall has a wooden crate and red jar; moldy bread and root stew have their own icons."
-				},
-				{
-					"text": "Ghost shop uses a pale cloth counter. Snack, artifact, and pawn rows are light shelves with an icon on the right."
-				},
-				{
-					"text": "Enemy drops retuned. Keyed HP orbs, mana orbs, and coin pickups roll per kill."
-				},
-				{
-					"text": "Mid-run quit or crash stores the run as lost: worn run loot and the run root do not survive."
-				},
-				{
-					"text": "Loading bars fill smoothly with weighted milestones, creep, and per-frame sub-progress. 100% only at finish. Loader weights are per-platform and learned."
-				},
-				{
-					"text": "Dungeon shadows fixed (cast and enemy grids were empty)."
-				},
-				{
-					"text": "UI restyle passes: crystal buttons match transport pages, tooltips/slot/anvil pickers/confirms/scroll bars follow the host skin, dark text has no outline, crystal focus ring brighter."
-				},
-				{
-					"text": "Web music streams and plays off the frame loop (HTMLAudio \u2192 Web Audio)."
-				},
-				{
-					"text": "Torches: hall cadence fills only dark stretches; light cap raised so the ring lights every torch. Dungeon arrival builds the full light plan under the cover."
-				}
-			],
-			"summary": "Metal HUD with mana and a danger gem, potions and food persist between dives, ghost shop and vendor got their own fronts and icons, loading and lighting cleaned up."
+			"summary": "Week 8 Grok Build snapshot. Quest board and Skills-journal recap, UI PNG art and receptionist redesign underway, rebuilt rekey and baked ground wear, recap/gear/HUD polish, cleaner debug/release separation, hub perf tooling, and tighter build process."
 		}
 	]
 }
