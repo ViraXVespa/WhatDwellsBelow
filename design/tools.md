@@ -24,7 +24,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
     - Batch all same-kind fixes into one edit pass (every rename, every cast, every path), then run the gates once for the batch, not after each small edit.
     - No prove or re-verify cycles on unchanged results. If a check reports nothing new, stop.
     - **Prove is final verification.** All diagnosis, instrumentation, and the intended fix are completed in Gather, Prepare, and Change before the prove is run. A red prove allows at most one small corrective edit and one re-run. Still red: stop and report the log path; do not open a new diagnostic cycle inside the prove. Build's retry uses the original session ID from the end of Gather (`build-job-cycle.md`).
-    - Two fixes that do not move the metric mean the diagnosis is unproven: return to Gather and improve the instrumentation, not a third fix.
+    - Two fixes that do not move the metric mean the diagnosis is unproven: the cause is not named (`build-job-cycle.md` Gather step 4), so Prepare improves the instrumentation, not a third fix.
     - Cap: at most 2 gate reruns per task (a full sweep such as `bot_warnscan` or `bot_smokes` counts as one). Anything not trivial becomes a question with options.
     - Exempt: iterating one visual unit (a screen, a sprite) with the User. Shoot, look, ask, change as often as the User asks. The rerun and retry counts above do not apply to it. Each pass still runs the compile check (`check_gd_load.py`).
 

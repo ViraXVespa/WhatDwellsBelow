@@ -5,13 +5,13 @@ Read when: Grok Build gather, change, or prove
 
 For **Grok Build** only. Web / chat and Grok Bot do not load this file.
 
-A **job** is one cycle: Gather, Prepare, Change, Prove, Complete. Report when the work is done. Ask as many questions as the job needs, in as many rounds as it needs, and ask again whenever a discovery changes what the User will see or what was assumed. No limit on count or rounds. **Multi-system job:** before the first change, list every system it touches and read each one's doc and `code_map.py row`.
+A **job** is one cycle: Gather, Prepare, Change, Prove, Complete. Report when the work is done. Ask as many questions as the job needs, in as many rounds as it needs, and ask again whenever a discovery changes what the User will see or what was assumed. No limit on count or rounds.
 
 ### Gather
 
 Gather finishes before any change.
 
-1. Read the relevant code and docs (planned `list_xref`, planned `show_func`, one `code_map.py` row when a live script is involved; list every system and read its doc and code-map row before a multi-system change).
+1. Read the relevant code and docs. First name a planned gather list (distinct `list_xref` patterns and `show_func` names; add to it when a new system turns up), plus one `code_map.py row` per live script. A multi-system job lists every system it touches and reads each one's doc and row. `summarize_scripts`, `list_route` (slice boot) and `list_changed` (git inventory) are not gather. Do not repeat a command with the same args.
 2. State the observable outcome that will show the task is done (one line: what the User or the bench will see if the work is correct).
 3. Confirm whether the existing tooling or in-game signal can show that outcome. Record what is missing, if anything.
 4. For a bug or perf miss: does the repro's output name the cause (a row, phase, or field that points at one cause)? A repro that shows the failure but not its cause is a missing signal; Prepare adds detail to that repro before any fix.
@@ -49,12 +49,7 @@ Present the user with any verification they still need to do and, when the task 
 
 A session finishes the whole request when it fits; a unit queue records the rest (`--unit-done`) only when it cannot.
 
-
-Gather is planned `list_xref` plus planned `show_func` plus one `code_map.py row` when a live script is in the slice. `summarize_scripts` is not gather. `list_route` and `list_changed` stay outside the gather set (`list_route` is slice boot; `list_changed` is git inventory).
-
-Name a **planned gather list** (distinct xref patterns and show-func names, as long as the systems need) before the first catalog call. Those planned calls are one gather phase; add to the list when a new system turns up. Do not repeat the same command with the same args.
-
-Change is one slice in a Grok worktree cut from the week branch `grok-build-w{N}`. The User starts it with `python tools/open_slice.py [AREA]`, which runs `grok worktree create NAME --ref grok-build-w{N}` and then `grok --cwd PATH --trust` (a NEW session whose directory is the worktree: a full clone under `.grok/worktrees/<repo>/<name>`, `.git` a directory, HEAD the week branch itself). Gather and change run in that session. Its first commands follow `grok-build.md` Work. `start_build_slice.py` prints the rules of the first message and every ask, and on a later run says where the slice stands (`SLICE ALREADY STARTED`). Do not edit the main checkout. A worktree the User already named is the slice. **Only `open_slice.py`, run by the User, launches grok; Build never does** (no fork, no headless run, no `--prompt-file`, no `--max-turns`; the isolated-media runner is the one exception).
+A **slice** is one Grok worktree cut from the week branch `grok-build-w{N}`. The User starts it with `python tools/open_slice.py [AREA]`, which runs `grok worktree create NAME --ref grok-build-w{N}` and then `grok --cwd PATH --trust` (a NEW session whose directory is the worktree: a full clone under `.grok/worktrees/<repo>/<name>`, `.git` a directory, HEAD the week branch itself). Gather runs in that session; after `/fork`, Prepare through Complete run in the forked peer. Its first commands follow `grok-build.md` Work. `start_build_slice.py` prints the rules of the first message and every ask, and on a later run says where the slice stands (`SLICE ALREADY STARTED`). Do not edit the main checkout. A worktree the User already named is the slice. **Only `open_slice.py`, run by the User, launches grok; Build never does** (no fork, no headless run, no `--prompt-file`, no `--max-turns`; the isolated-media runner is the one exception).
 
 **Restate first.** The start card has the order. A screen: import, baseline, the restate as visible text, Q0, then the other questions. A baseline with `band=fail` or script errors is invalid: find the cause, re-shoot, and never use it as the "before" shot or call its errors pre-existing without proof. A word the User used (a name, a metaphor) is not yet an answer to what it means here. Until answered change nothing, except shot-flow files (`tools/shot-flows/`) and the `routes.yaml` mapping. A task file whose Open questions are none already answered Q0, and a job the card marks NO PLAY CAMERA is not waiting on a play-camera baseline.
 
@@ -66,7 +61,7 @@ Change is one slice in a Grok worktree cut from the week branch `grok-build-w{N}
 
 **Compile check.** Run `python tools/check_gd_load.py` once the edits for the unit are complete (before Prove). It loads every changed and untracked `.gd` inside the project with its autoloads, so a stray `)` or a bad reference fails. The import check, a smoke and a standalone `--script` parse do not load every script, so none of them is evidence that the scripts compile.
 
-**Read what you run.** Open stderr and every check result before you describe it; output you did not read is not harmless, and a passing check that does not cover the claim is not evidence of it.
+**Read what you run:** `prove.md` Proof rules.
 
 Commit, without waiting for a yes, with `python tools/commit_slice.py`: it needs a passing `run_build_gate.py --batch --visual JOB` after your last edit and prints the lines for the message; a gate you did not run is said in the final message (`Did not work: gate not run (why)`, `--gate-skipped`); a gate still red at Complete commits with `--red-gate LOGPATH` (marked `RED GATE:`; its `Red gate:` line opens the done notice). At Prove, a visual change's shot flows run as `run_shot_flow.py --job J` (one call; flows another picked flow covers are skipped; shown and described), or `--visual JOB` on the gate adds them in the same call. Do not import, then smoke, then import.
 
@@ -81,7 +76,7 @@ Smokes at prove: the phases mapped to the door or job in `routes.yaml` `smokes` 
 | import + load graph + names / unnamed prove | `tools/run_build_gate.py` |
 | exported web build load, frame time, heap, asset sizes (advisory) | `tools/web_perf.py` (`--flow`, `--baseline`) after `export_web.py --out DIR` (`--site DIR`, baseline `tools/web-perf-baseline.json`) |
 
-A new numbered phase, `--wdb-*-smoke` flag, or host scene is allowed only when the feature is new and no mapped phase fits (add it with the feature; name it in the report). A new catalog runner is fine when it would reasonably help future tasks (`tools.md` rule 5). A postcard or shot flow (`shot-tool.md`) is a deliverable or a visual check, not the build gate or a smoke; the headless flow asserts (`bot_smokes.py --flows`) may be named in the prove step. When a task needs a picture the tool cannot stage, extend the tool inside the change job (`shot-flows.md` gap process); do not hand-drive Godot or edit a PNG. A red postcard (`fail` band) gets one same-command rerun only for `truncated`, timeout or `busy`; otherwise fix the tool or script.
+A new numbered phase, `--wdb-*-smoke` flag, or host scene is allowed only when the feature is new and no mapped phase fits (add it with the feature; name it in the report). A new catalog runner is fine when it would reasonably help future tasks (`tools.md` rule 5). A postcard or shot flow (`shot-tool.md`) is a deliverable or a visual check, not the build gate or a smoke; the headless flow asserts (`bot_smokes.py --flows`) may be named in the prove step. When a task needs a picture the tool cannot stage, extend the tool inside the change job (`shot-flows.md` gap process); do not hand-drive Godot or edit a PNG. A red postcard (`fail` band) follows the same-command rerun rule below; otherwise fix the tool or script.
 
 ## New feature flow
 
@@ -117,13 +112,13 @@ Lean: the task in her words; where the last result and its handoff notes live (c
 
 ## Red prove and merge-back
 
-**Retry** (one small corrective edit (prove is final verification): `tools.md` rule 10). The original session ID (the session before the `/fork` at the end of Gather) is the point a retry returns to. The User runs `grok -r <original-session-id> --fork-session` from the worktree directory (a fork keeps the directory of the session it forks, which is the worktree; no `--cwd`, never `--worktree`; gather context kept). A red prove prints a RETRY block with a paste-ready prompt: which prove failed, the red output in a line or two, the files in `git diff grok-build-w{N}` (working tree, so uncommitted edits show; untracked files are listed too) to look at first, and the ask for one small corrective edit. The forked session does not re-gather: it reads only the changed files, diagnoses once, fixes once and reruns once. Still red: stop and report. The worktree's git history holds the code.
+**Retry** (`tools.md` rule 10: one small corrective edit, one re-run). The original session ID (the session before the `/fork` at the end of Gather) is the point a retry returns to. The User runs `grok -r <original-session-id> --fork-session` from the worktree directory (a fork keeps the directory of the session it forks, which is the worktree; no `--cwd`, never `--worktree`; gather context kept). A red prove prints a RETRY block with a paste-ready prompt: which prove failed, the red output in a line or two, the files in `git diff grok-build-w{N}` (working tree, so uncommitted edits show; untracked files are listed too) to look at first, and the ask for one small corrective edit. The forked session does not re-gather: it reads only the changed files, diagnoses once, fixes once and reruns once. Still red: stop and report. The worktree's git history holds the code.
 
-**Merge-back** on a green prove. A Grok worktree is a full clone on the week branch itself: commit there, then `git push origin grok-build-w{N}` (plain push, no force, never main); there is no separate commit to merge by hand, and the main checkout pulls it. Put a short note in the commit message (a file under the worktree's `_logs/`, `git commit -F`); resolve conflicts yourself. Do not wait for approval before the commit or the push. After the push, the done notice says whether a playtest confirmation is required (game balance, audio, visuals / art, controls), recommended (feel, hitch, or timing the gates do not score), or not needed (refactors, tools, docs, and tests). Build writes no changelog files (the week-close `0.N.0.md` is a web session's: `versioning.md`).
+**Merge-back** (green prove, or red with `--red-gate`). A Grok worktree is a full clone on the week branch itself: commit there, then `git push origin grok-build-w{N}` (plain push, no force, never main); there is no separate commit to merge by hand, and the main checkout pulls it. Put a short note in the commit message (a file under the worktree's `_logs/`, `git commit -F`); resolve conflicts yourself. Do not wait for approval before the commit or the push. After the push: the done notice (`grok-build.md` Finish a unit).
 
 Read each job summary once via `python tools/read_summary.py --job <name>` (index first, newest run). Do not open summary files directly.
 
-A same-command rerun is valid only for `truncated`, crash, `busy` lock, or wrong scene, and then the same command once. A follow-up job with a new field named from a summary key does not need a User wait; questions still follow the rules above.
+A same-command rerun is valid only for `truncated`, timeout, crash, `busy` lock, or wrong scene, and then the same command once. A follow-up job with a new field named from a summary key does not need a User wait; questions still follow the rules above.
 
 Proof recipes by change kind: `prove.md`. A proof that needs a check no tool does: extend the library (`imglib`, shot tools) in the change job and add the recipe there; do not work around it.
 
