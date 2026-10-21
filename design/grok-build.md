@@ -41,7 +41,7 @@ Access and Just do / Ask first: `build-job-cycle.md`.
 
 ## Red prove, merge-back, other roles
 
-Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; prove is final verification (`tools.md` rule 10; job cycle in `build-job-cycle.md`); never merge into main. Bot notes: park with `python tools/task.py new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
+Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; red gate: `tools.md` rule 10; never merge into main. Bot notes: park with `python tools/task.py new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
 
 ## After a job
 

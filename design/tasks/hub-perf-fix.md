@@ -9,6 +9,8 @@ area: debug
 door: debug
 job: playtest
 needs: none
+units: capture, fix
+done: none
 
 ## Intent
 Both legs walk a full 30 s. Eight facings, the stations, one strike on the dummy, then an out-and-back walk on each facing until the play clock reaches 30 s. The window closes when that clock ends. `fps_pct` counts only while the hub is visible: camp is showing and the loader bar is down. 99% of those frames at or above 60 FPS is the bar. 100% is the aim.
@@ -21,7 +23,11 @@ Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (first launch, `--l
 The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again. The blocky look is on main too, so it is not a branch regression and not this task.
 
 ## Next
-The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. The next fix is whatever the moving fill adds on top of that still camera. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--layers` (`run_hub_bench.py --leg web --layers`) is the still-camera split; it does not score the 99% bar.
+Unit `capture` comes first: prove the tools can see the hitch before any fix. Normal-play hitch rows need a frame of 4x budget (about 67 ms); the fill misses are about 39 ms, so free-play hitches like Vira's are not logged. Build a free-roam web capture: localhost web debug export, hitch mult 1 (`?wdb-hitch-mult=1`), sink posts batched like the bench's, no per-frame scene walk, rows kept for the whole session. Done when it records a hitch during free play on web and Vira confirms it caught one she saw.
+
+Unit `fix`: fix only a cause the capture shows, then `run_hub_bench.py --leg web`. If two fixes do not move fps_pct, stop fixing and improve the diagnostic tooling.
+
+Tried, no gain: the light tap (textureLod and the four texelFetches both near fps_pct 75), a second path plane on the dirt, `texture()` on `hub_light.png`. `--layers` (`run_hub_bench.py --leg web --layers`) is the still-camera split; it does not score the 99% bar. Still at the dummy is one refresh; the fill walk is two to three refreshes the whole time.
 
 ## Notes from Vira
 That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.
@@ -31,7 +37,7 @@ Settled; do not re-investigate: hub FPS below dungeon FPS is this same web fill 
 - GLES quit leaks (N5GLES34MeshE / N5GLES37TextureE leaked at exit, and the raw Texture with GL ID / Buffer with GL ID leaked N bytes lines) are Compatibility-renderer artifacts on web exit. They are not the fail.
 - Desktop hub-bench already clears the 99% bar (99.7-99.8%, p50/p95 8.3 ms).
 - Web is refresh-paced (vsync=1 paced=1). fps_pct stuck mid-70s, dt_p50_ms ~17, dt_p95_ms ~44, worst 100-140. The fail is that tail.
-- One diagnosis, one fix, then run_hub_bench.py --leg web once. Do not open shader or mesh files because a quit-leak line named a texture or buffer.
+- Do not open shader or mesh files because a quit-leak line named a texture or buffer.
 - Attack does not clear the walk cache. ensure_loco and ensure_attack fill separate dictionaries and return once the key is present. The only clear is load_sprites at init.
 - Preloading every facing in warmup (ensure_loco + ensure_attack, then apply_tex) did not move the web number. Still fps_pct 76.8.
 - A warm Edge process can report 99 %. That is not the cold number the task measures.
