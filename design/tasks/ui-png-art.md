@@ -63,7 +63,7 @@ Style references (resized):
 Settings and rebind rows, XP rows, stat lists, resource chips, toasts. Gear icons and pad glyphs are already PNG.
 
 ## Not shot
-Gear board. Journal pages, the teleport network and fs_gate are now shot (`camp-receptionist-menu`, `dungeon-map-crystal`, `fs-gate`).
+None. Gear board: `camp-gear-board` plus the inventory, anvil and popup flows. Journal pages, the teleport network and fs_gate are now shot (`camp-receptionist-menu`, `dungeon-map-crystal`, `fs-gate`).
 
 ## UX audit
 2026-10-20 gamepad-first audit of every shot menu: 31 issues (H 5, M 17, L 9), one line each with a ref link, tagged [art] (the items above cover it) or [ux] (layout work): [ui-ux-audit.md](../ui-ux-audit.md).
