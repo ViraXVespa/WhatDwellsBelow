@@ -663,6 +663,9 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
+        if not Path(args.report).is_file():
+            msg = "error: --report file not found: %s" % args.report
+            return agent_log.finish("hub-bench-report", root, msg, "FAIL", args=args, legacy=False, echo=msg)
         ordered = _read_rows(args.report)
         bench = None
         for item in ordered:
