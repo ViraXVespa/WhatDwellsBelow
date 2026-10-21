@@ -118,7 +118,9 @@ def _die(msg: str, code: int = 2) -> None:
 def _which_grok(name: str) -> str | None:
     return shutil.which(name)
 
-def _style_lines(*, use_bibles: bool, kind: str) -> str:
+def _style_lines(*, use_bibles: bool, kind: str, staged: bool = False) -> str:
+    if not use_bibles and staged:
+        return "No locked Bibles were staged. Use the staged images as style and layout references, not exact copies."
     if not use_bibles:
         return (
             "No style-sheet images were staged. Infer a coherent pixel-art finish from the brief only."
@@ -246,7 +248,7 @@ def build_job(
         "Do not open the other `game-assets` references.\n\n"
         f"{specialist}\n\n"
         f"{_tool_lines(kind, pinned=bool(last_name))}\n"
-        f"{_style_lines(use_bibles=use_bibles, kind=kind)}\n\n"
+        f"{_style_lines(use_bibles=use_bibles, kind=kind, staged=ingested)}\n\n"
         f"{i2v_block}"
         f"{brief_block}"
         "One media call. Do not retry. Do not composite. Do not inspect the result beyond copying it.\n"

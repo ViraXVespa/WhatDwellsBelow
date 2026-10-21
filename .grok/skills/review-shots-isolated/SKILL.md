@@ -1,3 +1,14 @@
+---
+name: review-shots-isolated
+description: >
+  Isolate What Dwells Below shot review so the main Build session never carries
+  raw PNG data. Use before any visual prove step that would open PNGs in the
+  main session (show_png.py, direct image view, shot-flow output).
+user-invocable: true
+metadata:
+  short-description: Review shot PNGs in an isolated context, bring back text
+---
+
 # review-shots-isolated
 
 Isolate What Dwells Below shot review so the main Build session never carries raw PNG data.
