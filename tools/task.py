@@ -108,7 +108,9 @@ def main(argv: list[str] | None = None) -> int:
         if branch.startswith("grok-build-w"):
             # Build path: no changelog
             return end("\n".join(task_lib.done(root, args.id, None, dry)), "PASS", id=args.id, changed=0 if dry else 1)
-        log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root, create=True)
+        log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root, create=not dry)
+        if log is None and dry:
+            return end("\n".join(task_lib.done(root, args.id, None, dry) + ["changelog: would add one line to a new entry"]), "PASS", id=args.id, changed=0)
         if log is None:
             print("error: could not resolve or create changelog", file=sys.stderr)
             return end("", "FAIL", error="no-changelog")
