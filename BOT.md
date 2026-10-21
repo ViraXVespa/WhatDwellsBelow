@@ -35,7 +35,7 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 ## Prove
 
 - python tools/check_script_cap.py --bot --git-changed
-- python tools/check_load_graph.py --bot (also the tracked pre-commit hook; once per clone: `git config core.hooksPath .githooks`)
+- python tools/check_load_graph.py --bot (routes.yaml coverage; also run by `bot_status --prove`)
 - python tools/bot_status.py --bot --prove
 - python tools/code_map.py check (no new UNMAPPED for files you touched; older ones are expected)
 - python tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
