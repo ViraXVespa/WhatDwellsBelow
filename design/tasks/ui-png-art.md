@@ -19,15 +19,8 @@ The goal of this task is to update all of the menus to be high-quality, professi
 Follow the start-card ORDER: baseline shot + restate before any generation or edit.
 Shot review: `grok-build.md` Pictures rule (`review_shots.py` when text is enough, `show_png.py` when you need the image).
 Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, camp HUD bar, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Generate each with `python tools/run_isolated_grok.py --kind ui --aspect 16:9 --dest-name mockups/<screen>.png --out design/refs/ui-png-art --brief "..."` (lands in `design/refs/ui-png-art/mockups/`); later units build to them.
-Unit 2 works the crystal UI only. Deliver before/after shots, inform that the unit is done, and stop.
-Do not advance to the next area or task. Next flow starts the next slice.
-
-After approval:
-- Good result → next session covers three areas.
-- Needs work → next session covers one new area.
-Update this task with notes + the exact next slice before handoff.
-
-Once three areas are consistently solid in one session, organize the remaining UI into door/job combos. Stand up a base session that loads the locked style notes, then fork that session as the starting point for each combo.
+Unit 2 works the crystal UI only. Deliver before/after shots and inform that the unit is done.
+Finish the task in one session when it fits; unfinished work keeps its notes in this task. Vira says when a new session is needed.
 
 ## Style
 Locked look: `design/ui-style.md` Generated art look (read first every session; `--kind ui` stages it). 9-slice rules as listed per row. Load `imagine-isolated` before any image generation.
@@ -59,6 +52,3 @@ None. Gear board: `camp-gear-board` plus the inventory, anvil and popup flows. J
 
 ## UX audit
 2026-10-20 gamepad-first audit of every shot menu: 31 issues (H 5, M 17, L 9), one line each with a ref link, tagged [art] (the items above cover it) or [ux] (layout work): [ui-ux-audit.md](../ui-ux-audit.md).
-
-## Next slice
-(filled by the finishing session before handoff: exact areas or "crystal only — needs work")
