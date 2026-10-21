@@ -102,7 +102,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
             else "`python tools/run_build_gate.py --batch` (no `--visual`: this job has no shot flow)")
     cycle = [] if mode == "survey" else [
         "CYCLE (build-job-cycle.md): GATHER finishes before any change: no code changes, no new tools; read the code and docs, state the observable outcome "
-        "that shows the task is done, confirm the tooling or in-game signal can show it. End of Gather: tell the User to run `/fork` and continue in the new peer "
+        "that shows the task is done, confirm the tooling or in-game signal can show it; for a bug or perf miss, confirm the repro's output names the cause, else that is a missing signal. End of Gather: tell the User to run `/fork` and continue in the new peer "
         "session; the original session ID is the reset point. PREPARE: a missing signal gets the cheapest gated instrument; blocked or a design answer needed: stop "
         "and update the task. CHANGE: `python tools/check_gd_load.py` once the edits are complete. PROVE is final verification: at most one small corrective "
         "edit and one rerun; still red: stop and report the log path (the RETRY block names `grok -r <original-session-id> --fork-session`). COMPLETE: docs and "

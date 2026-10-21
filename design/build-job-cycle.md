@@ -14,6 +14,7 @@ Gather finishes before any change.
 1. Read the relevant code and docs (planned `list_xref`, planned `show_func`, one `code_map.py` row when a live script is involved; list every system and read its doc and code-map row before a multi-system change).
 2. State the observable outcome that will show the task is done (one line: what the User or the bench will see if the work is correct).
 3. Confirm whether the existing tooling or in-game signal can show that outcome. Record what is missing, if anything.
+4. For a bug or perf miss: does the repro's output name the cause (a row, phase, or field that points at one cause)? A repro that shows the failure but not its cause is a missing signal; Prepare adds detail to that repro before any fix.
 
 No code changes. No new tools.  
 End of Gather: tell the User to run `/fork`. Continue in the new peer session. The original session ID is the reset point. Later retries use `grok -r <original-session-id> --fork-session` from the worktree directory.
@@ -26,7 +27,7 @@ If Prepare discovers the task is blocked or needs a design answer, stop and upda
 
 ### Change
 
-Implement the task using the information and tooling from Gather and Prepare.  
+Implement the task using the information and tooling from Gather and Prepare. A fix targets a cause the signal named, not a guess.  
 Run `python tools/check_gd_load.py` once the edits for the unit are complete, before Prove.  
 No formal prove yet.
 
