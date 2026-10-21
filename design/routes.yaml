@@ -21,6 +21,7 @@ indexes:
   graph: design/load-graph.md
 
 notes_exempt:
+  - design/build-simulation.md
   - design/reuse-map.md
   - design/tasks/README.md
   - design/refs/README.md
