@@ -29,18 +29,8 @@ Update this task with notes + the exact next slice before handoff.
 
 Once three areas are consistently solid in one session, organize the remaining UI into door/job combos. Stand up a base session that loads the locked style notes, then fork that session as the starting point for each combo.
 
-## Locked style (load first every session)
-Pixel-art feel of the title-screen background + professionalism of the Journal UI.
-No pink. 9-slice rules as listed per row. Gamepad-first, readable at a glance.
-Load `imagine-isolated` before any image generation.
-
 ## Style
-
-Pixel-art feel of the title-screen background combined with the professionalism of the Journal UI. Gamepad-first and readable at a glance.
-
-Style references (resized):
-- [title-background](../refs/ui-png-art/title-background.png)
-- [journal-ui](../refs/ui-png-art/journal-ui.png)
+Locked look: `design/ui-style.md` Generated art look (read first every session; `--kind ui` stages it). 9-slice rules as listed per row. Load `imagine-isolated` before any image generation.
 
 ## Items
 

@@ -49,6 +49,13 @@ First open: `ui_warm.gd` loads every listed skin's art on a worker from the titl
 
 Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake_frame_art.py` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake_frame_art.py --check` (also in `bot_smokes.py` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is the open task `ui-png-art`.
 
+## Generated art look
+Locked look for generated UI art (her call, `ui-png-art`); `run_isolated_grok.py --kind ui` stages this section and the refs below.
+- Pixel-art feel of the title-screen background + professionalism of the Journal UI.
+- No pink. Gamepad-first, readable at a glance. 9-slice where a panel or button stretches.
+- Outside the pause journal, every screen keeps the game's pixel-art style and reads as one system.
+- Style refs (look and finish only, not layouts): `design/refs/ui-style/title-background.png`, `design/refs/ui-style/journal-ui.png`.
+
 ## Web export (flagged, not changed)
 - `journal_page._tex_at` loads `res://assets/ui/journal/paper.png` and `leather.png` with `load()` so the imported textures ship in the web pack. A missing page texture errors; it does not cache an empty image.
 - `ThemeS.ink_font()` returns the shipped `res://assets/ui/journal/ink.ttf` (Patrick Hand, OFL). SystemFont is not used; the web export has no Windows faces.

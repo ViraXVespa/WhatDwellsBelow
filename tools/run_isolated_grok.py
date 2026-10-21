@@ -34,6 +34,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -51,10 +52,9 @@ LOCKED_BIBLES = (
     REPO / "assets" / "sprites" / "player" / "bible_locked_female.png",
 )
 KINDS = ("tile", "character", "i2v", "ui", "still")
-# --kind ui stages the ui-png-art locked style: its style sections as ui-style.md plus the style refs.
-UI_STYLE_TASK = REPO / "design" / "tasks" / "ui-png-art.md"
-UI_STYLE_SECTIONS = ("## Locked style", "## Style")
-UI_STYLE_REFS = tuple(REPO / "design" / "refs" / "ui-png-art" / n for n in ("title-background.png", "journal-ui.png"))
+# --kind ui stages the locked UI look: this section of the ui style doc as ui-style.md, plus the refs it names.
+UI_STYLE_DOC = REPO / "design" / "ui-style.md"
+UI_STYLE_SECTION = "## Generated art look"
 INGEST_MAX_TURNS = 4
 RESULT_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4", ".webm", ".mov"}
 DEFAULT_DEST = {
@@ -263,18 +263,27 @@ def build_job(
         "Do not walk a parent repo. Do not edit Godot scenes.\n"
     )
 
-def ui_style_text(task: Path = UI_STYLE_TASK) -> str:
-    """The ui-png-art style sections, verbatim; empty when the task is gone."""
-    if not task.is_file():
-        return ""
+def ui_style_text(doc: Path = UI_STYLE_DOC) -> str:
+    """The Generated art look section of the ui style doc; dies when it is missing."""
+    lines = doc.read_text(encoding="utf-8-sig").splitlines() if doc.is_file() else []
     out: list[str] = []
     keep = False
-    for line in task.read_text(encoding="utf-8-sig").splitlines():
+    for line in lines:
         if line.startswith("## "):
-            keep = any(line.strip() == h or line.startswith(h + " (") for h in UI_STYLE_SECTIONS)
-        if keep and not line.lstrip().startswith("- [") and "imagine-isolated" not in line:  # drop repo links; the refs are staged by name
+            keep = line.strip() == UI_STYLE_SECTION
+        if keep:
             out.append(line)
+    if not out:
+        _die(f"--kind ui: no '{UI_STYLE_SECTION}' section in {doc} (pass --no-ui-style to run without the locked look)")
     return "\n".join(out).strip()
+
+def ui_style_refs(text: str) -> list[Path]:
+    """Repo image paths named in backticks in the style section; a missing one dies."""
+    refs = [REPO / m for m in re.findall(r"`(design/[^`]+\.(?:png|jpg))`", text)]
+    for r in refs:
+        if not r.is_file():
+            _die(f"ui style ref missing: {r}")
+    return refs
 
 def safe_dest(name: str) -> str:
     """A relative path inside scratch (subfolders allowed: mockups/title.png)."""
@@ -518,7 +527,7 @@ def selftest() -> int:
     ui = build_job(kind="ui", brief="", use_bibles=False, dest_name="ui.png")
     for need, ok in (("ui allows text", "Text and labels are allowed" in ui), ("ui no icon rule", "No text in the art" not in ui),
                      ("ui no ui-icons.md", "ui-icons.md" not in ui), ("ui default dest", DEFAULT_DEST["ui"] == "ui.png"),
-                     ("style sections", "No pink" in ui_style_text() or not UI_STYLE_TASK.is_file())):
+                     ("style section", "No pink" in ui_style_text()), ("style refs", len(ui_style_refs(ui_style_text())) == 2)):
         if not ok:
             bad.append(need)
     with tempfile.TemporaryDirectory(prefix="wdb-iso-st-") as tmp:
@@ -532,7 +541,7 @@ def selftest() -> int:
         seen = (Path(keep) / "seen-job.txt").read_text() if keep and (Path(keep) / "seen-job.txt").is_file() else ""
         if r.returncode or "dest=ok" not in r.stdout or not (t / "out" / "mockups" / "title.png").is_file():
             bad.append("subfolder dest: " + (r.stdout + r.stderr)[-300:])
-        if UI_STYLE_TASK.is_file() and ("ui_style=staged" not in r.stdout or "ui-style.md" not in seen):
+        if "ui_style=staged" not in r.stdout or "ui-style.md" not in seen:
             bad.append("ui style not staged")
         if keep:
             shutil.rmtree(keep, ignore_errors=True)
@@ -568,7 +577,7 @@ def main() -> None:
     p.add_argument("--keyframe", action="append", default=[], help="I2V mid-clip pin as path@seconds (repeatable, up to 4).")
     p.add_argument("--pin-ends", action="store_true", help="Pin last_frame to the seed even if the prompt is not the walk wrapper.")
     p.add_argument("--no-pin-ends", action="store_true", help="Do not auto-pin a walk. One-shots stay on image_to_video.")
-    p.add_argument("--no-ui-style", action="store_true", help="--kind ui: do not stage the ui-png-art locked style and refs")
+    p.add_argument("--no-ui-style", action="store_true", help="--kind ui: do not stage the locked UI look (design/ui-style.md) and its refs")
     p.add_argument("--skip-inspect", action="store_true", help="Skip the `grok inspect` isolation check.")
     p.add_argument(
         "--no-reuse",
@@ -608,8 +617,9 @@ def main() -> None:
         args.out.mkdir(parents=True, exist_ok=True)
 
     sources: list[Path] = []
-    if args.kind == "ui" and not args.no_ui_style:
-        sources.extend(r for r in UI_STYLE_REFS if r.is_file())
+    ui_text = ui_style_text() if args.kind == "ui" and not args.no_ui_style else ""
+    if ui_text:
+        sources.extend(ui_style_refs(ui_text))
     if args.bible_style:
         bibles = [b for b in LOCKED_BIBLES if b.is_file()]
         if not bibles:
@@ -646,11 +656,10 @@ def main() -> None:
             copy_into(src, scratch)
             copied.append(src.name)
         if args.kind == "ui":
-            text = ui_style_text()
-            if text:
-                write_job(scratch / "ui-style.md", text + "\n\nStaged images are style references for look and finish, not layouts to copy.\n")
+            if ui_text:
+                write_job(scratch / "ui-style.md", ui_text.replace("`design/refs/ui-style/", "`") + "\n")
                 copied.append("ui-style.md")
-            print("ui_style=" + ("staged" if text else "none (design/tasks/ui-png-art.md missing)"))
+            print("ui_style=" + ("staged" if ui_text else "none (--no-ui-style)"))
         if args.kind == "i2v":
             assert args.prompt_file is not None
             copy_into(args.prompt_file, scratch)
