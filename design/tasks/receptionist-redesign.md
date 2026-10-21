@@ -3,7 +3,7 @@
 id: receptionist-redesign
 owner: build
 status: open
-done-when: assets/sprites/npcs/receptionist.png (and its bust) show the new look in hub-guild.md; hub shot reviewed.
+done-when: assets/sprites/npcs/receptionist.png shows the new look in hub-guild.md (the window bust is that sprite clipped, not a second file); hub shot reviewed.
 resume: python tools/open_slice.py ui.receptionist --task receptionist-redesign
 
 ## Intent
