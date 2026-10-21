@@ -3,6 +3,7 @@ extends CanvasLayer
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const Ui := preload("res://scripts/ui/recap/recap_ui.gd")
 const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 const Flow := preload("res://scripts/ui/recap/recap_flow.gd")
 
 var open := false
@@ -54,6 +55,10 @@ func _focus() -> void:
 		focus_btn.grab_focus()
 
 func _process(delta: float) -> void:
+	if cont_btn and is_instance_valid(cont_btn):
+		var g: Texture2D = Prompts.texture_for("ui_accept")
+		if cont_btn.icon != g:
+			cont_btn.icon = g
 	Flow.tick(self, delta)
 
 func skip_drain() -> void:

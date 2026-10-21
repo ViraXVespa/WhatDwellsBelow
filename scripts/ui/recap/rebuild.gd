@@ -3,6 +3,7 @@ extends Object
 ## Recap content rebuild after a run ends.
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 const RecapBars := preload("res://scripts/ui/recap/bars.gd")
 
 static func rebuild(host: CanvasLayer, cond: String) -> void:
@@ -82,6 +83,9 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 	cont.set_meta("recap_continue", true)
 	cont.disabled = true
 	cont.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cont.icon = Prompts.texture_for("ui_accept")
+	cont.expand_icon = false
+	cont.add_theme_constant_override("icon_max_width", 28)
 	host.footer.add_child(cont)
 	host.cont_btn = cont
 	host.focus_btn = first if first else cont
