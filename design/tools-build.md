@@ -21,6 +21,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `run_dungeon_load_timing.py` | Placeholdia -> Dungeon load-timing smoke. Summary: `dungeon-load-timing`. | WD | `--help` | N |
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `--help` | N |
 | `run_dungeon_map_sweep.py` | Map smoke over seeds. Summary: `dungeon-map-sweep`. | D | `--help` | N |
+| `bake_ground_wear.py` | Bake the tileable ground wear sheet `ground_wear.png` (domain-warped noise, 4 steps, 16 px/m; same bytes each run; prints `stamp=` for `GROUND_WEAR_STAMP`). Also run by `run_bake_camp.py`. Summary: `ground-wear`. | BD | `--help` | Y |
 | `run_bake_camp.py` | Bake `hub_light.png` through `--wdb-bake-camp` on a real renderer (auto display; prints `stamp=`; `shadow_px=0` FAILs). Never rewrites `camp.tscn`. Summary: `bake-camp`. | BD | `--help` | Y |
 | `export_web.py` | Export the GitHub Pages build (Godot Web, no threads; runs `enable_texture_mips.py` before `--import`). `--archives` adds the `_pages/` site; `--out DIR` exports to a scratch dir; `--debug --out DIR` uses preset `Web Debug` (keeps `scripts/debug/`; release `Web` excludes it). | D | `--help` | N |
 | `run_agent_py.py` | Run an ephemeral script from `_logs/agent-py/` and delete it after. Prefer a real tool. Summary: `agent-py`. | D | `--help` | N |

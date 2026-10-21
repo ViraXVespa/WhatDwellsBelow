@@ -61,13 +61,11 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 
 ## Ground field
 
-World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu category Ground. `ground_wear` at 0 leaves the sheet untinted by wear.
+World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu category Ground. `ground_wear` scales the baked wear sheet (`assets/baked/ground_wear.png`, tileable patches at 1/16 m, 4 steps): at 0.22 the most worn ground is about 5% darker; 0 turns wear off.
 
 | Key | Live |
 |-----|------|
 | `GROUND_PX_PER_M` / `ground_px_per_m` | 128 |
-| `GROUND_HASH_M` / `ground_hash_m` | 4 |
-| `GROUND_VARIANTS` / `ground_variants` | 3 |
 | `GROUND_WEAR` / `ground_wear` | 0.22 |
 
 ## Light buffer

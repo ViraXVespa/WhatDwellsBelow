@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Hub bake check: the committed assets/baked/hub_light.png must match HUB_BAKE_STAMP in hub_bake.gd.
+"""Hub bake check: the committed assets/baked/hub_light.png must match HUB_BAKE_STAMP in hub_bake.gd, and
+assets/baked/ground_wear.png must match GROUND_WEAR_STAMP in ground_shader.gd (tools/bake_ground_wear.py).
 
     python tools/check_hub_bake.py [--root R] [--json]
 
@@ -20,6 +21,8 @@ import agent_log
 
 PNG = "assets/baked/hub_light.png"
 SRC = "scripts/graphics/light_rt/hub_bake.gd"
+WEAR_PNG = "assets/baked/ground_wear.png"
+WEAR_SRC = "scripts/graphics/ground_shader.gd"
 
 def png_stamp(path: Path) -> tuple[str, int, int]:
     from PIL import Image
@@ -47,6 +50,17 @@ def main(argv: list[str] | None = None) -> int:
         elif got != want:
             lines.append(f"FAIL {PNG} stamp {got} != HUB_BAKE_STAMP {want or '(empty)'}: rebake with tools/run_bake_camp.py, "
                          "review, paste its stamp= into hub_bake.gd")
+    wsrc = (root / WEAR_SRC).read_text(encoding="utf-8")
+    wm = re.search(r'const GROUND_WEAR_STAMP := "([0-9a-f]*)"', wsrc)
+    wpng = root / WEAR_PNG
+    if not wm or not wpng.is_file():
+        lines.append(f"FAIL {WEAR_PNG} or GROUND_WEAR_STAMP in {WEAR_SRC} missing")
+    else:
+        from PIL import Image
+        with Image.open(wpng) as im:
+            ws = hashlib.sha256(im.convert("L").tobytes()).hexdigest()[:16]
+        if ws != wm.group(1):
+            lines.append(f"FAIL {WEAR_PNG} stamp {ws} != GROUND_WEAR_STAMP {wm.group(1)}: run tools/bake_ground_wear.py, paste stamp=")
     ok = not lines
     if ok:
         lines.append(f"hub bake ok: {PNG} {w}x{h} stamp={got}")

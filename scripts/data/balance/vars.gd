@@ -328,8 +328,6 @@ var quest_xp_b := 16.0
 
 var near_death_hp := 0.2
 var ground_px_per_m: float = T.GROUND_PX_PER_M
-var ground_hash_m: float = T.GROUND_HASH_M
-var ground_variants: float = T.GROUND_VARIANTS
 var ground_wear: float = T.GROUND_WEAR
 var light_torch_range: float = T.LIGHT_TORCH_RANGE
 var light_torch_energy: float = T.LIGHT_TORCH_ENERGY
