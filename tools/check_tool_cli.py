@@ -48,6 +48,8 @@ ADVISORY_PS1_OK = ("python",)
 # A case is an arg list, or (arg list, allowed exit codes) when a clean `error:` exit 2 is the right answer in the sandbox.
 _ERR = (0, 1, 2)
 SMOKE: dict[str, list] = {
+    "review_shots": [["--selftest"]],
+    "run_isolated_grok": [["--selftest"]],
     "agent_log": [["smoke-job"], ["--selftest"]],
     "anim_review_pack": [["--dry-run"]], "anim_review_regen": [["--dry-run"]], "anim_review_tree": [["--dry-run"]],
     "archive_prior_changelogs": [["--dry-run"]],

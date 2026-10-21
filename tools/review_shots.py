@@ -127,11 +127,11 @@ def main() -> int:
     ap.add_argument("--max-turns", type=int, default=6, help="Max child turns (default 6)")
     ap.add_argument("--selftest", action="store_true", help="Run against a mock grok; no Grok needed")
     args = ap.parse_args()
+    root = agent_log.resolve_root(args)
     if args.selftest:
         return selftest()
     if not args.paths or not args.question.strip():
         return fail("give PNG paths and --question")
-    root = agent_log.resolve_root(args)
     rubric = args.rubric
     if rubric.startswith("@"):
         rubric = Path(rubric[1:]).read_text(encoding="utf-8")
