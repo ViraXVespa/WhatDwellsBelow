@@ -5,8 +5,12 @@ const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
+const TipPlace := preload("res://scripts/ui/tip_place.gd")
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
+	var src: Control = Board.find_sel(ui)
+	if src == null:
+		src = ui.get_viewport().gui_get_focus_owner()
 	Board.clear_sub(ui)
 	ui.gear_sub = true
 	ui.gear_sub_slot = slot
@@ -22,6 +26,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.08, 0.06, 0.05, 0.98), Color(0.9, 0.72, 0.32)))
 	ThemeS.BtnSkin.watch(panel, "panel")
 	ui.add_child(panel)
+	TipPlace.near(panel, src)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
