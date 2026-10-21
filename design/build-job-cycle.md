@@ -137,7 +137,7 @@ Concurrent agents share catalog tools. They do not share logs: each worktree has
 - Keep the ledger tight: one xref per shared script, list every other screen that uses it.
 - Surface art-survey items (frame, portrait, refs) in the initial restate so the draw-new vs reuse decision is explicit.
 - Use `--handoff` for a survey that never implemented, not `--next`.
-- Visual review: load the review-shots-isolated skill and bring back only the text report.
+- Visual review: `grok-build.md` Pictures rule.
 
 ## Session close (hard rules)
 - A session never moves on to another task.

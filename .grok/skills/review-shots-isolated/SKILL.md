@@ -1,9 +1,8 @@
 ---
 name: review-shots-isolated
 description: >
-  Isolate What Dwells Below shot review so the main Build session never carries
-  raw PNG data. Use before any visual prove step that would open PNGs in the
-  main session (show_png.py, direct image view, shot-flow output).
+  Offload a What Dwells Below shot review to an isolated Grok session when the
+  main session needs only a text answer, not the image itself.
 user-invocable: true
 metadata:
   short-description: Review shot PNGs in an isolated context, bring back text
@@ -11,20 +10,11 @@ metadata:
 
 # review-shots-isolated
 
-Isolate What Dwells Below shot review so the main Build session never carries raw PNG data.
+Use it when a text answer is enough → this; need the image → `show_png.py`.
 
-## When to use
-Before any visual prove step that would otherwise open PNGs in the main session
-(`show_png.py`, direct image view, or reading shot-flow output).
+## Run
+`python tools/review_shots.py PNG... --question "..." [--rubric "- item" | --rubric @FILE]`
 
-## Rules
-- Load this skill first.
-- Do not view the PNGs yourself in the main session.
-- Call `python tools/review_shots.py PATH1 PATH2 ...` (or paste the paths into a fresh isolated chat).
-- Bring only the printed text report back.
-- The runner never writes game files, assets, or docs.
-- The main session uses the text report for the verification ask (after commit/push).
-
-## Isolation
-Same pattern as imagine-isolated: the review lives in its own context. The main
-session stays lean.
+- Copies the PNGs to a scratch dir outside the repo, proves isolation with `grok inspect` (no project instructions), runs one child session, and prints only its report with a `VERDICT: PASS|FAIL|UNSURE` line.
+- `RESULT FAIL` means no review happened (grok missing, isolation not proven, child error, no report). Say so; do not guess a verdict or open the PNGs to replace it unless you then follow the `show_png.py` rule.
+- Read-only: writes nothing in the repo.
