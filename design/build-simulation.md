@@ -14,4 +14,5 @@ A dry walk of what a fresh Build session would do, to find defects before Vira l
    - surprising output names or paths;
    - a flag whose meaning differs between tools.
    A mechanical fix (wrong flag in a task, doc row) is made; a design change is listed, not made.
-5. Report: fixes with hashes, then the intuitiveness flags as a short list for Vira, then judgment calls. Clean up the worktree.
+5. Console output: for every tool run above, read stdout and stderr. Flag any line that is not the result, a needed status, or an actionable error: debug prints, banners, progress spam, repeated or verbose lines, stderr or tracebacks on success, unexpected non-ASCII. `python tools/check_tool_cli.py --smoke-run` flags the mechanical cases (CONSOLE, NOISE, ASCII); fix clear noise, list the rest.
+6. Report: fixes with hashes, then the intuitiveness flags as a short list for Vira, then judgment calls. Clean up the worktree.

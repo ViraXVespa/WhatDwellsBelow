@@ -7,7 +7,8 @@ via agent_log. Libs (`*_lib.py`, agent_log's siblings without a main guard) are 
 
 `--smoke-run` also executes every tool in a throwaway copy of the repo (never the live tree): bad flag and bad
 `--root` must exit 2 with an `error:` line, and each SMOKE case (read-only or `--dry-run` args) must not crash,
-must end in a RESULT line, stay under the line budget, print ASCII and repo-relative paths, and (dry runs) leave
+must end in a RESULT line, stay under the line budget, print ASCII and repo-relative paths, have no console noise
+(debug/progress/banner lines, repeated lines, stderr on success), and (dry runs) leave
 the copy unchanged. The per-run table (rc, lines, seconds) goes to the summary file.
 """
 from __future__ import annotations
@@ -112,6 +113,24 @@ SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
 TRACKED_GDIGNORE = ("_cache", "_logs", "_old", "_out", "_pages", "_src")  # root tool folders present in every clone
 SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
+NOISE_PAT = re.compile(r"^(DEBUG|debug:|TRACE)|\r|\d+%\|| ={5,}|^-{10,}$")  # debug prints, progress bars, banners
+STDERR_OK = {"agent_log"}  # stems whose stderr on success is expected
+
+def console_noise(stem: str, rc: int, out: str, err: str) -> list[str]:
+    """Lines that are not the result, a needed status or an actionable error."""
+    found = []
+    lines = out.splitlines()
+    for i, ln in enumerate(lines):
+        if NOISE_PAT.search(ln):
+            found.append(f"noisy line {i + 1}: {ln.strip()[:60]!r}")
+            break
+    dup = [ln for i, ln in enumerate(lines[1:], 1) if ln.strip() and ln == lines[i - 1]]
+    if dup:
+        found.append(f"repeated line {dup[0].strip()[:60]!r}")
+    if rc == 0 and err.strip() and stem not in STDERR_OK:
+        found.append(f"stderr on success: {err.strip().splitlines()[0][:60]!r}")
+    return found
+
 PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
 
 def snapshot(root: Path) -> tuple:
@@ -235,6 +254,8 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         bad.append(f"RESULT  {label}: last line is not RESULT")
     if lines > SMOKE_LINES.get(stem, SMOKE_MAX_LINES) and "--json" not in args:
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
+    for msg in console_noise(stem, proc.returncode, out, err):
+        bad.append(f"CONSOLE {label}: {msg}")
     if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
     if sb.as_posix() in out and "--doctor" not in args and stem not in ABS_ROOT_TOOLS:  # these print the absolute root they scanned / run from  # --doctor echoes the GODOT_BIN pin (a machine path)
