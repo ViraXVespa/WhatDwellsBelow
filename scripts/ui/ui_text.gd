@@ -40,3 +40,11 @@ static func _vp_size() -> Vector2:
 	if tree == null or tree.root == null:
 		return T.base_size()
 	return tree.root.get_visible_rect().size
+
+## Shrink a one-line label's font until its text fits `width` (never below `min_px`). Size follows the font override.
+static func fit_width(lab: Label, width: float, min_px: int = 14) -> void:
+	var font: Font = lab.get_theme_font("font")
+	var px: int = lab.get_theme_font_size("font_size")
+	while px > min_px and font.get_string_size(lab.text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > width:
+		px -= 1
+	lab.add_theme_font_size_override("font_size", px)
