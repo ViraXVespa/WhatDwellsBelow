@@ -6,25 +6,25 @@
 			"label": "0.7.2",
 			"points": [
 				{
-					"text": "Combat: free previous HP-bar ImageTexture and telegraph meshes on update to stop leaks."
+					"text": "Fixed a memory leak from enemy health bars and attack warnings."
 				},
 				{
-					"text": "Enemy present: hop/fly lift moves body Y instead of always pinning to ground."
+					"text": "Hopping and flying enemies now rise off the ground instead of staying pinned to it."
 				},
 				{
-					"text": "Player and enemy collision shapes now track visual height and feet."
+					"text": "Player and enemy hitboxes now match their height and feet."
 				},
 				{
-					"text": "Boss door removes itself and hotspots from interact groups when opened."
+					"text": "An opened boss door no longer offers an interact prompt."
 				},
 				{
-					"text": "Anvil: tab change mid-forge calls cancel_job so paid materials are surfaced."
+					"text": "Anvil: switching tabs mid-forge cancels the forge so the materials you paid are not lost."
 				},
 				{
-					"text": "Anvil analyze: shows result text and leaves the sub open for more items."
+					"text": "Anvil analyze: shows the result and stays open so you can analyze more items."
 				},
 				{
-					"text": "Crystal map: free previous AtlasTexture on every aim to stop leaks."
+					"text": "Fixed a memory leak when aiming on the crystal map."
 				}
 			],
 			"summary": "Bug fixes for combat leaks, collisions, the boss door and the anvil."
