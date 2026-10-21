@@ -28,6 +28,8 @@ notes_exempt:
   - design/benchmarks/menu-open.md
   - design/benchmarks/web-perf.md
   - design/benchmarks/hub-bench.md
+  - design/benchmarks/desktop-release.md
+  - design/ui-ux-audit.md
 
 
 parked_jobs:
