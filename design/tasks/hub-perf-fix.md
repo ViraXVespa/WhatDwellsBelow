@@ -14,11 +14,11 @@ needs: none
 Both legs walk a full 30 s. Eight facings, the stations, one strike on the dummy, then an out-and-back walk on each facing until the play clock reaches 30 s. The window closes when that clock ends. `fps_pct` counts only while the hub is visible: camp is showing and the loader bar is down. 99% of those frames at or above 60 FPS is the bar. 100% is the aim.
 
 ## Where it stands
-Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. Not re-run this session.
+Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. Not re-run since.
 
-Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (first launch, `--layers`): every hidden layer stayed at p50 and p95 16.7 ms, base draw 68. Fence, ground, buildings, sprites, light marks, and the HUD are not the still-camera cost. The full walk (second launch): fps_pct 77.0, frames 1236, slow 284, p50 16.7, p95 41.7, worst 144.8, ok 1. The sustained miss is the ending fill only (266 slow frames, median 38.9 ms, west-arm cells, phys about 2-4 ms, draw 48-78). The station walk is not that run. Uncapping (`--disable-frame-rate-limit` / `--disable-gpu-vsync`) bugchecked this GPU; `run_hub_bench.py` refuses both, and only `web_perf.py`'s headless SwiftShader (software GL) runs uncapped. A hitch-log scene walk on every frame latched the whole bench.
+Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (`--layers`): every hidden layer stayed at p50 and p95 16.7 ms, base draw 68. Fence, ground, buildings, sprites, light marks, and the HUD are not the still-camera cost. The full walk: fps_pct 77.0, frames 1236, slow 284, p50 16.7, p95 41.7, worst 144.8, ok 1. The sustained miss is the ending fill only (266 slow frames, median 38.9 ms, west-arm cells, phys about 2-4 ms, draw 48-78). The station walk is not that run. Uncapping (`--disable-frame-rate-limit` / `--disable-gpu-vsync`) bugchecked this GPU; `run_hub_bench.py` refuses both, and only `web_perf.py`'s headless SwiftShader (software GL) runs uncapped. A hitch-log scene walk on every frame latched the whole bench.
 
-The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again. The blocky look is on main too, so it is not a branch regression and not this task.
+The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again.
 
 ## Next
 The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. The next fix is whatever the moving fill adds on top of that still camera. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--layers` (`run_hub_bench.py --leg web --layers`) is the still-camera split; it does not score the 99% bar.
