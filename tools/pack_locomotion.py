@@ -509,9 +509,12 @@ def _run(args: argparse.Namespace) -> None:
         for facing in facings:
             vid = FINAL / f"{gender}_{facing}.mp4"
             if not vid.exists():
-                print("missing", vid)
+                print("missing", Path(vid).relative_to(ROOT) if Path(vid).is_relative_to(ROOT) else vid)
                 continue
             jobs.append((gender, facing, str(vid), args.reuse_harvest, args.rim, args.rim_hue))
+    if getattr(args, "dry_run", False):  # plan only: ffmpeg would write harvest frames
+        print(f"would pack {len(jobs)} clip(s)")
+        return
     agent_log.run_jobs([(pack_clip, job) for job in jobs])
 
 def main(argv: list[str] | None = None) -> int:

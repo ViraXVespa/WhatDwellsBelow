@@ -132,7 +132,7 @@ def _run(args: argparse.Namespace) -> None:
             for facing in facings:
                 vid = SRC / f"{gender}_{action}_{facing}.mp4"
                 if not vid.is_file():
-                    print("missing", vid)
+                    print("missing", Path(vid).relative_to(ROOT) if Path(vid).is_relative_to(ROOT) else vid)
                     continue
                 n = force_n
                 if n is None:
@@ -149,6 +149,9 @@ def _run(args: argparse.Namespace) -> None:
                         n,
                     )
                 )
+    if getattr(args, "dry_run", False):  # plan only: ffmpeg would write harvest frames
+        print(f"would pack {len(jobs)} clip(s)")
+        return
     agent_log.run_jobs([(pack_one, job) for job in jobs])
 
 def main(argv: list[str] | None = None) -> int:

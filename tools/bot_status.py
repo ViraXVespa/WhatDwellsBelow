@@ -138,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     lines.append("")
     lines.append(f"reuse_brief count={len(brief)} file={REUSE_FILE}")
     if not brief:
-        lines.append("(empty — reuse job stops)")
+        lines.append("(empty - reuse job stops)")
     else:
         for idx, item in enumerate(brief, start=1):
             snippet = item if len(item) <= 140 else item[:137] + "..."
