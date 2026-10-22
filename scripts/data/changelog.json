@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.8.2",
+			"points": [
+				{
+					"text": "Clarified changelog Summary rule: each file's Summary covers every bullet in it; intermediate emits update it; a push starts the next label fresh."
+				},
+				{
+					"text": "grok_share.py: Playwright tool that loads Grok shares (default dedicated Edge profile), dumps the conversation, and lists/saves images (User attachments and Grok-generated mediaId assets rewritten to public grok-img-share URLs)."
+				},
+				{
+					"text": "Staged the original 9 hub screenshots and distributed them into the per-task refs folders; added the current receptionist source plate to hub-guild-reception."
+				},
+				{
+					"text": "task_lib.done now deletes design/refs/<id>/ when a task is marked done; removed orphaned refs folders."
+				},
+				{
+					"text": "Web tasks are started by naming the task in a web session (no open_slice resume); open_slice remains the User start command for Build tasks only."
+				}
+			],
+			"summary": "Added grok_share.py for pulling Grok share conversations and images, clarified web-session changelog and task-start rules, and cleaned up refs handling so finished tasks remove their reference images."
+		},
+		{
 			"label": "0.8.1",
 			"points": [
 				{
