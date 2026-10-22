@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.8.4",
+			"points": [
+				{
+					"text": "Weekly archives now pin the build week at the week-close merge and the previous web week at the commit just before that branch started"
+				},
+				{
+					"text": "The archives folder is retired; changelog notes are no longer copied into it"
+				},
+				{
+					"text": "Tool checkers default to changed files, run in parallel, and compile-check each tool"
+				},
+				{
+					"text": "Historical pins and tags were corrected to match the new timing (two build pins kept at their later non-crashing commits)"
+				}
+			],
+			"summary": "Archives pin the right commits and the tool checker is faster."
+		},
+		{
 			"label": "0.8.3",
 			"points": [
 				{
