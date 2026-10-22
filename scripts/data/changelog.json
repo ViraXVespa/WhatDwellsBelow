@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.8.5",
+			"points": [
+				{
+					"text": "Web protocol: intermediate scratches skip write_changelog; the final scratch writes the complete outcome file once"
+				}
+			],
+			"summary": "Changelog protocol now writes one clean file per session"
+		},
+		{
 			"label": "0.8.4",
 			"points": [
 				{
