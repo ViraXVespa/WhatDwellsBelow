@@ -28,10 +28,14 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 		var top: float = (node.global_transform * node.get_aabb()).end.y
 		tops[node.get_parent()] = maxf(top, float(tops.get(node.get_parent(), 0.5)))
 		var bb: AABB = node.global_transform * node.get_aabb()
-		if bb.position.y < SKIP_H:
+		if bb.position.y < SKIP_H or node.name == "StallPitch":
 			var fp := Rect2(bb.position.x, bb.position.z, bb.size.x, bb.size.z)
 			feet[node.get_parent()] = (feet[node.get_parent()] as Rect2).merge(fp) if feet.has(node.get_parent()) else fp
 	var prot: Array = feet.values()
+	# Protect the vendor stall footprint so the tarp does not receive the actor shadow
+	var stall_pos := Vector2(25.0, 8.0)
+	var stall_half := Vector2(4.6 * 0.5, 3.4 * 0.5)
+	prot.append(Rect2(stall_pos - stall_half, stall_half * 2.0))
 	var wrote: int = 0
 	for node in casters:
 		var top: float = tops[node.get_parent()]

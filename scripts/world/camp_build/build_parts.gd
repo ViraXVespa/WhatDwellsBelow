@@ -61,18 +61,18 @@ static func solid(
 		var front := CollisionShape3D.new()
 		front.name = "StallFront"
 		var fblock := BoxShape3D.new()
-		fblock.size = Vector3(box_size.x * 0.92, box_size.y * 0.75, 0.18)
+		fblock.size = Vector3(box_size.x * 0.96, box_size.y, 0.12)
 		front.shape = fblock
-		front.position = Vector3(0.0, box_size.y * 0.32, box_size.z * 0.46)
+		front.position = Vector3(0.0, 0.0, box_size.z * 0.50)
 		body.add_child(front)
-		# Right wall mesh so bake can shadow it (matches left/right collision)
+		# Flush walls to post positions and ground
+		var hx := box_size.x * 0.48
+		var hy := box_size.y
+		var hz := box_size.z * 0.48
 		var rw := MeshInstance3D.new()
 		rw.name = "StallRightWall"
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var hx := box_size.x * 0.49
-		var hy := box_size.y * 0.72
-		var hz := box_size.z * 0.49
 		var a := Vector3(hx, -box_size.y * 0.5, -hz)
 		var b := Vector3(hx, -box_size.y * 0.5, hz)
 		var c := Vector3(hx, -box_size.y * 0.5 + hy, hz)
@@ -83,6 +83,20 @@ static func solid(
 		rw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
 		body.add_child(rw)
 		Prim._hit(body, rw.mesh, "StallRightHit")
+		var lw := MeshInstance3D.new()
+		lw.name = "StallLeftWall"
+		var stl := SurfaceTool.new()
+		stl.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var a2 := Vector3(-hx, -box_size.y * 0.5, -hz)
+		var b2 := Vector3(-hx, -box_size.y * 0.5, hz)
+		var c2 := Vector3(-hx, -box_size.y * 0.5 + hy, hz)
+		var d2 := Vector3(-hx, -box_size.y * 0.5 + hy, -hz)
+		Prim._quad(stl, a2, b2, c2, d2, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		stl.generate_normals()
+		lw.mesh = stl.commit()
+		lw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
+		body.add_child(lw)
+		Prim._hit(body, lw.mesh, "StallLeftHit")
 		Util._blob(body, Vector3(0.0, 0.0, box_size.z * 0.2))
 	else:
 		roof_plane(

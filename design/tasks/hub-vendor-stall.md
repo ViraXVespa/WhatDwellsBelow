@@ -3,11 +3,11 @@
 id: hub-vendor-stall
 owner: web
 status: open
-done-when: Ceiling sorts correctly behind/with character; front face blocks player; side sticks visible and aligned with existing collision; right wall present so bake can shadow it.
+done-when: Player and shadow correctly sort behind all parts of the vendor stall; walls and front face flush with the ground and connected to the posts for one uniform collision box; hub rebaked so shadows and lighting are final.
 resume: (web) start by naming this task in a web session; no open_slice command.
 
 ## Intent
-Fix vendor stall sorting, collision, missing sticks, and right-side wall from the hub issue list.
+Finish vendor stall geometry, collision, and sorting. Posts are locked. Shadow still draws on the tarp. Walls need to be flush and connected. Then rebake the hub.
 
 ## Refs
 - stall-character.jpg — player near stall (ceiling sort / walk-through)
@@ -16,8 +16,19 @@ Fix vendor stall sorting, collision, missing sticks, and right-side wall from th
 - stall-top.jpg — top-down stall
 - missing-wall-shadow.jpg — right-side wall / shadow gap
 
-## Notes
-Geometry, collision, posts, and right wall fixes applied in solid + pitched_tarp. Sorting set for proper occlusion. web-session.md clarified on parked task flow.
+## Current state (accurate)
+- Posts are correctly positioned and uniform height:
+  - Front: X = ±box_size.x * 0.48, Z = box_size.z * 0.52, top = y_eave - 0.01
+  - Rear: X = ±box_size.x * 0.48, Z = -box_size.z * 0.48, top = y_eave - 0.01
+  - Foot at -box_size.y * 0.5 (flush).
+- Player sprite occlusion is fixed (tarp ShaderMaterial render_priority + sorting_offset). Player is fully behind the tarp in the proof pose.
+- Shadow still appears on the tarp. It comes from the hub light RT (hub_shadow.gd projects the player Sprite3D onto the ground-plane light image; the tarp's wrap_shader samples that light_tex by world XZ). Posts already block shadows via the existing footprint protection (prot). The tarp does not, because its AABB bottom is above SKIP_H so it is not added to prot. The bake is precomputed (hub_light.png); changes to hub_shadow.gd only affect a fresh bake.
+- Walls / front face / collision are not yet flush with the ground or connected to the post positions. Extra space above the front face needs a short fill wall (hidden by the fold).
 
-## resume
-(web) front collision is verified fixed. Posts are visible (currently hidden behind the shop face) but still not aligned to the black edges of the face. Attempted post multipliers: original 0.42, then 0.49/0.50 (too far out), 0.38 (too far in), 0.45 (still off). Tarp-vs-player occlusion is still completely unresolved (player draws on top of the tarp; ShaderMaterial vs Sprite3D sort). Right-wall mesh and bake-stamp experiments landed locally. Next session starts from the live files and the latest-*.jpg images already in this task's refs.
+## Remaining work
+1. Fix the shadow sorting so the player shadow does not appear on the tarp/ceiling. Prefer a programmatic solution that uses the existing footprint protection (extend it so elevated roof/tarp meshes also protect their XZ footprint, the same way ground-level posts already do). Avoid hardcoded stall rectangles. After the change, force a hub rebake so the light RT updates.
+2. Make all walls and the front face flush with the ground (bottom at -box_size.y * 0.5) and connected to the post positions (X ±0.48, Z front 0.52 / rear 0.48) so the stall is one uniform collision box. Fill the extra space at the top of the front face with a short wall segment; the roof fold will hide it.
+3. Rebake the hub (LightRt.rebuild_hub / save_hub_bake) so the final shadows and lighting are pretty.
+
+## Notes
+Posts locked at the values above. Player sprite sort fixed. Shadow is an RT sampling issue, not a mesh sort issue. Walls still need the flush + connect pass. Do not trust older notes about post multipliers or "occlusion still unresolved".

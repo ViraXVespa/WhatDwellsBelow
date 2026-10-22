@@ -85,19 +85,23 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_mi
 	inst.mesh = built
 	var tarp_mat: Material = Mat.tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
 	inst.material_override = tarp_mat
+	if tarp_mat is ShaderMaterial:
+		(tarp_mat as ShaderMaterial).set_shader_parameter("ignore_actor_shadow", 1.0)
+		(tarp_mat as ShaderMaterial).render_priority = 3
+		(tarp_mat as ShaderMaterial).set_shader_parameter("ignore_actor_shadow", 1.0)
 	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	# Force opaque so depth test occludes the transparent Sprite3D player
-	if tarp_mat is BaseMaterial3D:
-		(tarp_mat as BaseMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
-		(tarp_mat as BaseMaterial3D).depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
+	inst.sorting_offset = 20.0
+	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	inst.gi_mode = GeometryInstance3D.GI_MODE_STATIC
 	body.add_child(inst)
 	Prim._hit(body, built, "StallPitchHit")
-	_post(body, Vector3(-box_size.x * 0.38, y_eave, box_size.z * 0.38), box_size.y)
-	_post(body, Vector3(box_size.x * 0.38, y_eave, box_size.z * 0.38), box_size.y)
-	_post(body, Vector3(-box_size.x * 0.38, y_eave, -box_size.z * 0.38), box_size.y)
-	_post(body, Vector3(box_size.x * 0.38, y_eave, -box_size.z * 0.38), box_size.y)
+	# Uniform tiny trim on all four posts
+	_post(body, Vector3(-box_size.x * 0.48, y_eave - 0.01, box_size.z * 0.52), box_size.y)
+	_post(body, Vector3(box_size.x * 0.48, y_eave - 0.01, box_size.z * 0.52), box_size.y)
+	_post(body, Vector3(-box_size.x * 0.48, y_eave - 0.01, -box_size.z * 0.48), box_size.y)
+	_post(body, Vector3(box_size.x * 0.48, y_eave - 0.01, -box_size.z * 0.48), box_size.y)
 static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
-	var foot: float = -box_h * 0.48
+	var foot: float = -box_h * 0.5
 	var x: float = 0.08
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -119,10 +123,13 @@ static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
 	var inst := MeshInstance3D.new()
 	inst.name = "StallPost"
 	inst.mesh = built
-	inst.material_override = Prim._timber(Color(0.36, 0.22, 0.12))
+	var post_mat = Prim._timber(Color(0.36, 0.22, 0.12))
+	if post_mat is BaseMaterial3D:
+		(post_mat as BaseMaterial3D).render_priority = -1
+	inst.material_override = post_mat
+	inst.sorting_offset = -5.0
 	body.add_child(inst)
 	Prim._hit(body, built, "StallPostHit")
-
 static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
 	var wx: float = box_size.x * 0.5
 	var wz: float = box_size.z * 0.5
