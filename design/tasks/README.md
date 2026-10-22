@@ -37,3 +37,5 @@ hub-vendor-stall | web | open | Vendor stall geometry, collision, sticks | -
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
 
 When `python tools/task.py done ID` runs, also delete `design/refs/<id>/` if it exists so reference images do not outlive the task.
+
+Web tasks have no resume command. A web session starts work by the User naming the task id (or its intent) in chat.

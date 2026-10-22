@@ -8,6 +8,7 @@ A finished task is deleted, its dependants lose it from `needs:` (a blocked task
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -253,6 +254,10 @@ def done(root: Path, tid: str, changelog: Path | None = None, dry: bool = False)
                     set_head(op, "status", "open")
     if not dry:
         (root / t["path"]).unlink()
+        refs = root / "design" / "refs" / tid
+        if refs.is_dir():
+            shutil.rmtree(refs)
+            out.append(f"deleted refs {refs.relative_to(root).as_posix()}")
         if changelog is not None:
             text, eol, bom = md.read_text(changelog, with_meta=True) if changelog.is_file() else ("", "\r\n", False)
             bullet = f"- Finished task {tid}: {title}."
