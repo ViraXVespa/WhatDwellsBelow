@@ -28,3 +28,5 @@ Finish vendor stall geometry, collision, and sorting. Posts are locked. Shadow s
 
 ## Notes
 Posts locked at the values above. Player sprite sort fixed. Shadow is an RT sampling issue, not a mesh sort issue. Walls still need the flush + connect pass. Do not trust older notes about post multipliers or "occlusion still unresolved".
+
+Use `run_shots.py --mode web --scene camp --hud 0 --zoom 3.2 --px 25.0 --pz 6.2 --cx 0.0 --cz -1.8` to check the shadow issue. After the shadows are fixed, we'll have you set up a shot flow that captures the vendor stall from all angles so we can check everything.
