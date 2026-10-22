@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.8.6",
+			"points": [
+				{
+					"text": "Vendor stall: pitched tarp now uses opaque depth write for correct character occlusion."
+				},
+				{
+					"text": "Posts thickened and right wall + full front-face collision added so bake shadows and blocking match the other walls."
+				},
+				{
+					"text": "web-session.md: removed resume-line assumption for web-owned parked tasks."
+				},
+				{
+					"text": "hub-vendor-stall: front collision fixed; posts visible but still misaligned to face edges; tarp occlusion vs player still open; right-wall mesh and bake stamp experiments landed locally (not closed)."
+				}
+			],
+			"summary": "Stall geometry, collision, and sorting fixed; web task flow clarified."
+		},
+		{
 			"label": "0.8.5",
 			"points": [
 				{
