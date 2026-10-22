@@ -10,11 +10,7 @@ resume: (web) start by naming this task in a web session; no open_slice command.
 Finish vendor stall geometry, collision, and sorting. Posts are locked. Shadow still draws on the tarp. Walls need to be flush and connected. Then rebake the hub.
 
 ## Refs
-- stall-character.jpg — player near stall (ceiling sort / walk-through)
-- stall-front.jpg — front face of stall
-- stall-side.jpg — side view (missing sticks)
-- stall-top.jpg — top-down stall
-- missing-wall-shadow.jpg — right-side wall / shadow gap
+- stall-current.jpg
 
 ## Current state (accurate)
 - Posts are correctly positioned and uniform height:
