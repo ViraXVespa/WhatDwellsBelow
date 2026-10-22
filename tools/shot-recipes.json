@@ -87,6 +87,22 @@
           -6.5
         ],
         "note": "north ridge"
+      },
+      {
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.0,
+          -1.8
+        ],
+        "zoom": 3.2,
+        "px": 25.0,
+        "pz": 6.2,
+        "face": "down",
+        "note": "player under tarp for occlusion + shadow check"
       }
     ]
   },

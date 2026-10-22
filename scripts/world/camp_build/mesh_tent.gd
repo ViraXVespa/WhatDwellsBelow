@@ -83,15 +83,21 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_mi
 	var inst := MeshInstance3D.new()
 	inst.name = "StallPitch"
 	inst.mesh = built
-	inst.material_override = Mat.tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
+	var tarp_mat: Material = Mat.tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
+	inst.material_override = tarp_mat
+	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	# Force opaque so depth test occludes the transparent Sprite3D player
+	if tarp_mat is BaseMaterial3D:
+		(tarp_mat as BaseMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+		(tarp_mat as BaseMaterial3D).depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
 	body.add_child(inst)
 	Prim._hit(body, built, "StallPitchHit")
-	_post(body, Vector3(-box_size.x * 0.42, y_eave, box_size.z * 0.42), box_size.y)
-	_post(body, Vector3(box_size.x * 0.42, y_eave, box_size.z * 0.42), box_size.y)
-	_post(body, Vector3(-box_size.x * 0.42, y_eave, -box_size.z * 0.42), box_size.y)
-	_post(body, Vector3(box_size.x * 0.42, y_eave, -box_size.z * 0.42), box_size.y)
+	_post(body, Vector3(-box_size.x * 0.38, y_eave, box_size.z * 0.38), box_size.y)
+	_post(body, Vector3(box_size.x * 0.38, y_eave, box_size.z * 0.38), box_size.y)
+	_post(body, Vector3(-box_size.x * 0.38, y_eave, -box_size.z * 0.38), box_size.y)
+	_post(body, Vector3(box_size.x * 0.38, y_eave, -box_size.z * 0.38), box_size.y)
 static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
-	var foot: float = -box_h * 0.5
+	var foot: float = -box_h * 0.48
 	var x: float = 0.08
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
