@@ -1,0 +1,13 @@
+# Hub bake, prop shadows, lamps, light leaks, desktop shading
+
+id: hub-bake-lights
+owner: web
+status: open
+done-when: Prop shadows present for fence/banner/anvil/dumpster; no bottom-face light leaks; torch VFX + light on guild lamp positions; ground shading matches web on Desktop. Full bake + stamp committed.
+resume: python tools/open_slice.py hub.bake --task hub-bake-lights
+
+## Intent
+Bake registration, torch lights, light-leak fix, and desktop/web shading parity. Scratch runs run_bake_camp.py.
+
+## Refs
+Drop missing-shadow and leak examples in design/refs/hub-bake-lights/.

@@ -40,7 +40,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ## Run when
 
 - **Bot:** `BOT.md` (boot, prove, smokes, Build-doc ban).
-- **Web/chat:** docs go through `doc_patch.py` (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web`; scripted flows `run_shot_flow.py` (`shot-tool.md`). Godot runners are the User's (`web-session.md`).
+- **Web/chat:** docs go through `doc_patch.py` (`doc-library.md`); the scratch may call any entry under `tools/` (including Godot launchers such as `run_bake_camp.py`, `run_shots.py --mode web`, `run_godot_import_check.py`). The only command the User runs is `python tools/_scratch.py`. Godot itself runs on the User’s machine.
 - **Build (User PC):** `file_stat.py` to measure (not `python -c`), `list_xref.py`, `list_changed.py`; `run_build_gate.py` after a `.gd` slice; `check_load_graph.py` after a design doc, the agents file, or `BOT.md` edit (RESULT PASS required, not deferred to ship); `list_changed.py --history` when a doc and its code disagree (`prove.md`); `web_perf.py` after a fresh `export_web.py --out DIR` (advisory, `tools-build.md`); `code_map.py patch` for one row; `task.py` for task files (`design/tasks/README.md`). Runner rules: `pc-offload.md`.
 
 ## Catalog: shared and Bot tools
@@ -52,6 +52,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_status.py` | Bot punch list (reuse brief, open opt tasks); `--prove` adds the Bot checks. Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
 | `check_script_cap.py` | Duplicate script-name check (`dupes=`): `--git-changed`, `--path`. The Bot's own checks run only with `--bot` (`BOT.md`). | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (PASS/FAIL, no summary): `smokes`/`shot_flows` keys, phases and flow files; the Bot adds boot budgets (`--bot`) | BWD | `--help` | Y |
+| `grok_share.py` | Pull conversation + images from a Grok share URL via Playwright (`--print-convo`, `--list-images`, `--save-images DEST`). Requires playwright installed. | W | `--help` | N |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks, now resolves bare basenames; exits 1 on new UNMAPPED or missing), `row --path P`, `patch --system S ...`, `sweep [--system NAME]` (coverage checklist: facade + resolved paths + cluster helpers + MISSING). | BD | `--help` | Y |
 | `bot_smokes.py` | Headless smokes on the Linux VM (`--phases`, or `--door` / `--job` for the `routes.yaml` `smokes` map; `--for FILE` prints the covering phases and warnscan areas, runs nothing). `--release` adds `run_release_smoke.py` (alone: only that). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install, `.uid` import: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan.py` | Warning sweep by area (leak / run-fail areas are rechecked and tagged stable / flaky). `--save-baseline` before, `--non-leak-diff` after (same `--areas`); `--changed` is the quick run; `--renderer real\|both` adds box-display runs. Procedure: BOT.md Smokes. | B | `--help` | Y |

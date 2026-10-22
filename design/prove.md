@@ -22,7 +22,7 @@ All sheets for that ask must already be written before the open. Do not open the
 |---|---|---|
 | Bot | its Prove gate, `bot_smokes.py`, `bot_warnscan.py`, shots | `BOT.md` Prove and Smokes |
 | Build | gather, change, prove: `check_gd_load.py` every pass; a visual change adds its `shot_flows` (one `show_png.py` folder, first sheet opened) and its UI load check; the flow is created at the START (step 0), and a missing or stale frame fails the prove at the END; `run_build_gate.py --batch` once at the end. A red prove prints its RETRY prompt | `build-job-cycle.md` |
-| Web / chat | cannot run Godot: the emit scratch runs the runners through the `doc_patch` lib (`dump_job`) and the User pastes the RESULT; a missing check is added the same way, as a tool or recipe in that scratch; a Build brief only for work Web cannot do (`web-emit.md`) | `web-test.md`, `web-emit.md`, `doc-library.md` |
+| Web / chat | The User runs `python tools/_scratch.py`. The scratch may call any `tools/` script, including those that launch Godot (`run_bake_camp.py`, `run_shots.py --mode web`, `run_godot_import_check.py`, `run_build_gate.py`, smokes, map, timing, etc.). It bases the printed `RESULT` solely on the runner’s exit code. The User pastes that RESULT (plus any clipboard shot or new bake stamp). Full hub bake + stamp and non-tiled asset processing are in scope for web. A Build brief is only for work that truly cannot be expressed as a scratch (complex animation packing, isolated Imagine tiled world assets, etc.). | `web-session.md`, `web-emit.md`, `web-test.md` |
 
 ## By change kind
 

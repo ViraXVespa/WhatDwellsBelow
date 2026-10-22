@@ -52,6 +52,7 @@ When a slice needs a visual proof, run `python tools/run_shots.py --mode web` an
 | Named phase assert | `tools/run_smokes.py` | smokes summary |
 | GDScript import / COMPILE | `tools/run_godot_import_check.py` via `dump_job(..., "godot-import-check", script="run_godot_import_check.py")` | godot-import-check summary; fail on COMPILE or clean=false |
 | Postcard shot | `python tools/run_shots.py --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
+| Hub light bake / stamp | `python tools/run_bake_camp.py` (invoked by the scratch) | bake summary + stamp line; User pastes RESULT and (if the scratch did not already) commits the new `hub_light.png` + `HUB_BAKE_STAMP` |
 
 A slice that only edits protocol docs does not boot Godot. If there is no runner for that work, say so and prove with the load-graph / gate only.
 
@@ -83,6 +84,6 @@ Do not treat a page-tool summary as the live file.
 
 When not on a grok-build branch the scratch calls `doc_patch.write_changelog` by default.
 
-Changelog entries: bullets list every change; the Summary line is a brief overview of those changes. A later call may replace an existing Summary.
+Changelog entries: bullets list every change; every changelog file must have a Summary line (a brief overview of those changes). Pass `summary=` to `write_changelog` (a later call may replace an existing Summary). Every emit that lands a change (including new or updated tasks) calls `write_changelog`.
 
 Changelog label: if any design/changelog/*.md is dirty in the working tree, append to the highest of those; otherwise use next_label().

@@ -27,6 +27,11 @@ hub-perf-fix | build | open | Hub perf fix - diagnose and clear sub-60 FPS on th
 receptionist-redesign | build | open | Redraw the receptionist sprite to her new design | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
+hub-bake-lights | web | open | Hub bake, prop shadows, lamps, light leaks, desktop shading | -
+hub-draw-order | web | open | Hub draw-order / sorting sweep | -
+hub-ground-roofs | web | open | Ground transitions + roof UV / awning banding | -
+hub-guild-reception | web | open | Guild receptionist bust + welcome banner | -
+hub-vendor-stall | web | open | Vendor stall geometry, collision, sticks | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
