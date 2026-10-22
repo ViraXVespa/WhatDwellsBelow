@@ -10,7 +10,6 @@ export_credentials.cfg.uid
 .archive_export_cache/
 /_pages/*
 !/_pages/.gdignore
-docs/
 
 # Local Copilot sweep notes (do not commit)
 /_logs/*
