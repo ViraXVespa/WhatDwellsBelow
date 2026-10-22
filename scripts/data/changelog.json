@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.8.3",
+			"points": [
+				{
+					"text": "Clarified changelog protocol: bullets record outcomes (not intermediate debugging), and the Summary must cover every bullet in the file."
+				},
+				{
+					"text": "Distributed additional hub screenshots into the task refs folders and updated each task's Refs section to name the files that are actually present and what they show."
+				}
+			],
+			"summary": "Aligned hub task refs with the actual screenshots and updated the task descriptions to match."
+		},
+		{
 			"label": "0.8.2",
 			"points": [
 				{
