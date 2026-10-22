@@ -84,6 +84,6 @@ Do not treat a page-tool summary as the live file.
 
 When not on a grok-build branch the scratch calls `doc_patch.write_changelog` by default.
 
-Changelog entries: bullets list every change; every changelog file must have a Summary line that covers every bullet currently in that file. Intermediate emits pass an updated cumulative `summary=` (write_changelog replaces the existing Summary line). After the User pushes, the next change starts a new label; do not carry the old Summary forward. Every emit that lands a change (including new or updated tasks) calls `write_changelog`.
+Changelog entries: bullets record the outcome of the work (what landed and why it matters), not intermediate debugging steps that were later superseded. Every changelog file must have a Summary line that covers every bullet currently in that file. Intermediate emits pass an updated cumulative `summary=` (write_changelog replaces the existing Summary line). After the User pushes, the next change starts a new label; do not carry the old Summary forward. Every emit that lands a change (including new or updated tasks) calls `write_changelog`.
 
 Changelog label: if any design/changelog/*.md is dirty in the working tree, append to the highest of those; otherwise use next_label().

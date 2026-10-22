@@ -10,4 +10,6 @@ resume: (web) start by naming this task in a web session; no open_slice command.
 Cross-cutting 2.5D draw-order fixes after geometry is stable.
 
 ## Refs
-Drop examples in design/refs/hub-draw-order/.
+- character-close.jpg — player close to wall / stall
+- stall-character.jpg — player vs stall ceiling
+- reception-sort.jpg — receptionist window sort

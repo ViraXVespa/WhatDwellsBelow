@@ -10,4 +10,4 @@ resume: (web) start by naming this task in a web session; no open_slice command.
 UV scale, ground blending, and awning banding.
 
 ## Refs
-Drop close-ups in design/refs/hub-ground-roofs/.
+- ground-tiles.jpg — hard edges between ground tiles (and roof/awning context)

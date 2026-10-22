@@ -11,3 +11,6 @@ Bake registration, torch lights, light-leak fix, and desktop/web shading parity.
 
 ## Refs
 Drop missing-shadow and leak examples in design/refs/hub-bake-lights/.
+
+## Refs
+- red-wall-shadow.jpg — missing / incorrect shadow on a wall face (bake registration example)

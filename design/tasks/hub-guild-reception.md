@@ -10,4 +10,6 @@ resume: (web) start by naming this task in a web session; no open_slice command.
 Fold in receptionist-redesign (new look from hub-guild.md) plus sorting and banner collision.
 
 ## Refs
-Drop screenshots and any new-look reference in design/refs/hub-guild-reception/.
+- reception-sign.jpg — window / RECEPTION sign (current clip)
+- banner-close.jpg — welcome banner poles
+- receptionist-current-src.jpg — existing source plate for the goth/metal redesign (same size/style)

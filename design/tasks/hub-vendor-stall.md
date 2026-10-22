@@ -10,4 +10,8 @@ resume: (web) start by naming this task in a web session; no open_slice command.
 Fix vendor stall sorting, collision, missing sticks, and right-side wall from the hub issue list.
 
 ## Refs
-Drop screenshots in design/refs/hub-vendor-stall/ (ceiling-sort, missing-wall, missing-sticks, walk-through).
+- stall-character.jpg — player near stall (ceiling sort / walk-through)
+- stall-front.jpg — front face of stall
+- stall-side.jpg — side view (missing sticks)
+- stall-top.jpg — top-down stall
+- missing-wall-shadow.jpg — right-side wall / shadow gap
