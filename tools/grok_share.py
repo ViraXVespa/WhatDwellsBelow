@@ -22,11 +22,13 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-try:
-    from playwright.sync_api import sync_playwright
-except ImportError:
-    print("error: playwright not installed. Run: pip install playwright && playwright install chromium", file=sys.stderr)
-    raise SystemExit(2)
+def _need_playwright():
+    try:
+        from playwright.sync_api import sync_playwright
+        return sync_playwright
+    except ImportError:
+        print("error: playwright not installed. Run: pip install playwright && playwright install chromium", file=sys.stderr)
+        raise SystemExit(2)
 
 
 UA = (
@@ -123,7 +125,16 @@ def save_images(page, images: list[dict], dest: Path, prefix: str, turn: int | N
     return saved
 
 
+
+def _early_help() -> None:
+    if "--help" in sys.argv or "-h" in sys.argv:
+        parser = agent_log.std_parser("Pull conversation + images from a Grok share URL (Playwright).", json_out=True)
+        parser.add_argument("url", nargs="?", help="Grok share URL")
+        parser.print_help()
+        raise SystemExit(0)
+
 def main(argv: list[str] | None = None) -> int:
+    _early_help()
     parser = agent_log.std_parser(
         "Pull conversation + images from a Grok share URL (Playwright).",
         json_out=True,
@@ -147,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.index:
         indexes = {int(x.strip()) for x in args.index.split(",") if x.strip()}
 
-    with sync_playwright() as p:
+    with _need_playwright()() as p:
         default_profile = Path(os.path.expandvars("%USERPROFILE%")) / ".grok-edge-profile"
         udd = Path(os.path.expandvars(str(args.user_data_dir or default_profile))).resolve()
         repo = agent_log.resolve_root(args)
@@ -162,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
             print("Log in to X in the window that opens, then close it. Later runs stay headless.")
             return 2
         if profile_empty and args.headed:
-            print(f"Creating profile at {udd} — log in to X in the window, then close it.")
+            print(f"Creating profile at {udd} -- log in to X in the window, then close it.")
             udd.mkdir(parents=True, exist_ok=True)
         launch_kwargs = {
             "headless": not args.headed,

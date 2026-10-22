@@ -56,18 +56,32 @@ def detect(root: Path, before: str, head: str) -> list[tuple[int, int]]:
     return sorted(set(found), key=lambda e: (e[0], e[1]))
 
 def pin_week(root: Path, epoch: int, n: int, head: str, dry: bool, say) -> tuple[list[str], list[str]]:
-    """Pin web + build for week n. Returns (paths to commit, new local tags)."""
+    """On the week-close merge of grok-build-wN:
+    - pin grok_build_wN at the merge commit
+    - pin grok_web_w{N-1} at the parent of the merge (tip of main before the branch)
+    - do not pin grok_web_wN (week_start creates that)
+    Returns (paths to commit, new local tags)."""
     paths, tags = [], []
-    for kind in KINDS:
-        spec = week_pin.pin_spec(kind, n)
-        sha = week_pin.tag_commit(root, spec["tag"]) or head  # a surviving tag keeps its commit
+    parent = rev(root, f"{head}^1") or rev(root, f"{head}^") or ""
+
+    # build N at the merge
+    spec = week_pin.pin_spec("build", n)
+    sha = week_pin.tag_commit(root, spec["tag"]) or head
+    res = week_pin.pin_row(root, spec, sha, epoch, dry)
+    say(f"{spec['id']} row={res['row']} tag={res['tag']} commit={res['commit'][:12]} docs={res['docs']}")
+    if res["tag"] in ("created", "would-create"):
+        tags.append(spec["tag"])
+
+    # web N-1 at the parent
+    if n > 1 and parent:
+        spec = week_pin.pin_spec("web", n - 1)
+        sha = week_pin.tag_commit(root, spec["tag"]) or parent
         res = week_pin.pin_row(root, spec, sha, epoch, dry)
-        say(f"{spec['id']} row={res['row']} tag={res['tag']} commit={res['commit'][:12]} docs={res['docs']} notes={res['notes']}")
-        if res["row"] in ("added", "would-add"):
-            paths.append(f"archives/docs/{spec['id']}")
+        say(f"{spec['id']} row={res['row']} tag={res['tag']} commit={res['commit'][:12]} docs={res['docs']}")
         if res["tag"] in ("created", "would-create"):
             tags.append(spec["tag"])
-    if paths or tags:
+
+    if tags:
         paths.append(week_pin.CATALOG)
     return paths, tags
 

@@ -28,14 +28,16 @@ import repo_lib
 CATALOG = "scripts/data/archive_catalog.json"
 
 def pin_spec(kind: str, n: int) -> dict:
-    """Row facts for a weekly pin. Web and Build both pin the week-close merge, so both copy series n's notes."""
+    """Row facts for a weekly pin.
+    Build pins the week-close merge of grok-build-wN.
+    Web pins the tip of main just before that branch was created (created by week_start)."""
     web = kind == "web"
     return {
         "id": f"grok_{kind}_w{n}",
         "label": f"Grok {'Web' if web else 'Build'} Results (Week {n})",
         "desc": (f"Live path at the end of Grok Web week {n}." if web else f"Live path at the end of Grok Build week {n} (the week-close merge)."),
         "tag": f"archive/grok-{kind}-w{n}",
-        "notes_series": n,
+        "notes_series": 0,
     }
 
 def design_docs(root: Path, commit: str) -> list[str]:
@@ -89,12 +91,9 @@ def pin_row(root: Path, spec: dict, sha: str, epoch: int, dry: bool) -> dict:
     data, bom, crlf = read_catalog(root)
     rows = rows_of(data)
     have = next((b for b in rows if b.get("id") == spec["id"]), None)
-    notes: list[str] = []
     docs = 0
     if have is None:
-        if spec["notes_series"]:
-            notes = copy_notes(root, epoch, spec["notes_series"], root / "archives" / "docs" / spec["id"], dry)
-        docs_list = design_docs(root, sha) + notes
+        docs_list = design_docs(root, sha)
         docs = len(docs_list)
         rows.append({"id": spec["id"], "label": spec["label"], "desc": spec["desc"], "commit": sha,
                      "pages_slug": f"archives/{spec['id']}", "video": "", "docs": docs_list})
@@ -111,7 +110,7 @@ def pin_row(root: Path, spec: dict, sha: str, epoch: int, dry: bool) -> dict:
             tag_state = "would-create" if dry else "created"
             if not dry:
                 repo_lib.run_git(root, "tag", tag, at)
-    return {"row": "exists" if have else ("would-add" if dry else "added"), "tag": tag_state, "commit": at, "docs": docs, "notes": len(notes)}
+    return {"row": "exists" if have else ("would-add" if dry else "added"), "tag": tag_state, "commit": at, "docs": docs, "notes": 0}
 
 def main() -> int:
     ap = agent_log.std_parser("Add a weekly archive pin (catalog row + local tag) for a commit; does not bump version.json.", writes=True)

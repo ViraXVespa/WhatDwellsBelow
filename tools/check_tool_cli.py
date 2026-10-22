@@ -12,6 +12,8 @@ must end in a RESULT line, stay under the line budget, print ASCII and repo-rela
 the copy unchanged. The per-run table (rc, lines, seconds) goes to the summary file.
 """
 from __future__ import annotations
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import ast
 import json
@@ -20,7 +22,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -163,6 +164,11 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
     except SyntaxError as exc:
         bad.append(f"SYNTAX  {path.name}: {exc.msg} line {exc.lineno}")
         return
+    try:
+        compile(src, str(path), "exec")
+    except SyntaxError as exc:
+        bad.append(f"COMPILE {path.name}: {exc.msg} line {exc.lineno}")
+        return
     if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         bad.append(f"ARGS    {path.name}: no argparse (use agent_log.std_parser)")
     if kind == "ops" and name not in PRINTERS:
@@ -275,14 +281,16 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
     stems = [p.stem for p in sorted((root / "tools").glob("*.py"))]
     runs = tools = 0
     try:
-        for stem in stems:
+        lock = threading.Lock()
+        def process_stem(stem: str) -> tuple[int, int, list[str], list[str]]:
+            local_bad: list[str] = []
+            local_table: list[str] = []
             src = (sb / "tools" / f"{stem}.py").read_text(encoding="utf-8-sig")
             if (only and stem not in only) or stem.endswith("_lib") or "__main__" not in src or src.lstrip("#!/usr/bin/env python3\n ").startswith('"""Shim'):
-                continue
-            tools += 1
+                return 0, 0, local_bad, local_table
             cases = [["--nope"]]
-            helptext = subprocess.run([sys.executable, str(sb / "tools" / f"{stem}.py"), "--help"], cwd=sb, capture_output=True, text=True,
-                                      stdin=subprocess.DEVNULL, timeout=60).stdout
+            helptext = subprocess.run([sys.executable, str(sb / "tools" / f"{stem}.py"), "--help"], cwd=sb,
+                                      capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60).stdout
             has_json = "--json" in helptext
             if "--root" in helptext:
                 cases.append(["--root", "/nonexistent/wdb-smoke-root"])
@@ -290,9 +298,22 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
             if mine and has_json and stem not in SMOKE_NO_RESULT:
                 first = mine[0][0] if isinstance(mine[0], tuple) else mine[0]
                 mine = mine + [(["--json"] + first, (0, 1, 2))]
+            nruns = 0
             for args in cases + mine:
-                runs += 1
-                smoke_one(sb, stem, args, bad, table)
+                nruns += 1
+                with lock:
+                    smoke_one(sb, stem, args, local_bad, local_table)
+            return 1, nruns, local_bad, local_table
+
+        stems_to_run = [s for s in stems if not ((only and s not in only) or s.endswith("_lib"))]
+        with ThreadPoolExecutor(max_workers=min(8, max(1, len(stems_to_run)))) as ex:
+            futs = [ex.submit(process_stem, s) for s in stems_to_run]
+            for fut in as_completed(futs):
+                t_add, r_add, b_add, tab_add = fut.result()
+                tools += t_add
+                runs += r_add
+                bad.extend(b_add)
+                table.extend(tab_add)
     finally:
         if os.environ.get("WDB_KEEP_SANDBOX"):
             table.append(f"sandbox kept: {sb}")
@@ -303,16 +324,37 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
     ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable).")
+    ap.add_argument("--full", action="store_true", help="Check every tool (default: only tools with uncommitted changes).")
     ap.add_argument("--smoke-run", action="store_true", help="Also run every tool's probes and SMOKE cases in a throwaway repo copy (about a minute).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     tools = root / "tools"
     bad: list[str] = []
     tally = {"checked": 0, "libs": 0}
-    for path in sorted(tools.glob("*.py")):
-        if args.only and path.stem not in args.only:
-            continue
-        check_py(root, path, bad, tally)
+    if args.only:
+        paths = [p for p in sorted(tools.glob("*.py")) if p.stem in args.only]
+    elif args.full:
+        paths = sorted(tools.glob("*.py"))
+    else:
+        # default: only tools with uncommitted changes
+        code, out = subprocess.run(["git", "status", "--porcelain", "tools/"], cwd=root, capture_output=True, text=True).returncode, ""
+        proc = subprocess.run(["git", "status", "--porcelain", "tools/"], cwd=root, capture_output=True, text=True)
+        dirty = {Path(line[3:].strip()).stem for line in proc.stdout.splitlines() if line[3:].strip().endswith(".py")}
+        paths = [p for p in sorted(tools.glob("*.py")) if p.stem in dirty]
+        if not paths:
+            print("tool-cli: no uncommitted tools (use --full for everything)")
+            return 0
+    lock = threading.Lock()
+    def check_one(path: Path) -> None:
+        local_bad: list[str] = []
+        local_tally = {"checked": 0, "libs": 0}
+        check_py(root, path, local_bad, local_tally)
+        with lock:
+            bad.extend(local_bad)
+            tally["checked"] += local_tally["checked"]
+            tally["libs"] += local_tally["libs"]
+    with ThreadPoolExecutor(max_workers=min(8, max(1, len(paths)))) as ex:
+        list(ex.map(check_one, paths))
     bad += [f"{d}: root underscore folder without .gdignore (Godot would import and pack it; any agent_log run adds it)"
             for d in agent_log.gdignore_underscore(root, fix=False)]
     tracked = set(subprocess.run(["git", "ls-files", "-z", "--", "_*/.gdignore"], cwd=root, capture_output=True, text=True).stdout.split("\0"))
