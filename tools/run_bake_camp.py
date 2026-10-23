@@ -42,13 +42,12 @@ def draw_overlay(root: Path, err_log: Path, out: Path, org: float = -18.0, sub: 
             d.rectangle([*px(n[0], n[1]), *px(n[0] + n[2], n[1] + n[3])], outline=(0, 220, 255))
     out.parent.mkdir(parents=True, exist_ok=True)
     im.save(out)
-    print(f"overlay={out}")
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     ap.add_argument("--headless", action="store_true", help="force the headless driver (same atlas, no display needed)")
-    ap.add_argument("--overlay", metavar="PNG", help="also write the bake with skirt boxes (yellow), protected footprints (red) and caster bounds (cyan) outlined, from the bake_dbg lines")
+    ap.add_argument("--overlay", nargs="?", const="_out/bake-camp/overlay.png", metavar="PNG", help="also write the bake with skirt boxes (yellow), protected footprints (red) and caster bounds (cyan) outlined, from the bake_dbg lines")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     out_log, err_log = agent_log.run_path("bake-camp", root, "bake-out.log"), agent_log.run_path("bake-camp", root, "bake-err.log")
@@ -73,8 +72,9 @@ def main(argv: list[str] | None = None) -> int:
                 hub.write_text(ht2, encoding="utf-8")
                 print(f"updated HUB_BAKE_STAMP={stamp}")
     clean = r["status"] == "EXIT=0" and not hard
-    if args.overlay:
-        draw_overlay(root, err_log, Path(args.overlay))
+    overlay = args.overlay or ""
+    if overlay:
+        draw_overlay(root, err_log, Path(overlay) if Path(overlay).is_absolute() else root / overlay)
     import bake_ground_wear
     if bake_ground_wear.main(["--root", str(root)]) != 0:
         clean = False
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     body = ["bake camp root=.", f"status={r['status']} ms={r['ms']} display={kind} shadow_px={shadow} stamp={stamp} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("bake-camp", root, "\n".join(body), status, args=args,
-                            clean=str(clean).lower(), shadow_px=shadow, stamp=stamp, display=kind)
+                            clean=str(clean).lower(), shadow_px=shadow, stamp=stamp, display=kind, **({"overlay": overlay} if overlay else {}))
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
