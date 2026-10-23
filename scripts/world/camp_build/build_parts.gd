@@ -2,6 +2,7 @@ extends Object
 
 ## Camp build buildings: guild hall and wings, stall solids, awnings, roof planes.
 
+const Lamps := preload("res://scripts/world/camp/lamps.gd")
 const MeshS := preload("res://scripts/world/camp_build/mesh.gd")
 const Util := preload("res://scripts/world/camp_build/build_util.gd")
 const Prim := preload("res://scripts/world/camp_build/mesh_prim.gd")
@@ -19,6 +20,7 @@ static func guild_hall(host: Node3D) -> void:
 	MeshS.wall_box(hall_body, hall_fit, Color(0.45, 0.32, 0.22))
 	Util._slide(hall_body, hall_fit)
 	Util.face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.32)
+	Lamps.on_face(hall_body.get_child(hall_body.get_child_count() - 1) as Sprite3D, 0.32, Lamps.GUILD_LAMPS)
 	var hall_valance: float = hall_fit.y * lay.awning_valance("Hall")
 	awning(hall_body, hall_fit, lay.awning_depth("Hall"), lay.awning_slope("Hall"), hall_valance, 0.0, 0.0, 0.0)
 	MeshS.gable_on(hall_body, hall_fit, 0.0, 0.55, lay.tile_for("Hall"), lay.hall_uv_off)

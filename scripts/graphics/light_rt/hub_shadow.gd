@@ -6,6 +6,7 @@ extends Object
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const SKIP_H := 0.2
+const PROPS_PATH := "res://scripts/graphics/light_rt/hub_props.gd"
 
 ## Darkens img under every shadow-casting mesh and building sprite below the Layout's parent (the camp in the tree).
 ## A building's parts (siblings under one body) share one top, so a wall and its roof fade as one shadow.
@@ -41,6 +42,7 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 		else:
 			wrote += _hub_project_sprite(img, org, sub, node, top, prot)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
+	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))
 	return wrote
 
 static func _is_covering(name: String) -> bool:

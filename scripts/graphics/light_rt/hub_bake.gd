@@ -11,7 +11,7 @@ const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
 ## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
 ## Layout boxes -> rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here
 ## (tools/check_hub_bake.py checks the committed png against it).
-const HUB_BAKE_STAMP := "03e7ce808a647e89"
+const HUB_BAKE_STAMP := "bafc3cc9b8627e3f"
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
 static func _baked_image(path: String) -> Image:

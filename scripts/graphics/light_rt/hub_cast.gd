@@ -3,6 +3,7 @@ extends Object
 ## Hub yard shadow boxes: building skirts cast onto the baked hub light image.
 
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
+const HubProps := preload("res://scripts/graphics/light_rt/hub_props.gd")
 ## Shadows fall along AWAY (+X +Z, same as the actor blobs); REACH metres of ground per metre of height.
 ## Shade runs SHADE_NEAR at the caster to SHADE_TIP at its far end (last 1 - TIP_FROM of the length).
 ## hub_shadow.gd uses the same numbers for the mesh shadows.
@@ -137,7 +138,7 @@ static func _hub_stamp_skirt(
 static func _hub_yard_boxes(layout: Node, meshed: bool) -> Array:
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
-		_hub_prop_blobs(layout, boxes)
+		HubProps.append(layout, boxes)
 		if meshed:
 			boxes.append(_hub_tarp(layout.stall_pos(), layout.stall_box))
 			return boxes
@@ -160,26 +161,6 @@ static func _hub_yard_boxes(layout: Node, meshed: bool) -> Array:
 		boxes.append(_hub_gable(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2)))
 		boxes.append(_hub_tarp(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4)))
 	return boxes
-static func _hub_prop_blobs(layout: Node, boxes: Array) -> void:
-	if layout == null:
-		return
-	var names: Array = ["anvil", "dumpster", "board", "notice", "crystal", "dummy", "vendor"]
-	var i: int = 0
-	while i < names.size():
-		var meth: String = str(names[i]) + "_pos"
-		if layout.has_method(meth):
-			var p: Vector3 = layout.call(meth)
-			boxes.append({
-				"kind": "post",
-				"x": p.x,
-				"z": p.z,
-				"hx": 0.34,
-				"hz": 0.26,
-				"eave": 0.65,
-				"ridge": 0.65,
-				"h": 0.85
-			})
-		i += 1
 static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
 	var eave: float = maxf(box.y, 1.2) * 0.78
 	return {
