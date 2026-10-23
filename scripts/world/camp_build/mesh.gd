@@ -58,26 +58,34 @@ static func ground(host: Node3D) -> void:
 	_band(host, ox, 25, ox + gw - 1, oz + gd - 1, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
 	_band(host, ox, 4, 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
 	_band(host, 31, 4, ox + gw - 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	# yard dirt + path plus; grass runs under the dirt so the dirt's worn noise edge shows it
+	# yard dirt + path plus; each fades into the surface below it (grass under dirt, dirt under the paths)
 	_band(host, 2, 4, 30, 24, y - 0.01, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 1.1)
-	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8)
-	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8)
+	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 1.1, GRASS)
+	# The two path arms share one union fade so the crossing stays path.
+	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8, DIRT, _tiles(15, 8, 17, 22))
+	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8, DIRT, _tiles(6, 13, 26, 16))
 	load("res://scripts/world/camp_build.gd").outer_grass(host)
 
+const GRASS := "res://assets/tiles/grass_field.png"
+const DIRT := "res://assets/tiles/packed_dirt.png"
+static func _tiles(x0: int, z0: int, x1: int, z1: int) -> Vector4:
+	return Vector4(float(x0), float(z0), float(x0) + float(x1 - x0 + 1) * T.TILE, float(z0) + float(z1 - z0 + 1) * T.TILE)
+
 static func _band(
-	host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color, feather: float = 0.0
+	host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color, feather: float = 0.0,
+	under: String = "", rect2: Vector4 = Vector4.ZERO
 ) -> void:
 	if x1 < x0 or z1 < z0:
 		return
 	var sx: float = float(x1 - x0 + 1) * T.TILE
 	var sz: float = float(z1 - z0 + 1) * T.TILE
 	var c := Vector3(float(x0) + sx * 0.5, y, float(z0) + sz * 0.5)
-	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback, feather)
+	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback, feather, under, rect2)
 
 static func grass_pad(
 
-	host: Node3D, center: Vector3, dim: Vector2, tex_path: String, fallback: Color, feather: float = 0.0
+	host: Node3D, center: Vector3, dim: Vector2, tex_path: String, fallback: Color, feather: float = 0.0,
+	under: String = "", rect2: Vector4 = Vector4.ZERO
 ) -> void:
 
 	if dim.x <= 0.05 or dim.y <= 0.05:
@@ -96,7 +104,7 @@ static func grass_pad(
 
 	if feather > 0.0:
 		var r := Vector4(center.x - dim.x * 0.5, center.z - dim.y * 0.5, center.x + dim.x * 0.5, center.z + dim.y * 0.5)
-		inst.material_override = GroundShader.feathered(tex_path, fallback, r, feather)
+		inst.material_override = GroundShader.feathered(tex_path, fallback, r, feather, under, rect2)
 	else:
 		inst.material_override = GroundShader.material(tex_path, fallback)
 

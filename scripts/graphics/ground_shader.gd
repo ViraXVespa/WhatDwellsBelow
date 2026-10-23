@@ -51,6 +51,9 @@ uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform vec4 feather_rect = vec4(0.0);
 uniform float feather = 0.0;
+uniform vec4 feather_rect2 = vec4(0.0);
+uniform sampler2D under_tex : source_color, filter_nearest_mipmap, repeat_enable;
+uniform vec2 under_uv = vec2(1.0);
 varying vec3 world_pos;
 float hash2(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 float vnoise(vec2 g) {
@@ -66,18 +69,19 @@ void vertex() {
 
 void fragment() {
 	vec2 xz = world_pos.xz;
+	vec3 c = texture(albedo_tex, xz * uv_scale + uv_off).rgb;
 	if (feather > 0.0) {
-		// Crisp edge on the 1/16 m texel grid, pushed in by smooth value noise (~1 m plus a 0.3 m octave): clumpy, no specks.
+		// Transition, not a cut: blend toward the surface below (under_tex) across the fade, alpha in 4 steps on the
+		// 1/16 m texel grid; the blend centre wobbles a little (0.25 m at ~2 m plus 0.12 m at ~0.6 m).
 		vec2 q = (floor(xz * 16.0) + 0.5) / 16.0;
-		float wob = vnoise(q * 1.1) * 0.7 + vnoise(q * 3.3 + 17.0) * 0.3;
-		vec2 lo = q - feather_rect.xy;
-		vec2 hi = feather_rect.zw - q;
-		if (min(min(lo.x, hi.x), min(lo.y, hi.y)) < wob * feather) {
-			discard;
+		float d = min(min(q.x - feather_rect.x, feather_rect.z - q.x), min(q.y - feather_rect.y, feather_rect.w - q.y));
+		if (feather_rect2.z > feather_rect2.x) {
+			d = max(d, min(min(q.x - feather_rect2.x, feather_rect2.z - q.x), min(q.y - feather_rect2.y, feather_rect2.w - q.y)));
 		}
+		float k = smoothstep(0.0, feather, d - 0.25 * vnoise(q * 0.5) - 0.12 * vnoise(q * 1.7 + 9.0));
+		k = floor(k * 4.0 + 0.5) / 4.0;
+		c = mix(texture(under_tex, xz * under_uv).rgb, c, k);
 	}
-	vec2 uv = xz * uv_scale + uv_off;
-	vec3 c = texture(albedo_tex, uv).rgb;
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
 """ + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * worn * lit;
 }
@@ -85,12 +89,16 @@ void fragment() {
 	_sh = sh
 	return sh
 
-## feather > 0: the plane ends within its last `feather` metres inside rect (x0, z0, x1, z1) (a crisp edge on the
-## 1/16 m texel grid, displaced by two octaves of value noise), so the layer below shows as a worn, clumpy border.
-static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float) -> ShaderMaterial:
+## feather > 0: inside rect (x0, z0, x1, z1), or the union with rect2, the plane blends to under_path's texture over its
+## last `feather` metres (4 alpha steps on the 1/16 m texel grid, small slow wobble), so surfaces meet in a soft transition.
+static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float, under_path: String, rect2: Vector4 = Vector4.ZERO) -> ShaderMaterial:
 	var mat: ShaderMaterial = material(tex_path, fallback)
 	mat.set_shader_parameter("feather_rect", rect)
+	mat.set_shader_parameter("feather_rect2", rect2)
 	mat.set_shader_parameter("feather", width)
+	var under: ShaderMaterial = material(under_path, fallback)
+	mat.set_shader_parameter("under_tex", under.get_shader_parameter("albedo_tex"))
+	mat.set_shader_parameter("under_uv", under.get_shader_parameter("uv_scale"))
 	return mat
 
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
