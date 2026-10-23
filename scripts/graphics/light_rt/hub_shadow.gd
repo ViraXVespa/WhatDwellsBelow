@@ -51,6 +51,13 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 			wrote += _hub_project_mesh(img, org, sub, node, top, prot)
 		else:
 			wrote += _hub_project_sprite(img, org, sub, node, top, prot)
+	var fence_px: int = 0
+	# Fence boxes skip live shadows (cast_shadow off) but are real rails and posts: project them as they are.
+	for body in root.get_tree().get_nodes_in_group("hub_fence"):
+		for mi in (body as Node).find_children("*", "MeshInstance3D", true, false):
+			fence_px += _hub_project_mesh(img, org, sub, mi, 1.13, prot)
+	wrote += fence_px
+	printerr("bake_camp: fence_px=%d" % fence_px)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
 	printerr("bake_camp: prop_px=%d" % load(PROPS_PATH).project_sprites(img, org, sub, layout, HubCast))
 	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))

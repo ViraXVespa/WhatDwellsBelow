@@ -1,10 +1,7 @@
 extends Object
 
-## Hub bake only: soft-skirt boxes for the yard props (anvil, dumpster, welcome banner, fence). Spots come from
-## Layout.spot_pos, so the boxes follow the Layout. Feeds hub_cast._hub_stamp_skirt (kind "post": flat top h).
-
-const FENCE_H := 1.05
-const FENCE_STEP := 2.0
+## Hub bake only: yard prop shadows from their billboard art (anvil, dumpster, welcome banner) and the lamp pools. Spots come from
+## Layout.spot_pos. Called from hub_shadow._hub_mesh_shadows.
 
 ## Yard props drawn as Y-billboards facing -Z (interact_fx / banner.gd): [spot, texture, world height, centre y].
 const SPRITES: Array = [
@@ -12,11 +9,6 @@ const SPRITES: Array = [
 	["Dumpster", "res://assets/sprites/props/dumpster.png", 0.85, 0.48],
 	["Banner", "res://assets/sprites/props/welcome_banner.png", 4.4, 2.2],
 ]
-
-static func append(layout: Node, boxes: Array) -> void:
-	if layout == null or not layout.has_method("spot_pos"):
-		return
-	_fence(layout, boxes)
 
 ## Prop shadows from the real art: every opaque texel of each prop billboard lands on the ground along
 ## HubCast.AWAY (same reach and shade as the mesh shadows), so the shadow matches the drawn outline and touches its foot.
@@ -55,34 +47,6 @@ static func project_sprites(img: Image, org: Vector2, sub: float, layout: Node, 
 					img.set_pixel(x, y, Color(minf(c.r, shade), minf(c.g, shade), minf(c.b, shade), 1.0))
 					wrote += 1
 	return wrote
-
-## Four runs on the slab edge (camp_view.fence): one post every ~2 m plus the top rail.
-static func _fence(layout: Node, boxes: Array) -> void:
-	var ox: float = float(layout.ground_ox)
-	var oz: float = float(layout.ground_oz)
-	var gw: float = float(layout.ground_w)
-	var gd: float = float(layout.ground_d)
-	var runs: Array = [
-		[Vector2(ox, oz + 0.08), Vector2(ox + gw, oz + 0.08)],
-		[Vector2(ox, oz + gd - 0.08), Vector2(ox + gw, oz + gd - 0.08)],
-		[Vector2(ox + 0.08, oz), Vector2(ox + 0.08, oz + gd)],
-		[Vector2(ox + gw - 0.08, oz), Vector2(ox + gw - 0.08, oz + gd)],
-	]
-	for r in runs:
-		var a: Vector2 = r[0]
-		var e: Vector2 = r[1]
-		var mid: Vector2 = (a + e) * 0.5
-		var along_x: bool = absf(e.x - a.x) > absf(e.y - a.y)
-		var span: float = a.distance_to(e)
-		var rail := Vector2(span * 0.5, 0.05) if along_x else Vector2(0.05, span * 0.5)
-		_box(boxes, Vector3(mid.x, 0.0, mid.y), rail.x, rail.y, FENCE_H * 0.85)
-		var n: int = maxi(2, int(round(span / FENCE_STEP)) + 1)
-		for i in n:
-			var p: Vector2 = a.lerp(e, float(i) / float(n - 1))
-			_box(boxes, Vector3(p.x, 0.0, p.y), 0.09, 0.09, FENCE_H)
-
-static func _box(boxes: Array, p: Vector3, hx: float, hz: float, h: float) -> void:
-	boxes.append({"kind": "post", "x": p.x, "z": p.z, "hx": hx, "hz": hz, "eave": h, "ridge": h, "h": h})
 
 ## Warm pool on the yard under each "hub_lamp" (guild lanterns): lifts toward GLOW within GLOW_R metres.
 const GLOW := Color(1.0, 0.8, 0.5)

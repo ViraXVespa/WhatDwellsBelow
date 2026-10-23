@@ -3,7 +3,6 @@ extends Object
 ## Hub yard shadow boxes: building skirts cast onto the baked hub light image.
 
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
-const HubProps := preload("res://scripts/graphics/light_rt/hub_props.gd")
 ## Shadows fall along AWAY (+X +Z, same as the actor blobs); REACH metres of ground per metre of height.
 ## Shade runs SHADE_NEAR at the caster to SHADE_TIP at its far end (last 1 - TIP_FROM of the length).
 ## hub_shadow.gd uses the same numbers for the mesh shadows.
@@ -139,7 +138,6 @@ static func _hub_stamp_skirt(
 static func _hub_yard_boxes(layout: Node, meshed: bool) -> Array:
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
-		HubProps.append(layout, boxes)
 		if meshed:
 			boxes.append(_hub_tarp(layout.stall_pos(), layout.stall_box))
 			return boxes
