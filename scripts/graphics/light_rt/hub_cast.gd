@@ -205,15 +205,16 @@ static func _hub_awning(pos: Vector3, box: Vector3, depth: float) -> Dictionary:
 		"hem": eave * 0.66,
 		"h": eave * 0.7
 	}
+## Lid = outer post rectangle (front 0.52 / rear 0.48 of box.z plus 0.08 posts), so no protected strip goes unshaded.
 static func _hub_tarp(pos: Vector3, box: Vector3) -> Dictionary:
 	var eave: float = box.y * 0.42
 	var ridge: float = eave + 0.92
 	return {
 		"kind": "tarp",
 		"x": pos.x,
-		"z": pos.z,
+		"z": pos.z + box.z * 0.02,
 		"hx": box.x * 0.5,
-		"hz": box.z * 0.5,
+		"hz": box.z * 0.5 + 0.08,
 		"eave": eave,
 		"ridge": ridge,
 		"h": ridge
