@@ -28,7 +28,6 @@ receptionist-redesign | build | open | Redraw the receptionist sprite to her new
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 hub-bake-lights | web | open | Hub bake, prop shadows, lamps, light leaks, desktop shading | -
-hub-ground-roofs | web | open | Ground transitions + roof UV / awning banding | -
 hub-guild-reception | web | open | Guild receptionist bust + welcome banner | -
 <!-- tasks:end -->
 
