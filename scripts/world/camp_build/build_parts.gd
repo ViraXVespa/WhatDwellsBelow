@@ -67,54 +67,56 @@ static func solid(
 		coll.shape = block
 		coll.position = Vector3(0.0, 0.0, (front_z + rear_z) * 0.5)
 		body.add_child(coll)
-		# Side walls flush to ground and connected to posts (front Z reaches 0.52).
-		var hy: float = box_size.y
-		var foot: float = -box_size.y * 0.5
+		var post_thick: float = 0.08
+		hx += post_thick                              # outer face flush with posts
+		var foot: float = -box_size.y * 0.5           # same base as posts
+		var top: float = box_size.y * 0.42 - 0.01     # same top as posts
+		var wall_h: float = top - foot
+		# Right
 		var rw := MeshInstance3D.new()
 		rw.name = "StallRightWall"
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var a := Vector3(hx, foot, rear_z)
 		var b := Vector3(hx, foot, front_z)
-		var c := Vector3(hx, foot + hy, front_z)
-		var d := Vector3(hx, foot + hy, rear_z)
+		var c := Vector3(hx, top, front_z)
+		var d := Vector3(hx, top, rear_z)
 		Prim._quad(st, a, b, c, d, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		st.generate_normals()
 		rw.mesh = st.commit()
 		rw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
 		body.add_child(rw)
 		Prim._hit(body, rw.mesh, "StallRightHit")
+		# Left
 		var lw := MeshInstance3D.new()
 		lw.name = "StallLeftWall"
 		var stl := SurfaceTool.new()
 		stl.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var a2 := Vector3(-hx, foot, rear_z)
 		var b2 := Vector3(-hx, foot, front_z)
-		var c2 := Vector3(-hx, foot + hy, front_z)
-		var d2 := Vector3(-hx, foot + hy, rear_z)
+		var c2 := Vector3(-hx, top, front_z)
+		var d2 := Vector3(-hx, top, rear_z)
 		Prim._quad(stl, a2, b2, c2, d2, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		stl.generate_normals()
 		lw.mesh = stl.commit()
 		lw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
 		body.add_child(lw)
 		Prim._hit(body, lw.mesh, "StallLeftHit")
-		# Short fill wall above the front face (hidden by tarp fold/drop).
-		var fill_h: float = 0.35
-		var fill := MeshInstance3D.new()
-		fill.name = "StallFrontFill"
-		var stf := SurfaceTool.new()
-		stf.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var fa := Vector3(-hx, foot + hy - fill_h, front_z)
-		var fb := Vector3(hx, foot + hy - fill_h, front_z)
-		var fc := Vector3(hx, foot + hy, front_z)
-		var fd := Vector3(-hx, foot + hy, front_z)
-		Prim._quad(stf, fa, fb, fc, fd, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-		stf.generate_normals()
-		fill.mesh = stf.commit()
-		fill.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
-		body.add_child(fill)
-		Prim._hit(body, fill.mesh, "StallFrontFillHit")
-		Util._blob(body, Vector3(0.0, 0.0, box_size.z * 0.2))
+		# Back
+		var bw := MeshInstance3D.new()
+		bw.name = "StallBackWall"
+		var stb := SurfaceTool.new()
+		stb.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var ba := Vector3(-hx, foot, rear_z)
+		var bb := Vector3(hx, foot, rear_z)
+		var bc := Vector3(hx, top, rear_z)
+		var bd := Vector3(-hx, top, rear_z)
+		Prim._quad(stb, ba, bb, bc, bd, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		stb.generate_normals()
+		bw.mesh = stb.commit()
+		bw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
+		body.add_child(bw)
+		Prim._hit(body, bw.mesh, "StallBackHit")
 	else:
 		roof_plane(
 			body,

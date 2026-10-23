@@ -167,6 +167,8 @@ func _step_spot_receptionist() -> void:
 
 func _step_spot_vendor() -> void:
 	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
+	if v:
+		v.global_position.y = 0.0
 	var v_lab: Label3D = v.get("label") as Label3D
 	if v_lab:
 		v_lab.position.y = 2.25
