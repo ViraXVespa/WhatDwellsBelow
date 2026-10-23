@@ -101,7 +101,7 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_mi
 	_post(body, Vector3(-box_size.x * 0.48, y_eave - 0.01, -box_size.z * 0.48), box_size.y)
 	_post(body, Vector3(box_size.x * 0.48, y_eave - 0.01, -box_size.z * 0.48), box_size.y)
 static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
-	var foot: float = -box_h * 0.5
+	var foot: float = -box_h * 0.5 - 0.02  # FLOOR_Y
 	var x: float = 0.08
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)

@@ -336,22 +336,17 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     stop_event = threading.Event()
     hide_thread = threading.Thread(target=_hide_godot_window, args=(stop_event, proc.pid), daemon=True)
     hide_thread.start()
-    import time
-    deadline = time.time() + max(1, args.timeout_sec)
-    while time.time() < deadline:
-        if proc.poll() is not None:      # Godot exited early (crash / script error)
-            break
-        time.sleep(0.25)
-    else:
+    try:
+        stdout, stderr = proc.communicate(timeout=max(1, args.timeout_sec))
+        out_log.write_bytes(stdout or b"")
+        err_log.write_bytes(stderr or b"")
+        run = {"status": f"EXIT={proc.returncode}", "ms": 0, "timed_out": False}
+    except subprocess.TimeoutExpired:
         proc.kill()
         run = {"status": "TIMEOUT", "ms": args.timeout_sec * 1000, "timed_out": True}
-    stdout, stderr = proc.communicate()
-    out_log.write_bytes(stdout or b"")
-    err_log.write_bytes(stderr or b"")
-    if "run" not in locals():
-        run = {"status": f"EXIT={proc.returncode}", "ms": 0, "timed_out": False}
-    stop_event.set()
-    hide_thread.join(timeout=1.0)
+    finally:
+        stop_event.set()
+        hide_thread.join(timeout=1.0)
     shot_hits = _shot_lines([err_log, out_log])
     err_hits = _error_lines([err_log, out_log])
     shot_ok = any("ok=true" in line for line in shot_hits)

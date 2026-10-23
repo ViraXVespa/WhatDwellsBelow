@@ -68,8 +68,8 @@ static func solid(
 		coll.position = Vector3(0.0, 0.0, (front_z + rear_z) * 0.5)
 		body.add_child(coll)
 		var post_thick: float = 0.08
-		hx += post_thick                              # outer face flush with posts
-		var foot: float = -box_size.y * 0.5           # same base as posts
+		hx += post_thick - 0.001                      # just behind outer face so posts sort in front
+		var foot: float = -pos.y + -0.02              # world FLOOR_Y
 		var top: float = box_size.y * 0.42 - 0.01     # same top as posts
 		var wall_h: float = top - foot
 		# Right
@@ -81,7 +81,7 @@ static func solid(
 		var b := Vector3(hx, foot, front_z)
 		var c := Vector3(hx, top, front_z)
 		var d := Vector3(hx, top, rear_z)
-		Prim._quad(st, a, b, c, d, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		Prim._quad(st, b, a, d, c, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		st.generate_normals()
 		rw.mesh = st.commit()
 		rw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
