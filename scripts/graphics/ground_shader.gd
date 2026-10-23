@@ -52,6 +52,8 @@ uniform vec2 light_span = vec2(1.0);
 uniform vec4 feather_rect = vec4(0.0);
 uniform float feather = 0.0;
 varying vec3 world_pos;
+const float BAYER[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+float hash2(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -61,11 +63,18 @@ void vertex() {
 void fragment() {
 	vec2 xz = world_pos.xz;
 	if (feather > 0.0) {
+		// Ordered 4x4 dither on 1/16 m cells against a smoothstep ramp; a slow wobble breaks the straight line.
 		vec2 cell = floor(xz * 16.0);
-		float n = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+		ivec2 b = ivec2(mod(cell, 4.0));
+		float th = (BAYER[b.y * 4 + b.x] + 0.5) / 16.0;
+		vec2 g = xz * 1.3;
+		vec2 gi = floor(g);
+		vec2 gf = smoothstep(0.0, 1.0, fract(g));
+		float wob = mix(mix(hash2(gi), hash2(gi + vec2(1.0, 0.0)), gf.x), mix(hash2(gi + vec2(0.0, 1.0)), hash2(gi + vec2(1.0)), gf.x), gf.y);
 		vec2 lo = xz - feather_rect.xy;
 		vec2 hi = feather_rect.zw - xz;
-		if (n * feather > min(min(lo.x, hi.x), min(lo.y, hi.y))) {
+		float d = min(min(lo.x, hi.x), min(lo.y, hi.y)) - wob * feather * 0.6;
+		if (th > smoothstep(0.0, feather * 0.7, d)) {
 			discard;
 		}
 	}
@@ -78,8 +87,8 @@ void fragment() {
 	_sh = sh
 	return sh
 
-## feather > 0: the plane dithers out over its last `feather` metres inside rect (x0, z0, x1, z1), so a layer below
-## shows through in 1/16 m cells instead of a hard edge.
+## feather > 0: the plane dithers out over its last `feather` metres inside rect (x0, z0, x1, z1) (ordered 4x4 dither on
+## 1/16 m cells, smoothstep ramp, slow edge wobble), so a layer below shows through softly instead of a hard edge.
 static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float) -> ShaderMaterial:
 	var mat: ShaderMaterial = material(tex_path, fallback)
 	mat.set_shader_parameter("feather_rect", rect)

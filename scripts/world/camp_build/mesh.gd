@@ -60,9 +60,9 @@ static func ground(host: Node3D) -> void:
 	_band(host, 31, 4, ox + gw - 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
 	# yard dirt + path plus; grass runs under the dirt so the dirt's dithered edge blends into it
 	_band(host, 2, 4, 30, 24, y - 0.01, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 0.75)
-	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.5)
-	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.5)
+	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 1.1)
+	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8)
+	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8)
 	load("res://scripts/world/camp_build.gd").outer_grass(host)
 
 static func _band(
