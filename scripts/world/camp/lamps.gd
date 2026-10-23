@@ -6,6 +6,8 @@ extends Object
 const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
 ## Lantern flame centres in guild.png texels (320x180 sheet).
 const GUILD_LAMPS: Array[Vector2] = [Vector2(99.0, 95.0), Vector2(219.0, 95.0)]
+## Lantern above the reception window in guild_reception.png (360x270), under the wing awning.
+const WING_LAMPS: Array[Vector2] = [Vector2(179.5, 101.0)]
 const HALO := """
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_add, depth_draw_never;

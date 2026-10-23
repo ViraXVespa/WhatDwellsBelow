@@ -34,6 +34,7 @@ static func guild_wing(host: Node3D) -> void:
 	MeshS.wall_box(wing_body, wing_fit, Color(0.5, 0.38, 0.28))
 	Util._slide(wing_body, wing_fit)
 	Util.face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.32)
+	Lamps.on_face(wing_body.get_child(wing_body.get_child_count() - 1) as Sprite3D, 0.32, Lamps.WING_LAMPS)
 	var wing_valance: float = wing_fit.y * lay.awning_valance("Wing")
 	awning(wing_body, wing_fit, lay.awning_depth("Wing"), lay.awning_slope("Wing"), wing_valance, 0.0, 0.0, 0.0)
 	MeshS.gable_on(wing_body, wing_fit, 0.0, 0.48, lay.tile_for("Wing"), lay.wing_uv_off)
