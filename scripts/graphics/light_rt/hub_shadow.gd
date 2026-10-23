@@ -10,6 +10,7 @@ const PROPS_PATH := "res://scripts/graphics/light_rt/hub_props.gd"
 
 ## Darkens img under every shadow-casting mesh and building sprite below the Layout's parent (the camp in the tree).
 ## A building's parts (siblings under one body) share one top, so a wall and its roof fade as one shadow.
+## Awnings are not protected (the yard under them is shaded; the cloth samples inside its wall, mesh_mat.awning_mat).
 ## Nothing is written inside a building's footprint (the parts that stand on the ground): its roof samples the atlas there.
 ## Returns pixels written.
 static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
@@ -51,12 +52,13 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 		else:
 			wrote += _hub_project_sprite(img, org, sub, node, top, prot)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
+	printerr("bake_camp: prop_px=%d" % load(PROPS_PATH).project_sprites(img, org, sub, layout, HubCast))
 	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))
 	return wrote
 
 static func _is_covering(name: String) -> bool:
 	var n := name.to_lower()
-	return n.contains("pitch") or n.contains("gable") or n.contains("roof") or n.contains("awning") or n.contains("tarp")
+	return n.contains("pitch") or n.contains("gable") or n.contains("roof") or n.contains("tarp")
 static func _hub_casts(node: GeometryInstance3D) -> bool:
 	if node == null or not node.is_visible_in_tree() or node.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 		return false

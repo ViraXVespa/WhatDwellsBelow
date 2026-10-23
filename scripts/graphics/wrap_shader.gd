@@ -15,6 +15,7 @@ uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enabl
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
+uniform vec2 light_shift = vec2(0.0);
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
@@ -46,7 +47,7 @@ void fragment() {
 	vec3 lit = vec3(1.0);
 	if (ignore_actor_shadow < 0.5) {
 		vec2 span = max(light_span, vec2(0.001));
-		vec2 luv = clamp((wpos.xz - light_origin) / span, vec2(0.0), vec2(1.0));
+		vec2 luv = clamp((wpos.xz + light_shift - light_origin) / span, vec2(0.0), vec2(1.0));
 		lit = texture(light_tex, luv).rgb;
 	}
 	ALBEDO = c * lit;

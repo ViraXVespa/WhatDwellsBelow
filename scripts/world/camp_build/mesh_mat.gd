@@ -77,6 +77,8 @@ static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
 	var mat: Material = _cloth("res://assets/tiles/plaza_awning.png", dim, world_min, Color(0.62, 0.22, 0.16))
 	if mat is ShaderMaterial:
 		mat.set_shader_parameter("uv_scale", Vector2(1.0, dim.y / maxf(dim.x, 0.01)))
+		# The yard under the awning takes the wall shadow; light the cloth from just inside its wall instead.
+		mat.set_shader_parameter("light_shift", Vector2(0.0, -(dim.y + 0.25)))
 	return mat
 
 ## Cloth (tarp, awning): wrap_mat with a white second tint, flags true, false.

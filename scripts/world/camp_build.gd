@@ -142,7 +142,7 @@ static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:
 		return
 	var lay: Node3D = LayoutS.of(host)
-	var names: Array = ["Vendor", "Anvil", "Dummy"]
+	var names: Array = ["Vendor", "Dummy"]  # Anvil: its shadow is baked (hub_props.gd)
 	var i: int = 0
 	while i < names.size():
 		var key: String = str(names[i])

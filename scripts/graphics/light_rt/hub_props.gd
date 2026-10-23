@@ -6,16 +6,55 @@ extends Object
 const FENCE_H := 1.05
 const FENCE_STEP := 2.0
 
+## Yard props drawn as Y-billboards facing -Z (interact_fx / banner.gd): [spot, texture, world height, centre y].
+const SPRITES: Array = [
+	["Anvil", "res://assets/sprites/props/anvil.png", 0.85, 0.48],
+	["Dumpster", "res://assets/sprites/props/dumpster.png", 0.85, 0.48],
+	["Banner", "res://assets/sprites/props/welcome_banner.png", 4.4, 2.2],
+]
+
 static func append(layout: Node, boxes: Array) -> void:
 	if layout == null or not layout.has_method("spot_pos"):
 		return
-	_box(boxes, layout.spot_pos("Anvil"), 0.34, 0.22, 0.75)
-	_box(boxes, layout.spot_pos("Dumpster"), 0.45, 0.3, 0.9)
-	var b: Vector3 = layout.spot_pos("Banner")
-	_box(boxes, b + Vector3(-1.45, 0.0, 0.0), 0.14, 0.14, 2.6)
-	_box(boxes, b + Vector3(1.45, 0.0, 0.0), 0.14, 0.14, 2.6)
-	_box(boxes, b, 1.3, 0.05, 2.3)
 	_fence(layout, boxes)
+
+## Prop shadows from the real art: every opaque texel of each prop billboard lands on the ground along
+## HubCast.AWAY (same reach and shade as the mesh shadows), so the shadow matches the drawn outline and touches its foot.
+static func project_sprites(img: Image, org: Vector2, sub: float, layout: Node, cast: GDScript) -> int:
+	if layout == null or not layout.has_method("spot_pos"):
+		return 0
+	var wrote: int = 0
+	for e in SPRITES:
+		if not ResourceLoader.exists(e[1]):
+			continue
+		var src: Image = (load(e[1]) as Texture2D).get_image()
+		if src.is_compressed():
+			src.decompress()
+		var at: Vector3 = layout.spot_pos(e[0])
+		var tw: int = src.get_width()
+		var th: int = src.get_height()
+		var ps: float = float(e[2]) / float(th)
+		var top: float = float(e[3]) + float(e[2]) * 0.5
+		for v in th:
+			var wy: float = float(e[3]) + (float(th) * 0.5 - float(v) - 0.5) * ps
+			if wy <= 0.0:
+				continue
+			var shade: float = cast.shade_at(wy / top)
+			var r: float = wy * cast.REACH
+			for u in tw:
+				if src.get_pixel(u, v).a < 0.5:
+					continue
+				var gx: float = at.x + (float(u) + 0.5 - float(tw) * 0.5) * ps + cast.AWAY.x * r
+				var gz: float = at.z + cast.AWAY.y * r
+				var x: int = int((gx - org.x) * sub)
+				var y: int = int((gz - org.y) * sub)
+				if x < 0 or y < 0 or x >= img.get_width() or y >= img.get_height():
+					continue
+				var c: Color = img.get_pixel(x, y)
+				if c.r > shade:
+					img.set_pixel(x, y, Color(minf(c.r, shade), minf(c.g, shade), minf(c.b, shade), 1.0))
+					wrote += 1
+	return wrote
 
 ## Four runs on the slab edge (camp_view.fence): one post every ~2 m plus the top rail.
 static func _fence(layout: Node, boxes: Array) -> void:

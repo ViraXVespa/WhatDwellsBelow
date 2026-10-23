@@ -15,6 +15,7 @@ The hub light is baked only: the game never renders it. Offline bake quality is 
 - Any change to the hub light code (`hub_bake`, `hub_cast`, `hub_shadow`), `HUB_SUB`, or the Layout boxes, size, awnings or crystal needs a rebake and a new stamp in the same commit. A stale png fails `python tools/check_hub_bake.py` (run by `run_build_gate.py --batch`) and crashes the hub.
 - Rebake: `python tools/run_bake_camp.py` (not headless). It must print `RESULT PASS`, `shadow_px` not 0 and `stamp=<hex>`. Review the shots (`run_shots.py --scene camp --hud 0 --mode build`), paste the stamp into `HUB_BAKE_STAMP`, commit png and stamp together, run `check_hub_bake.py`.
 - Shipped atlas is the png only. `scenes/camp.tscn` must not embed a second copy.
+- Shadow off its object? `run_bake_camp.py --overlay` and read the overlay against the shots: a shadow outside its outline or a bright gap inside a red footprint names the box.
 - Prove bake: `bake_camp: rt=` at least `1088x1024`, `sub=16`, `shadow_px` not 0 (`run_bake_camp.py` fails any bake with 0, headless or not) and `stamp=` printed. The tool picks a display itself (`shot-tool.md` Display). `shadow_px` not 0 is a pipeline check, not a look pass.
 - Prove shot: `python tools/run_shots.py --mode web --scene camp --hud 0 --zoom 0.69`. The runner stitches the `tools/shot-recipes.json` poses into one paste. `_arm_capture` must call `_apply_pose` again so settle cannot keep the play crop.
 - Play zoom 0.69 is how we judge roofs and puddles (stall, hall, dumpster, receptionist). The 0.38 postcard is the wide frame only.
