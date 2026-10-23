@@ -1,6 +1,7 @@
 @tool
 extends Node3D
 
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const Dbg := preload("res://scripts/app/dbg.gd")
 const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -169,6 +170,7 @@ func _step_spot_vendor() -> void:
 	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
 	if v:
 		v.global_position.y = -0.02
+		ActorLit.bind(v, v.get("spr") as Sprite3D)
 	var v_lab: Label3D = v.get("label") as Label3D
 	if v_lab:
 		v_lab.position.y = 2.25
@@ -287,8 +289,6 @@ func ensure_dummy() -> void:
 	n.position = _layout.spot_pos("Dummy")
 	dummy = n
 	add_child(n)
-	Build.stamp_actor_blobs(self)
-	Dbg.hitch("hub_blobs")
 
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):

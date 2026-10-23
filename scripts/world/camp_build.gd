@@ -141,14 +141,7 @@ static func dump_meshes(root: Node) -> void:
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:
 		return
-	var lay: Node3D = LayoutS.of(host)
-	var names: Array = ["Vendor", "Dummy"]  # Anvil: its shadow is baked (hub_props.gd)
-	var i: int = 0
-	while i < names.size():
-		var key: String = str(names[i])
-		var p: Vector3 = lay.spot_pos(key)
-		Util._blob(host, Vector3(p.x, 0.0, p.z))
-		i += 1
+	# Actors (player, vendor, dummy) get ActorLit marks; props are baked (hub_props.gd). Only the stall goods keep a blob.
 	var goods: Array = host.find_children("*", "Sprite3D", true, false)
 	var g: int = 0
 	while g < goods.size():
