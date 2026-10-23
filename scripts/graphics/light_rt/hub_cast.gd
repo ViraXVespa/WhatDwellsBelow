@@ -30,6 +30,7 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node, mesh
 	var i: int = 0
 	while i < boxes.size():
 		var b: Dictionary = boxes[i]
+		printerr("bake_dbg: box %s %.3f %.3f %.3f %.3f %.3f" % [b.get("kind", ""), b["x"], b["z"], b["hx"], b["hz"], float(b.get("h", 0.0))])
 		if meshed and b.get("kind", "") == "tarp":
 			wrote += _hub_stamp_lid(img, x0, z0, sub, w, h, b)
 		else:

@@ -34,6 +34,15 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 			var fp := Rect2(bb.position.x, bb.position.z, bb.size.x, bb.size.z)
 			feet[node.get_parent()] = (feet[node.get_parent()] as Rect2).merge(fp) if feet.has(node.get_parent()) else fp
 	var prot: Array = feet.values()
+	for k in feet:
+		var r: Rect2 = feet[k]
+		printerr("bake_dbg: prot %s %.3f %.3f %.3f %.3f" % [(k as Node).name, r.position.x, r.position.y, r.size.x, r.size.y])
+	for sp in root.find_children("*", "SpriteBase3D", true, false):
+		var sb: AABB = (sp as Node3D).global_transform * (sp as VisualInstance3D).get_aabb()
+		printerr("bake_dbg: spr %s/%s %.3f %.3f %.3f %.3f %.3f %.3f" % [sp.get_parent().name, sp.name, sb.position.x, sb.position.y, sb.position.z, sb.size.x, sb.size.y, sb.size.z])
+	for node in casters:
+		var cb: AABB = node.global_transform * node.get_aabb()
+		printerr("bake_dbg: cast %s/%s %.3f %.3f %.3f %.3f %.3f" % [node.get_parent().name, node.name, cb.position.x, cb.position.z, cb.size.x, cb.size.z, cb.end.y])
 	var wrote: int = 0
 	for node in casters:
 		var top: float = tops[node.get_parent()]

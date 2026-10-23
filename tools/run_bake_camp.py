@@ -23,10 +23,32 @@ import godot_lib
 
 GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"]
 
+def draw_overlay(root: Path, err_log: Path, out: Path, org: float = -18.0, sub: float = 16.0) -> None:
+    """Outlines what the bake was told about each caster, so a shadow that misses its geometry names which box is off."""
+    from PIL import Image, ImageDraw
+    im = Image.open(root / "assets/baked/hub_light.png").convert("RGB")
+    d = ImageDraw.Draw(im)
+    px = lambda x, z: ((x - org) * sub, (z - org) * sub)
+    for line in err_log.read_text(encoding="utf-8", errors="replace").splitlines():
+        f = line.split()
+        if len(f) < 3 or f[0] != "bake_dbg:":
+            continue
+        n = [float(v) for v in f[3:]]
+        if f[1] == "box":  # kind x z hx hz h
+            d.rectangle([*px(n[0] - n[2], n[1] - n[3]), *px(n[0] + n[2], n[1] + n[3])], outline=(255, 220, 0))
+        elif f[1] == "prot":  # name x z w d
+            d.rectangle([*px(n[0], n[1]), *px(n[0] + n[2], n[1] + n[3])], outline=(255, 40, 40))
+        elif f[1] == "cast":  # name x z w d top
+            d.rectangle([*px(n[0], n[1]), *px(n[0] + n[2], n[1] + n[3])], outline=(0, 220, 255))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    im.save(out)
+    print(f"overlay={out}")
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     ap.add_argument("--headless", action="store_true", help="force the headless driver (same atlas, no display needed)")
+    ap.add_argument("--overlay", metavar="PNG", help="also write the bake with skirt boxes (yellow), protected footprints (red) and caster bounds (cyan) outlined, from the bake_dbg lines")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     out_log, err_log = agent_log.run_path("bake-camp", root, "bake-out.log"), agent_log.run_path("bake-camp", root, "bake-err.log")
@@ -51,6 +73,8 @@ def main(argv: list[str] | None = None) -> int:
                 hub.write_text(ht2, encoding="utf-8")
                 print(f"updated HUB_BAKE_STAMP={stamp}")
     clean = r["status"] == "EXIT=0" and not hard
+    if args.overlay:
+        draw_overlay(root, err_log, Path(args.overlay))
     import bake_ground_wear
     if bake_ground_wear.main(["--root", str(root)]) != 0:
         clean = False
