@@ -13,7 +13,7 @@ void fragment() {
 	float d = length(UV * 2.0 - 1.0);
 	float f = 0.9 + 0.1 * sin(TIME * 9.0);
 	ALBEDO = vec3(1.0, 0.62, 0.24);
-	ALPHA = (1.0 - smoothstep(0.0, 1.0, d)) * 0.28 * f;
+	ALPHA = (1.0 - smoothstep(0.0, 1.0, d)) * 0.42 * f;
 }
 """
 
@@ -32,8 +32,8 @@ static func on_face(spr: Sprite3D, crop_top: float, pts: Array[Vector2]) -> void
 		root.position = at
 		root.add_to_group("hub_lamp")
 		spr.add_child(root)
-		root.add_child(_quad(TorchBill.FLAME, Vector2(0.09, 0.16), seed))
-		root.add_child(_quad(HALO, Vector2(0.9, 0.9), seed))
+		root.add_child(_quad(TorchBill.FLAME, Vector2(0.16, 0.28), seed))
+		root.add_child(_quad(HALO, Vector2(1.2, 1.2), seed))
 		seed += 1.7
 
 static func _quad(code: String, size: Vector2, seed: float) -> MeshInstance3D:
