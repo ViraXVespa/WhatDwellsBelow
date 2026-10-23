@@ -31,7 +31,6 @@ hub-bake-lights | web | open | Hub bake, prop shadows, lamps, light leaks, deskt
 hub-draw-order | web | open | Hub draw-order / sorting sweep | -
 hub-ground-roofs | web | open | Ground transitions + roof UV / awning banding | -
 hub-guild-reception | web | open | Guild receptionist bust + welcome banner | -
-hub-vendor-stall | web | open | Vendor stall geometry, collision, sticks | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
