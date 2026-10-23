@@ -3,6 +3,7 @@ extends Object
 ## Camp mesh materials: wrapped, roof, tarp, awning.
 
 const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
+const T := preload("res://scripts/data/tunables.gd")
 const TILE_W := 3.2
 
 static func wrap_mat(
@@ -62,17 +63,21 @@ static func roof_mat(
 		mat.set_shader_parameter("shade_use", 1.0)
 		mat.set_shader_parameter("shade_lo", 1.16)
 		mat.set_shader_parameter("shade_hi", 0.58)
-		var tile_px: float = tile if tile > 0.05 else 0.62
-		if tile_px > 0.7:
-			tile_px = 0.62
-		mat.set_shader_parameter("uv_scale", Vector2(dim.x / tile_px, dim.y / tile_px))
+		# Default repeat keeps the ground's texel density (T.GROUND_PX_PER_M) so shingles read as pixel art.
+		var sheet: Texture2D = mat.get_shader_parameter("albedo_tex")
+		var tile_m: float = tile if tile > 0.05 and tile != TILE_W else float(sheet.get_width()) / T.GROUND_PX_PER_M
+		mat.set_shader_parameter("uv_scale", Vector2(dim.x / tile_m, dim.y / tile_m))
 	return mat
 
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
 	return _cloth("res://assets/tiles/plaza_tarp.png", dim, world_min, Color(0.40, 0.46, 0.28))
 
+## Stripes run along v, so v spans dim.y / dim.x of the sheet: square texels, no mip collapse to a pink band.
 static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
-	return _cloth("res://assets/tiles/plaza_awning.png", dim, world_min, Color(0.62, 0.22, 0.16))
+	var mat: Material = _cloth("res://assets/tiles/plaza_awning.png", dim, world_min, Color(0.62, 0.22, 0.16))
+	if mat is ShaderMaterial:
+		mat.set_shader_parameter("uv_scale", Vector2(1.0, dim.y / maxf(dim.x, 0.01)))
+	return mat
 
 ## Cloth (tarp, awning): wrap_mat with a white second tint, flags true, false.
 static func _cloth(png: String, dim: Vector2, world_min: Vector3, tint: Color) -> Material:

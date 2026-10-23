@@ -58,24 +58,26 @@ static func ground(host: Node3D) -> void:
 	_band(host, ox, 25, ox + gw - 1, oz + gd - 1, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
 	_band(host, ox, 4, 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
 	_band(host, 31, 4, ox + gw - 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
-	# yard dirt + path plus
-	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30))
-	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
-	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
+	# yard dirt + path plus; grass runs under the dirt so the dirt's dithered edge blends into it
+	_band(host, 2, 4, 30, 24, y - 0.01, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
+	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 0.75)
+	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.5)
+	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.5)
 	load("res://scripts/world/camp_build.gd").outer_grass(host)
 
-static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color) -> void:
+static func _band(
+	host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color, feather: float = 0.0
+) -> void:
 	if x1 < x0 or z1 < z0:
 		return
 	var sx: float = float(x1 - x0 + 1) * T.TILE
 	var sz: float = float(z1 - z0 + 1) * T.TILE
 	var c := Vector3(float(x0) + sx * 0.5, y, float(z0) + sz * 0.5)
-	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback)
+	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback, feather)
 
 static func grass_pad(
 
-	host: Node3D, center: Vector3, dim: Vector2, tex_path: String, fallback: Color
-
+	host: Node3D, center: Vector3, dim: Vector2, tex_path: String, fallback: Color, feather: float = 0.0
 ) -> void:
 
 	if dim.x <= 0.05 or dim.y <= 0.05:
@@ -92,7 +94,11 @@ static func grass_pad(
 
 	inst.position = center
 
-	inst.material_override = GroundShader.material(tex_path, fallback)
+	if feather > 0.0:
+		var r := Vector4(center.x - dim.x * 0.5, center.z - dim.y * 0.5, center.x + dim.x * 0.5, center.z + dim.y * 0.5)
+		inst.material_override = GroundShader.feathered(tex_path, fallback, r, feather)
+	else:
+		inst.material_override = GroundShader.material(tex_path, fallback)
 
 	inst.add_to_group("hub_ground")
 

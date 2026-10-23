@@ -49,6 +49,8 @@ uniform float wear_uv = 0.03125;
 uniform float wear = 0.0;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
+uniform vec4 feather_rect = vec4(0.0);
+uniform float feather = 0.0;
 varying vec3 world_pos;
 
 void vertex() {
@@ -58,6 +60,15 @@ void vertex() {
 
 void fragment() {
 	vec2 xz = world_pos.xz;
+	if (feather > 0.0) {
+		vec2 cell = floor(xz * 16.0);
+		float n = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+		vec2 lo = xz - feather_rect.xy;
+		vec2 hi = feather_rect.zw - xz;
+		if (n * feather > min(min(lo.x, hi.x), min(lo.y, hi.y))) {
+			discard;
+		}
+	}
 	vec2 uv = xz * uv_scale + uv_off;
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
@@ -66,6 +77,14 @@ void fragment() {
 """
 	_sh = sh
 	return sh
+
+## feather > 0: the plane dithers out over its last `feather` metres inside rect (x0, z0, x1, z1), so a layer below
+## shows through in 1/16 m cells instead of a hard edge.
+static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float) -> ShaderMaterial:
+	var mat: ShaderMaterial = material(tex_path, fallback)
+	mat.set_shader_parameter("feather_rect", rect)
+	mat.set_shader_parameter("feather", width)
+	return mat
 
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
