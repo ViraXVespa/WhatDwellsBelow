@@ -2,12 +2,15 @@ extends Object
 
 ## Split from camp.gd: _banner, _banner_pole.
 
+## Post feet in welcome_banner.png (512x368 at 4.4 m tall): opaque columns centre at x = -2.21 / +2.22 m.
+const POLE_X := 2.2
+
 static func _banner(host: Node3D) -> void:
 	var root := Node3D.new()
 	root.position = host._layout.spot_pos("Banner")
 	host.add_child(root)
-	_banner_pole(root, Vector3(-1.45, 1.1, 0.0))
-	_banner_pole(root, Vector3(1.45, 1.1, 0.0))
+	_banner_pole(root, Vector3(-POLE_X, 1.1, 0.0))
+	_banner_pole(root, Vector3(POLE_X, 1.1, 0.0))
 	var spr := Sprite3D.new()
 	var path := "res://assets/sprites/props/welcome_banner.png"
 	if ResourceLoader.exists(path):
