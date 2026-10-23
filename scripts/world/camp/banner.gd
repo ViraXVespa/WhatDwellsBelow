@@ -26,6 +26,9 @@ static func _banner(host: Node3D) -> void:
 		spr.pixel_size = 4.4 / float(maxi(1, spr.texture.get_height()))
 	spr.position = Vector3(0.0, 2.2, 0.0)
 	root.add_child(spr)
+	# Same hard mark as the player (camp_build.mark_props); kept out of the bake.
+	spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	load("res://scripts/graphics/actor_lit.gd").bind(root, spr)
 
 static func _banner_pole(root: Node3D, pos: Vector3) -> void:
 	var pole := StaticBody3D.new()

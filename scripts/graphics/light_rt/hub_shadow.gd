@@ -59,7 +59,6 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	wrote += fence_px
 	printerr("bake_camp: fence_px=%d" % fence_px)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
-	printerr("bake_camp: prop_px=%d" % load(PROPS_PATH).project_sprites(img, org, sub, layout, HubCast))
 	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))
 	return wrote
 

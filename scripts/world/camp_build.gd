@@ -138,10 +138,21 @@ static func dump_meshes(root: Node) -> void:
 			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")
 	print("CAMP_MESH totals boxes=", boxes, " sprites=", sprites, " other=", other)
 
+## Yard props with the player's hard mark (ActorLit) instead of a baked projection; cast_shadow off keeps them out of the bake.
+const MARKED: Array[String] = ["anvil", "quest_board", "dumpster", "billboard"]
+static func mark_props(host: Node3D) -> void:
+	for n in host.get_children():
+		var spr: Sprite3D = n.get("spr") as Sprite3D
+		if spr == null or not MARKED.has(str(n.get("kind"))) or n.has_node("ActorLit"):
+			continue
+		spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		load("res://scripts/graphics/actor_lit.gd").bind(n, spr)
+
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:
 		return
-	# Actors (player, vendor, dummy) get ActorLit marks; props are baked (hub_props.gd). Only the stall goods keep a blob.
+	# Actors (player, vendor, dummy) and the yard props in MARKED (banner: banner.gd) get the player's ActorLit mark. Only the stall goods keep a blob.
+	mark_props(host)
 	var goods: Array = host.find_children("*", "Sprite3D", true, false)
 	var g: int = 0
 	while g < goods.size():
