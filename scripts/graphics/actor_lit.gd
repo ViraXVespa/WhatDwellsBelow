@@ -45,7 +45,8 @@ func _ready() -> void:
 		var mesh_node: MeshInstance3D = MeshInstance3D.new()
 		mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		var mat: ShaderMaterial = _mat()
-		mat.render_priority = 8 - slot
+		mat.render_priority = -2
+		mesh_node.sorting_offset = -30.0
 		mesh_node.material_override = mat
 		mesh_node.visible = false
 		mesh_node.top_level = true
@@ -143,7 +144,8 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 		node.global_transform = Transform3D(Basis.IDENTITY, origin)
 		var shade_mat: ShaderMaterial = node.material_override as ShaderMaterial
 		if shade_mat != null:
-			shade_mat.render_priority = 8 - _rank_at[slot]
+			shade_mat.render_priority = -2
+			node.sorting_offset = -30.0
 			var shown: float = _alpha_at[slot] * scale
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
 		node.visible = true

@@ -91,7 +91,8 @@ def _recipe_poses(rec: dict) -> str:
         px = fr.get("px", rec.get("px", look[0]))
         pz = fr.get("pz", rec.get("pz", look[1]))
         face = fr.get("face", "down")
-        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face))
+        cy = fr.get("cy", 4.2)
+        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy))
     return ";".join(bits)
 
 def _out_dir(root: Path) -> Path:

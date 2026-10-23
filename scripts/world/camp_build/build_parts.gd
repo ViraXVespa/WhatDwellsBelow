@@ -54,29 +54,30 @@ static func solid(
 	var z0: float = pos.z - box_size.z * 0.5
 	if tarp:
 		MeshS.pitched_tarp(body, box_size, 0.0, Vector3(x0, 0.0, z0))
-		Util.face(body, box_size, tex, 0.0, box_size.x * 0.92)
+		Util.face(body, box_size, tex, 0.0, box_size.x * 0.96)
 		Util._counter(body, box_size)
-		Util._stall_walls(body, box_size)
-		# Full front collision plane
-		var front := CollisionShape3D.new()
-		front.name = "StallFront"
-		var fblock := BoxShape3D.new()
-		fblock.size = Vector3(box_size.x * 0.96, box_size.y, 0.12)
-		front.shape = fblock
-		front.position = Vector3(0.0, 0.0, box_size.z * 0.50)
-		body.add_child(front)
-		# Flush walls to post positions and ground
-		var hx := box_size.x * 0.48
-		var hy := box_size.y
-		var hz := box_size.z * 0.48
+		# Uniform collision volume matching outer post rectangle (X ±0.48, Z front 0.52 / rear 0.48), flush with ground.
+		var coll := CollisionShape3D.new()
+		coll.name = "StallUniform"
+		var block := BoxShape3D.new()
+		var hx: float = box_size.x * 0.48
+		var front_z: float = box_size.z * 0.52
+		var rear_z: float = -box_size.z * 0.48
+		block.size = Vector3(hx * 2.0, box_size.y, front_z - rear_z)
+		coll.shape = block
+		coll.position = Vector3(0.0, 0.0, (front_z + rear_z) * 0.5)
+		body.add_child(coll)
+		# Side walls flush to ground and connected to posts (front Z reaches 0.52).
+		var hy: float = box_size.y
+		var foot: float = -box_size.y * 0.5
 		var rw := MeshInstance3D.new()
 		rw.name = "StallRightWall"
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var a := Vector3(hx, -box_size.y * 0.5, -hz)
-		var b := Vector3(hx, -box_size.y * 0.5, hz)
-		var c := Vector3(hx, -box_size.y * 0.5 + hy, hz)
-		var d := Vector3(hx, -box_size.y * 0.5 + hy, -hz)
+		var a := Vector3(hx, foot, rear_z)
+		var b := Vector3(hx, foot, front_z)
+		var c := Vector3(hx, foot + hy, front_z)
+		var d := Vector3(hx, foot + hy, rear_z)
 		Prim._quad(st, a, b, c, d, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		st.generate_normals()
 		rw.mesh = st.commit()
@@ -87,16 +88,32 @@ static func solid(
 		lw.name = "StallLeftWall"
 		var stl := SurfaceTool.new()
 		stl.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var a2 := Vector3(-hx, -box_size.y * 0.5, -hz)
-		var b2 := Vector3(-hx, -box_size.y * 0.5, hz)
-		var c2 := Vector3(-hx, -box_size.y * 0.5 + hy, hz)
-		var d2 := Vector3(-hx, -box_size.y * 0.5 + hy, -hz)
+		var a2 := Vector3(-hx, foot, rear_z)
+		var b2 := Vector3(-hx, foot, front_z)
+		var c2 := Vector3(-hx, foot + hy, front_z)
+		var d2 := Vector3(-hx, foot + hy, rear_z)
 		Prim._quad(stl, a2, b2, c2, d2, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		stl.generate_normals()
 		lw.mesh = stl.commit()
 		lw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
 		body.add_child(lw)
 		Prim._hit(body, lw.mesh, "StallLeftHit")
+		# Short fill wall above the front face (hidden by tarp fold/drop).
+		var fill_h: float = 0.35
+		var fill := MeshInstance3D.new()
+		fill.name = "StallFrontFill"
+		var stf := SurfaceTool.new()
+		stf.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var fa := Vector3(-hx, foot + hy - fill_h, front_z)
+		var fb := Vector3(hx, foot + hy - fill_h, front_z)
+		var fc := Vector3(hx, foot + hy, front_z)
+		var fd := Vector3(-hx, foot + hy, front_z)
+		Prim._quad(stf, fa, fb, fc, fd, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		stf.generate_normals()
+		fill.mesh = stf.commit()
+		fill.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
+		body.add_child(fill)
+		Prim._hit(body, fill.mesh, "StallFrontFillHit")
 		Util._blob(body, Vector3(0.0, 0.0, box_size.z * 0.2))
 	else:
 		roof_plane(

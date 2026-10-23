@@ -28,14 +28,11 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 		var top: float = (node.global_transform * node.get_aabb()).end.y
 		tops[node.get_parent()] = maxf(top, float(tops.get(node.get_parent(), 0.5)))
 		var bb: AABB = node.global_transform * node.get_aabb()
-		if bb.position.y < SKIP_H or node.name == "StallPitch":
+		# Ground-level parts OR elevated covering meshes (tarp/roof/gable/awning) protect their XZ footprint.
+		if bb.position.y < SKIP_H or _is_covering(node.name):
 			var fp := Rect2(bb.position.x, bb.position.z, bb.size.x, bb.size.z)
 			feet[node.get_parent()] = (feet[node.get_parent()] as Rect2).merge(fp) if feet.has(node.get_parent()) else fp
 	var prot: Array = feet.values()
-	# Protect the vendor stall footprint so the tarp does not receive the actor shadow
-	var stall_pos := Vector2(25.0, 8.0)
-	var stall_half := Vector2(4.6 * 0.5, 3.4 * 0.5)
-	prot.append(Rect2(stall_pos - stall_half, stall_half * 2.0))
 	var wrote: int = 0
 	for node in casters:
 		var top: float = tops[node.get_parent()]
@@ -46,8 +43,9 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
 	return wrote
 
-## Meshes and building sprites that stand on the yard. Fence rails and posts are built with shadows off; ground
-## planes and anything under SKIP_H are flat.
+static func _is_covering(name: String) -> bool:
+	var n := name.to_lower()
+	return n.contains("pitch") or n.contains("gable") or n.contains("roof") or n.contains("awning") or n.contains("tarp")
 static func _hub_casts(node: GeometryInstance3D) -> bool:
 	if node == null or not node.is_visible_in_tree() or node.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 		return false

@@ -174,5 +174,172 @@
         "face": "right"
       }
     ]
+  },
+  "vendor-stall": {
+    "scene": "camp",
+    "hud": 0,
+    "frames": [
+      {
+        "id": "overview",
+        "kind": "play",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.0,
+          0.0
+        ],
+        "zoom": 1.0,
+        "px": 25.0,
+        "pz": 14.0,
+        "face": "up",
+        "note": "normal gameplay camera framing the stall"
+      },
+      {
+        "id": "front-center",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.0,
+          8.0
+        ],
+        "zoom": 1.9,
+        "px": 25.0,
+        "pz": 16.0,
+        "face": "up",
+        "cy": 1.6,
+        "note": "front center"
+      },
+      {
+        "id": "front-ground",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.0,
+          7.0
+        ],
+        "zoom": 3.0,
+        "px": 25.0,
+        "pz": 15.0,
+        "face": "up",
+        "cy": -1.5,
+        "note": "front true ground (y\u22480.1) (inch or two above floor)"
+      },
+      {
+        "id": "back-center",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.0,
+          -8.0
+        ],
+        "zoom": 1.9,
+        "px": 25.0,
+        "pz": 0.0,
+        "face": "down",
+        "cy": 1.6,
+        "note": "back center"
+      },
+      {
+        "id": "back-ground",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.0,
+          -7.0
+        ],
+        "zoom": 3.0,
+        "px": 25.0,
+        "pz": 1.0,
+        "face": "down",
+        "cy": -1.5,
+        "note": "back true ground (y\u22480.1)"
+      },
+      {
+        "id": "left-center",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          -8.0,
+          0.0
+        ],
+        "zoom": 1.9,
+        "px": 17.0,
+        "pz": 8.0,
+        "face": "right",
+        "cy": 1.6,
+        "note": "left center"
+      },
+      {
+        "id": "left-ground",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          -7.0,
+          0.0
+        ],
+        "zoom": 3.0,
+        "px": 18.0,
+        "pz": 8.0,
+        "face": "right",
+        "cy": -1.5,
+        "note": "left true ground (y\u22480.1)"
+      },
+      {
+        "id": "right-center",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          8.0,
+          0.0
+        ],
+        "zoom": 1.9,
+        "px": 33.0,
+        "pz": 8.0,
+        "face": "left",
+        "cy": 1.6,
+        "note": "right center"
+      },
+      {
+        "id": "right-ground",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          7.0,
+          0.0
+        ],
+        "zoom": 3.0,
+        "px": 32.0,
+        "pz": 8.0,
+        "face": "left",
+        "cy": -1.5,
+        "note": "right true ground (y\u22480.1)"
+      }
+    ]
   }
 }

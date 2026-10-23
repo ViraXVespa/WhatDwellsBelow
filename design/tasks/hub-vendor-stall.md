@@ -27,6 +27,4 @@ Finish vendor stall geometry, collision, and sorting. Posts are locked. Shadow s
 3. Rebake the hub (LightRt.rebuild_hub / save_hub_bake) so the final shadows and lighting are pretty.
 
 ## Notes
-Posts locked at the values above. Player sprite sort fixed. Shadow is an RT sampling issue, not a mesh sort issue. Walls still need the flush + connect pass. Do not trust older notes about post multipliers or "occlusion still unresolved".
-
-Use `run_shots.py --mode web --scene camp --hud 0 --zoom 3.2 --px 25.0 --pz 6.2 --cx 0.0 --cz -1.8` to check the shadow issue. After the shadows are fixed, we'll have you set up a shot flow that captures the vendor stall from all angles so we can check everything.
+Shadow protection generalized (elevated covering meshes protect XZ footprint; hardcode removed). Walls/front flush with ground and connected to locked post positions (front Z 0.52 / rear 0.48). Uniform collision volume. Rebake pending.
