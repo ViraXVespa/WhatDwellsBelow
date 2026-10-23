@@ -40,6 +40,8 @@ static func _apply_pose(host: Node) -> void:
 	var T = load("res://scripts/data/tunables.gd")
 	if rig != null and rig.has_method("apply_size"):
 		rig.warm_hold = true
+		# Pin it: camp warm-up ends in restore_user, whose apply_zoom clamps to ZOOM_MIN (1.0) and undid zoom < 1.
+		rig.set("size_pin", T.base_size().y / float(T.PX) / maxf(0.01, z))
 		rig.call("apply_size", T.base_size().y / float(T.PX) / maxf(0.01, z))
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
