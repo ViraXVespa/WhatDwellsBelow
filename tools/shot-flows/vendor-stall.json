@@ -4,9 +4,6 @@
   "zoom": 3.2,
   "settle_ms": 800,
   "about": "Vendor stall geometry, posts, front face, shadow sorting, and foot light leak from multiple angles.",
-  "covers": [
-    "hub-vendor-stall"
-  ],
   "steps": [
     {
       "op": "call",
@@ -117,6 +114,11 @@
     {
       "op": "shot",
       "name": "post-feet-close"
+    },
+    {
+      "op": "assert",
+      "target": "App.ui_open",
+      "equals": false
     }
   ]
 }
