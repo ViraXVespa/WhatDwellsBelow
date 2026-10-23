@@ -117,6 +117,22 @@ static func solid(
 		bw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
 		body.add_child(bw)
 		Prim._hit(body, bw.mesh, "StallBackHit")
+		# Solid front wall sealing the opening.
+						# Front wall just behind the face sprite.
+		var fw := MeshInstance3D.new()
+		fw.name = "StallFrontWall"
+		fw.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		var stfw := SurfaceTool.new()
+		stfw.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var fwa := Vector3(-hx, foot - 0.5, front_z - 0.001)
+		var fwb := Vector3(hx, foot - 0.5, front_z - 0.001)
+		var fwc := Vector3(hx, top, front_z - 0.001)
+		var fwd := Vector3(-hx, top, front_z - 0.001)
+		Prim._quad(stfw, fwa, fwb, fwc, fwd, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		stfw.generate_normals()
+		fw.mesh = stfw.commit()
+		fw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
+		body.add_child(fw)
 	else:
 		roof_plane(
 			body,

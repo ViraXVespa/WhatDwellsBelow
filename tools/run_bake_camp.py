@@ -41,6 +41,15 @@ def main(argv: list[str] | None = None) -> int:
     shadow = px[-1] if px else 0
     stamps = [m.group(1) for h in hits for m in [re.search(r"stamp=([0-9a-f]+)", h)] if m]
     stamp = stamps[-1] if stamps else "none"
+
+    if stamp != "none":
+        hub = root / "scripts/graphics/light_rt/hub_bake.gd"
+        if hub.is_file():
+            ht = hub.read_text(encoding="utf-8")
+            ht2 = re.sub(r'const HUB_BAKE_STAMP := "[0-9a-f]+"', f'const HUB_BAKE_STAMP := "{stamp}"', ht, count=1)
+            if ht2 != ht:
+                hub.write_text(ht2, encoding="utf-8")
+                print(f"updated HUB_BAKE_STAMP={stamp}")
     clean = r["status"] == "EXIT=0" and not hard
     import bake_ground_wear
     if bake_ground_wear.main(["--root", str(root)]) != 0:

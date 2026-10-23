@@ -28,7 +28,8 @@ static func face(
 	var fw: float = maxf(face_w, 0.2)
 	spr.pixel_size = fw / tw
 	var sh: float = spr.pixel_size * rh
-	spr.position = Vector3(x_off, -box_size.y * 0.5 - 0.02 + sh * 0.5 - 0.06, box_size.z * 0.52)
+	spr.position = Vector3(x_off, -box_size.y * 0.5 - 0.02 + sh * 0.5 - 0.06, box_size.z * 0.52 - 0.001)
+	spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	body.add_child(spr)
 static func face_height(tex: String, face_w: float) -> float:
 	if not ResourceLoader.exists(tex):
