@@ -402,15 +402,17 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
         if not gui
         else GUI_HEAD + ["--path", str(root), "--", "--wdb-hub-bench", "--wdb-hitch-mult=1"]
     )
-    old_appdata = os.environ.get("APPDATA")
-    os.environ["APPDATA"] = str(fresh)
+    # Fresh user:// (the bench refuses a warm save): APPDATA on Windows, XDG_DATA_HOME on Linux.
+    old = {k: os.environ.get(k) for k in ("APPDATA", "XDG_DATA_HOME")}
+    os.environ.update({k: str(fresh) for k in old})
     try:
         r = godot_lib.run_godot(root, root, gargs, out_log, err_log, args.timeout_sec, gui=gui)
     finally:
-        if old_appdata is None:
-            os.environ.pop("APPDATA", None)
-        else:
-            os.environ["APPDATA"] = old_appdata
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
     hb = godot_lib.grep_logs([err_log, out_log], r"^HB:")
     errs = godot_lib.grep_logs(
         [err_log, out_log],
