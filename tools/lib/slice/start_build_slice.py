@@ -17,7 +17,8 @@ The first run also records this session's id ($GROK_SESSION_ID): the original se
 Gather. A red prove prints `grok -r <original-session-id> --fork-session` from it (retry_lib). This tool never starts grok.
 --handoff is for survey -> implement: it writes (first run) or validates (later runs) the task file design/tasks/ID.md (ID: --task, else the door),
 saves it and the survey's shot-flow / routes.yaml edits to _logs/handoff/survey-edits, and prints the one command she runs from the main checkout (`python tools/slice.py open AREA --prompt-file PATH`). The fresh session's
-first command, --from-handoff, prints the compact start summary, puts the saved edits back and points the task's first command at --from-task.
+first command, --from-handoff, prints the compact start summary, puts the saved edits back and points the task's first command at --from-task
+(a later session the User opens with the task's `resume:` line, `slice.py open AREA --task ID`, starts there).
 --selftest runs the cases below in a throwaway repo.
 """
 from __future__ import annotations
@@ -96,7 +97,7 @@ def queue_task(root: Path, st: dict, done: list[str]) -> str:
         units = ", ".join(st.get("units") or [])
         body = (f"area: {st.get('area') or door}\ndoor: {door}\nunits: {units}\ndone: {', '.join(done) or 'none'}\n\n"
                 "## Notes\nWritten by `slice.py start --unit-done`, so a new session can resume the queue if the rest does not fit one session.")
-        text = task_lib.skeleton(tid, "build", f"{door} unit queue", "every unit in `units:` is done", handoff_lib.from_task_cmd(door, tid), [], "")
+        text = task_lib.skeleton(tid, "build", f"{door} unit queue", "every unit in `units:` is done", handoff_lib.launch_cmd(door, tid), [], "")
         text = text.replace("\n\n## Notes\nnone yet", "\n" + body)
         tp.parent.mkdir(parents=True, exist_ok=True)
         tp.write_text(text, encoding="utf-8")
@@ -143,7 +144,7 @@ def unit_done(root: Path, args) -> int:
     elif nxt and not args.dry_run:
         made = queue_task(root, st, done)
     msg = (f"UNIT DONE: {cur}; done: {', '.join(done)}. " + (f"Next unit: {nxt}. If the request still fits this session, Complete this unit (commit, push) and continue: `python tools/slice.py start {('--job ' + st['job']) if st.get('task_units') and st.get('job') else '--door ' + st.get('door', 'D')} --full` prints its card{(' (with --task ' + st['task'] + ')') if st.get('task_units') else ''}. If it cannot fit, stop after Complete; a new session resumes the queue. " if nxt else "All units are done" + (f": close the task in this commit (`python tools/docs.py task done {st['task']}`). " if st.get("task") else ". "))
-           + (f"Queue recorded in the task file {made} (commit it with this unit); if the rest does not fit, a new session resumes it: `python tools/slice.py open {st.get('door', 'D')} --task {Path(made).stem}`. " if made else "")
+           + (f"Queue recorded in the task file {made} (commit it with this unit); if the rest does not fit, the User opens a new session with its `resume:` line (never run or print it). " if made else "")
            + "Complete this unit now: slice.py commit, then plain push. The done notice follows the last unit this session does.")
     return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, route="unit-done")
 
@@ -275,8 +276,10 @@ def main(argv: list[str] | None = None) -> int:
         if tid:
             first["task"] = tid
             local = task_lib.task_path(root, tid)
-            if local.is_file() and task_lib.set_head(local, "first", handoff_lib.from_task_cmd(args.door.strip(), tid)):
+            if local.is_file() and task_lib.set_head(local, "first", handoff_lib.from_task_cmd(args.door.strip(), tid, args.job.strip())):
                 hand.append(f"task {task_lib.TASKS_REL}/{tid}.md: its first command now reads --from-task {tid}; commit it with this unit")
+            if local.is_file():
+                task_lib.ensure_head(local, "resume", handoff_lib.launch_cmd(args.door.strip(), tid, args.job.strip()))
         slice_state.save(root, first)
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/gate.py smokes --door/--job; add or update asserts for new systems)",

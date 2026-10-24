@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     nw.add_argument("--owner", choices=task_lib.OWNERS, required=True, help="Who runs it.")
     nw.add_argument("--title", required=True, help="One-line title.")
     nw.add_argument("--done-when", dest="done_when", required=True, help="The check that proves it is finished.")
-    nw.add_argument("--resume", required=True, help="The command or one line a fresh session starts from.")
+    nw.add_argument("--resume", required=True, help="How a fresh session picks it up. Build: the launch line `python tools/slice.py open AREA --task ID`; Web/Bot: one plain line. Any tool named must exist.")
     nw.add_argument("--needs", default="", help="Comma-separated task ids this waits on (makes it blocked).")
     nw.add_argument("--body", default="", help="Body markdown (sections start `## `).")
     nw.add_argument("--body-file", dest="body_file", default="", help="File holding the body markdown.")
@@ -67,7 +67,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "show":
         t = tasks[args.id]
         lines = [f"{k}: {t[k]}" for k in ("title", "owner", "status", "needs", "done-when") if t.get(k)]
-        lines += [f"resume: {t.get('resume', '')}", f"file: {t['path']} (read it whole; it is the task)"]
+        label = "resume (the User's launch line from the repo root; a session never runs it)" if t.get("owner") == "build" else "resume"
+        lines += [f"{label}: {t.get('resume', '')}", f"file: {t['path']} (read it whole; it is the task)"]
         return end("\n".join(lines), "PASS", id=args.id)
     if args.cmd == "new":
         if args.id == "opt-next":
@@ -80,6 +81,10 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             print(f"error: --needs names no open task: {', '.join(missing)}", file=sys.stderr)
             return end("", "FAIL", error="bad-needs")
+        bad_cmd = task_lib.command_fails(root, f"{task_lib.TASKS_REL}/{args.id}.md", "resume", args.resume)
+        if bad_cmd:
+            print("error: " + "; ".join(bad_cmd), file=sys.stderr)
+            return end("", "FAIL", error="bad-resume")
         body = md.read_text(args.body_file) if args.body_file else args.body
         p = task_lib.task_path(root, args.id)
         if not dry:

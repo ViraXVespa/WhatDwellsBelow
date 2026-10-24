@@ -7,11 +7,11 @@ One open task is one `<id>.md` in this folder: Web parks, Build handoffs and uni
 
 ## Fields
 
-The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, `resume` (a fresh session's launch line; a Build task's must be `python tools/slice.py open AREA --task ID` or `python tools/slice.py start --door|--job AREA --from-task ID`, `--job` exactly when AREA has a dot; `docs.py task check` validates it), optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`; any Build task may carry `units:` labels without dots (its own queue, run by `slice.py start --task ID`, ticked by `--unit-done`) with `done: none`. The body is free sections.
+The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, `resume` (how a fresh session picks it up: a Build task's is the launch line the User runs from the repo root, `python tools/slice.py open AREA --task ID`, never run by Build; a Web or Bot task's is one plain line; every tool it names must exist, `docs.py task check`), optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`; any Build task may carry `units:` labels without dots (its own queue, run by `slice.py start --task ID`, ticked by `--unit-done`) with `done: none`. The body is free sections.
 
 ## Lifecycle
 
-- **Find / resume:** `python tools/docs.py task list [--owner X]`, then `python tools/docs.py task show ID`. Read that one file and run its `resume` line.
+- **Find / resume:** `python tools/docs.py task list [--owner X]`, then `python tools/docs.py task show ID`. Read that one file. The User opens a Build task from the repo root with its `resume` line; a Build session never runs or prints it and starts with the command its first message names (`slice.py start ... --task ID`, or `--from-task ID` for a handoff).
 - **Create:** Build's survey writes its handoff with `python tools/slice.py start --handoff`; anything else uses `python tools/docs.py task new ID ...` (Web: its scratch calls `dp.task([...])`, which runs `docs.py task`). A Web park is a task with owner web (packet: `web-discuss.md`). Web and Bot create a task for another owner only when the User says so.
 - **Update:** keep the header true and the body current as the work moves: `python tools/docs.py task update ID --status S | --needs IDS | --section TITLE --body TEXT`. Build's `slice.py start --unit-done` updates `done` itself.
 - **Finish:** in the change that completes it, `python tools/docs.py task done ID`: the file is deleted, dependants lose it from `needs`, and one line goes into the branch's changelog entry. Never mark a task done in place; there is no archive.
@@ -34,4 +34,4 @@ Reference images that a task needs live in `design/refs/<task-id>/`, not in this
 
 When `python tools/docs.py task done ID` runs, also delete `design/refs/<id>/` if it exists so reference images do not outlive the task.
 
-Web tasks have no resume command. A web session starts work by the User naming the task id (or its intent) in chat.
+A web session starts work by the User naming the task id (or its intent) in chat.

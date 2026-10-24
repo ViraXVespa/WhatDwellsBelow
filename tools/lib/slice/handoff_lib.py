@@ -4,8 +4,9 @@ A survey session ends when she has answered its first ask: Build writes the hand
 defaults to the door), and stops.
 `python tools/slice.py start --handoff` writes the skeleton, then validates the filled file and prints the one command she runs from the
 main checkout: `python tools/slice.py open AREA --prompt-file PATH`. The file becomes the first message of a NEW session, whose first command
-`slice.py start --door D --from-handoff PATH` prints a compact start summary and points the file's first command at `--from-task ID`, so
-the committed task resumes from any checkout. It is not the retry point (that is the implementation session's original session ID,
+`slice.py start --door D --from-handoff PATH` prints a compact start summary and points the file's first command at `--from-task ID`. Its
+`resume:` line is the User's launch line (`slice.py open AREA --task ID`, run from the repo root); a session she opens with it starts with
+`--from-task ID`, so the committed task resumes from any checkout. It is not the retry point (that is the implementation session's original session ID,
 forked after `/fork` at the end of Gather); the handoff moves a survey into a fresh implementation session.
 The fresh worktree is cut from the week branch, so survey-session edits to shot-flow files and the routes.yaml mapping are saved to
 `_logs/handoff/survey-edits/` (the task file with them) and put back by `--from-handoff` (a file that differs is only listed when the week branch moved).
@@ -55,11 +56,13 @@ def edits_dir(handoff: Path) -> Path:
         return handoff.parents[2] / EDITS_REL
     return handoff.parent / "survey-edits"
 
+def launch_cmd(door: str, tid: str, job: str = "") -> str:
+    """The task's `resume:` line: what the User runs from the repo root to open a new session on it. Build never runs it."""
+    return f"python tools/slice.py open {job if job and '.' in job else (door or '<door>')} --task {tid}"
+
 def from_task_cmd(door: str, tid: str, job: str = "") -> str:
-    """User starts with open_slice; Build resumes with start_build_slice --job door.job."""
-    if job and "." in job:
-        return f"python tools/slice.py open {job} --task {tid}"
-    return f"python tools/slice.py open {door or '<door>'} --task {tid}"
+    """The in-session first command for a committed handoff task (the new session's first message names it)."""
+    return f"python tools/slice.py start --door {door or '<door>'}" + (f" --job {job}" if job and "." in job else "") + f" --from-task {tid}"
 
 def _git(root: Path, *a: str) -> str:
     p = subprocess.run(["git", *a], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -69,7 +72,7 @@ def skeleton(root: Path, area: str, door: str, job: str, session: str = "", unit
     path = handoff_path(root, task)
     first = f'python tools/slice.py start --door {door or "<door>"}' + (f" --job {job}" if job else "") + f' --from-handoff "{path}", then python tools/docs.py task show {path.stem}'
     head = [f"# Handoff: {area}", f"id: {path.stem}", "owner: build", "status: active", "done-when: <fill: when this task is finished, in her words>",
-            f"area: {area}", f"door: {door}", f"job: {job}"]
+            f"resume: {launch_cmd(door, path.stem, job)}", f"area: {area}", f"door: {door}", f"job: {job}"]
     if units:  # a door worked as a queue of units: the order and what is done travel with the handoff
         head += ["units: " + ", ".join(units), "done: " + (", ".join(done) if done else "none")]
     head += [f"from: survey session {session or '(id unknown)'} in {root}",
@@ -349,4 +352,16 @@ def selftest(script: list[str]) -> list[str]:
         code, out = run(fresh, "--door", "ui", "--from-task", "nope", "--dry-run")
         if code == 0:
             bad.append("--from-task with no such task file must fail")
+        if not re.search(r"^resume: python tools/slice\.py open ui --task \S+$", sk, re.M):
+            bad.append("a handoff skeleton's resume line must be the launch line `slice.py open AREA --task ID`")
+    import task_lib
+    tools_root = Path(__file__).resolve().parents[3]
+    for line, ok in (("python tools/slice.py open ui --task x", True), ("python tools/media.py attack-keys --resume", True),
+                     ("the User names this task in a web session", True), ("open design/x.md (art_pipeline.attack_keyframes job)", True),
+                     ("python tools/open_slice.py ui --task x", False), ("python tools/slice.py launch ui", False),
+                     ("no open_slice command", False), ("run start_build_slice.py --door ui", False)):
+        if (not task_lib.command_fails(tools_root, "t.md", "resume", line)) != ok:
+            bad.append(f"task check must {'accept' if ok else 'reject'} the resume line {line!r}")
+    if not task_lib.resume_fails(tools_root, "x", {"path": "t.md", "resume": "python tools/slice.py start --door ui --from-task x"}):
+        bad.append("a Build resume line must be the launch line, not the in-session --from-task command")
     return bad

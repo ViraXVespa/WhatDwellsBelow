@@ -15,7 +15,7 @@ records trust for the source checkout, and the new session then loads no Agents.
 With AREA (a routes.yaml door, door.job, or a free name) the area is resolved first; a visual slice with no shot_flows prints a STEP 0
 note (creating the flow is the first job step, not a stop) and the launch continues. Without AREA there are no checks: Build runs
 slice.py start inside the worktree.
---task ID reads design/tasks/ID.md (AREA defaults to its `resume:` line): with no prompt given it writes a short first message (`slice.py start --job|--door AREA --task ID`, then `docs.py task show ID`; read that file whole).
+--task ID reads design/tasks/ID.md (AREA defaults to its `resume:` line): with no prompt given it writes a short first message (`slice.py start --job|--door AREA --task ID`, or `--door D --from-task ID` for a handoff, then `docs.py task show ID`; read that file whole).
 `_src` is in the repo, so the worktree already has it. `needs-local` is retired: a task that still sets it fails loudly and nothing is linked.
 This is the only tool that launches grok for a Build slice (the isolated-media runner is the other launcher, under its own gate).
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
@@ -53,8 +53,13 @@ def session_argv(grok: str, wt: str, prompt: str) -> list[str]:
     """Trust this folder. `grok --worktree --trust` trusts the source checkout, not the new one."""
     return [grok, "--cwd", wt, "--trust"] + ([prompt] if prompt else [])
 
-def task_prompt(tid: str, path: str, area: str) -> str:
-    start = f"python tools/slice.py start {task_lib.start_flag(area)} {area} --task {tid}, then python tools/docs.py task show {tid}"
+def task_prompt(tid: str, path: str, area: str, t: dict | None = None) -> str:
+    """First message for --task: a committed handoff (it has `from:`) restarts with --from-task; any other task with --task."""
+    t = t or {}
+    if t.get("from") and t.get("door"):
+        start = handoff_lib.from_task_cmd(t["door"], tid, t.get("job", "")) + f", then python tools/docs.py task show {tid}"
+    else:
+        start = f"python tools/slice.py start {task_lib.start_flag(area)} {area} --task {tid}, then python tools/docs.py task show {tid}"
     return f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole."
 
 def main(argv: list[str] | None = None) -> int:
@@ -79,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     ref = args.ref or repo_lib.week_branch(root)
     if not ref:
         return end("NO WEEK BRANCH: no grok-build-w* branch exists and no --ref was given, so nothing is started (main is never the fallback). "
-                   "Ask Vira whether to start a new week (`python tools/release.py week-start`), or pass --ref REF.", "FAIL", route="no-week-branch")
+                   "A new week starts in a Build session in the repo root told it is a new week (design/build-week-start.md); or pass --ref REF.", "FAIL", route="no-week-branch")
     area = args.area.strip()
     note = ""
     if area:
@@ -102,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
             if not area:
                 return end(f"NO AREA for task {args.task}: its `resume:` line names no door or door.job (`python tools/docs.py task check`).", "FAIL", route="no-area")
             _, _, _, note = slice_lib.slice_check(root, area)
-        prompt = prompt or task_prompt(args.task.strip(), t["path"], area)
+        prompt = prompt or task_prompt(args.task.strip(), t["path"], area, t)
         if subprocess.run(["git", "cat-file", "-e", f"{ref}:{t['path']}"], cwd=root, capture_output=True).returncode != 0:
             note = (note + "\n" if note else "") + f"WARN: {t['path']} is not on {ref}, so the new worktree will not have it. Merge main into {ref} first, or pass --ref."
     hand_note = ""

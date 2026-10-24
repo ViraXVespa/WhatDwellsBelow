@@ -1,7 +1,7 @@
 """Shared task files in design/tasks/ (library for docs.py task, handoff_lib.py, slice.py start and check.py load-graph; import only).
 
 One open task is one `design/tasks/<id>.md`. Its header (the lines before the first `## `) holds `key: value` fields: id, owner (build, web or
-bot), status (open, active or blocked), done-when, resume (or a Build handoff's `Your first command ...:` line), optional title and needs
+bot), status (open, active or blocked), done-when, resume (a Build task's: the User's launch line, `slice.py open AREA --task ID`; Build never runs it), optional title and needs
 (comma-separated ids it waits on). The body is free sections. design/tasks/README.md holds the rules and a generated index between markers.
 A finished task is deleted, its dependants lose it from `needs:` (a blocked task with nothing left becomes open), and one changelog line is added.
 """
@@ -35,7 +35,7 @@ def split(raw: str) -> list[str]:
     return [p.strip() for p in (raw or "").split(",") if p.strip() and p.strip() != "none"]
 
 def head(text: str) -> dict[str, str]:
-    """Header fields; `title` falls back to the `# ` heading, `resume` to a handoff's first-command line."""
+    """Header fields; `title` falls back to the `# ` heading; a handoff's `Your first command ...:` line is `first`."""
     out: dict[str, str] = {}
     for line in text.splitlines():
         if line.startswith("## "):
@@ -51,8 +51,6 @@ def head(text: str) -> dict[str, str]:
         if f and "first" not in out:
             out["first"] = f.group(1).strip()
     out.setdefault("title", out.get("heading", ""))
-    if not out.get("resume") and out.get("first"):
-        out["resume"] = out["first"]
     return out
 
 def files(root: Path) -> list[Path]:
@@ -78,6 +76,17 @@ def set_head(path: Path, key: str, value: str) -> bool:
             md.write_text(path, "\n".join(lines), eol="crlf" if eol == "\r\n" else "lf", bom=bom)
             return True
     return False
+
+def ensure_head(path: Path, key: str, value: str) -> bool:
+    """Add header line `key: value` after `id:` when the file has none; True when the file changed."""
+    if head(md.read_text(path)).get(key):
+        return False
+    text, eol, bom = md.read_text(path, with_meta=True)
+    lines = text.split("\n")
+    at = next((i + 1 for i, line in enumerate(lines) if line.startswith("id:")), 1)
+    lines.insert(at, f"{key}: {value}")
+    md.write_text(path, "\n".join(lines), eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+    return True
 
 def set_section(path: Path, title: str, body: str) -> bool:
     """Replace the body of `## title` (added at the end when missing); True when the file changed."""
@@ -118,7 +127,10 @@ def write_index(root: Path, dry: bool = False) -> bool:
     return True
 
 OPEN_RE = re.compile(r"^python tools/slice\.py open (\S+) --task (\S+)$")
-FROM_RE = re.compile(r"^python tools/slice\.py start --(door|job) (\S+) --from-task (\S+)$")
+FIRST_CMD_RE = re.compile(r'^python tools/slice\.py start --door (\S+)(?: --job (\S+))? --from-(task (\S+)|handoff "?[^"]+"?)(?:, then python tools/docs\.py task show (\S+))?$')
+CMD_RE = re.compile(r"(?:python3? )?\btools/([\w./-]+?\.py)\b(?:\s+([a-z][a-z0-9-]*))?")
+PY_RE = re.compile(r"(?<![\w/.-])([a-z_][a-z0-9_]*\.py)\b")
+WORD_RE = re.compile(r"\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b")
 
 def start_flag(area: str) -> str:
     """The slice.py start flag for a resume area: --job for door.job, --door for a door."""
@@ -126,26 +138,53 @@ def start_flag(area: str) -> str:
 
 def resume_area(t: dict[str, str]) -> str:
     """The door or door.job a Build task's `resume:` line names ('' when it names none)."""
-    r = t.get("resume", "").strip()
-    m = OPEN_RE.match(r)
-    if m:
-        return m.group(1)
-    m = FROM_RE.match(r)
-    return m.group(2) if m else ""
+    m = OPEN_RE.match(t.get("resume", "").strip())
+    return m.group(1) if m else ""
+
+def command_fails(root: Path, where: str, key: str, text: str) -> list[str]:
+    """Every tool a task line names must run today: `tools/E.py SUB` needs entry E with subcommand SUB; a bare `X.py`
+    must be an entry tool; a module name (open_slice, run_shots, ...) is never a command (say `slice.py open`)."""
+    import boot
+    table = boot.entries(root / "tools" if any((root / "tools").glob("*.py")) else boot.TOOLS)
+    out: list[str] = []
+    for path, sub in CMD_RE.findall(text):
+        e = path[:-3]
+        if "/" in e or e not in table:
+            out.append(f"{where}: `{key}:` names tools/{path}, which is not an entry tool (python tools/<entry>.py SUB; `python tools/docs.py task check`)")
+            continue
+        subs = {s for s, _, _ in table[e] if s}
+        if subs and sub not in subs:
+            out.append(f"{where}: `{key}:` runs {e}.py {sub or '(no subcommand)'}: {e}.py has no such subcommand (`python tools/{e}.py` lists them)")
+    entries_py = {f"{e}.py" for e in table}
+    for name in PY_RE.findall(CMD_RE.sub(" ", text)):
+        if name not in entries_py:
+            out.append(f"{where}: `{key}:` names {name}, which is not an entry tool")
+    mods = {m.rsplit("/", 1)[-1]: (e, s) for e, rows in table.items() for s, m, _ in rows}
+    for w in sorted(set(WORD_RE.findall(re.sub(r"[\w-]+\.[\w.-]+", " ", text))) & mods.keys()):  # door.job ids and file names are not modules
+        e, s = mods[w]
+        out.append(f"{where}: `{key}:` names the module {w}, not a command: use `python tools/{e}.py{' ' + s if s else ''}`")
+    return out
 
 def resume_fails(root: Path, tid: str, t: dict[str, str]) -> list[str]:
-    """A Build task's resume line: `python tools/slice.py open AREA --task ID` (her launch) or a handoff's
-    `python tools/slice.py start --door D|--job D.J --from-task ID`; AREA a routes.yaml door or door.job; units/done coherent."""
+    """A Build task's `resume:` is the User's launch line, `python tools/slice.py open AREA --task ID` (run from the repo root; Build never
+    runs it), AREA a routes.yaml door or door.job. A handoff's first-command line is the in-session start: `slice.py start --door D
+    [--job D.J] --from-handoff PATH | --from-task ID`. units/done coherent."""
     from load_routes import check_route, load_routes
     where, r, out = t["path"], t.get("resume", "").strip(), []
-    m, f = OPEN_RE.match(r), FROM_RE.match(r)
-    if not (m or f):
-        return [f"{where}: Build `resume:` must be `python tools/slice.py open AREA --task {tid}` (AREA a door or door.job)"]
-    area, rid = (m.group(1), m.group(2)) if m else (f.group(2), f.group(3))
+    m = OPEN_RE.match(r)
+    if not m:
+        return [f"{where}: Build `resume:` is the launch line the User runs from the repo root: `python tools/slice.py open AREA --task {tid}` (AREA a door or door.job); "
+                "the in-session start command belongs in the handoff's `Your first command` line"]
+    area, rid = m.group(1), m.group(2)
     if rid != tid:
         out.append(f"{where}: `resume:` names task {rid}, not {tid}")
-    if f and (f.group(1) == "job") != ("." in area):
-        out.append(f"{where}: `resume:` passes --{f.group(1)} {area}: use {start_flag(area)} for {'a door.job' if '.' in area else 'a door'}")
+    first = t.get("first", "")
+    if first:
+        f = FIRST_CMD_RE.match(first)
+        if not f:
+            out.append(f"{where}: first-command line must be `python tools/slice.py start --door D [--job D.J] --from-handoff PATH|--from-task {tid}`")
+        elif (f.group(4) and f.group(4) != tid) or (f.group(5) and f.group(5) != tid):
+            out.append(f"{where}: first-command line names another task than {tid}")
     bad = check_route(load_routes(root), "" if "." in area else area, area if "." in area else "")
     if bad:
         out.append(f"{where}: `resume:` {bad}")
@@ -182,6 +221,9 @@ def fails(root: Path) -> list[str]:
                 out.append(f"{where}: `{key}:` is empty or unfilled")
         if t.get("owner") == "build" and t.get("resume") and FILL not in t.get("resume", ""):
             out += resume_fails(root, tid, t)
+        for key in ("resume", "first"):
+            if t.get(key) and FILL not in t[key]:
+                out += command_fails(root, where, "first command" if key == "first" else key, t[key])
         needs = split(t.get("needs", ""))
         for n in needs:
             if n not in tasks:
