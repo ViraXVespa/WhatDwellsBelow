@@ -24,7 +24,7 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | grok_web_w4 | Grok Web Results (Week 4) | `313bb3e3dce29a3d75f4214c0cdadfe16ef9ba00` |
 | grok_build_w5 | Grok Build Results (Week 5) | `75b3bea979bf0fc530ab9660ca177c327eb465d8` |
 
-Each week adds `grok_web_w{N}` and `grok_build_w{N}` (sequence: `versioning.md`). Both pin the week-close merge commit, so the two builds are identical on purpose. Those rows use the same isolation rules as the rows above. Rows up to week 5 come from the older flow (web = end of week, build = seed commit) and stay as they are.
+The week-N close adds `grok_build_w{N}` at the week-close merge and `grok_web_w{N-1}` at that merge's parent (`main` just before the branch landed; sequence: `versioning.md`). Those rows use the same isolation rules as the rows above. Rows up to week 5 come from the older flow (web = end of week, build = seed commit) and stay as they are.
 
 No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
 
@@ -38,15 +38,15 @@ Core rule above still applies (no project-tree copies into `archives/`). User-or
 2. `python tools/week_pin.py --id ID --label L --desc D --commit SHA` (row, no tag).
 3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
 
-Weekly pins are automatic (below). `week_pin.py --web N` / `--build N [--commit SHA]` (`--dry-run` first) is the same code by hand: row, notes, local tag; a rerun adds nothing and only fills in a missing tag. Do not move a pin on a resume after corruption.
+Weekly pins are automatic (below). `week_pin.py --web N` / `--build N [--commit SHA]` (`--dry-run` first) is the same code by hand: row and local tag; a rerun adds nothing and only fills in a missing tag. Do not move a pin on a resume after corruption.
 
 ## Week-close archives (CI)
 
 `.github/workflows/archive.yml` runs on every push to `main` that is not `[skip ci]`. It waits for the Version stamp of that push to finish, then runs `tools/ci_archive.py --before <push base> --commit <pushed sha> --commit-changes --push origin`:
 
 1. **Detect.** The push adds `design/changelog/{epoch}.{N}.0.md` (patch 0, a new file directly in that folder). Moves into `archive/`, `chore: stamp` and other `[skip ci]` commits never match. No such file: stop.
-2. **Pin both.** For `grok_web_wN` and `grok_build_wN`, independently: add the missing catalog row at the pushed commit (an existing tag keeps its commit), copy series `N` notes to `archives/docs/<id>/`, create the missing tag `archive/grok-web-wN` / `archive/grok-build-wN`. Row and tag both present: nothing happens, so reruns are safe.
-3. **Commit and push.** `chore: archive week N [skip ci]` touches only the catalog and `archives/docs/`. New tags are pushed first, then the commit; a rejected push fetches, rebases that one commit and retries (3 times). Never forced, nothing deleted. The `[skip ci]` commit starts no Version, Pages or archive run.
+2. **Pin.** `grok_build_wN` at the pushed merge commit and `grok_web_w{N-1}` at its first parent, independently: add the missing catalog row (an existing tag keeps its commit; `docs` lists `design/` as it is on that commit) and create the missing tag `archive/grok-build-wN` / `archive/grok-web-w{N-1}`. No notes are copied. Row and tag both present: nothing happens, so reruns are safe.
+3. **Commit and push.** `chore: archive week N [skip ci]` touches only the catalog. New tags are pushed first, then the commit; a rejected push fetches, rebases that one commit and retries (3 times). Never forced, nothing deleted. The `[skip ci]` commit starts no Version, Pages or archive run.
 4. **Pages.** That commit starts no Pages deploy, so the job dispatches `pages.yml` once when something changed; the new rows then export.
 
 Recovery: Actions, Archive, Run workflow, input `week` = N (skips detection; `commit` optional, default the branch tip). Local proof with no GitHub: `python tools/ci_archive.py --selftest` (temp origin, squash-merge, stamp commit, rerun, tag repair, push race) and `--dry-run`. If a week is closed without CI, `week_start.py` pins the missing rows at HEAD as catch-up.
