@@ -330,7 +330,7 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
     ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable).")
-    ap.add_argument("--full", action="store_true", help="Check every tool (default: only tools with uncommitted changes).")
+    ap.add_argument("--full", action="store_true", help="Check every tool (default: tools with uncommitted changes or in unpushed commits).")
     ap.add_argument("--smoke-run", action="store_true", help="Also run every tool's probes and SMOKE cases in a throwaway repo copy (about a minute).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -342,14 +342,15 @@ def main(argv: list[str] | None = None) -> int:
     elif args.full:
         paths = sorted(tools.glob("*.py"))
     else:
-        # default: only tools with uncommitted changes
-        code, out = subprocess.run(["git", "status", "--porcelain", "tools/"], cwd=root, capture_output=True, text=True).returncode, ""
+        # default: tools with uncommitted changes plus tools in commits not yet on the upstream branch
         proc = subprocess.run(["git", "status", "--porcelain", "tools/"], cwd=root, capture_output=True, text=True)
         dirty = {Path(line[3:].strip()).stem for line in proc.stdout.splitlines() if line[3:].strip().endswith(".py")}
+        ahead = subprocess.run(["git", "diff", "--name-only", "@{upstream}...HEAD", "--", "tools/"], cwd=root, capture_output=True, text=True)
+        dirty |= {Path(line.strip()).stem for line in ahead.stdout.splitlines() if line.strip().endswith(".py")}
         paths = [p for p in sorted(tools.glob("*.py")) if p.stem in dirty]
         if not paths:
-            print("tool-cli: no uncommitted tools (use --full for everything)")
-            return 0
+            print("tool-cli: no uncommitted or unpushed tools (use --full for everything)")
+            return agent_log.emit_result("INFO", None, checked=0)
     lock = threading.Lock()
     def check_one(path: Path) -> None:
         local_bad: list[str] = []
