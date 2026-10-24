@@ -29,7 +29,7 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | Live code map (one system row) | `design/code-map.md` |
 | New or moved script placement (cluster folders) | `design/refactor.md` (Cluster folders section only) |
 | Numbers (when they change) | `design/tunables.md` |
-| Tools (what runs where, new-tool rule) | `design/tools.md` |
+| Tools (which tool for which job, rules) | `design/tools.md` |
 | Prove a change (any surface); extend a tool, do not work around it | `design/prove.md` |
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |
 

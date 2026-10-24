@@ -33,7 +33,7 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 - Plain `--headless` alone can **hang forever** under redirected IO. Always pass `--display-driver headless` `--audio-driver Dummy` for automated smoke.
 - Put the phase flag in **user** args (after `--`) so `OS.get_cmdline_user_args()` sees it.
 - Capture stderr for `P1:`…`P9:` lines and `SCRIPT ERROR`. Exit is self-quit from the phase (or kill after a timeout if hung).
-- Compile/reload check is separate: `tools/run_godot_import_check.py` (`--headless --editor --import`). Catalog: `tools.md`. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
+- Compile/reload check is separate: `tools/run_godot_import_check.py` (`--headless --editor --import`). Catalog: `tools-gates.md`. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
 
 | Fn | Checks |
 |----|--------|

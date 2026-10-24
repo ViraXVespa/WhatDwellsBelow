@@ -14,7 +14,7 @@ Door, rules, the CLI contract and the Surf / A key: `tools.md`. These print the 
 - **A tunable:** `tunables.py get KEY`; change it: `tunables.py set KEY --set "cell" --dry-run`, then without `--dry-run`.
 - **Scene nodes:** `list_scenes.py --path scenes/x.tscn`. Facade and helpers: `list_facade_cluster.py scripts/x.gd`.
 - **Bytes, BOM, EOL:** `file_stat.py PATH` (`--glob`). Funcs per script: `summarize_scripts.py --path P`.
-- **What changed / doc vs code:** `list_changed.py`; `list_changed.py --history design/x.md scripts/x.gd`.
+- **What changed / doc vs code:** `list_changed.py`; `list_changed.py --history DOC.md SCRIPT.gd`.
 - **A tool's last run:** `read_summary.py JOB` (no args lists jobs).
 - **Grok sessions:** `session_dump.py` (interactive, to clipboard); a share link: `grok_share.py URL --print-convo`.
 

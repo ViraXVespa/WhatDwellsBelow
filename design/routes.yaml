@@ -116,10 +116,25 @@ gates:
     when: editing_gdscript
   tools:
     file: design/tools.md
-    when: run_add_or_document_a_tool
+    when: pick_run_add_or_document_a_tool
+  tools_gates:
+    file: design/tools-gates.md
+    when: prove_gate_smoke_or_warning_tool
+  tools_shots:
+    file: design/tools-shots.md
+    when: shot_image_or_bake_tool
+  tools_perf:
+    file: design/tools-perf.md
+    when: perf_hitch_or_load_time_tool
+  tools_lookup:
+    file: design/tools-lookup.md
+    when: find_code_route_tunable_or_log_tool
   tools_lint:
     file: design/tools-lint.md
-    when: size_dupe_or_dead_code_tool
+    when: size_dupe_dead_code_or_doc_edit_tool
+  tools_libs:
+    file: design/tools-libs.md
+    when: write_or_change_a_tool_or_lib
   prove:
     file: design/prove.md
     when: choose_run_or_report_a_proof

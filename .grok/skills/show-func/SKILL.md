@@ -29,4 +29,4 @@ Rules:
 - Batch related funcs from the same system in one shell command.
 - Output is capped (first 20 lines of the declaration) and logged under _logs/show-func/. Read the printed RESULT / summary; do not open the log files.
 - If you need the whole file or are about to edit it, then read_file is fine. Otherwise stay with show_func.
-- Catalog row: design/tools.md. Do not open the tool body to learn flags.
+- Catalog row: design/tools-lookup.md. Do not open the tool body to learn flags.

@@ -2,7 +2,7 @@
 
 Status: protocol for agents on a local checkout
 Read when: inventorying live files, running a listed runner, reading that runner's _logs summary, or adding a new local runner
-The tool catalog (what each tool is, surfaces, gotchas) is `design/tools.md`; this file keeps only the Build / Windows habits.
+The tool door (which tool for which job, rules; catalog rows in its siblings) is `design/tools.md`; this file keeps only the Build / Windows habits.
 
 The cloud Refactorer does not use this file (BOT.md). Every runner is Python. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the job summary (`python tools/read_summary.py --job <name>`, then the final `RESULT` line)** those tools write - not raw Godot logs, not whole script bodies just to inventory.
 
@@ -26,7 +26,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 
 ## Build habits
 
-- Skill + catalog intercept before opening many untouched siblings. Tool choice: `design/tools.md` (Run when). Do not open `design/code-map.md` or a list of task files for row/task jobs; use the catalog tools (`task.py list`).
+- Skill + catalog intercept before opening many untouched siblings. Tool choice: `design/tools.md` (Which tool for which job). Do not open `design/code-map.md` or a list of task files for row/task jobs; use the catalog tools (`task.py list`).
 - While editing: prefer `file_stat.py` and Length summaries over reading untouched siblings.
 - After a slice that touched `.gd`: `run_build_gate.py` unless the User says skip.
 - After an edit of a design doc, the agents file, or `BOT.md`: `check_load_graph.py`. RESULT PASS is required before the change is reported done. It is not deferred to ship.

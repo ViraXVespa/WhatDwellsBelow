@@ -53,7 +53,7 @@ All sheets for that ask must already be written before the open. Do not open the
 
 **Doc and code disagree.** Enough to pick the current one: `python tools/list_changed.py --history DOC CODE` lists each path's latest commits (and flags uncommitted edits) and prints `newer=`. Trust the newer, and fix the older in the same job when that is a plain correction. Still unclear (similar dates, an uncommitted edit): Build asks with a question prompt, Web asks, Bot lists the line under `Stale doc lines (for the User)`.
 
-Each says when it is enough. Image checks use `python tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; the library is `tools/imglib/`, `tools-media.md`). The `--json` flag gives one object.
+Each says when it is enough. Image checks use `python tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; `tools-shots.md`; library `tools/imglib/`). The `--json` flag gives one object.
 
 **Same as main (shots).** Enough for a change that must not alter pixels. Fixed seed flows only (`fixed_fps`, `seed`; two runs are byte-identical). On a `main` checkout and on the branch: `run_shot_flow.py --all --save-baseline DIR`; then `shot_diff.py MAIN_DIR BRANCH_DIR --out OUT`. Expected diffs are the ones the change asked for; any other changed region is a finding. Frame-level detail: `img_inspect.py diff A B --out OUT`.
 

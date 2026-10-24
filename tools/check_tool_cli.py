@@ -329,7 +329,7 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
-    ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable).")
+    ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable or comma separated; .py optional).")
     ap.add_argument("--full", action="store_true", help="Check every tool (default: tools with uncommitted changes or in unpushed commits).")
     ap.add_argument("--smoke-run", action="store_true", help="Also run every tool's probes and SMOKE cases in a throwaway repo copy (about a minute).")
     args = ap.parse_args(argv)
@@ -337,6 +337,10 @@ def main(argv: list[str] | None = None) -> int:
     tools = root / "tools"
     bad: list[str] = []
     tally = {"checked": 0, "libs": 0}
+    args.only = [x.strip().removesuffix(".py") for o in args.only for x in o.split(",") if x.strip()]
+    unknown = [x for x in args.only if not (tools / f"{x}.py").is_file()]
+    if unknown:
+        agent_log.fail(f"--only: no such tool: {', '.join(unknown)}")
     if args.only:
         paths = [p for p in sorted(tools.glob("*.py")) if p.stem in args.only]
     elif args.full:

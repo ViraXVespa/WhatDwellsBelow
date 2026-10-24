@@ -7,12 +7,11 @@ Door, rules, the CLI contract and the Surf / A key: `tools.md`. Flows live in th
 
 ## Jobs
 
-- **Imagine a still (UI, NPC, tile, character):** `run_isolated_grok.py --kind ui --brief "..." --out DIR` (flow: the isolated-media gate).
-- **Rekey stills:** `rekey_all_stills.py --only assets/...png` (live), `--out DIR` (review copy), `--check` (two runs byte-identical); look first with `rekey_preview.py --only ...`; full-set check `rekey_check.py --new DIR`.
+- **Imagine a still:** `run_isolated_grok.py --kind ui --brief "..." --out DIR` (flow: the isolated-media gate).
+- **Rekey stills:** `rekey_all_stills.py --only assets/...png` (live), `--out DIR` (review copy), `--check`; look first with `rekey_preview.py --only ...`; full-set check `rekey_check.py --new DIR`.
 - **Animation review briefs:** `anim_review.py pack`, `anim_review.py regen`, `anim_review.py tree --out DIR`.
 - **Bible prompts and sheets:** `bible_prompt.py --gender female` / `--enemy ID`; `bible_normalize.py`.
 - **Sound effects:** `make_sfx.py --list`, `make_sfx.py --only CUE`, `make_sfx.py --check`.
-- **Image facts for a proof:** `img_inspect.py` (`tools-shots.md`).
 
 ### Media / art pipeline (Build only)
 

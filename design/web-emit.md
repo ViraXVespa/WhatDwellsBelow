@@ -67,7 +67,7 @@ Web writes a Build brief only when the User asks for one, and only for work Web 
 Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/task.py`. Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file. Extra header fields that `task.py new` does not emit may be added afterward with `ensure_line`.
 The scratch must call the matching prove runner (`dp.run_checker`, `dp.dump_job`, etc.) and base the RESULT line solely on the integer it returns. Do not print RESULT until the runner has returned. Do not hard-code PASS.
 
-Tool catalog (what each runner is, which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
+Which tool for which job (and which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
 Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
 Code-map rows: `code_map.py patch` (code_map_lib), not a hand regex on the table.

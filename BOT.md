@@ -66,7 +66,7 @@ Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run
 
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, exits 0 only on zero findings, and does not fix game code. `--list`, `--repeat 2`, `--out-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
 The Bot's Linux box has only `python3`; run `python3` wherever a doc says `python`.
-Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `python tools/X.py`. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
+Tools: `design/tools.md` maps each job to a tool and names the sibling with its row. The Bot runs only `A=Y` tools, as `python tools/X.py`. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
 
 ## Hard stops
 
