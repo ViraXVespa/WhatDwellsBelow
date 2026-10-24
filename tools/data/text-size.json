@@ -1,0 +1,56 @@
+{
+ "_about": "shots.py textsize: viewports (CSS width, height, device pixel ratio), the screens (shot flows) measured, and the minimum text size in CSS px on the gated viewports. allow: screen regex (flow/state) -> lower minimum, for fixed-art frames whose text is capped (frame skin TEXT_CAP); each is an open layout question. design/ui-style.md (Text size).",
+ "min_css": 10,
+ "gate": [
+  "phone-l"
+ ],
+ "viewports": {
+  "phone-l": [
+   844,
+   390,
+   3
+  ],
+  "phone-p": [
+   390,
+   844,
+   3
+  ],
+  "tablet-l": [
+   1133,
+   744,
+   2
+  ],
+  "desktop": [
+   1920,
+   1080,
+   1
+  ]
+ },
+ "flows": [
+  "title-menu",
+  "fs-gate",
+  "splash-credit",
+  "camp-pause-menu",
+  "camp-pause-pages",
+  "camp-pause-inventory",
+  "camp-inventory",
+  "camp-npc-panels",
+  "camp-receptionist-menu",
+  "camp-anvil-tabs",
+  "camp-gear-board",
+  "camp-gear-popups",
+  "camp-billboard-controls",
+  "camp-overlays",
+  "camp-recap",
+  "dungeon-hud-states",
+  "dungeon-gate-shop",
+  "dungeon-map-crystal",
+  "dungeon-f1-boss"
+ ],
+ "skip": [],
+ "allow": {
+  "^camp-npc-panels/(vendor|quest-board|dumpster)$": 7,
+  "^camp-billboard-controls/": 7,
+  "^camp-(anvil-tabs|gear-popups)/(tab|anvil-)": 9
+ }
+}

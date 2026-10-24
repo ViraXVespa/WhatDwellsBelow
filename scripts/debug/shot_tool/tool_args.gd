@@ -111,6 +111,9 @@ static func frames_dir() -> String:
 static func show_window() -> bool:
 	return _arg_int("--wdb-shot-show", 0) != 0
 
+static func texts_all() -> bool:
+	return _arg_int("--wdb-shot-texts", 0) != 0
+
 static func no_pixels() -> bool:
 	return _arg_int("--wdb-shot-nopix", 0) != 0
 

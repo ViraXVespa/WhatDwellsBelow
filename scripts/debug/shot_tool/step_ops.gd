@@ -124,7 +124,7 @@ static func op_press(st: Dictionary, step: Dictionary) -> void:
 	printerr("SHOT: press %s x%d" % [JSON.stringify(step), times])
 
 static func _dump_texts(st: Dictionary, step: Dictionary, stem: String) -> void:
-	if not bool(step.get("texts", false)):
+	if not bool(step.get("texts", false)) and not Args.texts_all():
 		return
 	var rows: Array = op_texts(st, step)
 	var f: FileAccess = FileAccess.open(Args.frames_dir().path_join(stem + ".texts.json"), FileAccess.WRITE)

@@ -130,6 +130,10 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         extra.append(f"--wdb-shot-frames={Path(args.frames_dir).resolve()}")
     if args.no_pixels:
         extra.append("--wdb-shot-nopix=1")
+    if args.texts_all:
+        extra.append("--wdb-shot-texts=1")
+    if args.dpr > 0:
+        extra.append("--wdb-dpr=%g" % args.dpr)
     return extra
 
 def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int, poses: str) -> list[str]:
@@ -267,6 +271,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")
     p.add_argument("--fixed-fps", type=int, default=0, help="engine fixed frame delta (e.g. 60) so animation and AI repeat; 0 = real time. Flow key: fixed_fps.")
+    p.add_argument("--texts-all", action="store_true", help="with --steps: every shot also writes NN-name.texts.json (text, font size, px on screen); shots.py textsize reads them")
+    p.add_argument("--dpr", type=float, default=0.0, help="device pixel ratio the game assumes (--wdb-dpr): emulate a phone with --width/--height = CSS size x dpr")
     p.add_argument("--movie", default="", help="with --steps: Godot movie maker writes every rendered frame here (.png = numbered PNGs, .avi = MJPEG) at the project viewport size (1920x1080); shots.py movie drives this")
     p.add_argument("--full-map", action="store_true", help="photograph the whole dungeon floor in overlapping tiles and stitch one PNG (seed 42 floor 1 unless --seed/--floor) at the real game scale (64 px per cell)")
     p.add_argument("--max-px", type=int, default=8192, help="with --full-map: longest side of the output PNG, 0 = native size (about 27000 px wide on a 432-cell floor); reduced by exact 2x steps")

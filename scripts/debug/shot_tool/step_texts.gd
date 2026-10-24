@@ -1,7 +1,8 @@
 extends RefCounted
 
 ## Shot flow text dump: every visible Label / Button / RichTextLabel / LineEdit under a root.
-## Rows: text, font_size, rect [x, y, w, h], path. Lets a flow assert copy and size rules without pixels.
+## Rows: text, font_size, px (glyph em size in window pixels after canvas, layer and stretch scale), rect [x, y, w, h],
+## path. Lets a flow assert copy and size rules without pixels; shots.py textsize turns px into CSS px.
 
 static func _text_of(c: Control) -> String:
 	if c is RichTextLabel:
@@ -22,9 +23,12 @@ static func _walk(n: Node, out: Array) -> void:
 		var t: String = _text_of(c).strip_edges()
 		if not t.is_empty():
 			var r: Rect2 = c.get_global_rect()
+			var fs: int = c.get_theme_font_size("normal_font_size" if c is RichTextLabel else "font_size")
+			var k: float = c.get_global_transform_with_canvas().get_scale().y * c.get_viewport().get_final_transform().get_scale().y
 			out.append({
 				"text": t,
 				"font_size": c.get_theme_font_size("font_size"),
+				"px": snappedf(float(fs) * absf(k), 0.1),
 				"rect": [int(r.position.x), int(r.position.y), int(r.size.x), int(r.size.y)],
 				"path": str(c.get_path()),
 			})
