@@ -82,7 +82,7 @@ def block(root: Path, what: str, red: list[str]) -> str:
     head = f"RETRY: red prove ({what}). Prove is final verification: at most one small corrective edit and one rerun; still red: stop and report the log path."
     if not base:
         return "\n".join([head, "NO BASE: no grok-build-w* week branch and no saved --ref, so there is no diff to point a retry at. "
-                           "Ask Vira in a question prompt (she runs `python tools/release.py week-start` to start a week). Nothing is started for you.", END])
+                           "Tell the User; a new week starts when she opens Build in the repo root and says so (design/build-week-start.md). Nothing is started for you.", END])
     if session:
         head += f" Retry: the User runs, from the worktree directory (`cd {_q(root)}`): `grok -r {session} --fork-session`: a fork of the original session, from the end of its Gather."
     else:

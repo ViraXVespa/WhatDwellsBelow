@@ -17,6 +17,7 @@ AGENTS.md
             -> docs/routing may open this file and the topic index; write stays one door
     build -> design/grok-build.md -> protocol.md and constraints.md
             -> design/build-job-cycle.md when gathering, changing, or proving
+            -> design/build-week-start.md when the User says it is a new week (main checkout, no slice)
             -> listed runner from that cycle table when proving; do not invent a flag
             -> next unit is User-named
     bot   -> BOT.md -> exactly one Job sibling

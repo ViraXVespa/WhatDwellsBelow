@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""QUARANTINE: human-only. Agents must not run this file.
-
-Local week start, run on an up-to-date main. In this order: seed version.json as epoch.{series+1}.0 + open_commit,
+"""Week start, run by Grok Build in the main checkout on an up-to-date main when the User says it is a new week
+(design/build-week-start.md); Grok Bot never runs it. In this order: seed version.json as epoch.{series+1}.0 + open_commit,
 archive prior changelogs, create and switch to the local branch grok-build-w{series+1} from HEAD, commit the seed
 there ("Grok Build Week N": version.json, changelogs, catalog), `grok worktree gc`, delete Godot locks, clean logs
 (--new-week). The weekly archives are NOT made here: CI pins both grok_web_wN and grok_build_wN when the squash-merge
@@ -9,7 +8,7 @@ of that branch adds design/changelog/0.N.0.md (release.py ci-archive). Catch-up 
 `grok_web_w{series}` / `grok_build_w{series}` row (CI did not run), the missing rows are pinned at HEAD with local
 tags. Never bumps the epoch, kills Godot, pushes, or writes leave-off. --dry-run prints "would ..." lines.
 
-    python tools/release.py week-start [--dry-run]       # old: -WhatIf
+    python tools/release.py week-start [--dry-run]
 Each run writes _logs/week-start/<stamp>-week-start.txt (session.py summary --job week-start).
 """
 from __future__ import annotations
@@ -29,7 +28,7 @@ import week_pin
 TOOLS = Path(__file__).resolve().parents[2]
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Human-only week start: seed version, week branch, changelog archive, catch-up pins, gc, clean.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, changelog archive, catch-up pins, gc, clean.", writes=True, json_out=True)
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = args.dry_run
@@ -119,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
             say(f"branch={branch} seed commit failed")
         else:
             say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
-    say(f"push=User runs: git push -u origin {branch}" + (f" and git push origin {' '.join(catch_tags)} (catch-up tags)" if catch else "") + " (never main; CI archives on the squash-merge)")
+    say(f"push=run: git push -u origin {branch}" + (f" and git push origin {' '.join(catch_tags)} (catch-up tags)" if catch else "") + " (never main; CI archives on the squash-merge)")
     # 4. housekeeping
     gc = "skipped"
     grok = shutil.which("grok")

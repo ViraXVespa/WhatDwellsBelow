@@ -13,7 +13,7 @@ Entries here: `slice.py`, `session.py`, `release.py`; their code: `tools/lib/rel
 - **A one-off script:** `session.py py --script _logs/agent-py/x.py` (deleted after the run); prefer a tool.
 - **Logs:** `session.py clean` (raw logs), `--new-week` (everything).
 - **Web export:** `release.py export-web` (Pages build), `release.py export-web --debug --out DIR` (debug build for perf or hitch work).
-- **Week and pins (human ritual):** `release.py week-start`, `release.py week-pin --web N` / `--build N`; CI runs `release.py ci-archive`.
+- **Week and pins:** `release.py week-start` (Build, `build-week-start.md`), `release.py week-pin --web N` / `--build N`; CI runs `release.py ci-archive`.
 
 ## Catalog
 
@@ -24,7 +24,7 @@ Entries here: `slice.py`, `session.py`, `release.py`; their code: `tools/lib/rel
 | `session.py py` | Run a one-off script from `_logs/agent-py/` (`--script PATH [args]`) and delete it after (`--keep-script` keeps it). Prefer a real tool. Summary: `agent-py`. | D | `--help` | N |
 | `session.py clean` | Delete raw logs under `_logs/` (`--max-age-hours`, `--keep-raw`); `--new-week` also every stamped summary and index. Summary: `clean`. | D | `--help` | N |
 | `release.py export-web` | Export the GitHub Pages build (Godot Web, no threads; runs `release.py mips` before `--import`). `--archives` adds the `_pages/` site; `--out DIR` exports to a scratch dir; `--debug --out DIR` uses preset `Web Debug` (keeps `scripts/debug/`; release `Web` excludes it). | D | `--help` | N |
-| `release.py week-start` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs; pins a missing closing-week row. **Human-only.** | D | `--help` | N |
+| `release.py week-start` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs; pins a missing closing-week row. Build only, at a new week (`build-week-start.md`). | D | `--help` | N |
 | `release.py week-pin` | Catalog row, notes, local tag: `--web N`, `--build N`, `--id`. Idempotent. | D | `--help` | N |
 | `release.py ci-archive` | CI: a merge adding `design/changelog/0.N.0.md` pins web + build week N (tags, rows, docs) and pushes. `--dry-run`, `--selftest`. | D | `--help` | N |
 | `release.py park-changelogs` | Move non-current-series changelogs into `archive/`. Human week ritual. | D | `--help` | N |

@@ -2,7 +2,7 @@
 """Housekeep _logs/ so runners do not clog the disk. Never touches files outside _logs/.
 
     python tools/session.py clean [--keep-raw] [--max-age-hours 24] [--dry-run]
-    python tools/session.py clean --new-week     # human-only: wipes every run summary, index and raw log + scratch dirs
+    python tools/session.py clean --new-week     # week start only (release.py week-start runs it): wipes every run summary, index and raw log + scratch dirs
 Default: delete raw *.log / *.err (run summaries and index.txt stay; each run keeps its own stamped files and the
 newest 20 stay per folder, run_log_lib.py). Summary: _logs/clean/ (its own stamped run files).
 

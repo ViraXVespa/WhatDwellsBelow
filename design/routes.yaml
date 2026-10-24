@@ -102,6 +102,9 @@ gates:
   art_attack_log:
     file: design/art-attack-keyframes-log.md
     when: attack_keyframe_roll_history
+  build_week_start:
+    file: design/build-week-start.md
+    when: build_new_week
   versioning:
     file: design/versioning.md
     when: named_pin_or_archive
