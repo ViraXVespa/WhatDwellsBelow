@@ -7,7 +7,7 @@ Modes:
   user  full-res PNG and open it
 
 Scripted flows (open a menu, press pad buttons, shoot every page, assert state): --steps FILE
-(a tools/shot-flows/*.json; see design/shot-flows.md). Whole flows, diffs and publishing: run_shot_flow.py.
+(a tools/data/shot-flows/*.json; see design/shot-flows.md). Whole flows, diffs and publishing: shots.py flow.
 Whole floor in one image: --full-map [--floor N --seed S --max-px 8192] sweeps the dungeon floor in overlapping play-camera
 tiles (flow op "sweep") and stitches them (needs Pillow). Numbers live here, not in a prompt.
 """
@@ -23,9 +23,9 @@ import ctypes
 from datetime import datetime, timezone
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import godot_lib
@@ -72,7 +72,7 @@ def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
         pass
 
 def _load_recipe(root: Path, name: str) -> dict:
-    path = root / "tools" / "shot-recipes.json"
+    path = root / "tools" / "data" / "shot-recipes.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     rec = data.get(name)
     if not isinstance(rec, dict) or not rec.get("frames"):
@@ -254,8 +254,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--pz", default="", help="player world Z; empty keeps spawn")
     p.add_argument("--cx", type=float, default=0.0, help="camera look offset X")
     p.add_argument("--cz", type=float, default=0.0, help="camera look offset Z")
-    p.add_argument("--recipe", default="", help="tools/shot-recipes.json key; empty is the play camera")
-    p.add_argument("--steps", default="", help="shot flow JSON (tools/shot-flows/*.json): scripted input, state and shots")
+    p.add_argument("--recipe", default="", help="tools/data/shot-recipes.json key; empty is the play camera")
+    p.add_argument("--steps", default="", help="shot flow JSON (tools/data/shot-flows/*.json): scripted input, state and shots")
     p.add_argument("--frames-dir", default="", help="with --steps: where numbered frames and flow.json go (default: the PNG dir)")
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")

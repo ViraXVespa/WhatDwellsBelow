@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Bake the hub light atlas (assets/baked/hub_light.png) through the --wdb-bake-camp hook.
 
-    python tools/run_bake_camp.py [--timeout-sec 180] [--headless]
+    python tools/bake.py camp [--timeout-sec 180] [--headless]
 
 Default is a real renderer: uses $DISPLAY / a live X socket, else xvfb-run (godot_lib.pick_display), software GL
 is fine. --headless (or no display and no xvfb-run) forces the headless driver. The atlas is the runtime yard render
 (day gradient, cast skirts, blur: all CPU), saved as is. shadow_px=0 is a FAIL in either mode (no box cast: the Layout
 did not realize). After a bake, review the shots, then paste RESULT stamp= into HUB_BAKE_STAMP (hub_bake.gd): the game
-loads only a png with that stamp and crashes at the hub otherwise (check_hub_bake.py is the no-Godot check).
-Then bakes assets/baked/ground_wear.png (bake_ground_wear.py; same bytes each run). Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
+loads only a png with that stamp and crashes at the hub otherwise (bake.py check is the no-Godot check).
+Then bakes assets/baked/ground_wear.png (bake.py ground; same bytes each run). Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
 Summary: _logs/bake-camp/<stamp>-bake-camp.txt; RESULT carries clean=, shadow_px=, stamp=, display=.
 """
 from __future__ import annotations
@@ -17,7 +17,8 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 

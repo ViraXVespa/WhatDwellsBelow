@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Bake the object-frame art (scripts/ui/progress_ui/*_art.gd) to PNGs under assets/ui/frames/<art>/<key>.png.
 
-  python tools/bake_frame_art.py            draw every skin in code, write the PNGs, import, then --check
-  python tools/bake_frame_art.py --check    draw in code and compare with the committed PNGs (FAIL = stale or missing)
-  python tools/bake_frame_art.py --time     how long building every skin takes from the PNGs
+  python tools/bake.py frames            draw every skin in code, write the PNGs, import, then --check
+  python tools/bake.py frames --check    draw in code and compare with the committed PNGs (FAIL = stale or missing)
+  python tools/bake.py frames --time     how long building every skin takes from the PNGs
 
 Re-run after editing any *_art.gd or a frame's dress(); the game loads only the PNGs (art_bake.gd) and a missing
 one is an error. New PNG imports get fix_alpha_border off so the pixels match the drawn image exactly.
@@ -15,8 +15,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 

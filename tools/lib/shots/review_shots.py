@@ -7,7 +7,7 @@ outside the repo, the run_isolated_grok isolation gate (`grok inspect`: no
 project instructions) must pass, a fresh child session answers the question
 and writes report.md, and only that text comes back. Any failure (grok
 missing, isolation not proven, child error, no report) is RESULT FAIL; there is
-no placeholder verdict. Use show_png.py instead when you need the image.
+no placeholder verdict. Use shots.py show instead when you need the image.
 """
 import os
 import shutil
@@ -16,9 +16,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log  # noqa: E402
 import run_isolated_grok as iso  # noqa: E402
@@ -103,7 +103,7 @@ def selftest() -> int:
         fake.chmod(0o755)
         png = t / "a.png"
         png.write_bytes(b"\x89PNG\r\n\x1a\n")
-        me = [sys.executable, str(Path(__file__).resolve())]
+        me = [*boot.cmd("review_shots")]
         cases = [("ok", str(fake), 0, "VERDICT: PASS"), ("leak", str(fake), 1, "isolation not proven"),
                  ("crash", str(fake), 1, "exited 4"), ("silent", str(fake), 1, "no report.md"),
                  ("ok", str(t / "nogrok"), 1, "not on PATH")]

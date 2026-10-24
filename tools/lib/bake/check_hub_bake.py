@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Hub bake check: the committed assets/baked/hub_light.png must match HUB_BAKE_STAMP in hub_bake.gd, and
-assets/baked/ground_wear.png must match GROUND_WEAR_STAMP in ground_shader.gd (tools/bake_ground_wear.py).
+assets/baked/ground_wear.png must match GROUND_WEAR_STAMP in ground_shader.gd (tools/bake.py ground).
 
-    python tools/check_hub_bake.py [--root R] [--json]
+    python tools/bake.py check [--root R] [--json]
 
 The game loads only a baked hub image whose size matches the Layout and whose RGBA8 pixels hash to HUB_BAKE_STAMP
 (first 16 hex of SHA-256), and crashes with a FATAL message otherwise. This is the same hash without Godot, so a stale
-bake fails here (run_build_gate.py --batch) before it breaks the hub. Fix: tools/run_bake_camp.py, review, paste stamp=.
+bake fails here (gate.py build --batch) before it breaks the hub. Fix: tools/bake.py camp, review, paste stamp=.
 RESULT PASS = png present, size >= 16, stamp equal; FAIL otherwise. Summary: _logs/hub-bake/.
 """
 from __future__ import annotations
@@ -16,7 +16,8 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 
 PNG = "assets/baked/hub_light.png"
@@ -48,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
         if min(w, h) < 16:
             lines.append(f"FAIL {PNG} is {w}x{h}")
         elif got != want:
-            lines.append(f"FAIL {PNG} stamp {got} != HUB_BAKE_STAMP {want or '(empty)'}: rebake with tools/run_bake_camp.py, "
+            lines.append(f"FAIL {PNG} stamp {got} != HUB_BAKE_STAMP {want or '(empty)'}: rebake with tools/bake.py camp, "
                          "review, paste its stamp= into hub_bake.gd")
     wsrc = (root / WEAR_SRC).read_text(encoding="utf-8")
     wm = re.search(r'const GROUND_WEAR_STAMP := "([0-9a-f]*)"', wsrc)
@@ -60,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         with Image.open(wpng) as im:
             ws = hashlib.sha256(im.convert("L").tobytes()).hexdigest()[:16]
         if ws != wm.group(1):
-            lines.append(f"FAIL {WEAR_PNG} stamp {ws} != GROUND_WEAR_STAMP {wm.group(1)}: run tools/bake_ground_wear.py, paste stamp=")
+            lines.append(f"FAIL {WEAR_PNG} stamp {ws} != GROUND_WEAR_STAMP {wm.group(1)}: run tools/bake.py ground, paste stamp=")
     ok = not lines
     if ok:
         lines.append(f"hub bake ok: {PNG} {w}x{h} stamp={got}")

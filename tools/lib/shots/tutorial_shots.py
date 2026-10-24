@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """How-to-Play screenshots from shot flows (receptionist Ask? pages).
 
-  python tools/tutorial_shots.py            check the manifest (no Godot): flows exist, shots exist, ids unique
-  python tools/tutorial_shots.py --run      shoot each named flow (needs a display) and stage _out/tutorial/<id>.png
+  python tools/shots.py tutorial            check the manifest (no Godot): flows exist, shots exist, ids unique
+  python tools/shots.py tutorial --run      shoot each named flow (needs a display) and stage _out/tutorial/<id>.png
                                             plus _out/tutorial/tutorial_shots.json (sha256 per file)
 
-Manifest: tools/tutorial_shots.json (topic id -> {flow, shot}). Tooling never writes under assets/: Grok Build
+Manifest: tools/data/tutorial_shots.json (topic id -> {flow, shot}). Tooling never writes under assets/: Grok Build
 copies the staged PNGs to the manifest's dest. Re-run after a UI change to refresh every page at once.
 """
 from __future__ import annotations
@@ -18,15 +18,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log  # noqa: E402
 
 ROOT = _TOOLS.parent
-MANIFEST = ROOT / "tools" / "tutorial_shots.json"
-FLOWS = ROOT / "tools" / "shot-flows"
+MANIFEST = ROOT / "tools" / "data" / "tutorial_shots.json"
+FLOWS = ROOT / "tools" / "data" / "shot-flows"
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
 def load() -> dict:
@@ -62,7 +62,7 @@ def check(man: dict) -> list[str]:
 def run(man: dict, out: Path) -> list[str]:
     bad: list[str] = []
     flows = sorted({r["flow"] for r in man["topics"].values()})
-    r = subprocess.run([sys.executable, str(ROOT / "tools" / "run_shot_flow.py"), "--no-dedupe", "--flow", ",".join(flows)], cwd=ROOT)
+    r = subprocess.run([*boot.cmd("run_shot_flow"), "--no-dedupe", "--flow", ",".join(flows)], cwd=ROOT)
     if r.returncode != 0:
         return [f"run_shot_flow failed ({r.returncode})"]
     out.mkdir(parents=True, exist_ok=True)
@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", default="_out/tutorial", help="staging dir (never under assets/)")
     a = ap.parse_args(argv)
     ROOT = agent_log.resolve_root(a)
-    MANIFEST, FLOWS = ROOT / "tools" / "tutorial_shots.json", ROOT / "tools" / "shot-flows"
+    MANIFEST, FLOWS = ROOT / "tools" / "data" / "tutorial_shots.json", ROOT / "tools" / "data" / "shot-flows"
     man = load()
     bad = check(man)
     out = (ROOT / a.out).resolve()

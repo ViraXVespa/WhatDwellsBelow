@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Crop, zoom and probe a shot PNG, so a detail or a pixel question needs no ad hoc script.
 
-    python tools/shot_crop.py PNG --box X,Y,W,H [--zoom N] [--out PATH]    # crop (and enlarge N times, nearest) to a PNG; open it with show_png.py or read it
-    python tools/shot_crop.py PNG --probe X,Y [X,Y ...]                    # RGBA and hex at each point
-    python tools/shot_crop.py PNG [--box X,Y,W,H] --near HEX [--tol N]     # count and bounding box of pixels within N of a colour (default tol 8)
-    python tools/shot_crop.py PNG [--box X,Y,W,H] --dark N                 # count and bounding box of pixels whose R, G and B are all <= N
+    python tools/shots.py crop PNG --box X,Y,W,H [--zoom N] [--out PATH]    # crop (and enlarge N times, nearest) to a PNG; open it with shots.py show or read it
+    python tools/shots.py crop PNG --probe X,Y [X,Y ...]                    # RGBA and hex at each point
+    python tools/shots.py crop PNG [--box X,Y,W,H] --near HEX [--tol N]     # count and bounding box of pixels within N of a colour (default tol 8)
+    python tools/shots.py crop PNG [--box X,Y,W,H] --dark N                 # count and bounding box of pixels whose R, G and B are all <= N
 Coordinates are image pixels, origin top-left. A box outside the image fails. Default --out: _logs/shot-crop/<name>-X-Y-WxH[-zN].png.
 """
 from __future__ import annotations
@@ -12,7 +12,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 
 def parse_box(text: str) -> tuple[int, int, int, int]:
@@ -84,7 +85,7 @@ def selftest() -> int:
         imgio.save(im, f)
 
         def run_me(*a: str) -> subprocess.CompletedProcess:
-            return subprocess.run([sys.executable, str(Path(__file__).resolve()), str(f), *a], capture_output=True, text=True)
+            return subprocess.run([*boot.cmd("shot_crop"), str(f), *a], capture_output=True, text=True)
 
         p = run_me("--probe", "5,4")
         if "rgba=(200,100,50,255) #c86432" not in p.stdout:
@@ -120,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.selftest:
         return selftest()
     if not args.png:
-        agent_log.fail("pass the PNG (example: python tools/shot_crop.py _logs/shot-flow/camp-npc-panels/01-vendor.png --box 100,80,300,200 --zoom 3)")
+        agent_log.fail("pass the PNG (example: python tools/shots.py crop _logs/shot-flow/camp-npc-panels/01-vendor.png --box 100,80,300,200 --zoom 3)")
     png = Path(args.png)
     if not png.is_file():
         agent_log.fail(f"not a file: {png}")

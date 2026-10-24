@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Run scripted shot flows (tools/shot-flows/*.json): open an NPC menu or screen, press pad/key input,
+"""Run scripted shot flows (tools/data/shot-flows/*.json): open an NPC menu or screen, press pad/key input,
 set state, shoot every page, assert, then diff against a baseline or publish to _out/shots/<flow>/ (never assets/: Grok Build places those).
 
-  python tools/run_shot_flow.py --list
-  python tools/run_shot_flow.py --survey [--flow A,B]   # one text line per flow: about, states, last shot, band (no picture needed)
-  python tools/run_shot_flow.py --sheet NAME            # tile a flow's last frames into one sheet.png (labels; small text is not readable on it)
-  python tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
-  python tools/run_shot_flow.py --job ui.pause [--save-baseline DIR]   # every flow routes.yaml maps to the job (a door name: its door flows), one call, one summary
-  python tools/run_shot_flow.py --changed               # the flows whose JSON changed, plus those mapped to a job whose doc changed
-  python tools/run_shot_flow.py --flow N --state NAME   # re-shoot one state of a flow (its steps up to that shot only); prints that frame as changed or same
-  python tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
+  python tools/shots.py flow --list
+  python tools/shots.py flow --survey [--flow A,B]   # one text line per flow: about, states, last shot, band (no picture needed)
+  python tools/shots.py flow --sheet NAME            # tile a flow's last frames into one sheet.png (labels; small text is not readable on it)
+  python tools/shots.py flow --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
+  python tools/shots.py flow --job ui.pause [--save-baseline DIR]   # every flow routes.yaml maps to the job (a door name: its door flows), one call, one summary
+  python tools/shots.py flow --changed               # the flows whose JSON changed, plus those mapped to a job whose doc changed
+  python tools/shots.py flow --flow N --state NAME   # re-shoot one state of a flow (its steps up to that shot only); prints that frame as changed or same
+  python tools/shots.py flow --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
-Each flow is one worker boot (run_shots.py --steps); the shot tool cannot run two step files in one boot. Flows picked together are run in one call and
+Each flow is one worker boot (shots.py capture --steps); the shot tool cannot run two step files in one boot. Flows picked together are run in one call and
 deduplicated: a flow with `covered_by: OTHER` is skipped when OTHER is picked too (OTHER shoots and asserts everything it does; `--no-dedupe` runs both). Frames land in _logs/shot-flow/<flow>/ as
 NN-name.png (plus NN-name.texts.json and flow.json). Flow format and ops: design/shot-flows.md.
 """
@@ -23,9 +23,9 @@ import shutil
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import run_shots
@@ -33,7 +33,7 @@ import shot_diff
 from agent_log import rel
 
 JOB = "shot-flow"
-FLOW_DIR = "tools/shot-flows"
+FLOW_DIR = "tools/data/shot-flows"
 NON_FLOW = {"states.json"}
 
 def list_flows(root: Path) -> dict[str, dict]:
@@ -330,7 +330,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_log.fail("unknown flow %s. flows: %s" % (args.sheet, ", ".join(flows)))
         out = contact_sheet(root, args.sheet)
         if out is None:
-            agent_log.fail("no frames for %s yet: run `python tools/run_shot_flow.py --flow %s` first" % (args.sheet, args.sheet))
+            agent_log.fail("no frames for %s yet: run `python tools/shots.py flow --flow %s` first" % (args.sheet, args.sheet))
         print("sheet: %s (labels are frame names; open a single frame to read small text)" % rel(root, out))
         return agent_log.emit_result("PASS", sheet=rel(root, out))
     for j in agent_log.split_list(args.job):
@@ -351,7 +351,7 @@ def main(argv: list[str] | None = None) -> int:
     out_root = Path(args.out_dir) if args.out_dir else root / "_logs" / JOB
     if args.state:
         if len(names) != 1 or args.all or args.smoke or args.changed:
-            agent_log.fail("--state NAME goes with exactly one --flow N (example: python tools/run_shot_flow.py --flow camp-npc-panels --state vendor)")
+            agent_log.fail("--state NAME goes with exactly one --flow N (example: python tools/shots.py flow --flow camp-npc-panels --state vendor)")
         base = names[0]
         if base not in flows:
             agent_log.fail("unknown flow %s. flows: %s" % (base, ", ".join(flows)))
@@ -399,7 +399,7 @@ def main(argv: list[str] | None = None) -> int:
     if status == "FAIL" and not args.dry_run:
         import retry_lib
 
-        lines += ["", retry_lib.block(root, "run_shot_flow.py --flow " + ",".join(t.split("~")[0] for t in todo), lines)]
+        lines += ["", retry_lib.block(root, "shots.py flow --flow " + ",".join(t.split("~")[0] for t in todo), lines)]
     res = agent_log.write_run_file(root, out_root, JOB, "\n".join(lines), status, write=not args.dry_run, flows=len(rows),
                                    **{"pass": sum(1 for r in rows if r["ok"])}, fail=len(bad_run), stale=len(stale),
                                    changed=len(changed) + sum(1 for n in notes if "CHANGED" in n), frames=sum(r["frames"] for r in rows),

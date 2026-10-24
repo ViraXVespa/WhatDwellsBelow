@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Bake the ground wear sheet (assets/baked/ground_wear.png) that ground_shader.gd samples once per pixel.
 
-    python tools/bake_ground_wear.py [--root R] [--json]
+    python tools/bake.py ground [--root R] [--json]
 
 Tileable grayscale, PX_PER_M * PERIOD_M square texels at WEAR_PX_PER_M (ground_shader.gd), so it repeats every SIZE/px metres over
 hub and dungeon floors. Domain-warped multi-octave periodic value noise (smooth, no cell edges), posterized to STEPS (12)
 levels at texel size so it reads as pixel art. 0 = no wear, 255 = full wear (shader darkens by ground_wear * 0.22).
-Deterministic (fixed seed): same bytes every run. Also run at the end of tools/run_bake_camp.py. Prints stamp= (first 16
-hex of SHA-256 of the L8 pixels); paste it into GROUND_WEAR_STAMP (ground_shader.gd); check_hub_bake.py checks it.
+Deterministic (fixed seed): same bytes every run. Also run at the end of tools/bake.py camp. Prints stamp= (first 16
+hex of SHA-256 of the L8 pixels); paste it into GROUND_WEAR_STAMP (ground_shader.gd); bake.py check checks it.
 """
 from __future__ import annotations
 
@@ -15,7 +15,8 @@ import hashlib
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 
 PNG = "assets/baked/ground_wear.png"

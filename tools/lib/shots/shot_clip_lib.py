@@ -1,6 +1,6 @@
 """Shot output helpers: Windows clipboard paste (web mode) and open-in-viewer (user mode).
 
-Library for run_shots.py; no CLI. Both return 'ok', 'fail' or 'skip'.
+Library for shots.py capture; no CLI. Both return 'ok', 'fail' or 'skip'.
 """
 from __future__ import annotations
 

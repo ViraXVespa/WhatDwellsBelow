@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Stage one prove folder and open the first sheet in Photos.
 
-    python tools/show_png.py --ask NAME --group AREA PATH=description PATH=description ...
-    python tools/show_png.py PATH=description ...
+    python tools/shots.py show --ask NAME --group AREA PATH=description PATH=description ...
+    python tools/shots.py show PATH=description ...
 
 One call per ask. Each group is one area or source asset, composed into one PNG.
 Two frames sit side by side when each is taller than wide, stacked when each is
@@ -20,7 +20,8 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import session_lib
 from imglib import compare
@@ -163,7 +164,7 @@ def selftest() -> int:
         if open_files([a, b], native=False) != 0:
             bad.append("a non-Windows run must open nothing")
         proc = subprocess.run(
-            [sys.executable, str(Path(__file__).resolve()), "--no-open", "--ask", "selftest", "--group", "pause", f"{a}=before", f"{b}=after"],
+            [*boot.cmd("show_png"), "--no-open", "--ask", "selftest", "--group", "pause", f"{a}=before", f"{b}=after"],
             capture_output=True,
             text=True,
             cwd=td,
@@ -177,7 +178,7 @@ def selftest() -> int:
         elif Image.open(sheet).width <= 12:
             bad.append("a tall pair sheet must contain both frames")
         missing = subprocess.run(
-            [sys.executable, str(Path(__file__).resolve()), str(folder / "nope.png")],
+            [*boot.cmd("show_png"), str(folder / "nope.png")],
             capture_output=True,
             text=True,
         )

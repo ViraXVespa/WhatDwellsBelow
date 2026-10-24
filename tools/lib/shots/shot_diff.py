@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Before/after diff of shot PNGs (two files, or two directories paired by file name).
 
-  python tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--mask X,Y,W,H] [--out DIR] [--json]
+  python tools/shots.py diff BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--mask X,Y,W,H] [--out DIR] [--json]
 
 Identical bytes short-circuit (no Pillow needed). Otherwise imglib.compare (Pillow + numpy) counts changed pixels
 (any channel differs by more than --tol), the changed bounding box and the max channel delta, and
@@ -18,9 +18,9 @@ import json
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 from agent_log import rel

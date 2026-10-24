@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Shot-gap check: which UI states (menus, NPC panels, pages) have no shot flow, and are flows/published shots healthy.
 
-  python tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict] [--json]
+  python tools/shots.py gaps [--changed [REF]] [--advisory] [--strict] [--json]
 
-States come from tools/shot-flows/states.json (regexes over the UI/interact sources; add a source for a new
+States come from tools/data/shot-flows/states.json (regexes over the UI/interact sources; add a source for a new
 menu). A flow covers a state when it lists it in `covers`, or derives it (an `interact` op for kind K covers
 interact:K; an assert on host.ui.mode equals M covers ui:M). Reports:
   gap       a state no flow covers (INFO; FAIL with --strict). Ignored states are listed in states.json `ignore`.
@@ -11,9 +11,9 @@ interact:K; an assert on host.ui.mode equals M covers ui:M). Reports:
   problem   a flow with no shot or no assert, a covers entry naming no state, a publish manifest that is
             missing files or stale (file sha differs from shots.json).
 RESULT PASS = no gaps or problems, INFO = gaps only, FAIL = problems, uncovered new states, or gaps under --strict.
-Gate mode (routes.yaml shot_gaps: bot required, build required): the END gates FAIL on a new uncovered state - bot_smokes.py,
-run_build_gate.py (--batch reads the bot key, plain reads the build key) and a Build UI or theme prove. run_smokes.py (mid-slice
-smoke run) only prints it with --advisory. The START of a slice never fails on a missing flow (start_build_slice.py prints a
+Gate mode (routes.yaml shot_gaps: bot required, build required): the END gates FAIL on a new uncovered state - gate.py bot-smokes,
+gate.py build (--batch reads the bot key, plain reads the build key) and a Build UI or theme prove. gate.py smokes (mid-slice
+smoke run) only prints it with --advisory. The START of a slice never fails on a missing flow (slice.py start prints a
 STEP 0 note); the flow must exist before the prove passes.
 """
 from __future__ import annotations
@@ -25,15 +25,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import run_shot_flow
 from agent_log import rel
 
-CFG = "tools/shot-flows/states.json"
+CFG = "tools/data/shot-flows/states.json"
 
 def _text_at(root: Path, ref: str, path: str) -> str:
     if not ref:
@@ -95,7 +95,7 @@ def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
         d = root / pub["dir"]
         man = d / (str(pub.get("prefix", "")) + "shots.json")
         if not man.is_file():
-            probs.append(f"{name}: publish.dir {pub['dir']} has no shots.json (run run_shot_flow.py --flow {name} --publish)")
+            probs.append(f"{name}: publish.dir {pub['dir']} has no shots.json (run shots.py flow --flow {name} --publish)")
         else:
             for row in json.loads(man.read_text(encoding="utf-8")).get("frames", []):
                 f = d / row["file"]
