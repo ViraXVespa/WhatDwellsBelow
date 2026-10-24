@@ -139,8 +139,6 @@ def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int,
         head = head + ["--fixed-fps", str(args.fixed_fps)]
     if getattr(args, "movie", ""):
         head = head + ["--write-movie", str(Path(args.movie).resolve())]
-        if args.width > 0 and args.height > 0:  # movie maker keeps the boot window size
-            head = head + ["--resolution", "%dx%d" % (args.width, args.height)]
     godot_args = head + [
         "--path", str(root),
         "--",
@@ -269,7 +267,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")
     p.add_argument("--fixed-fps", type=int, default=0, help="engine fixed frame delta (e.g. 60) so animation and AI repeat; 0 = real time. Flow key: fixed_fps.")
-    p.add_argument("--movie", default="", help="with --steps: Godot movie maker writes every rendered frame here (.png = numbered PNGs, .avi = MJPEG); shots.py movie drives this")
+    p.add_argument("--movie", default="", help="with --steps: Godot movie maker writes every rendered frame here (.png = numbered PNGs, .avi = MJPEG) at the project viewport size (1920x1080); shots.py movie drives this")
     p.add_argument("--full-map", action="store_true", help="photograph the whole dungeon floor in overlapping tiles and stitch one PNG (seed 42 floor 1 unless --seed/--floor) at the real game scale (64 px per cell)")
     p.add_argument("--max-px", type=int, default=8192, help="with --full-map: longest side of the output PNG, 0 = native size (about 27000 px wide on a 432-cell floor); reduced by exact 2x steps")
     p.add_argument("--keep-tiles", action="store_true", help="with --full-map: keep the raw tiles and sweep.json next to the PNG")

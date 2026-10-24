@@ -50,10 +50,11 @@ def info(path: Path) -> dict:
     return {"w": int(st["width"]), "h": int(st["height"]), "fps": round(int(num) / max(1, int(den)), 2),
             "sec": round(float(fm.get("duration", 0)), 2), "mb": round(int(fm.get("size", 0)) / 1048576, 2), "codec": st.get("codec_name", "")}
 
-def encode_seq(pattern: Path, fps: int, start: int, count: int, out: Path) -> Path:
-    """PNG sequence (printf `pattern`, first index `start`, `count` frames) -> H.264 MP4."""
+def encode_seq(pattern: Path, fps: int, start: int, count: int, out: Path, size: tuple[int, int] = (0, 0)) -> Path:
+    """PNG sequence (printf `pattern`, first index `start`, `count` frames) -> H.264 MP4, fitted into `size` when given."""
+    fit = "scale=%d:%d:force_original_aspect_ratio=decrease:flags=lanczos," % size if size[0] > 0 and size[1] > 0 else ""
     _run(["-framerate", str(fps), "-start_number", str(start), "-i", str(pattern), "-frames:v", str(count),
-          "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", *H264, str(out)])
+          "-vf", fit + "pad=ceil(iw/2)*2:ceil(ih/2)*2", *H264, str(out)])
     return out
 
 def trim(src: Path, start: float, end: float, out: Path) -> Path:

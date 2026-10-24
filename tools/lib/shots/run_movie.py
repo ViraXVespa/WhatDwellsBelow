@@ -3,7 +3,7 @@
 Godot movie maker (--write-movie) and keep only the frames between the timeline's marks as an H.264 MP4.
 
   python tools/shots.py movie --list                       # movies and scenarios in tools/data/movies.json
-  python tools/shots.py movie hub-walk                     # -> _logs/movie/hub-walk/hub-walk.mp4 (+ end.png, flow.json)
+  python tools/shots.py movie hub-walk                     # -> _logs/movie/hub-walk/hub-walk.mp4 (+ end.png, movie-flow.json)
   python tools/shots.py movie hub-walk --game DIR --out O  # same script against another checkout (before/after clips)
   python tools/shots.py movie hub-walk --dry-run           # print the composed shot flow, run nothing
   python tools/shots.py movie --selftest                   # every movie composes; PNG-sequence trim math (ffmpeg only)
@@ -11,7 +11,8 @@ Godot movie maker (--write-movie) and keep only the frames between the timeline'
 A movie is `{about, scenario, fps, width, height, zoom?, timeline: [shot-flow ops]}`. A scenario is either shot-flow
 header keys plus setup `steps`, or `{flow, state}`: that flow's steps up to its `state` shot (gear, enemies, rooms and
 camera all come from the flow). The run is one `shots.py capture --steps` boot with `--movie` and `--fixed-fps fps`, so
-the recorded clip is frame-exact and repeatable. Timeline ops: walk_to, drive, tap (step_play.gd) and every other flow op.
+the recorded clip is frame-exact and repeatable. Movie maker records at the project viewport size (1920x1080; the
+window size does not change it), so the cut is scaled into the movie's width x height (same 16:9 framing). Timeline ops: walk_to, drive, tap (step_play.gd) and every other flow op.
 Edit the result with `media.py clip` (trim, join, caption, sbs, export). Clips stay in _logs/ (never committed).
 """
 from __future__ import annotations
@@ -71,14 +72,14 @@ def compose(data: dict, name: str, root: Path) -> dict:
 def marks(lines: list[str]) -> dict[str, int]:
     return {m.group(1): int(m.group(2)) for m in (MARK.search(x) for x in lines) if m}
 
-def cut(raw: Path, at: dict[str, int], fps: int, out: Path) -> tuple[int, int]:
+def cut(raw: Path, at: dict[str, int], fps: int, out: Path, size: tuple[int, int] = (0, 0)) -> tuple[int, int]:
     """Encode raw/f%08d.png from the start mark to the end mark; returns (first frame, count)."""
     have = sorted(int(p.stem[1:]) for p in raw.glob("f[0-9]*.png"))
     if not have:
         raise SystemExit("movie maker wrote no frames in %s" % raw)
     first = max(have[0], min(at.get("start", have[0]), have[-1]))
     last = max(first, min(at.get("end", have[-1]), have[-1]))
-    clip_edit.encode_seq(raw / "f%08d.png", fps, first, last - first + 1, out)
+    clip_edit.encode_seq(raw / "f%08d.png", fps, first, last - first + 1, out, size)
     return first, last - first + 1
 
 def selftest(root: Path) -> list[str]:
@@ -101,9 +102,9 @@ def selftest(root: Path) -> list[str]:
     with tempfile.TemporaryDirectory() as td:
         t = Path(td)
         clip_edit._run(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=30:duration=1", "-start_number", "0", str(t / "f%08d.png")])
-        first, n = cut(t, {"start": 5, "end": 24}, 30, t / "c.mp4")
+        first, n = cut(t, {"start": 5, "end": 24}, 30, t / "c.mp4", (160, 90))
         got = clip_edit.info(t / "c.mp4")
-        if (first, n) != (5, 20) or abs(got["sec"] - 20 / 30) > 0.05:
+        if (first, n) != (5, 20) or abs(got["sec"] - 20 / 30) > 0.05 or got["w"] != 160:
             bad.append("trim math: first=%d n=%d %s" % (first, n, got))
     return bad
 
@@ -135,18 +136,18 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish(JOB, root, "", "INFO", args=args, write=False, movie=args.movie, game=game)
     work = out.parent
     work.mkdir(parents=True, exist_ok=True)
-    (work / "flow.json").write_text(json.dumps(flow, indent=1) + "\n", encoding="utf-8")
+    (work / "movie-flow.json").write_text(json.dumps(flow, indent=1) + "\n", encoding="utf-8")
     raw = work / "raw"
     shutil.rmtree(raw, ignore_errors=True)
     raw.mkdir()
-    ns = run_shots.build_parser().parse_args(["--steps", str(work / "flow.json"), "--frames-dir", str(work), "--out", str(work / "end.png"),
+    ns = run_shots.build_parser().parse_args(["--steps", str(work / "movie-flow.json"), "--frames-dir", str(work), "--out", str(work / "end.png"),
                                               "--movie", str(raw / "f.png"), "--timeout-sec", str(args.timeout_sec)])
     res = run_shots.capture(ns, game, set())
     at = marks(res.get("lines", []))
     lines = ["movie %s scenario=%s game=%s" % (args.movie, data["movies"][args.movie].get("scenario"), game)] + res.get("lines", [])[-12:] + res.get("errors", [])[:5]
     if not res.get("ok") or "end" not in at:
         return agent_log.finish(JOB, root, "\n".join(lines), "FAIL", args=args, movie=args.movie, band=res.get("band"))
-    first, n = cut(raw, at, int(flow["fixed_fps"]), out)
+    first, n = cut(raw, at, int(flow["fixed_fps"]), out, (int(flow["width"]), int(flow["height"])))
     if not args.keep_raw:
         shutil.rmtree(raw)
     got = clip_edit.info(out)

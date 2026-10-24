@@ -65,7 +65,7 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 
 ## Gameplay clips
 
-Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (`--write-movie`, `--fixed-fps` = the movie fps, window = its width x height) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}` brings that flow's rooms, enemies, gear and camera); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap` (`shot-flows.md`). Before/after: record the same movie with `--game WORKTREE` (a `git worktree` at the old commit with this branch's `scripts/debug/shot_tool/` copied in, then `gate.py import` there).
+Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (`--write-movie`, `--fixed-fps` = the movie fps; frames come at the project viewport size, 1920x1080, and are scaled to the movie's width x height) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}` brings that flow's rooms, enemies, gear and camera); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap` (`shot-flows.md`). Before/after: record the same movie with `--game WORKTREE` (a `git worktree` at the old commit with this branch's `scripts/debug/shot_tool/` copied in, then `gate.py import` there).
 
 Web, real time: `perf.py web --flow camp-walk --video DIR` (Playwright WebM from page open, 25 fps, boot included; cut with `media.py clip trim`).
 
