@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Desktop release vs debug perf: drive exported Linux builds with OS-level keys, time frames from outside the game.
 
-    python tools/run_desktop_perf.py [--builds release,debug] [--export] [--sec 8] [--runs 1] [--write-md]
+    python tools/perf.py desktop [--builds release,debug] [--export] [--sec 8] [--runs 1] [--write-md]
 
 Builds: preset `Linux` (release template, no scripts/debug, no _*) -> _out/linux/, preset `Linux Debug` (debug template,
 debug code kept) -> _out/linux-debug/. `--export` re-exports both first (binaries stay in untracked _out/).
@@ -27,7 +27,8 @@ import threading
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import bench_env
 
@@ -221,7 +222,7 @@ def main() -> int:
         body = "\n## %s, runs=%d, %.0f s phases\n%s\n\n%s\n" % (stamp, args.runs, args.sec, env, "\n".join(lines))
         if not md.is_file():
             md.write_text("# Desktop release vs debug perf\n\nStatus: record\nRead when: comparing desktop release and debug frame cost\n\n"
-                          "`python tools/run_desktop_perf.py --export --runs 2 --write-md`. Compare rows only within one `machine=`.\n",
+                          "`python tools/perf.py desktop --export --runs 2 --write-md`. Compare rows only within one `machine=`.\n",
                           encoding="utf-8")
         with md.open("a", encoding="utf-8") as f:
             f.write(body)

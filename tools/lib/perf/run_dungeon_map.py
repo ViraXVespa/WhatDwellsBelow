@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Dungeon generation map smoke (--wdb-dungeon-map-smoke), one seed or a seed sweep. Per-path Godot lock.
 
-    python tools/run_dungeon_map.py [--seed 42] [--floor 1] [--scale 8] [--timeout-sec 180]
-    python tools/run_dungeon_map.py --sweep [--count 10 | --seeds 42,7,9] [--floor 1] [--scale 8]
+    python tools/perf.py map [--seed 42] [--floor 1] [--scale 8] [--timeout-sec 180]
+    python tools/perf.py map --sweep [--count 10 | --seeds 42,7,9] [--floor 1] [--scale 8]
 One seed:  _logs/dungeon-map/<stamp>-dungeon-map.txt (full dump _logs/dungeon-map/dump.txt).
 --sweep:   one row per seed in _logs/dungeon-map-sweep/<stamp>-dungeon-map-sweep.txt.
 """
@@ -14,7 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 
@@ -52,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     body += maps or ["(no MAP: lines - check the err log if TIMEOUT)"]
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
     return agent_log.finish("dungeon-map", root, "\n".join(body), "FAIL" if fail else "PASS", args=args,
-                            retry=("run_dungeon_map.py", body), fail_signals=fail, spec_fail=spec_fail, map_ok=str(has_ok))
+                            retry=("perf.py map", body), fail_signals=fail, spec_fail=spec_fail, map_ok=str(has_ok))
 
 def sweep(args, root: Path) -> int:
     """Run this tool once per seed in a child process; one row per seed from each run's summary."""
@@ -66,7 +67,7 @@ def sweep(args, root: Path) -> int:
     rows, fail_n = [], 0
     names = {"rim_closed": "rim", "span_on_solid": "span", "gates_placed": "gates"}
     for i, seed in enumerate(seeds, 1):
-        code = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--root", str(root), "--seed", str(seed),
+        code = subprocess.run([*boot.cmd("run_dungeon_map"), "--root", str(root), "--seed", str(seed),
                                "--floor", str(args.floor), "--scale", str(args.scale), "--timeout-sec", str(args.timeout_sec)],
                               capture_output=True, text=True).returncode
         summary = agent_log.agent_summary_path("dungeon-map", root)  # the run that just finished

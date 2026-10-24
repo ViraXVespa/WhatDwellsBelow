@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Grok Build post-slice gate: editor import check. One batch gate for a fix pass:
 
-    python tools/run_build_gate.py [--skip-import] [--force]
-    python tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
-    python tools/run_build_gate.py --batch --visual ui.pause     (the job's shot flows in the same call; look at the frames, then show_png.py)
+    python tools/gate.py build [--skip-import] [--force]
+    python tools/gate.py build --batch --warnscan-baseline B.json [--areas p6,static]
+    python tools/gate.py build --batch --visual ui.pause     (the job's shot flows in the same call; look at the frames, then shots.py show)
 --batch = import + restore `.import` churn + check_load_graph + the script-name check (duplicate
 basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + process_gear_icons --check (each expected gear icon has a plate under _src/sources) + rekey_all_stills --check (two runs byte-identical) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). `assets/keytest` is retired. Run it once
-per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with read_summary.py --job build-gate.
+per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with session.py summary --job build-gate.
 """
 from __future__ import annotations
 
@@ -15,13 +15,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import bot_gate_lib
 import godot_lib
 
-def child(root: Path, script: str, job: str, *flags: str) -> tuple[int, list[str]]:
-    p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / script), "--root", str(root), *flags],
+def child(root: Path, stem: str, job: str, *flags: str) -> tuple[int, list[str]]:
+    """Run module `stem` through its entry tool (boot.cmd) and read its summary."""
+    p = subprocess.run([*boot.cmd(stem), "--root", str(root), *flags],
                        cwd=root)
     s = agent_log.agent_summary_path(job, root)
     return p.returncode, (s.read_text(encoding="utf-8").splitlines() if s.is_file() else [])
@@ -34,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--force", action="store_true", help="Continue even if Godot is on this path.")
     ap.add_argument("--script-cap", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--batch", action="store_true", help="Import + restore .import churn + check_load_graph + script names (duplicate basenames).")
-    ap.add_argument("--visual", default="", metavar="JOB", help="Also run the shot flows routes.yaml maps to JOB (door.job, or a door) in one call (run_shot_flow.py --job) and list the frames.")
+    ap.add_argument("--visual", default="", metavar="JOB", help="Also run the shot flows routes.yaml maps to JOB (door.job, or a door) in one call (shots.py flow --job) and list the frames.")
     ap.add_argument("--warnscan-baseline", default="", help="Also run bot_warnscan --non-leak-diff against this --save-baseline file.")
     ap.add_argument("--areas", default="", help="bot_warnscan areas for --warnscan-baseline (must match the baseline run).")
     ap.add_argument("--shot-gaps", choices=("required", "advisory", "off"), default="",
@@ -56,12 +58,12 @@ def main(argv: list[str] | None = None) -> int:
     fail = 0
     if bot and args.script_cap:
         print("== bot checks (changed scripts) ==")
-        code, lines = child(root, "check_script_cap.py", "script-cap", *bot_flag, "--git-changed")
+        code, lines = child(root, "check_script_cap", "script-cap", *bot_flag, "--git-changed")
         body += [f"--- bot checks exit={code} ---"] + (lines or ["(missing summary)"]) + [""]
         fail += int(code != 0) + int(not lines)
     if not args.skip_import:
         print("== import check ==")
-        code, lines = child(root, "run_godot_import_check.py", "godot-import-check", "--timeout-sec", str(args.import_timeout_sec))
+        code, lines = child(root, "run_godot_import_check", "godot-import-check", "--timeout-sec", str(args.import_timeout_sec))
         body += [f"--- import check exit={code} ---"] + (lines or ["(missing import summary)"]) + [""]
         fail += int(code != 0) + int(not lines)
     else:
@@ -71,34 +73,34 @@ def main(argv: list[str] | None = None) -> int:
         body += [f"--- restored {n} .import files, removed {gone} stray ones ---", ""]
     if args.batch:
         print("== load graph ==")
-        code, lines = child(root, "check_load_graph.py", "load-graph", *bot_flag)
+        code, lines = child(root, "check_load_graph", "load-graph", *bot_flag)
         body += [f"--- load graph exit={code} ---"] + (lines or ["(missing load-graph summary)"]) + [""]
         fail += int(code != 0)
         if not (bot and args.script_cap):
             print("== script names ==")
-            code, lines = child(root, "check_script_cap.py", "script-cap", *bot_flag)
+            code, lines = child(root, "check_script_cap", "script-cap", *bot_flag)
             body += [f"--- script names exit={code} ---"] + (lines or ["(missing summary)"]) + [""]
             fail += int(code != 0)
         print("== gear sources ==")
-        code, lines = child(root, "process_gear_icons.py", "process_gear_icons", "--check")
+        code, lines = child(root, "process_gear_icons", "process_gear_icons", "--check")
         body += [f"--- gear sources exit={code} ---"] + lines[-6:] + [""]
         fail += int(code != 0)
         if (root / "_src" / "manifest.json").is_file():
             print("== rekey determinism ==")
-            code, lines = child(root, "rekey_all_stills.py", "rekey-all-stills", "--check", "--jobs", "4")
+            code, lines = child(root, "rekey_all_stills", "rekey-all-stills", "--check", "--jobs", "4")
             body += [f"--- rekey determinism exit={code} ---"] + lines[-4:] + [""]
             fail += int(code != 0)
         print("== release smoke (stripped) ==")
-        code, lines = child(root, "run_release_smoke.py", "release-smoke", "--modes", "stripped")
+        code, lines = child(root, "run_release_smoke", "release-smoke", "--modes", "stripped")
         body += [f"--- release smoke exit={code} ---"] + lines[-4:] + [""]
         fail += int(code != 0)
         print("== hub bake stamp ==")
-        code, lines = child(root, "check_hub_bake.py", "hub-bake")
+        code, lines = child(root, "check_hub_bake", "hub-bake")
         body += [f"--- hub bake stamp exit={code} ---"] + lines[-3:] + [""]
         fail += int(code != 0)
     if args.visual:
         print("== visual prove (%s) ==" % args.visual)
-        p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "run_shot_flow.py"), "--root", str(root), "--job", args.visual],
+        p = subprocess.run([*boot.cmd("run_shot_flow"), "--root", str(root), "--job", args.visual],
                            cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
         out = (p.stdout + p.stderr).strip().splitlines()
         print("\n".join(out))
@@ -107,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.warnscan_baseline:
         print("== warnscan non-leak diff ==")
         flags = ["--non-leak-diff", args.warnscan_baseline] + (["--areas", args.areas] if args.areas else [])
-        code, lines = child(root, "bot_warnscan.py", "warnscan", *flags)
+        code, lines = child(root, "bot_warnscan", "warnscan", *flags)
         body += [f"--- warnscan diff exit={code} (see its console RESULT line) ---", ""]
         fail += int(code != 0)
     sg = args.shot_gaps
@@ -116,10 +118,10 @@ def main(argv: list[str] | None = None) -> int:
         sg = shot_gaps_mode(load_routes(root), "bot" if args.batch else "build")
     if sg != "off":
         print("== shot gaps (%s) ==" % sg)
-        code, lines = child(root, "check_shot_gaps.py", "shot-gaps", "--changed", *(["--advisory"] if sg == "advisory" else []))
+        code, lines = child(root, "check_shot_gaps", "shot-gaps", "--changed", *(["--advisory"] if sg == "advisory" else []))
         body += [f"--- shot gaps {sg} exit={code} ---"] + lines[-6:] + [""]
         fail += int(code != 0 and sg == "required")
-    what = "run_build_gate.py" + (" --batch" if args.batch else "")
+    what = "gate.py build" + (" --batch" if args.batch else "")
     return agent_log.finish("build-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(what, body), fail_signals=fail)
 
 if __name__ == "__main__":

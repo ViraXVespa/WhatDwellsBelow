@@ -1,4 +1,4 @@
-"""Browser side of tools/web_perf.py: init script, flow replay, one measured page load. Advisory; see web_perf.py."""
+"""Browser side of tools/perf.py web: init script, flow replay, one measured page load. Advisory; see perf.py web."""
 from __future__ import annotations
 
 import os
@@ -47,7 +47,7 @@ o.zero+=s.zero;o.longest=Math.max(o.longest,s.longest);o.on|=s.on;o.q+=s.q});var
 return {audio_on:o.on,audio_gaps:o.gaps,audio_gap_ms:Math.round(o.longest*ms),audio_silent_ms:Math.round(o.zero*ms),audio_ms:Math.round(o.q*ms)}}})();
 """
 # Headless Chrome paces rAF to 60 Hz, so frame times snap to 16.7 ms steps (33.4 p95 was two vsyncs, not game cost):
-# a WebGL page sits at 59.5 fps with the defaults and ~1300 fps with these. --vsync in web_perf.py restores the pacing.
+# a WebGL page sits at 59.5 fps with the defaults and ~1300 fps with these. --vsync in perf.py web restores the pacing.
 UNCAP = ["--disable-frame-rate-limit", "--disable-gpu-vsync", "--disable-background-timer-throttling", "--disable-renderer-backgrounding"]
 PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death",
         "think_ms", "think_max_ms", "think_n", "phys_ms", "gate_s", "gate_over", "unstick_n", "stuck_max", "time_scale")
@@ -99,7 +99,7 @@ def _lum(png: bytes) -> float:
         return -1.0
 
 def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
-    """Replay steps. Returns ({shot name: mean luminance 0-255, -1 without Pillow}, {settle mark: ms}); web_perf.py flags expect_change pairs that look alike (stuck menu)."""
+    """Replay steps. Returns ({shot name: mean luminance 0-255, -1 without Pillow}, {settle mark: ms}); perf.py web flags expect_change pairs that look alike (stuck menu)."""
     shots, marks = {}, {}
     for s in steps:
         if "phase" in s:

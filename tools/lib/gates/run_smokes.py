@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Phase smoke runner (Windows/any host). Per-path Godot lock; never kills godot*.
 
-    python tools/run_smokes.py [--phases 1,2,3 | --door D | --job door.job] [--timeout-sec 120] [--verbose-godot]
+    python tools/gate.py smokes [--phases 1,2,3 | --door D | --job door.job] [--timeout-sec 120] [--verbose-godot]
 --door / --job pick the phases mapped in routes.yaml `smokes` (Build prove). Neither: all nine.
 CamelCase spellings work too: -Phases 4,5 -TimeoutSec 60 -VerboseGodot.
-Summary: _logs/smokes/<stamp>-smokes.txt. Bot VM: use bot_smokes.py instead.
+Summary: _logs/smokes/<stamp>-smokes.txt. Bot VM: use gate.py bot-smokes instead.
 """
 from __future__ import annotations
 
@@ -13,7 +13,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 from load_routes import SMOKE_PHASES, check_route, load_routes, smoke_phases
@@ -24,7 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--door", default="", help="Run the phases mapped to this routes.yaml door.")
     ap.add_argument("--job", default="", help="Run the phases mapped to this routes.yaml door.job.")
     ap.add_argument("--timeout-sec", type=int, default=120, help="Seconds per smoke phase (default 120).")
-    ap.add_argument("--no-gaps", action="store_true", help="skip the mid-slice check_shot_gaps --changed print (the END gate is run_build_gate.py, required per routes.yaml)")
+    ap.add_argument("--no-gaps", action="store_true", help="skip the mid-slice check_shot_gaps --changed print (the END gate is gate.py build, required per routes.yaml)")
     ap.add_argument("--verbose-godot", action="store_true", help="Pass --verbose to Godot (leak detail rows).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -58,10 +59,10 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_gaps:
         from load_routes import shot_gaps_mode
         if shot_gaps_mode(load_routes(root), "build") != "off":
-            adv = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "check_shot_gaps.py"),
+            adv = subprocess.run([*boot.cmd("check_shot_gaps"),
                                   "--changed", "--advisory", "--root", str(root)], check=False)
-            body += [f"--- shot gaps advisory exit={adv.returncode} (mid-slice print; the END gate run_build_gate.py is required) ---", ""]
-    return agent_log.finish("smokes", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(f"run_smokes.py phases {','.join(map(str, phases))}", body), fail_signals=fail)
+            body += [f"--- shot gaps advisory exit={adv.returncode} (mid-slice print; the END gate gate.py build is required) ---", ""]
+    return agent_log.finish("smokes", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(f"gate.py smokes phases {','.join(map(str, phases))}", body), fail_signals=fail)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

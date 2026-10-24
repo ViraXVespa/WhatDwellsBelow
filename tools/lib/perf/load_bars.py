@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Record both loading bars against time and chart them: the web landing bar (tools/web_shell.html) and the in-game
+"""Record both loading bars against time and chart them: the web landing bar (tools/data/web_shell.html) and the in-game
 Placeholdia loader (scripts/ui/loader.gd, ?wdb-loader-trace).
 
-    python tools/load_bars.py --site DIR [--mbps 16] [--tag NAME]
-    python tools/load_bars.py --desktop [--tag NAME]
+    python tools/perf.py bars --site DIR [--mbps 16] [--tag NAME]
+    python tools/perf.py bars --desktop [--tag NAME]
 
 --desktop runs the game itself (Godot pin, OpenGL on $DISPLAY) twice instead: cold (shader caches cleared) then warm.
 
@@ -24,7 +24,8 @@ import threading
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 
 SAMPLE = r"""
@@ -162,7 +163,7 @@ def desktop(root: Path, timeout_s: int) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Chart both loading bars (web landing + in-game) vs time, cold and cached.", json_out=True)
-    ap.add_argument("--site", default="", help="Exported web build dir (tools/export_web.py --out DIR).")
+    ap.add_argument("--site", default="", help="Exported web build dir (tools/release.py export-web --out DIR).")
     ap.add_argument("--mbps", type=float, default=16.0, help="Cold-run download throttle in Mbit/s (default 16).")
     ap.add_argument("--tag", default="load-bars", help="Output name under _logs/load-bars/.")
     ap.add_argument("--timeout-sec", type=int, default=240, help="Per-run timeout in seconds (default 240).")
@@ -219,7 +220,7 @@ def _report(root: Path, args, runs: dict) -> int:
     try:
         chart(runs, out / f"{args.tag}.png")
     except ImportError:
-        print(f"no PIL in this python: draw it with  python tools/load_bars.py --chart _logs/load-bars/{args.tag}.json")
+        print(f"no PIL in this python: draw it with  python tools/perf.py bars --chart _logs/load-bars/{args.tag}.json")
     body = []
     for name, r in runs.items():
         g = r["game"]

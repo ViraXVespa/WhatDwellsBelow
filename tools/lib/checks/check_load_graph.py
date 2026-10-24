@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Check design-doc routing against design/routes.yaml.
 
-    python tools/check_load_graph.py
-    python tools/check_load_graph.py --root .
+    python tools/check.py load-graph
+    python tools/check.py load-graph --root .
 
 Exit 0 if every check passes. Exit 1 and print FAIL lines otherwise.
 Exit 2 if the tree is not a WDB root or routes.yaml cannot be parsed.
@@ -27,9 +27,9 @@ import re
 import sys
 from pathlib import Path
 
-TOOLS_DIR = Path(__file__).resolve().parent
-if str(TOOLS_DIR) not in sys.path:
-    sys.path.insert(0, str(TOOLS_DIR))
+TOOLS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log  # noqa: E402
 import bot_gate_lib  # noqa: E402
@@ -498,12 +498,12 @@ def route_map_fails(root: Path, routes: dict) -> list[str]:
             for tok in [t for t in str(val).replace(" ", "").split(",") if t]:
                 if name == "smokes" and not (tok.isdigit() and int(tok) in SMOKE_PHASES):
                     fails.append(f"smokes.{key} phase {tok!r} not in {SMOKE_PHASES[0]}-{SMOKE_PHASES[-1]}")
-                if name == "shot_flows" and not (root / "tools" / "shot-flows" / f"{tok}.json").is_file():
-                    fails.append(f"shot_flows.{key} flow has no tools/shot-flows/{tok}.json")
+                if name == "shot_flows" and not (root / "tools" / "data" / "shot-flows" / f"{tok}.json").is_file():
+                    fails.append(f"shot_flows.{key} flow has no tools/data/shot-flows/{tok}.json")
     return fails
 
 def boot_budget_fails(root: Path, routes: dict) -> list[str]:
-    """Bot mode only: every boot_max path not in no_budget needs a budget in tools/bot_budgets.json; on-disk size must not exceed it."""
+    """Bot mode only: every boot_max path not in no_budget needs a budget in tools/data/bot_budgets.json; on-disk size must not exceed it."""
     budgets = bot_gate_lib.boot_budgets(root)
     if not budgets:
         return []

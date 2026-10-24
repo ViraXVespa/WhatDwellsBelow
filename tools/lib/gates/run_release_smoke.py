@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Release-mode smokes: the shipped path runs with no debug code, and a release export carries none of it.
 
-    python tools/run_release_smoke.py [--modes flag,stripped] [--pck DIR] [--pck-debug DIR] [--timeout-sec 240]
+    python tools/gate.py release [--modes flag,stripped] [--pck DIR] [--pck-debug DIR] [--timeout-sec 240]
 flag:     a scratch copy of the project, debug folder kept, run with `--wdb-release` (a debug binary acting as release).
 stripped: the same copy with scripts/debug/ deleted, as a release export leaves it (proves no shared code needs it).
-Both add tools/release_smoke/release_drive.gd as an autoload in the copy only (title, hub, dungeon; REL: lines) and
+Both add tools/data/release_smoke/release_drive.gd as an autoload in the copy only (title, hub, dungeon; REL: lines) and
 FAIL on a script error, a debug node at runtime, or the drive not reaching the dungeon.
---pck DIR: DIR/*.pck must hold no `scripts/debug/` path (a release export, export_web.py). --pck-debug DIR: it must
-(a debug export, export_web.py --debug). Logs: _logs/release-smoke/.
+--pck DIR: DIR/*.pck must hold no `scripts/debug/` path (a release export, release.py export-web). --pck-debug DIR: it must
+(a debug export, release.py export-web --debug). Logs: _logs/release-smoke/.
 """
 from __future__ import annotations
 
@@ -17,12 +17,13 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 
 SKIP = {".git", "_logs", "docs", "_pages", ".archive_worktrees", ".archive_export_cache", "_out"}
-DRIVE = 'ReleaseDrive="*res://tools/release_smoke/release_drive.gd"'
+DRIVE = 'ReleaseDrive="*res://tools/data/release_smoke/release_drive.gd"'
 BAD = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to")
 
 def scratch(root: Path, dest: Path) -> None:

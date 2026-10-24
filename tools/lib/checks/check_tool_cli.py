@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-"""Check tools/*.py against the CLI contract in design/tools.md.
+"""Check the tools against the CLI contract in design/tools.md.
 
+A tool is one subcommand of an entry tool (tools/<entry>.py SUB -> tools/lib/<area>/<module>.py; boot.entries),
+named here by its module stem (run_shots), or a tools/lib/*.py lib with a main guard (run directly).
+Per entry (tools/*.py): shebang, a COMMANDS or MODULE table and no other logic (no def/class), every module it
+names exists, bare run and --help list the subcommands, an unknown subcommand exits 2 with `error:`.
 Per tool: python3 shebang, argparse, main guard, `--help` exits 0 and writes
 nothing, ASCII print strings, --root on ops tools, --dry-run on writers, RESULT
 via agent_log, help text on every option, output paths named `--out` / `--out-<kind>`
@@ -27,9 +31,8 @@ import tempfile
 import time
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402
 
 import agent_log
 import repo_lib
@@ -61,7 +64,7 @@ SMOKE: dict[str, list] = {
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"], ["--dry-run", "update", "opt-003", "--status", "open"]],
     "bot_smokes": [["--doctor"], ["--for", "scripts/app.gd"]],
-    "bot_status": [[], ["--bot"]],
+    "bot_punch_list": [[], ["--bot"]],
     "bot_warnscan": [["--list"]],
     "build_changelog": [["--dry-run"]],
     "check_load_graph": [[], ["--bot"]],
@@ -74,7 +77,7 @@ SMOKE: dict[str, list] = {
     "doc_patch": [["next-label"], ["--dry-run", "replace-file", "design/tools.md", "--from-file", "design/tools.md"]],
     "enable_texture_mips": [["--dry-run"]],
     "facade_requal": [["scripts/graphics/mesh_commit.gd", "--check"]],
-    "file_stat": [["--path", "tools"], ["tools/agent_log.py"]],
+    "file_stat": [["--path", "tools"], ["tools/lib/agent_log.py"]],
     "gen_prompt_glyphs": [["--dry-run"]],
     "godot_lib": [["--display"]],
     "img_inspect": [["selftest"]],
@@ -142,7 +145,43 @@ def classify(src: str) -> str:
     mods = set(re.findall(r"^\s*(?:import|from)\s+(\w+)", src, re.M))
     return "media" if mods & set(MEDIA_IMPORTS) else "ops"
 
-def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> None:
+def units(tools: Path) -> dict[str, tuple[Path, list[str], str]]:
+    """module stem -> (module file, argv prefix that runs it, label): every entry subcommand plus libs under tools/lib/ with a main guard (run directly)."""
+    out: dict[str, tuple[Path, list[str], str]] = {}
+    for e, rows in boot.entries(tools).items():
+        for sub, mod, _ in rows:
+            stem = mod.rsplit("/", 1)[-1]
+            out[stem] = (tools / "lib" / f"{mod}.py", [sys.executable, str(tools / f"{e}.py"), *([sub] if sub else [])], f"{e}.py" + (f" {sub}" if sub else ""))
+    for p in sorted((tools / "lib").rglob("*.py")):
+        if "imglib" in p.parts or "__pycache__" in p.parts:
+            continue
+        if p.stem not in out and p.stem != "boot" and "__main__" in p.read_text(encoding="utf-8-sig"):
+            out[p.stem] = (p, [sys.executable, str(p)], f"lib/{p.relative_to(tools / 'lib').as_posix()}")
+    return out
+
+def check_entry(root: Path, path: Path, bad: list[str]) -> None:
+    """A top-level entry: a table and a dispatch call, nothing else; bare run lists, an unknown subcommand is a usage error."""
+    src = path.read_text(encoding="utf-8-sig")
+    if src.splitlines()[:1] != ["#!/usr/bin/env python3"]:
+        bad.append(f"SHEBANG {path.name}: first line must be #!/usr/bin/env python3")
+    tree = ast.parse(src)
+    if any(isinstance(n, (ast.FunctionDef, ast.ClassDef)) for n in ast.walk(tree)):
+        bad.append(f"ENTRY   {path.name}: an entry tool holds only its table (move the logic into tools/lib/)")
+    rows = boot.entries(path.parent).get(path.stem)
+    if not rows:
+        bad.append(f"ENTRY   {path.name}: no COMMANDS or MODULE table (top-level tools/*.py are entry tools only)")
+        return
+    for sub, mod, _ in rows:
+        if not (path.parent / "lib" / f"{mod}.py").is_file():
+            bad.append(f"ENTRY   {path.name}: {sub or 'MODULE'} -> lib/{mod}.py does not exist")
+    if rows[0][0] is None:
+        return
+    for argv, want in (([], 0), (["--help"], 0), (["no-such-sub"], 2)):
+        p = subprocess.run([sys.executable, str(path), *argv], cwd=root, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+        if p.returncode != want or (want == 0 and not all(s in p.stdout for s, _, _ in rows)) or (want == 2 and "error:" not in p.stderr):
+            bad.append(f"ENTRY   {path.name} {' '.join(argv) or '(bare)'}: want exit {want}" + (" listing every subcommand" if want == 0 else " + error: line"))
+
+def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int], cmd: list[str] | None = None) -> None:
     name = path.stem
     src = path.read_text(encoding="utf-8-sig")
     if name.endswith("_lib") or name.startswith("_") or "__main__" not in src:
@@ -198,7 +237,7 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
     before = snapshot(root)
     try:
         proc = subprocess.run(
-            [sys.executable, str(path), "--help"], cwd=root, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL
+            [*(cmd or [sys.executable, str(path)]), "--help"], cwd=root, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL
         )
     except subprocess.TimeoutExpired:
         bad.append(f"HELP    {path.name}: --help timed out")
@@ -227,19 +266,19 @@ def make_sandbox(root: Path) -> Path:
         subprocess.run(git + cmd, cwd=sb, capture_output=True)
     return sb
 
-def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], table: list[str]) -> None:
+def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], table: list[str], unit: tuple) -> None:
     args, ok_codes = (case[0], case[1]) if isinstance(case, tuple) else (case, (0, 1))
-    label = f"{stem} {' '.join(args)}".strip()
+    label = f"{unit[2]} {' '.join(args)}".strip()
     t0 = time.time()
     try:
-        proc = subprocess.run([sys.executable, str(sb / "tools" / f"{stem}.py"), *args], cwd=sb, capture_output=True, text=True,
+        proc = subprocess.run([*unit[1], *args], cwd=sb, capture_output=True, text=True,
                               timeout=120, stdin=subprocess.DEVNULL, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "GODOT_BIN": str(sb / "no-godot")})
     except subprocess.TimeoutExpired:
         bad.append(f"TIMEOUT {label}")
         return
     out, err = proc.stdout, proc.stderr
     lines = len(out.splitlines())
-    table.append(f"{stem:28} rc={proc.returncode} lines={lines:<4} {time.time() - t0:5.1f}s  {' '.join(args)}")
+    table.append(f"{unit[2]:28} rc={proc.returncode} lines={lines:<4} {time.time() - t0:5.1f}s  {' '.join(args)}")
     probe = args[:1] in (["--nope"],) or args[:1] == ["--root"]
     if "Traceback" in err or "Traceback" in out:
         bad.append(f"CRASH   {label}: {err.strip().splitlines()[-1][:100] if err.strip() else 'traceback'}")
@@ -281,21 +320,24 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
 
 def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, list[str]]:
     sb = make_sandbox(root)
-    for path in (root / "tools").glob("*.py"):  # the live tools, not the committed ones
-        shutil.copy2(path, sb / "tools" / path.name)
+    for path in (root / "tools").rglob("*.py"):  # the live tools, not the committed ones
+        (sb / path.relative_to(root)).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, sb / path.relative_to(root))
     table: list[str] = []
-    stems = [p.stem for p in sorted((root / "tools").glob("*.py"))]
+    found = units(sb / "tools")
+    stems = sorted(found)
     runs = tools = 0
     try:
         lock = threading.Lock()
         def process_stem(stem: str) -> tuple[int, int, list[str], list[str]]:
             local_bad: list[str] = []
             local_table: list[str] = []
-            src = (sb / "tools" / f"{stem}.py").read_text(encoding="utf-8-sig")
+            unit = found[stem]
+            src = unit[0].read_text(encoding="utf-8-sig")
             if (only and stem not in only) or stem.endswith("_lib") or "__main__" not in src or src.lstrip("#!/usr/bin/env python3\n ").startswith('"""Shim'):
                 return 0, 0, local_bad, local_table
             cases = [["--nope"]]
-            helptext = subprocess.run([sys.executable, str(sb / "tools" / f"{stem}.py"), "--help"], cwd=sb,
+            helptext = subprocess.run([*unit[1], "--help"], cwd=sb,
                                       capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60).stdout
             has_json = "--json" in helptext
             if "--root" in helptext:
@@ -308,7 +350,7 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
             for args in cases + mine:
                 nruns += 1
                 with lock:
-                    smoke_one(sb, stem, args, local_bad, local_table)
+                    smoke_one(sb, stem, args, local_bad, local_table, unit)
             return 1, nruns, local_bad, local_table
 
         stems_to_run = [s for s in stems if not ((only and s not in only) or s.endswith("_lib"))]
@@ -328,30 +370,35 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
     return tools, runs, table
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
-    ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable or comma separated; .py optional).")
+    ap = agent_log.std_parser("Check the entry tools and their subcommand modules against the CLI contract.", json_out=True)
+    ap.add_argument("--only", action="append", default=[], help="Only these module stems or entry names (repeatable or comma separated; .py optional; an entry means all its subcommands).")
     ap.add_argument("--full", action="store_true", help="Check every tool (default: tools with uncommitted changes or in unpushed commits).")
     ap.add_argument("--smoke-run", action="store_true", help="Also run every tool's probes and SMOKE cases in a throwaway repo copy (about a minute).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     tools = root / "tools"
     bad: list[str] = []
-    tally = {"checked": 0, "libs": 0}
+    tally = {"checked": 0, "libs": 0, "entries": 0}
+    found = units(tools)
+    entries = {p.stem: p for p in sorted(tools.glob("*.py"))}
+    by_entry = {e: [m.rsplit("/", 1)[-1] for _, m, _ in rows] for e, rows in boot.entries(tools).items()}
     args.only = [x.strip().removesuffix(".py") for o in args.only for x in o.split(",") if x.strip()]
-    unknown = [x for x in args.only if not (tools / f"{x}.py").is_file()]
+    unknown = [x for x in args.only if x not in found and x not in entries]
     if unknown:
-        agent_log.fail(f"--only: no such tool: {', '.join(unknown)}")
+        agent_log.fail(f"--only: no such tool: {', '.join(unknown)} (a module stem like run_shots or an entry like shots)")
+    args.only = sorted({s for x in args.only for s in ([x] if x in found else by_entry.get(x, []))} | {x for x in args.only if x in entries})
     if args.only:
-        paths = [p for p in sorted(tools.glob("*.py")) if p.stem in args.only]
+        paths = [found[s][0] for s in args.only if s in found] + [entries[e] for e in args.only if e in entries]
     elif args.full:
-        paths = sorted(tools.glob("*.py"))
+        paths = [u[0] for u in found.values()] + list(entries.values())
     else:
         # default: tools with uncommitted changes plus tools in commits not yet on the upstream branch
-        proc = subprocess.run(["git", "status", "--porcelain", "tools/"], cwd=root, capture_output=True, text=True)
-        dirty = {Path(line[3:].strip()).stem for line in proc.stdout.splitlines() if line[3:].strip().endswith(".py")}
+        proc = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "tools/"], cwd=root, capture_output=True, text=True)
+        names = [line[3:].strip().split(" -> ")[-1] for line in proc.stdout.splitlines()]
         ahead = subprocess.run(["git", "diff", "--name-only", "@{upstream}...HEAD", "--", "tools/"], cwd=root, capture_output=True, text=True)
-        dirty |= {Path(line.strip()).stem for line in ahead.stdout.splitlines() if line.strip().endswith(".py")}
-        paths = [p for p in sorted(tools.glob("*.py")) if p.stem in dirty]
+        names += [line.strip() for line in ahead.stdout.splitlines()]
+        dirty = {(root / n).resolve() for n in names if n.endswith(".py")}
+        paths = [p for p in [u[0] for u in found.values()] + list(entries.values()) if p.resolve() in dirty]
         if not paths:
             print("tool-cli: no uncommitted or unpushed tools (use --full for everything)")
             return agent_log.emit_result("INFO", None, checked=0)
@@ -359,11 +406,17 @@ def main(argv: list[str] | None = None) -> int:
     def check_one(path: Path) -> None:
         local_bad: list[str] = []
         local_tally = {"checked": 0, "libs": 0}
-        check_py(root, path, local_bad, local_tally)
+        if path.parent == tools:
+            check_entry(root, path, local_bad)
+            local_tally["entries"] = 1
+        else:
+            unit = next((u for u in found.values() if u[0] == path), None)
+            check_py(root, path, local_bad, local_tally, unit[1] if unit else None)
         with lock:
             bad.extend(local_bad)
             tally["checked"] += local_tally["checked"]
             tally["libs"] += local_tally["libs"]
+            tally["entries"] += local_tally.get("entries", 0)
     with ThreadPoolExecutor(max_workers=min(8, max(1, len(paths)))) as ex:
         list(ex.map(check_one, paths))
     bad += [f"{d}: root underscore folder without .gdignore (Godot would import and pack it; any agent_log run adds it)"
@@ -373,12 +426,12 @@ def main(argv: list[str] | None = None) -> int:
     smoke: dict = {}
     table: list[str] = []
     if args.smoke_run:
-        n_tools, n_runs, table = smoke_run(root, args.only, bad)
+        n_tools, n_runs, table = smoke_run(root, [s for s in args.only if s in found], bad)
         smoke = {"smoke_tools": n_tools, "smoke_runs": n_runs}
-    lines = [f"tool-cli: checked={tally['checked']} libs={tally['libs']} problems={len(bad)}"] + bad
+    lines = [f"tool-cli: entries={tally['entries']} checked={tally['checked']} libs={tally['libs']} problems={len(bad)}"] + bad
     status = "FAIL" if bad else "PASS"
     return agent_log.finish("tool-cli", root, "\n".join(lines + table), status, args=args, echo="\n".join(lines),
-                            checked=tally["checked"], problems=len(bad), **smoke)
+                            entries=tally["entries"], checked=tally["checked"], problems=len(bad), **smoke)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

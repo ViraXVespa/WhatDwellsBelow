@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Script name check: FAIL (exit 1) when two live scripts/**/*.gd share a basename (dupes=).
 
-    check_script_cap.py [--git-changed | --path P]    basenames must stay unique repo-wide
-    check_script_cap.py --selftest                    the checks below in a throwaway repo
+    check.py script-cap [--git-changed | --path P]    basenames must stay unique repo-wide
+    check.py script-cap --selftest                    the checks below in a throwaway repo
 A `--path` that is not on disk (a script the change deleted: CI passes every changed path) is skipped with a note,
 never an error. A `--path` that exists but is not a file still exits 2.
 The Bot and CI run more checks (BOT.md); outside them only the name check runs.
@@ -17,9 +17,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import bot_gate_lib

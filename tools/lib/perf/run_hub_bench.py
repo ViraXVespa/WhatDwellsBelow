@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Two hub bench walks, about 30 s each. Per-path Godot lock; never kills godot*.
 
-    python tools/run_hub_bench.py [--leg both|desktop|web] [--timeout-sec 240]
+    python tools/perf.py hub [--leg both|desktop|web] [--timeout-sec 240]
 Desktop: a gl_compatibility window. Web: a local export in a visible Edge window
 (Chrome if Edge is not installed). The web window keeps the browser frame cap
 and GPU vsync. Neither leg is headless. --headless on the desktop leg is not
@@ -20,7 +20,8 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import bench_env
 import godot_lib
@@ -458,7 +459,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     if site.exists():
         shutil.rmtree(site)
     exp = subprocess.run(
-        [sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--debug", "--out", str(site)],
+        [*boot.cmd("export_web"), "--debug", "--out", str(site)],
         cwd=str(root),
         capture_output=True,
         text=True,

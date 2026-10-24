@@ -14,9 +14,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import bot_gate_lib

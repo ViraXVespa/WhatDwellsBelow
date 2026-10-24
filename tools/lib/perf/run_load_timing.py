@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Load-timing smoke for one leg. Per-path Godot lock; never kills godot*.
 
-    python tools/run_load_timing.py [--leg hub|dungeon] [--timeout-sec 180]
+    python tools/perf.py load [--leg hub|dungeon] [--timeout-sec 180]
 hub:     Title -> Placeholdia (--wdb-load-timing-smoke).        Summary: _logs/load-timing/<stamp>-load-timing.txt
 dungeon: Placeholdia -> Dungeon (--wdb-dungeon-load-timing-smoke). Summary: _logs/dungeon-load-timing/<stamp>-dungeon-load-timing.txt
 """
@@ -10,7 +10,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 

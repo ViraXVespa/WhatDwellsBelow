@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile check: load every changed .gd inside the real project (autoloads present), so a parse or compile error fails.
 
-    python tools/check_gd_load.py [--changed [--base REF] | --files a.gd b.gd | --all] [--timeout-sec 180] | --selftest
+    python tools/gate.py gd-load [--changed [--base REF] | --files a.gd b.gd | --all] [--timeout-sec 180] | --selftest
 Default --changed: .gd files that differ from BASE in the working tree (committed or not) plus untracked ones; BASE = the
 week branch grok-build-w{N}, else HEAD. A script that does not compile, or that cannot be instantiated, is listed with the
 Godot error lines that name it; every file is loaded even after the first failure. The editor import check does not load
@@ -19,7 +19,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 import repo_lib
@@ -58,7 +59,7 @@ def selftest(timeout: int) -> int:
         (t / "auto.gd").write_text("extends Node\nvar val := 1\n", encoding="utf-8")
         (t / "good.gd").write_text("extends Node\nfunc f() -> int:\n\treturn Auto.val\n", encoding="utf-8")
         (t / "broken.gd").write_text("extends Node\nfunc f() -> int:\n\tvar x := 1)\n\treturn x\n", encoding="utf-8")
-        run = lambda *fs: subprocess.run([sys.executable, str(Path(__file__).resolve()), "--root", td, "--timeout-sec", str(timeout), "--files", *fs], capture_output=True, text=True)  # noqa: E731
+        run = lambda *fs: subprocess.run([*boot.cmd("check_gd_load"), "--root", td, "--timeout-sec", str(timeout), "--files", *fs], capture_output=True, text=True)  # noqa: E731
         ok, no = run("good.gd"), run("good.gd", "broken.gd")
         if "RESULT PASS" not in ok.stdout or "files=1 failed=0" not in ok.stdout:
             bad.append("good script (uses an autoload) did not pass: " + ok.stdout[-300:])
@@ -143,7 +144,7 @@ def main(argv: list[str] | None = None) -> int:
     body += ["", f"other Godot output lines: {len(other)}, stderr {r['err_bytes']} bytes"
              + (f". Open {agent_log.rel(root, err_log)} before calling any of it harmless; first lines:" if other or r["err_bytes"] else "")]
     body += ["    " + e[:200] for e in other[:8]]
-    return agent_log.finish("gd-load-check", root, "\n".join(body), "FAIL" if bad or nul or d3d else "PASS", args=args, retry=("check_gd_load.py", body),
+    return agent_log.finish("gd-load-check", root, "\n".join(body), "FAIL" if bad or nul or d3d else "PASS", args=args, retry=("gate.py gd-load", body),
                             files=len(files), failed=len(bad), nul=len(nul), d3d=len(d3d), status_godot=r["status"])
 
 if __name__ == "__main__":

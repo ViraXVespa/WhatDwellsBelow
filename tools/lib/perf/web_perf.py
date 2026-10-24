@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Advisory performance run of the EXPORTED web build in headless Edge, or headless Chrome when Edge is not installed. Not a gate, except a flow `assert` breach (FAIL). Not an FPS reading.
 
-  python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
+  python tools/perf.py web [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
-Serves --site (default _out/web; use a fresh `export_web.py --debug --out DIR`: hitch rows and wdb-playtest flows need the debug export, _out/web/ is release and may be stale) and replays flows from
-tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
+Serves --site (default _out/web; use a fresh `release.py export-web --debug --out DIR`: hitch rows and wdb-playtest flows need the debug export, _out/web/ is release and may be stale) and replays flows from
+tools/data/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
-page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
+page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/data/web-perf-baseline.json);
 a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
 --mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Edge (or Chrome/Chromium when Edge is not installed); no browser download. Software GL:
 compare runs on the same machine only. Not a numbered smoke.
@@ -22,9 +22,9 @@ import sys
 import time
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import bench_env
@@ -32,7 +32,7 @@ import hitch_sink
 import web_perf_lib
 
 JOB = "web-perf"
-FLOWS = "tools/web-perf-flows.json"
+FLOWS = "tools/data/web-perf-flows.json"
 # metric: (max worse %, min absolute change). Down-is-bad metrics are in DOWN. Wall-clock and JS heap (GC timing, bimodal 77/136 MB in camp) are noisy, so wide; wasm_mem_mb is the steady one.
 UP = {"load_ms": (40, 1500), "init_ms": (50, 1000), "avg_frame_ms": (30, 5), "p95_frame_ms": (40, 10), "long_frames": (60, 5),
       "heap_mb": (60, 40), "wasm_mem_mb": (10, 16), "transfer_mb": (5, 0.5), "page_errors": (0, 1)}
@@ -45,7 +45,7 @@ def median(runs: list[dict]) -> dict:
     for k in SCALAR:
         rep[k] = round(statistics.median(r[k] for r in runs), 2)
     rep["runs"] = len(runs)
-    rep["hitch_runs"] = [r.get("hitch", []) for r in runs]  # game hitch-log rows per run (hitch_sink.py)
+    rep["hitch_runs"] = [r.get("hitch", []) for r in runs]  # game hitch-log rows per run (perf.py hitch)
     if len({len(r.get("load_marks", [])) for r in runs}) == 1:  # engine load marks: median of each mark across the runs
         rep["load_marks"] = [[m[0]] + [int(statistics.median(r["load_marks"][i][j] for r in runs)) for j in range(1, 5)]
                              for i, m in enumerate(runs[0].get("load_marks", []))]
@@ -132,7 +132,7 @@ def selftest() -> list[str]:
         bad.append("frame pacing not uncapped")
     return bad
 
-REL_BASE = "tools/web-perf-release-baseline.json"
+REL_BASE = "tools/data/web-perf-release-baseline.json"
 HOOKS = ("wdb-playtest", "eval", "waitplay")  # in-game hooks (scripts/debug/web_hook.gd); a release export has none
 
 def hook_free(flow: dict) -> bool:
@@ -140,7 +140,7 @@ def hook_free(flow: dict) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Edge (Chrome if Edge is missing).", json_out=True)
-    ap.add_argument("--site", default="_out/web", help="Exported site dir (default _out/web; may be stale, export with export_web.py --out).")
+    ap.add_argument("--site", default="_out/web", help="Exported site dir (default _out/web; may be stale, export with release.py export-web --out).")
     ap.add_argument("--url", default="", help="Test this URL instead of serving --site.")
     ap.add_argument("--flow", default="title-idle", help="Flow name(s), comma separated, or all (see %s)." % FLOWS)
     ap.add_argument("--chrome", default="", help="Force this browser binary. Default: Edge if installed, else Chrome/Chromium (CHROME_BIN or PATH).")
@@ -151,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mbps", type=float, default=0.0, help="Throttle the network to this many Mbit/s (default off).")
     ap.add_argument("--vsync", action="store_true", help="Keep Chrome's 60 Hz frame pacing (default off: frame times are the game's cost, not vsync steps).")
     ap.add_argument("--repeat", type=int, default=1, help="Runs per flow; the report holds the median (default 1).")
-    ap.add_argument("--baseline", default="", help="Saved report (e.g. tools/web-perf-baseline.json) to diff against.")
+    ap.add_argument("--baseline", default="", help="Saved report (e.g. tools/data/web-perf-baseline.json) to diff against.")
     ap.add_argument("--save-baseline", default="", help="Write this run's report here (merges flows into an existing file).")
     ap.add_argument("--max-worse-pct", type=float, default=None, help="One percent for every metric (default: per-metric table).")
     ap.add_argument("--strict", action="store_true", help="Exit 1 when a metric is WORSE or a flow is STUCK (default advisory).")
@@ -182,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.site == "_out/web":
             args.site = "_logs/web-perf-release/site"
             print("exporting release (preset Web) -> %s" % args.site)
-            ex = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "export_web.py"), "--out", str(root / args.site)], cwd=str(root))
+            ex = subprocess.run([*boot.cmd("export_web"), "--out", str(root / args.site)], cwd=str(root))
             if ex.returncode:
                 agent_log.fail("release export failed (see _logs/export-web)")
     elif args.baseline and Path(args.baseline).name == Path(REL_BASE).name:
@@ -198,11 +198,11 @@ def main(argv: list[str] | None = None) -> int:
     site, srv, url = root / args.site, None, args.url
     if not url:
         if not (site / "index.html").is_file():
-            agent_log.fail("no exported site at %s (python tools/export_web.py --out DIR)" % args.site)
+            agent_log.fail("no exported site at %s (python tools/release.py export-web --out DIR)" % args.site)
         mode = "debug" if any(re.search(rb"scripts/debug/[A-Za-z0-9_/]+\.gdc", p.read_bytes()) for p in site.glob("*.pck")) else "release"
         if args.release_ref and mode != "release":
-            agent_log.fail("--release-ref: %s holds debug code (export_web.py without --debug)" % args.site)
-        print("site_mode=%s%s" % (mode, "" if mode == "debug" else " (no hitch rows / wdb-playtest: export_web.py --debug --out DIR)"))
+            agent_log.fail("--release-ref: %s holds debug code (release.py export-web without --debug)" % args.site)
+        print("site_mode=%s%s" % (mode, "" if mode == "debug" else " (no hitch rows / wdb-playtest: release.py export-web --debug --out DIR)"))
         srv = hitch_sink.serve(site, root)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
     shots = root / "_logs" / JOB

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Editor import / script-reload check. Per-path Godot lock; never kills godot*.
 
-    python tools/run_godot_import_check.py [--timeout-sec 180]
+    python tools/gate.py import [--timeout-sec 180]
 Summary: _logs/godot-import-check/<stamp>-godot-import-check.txt; RESULT carries clean=true|false.
 """
 from __future__ import annotations
@@ -9,7 +9,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 import agent_log
 import godot_lib
 
@@ -28,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     clean = r["status"] == "EXIT=0" and r["err_bytes"] == 0 and not hard
     body = [f"godot import check {where}", f"status={r['status']} ms={r['ms']} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
-    return agent_log.finish("godot-import-check", root, "\n".join(body), "PASS" if clean else "FAIL", args=args, retry=("run_godot_import_check.py", body),
+    return agent_log.finish("godot-import-check", root, "\n".join(body), "PASS" if clean else "FAIL", args=args, retry=("gate.py import", body),
                             clean=str(clean).lower(), status_godot=r["status"])
 
 if __name__ == "__main__":

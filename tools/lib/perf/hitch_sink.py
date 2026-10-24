@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Local static server for an exported web build that also takes the game's hitch rows.
 
-  python tools/hitch_sink.py [--site DIR] [--port N]
+  python tools/perf.py hitch [--site DIR] [--port N]
 
 Serves DIR (default _out/web) on 127.0.0.1. On localhost the game (scripts/debug/hitch_log.gd) POSTs each hitch-log row to
-/_wdb/hitch (fire-and-forget fetch); they are appended to _logs/web-perf/hitch.jsonl. web_perf.py uses the same handler and
+/_wdb/hitch (fire-and-forget fetch); they are appended to _logs/web-perf/hitch.jsonl. perf.py web uses the same handler and
 tags each row with its flow run (`wp_run`). Other static servers just refuse the POST; the game ignores that.
 """
 from __future__ import annotations
@@ -69,7 +69,8 @@ def rows(root: Path, run: str) -> list[dict]:
     return out
 
 def main(argv: list[str] | None = None) -> int:
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+    import boot  # noqa: E402,F401
     import agent_log
 
     ap = agent_log.std_parser(__doc__.splitlines()[0])

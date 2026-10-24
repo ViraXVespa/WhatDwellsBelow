@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bot-only: audit how much a Grok Build session read before its first ask, from its chat_history.jsonl (Bot and CI only: pass --bot).
 
-    python tools/bot_load_audit.py --bot --session DIR | --file chat_history.jsonl
+    python tools/check.py load-audit --bot --session DIR | --file chat_history.jsonl
 Lists the reads before the first ask_user_question (repo docs, skills, memory topics, scripts, pictures, searches), which of them the
 session never named again (a name in later assistant text, reasoning or call arguments counts as used; a doc that shaped work silently
 shows up as unused, so confirm before trimming), the call index of start_build_slice / list_route, and the share of reads that were
@@ -14,9 +14,9 @@ import re
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 import bot_gate_lib

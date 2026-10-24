@@ -1,4 +1,4 @@
-"""Log parser for tools/bot_warnscan.py. Python 3 stdlib only.
+"""Log parser for tools/gate.py warnscan. Python 3 stdlib only.
 
 Reads Godot stdout/stderr text and returns de-duplicated findings:
 WARNING / ERROR / SCRIPT ERROR lines with their `at:` and backtrace lines,

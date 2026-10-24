@@ -4,11 +4,11 @@
 Not a boot step. Setup downloads the official Godot 4.7.2 Linux tools
 binary only when the pin is missing. Editor playtest is out of scope.
 
-  python tools/bot_smokes.py --doctor
-  python tools/bot_smokes.py --setup
-  python tools/bot_smokes.py --phases 1,2,6 [--release]   (--release: run_release_smoke.py too)
-  python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
-  python tools/bot_smokes.py --for scripts/world/player.gd   (which phases load a file; runs nothing)
+  python tools/gate.py bot-smokes --doctor
+  python tools/gate.py bot-smokes --setup
+  python tools/gate.py bot-smokes --phases 1,2,6 [--release]   (--release: gate.py release too)
+  python tools/gate.py bot-smokes --door hub | --job hub.guild   (phases from routes.yaml smokes)
+  python tools/gate.py bot-smokes --for scripts/world/player.gd   (which phases load a file; runs nothing)
 """
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ import zipfile
 from pathlib import Path
 from urllib.request import urlretrieve
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
 
 import agent_log
 from load_routes import SMOKE_PHASES
@@ -134,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
-    p.add_argument("--release", action="store_true", help="Also run run_release_smoke.py (release mode: no debug code, title to dungeon). Alone: just that.")
+    p.add_argument("--release", action="store_true", help="Also run gate.py release (release mode: no debug code, title to dungeon). Alone: just that.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (end gate: a new UI state without a shot flow FAILS this run)")
     p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
@@ -149,8 +149,8 @@ def main(argv: list[str] | None = None) -> int:
         areas, phases = phases_for(files)
         run = ",".join(map(str, phases)) or "1,2,6"
         print(f"areas={','.join(areas) or 'none'}" + ("" if phases else " (no phase loads it; BOT.md baseline 1,2,6)"))
-        print(f"run: python tools/bot_smokes.py --phases {run}")
-        print(f"warn: python tools/bot_warnscan.py --areas {','.join(areas) or 'static'}   (or --changed)")
+        print(f"run: python tools/gate.py bot-smokes --phases {run}")
+        print(f"warn: python tools/gate.py warnscan --areas {','.join(areas) or 'static'}   (or --changed)")
         return agent_log.emit_result("INFO", phases=run, areas=",".join(areas))
     for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
         if not tok.isdigit() or int(tok) not in (0, *SMOKE_PHASES):
@@ -188,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
             from load_routes import load_routes, shot_flows
             names = ",".join(shot_flows(load_routes(root), door=ns.door.strip(), job=ns.job.strip()))
         if names:
-            cmd = [sys.executable, str(Path(__file__).resolve().parent / "run_shot_flow.py"), "--no-pixels", "--flow", names, "--root", str(root)]
+            cmd = [*boot.cmd("run_shot_flow"), "--no-pixels", "--flow", names, "--root", str(root)]
             print("run\t" + " ".join(cmd))
             frc = subprocess.run(cmd, check=False).returncode
             print(f"flows={'PASS' if frc == 0 else 'FAIL'}\t{names}")
@@ -197,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
         from load_routes import load_routes, shot_gaps_mode
         mode = shot_gaps_mode(load_routes(root), "bot")
         if mode != "off":
-            cmd = [sys.executable, str(Path(__file__).resolve().parent / "check_shot_gaps.py"), "--changed", "--root", str(root)]
+            cmd = [*boot.cmd("check_shot_gaps"), "--changed", "--root", str(root)]
             if mode == "advisory":
                 cmd.append("--advisory")
             print("run\t" + " ".join(cmd))
@@ -211,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         rc |= run_phase(exe, root, n, ns.timeout, ns.verbose)
     if ns.release:
-        rrc = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "run_release_smoke.py"), "--root", str(root)], check=False).returncode
+        rrc = subprocess.run([*boot.cmd("run_release_smoke"), "--root", str(root)], check=False).returncode
         print(f"release={'PASS' if rrc == 0 else 'FAIL'}")
         rc |= 1 if rrc else 0
     print(f"smokes={'PASS' if rc == 0 else 'FAIL'}")

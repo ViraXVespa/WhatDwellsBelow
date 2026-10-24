@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt.
+"""Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt.
+
+Catalog rows name commands: one row per entry subcommand (`shots.py capture`), or the entry alone when it has
+no subcommands (`bot_status.py`). Every lib module (tools/lib/**/*.py that is not a subcommand, plus
+`lib/imglib/`) and every data file (tools/data/*, tools/*.txt) must be named in backticks in some tools*.md.
 
 --stale-refs scans the docs (design/*.md without changelog/, root *.md, skills) for dead references:
 PATH (backticked path or file name that is not in the tree), IDENT (`Class.member` whose class_name
@@ -14,9 +18,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-_TOOLS = Path(__file__).resolve().parent
-if str(_TOOLS) not in sys.path:
-    sys.path.insert(0, str(_TOOLS))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402
 
 import agent_log
 import repo_lib
@@ -89,7 +92,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     return bad, narr
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt (A=Y needs the path allowed; globs and ! denies count).", json_out=True)
+    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)
     ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers instead of checking the catalog.")
     ap.add_argument("--narration", action="store_true", help="With --stale-refs: also list will-be-added / legacy / formerly / no-longer lines (advisory).")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
@@ -97,16 +100,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.stale_refs:
         bad, narr = stale_refs(root, args.narration)
         head = f"stale-refs: dead={len(bad)} narration={len(narr)}"
+        echo = "\n".join(agent_log.fold(bad + narr, args.verbose, keep=20, limit=28) + [head])
         return agent_log.finish("stale-refs", root, "\n".join(bad + narr + [head]), "FAIL" if bad else ("INFO" if narr else "PASS"),
-                                args=args, legacy=False, dead=len(bad), narration=len(narr))
+                                args=args, echo=echo, legacy=False, dead=len(bad), narration=len(narr))
     tools = root / "tools"
-    files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py" and not f.name.startswith(".")}  # dotfiles (.gdignore) are not tools
+    table = boot.entries(tools)
+    files = {f"{e}.py" + (f" {sub}" if sub else "") for e, rows_ in table.items() for sub, _, _ in rows_}  # catalog names: commands
+    entry_of = {n: n.split(" ", 1)[0] for n in files}
+    sub_mods = {f"lib/{m}.py" for rows_ in table.values() for _, m, _ in rows_}
+    lib = tools / "lib"
+    named = {f"lib/{p.relative_to(lib).as_posix()}" for p in lib.rglob("*.py") if "imglib" not in p.parts and "__pycache__" not in p.parts} - sub_mods
+    named |= {"lib/imglib/"} | {f"data/{p.name}" + ("/" if p.is_dir() else "") for p in (tools / "data").iterdir()}
+    named |= {p.name for p in tools.iterdir() if p.is_file() and p.suffix != ".py" and not p.name.startswith(".")}
+    stray = sorted(p.name for p in tools.glob("*.py") if p.stem not in table and p.name != "_scratch.py")
     globs = repo_lib.load_allowlist(root)
-    allow = {n for n in files if repo_lib.allowed(f"tools/{n}", globs)}  # honours globs (`tools/*`), `!` denies and exact lines
+    allow = {n for n in files if repo_lib.allowed(f"tools/{entry_of[n]}", globs)}  # honours globs (`tools/*`), `!` denies and exact lines
     exact = {g[len("tools/"):] for g in globs if g.startswith("tools/") and not any(c in g for c in "*?[!")}
     rows: dict[str, tuple[str, str]] = {}
-    bad: list[str] = []
+    bad: list[str] = [f"ENTRY   tools/{n}: top-level tools/*.py must be an entry tool (COMMANDS or MODULE table)" for n in stray]
+    text = ""
     for cat in sorted((root / "design").glob(CATALOG_GLOB)):
+        text += cat.read_text(encoding="utf-8")
         for ln in cat.read_text(encoding="utf-8").splitlines():
             m = ROW.match(ln)
             if not m:
@@ -116,25 +130,25 @@ def main(argv: list[str] | None = None) -> int:
                 bad.append(f"DUP     {name} (also in another row)")
             rows[name] = (surf, a)
     for n in sorted(files - rows.keys()):
-        bad.append(f"MISSING {n}: no catalog row")
+        bad.append(f"MISSING {n}: no catalog row")  # every subcommand of every entry tool
     for n in sorted(rows.keys() - files):
-        bad.append(f"STALE   {n}: catalog row but no such file")
-    for n in sorted(exact - files):
+        bad.append(f"STALE   {n}: catalog row but no such command")
+    for n in sorted(exact - {p.relative_to(tools).as_posix() for p in tools.rglob("*") if p.is_file()}):
         bad.append(f"ALLOW   {n}: on bot_allow.txt but no such file")
+    for n in sorted(named):
+        if f"`{n}" not in text and f"`tools/{n}" not in text:
+            bad.append(f"UNNAMED tools/{n}: name it in backticks in the tools*.md that owns its area (libs: tools-libs.md)")
     for n, (surf, a) in sorted(rows.items()):
         if n in files and a == "Y" and n not in allow:
             bad.append(f"ALLOWED {n}: catalog A=Y but tools/{n} is not allowed by bot_allow.txt (add a line or mark A=N)")
         if a == "Y" and "B" not in surf and "D" not in surf:
             bad.append(f"SURF    {n}: allowlisted but no B/D surface")
-        if a == "Y" and n.endswith(".py") and n in files:
-            t = (tools / n).read_text(encoding="utf-8-sig", errors="replace")
-            if '"""' not in t[:600] and "argparse" not in t:
-                bad.append(f"HELP    {n}: allowlisted .py without docstring or argparse")
-    head = f"tool-docs: tools={len(files)} rows={len(rows)} allowlisted={len(allow)} problems={len(bad)}"
+    head = f"tool-docs: commands={len(files)} rows={len(rows)} libs_data={len(named)} allowlisted={len(allow)} problems={len(bad)}"
     if bad:
-        bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
-    return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args,
-                            legacy=False, tools=len(files), rows=len(rows), problems=len(bad))
+        bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); UNNAMED = name the lib or data file in its area doc; ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
+    echo = "\n".join(agent_log.fold(bad[:-1], args.verbose, keep=20, limit=28) + bad[-1:] + [head]) if bad else None
+    return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args, echo=echo,
+                            legacy=False, commands=len(files), rows=len(rows), problems=len(bad))
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
