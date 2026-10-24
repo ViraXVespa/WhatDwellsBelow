@@ -10,11 +10,12 @@ const GRASS_PAD := 16
 const YARD := Rect2i(2, 4, 29, 21)
 const PATHS: Array[Rect2i] = [Rect2i(6, 13, 21, 4), Rect2i(15, 8, 3, 15)]
 ## Fence along the slab edge: run centre height, height, thickness, inset; posts (width, y, spacing, end trim) and the
-## two rails (body-local y, thickness x height); art and fallback colour. shadow_top: the top the bake projects.
+## two rails (body-local y, thickness x height); art and fallback colour. The bake projects it from the post tops
+## (Layout.fence_shadow_top).
 const FENCE := {
 	"y": 0.58, "h": 1.05, "t": 0.22, "inset": 0.08, "post": 0.18, "post_y": 0.02, "post_step": 2.0, "trim": 0.2,
 	"rails": [-0.12, 0.22], "rail": Vector2(0.1, 0.12), "tex": "res://assets/sprites/props/fence.png",
-	"col": Color(0.45, 0.32, 0.2), "shadow_top": 1.13,
+	"col": Color(0.45, 0.32, 0.2),
 }
 ## Ground art: tile texture and fallback colour; feather: fade metres into the surface below (dirt over grass, paths
 ## over dirt).

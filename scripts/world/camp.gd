@@ -119,6 +119,8 @@ func _step_stall() -> void:
 	Build.stall(gen)
 	Build.strip_building_cubes(gen)
 	Build.quiet_shadows(gen)
+	for b in get_tree().get_nodes_in_group("hub_build"):
+		LightRt.rebind_tree(b)  # roofs, awnings, tarp sample the hub atlas; they are built after _step_light
 	Dbg.lt_mark("camp_buildings")
 	Dbg.hitch("hub_stall")
 

@@ -140,9 +140,10 @@ func stall_lid() -> Dictionary:
 	var z0: float = minf(-stall_box.z * 0.5, p.z - ph)
 	var z1: float = maxf(stall_box.z * 0.5, p.y + ph)
 	return {"x": at.x, "z": at.z + (z0 + z1) * 0.5, "hx": hx, "hz": (z1 - z0) * 0.5, "h": stall_ridge_y()}
-## Top the bake projects the fence from (rails and posts).
+## Top the bake projects the fence from: the post tops (run centre y + post_y + half the run height).
 func fence_shadow_top() -> float:
-	return Spec.FENCE["shadow_top"]
+	var f: Dictionary = Spec.FENCE
+	return float(f["y"]) + float(f["post_y"]) + float(f["h"]) * 0.5
 ## Banner pole collision boxes, world: [centre, size] per pole.
 func banner_poles() -> Array:
 	var at: Vector3 = spot_pos("Banner")
