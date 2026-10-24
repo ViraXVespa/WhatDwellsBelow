@@ -89,8 +89,8 @@ def block(root: Path, what: str, red: list[str]) -> str:
                  "(`/session-info` there, or `grok sessions list` in this directory). Nothing is forked or started for you.")
     head += " The fork keeps the worktree and that Gather's context; no re-gather. Paste:"
     files = changed_files(root, base)
-    ask = (f'The prove "{what}" is red: {" | ".join(seen)}. '
-           
+    ask = (f'The prove "{what}" is red: {" | ".join(seen)}. The work so far, committed or not, is in this worktree: `git diff {base}` (working tree) and the untracked files. '
+           f"Read only the changed files (start with {', '.join(files) or 'the files in that diff'}), "
            "then make one small corrective edit. Rerun that prove once and report; still red: stop and report the log path.")
     return "\n".join([head, "--- paste ---", ask, END])
 
