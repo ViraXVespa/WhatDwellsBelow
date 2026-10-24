@@ -40,7 +40,7 @@ NO_ROOT: set[str] = set()
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
     "doc_patch", "code_map", "tunables", "build_changelog",
-    "week_pin", "list_unused_funcs", "bot_opt", "task", "split_funcs", "facade_requal",
+    "week_pin", "list_unused_funcs", "task", "split_funcs", "facade_requal",
     "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips", "ci_archive",
 }
 # flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
@@ -58,7 +58,6 @@ SMOKE: dict[str, list] = {
     "archive_prior_changelogs": [["--dry-run"]],
     "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
-    "bot_opt": [["--list"]],
     "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"], ["--dry-run", "update", "opt-003", "--status", "open"]],
     "bot_smokes": [["--doctor"], ["--for", "scripts/app.gd"]],
     "bot_status": [[], ["--bot"]],
@@ -87,15 +86,10 @@ SMOKE: dict[str, list] = {
     "list_scenes": [[]],
     "list_unused_funcs": [["--dry-run"]],
     "list_xref": [["bot_status"], ["bot_status", "--all"]],
-    "make_placeholder_audio": [["--dry-run"]],
-    "pack_facing_fix": [(["--dry-run"], _ERR)], "pack_locomotion": [["--dry-run"]], "pack_oneshot": [["--dry-run"]],
-    "pack_p2_art": [(["--dry-run"], _ERR)], "pack_turntable": [(["--dry-run"], _ERR)], "pack_walk": [(["--dry-run"], _ERR)],
+    "pack_locomotion": [["--dry-run"]], "pack_oneshot": [["--dry-run"]], "pack_turntable": [(["--dry-run"], _ERR)],
     "pages_game_hash": [[]],
-    "process_enemies": [(["--dry-run"], _ERR)], "process_gear_icons": [(["--dry-run"], _ERR)], "process_gloam": [(["--dry-run"], _ERR)],
-    "process_session_sprites": [(["--dry-run"], _ERR)], "process_sprites": [(["--dry-run"], _ERR)],
-    "process_world": [(["--dry-run"], _ERR)], "process_world_pass": [(["--dry-run"], _ERR)],
+    "process_gear_icons": [(["--dry-run"], _ERR)], "process_world_pass": [(["--dry-run"], _ERR)],
     "read_summary": [["bot-status"], ["bot-status", "--index"]],
-    "rekey_stills": [(["--dry-run"], _ERR)],
     "run_shot_flow": [["--list"], ["--survey", "--flow", "camp-inventory"], ["--selftest"]],
     "show_png": [["--selftest"]], "shot_crop": [["--selftest"]], "commit_slice": [["--selftest"]],
     "make_sfx": [["--list"], ["--dry-run", "--prefix", "p2_"], ["--check", "--prefix", "p9_"]],

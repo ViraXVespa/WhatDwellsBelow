@@ -9,7 +9,7 @@ Imagine runs only through the isolated-media gate (CLI Build). Samples stay out 
 
 - One 3x3 sheet per enemy in one pass (separate figures drift in look and palette). Cell order as the player Bible (`art-bible-character`): Up-Left, Up, Up-Right / Left, centre close-up, Right / Down-Left, Down, Down-Right.
 - Opaque `#FF00FF` plate, then `plate_remap.py`, square, split, cleanup as the player Bible.
-- Live enemy stills are ONE picture per type, copied to five directions and flipped for three (`pack_p4_enemies.py`), so there is no real directional set yet.
+- Live enemy stills are ONE picture per type, copied to five directions and flipped for three at pack time, so there is no real directional set yet.
 
 ## Props, hands and the prompt (one home: the tool)
 

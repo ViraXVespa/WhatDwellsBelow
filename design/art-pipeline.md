@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: sprite frames, paper plates, sheet harvest
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/bible_normalize.py`, `tools/imglib/`, `tools/img_inspect.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/bible_normalize.py`, `tools/imglib/`, `tools/img_inspect.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_all_stills.py`, `tools/process_world_pass.py`, `tools/process_gear_icons.py`, `tools/pack_turntable.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
 
 This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load Job siblings until a table row matches. Do not load art_pipeline.attack_keyframes unless the User is resuming that parked pipeline.
 
@@ -22,7 +22,7 @@ Imagine calls (`image_gen`, `image_edit`, `image_to_video`) use the isolated-med
 
 Reliability comes from **one Image-to-Video clip at a time**, the live prompt in `tools/i2v_seeds.py`, **User review**, and plate-correct / cleanup scripts. Do not run automatic multi-pass fill-in.
 
-After an isolated still lands under `_src/`, key the source plate directly with `python tools/sprite_pipeline.py key` (or `matte`; both use `tools/imglib/matte.py`), no remap first (art-pack, Still rekey). `tools/plate_remap.py` is only for opaque I2V seed plates. Do not write a new keyer, a PIL loop, or a one-off script for chroma. Extend an existing `process_*.py` only if a durable batch wrapper is needed, and tell the User.
+After an isolated still lands under `_src/`, key the source plate directly with `python tools/sprite_pipeline.py key` (or `matte`; both use `tools/imglib/matte.py`), no remap first (art-pack, Still rekey). `tools/plate_remap.py` is only for opaque I2V seed plates. Do not write a new keyer, a PIL loop, or a one-off script for chroma. Extend `process_world_pass.py` or `process_gear_icons.py` only if a durable batch wrapper is needed, and tell the User.
 
 All character art (player and enemies) MUST follow this pipeline. Props may use a simplified stills-only variant.  
 Male and female player characters MUST each have their own locked Character Bible and MUST maintain full animation parity so that weapon and tool paper-doll **layers** composite onto either body without special per-gender tweaks.  
