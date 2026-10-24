@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Shot flow target paths: "App.gold", "host.ui.mode", "kind:receptionist.prompt", "group:player.hp".
 ## First token picks the root (autoload name, host, kind:K, group:G, node:Path, script:debug/x = a fresh res://scripts/debug/x.gd); the rest are properties,
-## child nodes, dictionary keys or [index]. Values from JSON are cleaned (integral floats become ints).
+## child nodes, dictionary keys, [index] or a vector's x/y/z. Values from JSON are cleaned (integral floats become ints).
 
 static func clean(v: Variant) -> Variant:
 	if v is Dictionary and (v as Dictionary).has("v3"):
@@ -43,6 +43,9 @@ static func _step(cur: Variant, seg: String) -> Variant:
 		var a: Array = cur
 		var i: int = seg.to_int()
 		return a[i] if i >= 0 and i < a.size() else null
+	if cur is Vector3 or cur is Vector2:  # global_position.x / .z
+		var k: int = "xyz".find(seg)
+		return cur[k] if k >= 0 and k < (3 if cur is Vector3 else 2) else null
 	if cur is Object and is_instance_valid(cur):
 		var o: Object = cur
 		var v: Variant = o.get(seg)

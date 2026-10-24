@@ -6,5 +6,5 @@
   {"key": "b09cf67600e3", "kind": "clone", "where": "goals_best.gd / goals_near.gd foe picks",
    "why": "the shared part is the Cache.foes scan prologue; each pick has its own radius, filter and score, and a Callable-per-foe helper would cost more in the per-tick playtest driver than it saves"},
   {"key": "936cae54a52f", "kind": "clone", "where": "torch_plan/hall.gd vs dungeon_stream/queue.gd flood fill",
-   "why": "deferred: queue.gd's walk predicate reads two grids and runs on the web floor-gen path; a shared mask helper needs a full-map pre-pass there. Revisit with a predicate-callable fill and a web floor-gen timing"}
+   "why": "queue.gd's walk predicate reads two grids and runs on the web floor-gen path; sharing a mask helper with torch_hall would add a full-map pass in web floor gen"}
 ]

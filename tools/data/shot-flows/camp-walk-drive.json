@@ -1,0 +1,10 @@
+{"name": "camp-walk-drive", "about": "Placeholdia: the movie ops (walk_to, drive, tap, mark) move the player through the playtest hooks; walk south of the crystal, step east, swing", "scene": "camp", "hud": 0, "settle_ms": 500, "fixed_fps": 60, "covers": [], "smoke": true,
+ "steps": [
+  {"op": "mark", "name": "start"},
+  {"op": "walk_to", "x": 15.2, "z": 12.0},
+  {"op": "assert", "target": "group:player.global_position.z", "gt": 11.4},
+  {"op": "drive", "move": [1, 0], "ms": 500},
+  {"op": "assert", "target": "group:player.global_position.x", "gt": 16.5},
+  {"op": "tap", "action": "attack"},
+  {"op": "mark", "name": "end"},
+  {"op": "shot", "name": "walked"}]}

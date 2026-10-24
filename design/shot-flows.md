@@ -23,13 +23,14 @@ A flow is `tools/data/shot-flows/<name>.json`: header keys fill unset CLI defaul
 | `repeat` | `max`, `until`, `steps` | Pages: loop steps until the `until` assert holds (or `max`) |
 | `freeze` | `group`, `on` | Disables (or restores) processing of a node group, e.g. `enemies`; the HUD host keeps running |
 | `sweep` | `margin` (3), `frames` (8), `keep_x` (192), `keep_y` (112) | Full-floor capture: streams the whole floor, tiles it with the play camera (one PNG per tile in the frames dir plus `sweep.json`), player and enemies hidden. Driven by `shots.py capture --full-map` (`shot-tool.md`) |
+| `walk_to` / `drive` / `tap` / `mark` | `x z near must max_ms` / `move aim attack ms` / `action` / `name` | Play through `App.playtest` like a pad: walk to a ground point, hold a world-space stick (and attack), one-frame press; `mark` prints the frame for `shots.py movie` cuts. Proof flow: `camp-walk-drive` |
 | `wait` `settle` `seed` `hud` `texts` `log` | | `ms` or `frames`; two frames plus a draw; global RNG seed; HUD on or off; text dump alone; a marker |
 
-Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Seed or set any random state (the quest board rolls its own `randomize()`, so a flow sets `quests_offered`), or two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
+Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`, a vector's `x`/`y`/`z`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Seed or set any random state (the quest board rolls its own `randomize()`, so a flow sets `quests_offered`), or two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
 
 A screen that lists what the delver is carrying is stocked before the shot. A fresh dungeon boot only has the starter potion and ration, which hides the gear board, the unsafe pile, and the resources. The extract flow calls `App.prog.stock_extract_shot` before it opens the gate: a worn green weapon, a worn blue helm, an unsafe body in the bag, an artifact that stays, and ore, wood, gold, and root. Do not shoot that screen on the starter kit.
 
-Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1`. Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump) in `scripts/debug/shot_tool/`.
+Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1`. Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_play.gd` (play ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump) in `scripts/debug/shot_tool/`.
 
 Commands:
 - `python tools/shots.py capture --steps tools/data/shot-flows/X.json [--no-pixels] [--out P]` one flow, summary `shots`.
