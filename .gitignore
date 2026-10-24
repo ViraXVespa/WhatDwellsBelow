@@ -28,7 +28,7 @@ _rngw_*.jpg
 tools/anim_review/
 
 # Python
-tools/__pycache__/
+__pycache__/
 *.pyc
 
 # OS / editor

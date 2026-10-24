@@ -1,5 +1,5 @@
 {
-"_about": "Cue specs for tools/make_sfx.py. graph nodes: [sine freq dur vol decay power] [noise dur vol seed] [mix node...] [cat node...]. A new cue is one entry here.",
+"_about": "Cue specs for tools/media.py sfx. graph nodes: [sine freq dur vol decay power] [noise dur vol seed] [mix node...] [cat node...]. A new cue is one entry here.",
 "cues": [
 {"name": "p2_hit", "scale": 32000, "graph": ["mix", ["sine", 180, 0.08, 0.4, true, 1.0], ["noise", 0.09, 0.25, 0.0]]},
 {"name": "p2_crit", "scale": 32000, "graph": ["mix", ["sine", 520, 0.12, 0.35, true, 1.0], ["sine", 780, 0.12, 0.25, true, 1.0]]},

@@ -1,5 +1,5 @@
 {
-  "about": "How-to-Play screenshots: topic id -> the shot-flow frame that shows it. tutorial_shots.py --run shoots the flows and stages <id>.png in _out/tutorial/; Grok Build copies them to dest (tooling never writes under assets/). A new topic is one row; a new screen needs its flow shot first.",
+  "about": "How-to-Play screenshots: topic id -> the shot-flow frame that shows it. shots.py tutorial --run shoots the flows and stages <id>.png in _out/tutorial/; Grok Build copies them to dest (tooling never writes under assets/). A new topic is one row; a new screen needs its flow shot first.",
   "dest": "assets/ui/tutorial",
   "topics": {
     "forging": {"flow": "camp-anvil-tabs", "shot": "tab"},

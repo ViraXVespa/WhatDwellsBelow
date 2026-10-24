@@ -1,6 +1,6 @@
 extends Node
 
-## Release smoke driver. Never in the game: run_release_smoke.py adds it as an autoload in a scratch copy of the
+## Release smoke driver. Never in the game: `gate.py release` adds it as an autoload in a scratch copy of the
 ## project only. It plays the shipped path with no debug code (title, hub, dungeon) and prints REL: lines.
 
 var _t := 0.0
