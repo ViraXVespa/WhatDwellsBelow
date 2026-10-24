@@ -155,7 +155,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 		y += 1
 	if rt.hub_crystal.length() < 0.2:
 		return
-	var cr: float = 4.2
+	var cr: float = load("res://scripts/world/camp/layout_spec.gd").CRYSTAL_GLOW_R
 	# Only pixels within cr of the crystal change; skip the rest of the image.
 	var gx0: int = clampi(int(floor((rt.hub_crystal.x - cr - float(x0)) * sub)) - 2, 0, w)
 	var gx1: int = clampi(int(ceil((rt.hub_crystal.x + cr - float(x0)) * sub)) + 2, 0, w)
@@ -230,11 +230,11 @@ static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) ->
 		else:
 			lo = m + 1
 	return lo
-## Day gradient, prop skirts, mesh shadows (each shadow takes the darker of what is there, so nothing darkens twice),
+## Day gradient, tarp lid, mesh shadows (each shadow takes the darker of what is there, so nothing darkens twice),
 ## one blur, on a field-filled image. Only the bake (save_hub_bake) calls this.
 static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
 	_hub_paint_day(img, x0, z0, layout)
-	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout, true)
+	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout)
 	wrote += HubShadow._hub_mesh_shadows(img, Vector2(float(x0), float(z0)), layout)
 	HubShadow._blur_hub(img)
 	return wrote

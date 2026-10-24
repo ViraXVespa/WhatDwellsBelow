@@ -19,7 +19,7 @@ static func _apply_pose(host: Node) -> void:
 		player.global_position = Vector3(Args.player_x(), p.y, Args.player_z())
 	elif player != null and str(host.scene_file_path).contains("camp"):
 		var p2: Vector3 = player.global_position
-		player.global_position = Vector3(15.2, p2.y, 7.6)
+		player.global_position = Vector3(15.2, p2.y, 7.6)  # shot default stand, not a layout point
 	var hud_n: Node = host.get("hud") as Node
 	if hud_n != null:
 		hud_n.visible = Args.hud_on()
@@ -62,13 +62,14 @@ static func _apply_pose(host: Node) -> void:
 static func _apply_pose_token(host: Node, token: String) -> void:
 	var bits: PackedStringArray = token.split(",")
 	var kind: String = bits[0] if bits.size() > 0 else "play"
-	var cx: float = float(bits[1]) if bits.size() > 1 else 16.5
-	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
+	var c: Vector2 = _look(host, bits[1] if bits.size() > 1 else "", bits[2] if bits.size() > 2 else "")
+	var cx: float = c.x
+	var cz: float = c.y
 	var ox: float = float(bits[3]) if bits.size() > 3 else 0.0
 	var oz: float = float(bits[4]) if bits.size() > 4 else 0.0
 	var zoom: float = float(bits[5]) if bits.size() > 5 else 1.0
-	var px: float = float(bits[6]) if bits.size() > 6 else cx
-	var pz: float = float(bits[7]) if bits.size() > 7 else cz
+	var px: float = float(bits[6]) if bits.size() > 6 and bits[6] != "" else cx + (float(bits[10]) if bits.size() > 10 else 0.0)
+	var pz: float = float(bits[7]) if bits.size() > 7 and bits[7] != "" else cz + (float(bits[11]) if bits.size() > 11 else 0.0)
 	var face: String = bits[8] if bits.size() > 8 else "down"
 	var cy: float = float(bits[9]) if bits.size() > 9 else 4.2
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
@@ -78,7 +79,8 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 		return
 	var rt = load("res://scripts/graphics/light_rt.gd")
 	if rt != null and rt.get("hub_crystal") == Vector2.ZERO:
-		rt.set("hub_crystal", Vector2(16.475, 10.2))
+		var cp: Vector3 = load("res://scripts/world/camp/layout_spec.gd").SPOTS["Crystal"]
+		rt.set("hub_crystal", Vector2(cp.x, cp.z))
 	var crystal: Vector2 = rt.get("hub_crystal") if rt != null else Vector2.ZERO
 	var player: Node = host.get("player")
 	if player == null:
@@ -118,3 +120,14 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	cam.global_position = persp
 	cam.look_at(look, Vector3.UP)
 	printerr("SHOT: token=%s at=%s look=%s" % [token, str(cam.global_position), str(look)])
+
+## Recipe look point: numbers, a Layout name (Hall, Wing, Stall or a spot), or empty (the path crossing).
+static func _look(host: Node, a: String, b: String) -> Vector2:
+	if a.is_valid_float():
+		return Vector2(a.to_float(), b.to_float())
+	var layout_s: GDScript = load("res://scripts/world/camp/layout.gd")
+	if a == "":
+		return layout_s.path_cross()
+	var lay: Node3D = layout_s.of(host)
+	var p: Vector3 = lay.call(a.to_lower() + "_pos") if a in ["Hall", "Wing", "Stall"] else lay.spot_pos(a)
+	return Vector2(p.x, p.z)

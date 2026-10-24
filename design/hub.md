@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: Placeholdia, camp benches
-Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp/layout.gd` (script-default pose / eave / UV; scene exports override), `scripts/world/camp/warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build/mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build/roof.gd`, `scripts/world/camp/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp/layout_spec.gd` (the hub layout data), `scripts/world/camp/layout.gd` (serves it), `scripts/world/camp/warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build/mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build/roof.gd`, `scripts/world/camp/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
 
 ## Required Interactables
 - Floor Crystal (opens loadout / enter-dungeon UI)
@@ -16,7 +16,7 @@ Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp/lay
 - Test dummy (coverage / weapon sandbox)
 
 All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidity under the orthographic Camera3D.
-- `Layout` on `scenes/camp.tscn` is the single source for yard size, box sizes, poses, eave, UV, and awning depth/slope/valance (valance is a fraction of wall height). Build code finds it with `Layout.of(node)` only: no meta tag, no fallback constants, no `if layout else` branches. `ensure_tree()` creates the spot and roof children from script defaults. Scene exports override eave, UV, and box size. An empty `Layout` is valid. `Generated` is a runtime bucket. Play clears it and runs the helpers so Title and shots show the same town. `camp.tscn` holds no `Generated` children and the editor does not re-tag it on save; the bake tools realize it in memory and only write `hub_light.png`.
+- One layout: `layout_spec.gd` holds every hub placement, size, asset, light and draw-order number (yard, paths, fence, buildings, stall posts, spots, banner, lamps, crystal glow, sun). `Layout` (`layout.gd`, the only node under `Camp` in `camp.tscn`) serves it: `Layout.of(node)`, `*_pos()`, `stall_posts()`, `stall_lid()`, `vendor_pos()` (in front of the stall), `banner_poles()`. Meshes, collision, lamps, labels, draw order, the bake (lid, footprints, fence, lamp pools, crystal) and the bake overlay derive from it; shot recipes can name a look (`"look": "Stall"`). Edit the spec, never a consumer; a box, fence or light change needs a rebake (`bake.py camp`). `ensure_tree()` makes the Hall/Wing/Stall/Spots nodes at run time with no owner, so the editor never saves a pose into `camp.tscn`. `Generated` is a runtime bucket. Play clears it and runs the helpers so Title and shots show the same town. `camp.tscn` holds no `Generated` children and the editor does not re-tag it on save; the bake tools realize it in memory and only write `hub_light.png`.
 
 ## Camp entry events
 

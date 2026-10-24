@@ -24,23 +24,41 @@ import godot_lib
 
 GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility", "--rendering-driver", "opengl3"]
 
-def draw_overlay(root: Path, err_log: Path, out: Path, org: float = -18.0, sub: float = 16.0) -> None:
-    """Outlines what the bake was told about each caster, so a shadow that misses its geometry names which box is off."""
+def draw_overlay(root: Path, err_log: Path, out: Path) -> None:
+    """Outlines what the bake saw, all from the Layout (bake_dbg lines): tarp lid (yellow), protected footprints (red),
+    caster bounds (cyan), collision boxes (magenta), lamp pools (orange) and spots (white cross + name)."""
     from PIL import Image, ImageDraw
     im = Image.open(root / "assets/baked/hub_light.png").convert("RGB")
     d = ImageDraw.Draw(im)
-    px = lambda x, z: ((x - org) * sub, (z - org) * sub)
-    for line in err_log.read_text(encoding="utf-8", errors="replace").splitlines():
-        f = line.split()
-        if len(f) < 3 or f[0] != "bake_dbg:":
+    lines = [ln.split() for ln in err_log.read_text(encoding="utf-8", errors="replace").splitlines()]
+    lines = [f for f in lines if len(f) >= 3 and f[0] == "bake_dbg:"]
+    lines.sort(key=lambda f: f[1] != "coll")  # collision underneath, so lid/footprint/caster outlines stay visible
+    org = next(([float(v) for v in f[2:5]] for f in lines if f[1] == "org"), None)
+    if org is None:
+        raise SystemExit("FAIL overlay: no bake_dbg org line in " + str(err_log))
+    ox, oz, sub = org
+    px = lambda x, z: ((x - ox) * sub, (z - oz) * sub)
+    rect = lambda x, z, w, h, col: d.rectangle([*px(x, z), *px(x + w, z + h)], outline=col)
+    for f in lines:
+        if f[1] == "org":
             continue
         n = [float(v) for v in f[3:]]
         if f[1] == "box":  # kind x z hx hz h
-            d.rectangle([*px(n[0] - n[2], n[1] - n[3]), *px(n[0] + n[2], n[1] + n[3])], outline=(255, 220, 0))
+            rect(n[0] - n[2], n[1] - n[3], n[2] * 2, n[3] * 2, (255, 220, 0))
         elif f[1] == "prot":  # name x z w d
-            d.rectangle([*px(n[0], n[1]), *px(n[0] + n[2], n[1] + n[3])], outline=(255, 40, 40))
+            rect(*n[:4], (255, 40, 40))
         elif f[1] == "cast":  # name x z w d top
-            d.rectangle([*px(n[0], n[1]), *px(n[0] + n[2], n[1] + n[3])], outline=(0, 220, 255))
+            rect(*n[:4], (0, 220, 255))
+        elif f[1] == "coll":  # name x z w d
+            rect(*n[:4], (255, 0, 255))
+        elif f[1] == "lamp":  # x z r (f[2] is x)
+            n = [float(v) for v in f[2:5]]
+            d.ellipse([*px(n[0] - n[2], n[1] - n[2]), *px(n[0] + n[2], n[1] + n[2])], outline=(255, 150, 0))
+        elif f[1] == "spot":  # name x z
+            x, y = px(n[0], n[1])
+            d.line([x - 6, y, x + 6, y], fill=(255, 255, 255))
+            d.line([x, y - 6, x, y + 6], fill=(255, 255, 255))
+            d.text((x + 7, y - 6), f[2], fill=(255, 255, 255))
     out.parent.mkdir(parents=True, exist_ok=True)
     im.save(out)
 
@@ -48,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     ap.add_argument("--headless", action="store_true", help="force the headless driver (same atlas, no display needed)")
-    ap.add_argument("--overlay", nargs="?", const="_out/bake-camp/overlay.png", metavar="PNG", help="also write the bake with skirt boxes (yellow), protected footprints (red) and caster bounds (cyan) outlined, from the bake_dbg lines")
+    ap.add_argument("--overlay", nargs="?", const="_out/bake-camp/overlay.png", metavar="PNG", help="also write the bake with the tarp lid (yellow), protected footprints (red), caster bounds (cyan), collision (magenta), lamp pools (orange) and spots (white) outlined, from the bake_dbg lines")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     out_log, err_log = agent_log.run_path("bake-camp", root, "bake-out.log"), agent_log.run_path("bake-camp", root, "bake-err.log")

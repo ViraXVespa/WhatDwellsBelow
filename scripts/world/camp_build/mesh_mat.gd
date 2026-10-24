@@ -4,7 +4,7 @@ extends Object
 
 const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const TILE_W := 3.2
+const TILE_W: float = preload("res://scripts/world/camp/layout_spec.gd").TILE_W
 
 static func wrap_mat(
 	path: String,

@@ -1,127 +1,36 @@
-﻿@tool
+@tool
 extends Node3D
+
+## The hub's one layout: serves layout_spec.gd (every placement, size, asset, light and draw-order number) to the camp
+## build, the props, the hub bake and the bake overlay. camp.tscn holds only this node; ensure_tree() makes the
+## Hall/Wing/Stall/Spots nodes from the spec at run time (never saved). design/hub.md.
 
 signal editor_redraw
 
-const GROUND_W: int = 36
-const GROUND_D: int = 32
-const GROUND_OX: int = -2
-const GROUND_OZ: int = -2
-const GRASS_PAD: int = 16
-const PATH_X: float = 16.5
-const PATH_Z: float = 15.0
-const TILE_W_DEFAULT: float = 3.2
-const ROOF_EAVE_DEFAULT: float = 0.42
-const HALL_AWNING_DEPTH_DEFAULT: float = 0.42
-const WING_AWNING_DEPTH_DEFAULT: float = 0.36
-const AWNING_SLOPE_DEFAULT: float = 0.10
-const AWNING_VALANCE_DEFAULT: float = 0.16
-const HALL_SIZE_DEFAULT := Vector3(5.6, 3.4, 4.2)
-const WING_SIZE_DEFAULT := Vector3(3.8, 3.8, 3.2)
-const HALL_POS_DEFAULT := Vector3(8.2, 1.7, 6.0)
-const STALL_POS_DEFAULT := Vector3(25.0, 1.2, 8.0)
-const STALL_SIZE_DEFAULT := Vector3(4.6, 2.4, 3.4)
-const CRYSTAL_POS_DEFAULT := Vector3(16.475, 0.0, 10.2)
-const ANVIL_POS_DEFAULT := Vector3(21.2, 0.0, 11.4)
-const BOARD_POS_DEFAULT := Vector3(16.1, 0.0, 6.2)
-const VENDOR_POS_DEFAULT := Vector3(25.0, 0.0, 10.2)
-const DUMPSTER_POS_DEFAULT := Vector3(5.2, 0.0, 9.4)
-const BILLBOARD_POS_DEFAULT := Vector3(20.5, 0.0, 16.5)
-const DUMMY_POS_DEFAULT := Vector3(8.5, 0.0, 15.5)
-const SPAWN_POS_DEFAULT := Vector3(16.5, 0.0, 16.0)
-const BANNER_POS_DEFAULT := Vector3(16.5, 0.0, 22.0)
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
-@export var ground_w: int = GROUND_W
-@export var ground_d: int = GROUND_D
-@export var ground_ox: int = GROUND_OX
-@export var ground_oz: int = GROUND_OZ
-@export var grass_pad: int = GRASS_PAD
-@export var path_x: float = PATH_X
-@export var path_z: float = PATH_Z
-@export var tile_w: float = TILE_W_DEFAULT
+var ground_w: int = Spec.GROUND.size.x
+var ground_d: int = Spec.GROUND.size.y
+var ground_ox: int = Spec.GROUND.position.x
+var ground_oz: int = Spec.GROUND.position.y
+var grass_pad: int = Spec.GRASS_PAD
+var tile_w: float = Spec.TILE_W
+var hall_box: Vector3 = Spec.HALL["box"]
+var wing_box: Vector3 = Spec.WING["box"]
+var stall_box: Vector3 = Spec.STALL["box"]
+var hall_tile_w: float = 0.0
+var wing_tile_w: float = 0.0
+var stall_tile_w: float = 0.0
+var hall_uv_off := Vector2.ZERO
+var wing_uv_off := Vector2.ZERO
+var stall_uv_off := Vector2.ZERO
 
-@export var hall_box: Vector3 = HALL_SIZE_DEFAULT
-@export var wing_box: Vector3 = WING_SIZE_DEFAULT
-@export var stall_box: Vector3 = STALL_SIZE_DEFAULT
-@export var hall_eave: float = ROOF_EAVE_DEFAULT
-@export var wing_eave: float = ROOF_EAVE_DEFAULT
-@export var stall_eave: float = ROOF_EAVE_DEFAULT
-@export var hall_tile_w: float = 0.0
-@export var wing_tile_w: float = 0.0
-@export var stall_tile_w: float = 0.0
-@export var hall_uv_off := Vector2.ZERO
-@export var wing_uv_off := Vector2.ZERO
-@export var stall_uv_off := Vector2.ZERO
-@export var hall_awning_depth: float = HALL_AWNING_DEPTH_DEFAULT
-@export var hall_awning_slope: float = AWNING_SLOPE_DEFAULT
-@export var hall_awning_valance: float = AWNING_VALANCE_DEFAULT
-@export var wing_awning_depth: float = WING_AWNING_DEPTH_DEFAULT
-@export var wing_awning_slope: float = AWNING_SLOPE_DEFAULT
-@export var wing_awning_valance: float = AWNING_VALANCE_DEFAULT
-
+## Editor: rebuild the preview after editing layout_spec.gd.
 @export var rebuild_preview: bool = false:
 	set(v):
 		rebuild_preview = false
-		_kick_redraw()
-
-func _kick_redraw() -> void:
-	if Engine.is_editor_hint():
-		editor_redraw.emit()
-
-func _set(property: StringName, value: Variant) -> bool:
-	var key: String = String(property)
-	var dress: PackedStringArray = PackedStringArray([
-		"tile_w", "hall_box", "wing_box", "stall_box",
-		"hall_eave", "wing_eave", "stall_eave",
-		"hall_tile_w", "wing_tile_w", "stall_tile_w",
-		"hall_uv_off", "wing_uv_off", "stall_uv_off",
-		"hall_awning_depth", "hall_awning_slope", "hall_awning_valance",
-		"wing_awning_depth", "wing_awning_slope", "wing_awning_valance"
-	])
-	if key not in dress:
-		return false
-	match key:
-		"tile_w":
-			tile_w = float(value)
-		"hall_box":
-			hall_box = value
-		"wing_box":
-			wing_box = value
-		"stall_box":
-			stall_box = value
-		"hall_eave":
-			hall_eave = float(value)
-		"wing_eave":
-			wing_eave = float(value)
-		"stall_eave":
-			stall_eave = float(value)
-		"hall_tile_w":
-			hall_tile_w = float(value)
-		"wing_tile_w":
-			wing_tile_w = float(value)
-		"stall_tile_w":
-			stall_tile_w = float(value)
-		"hall_uv_off":
-			hall_uv_off = value
-		"wing_uv_off":
-			wing_uv_off = value
-		"stall_uv_off":
-			stall_uv_off = value
-		"hall_awning_depth":
-			hall_awning_depth = float(value)
-		"hall_awning_slope":
-			hall_awning_slope = float(value)
-		"hall_awning_valance":
-			hall_awning_valance = float(value)
-		"wing_awning_depth":
-			wing_awning_depth = float(value)
-		"wing_awning_slope":
-			wing_awning_slope = float(value)
-		"wing_awning_valance":
-			wing_awning_valance = float(value)
-	notify_property_list_changed()
-	_kick_redraw()
-	return true
+		if Engine.is_editor_hint():
+			editor_redraw.emit()
 
 ## The one layout lookup: nearest `Layout` child on `n` or an ancestor, else a default one on `n`.
 static func of(n: Node) -> Node3D:
@@ -146,33 +55,23 @@ static func on_camp(host: Node3D) -> Node3D:
 	return layout
 
 func ensure_tree() -> void:
-	_ensure_body("Hall", HALL_POS_DEFAULT)
-	_ensure_body("Wing", _default_wing_pos())
-	_ensure_body("Stall", STALL_POS_DEFAULT)
-	_ensure_child("RoofHall", _default_roof_pos(HALL_POS_DEFAULT, hall_box, hall_eave, 0.0))
-	_ensure_child("RoofWing", _default_roof_pos(_default_wing_pos(), wing_box, wing_eave, 0.01))
-	_ensure_child("AwningHall", HALL_POS_DEFAULT)
-	_ensure_child("AwningWing", _default_wing_pos())
-	var spots: Node3D = _ensure_child("Spots", Vector3.ZERO)
-	_ensure_named(spots, "Crystal", CRYSTAL_POS_DEFAULT)
-	_ensure_named(spots, "Anvil", ANVIL_POS_DEFAULT)
-	_ensure_named(spots, "Board", BOARD_POS_DEFAULT)
-	_ensure_named(spots, "Vendor", VENDOR_POS_DEFAULT)
-	_ensure_named(spots, "Dumpster", DUMPSTER_POS_DEFAULT)
-	_ensure_named(spots, "Billboard", BILLBOARD_POS_DEFAULT)
-	_ensure_named(spots, "Dummy", DUMMY_POS_DEFAULT)
-	_ensure_named(spots, "Spawn", SPAWN_POS_DEFAULT)
-	_ensure_named(spots, "Banner", BANNER_POS_DEFAULT)
+	_ensure(self, "Hall", Spec.HALL["pos"])
+	_ensure(self, "Wing", _default_wing_pos())
+	_ensure(self, "Stall", Spec.STALL["pos"])
+	var spots: Node3D = _ensure(self, "Spots", Vector3.ZERO)
+	for id: String in Spec.SPOTS:
+		_ensure(spots, id, Spec.SPOTS[id])
+
+## The spec row of a building: "Hall", "Wing" or "Stall".
+static func body(which: String) -> Dictionary:
+	return Spec.WING if which == "Wing" else (Spec.STALL if which == "Stall" else Spec.HALL)
 
 func hall() -> Node3D:
 	return _leaf("Hall")
-
 func wing() -> Node3D:
 	return _leaf("Wing")
-
 func stall() -> Node3D:
 	return _leaf("Stall")
-
 func spot(spot_id: String) -> Node3D:
 	return _leaf("Spots/" + spot_id)
 
@@ -195,8 +94,19 @@ func wing_pos() -> Vector3:
 	return _pose_of(wing())
 func stall_pos() -> Vector3:
 	return _pose_of(stall())
+## A ground spot; "Vendor" stands VENDOR_GAP in front of the stall.
 func spot_pos(spot_id: String) -> Vector3:
+	if spot_id == "Vendor":
+		return vendor_pos()
 	return _pose_of(spot(spot_id))
+func vendor_pos() -> Vector3:
+	var at: Vector3 = stall_pos()
+	return Vector3(at.x, 0.0, at.z + stall_box.z * 0.5 + Spec.VENDOR_GAP)
+## Every interact or actor spot by name (overlay, bench).
+func spot_ids() -> Array:
+	var ids: Array = Spec.SPOTS.keys()
+	ids.append("Vendor")
+	return ids
 
 func tile_for(which: String) -> float:
 	var override_w: float = tile_w
@@ -207,42 +117,60 @@ func tile_for(which: String) -> float:
 	elif which == "Stall" and stall_tile_w > 0.0:
 		override_w = stall_tile_w
 	if override_w <= 0.05:
-		return TILE_W_DEFAULT
+		return Spec.TILE_W
 	return override_w
 
 func awning_depth(which: String) -> float:
-	if which == "Wing":
-		return wing_awning_depth
-	return hall_awning_depth
-
-func awning_slope(which: String) -> float:
-	if which == "Wing":
-		return wing_awning_slope
-	return hall_awning_slope
-
+	return (body(which)["awning"] as Vector2).x
 ## Valance height as a fraction of the wall height (not metres).
 func awning_valance(which: String) -> float:
-	if which == "Wing":
-		return wing_awning_valance
-	return hall_awning_valance
+	return (body(which)["awning"] as Vector2).y
+
+## Stall post centres, body-local: (half width x, front z, rear z); posts reach post_half beyond. Walls, collision,
+## tarp posts and the bake lid all use it.
+func stall_posts() -> Vector3:
+	var f: Vector3 = Spec.STALL["posts"]
+	return Vector3(stall_box.x * f.x, stall_box.z * f.y, -stall_box.z * f.z)
+## Bake lid over the stall, world XZ centre and half sizes: the tarp and the post outer faces together; h = ridge.
+func stall_lid() -> Dictionary:
+	var at: Vector3 = stall_pos()
+	var p: Vector3 = stall_posts()
+	var ph: float = Spec.STALL["post_half"]
+	var hx: float = maxf(stall_box.x * 0.5, p.x + ph)
+	var z0: float = minf(-stall_box.z * 0.5, p.z - ph)
+	var z1: float = maxf(stall_box.z * 0.5, p.y + ph)
+	return {"x": at.x, "z": at.z + (z0 + z1) * 0.5, "hx": hx, "hz": (z1 - z0) * 0.5, "h": stall_ridge_y()}
+## Top the bake projects the fence from (rails and posts).
+func fence_shadow_top() -> float:
+	return Spec.FENCE["shadow_top"]
+## Banner pole collision boxes, world: [centre, size] per pole.
+func banner_poles() -> Array:
+	var at: Vector3 = spot_pos("Banner")
+	var pole: Vector3 = Spec.BANNER["pole"]
+	var px: float = Spec.BANNER["pole_x"]
+	return [[at + Vector3(-px, pole.y * 0.5, 0.0), pole], [at + Vector3(px, pole.y * 0.5, 0.0), pole]]
+func stall_eave_y() -> float:
+	return stall_box.y * float(Spec.STALL["eave"])
+func stall_ridge_y() -> float:
+	return stall_eave_y() + float(Spec.STALL["rise"])
 
 func pad() -> int:
 	return grass_pad
-
 func wing_face_z() -> float:
 	return wing_pos().z + wing_box.z * 0.5
-
 func reception_pos() -> Vector3:
-	return Vector3(wing_pos().x + 0.027, 0.785, wing_face_z() + 0.07)
+	return Vector3(wing_pos().x + Spec.RECEPTION.x, Spec.RECEPTION.y, wing_face_z() + Spec.RECEPTION.z)
+## Path crossing centre (shot default look): x of the north-south arm, z of the east-west arm.
+static func path_cross() -> Vector2:
+	var ns: Rect2i = Spec.PATHS[1]
+	var ew: Rect2i = Spec.PATHS[0]
+	return Vector2(ns.position.x + ns.size.x * 0.5, ew.position.y + ew.size.y * 0.5)
 func aabb_x0() -> float:
 	return float(ground_ox - grass_pad)
-
 func aabb_z0() -> float:
 	return float(ground_oz - grass_pad)
-
 func aabb_x1() -> float:
 	return float(ground_ox + ground_w + grass_pad)
-
 func aabb_z1() -> float:
 	return float(ground_oz + ground_d + grass_pad)
 
@@ -251,24 +179,10 @@ func _leaf(rel: String) -> Node3D:
 	var n: Node = get_node_or_null(rel)
 	if n is Node3D:
 		return n as Node3D
-	return _ensure_child(rel, Vector3.ZERO)
+	return _ensure(self, rel, Vector3.ZERO)
 
-func _ensure_body(doc_name: String, pos: Vector3) -> Node3D:
-	return _ensure_child(doc_name, pos)
-
-func _ensure_child(doc_name: String, pos: Vector3) -> Node3D:
-	var n: Node = get_node_or_null(doc_name)
-	if n is Node3D:
-		return n as Node3D
-	var node: Node3D = Node3D.new()
-	node.name = doc_name
-	node.position = pos
-	add_child(node)
-	if Engine.is_editor_hint() and owner != null:
-		node.owner = owner
-	return node
-
-func _ensure_named(parent_node: Node3D, doc_name: String, pos: Vector3) -> Node3D:
+## Run-time child at the spec pose; no owner, so the editor never saves a pose into camp.tscn.
+func _ensure(parent_node: Node3D, doc_name: String, pos: Vector3) -> Node3D:
 	var n: Node = parent_node.get_node_or_null(doc_name)
 	if n is Node3D:
 		return n as Node3D
@@ -276,22 +190,13 @@ func _ensure_named(parent_node: Node3D, doc_name: String, pos: Vector3) -> Node3
 	node.name = doc_name
 	node.position = pos
 	parent_node.add_child(node)
-	if Engine.is_editor_hint() and owner != null:
-		node.owner = owner
 	return node
 
 func _default_wing_pos() -> Vector3:
-	var back: float = HALL_POS_DEFAULT.z - HALL_SIZE_DEFAULT.z * 0.5
-	return Vector3(
-		HALL_POS_DEFAULT.x + HALL_SIZE_DEFAULT.x * 0.5 + WING_SIZE_DEFAULT.x * 0.5 - 0.12,
-		WING_SIZE_DEFAULT.y * 0.5,
-		back + WING_SIZE_DEFAULT.z * 0.5
-	)
-
-func _default_roof_pos(body_pos: Vector3, body_box: Vector3, eave: float, y_bias: float) -> Vector3:
-	var y: float = body_pos.y + body_box.y * 0.5 + 0.03 + y_bias
-	var z0: float = body_pos.z - body_box.z * 0.5
-	return Vector3(body_pos.x, y, z0 + (body_box.z + eave) * 0.5)
+	var hp: Vector3 = Spec.HALL["pos"]
+	var hb: Vector3 = Spec.HALL["box"]
+	var wb: Vector3 = Spec.WING["box"]
+	return Vector3(hp.x + hb.x * 0.5 + wb.x * 0.5 - float(Spec.WING["overlap"]), wb.y * 0.5, hp.z - hb.z * 0.5 + wb.z * 0.5)
 
 func _ready() -> void:
 	ensure_tree()

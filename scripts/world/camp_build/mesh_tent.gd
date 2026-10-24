@@ -1,26 +1,15 @@
 extends Object
 
-## Camp mesh tents: awnings, pitched tarps, posts, gable roofs.
+## Camp mesh tents: awnings, pitched tarps, posts, gable roofs. Sizes, colours and draw order from layout_spec.gd.
 
 const Prim := preload("res://scripts/world/camp_build/mesh_prim.gd")
 const Mat := preload("res://scripts/world/camp_build/mesh_mat.gd")
 
-const AWNING_DEPTH := 0.48
-const AWNING_SLOPE := 0.10
-const AWNING_VALANCE := 0.16
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
-static func attach_awning(
-	body: Node3D,
-	box_size: Vector3,
-	depth: float = AWNING_DEPTH,
-	_slope: float = AWNING_SLOPE,
-	valance: float = AWNING_VALANCE,
-	_eave: float = 0.0,
-	inset_l: float = 0.0,
-	inset_r: float = 0.0
-) -> void:
-	var x0: float = -box_size.x * 0.5 + inset_l
-	var x1: float = box_size.x * 0.5 - inset_r
+static func attach_awning(body: Node3D, box_size: Vector3, depth: float, valance: float) -> void:
+	var x0: float = -box_size.x * 0.5
+	var x1: float = box_size.x * 0.5
 	var z_eave: float = box_size.z * 0.5
 	var z_hem: float = box_size.z * 0.5 + depth
 	var y_eave: float = box_size.y * 0.5
@@ -61,18 +50,18 @@ static func attach_awning(
 	plain.cull_mode = BaseMaterial3D.CULL_DISABLED
 	cap.material_override = plain
 	body.add_child(cap)
-static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_min: Vector3) -> void:
-	var hx: float = box_size.x * 0.5 + eave
-	var hz: float = box_size.z * 0.5 + eave
-	var y_eave: float = box_size.y * 0.42
-	var ridge: float = y_eave + 0.92
+## The stall tarp (eave at y_eave, body-local) and its four posts at the Layout post rectangle (x, front z, rear z).
+static func pitched_tarp(body: Node3D, box_size: Vector3, posts: Vector3, y_eave: float) -> void:
+	var hx: float = box_size.x * 0.5
+	var hz: float = box_size.z * 0.5
+	var ridge: float = y_eave + float(Spec.STALL["rise"])
 	var sl := Vector3(-hx, y_eave, hz)
 	var sr := Vector3(hx, y_eave, hz)
 	var nl := Vector3(-hx, y_eave, -hz)
 	var nr := Vector3(hx, y_eave, -hz)
 	var rl := Vector3(-hx, ridge, 0.0)
 	var rr := Vector3(hx, ridge, 0.0)
-	var drop: float = 0.22
+	var drop: float = Spec.STALL["drop"]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	Prim._quad(st, rl, rr, sr, sl, Vector2(0.0, 0.5), Vector2(1.0, 0.5), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
@@ -87,22 +76,18 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_mi
 	inst.material_override = tarp_mat
 	if tarp_mat is ShaderMaterial:
 		(tarp_mat as ShaderMaterial).set_shader_parameter("ignore_actor_shadow", 1.0)
-		(tarp_mat as ShaderMaterial).render_priority = 3
-		(tarp_mat as ShaderMaterial).set_shader_parameter("ignore_actor_shadow", 1.0)
-	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	inst.sorting_offset = 20.0
+		(tarp_mat as ShaderMaterial).render_priority = Spec.DRAW["tarp"]
+	inst.sorting_offset = Spec.DRAW["tarp_sort"]
 	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	inst.gi_mode = GeometryInstance3D.GI_MODE_STATIC
 	body.add_child(inst)
 	Prim._hit(body, built, "StallPitchHit")
-	# Uniform tiny trim on all four posts
-	_post(body, Vector3(-box_size.x * 0.48, y_eave - 0.01, box_size.z * 0.52), box_size.y)
-	_post(body, Vector3(box_size.x * 0.48, y_eave - 0.01, box_size.z * 0.52), box_size.y)
-	_post(body, Vector3(-box_size.x * 0.48, y_eave - 0.01, -box_size.z * 0.48), box_size.y)
-	_post(body, Vector3(box_size.x * 0.48, y_eave - 0.01, -box_size.z * 0.48), box_size.y)
+	var top: float = y_eave - 0.01
+	for c: Vector2 in [Vector2(-posts.x, posts.y), Vector2(posts.x, posts.y), Vector2(-posts.x, posts.z), Vector2(posts.x, posts.z)]:
+		_post(body, Vector3(c.x, top, c.y), box_size.y)
 static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
 	var foot: float = -box_h * 0.5 - 0.02  # FLOOR_Y
-	var x: float = 0.08
+	var x: float = Spec.STALL["post_half"]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var a := Vector3(top.x - x, foot, top.z - x)
@@ -123,11 +108,11 @@ static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
 	var inst := MeshInstance3D.new()
 	inst.name = "StallPost"
 	inst.mesh = built
-	var post_mat = Prim._timber(Color(0.36, 0.22, 0.12))
+	var post_mat = Prim._timber(Spec.STALL["post_col"])
 	if post_mat is BaseMaterial3D:
-		(post_mat as BaseMaterial3D).render_priority = -1
+		(post_mat as BaseMaterial3D).render_priority = Spec.DRAW["post"]
 	inst.material_override = post_mat
-	inst.sorting_offset = -5.0
+	inst.sorting_offset = Spec.DRAW["post_sort"]
 	body.add_child(inst)
 	Prim._hit(body, built, "StallPostHit")
 static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
@@ -165,6 +150,6 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	var cap := MeshInstance3D.new()
 	cap.name = "GableEnd"
 	cap.mesh = end_mesh
-	cap.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
+	cap.material_override = Prim._timber(Spec.TIMBER)
 	body.add_child(cap)
 	Prim._hit(body, end_mesh, "GableEndHit")

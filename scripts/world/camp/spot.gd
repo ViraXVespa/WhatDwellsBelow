@@ -1,6 +1,6 @@
 extends Object
 
-## Split from camp.gd: _bust_mat, _tune_label, _new_spot....
+## Split from camp.gd: _bust_mat, _new_spot....
 
 static func _bust_mat(tex: Texture2D) -> ShaderMaterial:
 	var sh := Shader.new()
@@ -22,14 +22,6 @@ void fragment() {
 	mat.set_shader_parameter("albedo_tex", tex)
 	return mat
 
-static func _tune_label(host: Node3D) -> void:
-	if host == null or not ("label" in host) or host.label == null:
-		return
-	host.label.no_depth_test = true
-	host.label.render_priority = 8
-	host.label.outline_render_priority = 7
-	host.label.sorting_offset = 0.0
-
 static func _new_spot(host: Node3D, id: String, at: Vector3) -> Node3D:
 	var SpotS: GDScript = load("res://scripts/world/interact.gd") as GDScript
 	var spot: Node3D = SpotS.new() as Node3D
@@ -38,4 +30,4 @@ static func _new_spot(host: Node3D, id: String, at: Vector3) -> Node3D:
 	return spot
 
 static func _add_spot(host: Node3D, id: String, at: Vector3) -> void:
-	_tune_label(_new_spot(host, id, at))
+	_new_spot(host, id, at)

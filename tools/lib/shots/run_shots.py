@@ -83,16 +83,21 @@ def _recipe_poses(rec: dict) -> str:
     bits: list[str] = []
     for fr in rec.get("frames") or []:
         kind = str(fr.get("kind") or "play")
-        look = fr.get("look") or [16.5, 15.0]
+        # look: [x, z], a Layout name ("Hall", "Stall", a spot) or absent (path crossing); the game resolves names.
+        look = fr.get("look") or ["", ""]
+        if isinstance(look, str):
+            look = [look, ""]
         off = fr.get("offset") or [0.0, 0.0]
         zoom = fr.get("zoom")
         if zoom is None:
             zoom = rec.get("zoom", 1.0)
-        px = fr.get("px", rec.get("px", look[0]))
-        pz = fr.get("pz", rec.get("pz", look[1]))
+        # Player: px/pz absolute, else "player": [dx, dz] from the look point (default: on it).
+        px = fr.get("px", rec.get("px", ""))
+        pz = fr.get("pz", rec.get("pz", ""))
+        pl = fr.get("player") or [0.0, 0.0]
         face = fr.get("face", "down")
         cy = fr.get("cy", 4.2)
-        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy))
+        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy, pl[0], pl[1]))
     return ";".join(bits)
 
 def _out_dir(root: Path) -> Path:

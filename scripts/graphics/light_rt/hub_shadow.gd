@@ -1,7 +1,7 @@
 extends Object
 
 ## Hub bake only: building shadows projected from the real meshes onto the yard image, then the 3x3 blur.
-## Same direction, reach and shade as the cast skirts in hub_cast.gd, so the two never disagree.
+## Direction, reach and shade: hub_cast.gd (AWAY, REACH, shade_at).
 
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
@@ -55,11 +55,12 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	# Fence boxes skip live shadows (cast_shadow off) but are real rails and posts: project them as they are.
 	for body in root.get_tree().get_nodes_in_group("hub_fence"):
 		for mi in (body as Node).find_children("*", "MeshInstance3D", true, false):
-			fence_px += _hub_project_mesh(img, org, sub, mi, 1.13, prot)
+			fence_px += _hub_project_mesh(img, org, sub, mi, layout.fence_shadow_top(), prot)
 	wrote += fence_px
 	printerr("bake_camp: fence_px=%d" % fence_px)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
 	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))
+	load(PROPS_PATH).overlay_dbg(org, sub, root, layout)
 	return wrote
 
 static func _is_covering(name: String) -> bool:

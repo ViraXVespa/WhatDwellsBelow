@@ -13,10 +13,7 @@
       {
         "id": "hall-eave",
         "kind": "hall",
-        "look": [
-          8.2,
-          6.0
-        ],
+        "look": "Hall",
         "offset": [
           4.5,
           7.5
@@ -26,10 +23,7 @@
       {
         "id": "hall-end",
         "kind": "hall",
-        "look": [
-          8.2,
-          6.0
-        ],
+        "look": "Hall",
         "offset": [
           -6.5,
           2.0
@@ -39,10 +33,7 @@
       {
         "id": "hall-back",
         "kind": "hall",
-        "look": [
-          8.2,
-          6.0
-        ],
+        "look": "Hall",
         "offset": [
           0.4,
           -7.0
@@ -52,10 +43,7 @@
       {
         "id": "stall-front",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.4,
           5.5
@@ -65,10 +53,7 @@
       {
         "id": "stall-side",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           6.5,
           0.4
@@ -78,10 +63,7 @@
       {
         "id": "stall-back",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           -0.4,
           -6.5
@@ -90,19 +72,18 @@
       },
       {
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.0,
           -1.8
         ],
         "zoom": 3.2,
-        "px": 25.0,
-        "pz": 6.2,
         "face": "down",
-        "note": "player under tarp for occlusion + shadow check"
+        "note": "player under tarp for occlusion + shadow check",
+        "player": [
+          0.0,
+          -1.8
+        ]
       }
     ]
   },
@@ -182,163 +163,154 @@
       {
         "id": "overview",
         "kind": "play",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.0,
           0.0
         ],
         "zoom": 1.0,
-        "px": 25.0,
-        "pz": 14.0,
         "face": "up",
-        "note": "normal gameplay camera framing the stall"
+        "note": "normal gameplay camera framing the stall",
+        "player": [
+          0.0,
+          6.0
+        ]
       },
       {
         "id": "front-center",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.0,
           8.0
         ],
         "zoom": 1.9,
-        "px": 25.0,
-        "pz": 16.0,
         "face": "up",
         "cy": 1.6,
-        "note": "front center"
+        "note": "front center",
+        "player": [
+          0.0,
+          8.0
+        ]
       },
       {
         "id": "front-ground",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.0,
           7.0
         ],
         "zoom": 3.0,
-        "px": 25.0,
-        "pz": 15.0,
         "face": "up",
         "cy": -1.5,
-        "note": "front true ground (y\u22480.1) (inch or two above floor)"
+        "note": "front true ground (y\u22480.1) (inch or two above floor)",
+        "player": [
+          0.0,
+          7.0
+        ]
       },
       {
         "id": "back-center",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.0,
           -8.0
         ],
         "zoom": 1.9,
-        "px": 25.0,
-        "pz": 0.0,
         "face": "down",
         "cy": 1.6,
-        "note": "back center"
+        "note": "back center",
+        "player": [
+          0.0,
+          -8.0
+        ]
       },
       {
         "id": "back-ground",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           0.0,
           -7.0
         ],
         "zoom": 3.0,
-        "px": 25.0,
-        "pz": 1.0,
         "face": "down",
         "cy": -1.5,
-        "note": "back true ground (y\u22480.1)"
+        "note": "back true ground (y\u22480.1)",
+        "player": [
+          0.0,
+          -7.0
+        ]
       },
       {
         "id": "left-center",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           -8.0,
           0.0
         ],
         "zoom": 1.9,
-        "px": 17.0,
-        "pz": 8.0,
         "face": "right",
         "cy": 1.6,
-        "note": "left center"
+        "note": "left center",
+        "player": [
+          -8.0,
+          0.0
+        ]
       },
       {
         "id": "left-ground",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           -7.0,
           0.0
         ],
         "zoom": 3.0,
-        "px": 18.0,
-        "pz": 8.0,
         "face": "right",
         "cy": -1.5,
-        "note": "left true ground (y\u22480.1)"
+        "note": "left true ground (y\u22480.1)",
+        "player": [
+          -7.0,
+          0.0
+        ]
       },
       {
         "id": "right-center",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           8.0,
           0.0
         ],
         "zoom": 1.9,
-        "px": 33.0,
-        "pz": 8.0,
         "face": "left",
         "cy": 1.6,
-        "note": "right center"
+        "note": "right center",
+        "player": [
+          8.0,
+          0.0
+        ]
       },
       {
         "id": "right-ground",
         "kind": "stall",
-        "look": [
-          25.0,
-          8.0
-        ],
+        "look": "Stall",
         "offset": [
           7.0,
           0.0
         ],
         "zoom": 3.0,
-        "px": 32.0,
-        "pz": 8.0,
         "face": "left",
         "cy": -1.5,
-        "note": "right true ground (y\u22480.1)"
+        "note": "right true ground (y\u22480.1)",
+        "player": [
+          7.0,
+          0.0
+        ]
       }
     ]
   }

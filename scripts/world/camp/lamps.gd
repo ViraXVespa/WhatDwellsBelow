@@ -4,10 +4,8 @@ extends Object
 ## art. Nodes join "hub_lamp" so the hub bake (hub_props.lamp_glow) adds a warm pool under each one.
 
 const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
-## Lantern flame centres in guild.png texels (320x180 sheet).
-const GUILD_LAMPS: Array[Vector2] = [Vector2(99.0, 95.0), Vector2(219.0, 95.0)]
-## Lantern above the reception window in guild_reception.png (360x270), under the wing awning.
-const WING_LAMPS: Array[Vector2] = [Vector2(179.5, 101.0)]
+## Lantern texels per face art: layout_spec.gd HALL/WING "lamps". Sizes and draw order: Spec.LAMP, Spec.DRAW.
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 const HALO := """
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_add, depth_draw_never;
@@ -19,7 +17,7 @@ void fragment() {
 }
 """
 
-static func on_face(spr: Sprite3D, crop_top: float, pts: Array[Vector2]) -> void:
+static func on_face(spr: Sprite3D, crop_top: float, pts: Array) -> void:
 	if spr == null or spr.texture == null:
 		return
 	var tw: float = float(spr.texture.get_width())
@@ -28,14 +26,14 @@ static func on_face(spr: Sprite3D, crop_top: float, pts: Array[Vector2]) -> void
 	var rh: float = th - cut
 	var ps: float = spr.pixel_size
 	var seed: float = 0.0
-	for p in pts:
+	for p: Vector2 in pts:
 		var at := Vector3((p.x - tw * 0.5) * ps, (rh * 0.5 - (p.y - cut)) * ps, 0.02)
 		var root := Node3D.new()
 		root.position = at
 		root.add_to_group("hub_lamp")
 		spr.add_child(root)
-		root.add_child(_quad(TorchBill.FLAME, Vector2(0.16, 0.28), seed))
-		root.add_child(_quad(HALO, Vector2(1.2, 1.2), seed))
+		root.add_child(_quad(TorchBill.FLAME, Spec.LAMP["flame"], seed))
+		root.add_child(_quad(HALO, Vector2.ONE * float(Spec.LAMP["halo"]), seed))
 		seed += 1.7
 
 static func _quad(code: String, size: Vector2, seed: float) -> MeshInstance3D:
@@ -45,7 +43,7 @@ static func _quad(code: String, size: Vector2, seed: float) -> MeshInstance3D:
 	sh.code = code
 	var mat := ShaderMaterial.new()
 	mat.shader = sh
-	mat.render_priority = 2
+	mat.render_priority = Spec.DRAW["lamp"]
 	if code == TorchBill.FLAME:
 		mat.set_shader_parameter("flame_seed", seed)
 	var mi := MeshInstance3D.new()
