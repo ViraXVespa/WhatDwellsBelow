@@ -55,5 +55,5 @@ One overlay on `App` (layer 110) survives scene changes and covers Title → Pla
 - A step eases to its start, then creeps toward its end while it works. A milestone caps at 99%; only `finish()` shows 100%. The shown value never goes back, and the fill and % label always agree.
 - Each step's share of the bar is its expected time (per-platform defaults, then this machine's last runs). The camp build and warm-up frame block about a second on web, so the bar moves on right after them.
 - Visual: full-viewport dim, paper card, ink heading, status, percent, and a 720×20 ink fill on a brown track, centered on the visible rect.
-- Web landing bar (`tools/web_shell.html`): download fills to 85%; during wasm compile and engine start the fill eases toward 97% on the compositor; 100% only once the engine has started.
-- Diagnose with `?wdb-loader-trace` and `python tools/load_bars.py` (`--site DIR`, `--desktop`).
+- Web landing bar (`tools/data/web_shell.html`): download fills to 85%; during wasm compile and engine start the fill eases toward 97% on the compositor; 100% only once the engine has started.
+- Diagnose with `?wdb-loader-trace` and `python tools/perf.py bars` (`--site DIR`, `--desktop`).

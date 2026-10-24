@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: the User has accepted an I2V clip and it is time to harvest or pack  
-Code: `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/plate_remap.py`, `tools/sprite_pipeline.py`
+Code: `tools/media.py pack-loco`, `tools/media.py pack-oneshot`, `tools/media.py plate-remap`, `tools/media.py sprites`
 
 ## Frame counts after harvest
 
@@ -10,7 +10,7 @@ Walk harvest targets **8 frames** for `walk` when the clip supports it. `idle_to
 
 The same frame-count rule applies to every animation state: all eight facings of that state share one frame count. Attack / special / gather pack to 6 frames per facing. Death and Dispel keep the accepted clip length (Dispel may be long); those two states still share one count across the eight facings.
 
-Pack one-shots with `tools/pack_oneshot.py` from `_src/sources/clips/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py` and reads `_src/sources/clips/walk_final/{gender}_{facing}.mp4`.
+Pack one-shots with `tools/media.py pack-oneshot` from `_src/sources/clips/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/media.py pack-loco` and reads `_src/sources/clips/walk_final/{gender}_{facing}.mp4`.
 
 Idle is not harvested from the video. Walk-clip state cuts stay with the I2V-unit job on art.
 
@@ -36,7 +36,7 @@ Then the User judges the packed strip. Do not start the next unit until the User
 
 Every still with a source plate is rekeyed (rows in `_src/manifest.json`). Source plates live under `_src/sources`, mirrored to the live path. `assets/keytest` is retired.
 
-The keyer is `tools/imglib/matte.py` (`key_to_alpha` and `punch` in `imglib/key.py` call it). Key the source plate directly at full resolution; no remap first. Order (`key(im, debug=DIR)` dumps plate, trimap, alpha, keyed):
+The keyer is `tools/lib/imglib/matte.py` (`key_to_alpha` and `punch` in `imglib/key.py` call it). Key the source plate directly at full resolution; no remap first. Order (`key(im, debug=DIR)` dumps plate, trimap, alpha, keyed):
 1. Clean plate: border pixels on the plate hue are clustered in YCrCb; the sure plate is the border flood within 3 sigma of the local plate plus enclosed plate pockets; B(x) is that plate inpainted under the subject. Drift and gradients (B 153..243) follow B(x).
 2. Trimap: unknown is the edge band plus plate-tinted regions (magenta excess at least 15% of the plate's) that reach the plate, hold a near-plate pixel, or are small shadowed-plate patches (armpits); paint deep inside (a pink robe) stays foreground.
 3. Alpha: one solve, I = a F + (1 - a) B(x), F = the paint behind the edge carried outward; the projection onto B -> F, raised to the least alpha that keeps F in gamut. Alpha within the plate's noise is 0 (twice the noise beside hard paint, for JPEG ringing); specks that reach neither paint nor half coverage are dropped. No snapping.
@@ -48,12 +48,12 @@ Post-key overlays: a manifest row's `"overlay"` (lines, box, fill, centre) is dr
 
 Placement (`geom.fit_like`). A rekeyed still lands exactly like the live still it replaces: same canvas and mode, the solid body (alpha >= 128) scaled to live's body and lined up on live's bottom edge and centre x. No recentring and no padding of its own. A manifest `flip` row is placed like the mirrored live still and then mirrored. The keyer drops a thin frame of paint along the picture's own border (a crop seam).
 
-Full set: `python tools/rekey_all_stills.py --out DIR --jobs 8` writes a review copy (live `assets/` untouched) and `<DIR>/_metrics.json`; `python tools/rekey_check.py --new DIR` scores every row (canvas, quality, area, edge, halo, shift, pad, mirror, plate, alpha, stale, lost, notch) into `_logs/rekey-check/last.json`. area, edge, halo and notch compare the output with the exact area average of the same key. Live art with no alpha is kept; a stale plate is reported (live is the truth); a key that loses the subject keeps live (lost).
-Golden set: `python tools/keytest.py` keys the truth mattes in `_src/truth` (nail, crack, lightning, tree, longbow, wisp, female idle) again from a drifting JPEG plate and checks alpha error, area, edge and halo (`keytest_expect.json`). The truth mattes come from the keyer and were reviewed once; `--make-truth` rewrites them only after the User accepts a new key.
-Re-runs: placement uses the manifest `fit` geometry ([W, H, x0, y0, x1, y1], recorded with `--record-fit REV`), not the current live file. Every run rekeys every still; the only pass-throughs are opaque live art, the lost-subject guard and `SOURCE_WINS`. `python tools/rekey_all_stills.py --check` (in the build gate) runs the set twice and fails unless the runs are byte-identical. A pass is numbers, not the User's yes.
+Full set: `python tools/media.py rekey --out DIR --jobs 8` writes a review copy (live `assets/` untouched) and `<DIR>/_metrics.json`; `python tools/media.py rekey-check --new DIR` scores every row (canvas, quality, area, edge, halo, shift, pad, mirror, plate, alpha, stale, lost, notch) into `_logs/rekey-check/last.json`. area, edge, halo and notch compare the output with the exact area average of the same key. Live art with no alpha is kept; a stale plate is reported (live is the truth); a key that loses the subject keeps live (lost).
+Golden set: `python tools/media.py keytest` keys the truth mattes in `_src/truth` (nail, crack, lightning, tree, longbow, wisp, female idle) again from a drifting JPEG plate and checks alpha error, area, edge and halo (`keytest_expect.json`). The truth mattes come from the keyer and were reviewed once; `--make-truth` rewrites them only after the User accepts a new key.
+Re-runs: placement uses the manifest `fit` geometry ([W, H, x0, y0, x1, y1], recorded with `--record-fit REV`), not the current live file. Every run rekeys every still; the only pass-throughs are opaque live art, the lost-subject guard and `SOURCE_WINS`. `python tools/media.py rekey --check` (in the build gate) runs the set twice and fails unless the runs are byte-identical. A pass is numbers, not the User's yes.
 
-NPC redesign (new look, same slot): generate with `python tools/run_isolated_grok.py --kind npc --copy assets/sprites/npcs/NAME.png --brief "<her description>" --dest-name NAME.png --out _src/sources/assets/sprites/npcs`; point the manifest row's `source` / `origin` at that `.png`; add the live path to `SOURCE_WINS` (the new plate is other art than live); then `python tools/rekey_all_stills.py --only assets/sprites/npcs/NAME.png`. The row's `fit` keeps the old canvas, body box and bottom line, so the new sprite lands on the same pixel grid and spot.
+NPC redesign (new look, same slot): generate with `python tools/media.py grok --kind npc --copy assets/sprites/npcs/NAME.png --brief "<her description>" --dest-name NAME.png --out _src/sources/assets/sprites/npcs`; point the manifest row's `source` / `origin` at that `.png`; add the live path to `SOURCE_WINS` (the new plate is other art than live); then `python tools/media.py rekey --only assets/sprites/npcs/NAME.png`. The row's `fit` keeps the old canvas, body box and bottom line, so the new sprite lands on the same pixel grid and spot.
 
 Do not nearest-upscale the plate before the key. That distorted the female face.
 
-`rekey_preview.py` fits the open set from `_src` the same way (blue composites). It needs the `_src` link.
+`media.py rekey-preview` fits the open set from `_src` the same way (blue composites). It needs the `_src` link.

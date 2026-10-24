@@ -8,7 +8,7 @@ If a path file is already loaded, stay on that path.
 
 ## Core rules
 
-- Fresh web / Build: this file, `design/constraints.md`, then the topic that matches the work. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Do not read `design/changelog/` to learn history (only for a named archive pin, a revert, a named past build, or when the User asks what shipped). Web writes the changelog entry for every change (`tools/doc_patch.py changelog --bullet`). Bullets record outcomes, not intermediate debugging. The Summary on a changelog file always covers every bullet in that file; after a push the next label starts fresh. Build writes none (its notes go in commit messages).
+- Fresh web / Build: this file, `design/constraints.md`, then the topic that matches the work. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Do not read `design/changelog/` to learn history (only for a named archive pin, a revert, a named past build, or when the User asks what shipped). Web writes the changelog entry for every change (`tools/docs.py patch changelog --bullet`). Bullets record outcomes, not intermediate debugging. The Summary on a changelog file always covers every bullet in that file; after a push the next label starts fresh. Build writes none (its notes go in commit messages).
 - Implement the **game** systems the plan names. Do not add skills, rarities, hub upgrades, meta-progression, or co-op scaffolding unasked; suggest them in a question. Grok Build may add helpers and same-system APIs. A new cross-system owner or named live-module replace is asked first.
 - Open numbers may start coherent. Expose every invented value in the secret debug menu and record it in `design/tunables.md`.
 - Coverage fills gaps in the live build; it is no license to delete and rebuild.
@@ -19,7 +19,7 @@ If a path file is already loaded, stay on that path.
 
 ## Long-running
 
-Do not fetch a loaded file. Live-path code must not share state with an archive. Archive pins are CI-only (`ci_archive.py`); agents never pin. (Web emit-pass loop: `web-test.md`.)
+Do not fetch a loaded file. Live-path code must not share state with an archive. Archive pins are CI-only (`release.py ci-archive`); agents never pin. (Web emit-pass loop: `web-test.md`.)
 
 ## Database
 

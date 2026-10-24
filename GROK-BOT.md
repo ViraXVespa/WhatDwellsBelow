@@ -42,8 +42,8 @@ Live scripts/**/*.gd must ship under 10KB.
 
 - Extra connectors (every Bot on the account shares those logins)
 - Push main, gh pr merge, force-push
-- week_start.py, Windows / Steam / WDB_ROOT / pc-offload
-- Editor playtest, Steam Godot, and any Godot install except tools/bot_smokes.py on the Linux pin
+- release.py week-start, Windows / Steam / WDB_ROOT / pc-offload
+- Editor playtest, Steam Godot, and any Godot install except tools/gate.py bot-smokes on the Linux pin
 - Two Bots as disk isolation (they share the VM)
 
 ## First message

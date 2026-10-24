@@ -1,7 +1,7 @@
 # Doc library: doc_patch, md_format_lib, code_map_lib
 
 Status: protocol  
-Read when: editing docs, code-map rows or tool text by script; changing `doc_patch.py`, `md_format_lib.py` or `code_map_lib.py`  
+Read when: editing docs, code-map rows or tool text by script; changing `docs.py patch`, `md_format_lib.py` or `code_map_lib.py`  
 
 Docs are edited by tools, not by hand-rolled scripts. Everything is idempotent: run twice, same bytes. Catalog and tool rules: `tools.md`.
 
@@ -11,7 +11,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 ## doc_patch CLI
 
-`python tools/doc_patch.py <cmd>` (`--dry-run` prints "would write" and changes nothing; `--eol keep|crlf|lf`, default keep):
+`python tools/docs.py patch <cmd>` (`--dry-run` prints "would write" and changes nothing; `--eol keep|crlf|lf`, default keep):
 
 | Cmd | Does |
 |---|---|
@@ -27,7 +27,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 ## Library (import from a scratch only when the CLI cannot express it)
 
-`replace_once`, `replace_once_any`, `replace_func`, `upsert_func` (new function), `replace_block`, `patch_file`, `ensure_line`, `set_read_when`, `drop_citations`, `drop_table_column`, `next_label`, `write_changelog`, `task` (runs `task.py`: new / update / show / list / done), `write_text`, `run_checker`, `dump_job` (runs a prove job, prints its summary body; never print `Summary ->` paths). `append_funcs` does not exist. `replace_func` fails when the name appears twice. A `.gd` body is tabs.
+`replace_once`, `replace_once_any`, `replace_func`, `upsert_func` (new function), `replace_block`, `patch_file`, `ensure_line`, `set_read_when`, `drop_citations`, `drop_table_column`, `next_label`, `write_changelog`, `task` (runs `docs.py task`: new / update / show / list / done), `write_text`, `run_checker`, `dump_job` (runs a prove job, prints its summary body; never print `Summary ->` paths). `append_funcs` does not exist. `replace_func` fails when the name appears twice. A `.gd` body is tabs.
 
 ## md_format_lib
 
@@ -35,8 +35,8 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 ## code_map_lib
 
-Row parser/writer for the code map: `parse_rows`, `find_system`, `add_path`, `remove_path`, `rename_path`, `file_is_mapped`. CLI is `code_map.py check|row|patch`, never edit a row by hand.
+Row parser/writer for the code map: `parse_rows`, `find_system`, `add_path`, `remove_path`, `rename_path`, `file_is_mapped`. CLI is `docs.py code-map check|row|patch`, never edit a row by hand.
 
 ## Extend or fix
 
-1. Reproduce with `--dry-run` on a copy of the text. 2. Fix in the lib function (shared by CLI and import), keep the signature. 3. Add a CLI subcommand if the need will repeat. 4. `check_tool_cli.py`, `check_tool_docs.py`, `check_load_graph.py`. 5. Update this file and the `doc_patch` row in `tools.md`.
+1. Reproduce with `--dry-run` on a copy of the text. 2. Fix in the lib function (shared by CLI and import), keep the signature. 3. Add a CLI subcommand if the need will repeat. 4. `check.py tool-cli`, `check.py tool-docs`, `check.py load-graph`. 5. Update this file and the `doc_patch` row in `tools.md`.

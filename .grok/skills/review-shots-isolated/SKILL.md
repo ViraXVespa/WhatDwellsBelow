@@ -10,11 +10,11 @@ metadata:
 
 # review-shots-isolated
 
-Use it when a text answer is enough → this; need the image → `show_png.py`.
+Use it when a text answer is enough → this; need the image → `shots.py show`.
 
 ## Run
-`python tools/review_shots.py PNG... --question "..." [--rubric "- item" | --rubric @FILE]`
+`python tools/shots.py review PNG... --question "..." [--rubric "- item" | --rubric @FILE]`
 
 - Copies the PNGs to a scratch dir outside the repo, proves isolation with `grok inspect` (no project instructions), runs one child session, and prints only its report with a `VERDICT: PASS|FAIL|UNSURE` line.
-- `RESULT FAIL` means no review happened (grok missing, isolation not proven, child error, no report). Say so; do not guess a verdict or open the PNGs to replace it unless you then follow the `show_png.py` rule.
+- `RESULT FAIL` means no review happened (grok missing, isolation not proven, child error, no report). Say so; do not guess a verdict or open the PNGs to replace it unless you then follow the `shots.py show` rule.
 - Read-only: writes nothing in the repo.

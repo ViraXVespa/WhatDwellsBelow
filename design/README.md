@@ -7,7 +7,7 @@ This folder is the documentation database for humans and agents.
 It is not one design monolith. It is not a boot file.
 Never open `notes/` from an agent path.
 
-Pages is built in CI (`.github/workflows/pages.yml`); local exports go to untracked `_out/web/`. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
+Pages is built in CI (`.github/workflows/pages.yml`); local exports go to untracked `_out/web/`. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/release.py park-changelogs`.
 
 `_logs/` holds local agent tool summaries (and optional Bot sweep notes). It is gitignored. Do not store design there and do not commit it. Tools: `design/tools.md` (which tool for which job; per-area siblings `design/tools-*.md`; Build runner habits: `design/pc-offload.md`).
 

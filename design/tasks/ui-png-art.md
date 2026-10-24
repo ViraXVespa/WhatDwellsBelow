@@ -4,7 +4,7 @@ id: ui-png-art
 owner: build
 status: open
 done-when: all in-game menu locations feel polished, complete, unified, and professional.
-resume: python tools/open_slice.py ui.style --task ui-png-art
+resume: python tools/slice.py open ui.style --task ui-png-art
 units: mockups, crystal
 done: none
 
@@ -17,8 +17,8 @@ The goal of this task is to update all of the menus to be high-quality, professi
 ## Process / Review
 
 Follow the start-card ORDER: baseline shot + restate before any generation or edit.
-Shot review: `grok-build.md` Pictures rule (`review_shots.py` when text is enough, `show_png.py` when you need the image).
-Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, camp HUD bar, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Generate each with `python tools/run_isolated_grok.py --kind ui --aspect 16:9 --dest-name mockups/<screen>.png --out design/refs/ui-png-art --brief "..."` (lands in `design/refs/ui-png-art/mockups/`); later units build to them.
+Shot review: `grok-build.md` Pictures rule (`shots.py review` when text is enough, `shots.py show` when you need the image).
+Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, camp HUD bar, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Generate each with `python tools/media.py grok --kind ui --aspect 16:9 --dest-name mockups/<screen>.png --out design/refs/ui-png-art --brief "..."` (lands in `design/refs/ui-png-art/mockups/`); later units build to them.
 Unit 2 works the crystal UI only. Deliver before/after shots and inform that the unit is done.
 Finish the task in one session when it fits; unfinished work keeps its notes in this task. Vira says when a new session is needed.
 
@@ -30,7 +30,7 @@ Locked look: `design/ui-style.md` Generated art look (read first every session; 
  (element: now -> art; spec; priority)
 - Receptionist portrait in the receptionist UI: currently a placeholder/drawing. Replace with the live receptionist character art (assets/sprites/npcs/receptionist.png or the current bust source) so the UI portrait updates automatically when the character art changes. Uses her new design (young goth/metal guild clerk, `hub-guild.md`). High.
 - Talk UIs (receptionist, vendor, ghost shop): may use new generated portrait or bust views drawn from the NPC's sprite art, not only the in-game sprite.
-- Crystal background, floor + loadout crystal, shared by the teleport network (her request): code-baked frame with a flat pale-cyan fill -> a NEW generated crystal frame plus crystal-interior graphic, replacing the baked crystal frame (9-slice 128; interior panel-size opaque or 9-slice 128). The pink studs go away with the old frame. Once the new art is wired in, delete the old `assets/ui/frames/crystal/` PNGs and their drawing code (`crystal_art.gd`, the crystal part of `tools/bake_frame_art.py`) after `rg` shows nothing else uses them. High. Refs [camp-npc-panels_04-loadout](../refs/ui-png-art/camp-npc-panels_04-loadout.jpg), [dungeon-map-crystal_02-crystal-root](../refs/ui-png-art/dungeon-map-crystal_02-crystal-root.jpg).
+- Crystal background, floor + loadout crystal, shared by the teleport network (her request): code-baked frame with a flat pale-cyan fill -> a NEW generated crystal frame plus crystal-interior graphic, replacing the baked crystal frame (9-slice 128; interior panel-size opaque or 9-slice 128). The pink studs go away with the old frame. Once the new art is wired in, delete the old `assets/ui/frames/crystal/` PNGs and their drawing code (`crystal_art.gd`, the crystal part of `tools/bake.py frames`) after `rg` shows nothing else uses them. High. Refs [camp-npc-panels_04-loadout](../refs/ui-png-art/camp-npc-panels_04-loadout.jpg), [dungeon-map-crystal_02-crystal-root](../refs/ui-png-art/dungeon-map-crystal_02-crystal-root.jpg).
 - Crystal buttons + floor -/+ stepper: flat teal bars, tiny squares -> crystal-cut button 9-slice 96x32 x2 states, arrows 32x32. Med. Same refs.
 - Slot tiles (inventory, anvil, crystal loadout, extract): outlined boxes, the empty bag reads like a spreadsheet -> one inset socket 9-slice 64x64 (normal/selected/empty), tinted per screen. High. Refs [camp-pause-pages_10-pause-inventory](../refs/ui-png-art/camp-pause-pages_10-pause-inventory.jpg), [camp-anvil-tabs_01-tab](../refs/ui-png-art/camp-anvil-tabs_01-tab.jpg), [dungeon-gate-shop_01-extract](../refs/ui-png-art/dungeon-gate-shop_01-extract.jpg).
 - Title: text title, flat dark box, outlined buttons -> logo ~900x200 transparent, panel 9-slice 128, button 9-slice 96x32 x3 states. High. Ref [title-menu_01-title-card](../refs/ui-png-art/title-menu_01-title-card.jpg).

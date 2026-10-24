@@ -60,7 +60,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 
-1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`. `web-session.md` has none (`no_budget`): web sessions are limited by turns, not tokens.
+1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/data/bot_budgets.json`) are checked only with `check.py load-graph --bot`. `web-session.md` has none (`no_budget`): web sessions are limited by turns, not tokens.
 2. Bot boot is BOT.md + one Job sibling.
 3. No mutual See also.
 4. One job phrase belongs to one door.
@@ -68,7 +68,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 6. Path files never appear on topic See also.
 7. Versioning / changelog body is ship-only.
 8. Opening this file happens when the User names routing work, or on a web docs/routing pass. Open design/tasks/README.md only when the User names a task, a parked task or resume parked.
-9. Topic job siblings name no other `design/*.md` paths. A doc edit proves with `python tools/check_load_graph.py` in the same change. RESULT PASS is required. It is not deferred to ship.
+9. Topic job siblings name no other `design/*.md` paths. A doc edit proves with `python tools/check.py load-graph` in the same change. RESULT PASS is required. It is not deferred to ship.
 10. Opening the topic table is not a boot step.
 11. README and code-map are human indexes, not boot files.
 12. Door and job files start with an H1.

@@ -9,9 +9,9 @@ Every value **MUST** be exposed in the debug menu and treated as non-final.
 Suggested starts are seeds only.
 Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
-This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python tools/tunables.py add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `doc_patch.py replace`); do not hunt for a row that does not exist.
+This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python tools/docs.py tunable add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `docs.py patch replace`); do not hunt for a row that does not exist.
 
-List one key with `python tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). Patch one Live cell with `python tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`). Do not open this whole file to change one number.
+List one key with `python tools/docs.py tunable get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). Patch one Live cell with `python tools/docs.py tunable set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`). Do not open this whole file to change one number.
 
 `BAL_REV` is 15. Old saves pick up shipped default retunes through `migrate.gd`.
 
@@ -86,5 +86,5 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 
 ## Other tunables files
 
-Movement and combat, Gathering, Enemy drops and Consumables are in `tunables-combat.md`. Dungeon generation and Enemies and combat level are in `tunables-world.md`; Progression and economy, Anvil / affixes and UI / feel targets are in `tunables-economy.md`. `tools/tunables.py` finds a key in any of them.
+Movement and combat, Gathering, Enemy drops and Consumables are in `tunables-combat.md`. Dungeon generation and Enemies and combat level are in `tunables-world.md`; Progression and economy, Anvil / affixes and UI / feel targets are in `tunables-economy.md`. `tools/docs.py tunable` finds a key in any of them.
 - `max_clerks` 12. Hall-torch cadence 7–11 on runs of 8+. Hall-traveler cadence 14–18 on runs of 10+.

@@ -1,9 +1,9 @@
 # Benchmark: web export perf
 
 Status: record
-Read when: `web_perf.py` is rerun or its baseline changes
+Read when: `perf.py web` is rerun or its baseline changes
 
-Baseline file the tool compares against: `tools/web-perf-baseline.json` (committed 2026-10-13 in `0204b8ca`, build_id `52f50eb125790f66`). Machine: `unknown` (the file records only `google-chrome`, headless, viewport 1280x720; Chrome version, CPU, GPU and OS were not saved). Renderer: Compatibility on SwiftShader per the tool docstring. Per flow: load_ms / avg_fps / p95 frame ms / heap MB.
+Baseline file the tool compares against: `tools/data/web-perf-baseline.json` (committed 2026-10-13 in `0204b8ca`, build_id `52f50eb125790f66`). Machine: `unknown` (the file records only `google-chrome`, headless, viewport 1280x720; Chrome version, CPU, GPU and OS were not saved). Renderer: Compatibility on SwiftShader per the tool docstring. Per flow: load_ms / avg_fps / p95 frame ms / heap MB.
 
 | Flow | load_ms | avg_fps | p95 ms | heap MB |
 |------|---------|---------|--------|---------|
@@ -21,9 +21,9 @@ Baseline file the tool compares against: `tools/web-perf-baseline.json` (committ
 
 Reruns, dungeon-arrive (2026-10-11, machine `unknown`): load_ms 2505-2739, avg_fps 27.4-28.2, heap 103-106 MB, wasm 95.8 MB.
 
-## Release reference (`web_perf.py --release-ref`)
+## Release reference (`perf.py web --release-ref`)
 
-Release export (preset `Web`, no `scripts/debug/`), only the 9 flows with no in-game hook; file `tools/web-perf-release-baseline.json` (2026-10-20, build_id `cc6ff983fb198b8e`, box: Xeon x8, 16 GB, Debian 13, Chrome 155, SwiftShader, 1280x720, 1 run). Release and debug baselines are not comparable (different engine template, no hitch hooks); the tool refuses to cross them.
+Release export (preset `Web`, no `scripts/debug/`), only the 9 flows with no in-game hook; file `tools/data/web-perf-release-baseline.json` (2026-10-20, build_id `cc6ff983fb198b8e`, box: Xeon x8, 16 GB, Debian 13, Chrome 155, SwiftShader, 1280x720, 1 run). Release and debug baselines are not comparable (different engine template, no hitch hooks); the tool refuses to cross them.
 
 | Flow | load_ms | avg_fps | p95 ms | heap MB |
 |------|---------|---------|--------|---------|

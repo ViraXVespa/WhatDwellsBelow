@@ -1,7 +1,7 @@
 # Benchmark: hub walk FPS
 
 Status: record
-Read when: `run_hub_bench.py` is rerun (the bar: 99% of counted frames at 60 FPS)
+Read when: `perf.py hub` is rerun (the bar: 99% of counted frames at 60 FPS)
 
 | Date | Leg | Machine | fps_pct | Frames / s | Hitches | Note |
 |------|-----|---------|---------|------------|---------|------|

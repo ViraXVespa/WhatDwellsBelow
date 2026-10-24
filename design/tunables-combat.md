@@ -3,7 +3,7 @@
 Status: suggested starts  
 Read when: the work changes a movement, combat, gathering, drop or consumable number  
 
-Same table shape and rules as the tunables door; `tools/tunables.py get|set|add --key KEY` reads every tunables file.
+Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|add --key KEY` reads every tunables file.
 
 ## Movement and combat
 

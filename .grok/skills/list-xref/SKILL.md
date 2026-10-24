@@ -1,7 +1,7 @@
 ---
 name: list-xref
 description: >
-  Preferred invocations for tools/list_xref.py (repo search that replaces grep/rg).
+  Preferred invocations for tools/find.py xref (repo search that replaces grep/rg).
   Use when about to search scripts/, design/, tools/, scenes/, or shot-flow texts.
 when-to-use: >
   search the tree, find a symbol, list funcs/consts in a file or folder,
@@ -18,16 +18,16 @@ Run from repo root. Do not use grep/rg on scripts/, design/, tools/, or scenes/.
 Preferred shapes (copy these; do not invent flag combinations):
 
 Index of hits (file + count + first line):
-python tools/list_xref.py --pattern SYMBOL --path scripts/ui
+python tools/find.py xref --pattern SYMBOL --path scripts/ui
 
 Regex inventory of funcs/consts/class_names in one or more files:
-python tools/list_xref.py --regex --pattern "^func |^const |^class_name" --path scripts/ui/recap
+python tools/find.py xref --regex --pattern "^func |^const |^class_name" --path scripts/ui/recap
 
 Show every hit inside specific files after the index:
-python tools/list_xref.py --pattern JournalSpread --expand scripts/ui/pause_menu/journal_page.gd
+python tools/find.py xref --pattern JournalSpread --expand scripts/ui/pause_menu/journal_page.gd
 
 Shot-flow text dumps:
-python tools/list_xref.py --pattern recap --texts
+python tools/find.py xref --pattern recap --texts
 
 Rules:
 - The tool requires --pattern; a bare positional string is rejected.

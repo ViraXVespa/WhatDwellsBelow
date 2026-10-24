@@ -8,7 +8,7 @@ Measured numbers only, newest first. Thresholds and budgets stay in the tunables
 Rules:
 - Every record names its machine (a row below) plus date (America/Chicago), commit, Godot version, renderer, vsync / frame cap, resolution, headless or windowed, and the browser and version for web. A field nobody recorded is `unknown`; never fill one in by guess.
 - Compare numbers only within one machine. A cross-machine comparison is not valid (different CPU, GPU, OS or browser).
-- When a benchmark is rerun or a perf change lands, add the new row next to the old one (keep the old row). `web_perf.py`, `run_hub_bench.py`, `run_desktop_perf.py` and the `open_timing` smoke (`bot_smokes.py`) print an `env:` line (`tools/bench_env.py`); copy it into the record.
+- When a benchmark is rerun or a perf change lands, add the new row next to the old one (keep the old row). `perf.py web`, `perf.py hub`, `perf.py desktop` and the `open_timing` smoke (`gate.py bot-smokes`) print an `env:` line (`tools/lib/perf/bench_env.py`); copy it into the record.
 
 ## Machines
 
@@ -22,6 +22,6 @@ Rules:
 |--------|------|
 | Frame-time breakdown and per-function script cost (0.5.21) | `frame-time.md` |
 | Menu first open (`open_timing` smoke) | `menu-open.md` |
-| Web export load, FPS, heap (`web_perf.py`) | `web-perf.md` |
-| Hub walk FPS (`run_hub_bench.py`) | `hub-bench.md` |
-| Desktop release vs debug export (`run_desktop_perf.py`) | `desktop-release.md` |
+| Web export load, FPS, heap (`perf.py web`) | `web-perf.md` |
+| Hub walk FPS (`perf.py hub`) | `hub-bench.md` |
+| Desktop release vs debug export (`perf.py desktop`) | `desktop-release.md` |

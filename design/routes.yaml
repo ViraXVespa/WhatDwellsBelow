@@ -380,7 +380,7 @@ job_parked:
   - art_pipeline.attack_keyframes
 
 # Build prove: numbered smoke phases per door or door.job (job key wins over its door). Phase meanings: debug-smokes.
-# Printed by list_route and start_build_slice; run_smokes.py / bot_smokes.py take --door / --job instead of --phases.
+# Printed by list_route and start_build_slice; gate.py smokes / gate.py bot-smokes take --door / --job instead of --phases.
 smokes:
   default: "1"
   overview: "1"
@@ -419,10 +419,10 @@ smokes:
   art_pipeline: "9"
   archives: "9"
 
-# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job. A job maps only to its own key (its door's flows
+# Build prove: scripted shot flows (tools/data/shot-flows/*.json) per door or door.job. A job maps only to its own key (its door's flows
 # are shown as "door-level, maybe not this screen", never as the job's). A visual job with no key gets a STEP 0 note at slice start
-# (creating the flow and adding its key here is the first job step, not a stop). Headless asserts: bot_smokes.py --flows;
-# pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
+# (creating the flow and adding its key here is the first job step, not a stop). Headless asserts: gate.py bot-smokes --flows;
+# pictures: shots.py flow --flow N. Printed by list_route and start_build_slice.
 shot_flows:
   hub: "camp-receptionist-menu,camp-anvil-tabs,camp-billboard-controls,camp-npc-panels,camp-inventory"
   hub.guild: "camp-receptionist-menu"
@@ -448,7 +448,7 @@ shot_flows:
   ui.quest_board: "camp-npc-panels"
   ui.receptionist: "camp-receptionist-menu"
 
-# Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. start_build_slice.py --door D picks the first
+# Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. slice.py start --door D picks the first
 # not done (`--unit-done` marks it done at Complete; a `<door>-units` task keeps the queue), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
 unit_queue:
   # Order of the ui units only. Done-state lives in the slice state (start_build_slice), so finished units stay listed.
@@ -466,7 +466,7 @@ unit_docs:
   ui.quest_board: "design/ui-run-flow.md#Quest UI; design/hub-guild.md#Guild / Quest Access"
   ui.receptionist: "design/hub-guild.md#Guild / Quest Access"
 
-# One unit's code: `path: function, function` entries separated by `;` (open them with show_func.py, not whole).
+# One unit's code: `path: function, function` entries separated by `;` (open them with find.py func, not whole).
 unit_files:
   ui.controls: "scripts/ui/progress_ui/ui_hub.gd: rebuild_controls; scripts/ui/progress_ui.gd: open_controls; scripts/ui/progress_ui/controls_frame.gd: spec, build, place, dress; scripts/ui/progress_ui/controls_art.gd: grain, face, post, bracket, plank"
   ui.anvil: "scripts/ui/progress_ui/ui_hub.gd: rebuild_anvil; scripts/ui/progress_ui/ui_flow.gd: open_anvil; scripts/ui/gear_board/board_sub.gd: open_sub, _open_forge; scripts/ui/progress_ui/anvil_frame.gd: spec, build, place; scripts/ui/progress_ui/anvil_art.gd: stump, shadow, anvil"
@@ -475,9 +475,9 @@ unit_files:
   ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop; scripts/ui/gear_icons.gd; scripts/ui/item_board.gd"
   ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play; scripts/ui/recap/bars.gd; scripts/ui/tip_hover.gd; scripts/ui/pause_skills.gd; scripts/ui/pause_menu/journal_page.gd; scripts/ui/journal_spread.gd"
   ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd; scripts/ui/pause_menu.gd: TABS; scripts/ui/pause_menu/menu_flow.gd; scripts/ui/pause_menu/pause_menu_view.gd; scripts/ui/tip_hover.gd"
-  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/ui/progress_ui/receptionist.gd: rebuild, back; scripts/ui/progress_ui/receptionist_frame.gd: spec, build, place; scripts/ui/progress_ui/receptionist_art.gd: body, speech, bust; scripts/ui/progress_ui/guide_frame.gd: spec, build, place; scripts/ui/progress_ui/guide_art.gd: body; scripts/data/tutorial_pages.gd: page_of, shot_tex; scripts/data/talk_lines.gd: line_key, commit_once; scripts/world/interact/interact_act.gd: interact; tools/tutorial_shots.py"
+  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/ui/progress_ui/receptionist.gd: rebuild, back; scripts/ui/progress_ui/receptionist_frame.gd: spec, build, place; scripts/ui/progress_ui/receptionist_art.gd: body, speech, bust; scripts/ui/progress_ui/guide_frame.gd: spec, build, place; scripts/ui/progress_ui/guide_art.gd: body; scripts/data/tutorial_pages.gd: page_of, shot_tex; scripts/data/talk_lines.gd: line_key, commit_once; scripts/world/interact/interact_act.gd: interact; tools/lib/shots/tutorial_shots.py"
 
-# A unit that is one state of a shared flow: the job's flow, cut after that top-level shot (run_shot_flow.py --job J re-shoots only it).
+# A unit that is one state of a shared flow: the job's flow, cut after that top-level shot (shots.py flow --job J re-shoots only it).
 shot_states:
   ui.controls: "controls"
   ui.loadout: "loadout"
@@ -487,18 +487,18 @@ shot_states:
   ui.quest_board: "quest-board"
   ui.receptionist: "menu-open"
 
-# New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL at the END gates (bot_smokes.py,
-# run_build_gate.py, a Build UI or theme prove) on a new uncovered state. The START of a slice never fails on a missing flow.
+# New UI states with no shot flow (shots.py gaps --changed): Bot and Build both FAIL at the END gates (gate.py bot-smokes,
+# gate.py build, a Build UI or theme prove) on a new uncovered state. The START of a slice never fails on a missing flow.
 shot_gaps:
   bot: required
   build: required
 
-# Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
+# Web build performance (tools/perf.py web, headless Chrome on the exported site): Build prove, advisory only, never a gate.
 web_perf:
   flows: "title-idle,camp-idle,camp-walk,camp-pause,camp-shop,dungeon-walk,dungeon-fight,hub-load,dungeon-load"
-  baseline: tools/web-perf-baseline.json
+  baseline: tools/data/web-perf-baseline.json
   gate: advisory
-  # door -> flows to run after a fresh export for a slice in that door (python tools/web_perf.py --flow A,B --baseline <baseline>)
+  # door -> flows to run after a fresh export for a slice in that door (python tools/perf.py web --flow A,B --baseline <baseline>)
   by_door:
     default: "title-idle,camp-walk"
     ui: "camp-pause,camp-shop"

@@ -34,11 +34,11 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 
 ## Prove
 
-- python tools/check_script_cap.py --bot --git-changed
-- python tools/check_load_graph.py --bot (routes.yaml coverage; also run by `bot_status --prove`)
+- python tools/check.py script-cap --bot --git-changed
+- python tools/check.py load-graph --bot (routes.yaml coverage; also run by `bot_status --prove`)
 - python tools/bot_status.py --bot --prove
-- python tools/code_map.py check (no new UNMAPPED for files you touched; older ones are expected)
-- python tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
+- python tools/docs.py code-map check (no new UNMAPPED for files you touched; older ones are expected)
+- python tools/check.py tool-docs (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 Proof rules: the agents file. Say plainly when a message or handoff to a worker did not arrive.
@@ -46,25 +46,25 @@ CI: .github/workflows/bot-gate.yml. Allowlist: tools/bot_allow.txt (default deny
 Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. If the current truth is unclear, list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
 New `tools/` runners: only after the User approves one this session (`design/tools.md` rule 5). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
-Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read with `read_summary.py --job <name>`.
+Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read with `session.py summary --job <name>`.
 
 ## Caps (Bot-only)
 
 The Bot alone enforces size; Build and Web never measure or split, and the size tools run only for the Bot (`--bot`, `WDB_BOT`) or in CI (`bot-gate.yml`). Measure with `os.path.getsize`.
 - Scripts: every live `scripts/**/*.gd` under 10,000 bytes (ship floor); the 5,000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
-- Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/bot_budgets.json` (`check_load_graph.py --bot`).
+- Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/data/bot_budgets.json` (`check.py load-graph --bot`).
 - Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
 
 Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
 
 ## Smokes
 
-When a cluster needs a headless prove: `python tools/bot_smokes.py --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+When a cluster needs a headless prove: `python tools/gate.py bot-smokes --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets docs icon.svg.import` (the import also rewrites those `.import` files; a fresh worktree needs this import once before any smoke, else P1 fails with no marker), and commit the `.uid` files only.
 No editor playtest, no routine that launches Godot.
-Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows`, `shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
+Shots and light bakes are not headless: `shots.py capture`, `shots.py flow`, `bake.py camp` pick the box display themselves (`python tools/lib/godot_lib.py --display`). Menu/NPC proof: `gate.py bot-smokes --door D --flows`, `shot-flows.md`. `shots.py gaps --changed` (run by `gate.py bot-smokes` unless `--no-gaps`, and by `gate.py build --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/data/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
 
-Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, exits 0 only on zero findings, and does not fix game code. `--list`, `--repeat 2`, `--out-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
+Warning sweep (User-named only): `python tools/gate.py warnscan` runs every smoke area plus boot/static, exits 0 only on zero findings, and does not fix game code. `--list`, `--repeat 2`, `--out-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python tools/gate.py build --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
 The Bot's Linux box has only `python3`; run `python3` wherever a doc says `python`.
 Tools: `design/tools.md` maps each job to a tool and names the sibling with its row. The Bot runs only `A=Y` tools, as `python tools/X.py`. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
 
@@ -72,7 +72,7 @@ Tools: `design/tools.md` maps each job to a tool and names the sibling with its 
 
 No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V (except User-named art-pipeline / rekey / stills work when the task file assigns it to Bot), locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
 Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named opt item lists them.
-Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ beyond this file and the one Job file. Do not pin weeks or run `tools/week_start.py` (human-only). Do not invent numbers. Bot may save its own skill after two good clusters.
+Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ beyond this file and the one Job file. Do not pin weeks or run `tools/release.py week-start` (human-only). Do not invent numbers. Bot may save its own skill after two good clusters.
 
 ## After-cluster report
 

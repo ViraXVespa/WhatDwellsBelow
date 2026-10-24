@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: Grok Build is about to call Imagine (`image_gen`, `image_edit`, `image_to_video`) or stage a tile / character still / UI still / I2V unit  
-Code: `tools/run_isolated_grok.py`  
+Code: `tools/media.py grok`  
 Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md`
 
 This file is the Imagine **gate**. It is not an art-pipeline job. Grok Build must load it before any `image_gen`, `image_edit`, or `image_to_video` call.
@@ -12,7 +12,7 @@ CLI-only. Web / chat and Grok Bot do not run Imagine and do not spawn this runne
 
 Isolate. Do not call Imagine in the game-repo cwd unless a row in **In-session exceptions** matches. Project hook `.grok/hooks/wdb-pretool.json` denies Imagine/I2V when cwd is this repo.
 
-A skill may auto-load so the **parent** follows this file. That is not permission to generate in-repo. The parent stages a scratch directory outside the git tree and runs `tools/run_isolated_grok.py`.
+A skill may auto-load so the **parent** follows this file. That is not permission to generate in-repo. The parent stages a scratch directory outside the git tree and runs `tools/media.py grok`.
 
 ## In-session exceptions
 
@@ -33,8 +33,8 @@ Load `imagine` and `game-assets` (`ui`: `imagine` only). The child reads the one
 |---|---|---|---|
 | `tile` | `imagine`, `game-assets` (`tilesets.md`) | `image_gen` once | World tile / roof / ground / wall. Seamless. The child reads `tilesets.md` only. It does not retry or composite. The parent runs the 2×2 seam check. |
 | `character` | `imagine`, `game-assets` (`characters.md`) | `image_gen` for a new Bible / style candidate; `image_edit` after lock | Character still, facing variant, overlay-on-body. After lock, edit-chain from the locked Bible or body frame. |
-| `i2v` | `imagine`, `game-assets` (`animation.md`) | `image_to_video` from the staged seed; walk pins that seed as `first_frame` and `last_frame` via `reference_to_video` | One unit. The child reads `animation.md`. Prompt and seed from `tools/i2v_seeds.py`. No fixed 6s/10s clock. Child does not harvest or pack. |
-| `ui` | `imagine`; style from the staged `ui-style.md` (the ui style doc's Generated art look section) and the refs it names, plus `--copy` refs | `image_gen` / `image_edit` | Generic UI still: menu, screen, panel, HUD, mockup or ref; text allowed. Default `ui.png`; `--dest-name` may hold a subfolder (`mockups/title.png`), kept under `--out`. `--no-ui-style` skips the style. A small icon is a `ui` job whose brief says no text. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
+| `i2v` | `imagine`, `game-assets` (`animation.md`) | `image_to_video` from the staged seed; walk pins that seed as `first_frame` and `last_frame` via `reference_to_video` | One unit. The child reads `animation.md`. Prompt and seed from `tools/media.py i2v-seeds`. No fixed 6s/10s clock. Child does not harvest or pack. |
+| `ui` | `imagine`; style from the staged `ui-style.md` (the ui style doc's Generated art look section) and the refs it names, plus `--copy` refs | `image_gen` / `image_edit` | Generic UI still: menu, screen, panel, HUD, mockup or ref; text allowed. Default `ui.png`; `--dest-name` may hold a subfolder (`mockups/title.png`), kept under `--out`. `--no-ui-style` skips the style. A small icon is a `ui` job whose brief says no text. Input glyphs stay `tools/media.py glyphs`. |
 | `npc` | `imagine`, `game-assets` (`characters.md`) | `image_gen` | NPC sprite redesign from `--brief`; `--copy` the old sprite for framing, pose and size only (no identity lock). Opaque #FF00FF plate, default `npc.png`. Then the pack doc's NPC redesign rekey. |
 | `still` | `imagine`, `game-assets` (`assets.md`) | `image_gen` / `image_edit` | Fallback only. Prefer a tighter kind. The child reads `assets.md` only, not `animation.md`. |
 
@@ -46,7 +46,7 @@ Do not vendor bundled skill bodies into this repo. Point at them by name. `job.m
 
 Must resolve **outside** the git tree. A folder under `WhatDwellsBelow/` still walks up to the repo agent-rules file. `--worktree` copies the tree and is the wrong isolator.
 
-Runner: `python tools/run_isolated_grok.py --kind <kind> …`
+Runner: `python tools/media.py grok --kind <kind> …`
 
 - Default one-shot scratch is `tempfile.TemporaryDirectory()` (OS temp). `--keep` uses `mkdtemp` and prints the path. `--no-reuse` forces that path.
 - With staged reference images (Bibles, `--copy`, I2V seed) the default is a durable scratch under `%USERPROFILE%\.grok\wdb-iso\work\<ref_key>\` (or `$GROK_HOME/wdb-iso/...`). Catalog: `catalog.json` beside the work dirs. Key is SHA-256 of `--kind` plus each reference filename and file hash. Prompt text / brief is not in the key.
@@ -60,7 +60,7 @@ Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 
 Durable source assets produced by the runner (or by Build) are then placed under `_src/` using the same relative path they will occupy under `assets/`. Any generator script written for the job is saved under `tools/` (extend an existing tool when one owns the output).
 
-`--kind i2v` requires `--seed` and `--prompt-file` already produced in the parent by `tools/i2v_seeds.py`.
+`--kind i2v` requires `--seed` and `--prompt-file` already produced in the parent by `tools/media.py i2v-seeds`.
 
 ## Parent still owns
 

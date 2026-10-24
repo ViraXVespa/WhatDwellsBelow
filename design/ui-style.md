@@ -36,7 +36,7 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Chips have `focus_mode` NONE: no tab, highlight or select focus, and the menu keeps its focus.
 - A strip that only lists binds (the controls sign rows, the world HUD prompt) sets `prompt_tap` false on its host.
 - A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.
-- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/run_smokes.py --phases 6` and `bot_smokes.py` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `bot_smokes.py` phase 6 only; run it by hand with `--wdb-load-timing-smoke --wdb-open-timing`.
+- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/gate.py smokes --phases 6` and `gate.py bot-smokes` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `gate.py bot-smokes` phase 6 only; run it by hand with `--wdb-load-timing-smoke --wdb-open-timing`.
 
 ## Object frames (`scripts/ui/progress_ui/`)
 A frame re-skins the progress panel host for one object (stall, bin). `frame_base.gd` owns what every frame shares: the chrome layer under the host, the cream plate every other mode keeps, the footer room, the button row (the host's scroll area) and its separation. `frame_set.gd` lists the skins.
@@ -47,10 +47,10 @@ A skin is a script with static hooks:
 Add a frame: write `<object>_frame.gd` (+ `<object>_art.gd` for code-drawn pictures), list it in `frame_set.gd`, set the host `mode` when it opens. A frame takes the hooks it needs and adds its own pieces; it need not look like another.
 First open: `ui_warm.gd` loads every listed skin's art on a worker from the title screen and opens the heavy menus once behind the hub loader. A new menu or frame gets a row in `scripts/debug/open_timing.gd` (pause tabs are timed from `TABS`), and a warm step if its first open is over budget.
 
-Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake_frame_art.py` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake_frame_art.py --check` (also in `bot_smokes.py` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is the open task `ui-png-art`.
+Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake.py frames` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake.py frames --check` (also in `gate.py bot-smokes` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is the open task `ui-png-art`.
 
 ## Generated art look
-Standing look for generated UI art (her call); `run_isolated_grok.py --kind ui` stages this section as `ui-style.md`.
+Standing look for generated UI art (her call); `media.py grok --kind ui` stages this section as `ui-style.md`.
 - The game's pixel-art feel, with a professional, polished finish.
 - No pink. Gamepad-first, readable at a glance. 9-slice where a panel or button stretches.
 - Outside the pause journal, every screen keeps the game's pixel-art style and reads as one system.
