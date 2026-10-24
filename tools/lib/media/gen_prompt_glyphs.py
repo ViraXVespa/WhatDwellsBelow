@@ -308,31 +308,24 @@ def save_aliases(img: Image.Image, folder: str, names: list[str]) -> None:
     for name in names:
         save(img, folder, name)
 
+# Wide keyboard keys (label, width px, file names); all 28 px tall.
+WIDE_KEYS = (
+    ("ESC", 44, ["esc", "escape"]), ("TAB", 44, ["tab"]), ("SHFT", 56, ["shift"]), ("CTRL", 56, ["ctrl"]),
+    ("ALT", 44, ["alt"]), ("BKSP", 56, ["backspace"]), ("DEL", 40, ["del"]), ("ENTER", 64, ["enter"]),
+    ("PGUP", 52, ["pageup"]), ("PGDN", 52, ["pagedown"]), ("-", 28, ["minus"]), ("=", 28, ["equal"]),
+    (",", 28, ["comma"]), (".", 28, ["period"]), ("[", 28, ["lbracket", "bracketleft"]), ("]", 28, ["rbracket", "bracketright"]),
+)
+ARROWS = ("left", "right", "up", "down")
+
 def _run() -> None:
     ROOT.mkdir(parents=True, exist_ok=True)
     for ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
         save(letter_key(ch), "kb", ch.lower())
-    save_aliases(wide_key("ESC", 44, 28), "kb", ["esc", "escape"])
-    save(wide_key("TAB", 44, 28), "kb", "tab")
-    save(wide_key("SHFT", 56, 28), "kb", "shift")
-    save(wide_key("CTRL", 56, 28), "kb", "ctrl")
-    save(wide_key("ALT", 44, 28), "kb", "alt")
-    save(wide_key("BKSP", 56, 28), "kb", "backspace")
-    save(wide_key("DEL", 40, 28), "kb", "del")
-    save(wide_key("ENTER", 64, 28), "kb", "enter")
+    for label, w, names in WIDE_KEYS:
+        save_aliases(wide_key(label, w, 28), "kb", names)
     save(space_key(), "kb", "space")
-    save(wide_key("PGUP", 52, 28), "kb", "pageup")
-    save(wide_key("PGDN", 52, 28), "kb", "pagedown")
-    save(wide_key("-", 28, 28), "kb", "minus")
-    save(wide_key("=", 28, 28), "kb", "equal")
-    save(wide_key(",", 28, 28), "kb", "comma")
-    save(wide_key(".", 28, 28), "kb", "period")
-    save_aliases(wide_key("[", 28, 28), "kb", ["lbracket", "bracketleft"])
-    save_aliases(wide_key("]", 28, 28), "kb", ["rbracket", "bracketright"])
-    save(arrow_key("left"), "kb", "left")
-    save(arrow_key("right"), "kb", "right")
-    save(arrow_key("up"), "kb", "up")
-    save(arrow_key("down"), "kb", "down")
+    for d in ARROWS:
+        save(arrow_key(d), "kb", d)
     save(mouse("l"), "mouse", "lmb")
     save(mouse("r"), "mouse", "rmb")
     save(mouse("m"), "mouse", "mmb")
@@ -348,10 +341,8 @@ def _run() -> None:
     save(stick("RS"), "pad", "rs")
     save(menu_btn(), "pad", "menu")
     save(view_btn(), "pad", "view")
-    save(dpad("up"), "pad", "dpad_up")
-    save(dpad("down"), "pad", "dpad_down")
-    save(dpad("left"), "pad", "dpad_left")
-    save(dpad("right"), "pad", "dpad_right")
+    for d in ("up", "down", "left", "right"):
+        save(dpad(d), "pad", f"dpad_{d}")
     for stale in ("start", "l3", "r3"):
         p = ROOT / "pad" / f"{stale}.png"
         if p.exists():

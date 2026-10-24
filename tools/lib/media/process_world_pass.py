@@ -154,30 +154,19 @@ def banner_out() -> None:
     out.save(dest)
     print("banner", dest.name, out.size)
 
+# Recut props/NPCs: (source still, folder, sprite name, canvas px).
+RECUTS = (
+    (18, PROPS, "anvil", 128), (19, PROPS, "crystal", 128), (20, PROPS, "dumpster", 128), (21, PROPS, "notice_board", 128),
+    (22, FX, "dummy", 160), (23, PROPS, "chest", 128), (24, PROPS, "shrine", 128), (25, PROPS, "campfire", 128),
+    (26, PROPS, "tree", 160), (27, PROPS, "ore", 128), (28, PROPS, "pot", 128), (29, PROPS, "barrel", 128),
+    (30, PROPS, "stairs", 160), (32, PROPS, "plate", 128), (33, PROPS, "lever", 128), (34, PROPS, "hp_orb", 64),
+    (35, PROPS, "gate", 160), (38, PROPS, "sign", 160), (40, PROPS, "crack_wall", 160), (41, PROPS, "boss_door", 160),
+    (36, NPCS, "receptionist", 160), (37, NPCS, "vendor", 160), (39, NPCS, "shopkeep", 160),
+)
+
 def recut_sprites() -> None:
-    sprite_out("18.jpg", PROPS / "anvil.png")
-    sprite_out("19.jpg", PROPS / "crystal.png")
-    sprite_out("20.jpg", PROPS / "dumpster.png")
-    sprite_out("21.jpg", PROPS / "notice_board.png")
-    sprite_out("22.jpg", FX / "dummy.png", canvas=160)
-    sprite_out("23.jpg", PROPS / "chest.png")
-    sprite_out("24.jpg", PROPS / "shrine.png")
-    sprite_out("25.jpg", PROPS / "campfire.png")
-    sprite_out("26.jpg", PROPS / "tree.png", canvas=160)
-    sprite_out("27.jpg", PROPS / "ore.png")
-    sprite_out("28.jpg", PROPS / "pot.png")
-    sprite_out("29.jpg", PROPS / "barrel.png")
-    sprite_out("30.jpg", PROPS / "stairs.png", canvas=160)
-    sprite_out("32.jpg", PROPS / "plate.png")
-    sprite_out("33.jpg", PROPS / "lever.png")
-    sprite_out("34.jpg", PROPS / "hp_orb.png", canvas=64)
-    sprite_out("35.jpg", PROPS / "gate.png", canvas=160)
-    sprite_out("38.jpg", PROPS / "sign.png", canvas=160)
-    sprite_out("40.jpg", PROPS / "crack_wall.png", canvas=160)
-    sprite_out("41.jpg", PROPS / "boss_door.png", canvas=160)
-    sprite_out("36.jpg", NPCS / "receptionist.png", canvas=160)
-    sprite_out("37.jpg", NPCS / "vendor.png", canvas=160)
-    sprite_out("39.jpg", NPCS / "shopkeep.png", canvas=160)
+    for n, folder, name, canvas in RECUTS:
+        sprite_out(f"{n}.jpg", folder / f"{name}.png", canvas=canvas)
 
 def mix_path() -> None:
     dirt = imgio.load(TILES / "plaza_ground.png", "RGB")

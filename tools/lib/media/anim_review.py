@@ -62,6 +62,18 @@ def _scan_good_pack_clips() -> list[dict]:
                 )
     return found
 
+def _model_groups(lines: list[str], rows: list[dict]):
+    """Yield rows grouped by model (sorted), after appending each group's `### model` heading; `None.` when empty."""
+    if not rows:
+        lines += ["None.", ""]
+    by_model = defaultdict(list)
+    for row in rows:
+        by_model[row["model"]].append(row)
+    for model in sorted(by_model):
+        lines += [f"### {model}", ""]
+        yield by_model[model]
+
+
 def _pack_md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
     lines = [
         "# Pack review brief",
@@ -76,16 +88,8 @@ def _pack_md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
         "## Repack",
         "",
     ]
-    if not repack:
-        lines.append("None.")
-        lines.append("")
-    by_model = defaultdict(list)
-    for row in repack:
-        by_model[row["model"]].append(row)
-    for model in sorted(by_model):
-        lines.append(f"### {model}")
-        lines.append("")
-        for row in by_model[model]:
+    for rows in _model_groups(lines, repack):
+        for row in rows:
             frames = [str(p.relative_to(lib.ROOT)) for p in lib.frame_paths(row["model"], row["facing"], row["anim"])]
             lines.append(f"- `{row['key']}` frames={len(frames)}")
             if frames:
@@ -147,16 +151,8 @@ def _regen_md(regen: list[dict], prompts: dict[str, str], missing: list[str]) ->
         "## Regenerate",
         "",
     ]
-    if not regen:
-        lines.append("None.")
-        lines.append("")
-    by_model = defaultdict(list)
-    for row in regen:
-        by_model[row["model"]].append(row)
-    for model in sorted(by_model):
-        lines.append(f"### {model}")
-        lines.append("")
-        for row in by_model[model]:
+    for rows in _model_groups(lines, regen):
+        for row in rows:
             lines.append(f"- `{row['key']}` i2v_action=`{row['i2v_action']}`")
             note = row["note"].strip()
             lines.append(f"  - note: {note if note else '(none)'}")

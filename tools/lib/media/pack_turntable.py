@@ -83,34 +83,25 @@ def pack_list(folder: str, idxs: list, dest_prefix: str) -> None:
         save(imgio.load(p), OUT / f"{dest_prefix}_{n}.png")
         n += 1
 
+# Facings shot as their own clips / stills (191-194.jpg); the rest come off the turntable at these frames.
+NEW_FACINGS = ("right", "down_right", "up_right", "down_left")
+TURN_PICKS = {
+    "walk": (("down", [0, 8, 12, 16]), ("left", [28, 30, 32, 36]), ("up", [44, 46, 48, 52]), ("up_left", [56, 60, 64, 68])),
+    "attack": (("down", [0, 8, 12, 18]), ("left", [70, 74, 78, 82]), ("up", [50, 54, 58, 62]), ("up_left", [26, 30, 34, 38])),
+}
+
 def _run() -> None:
     # Idles from stills + turntable
     save(imgio.load(ROOT / "assets" / "live" / "player" / "down.png"), OUT / "down.png")
-    save(imgio.load(IMG / "191.jpg"), OUT / "right.png")
-    save(imgio.load(IMG / "192.jpg"), OUT / "down_right.png")
-    save(imgio.load(IMG / "193.jpg"), OUT / "up_right.png")
-    save(imgio.load(IMG / "194.jpg"), OUT / "down_left.png")
-    save(imgio.load(frame("turn_walk", 30)), OUT / "left.png")
-    save(imgio.load(frame("turn_walk", 45)), OUT / "up.png")
-    save(imgio.load(frame("turn_walk", 60)), OUT / "up_left.png")
-
-    pack_list("turn_walk", [0, 8, 12, 16], "walk_down")
-    pack_list("turn_walk", [28, 30, 32, 36], "walk_left")
-    pack_list("turn_walk", [44, 46, 48, 52], "walk_up")
-    pack_list("turn_walk", [56, 60, 64, 68], "walk_up_left")
-    pack_list("walk_right_new", PICKS, "walk_right")
-    pack_list("walk_down_right_new", PICKS, "walk_down_right")
-    pack_list("walk_up_right_new", PICKS, "walk_up_right")
-    pack_list("walk_down_left_new", PICKS, "walk_down_left")
-
-    pack_list("turn_atk", [0, 8, 12, 18], "attack_down")
-    pack_list("turn_atk", [70, 74, 78, 82], "attack_left")
-    pack_list("turn_atk", [50, 54, 58, 62], "attack_up")
-    pack_list("turn_atk", [26, 30, 34, 38], "attack_up_left")
-    pack_list("atk_right_new", ATK_PICKS, "attack_right")
-    pack_list("atk_down_right_new", ATK_PICKS, "attack_down_right")
-    pack_list("atk_up_right_new", ATK_PICKS, "attack_up_right")
-    pack_list("atk_down_left_new", ATK_PICKS, "attack_down_left")
+    for i, facing in enumerate(NEW_FACINGS):
+        save(imgio.load(IMG / f"{191 + i}.jpg"), OUT / f"{facing}.png")
+    for idx, facing in ((30, "left"), (45, "up"), (60, "up_left")):
+        save(imgio.load(frame("turn_walk", idx)), OUT / f"{facing}.png")
+    for action, turn, clip, picks in (("walk", "turn_walk", "walk", PICKS), ("attack", "turn_atk", "atk", ATK_PICKS)):
+        for facing, idx in TURN_PICKS[action]:
+            pack_list(turn, idx, f"{action}_{facing}")
+        for facing in NEW_FACINGS:
+            pack_list(f"{clip}_{facing}_new", picks, f"{action}_{facing}")
     print("turntable pack done")
 
 def main(argv: list[str] | None = None) -> int:
