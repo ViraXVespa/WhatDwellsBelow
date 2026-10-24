@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Find reused/duplicated code: whole functions (exact, or same shape with renamed params/locals) and line-block clones.
+"""Find reused/duplicated code: function clones, line-block clones, and literal-blind repeats (runs, clones).
 
-    python tools/lint.py dupes [--lang gd|py|all] [--min-lines 4] [--min-block 8] [--top 40] [--out-md PATH] [--json]
+    python tools/lint.py dupes [--lang gd|py|all] [--gate] [--min-lines 4] [--min-block 8] [--min-run 4] [--min-clone 6]
+                               [--gate-score 12] [--top 40] [--out-md PATH] [--json] [--selftest]
 
-gd = scripts/**/*.gd, py = tools/*.py (archives, .archive_worktrees, _logs skipped). Kinds, ranked by score
-(copies-1)*lines:
+gd = scripts/**/*.gd, py = tools/**/*.py (archives, tools/retired, _logs skipped). Kinds, ranked by score (copies-1)*lines:
   exact   function bodies identical after comments/blank lines are dropped (name ignored)
   shape   same control flow once params and locals are renamed (the shared-extract candidates in design/refactor.md)
   near    same shape once string and number literals are masked too (a shared helper takes the literals as args)
   block   >= --min-block consecutive code lines repeated verbatim in 2+ places (not inside an already reported function)
   nblock  the same, with string/number literals masked (copies differ only in constants)
-Read-only. Summary: _logs/dupes/<stamp>-dupes.txt; --md writes the ranked list (location, lines, copies) for design/reuse-map.md.
-Result: RESULT INFO exact= shape= near= block= nblock= (always INFO; this is a finder, not a gate).
+  run     >= --min-run adjacent calls in one file that differ only in literals or signs (an unrolled loop; score lines-1)
+  clone   >= --min-clone lines repeated in one file or across files once literals, signs and local names are masked
+          (dupes_clone.py; not reported again when a block/function row already covers every copy)
+Output is summary-first: counts per kind, finding files, the files with most findings, then the ranked rows.
+Without --gate: RESULT INFO (a finder). --gate (Bot prove, via bot_status --prove): every run and every row with
+score >= --gate-score must be refactored or listed with a reason in tools/data/dupes_allow.json (dupes_gate.py);
+new or stale entries FAIL. --selftest: the pre-fix stall builder fixture (tools/data/dupes-fixture) must be flagged.
+Summary: _logs/dupes/<stamp>-dupes.txt (all rows); --out-md writes the ranked list as markdown.
 """
 from __future__ import annotations
 
@@ -26,10 +32,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
 import agent_log
+import dupes_clone
+import dupes_gate
 import gd_lib
 
-KINDS = ("exact", "shape", "near", "block", "nblock")
-SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git", "assets", "__pycache__"}
+KINDS = ("exact", "shape", "near", "block", "nblock", "run", "clone")
+SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git", "assets", "__pycache__", "retired"}  # tools/retired: reference only, never run
 IDENT = re.compile(r"\b[A-Za-z_]\w*\b")
 LOCAL = re.compile(r"^\s*(?:var|for)\s+(\w+)")
 TRIVIAL = re.compile(r"^(pass|return|return null|return false|return true|else:|\)|\]|\})$")
@@ -230,36 +238,65 @@ def drop_inside_funcs(blocks: list[dict], fgroups: list[dict]) -> list[dict]:
             keep.append(b)
     return keep
 
+def find(root: Path, lang: str = "all", min_lines: int = 4, min_block: int = 8, min_run: int = 4,
+         min_clone: int = 6) -> list[dict]:
+    """Every finding row, ranked, each with a stable key."""
+    funcs, wins, seqs = build(root, lang, min_lines, min_block)
+    fg = func_groups(funcs)
+    bg = drop_inside_funcs(block_groups(wins, seqs, min_block), fg)
+    loose = dupes_clone.runs(seqs, min_run) + dupes_gate.drop_covered(dupes_clone.clones(seqs, min_clone, HEADER), fg + bg)
+    rows = sorted(fg + bg + loose, key=lambda r: (-r["score"], r["where"]))
+    dupes_gate.add_keys(rows, seqs)
+    return rows
+
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Find duplicated functions and code blocks (exact, same-shape, block clones).", json_out=True, verbose=True)
+    ap = agent_log.std_parser("Find duplicated functions, code blocks and literal-only repeats; --gate checks them against the exceptions file.", json_out=True, verbose=True)
     ap.add_argument("--lang", choices=("gd", "py", "all"), default="all", help="Which sources to scan: gd, py or all (default all).")
     ap.add_argument("--min-lines", type=int, default=4, help="min function body lines for exact/shape groups")
     ap.add_argument("--min-block", type=int, default=8, help="min consecutive repeated code lines for block clones")
-    ap.add_argument("--top", type=int, default=40, help="rows shown per kind in the console summary")
+    ap.add_argument("--min-run", type=int, default=4, help="min adjacent literal-only call repeats for a run (default 4)")
+    ap.add_argument("--min-clone", type=int, default=6, help="min consecutive loose lines for a clone (default 6)")
+    ap.add_argument("--gate", action="store_true", help="FAIL on a gated row not in tools/data/dupes_allow.json (or a stale entry)")
+    ap.add_argument("--gate-score", type=int, default=12, help="non-run rows at or above this score are gated (default 12)")
+    ap.add_argument("--selftest", action="store_true", help="Check the pre-fix stall fixture is flagged and a clean table is not.")
+    ap.add_argument("--top", type=int, default=40, help="ranked rows kept after the summary (default 40; the rows.json log has all)")
     ap.add_argument("--out-md", "--md", dest="md", default="", metavar="PATH", help="Also write the ranked list as markdown to this file (old name --md).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
-    funcs, wins, seqs = build(root, args.lang, args.min_lines, args.min_block)
-    fg = func_groups(funcs)
-    bg = drop_inside_funcs(block_groups(wins, seqs, args.min_block), fg)
-    rows = sorted(fg + bg, key=lambda r: -r["score"])
+    if args.selftest:
+        errs = dupes_gate.selftest(root, lambda r: find(r, "all", args.min_lines, args.min_block, args.min_run, args.min_clone))
+        return agent_log.finish("dupes", root, "\n".join(["dupes selftest", *errs]), "FAIL" if errs else "PASS",
+                                args=args, selftest="fail" if errs else "ok", problems=len(errs))
+    rows = find(root, args.lang, args.min_lines, args.min_block, args.min_run, args.min_clone)
     cnt = {k: sum(1 for r in rows if r["kind"] == k) for k in KINDS}
-    lines = ["dupes lang=%s min_lines=%d min_block=%d" % (args.lang, args.min_lines, args.min_block)]
-    for k in KINDS:
-        for r in [r for r in rows if r["kind"] == k][:args.top]:
-            lines.append("%-5s score=%-4d lines=%-3d copies=%d  %s" % (k, r["score"], r["lines"], r["copies"], " | ".join(r["where"])))
+    head = ["dupes lang=%s min_lines=%d min_block=%d min_run=%d min_clone=%d gate_score=%d" % (
+        args.lang, args.min_lines, args.min_block, args.min_run, args.min_clone, args.gate_score)]
+    head += dupes_gate.summary(rows, KINDS)
+    status, extra, body = "INFO", {}, []
+    if args.gate:
+        g = dupes_gate.check(root, rows, args.gate_score)
+        bad = len(g["new"]) + len(g["stale"]) + len(g["nowhy"])
+        status = "FAIL" if bad else "PASS"
+        extra = {"gated": len(g["gated"]), "kept": len(g["kept"]), "new": len(g["new"]), "stale": len(g["stale"])}
+        head.append("gate gated=%d kept=%d new=%d stale=%d nowhy=%d (allow: %s)" % (
+            extra["gated"], extra["kept"], extra["new"], extra["stale"], len(g["nowhy"]), dupes_gate.ALLOW))
+        body += ["NEW " + dupes_gate.row_line(r) for r in g["new"]]
+        body += ["STALE key=%s %s %s" % (a["key"], a.get("kind", ""), " | ".join(a.get("where", []))) for a in g["stale"]]
+        if bad:
+            body.append("next: refactor each NEW row into a shared helper/data, or add it to %s with a why; drop STALE keys" % dupes_gate.ALLOW)
+    body += [dupes_gate.row_line(r) for r in rows[:args.top]]
     if args.md:
-        md = ["| Kind | Score | Lines | Copies | Where |", "|---|---|---|---|---|"]
-        md += ["| %s | %d | %d | %d | %s |" % (r["kind"], r["score"], r["lines"], r["copies"], "<br>".join("`%s`" % w for w in r["where"])) for r in rows]
+        md = ["| Kind | Score | Lines | Copies | Key | Where |", "|---|---|---|---|---|---|"]
+        md += ["| %s | %d | %d | %d | %s | %s |" % (r["kind"], r["score"], r["lines"], r["copies"], r["key"], "<br>".join("`%s`" % w for w in r["where"])) for r in rows]
         Path(args.md).write_text("\n".join(md) + "\n", encoding="utf-8")
     d = agent_log.ensure_agent_log_dir("dupes", root)
     agent_log.run_path("dupes", root, "rows.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
-    res = agent_log.write_run_file(root, d, "dupes", "\n".join(lines), "INFO", **cnt)
+    res = agent_log.write_run_file(root, d, "dupes", "\n".join(head + body), status, **cnt, **extra)
     if args.json:
-        agent_log.print_json({"status": "INFO", "counts": cnt, "rows": rows})
+        agent_log.print_json({"status": status, "counts": cnt, **extra, "rows": rows})
     else:
-        print("\n".join(lines[:1] + agent_log.fold(lines[1:], args.verbose, keep=20, limit=28) + [res]))
-    return 0
+        print("\n".join(head + agent_log.fold(body, args.verbose, keep=12, limit=16) + [res]))
+    return 1 if status == "FAIL" else 0
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

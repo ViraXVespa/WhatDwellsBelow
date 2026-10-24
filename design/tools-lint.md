@@ -5,12 +5,12 @@ Read when: running a size, dupe, dead-code, split, relocate or doc-edit tool
 
 Door, rules, the CLI contract and the Surf / A key: `tools.md`. Bot flows: the Bot job files; doc edit detail: `doc-library.md`.
 
-Entries here: `lint.py`, `check.py`, `docs.py`; their code: `tools/lib/checks/`, `tools/lib/docs/`, `tools/lib/lint/`.
+Entries here: `lint.py`, `check.py`, `docs.py`; their code: `tools/lib/checks/`, `tools/lib/docs/`, `tools/lib/lint/`. `lint.py dupes` helpers: `tools/lib/lint/dupes_clone.py` (run / clone finder), `tools/lib/lint/dupes_gate.py` (gate, exceptions, selftest).
 
 ## Jobs
 
 - **Script sizes:** `check.py script-cap --bot --sweep` (Bot; `--verbose` for every row). Doc sizes: `check.py docs-size --bot --boot --dupes`.
-- **Duplicates:** `lint.py dupes --lang gd --out-md PATH`.
+- **Duplicates:** `lint.py dupes` (summary first; `--out-md PATH` for the ranked list); the Bot gate is `lint.py dupes --gate` (run by `bot_status.py --bot --prove`).
 - **Dead code:** `lint.py unused --limit 30` (report only).
 - **Split a script:** `lint.py split FILE --list`, write `plan.json`, `lint.py split FILE --plan plan.json --dry-run`, then without `--dry-run`.
 - **Move a cluster:** `lint.py move --list-cluster FACADE`, then `--to-dir DIR --dry-run`.
@@ -21,7 +21,7 @@ Entries here: `lint.py`, `check.py`, `docs.py`; their code: `tools/lib/checks/`,
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `lint.py dupes` | Duplicate finder (read-only): exact / shape / near function clones and repeated line blocks across `scripts/**/*.gd` and `tools/*.py`, ranked by (copies-1) x lines. `--lang gd\|py\|all`, `--min-lines`, `--min-block`, `--top`, `--out-md PATH`. Feeds `design/reuse-map.md`. Summary: `dupes`. | B | `--help` | Y |
+| `lint.py dupes` | Duplicate finder over `scripts/**/*.gd` and `tools/**/*.py` (not `tools/retired`): exact / shape / near function clones, `block` / `nblock` line blocks, `run` (4+ adjacent calls differing only in literals or signs, one file) and `clone` (6+ lines equal once literals, signs and local names are masked; one file or across files). Summary first (counts, finding files, top files), then rows ranked by (copies-1) x lines, each with a stable `key`. `--gate`: every run and every row scoring `--gate-score` (12)+ must be refactored or listed with a `why` in `tools/data/dupes_allow.json`; new or stale keys FAIL. `--selftest`: the pre-fix stall builder fixture (`tools/data/dupes-fixture/`) must be flagged. `--lang`, `--min-lines`, `--min-block`, `--min-run`, `--min-clone`, `--top`, `--out-md PATH`. Summary: `dupes`. | B | `--help` | Y |
 | `lint.py unused` | Dead-code report (`--limit N` rows on stdout): `unused` funcs, `shadowed` (defined in 2+ files, nothing resolves to that def), `decl` (unused const/signal/preload alias), `maybe` (bare-name string only: check by hand); `dynamic` (called by name) counts only. **`--apply` DELETES** unused+shadowed+decl until none are left: only when the opt item says so. Summary: `unused-funcs`. | B | `--help` | Y |
 | `check.py docs-size` | Bot-only doc sweep (runs with `--bot`): `design/*.md` by size, `--boot` boot-chain bytes, `--dupes` sentences repeated across docs | B | `--help` | Y |
 | `lint.py split` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first; runs `lint.py requal` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |

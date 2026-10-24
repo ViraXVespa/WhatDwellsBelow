@@ -1,0 +1,17 @@
+extends RefCounted
+## Selftest fixture: the fixed shape (one helper, corners from data, a loop) must not be flagged.
+const CORNERS := {
+	"front_left": Vector3(-0.48, 0.0, 0.52),
+	"front_right": Vector3(0.48, 0.0, 0.52),
+	"rear_left": Vector3(-0.48, 0.0, -0.48),
+	"rear_right": Vector3(0.48, 0.0, -0.48),
+}
+static func posts(body: Node3D, box: Vector3, y_top: float) -> void:
+	for id in CORNERS:
+		var c: Vector3 = CORNERS[id]
+		_post(body, Vector3(box.x * c.x, y_top, box.z * c.z), box.y)
+static func _post(body: Node3D, top: Vector3, h: float) -> void:
+	var inst := MeshInstance3D.new()
+	inst.position = top
+	inst.scale = Vector3(1.0, h, 1.0)
+	body.add_child(inst)

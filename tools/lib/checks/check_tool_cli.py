@@ -83,7 +83,7 @@ SMOKE: dict[str, list] = {
     "img_inspect": [["selftest"]],
     "lint_hostify": [[]],
     "list_changed": [[], ["--history", "AGENTS.md", "BOT.md"]],
-    "list_dupes": [["--lang", "py"]],
+    "list_dupes": [["--lang", "py"], ["--selftest"]],
     "list_facade_cluster": [["scripts/graphics/mesh_commit.gd"]],
     "list_oversize_docs": [[], ["--bot"]],
     "list_route": [[], ["debug.smokes"], ["--digest", "--door", "debug"]],
