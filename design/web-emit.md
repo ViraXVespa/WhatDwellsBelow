@@ -13,7 +13,7 @@ Revise from a fetched raw body plus the artifact byte check, or from a User past
 
 Scratch shape. One file, `tools/_scratch.py`. The runner imports `doc_patch` before the scratch body, so a scratch cannot repair a broken `doc_patch`. That repair is a direct `python` file.
 
-The block below is an example only (docs/load-graph checker). A real scratch must call the prove tools that match the work that landed (see the prove table). The full suite is available: check_load_graph, run_build_gate, run_load_timing, run_dungeon_load_timing, run_dungeon_map, run_smokes, run_godot_import_check, run_shots, and task.py list/show. Always print RESULT checker=PASS|FAIL (or gate=...) from the exit code.
+The block below is an example only (docs/load-graph checker). A real scratch must call the prove tools that match the work that landed (see the prove table). The full suite is available: check_load_graph, run_build_gate, run_load_timing (`--leg hub|dungeon`), run_dungeon_map, run_smokes, run_godot_import_check, run_shots, and task.py list/show. Always print RESULT checker=PASS|FAIL (or gate=...) from the exit code.
 
 ```python
 import sys
@@ -47,7 +47,7 @@ When a slice needs a visual proof, run `python tools/run_shots.py --mode web` an
 | design / AGENTS / routes / load-graph | `tools/check_load_graph.py` | checker line |
 | GDScript / scenes / project.godot | `tools/run_build_gate.py` | gate summary |
 | Title to Play load | `tools/run_load_timing.py` | load-timing summary |
-| Hub to dungeon load | `tools/run_dungeon_load_timing.py` | dungeon-load-timing summary |
+| Hub to dungeon load | `tools/run_load_timing.py --leg dungeon` | dungeon-load-timing summary |
 | Gen / map shape | `tools/run_dungeon_map.py` | dungeon-map summary |
 | Named phase assert | `tools/run_smokes.py` | smokes summary |
 | GDScript import / COMPILE | `tools/run_godot_import_check.py` via `dump_job(..., "godot-import-check", script="run_godot_import_check.py")` | godot-import-check summary; fail on COMPILE or clean=false |

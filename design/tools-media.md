@@ -11,9 +11,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 |---|---|---|---|---|
 | `audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical | D | module docstring (no `--help`) | N |
 | `anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. | D | module docstring (no `--help`) | Y |
-| `anim_review_pack.py` | Build a Grok-readable pack brief from Animation Browser review.json | D | `--help` | N |
-| `anim_review_regen.py` | Build a Grok-readable regen brief from Animation Browser review.json | D | `--help` | N |
-| `anim_review_tree.py` | Build a wiped I2V test tree for every Regenerate clip in review.json | D | `--help` | N |
+| `anim_review.py` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree` (wiped I2V test tree, `--out DIR`). Summary: `anim-review` | D | `--help` | N |
 | `attack_keyframes.py` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
 | `attack_keyframes_log.json` | Sidecar data for the tool of the same stem | D | - | N |
 | `bible_normalize.py` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |

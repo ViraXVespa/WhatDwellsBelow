@@ -411,7 +411,7 @@ JOB_SCRIPTS = {
     "build-gate": "run_build_gate.py",
     "dungeon-map": "run_dungeon_map.py",
     "load-timing": "run_load_timing.py",
-    "dungeon-load-timing": "run_dungeon_load_timing.py",
+    "dungeon-load-timing": "run_load_timing.py --leg dungeon",
     "smokes": "run_smokes.py",
 }  # prove runners by job
 
@@ -435,8 +435,9 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
     name = script or JOB_SCRIPTS.get(job)
     if not name:
         raise SystemExit(f"FAIL  unknown prove job {job!r}")
-    py = root / "tools" / (Path(name).stem + ".py")
-    cmd = [sys.executable, str(py)]
+    script_name, *extra_args = name.split()
+    py = root / "tools" / (Path(script_name).stem + ".py")
+    cmd = [sys.executable, str(py), *extra_args]
     proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
     exact = run_log_lib.latest(root / "_logs" / job) or root / "_logs" / job / "summary.txt"
     hits = [exact] if exact.is_file() else sorted(

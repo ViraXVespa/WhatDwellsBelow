@@ -46,7 +46,7 @@ All sheets for that ask must already be written before the open. Do not open the
 | Menu and NPC flows, headless asserts | `bot_smokes.py --door D --flows` |
 | New UI state has a flow | `check_shot_gaps.py --changed` |
 | Warnings before and after | `bot_warnscan.py --save-baseline B`, then `--non-leak-diff B` |
-| Dungeon map, load timing | `run_dungeon_map.py --seed 42 --floor 1`, `run_load_timing.py`, `run_dungeon_load_timing.py` |
+| Dungeon map, load timing | `run_dungeon_map.py --seed 42 --floor 1`, `run_load_timing.py [--leg dungeon]` |
 | Web build size and frame time | `web_perf.py` (advisory) |
 
 ## Recipes

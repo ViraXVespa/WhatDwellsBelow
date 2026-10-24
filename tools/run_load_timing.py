@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Title -> Placeholdia load-timing smoke. Per-path Godot lock; never kills godot*.
+"""Load-timing smoke for one leg. Per-path Godot lock; never kills godot*.
 
-    python tools/run_load_timing.py [--timeout-sec 180]
-Summary: _logs/load-timing/<stamp>-load-timing.txt.
+    python tools/run_load_timing.py [--leg hub|dungeon] [--timeout-sec 180]
+hub:     Title -> Placeholdia (--wdb-load-timing-smoke).        Summary: _logs/load-timing/<stamp>-load-timing.txt
+dungeon: Placeholdia -> Dungeon (--wdb-dungeon-load-timing-smoke). Summary: _logs/dungeon-load-timing/<stamp>-dungeon-load-timing.txt
 """
 from __future__ import annotations
 
@@ -13,10 +14,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
 
+LEGS = {  # leg -> (job, title, app flag, running line)
+    "hub": ("load-timing", "load timing", "--wdb-load-timing-smoke", "Running Title to Placeholdia load timing..."),
+    "dungeon": ("dungeon-load-timing", "dungeon load timing", "--wdb-dungeon-load-timing-smoke",
+                "Running Placeholdia to Dungeon load timing..."),
+}
+
 def main(argv: list[str] | None = None) -> int:
-    args = godot_lib.timing_parser("Title to Placeholdia load-timing smoke.").parse_args(argv)
-    return godot_lib.timing_job(args, "load-timing", "load timing", "--wdb-load-timing-smoke",
-                                "Running Title to Placeholdia load timing...")
+    ap = godot_lib.timing_parser("Load-timing smoke: Title to Placeholdia (hub) or Placeholdia to Dungeon (dungeon).")
+    ap.add_argument("--leg", choices=sorted(LEGS), default="hub", help="hub: Title to Placeholdia (default). dungeon: Placeholdia to Dungeon.")
+    args = ap.parse_args(argv)
+    return godot_lib.timing_job(args, *LEGS[args.leg])
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

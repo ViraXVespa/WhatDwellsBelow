@@ -313,7 +313,7 @@ def grep_logs(logs: list[Path], pattern: str) -> list[str]:
     return out
 
 def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[str] | None = None) -> int:
-    """Shared body of run_load_timing / run_dungeon_load_timing: run one --wdb-*-smoke, parse LOAD: lines."""
+    """Shared body of run_load_timing (both legs): run one --wdb-*-smoke, parse LOAD: lines."""
     root = agent_log.resolve_root(args)
     out_log, err_log = agent_log.run_path(job, root, "out.log"), agent_log.run_path(job, root, "err.log")
     print(running)

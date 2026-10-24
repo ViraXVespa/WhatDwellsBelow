@@ -54,7 +54,7 @@ SMOKE: dict[str, list] = {
     "review_shots": [["--selftest"]],
     "run_isolated_grok": [["--selftest"]],
     "agent_log": [["smoke-job"], ["--selftest"]],
-    "anim_review_pack": [["--dry-run"]], "anim_review_regen": [["--dry-run"]], "anim_review_tree": [["--dry-run"]],
+    "anim_review": [["pack", "--dry-run"], ["regen", "--dry-run"], ["tree", "--dry-run"]],
     "archive_prior_changelogs": [["--dry-run"]],
     "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],

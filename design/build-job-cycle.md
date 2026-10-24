@@ -70,7 +70,7 @@ Smokes at prove: the phases mapped to the door or job in `routes.yaml` `smokes` 
 | Unit | Runner |
 |------|--------|
 | floor map / gen silhouette / placement specs | `tools/run_dungeon_map.py` `--seed 42 --floor 1` |
-| Placeholdia to dungeon timing | `tools/run_dungeon_load_timing.py` |
+| Placeholdia to dungeon timing | `tools/run_load_timing.py --leg dungeon` |
 | named phase asserts | `tools/run_smokes.py` `--door D` / `--job door.job` / `--phases N` |
 | changed `.gd` load with autoloads (end of Change) | `tools/check_gd_load.py` (`--files`, `--all`, `--base REF`) |
 | import + load graph + names / unnamed prove | `tools/run_build_gate.py` |
