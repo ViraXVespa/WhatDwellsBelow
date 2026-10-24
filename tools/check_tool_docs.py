@@ -42,7 +42,7 @@ def _doc_files(root: Path, tracked: set[str]) -> list[Path]:
 
 def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     git = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split("\n")
-    tracked = {g for g in git if g}
+    tracked = {g for g in git if g and (root / g).exists()}  # a tracked file deleted in the working tree is gone
     names = {g.rsplit("/", 1)[-1] for g in tracked}
     gone = subprocess.run(["git", "log", "--diff-filter=D", "--name-only", "--pretty=format:"], cwd=root, capture_output=True, text=True).stdout.split("\n")
     gone_names = {g.rsplit("/", 1)[-1] for g in gone if g} - names

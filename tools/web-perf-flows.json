@@ -1,5 +1,5 @@
 {
-  "_boot": [{"phase": "_boot"}, {"wait": 2500}, {"key": "Enter"}, {"wait": 2500}, {"key": "Enter"}, {"wait": 3500}, {"shot": "title"}, {"key": "Enter"}, {"settle": 30000, "min": 2000, "as": "camp_load_ms"}],
+  "_boot": [{"phase": "_boot"}, {"wait": 2500}, {"key": "Enter"}, {"wait": 2500}, {"key": "Enter"}, {"wait": 3500}, {"key": "Enter"}, {"wait": 1000}, {"shot": "title"}, {"key": "Enter"}, {"settle": 30000, "min": 2000, "as": "camp_load_ms"}],
   "title-idle": {"about": "Load, sit on the splash (no input) for 6 s.", "steps": [{"phase": "splash"}, {"wait": 6000}, {"shot": "splash"}]},
   "camp-walk": {"about": "Splash, title (Enter on Play - Male), then walk the Placeholdia camp in a square.", "boot": true, "expect_change": [["title", "camp-start"]],
     "steps": [{"shot": "camp-start"}, {"phase": "walk"}, {"hold": "d", "ms": 3000}, {"hold": "s", "ms": 3000}, {"hold": "a", "ms": 3000}, {"hold": "w", "ms": 3000}, {"shot": "camp-end"}]},

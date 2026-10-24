@@ -27,7 +27,6 @@ hub-perf-fix | build | open | Hub perf fix - diagnose and clear sub-60 FPS on th
 receptionist-redesign | build | open | Redraw the receptionist sprite to her new design | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
-hub-bake-lights | web | open | Hub bake, prop shadows, lamps, light leaks, desktop shading | -
 hub-guild-reception | web | open | Guild receptionist bust + welcome banner | -
 <!-- tasks:end -->
 
