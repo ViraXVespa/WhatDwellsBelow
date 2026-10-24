@@ -30,34 +30,7 @@ import agent_log
 from load_routes import SMOKE_PHASES
 from agent_log import repo_root  # noqa: F401  (bot_warnscan imports it from here)
 
-VERSION = "4.7.2"
-BIN_NAME = f"Godot_v{VERSION}-stable_linux.x86_64"
-ZIP_NAME = BIN_NAME + ".zip"
-ZIP_URL = (
-    "https://github.com/godotengine/godot-builds/releases/download/"
-    f"{VERSION}-stable/" + ZIP_NAME
-)
-STEAM_WIN = (
-    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\"
-    "Godot Engine\\godot.windows.opt.tools.64.exe"
-)
-
-def pin_path() -> Path:
-    env = os.environ.get("GODOT_BIN", "").strip()
-    if env:
-        return Path(env)
-    if Path("/workspace").is_dir():
-        return Path("/workspace/godot") / BIN_NAME
-    return Path.home() / ".local" / "share" / "wdb-godot" / BIN_NAME
-
-def resolve_bin() -> Path | None:
-    pin = pin_path()
-    if pin.is_file():
-        return pin
-    steam = Path(STEAM_WIN)
-    if steam.is_file():
-        return steam
-    return None
+from godot_lib import BIN_NAME, STEAM_WIN, VERSION, ZIP_NAME, ZIP_URL, pin_path, resolve_bin  # noqa: F401  (engine pin lives in godot_lib)
 
 def setup(pin: Path) -> Path:
     if pin.is_file():

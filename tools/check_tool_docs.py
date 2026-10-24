@@ -20,7 +20,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 import repo_lib
-from bot_smokes import VERSION as ENGINE_PIN
+from godot_lib import VERSION as ENGINE_PIN
 
 CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
@@ -30,7 +30,7 @@ SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".cfg", ".html
 TICK = re.compile(r"`([^`\n]+)`")
 PATH_SKIP = ("_logs/", "_out/", "user://", "http", ".godot/", "docs/", "design/changelog/")
 NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previously|no longer|used to|not yet|for now|old flat|temporary|deprecated|obsolete|superseded)\b", re.I)
-ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI must equal bot_smokes.VERSION
+ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI must equal godot_lib.VERSION
 MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
 
 def _doc_files(root: Path, tracked: set[str]) -> list[Path]:

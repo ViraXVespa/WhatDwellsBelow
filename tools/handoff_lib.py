@@ -18,6 +18,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import repo_lib
 import task_lib
 
 EDITS_REL = "_logs/handoff/survey-edits"
@@ -263,16 +264,10 @@ def selftest(script: Path) -> list[str]:
                            env={**os.environ, "GROK_SESSION_ID": ""})
         return p.returncode, p.stdout + p.stderr
 
-    def git(cwd: Path, *a: str) -> None:
-        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=cwd, check=True, capture_output=True)
+    git = repo_lib.git_test
 
     with tempfile.TemporaryDirectory() as td:
-        main = Path(td) / "main"
-        main.mkdir()
-        git(main, "init", "-q")
-        (main / "project.godot").write_text("")
-        (main / "scripts" / "data").mkdir(parents=True)
-        (main / "scripts" / "data" / "version.json").write_text('{"epoch": 0, "series": 9, "patch": 0}\n')
+        main = repo_lib.selftest_repo(td)
         (main / "design").mkdir()
         (main / "design" / "routes.yaml").write_text("version: 1\ndoors:\n  ui:\n    file: design/ui.md\n    read_when: x\n    jobs:\n      pause: design/ui-pause.md\n", encoding="utf-8")
         git(main, "add", "-A")

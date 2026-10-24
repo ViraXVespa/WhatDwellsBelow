@@ -49,7 +49,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import agent_log  # noqa: E402
-from bot_smokes import resolve_bin  # noqa: E402
+from godot_lib import resolve_bin  # noqa: E402
 from bot_warnscan_lib import changed_areas, flake_label, merge, mode_label, parse_stream, run_failure  # noqa: E402
 from godot_lib import XVFB_SCREEN, pick_display  # noqa: E402
 from load_routes import SMOKE_PHASES  # noqa: E402

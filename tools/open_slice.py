@@ -164,17 +164,10 @@ def selftest(script: Path) -> int:
                            env=env or os.environ)
         return p.returncode, p.stdout + p.stderr
 
-    def git(cwd: Path, *a: str) -> None:
-        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=cwd, check=True, capture_output=True)
+    git = repo_lib.git_test
 
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td) / "main"
-        root.mkdir()
-        git(root, "init", "-q")
-        git(root, "commit", "-q", "--allow-empty", "-m", "a")
-        (root / "project.godot").write_text("")
-        (root / "scripts" / "data").mkdir(parents=True)
-        (root / "scripts" / "data" / "version.json").write_text('{"epoch": 0, "series": 9, "patch": 0}\n')
+        root = repo_lib.selftest_repo(td, empty_commit=True)
         code, out = run(root, "--dry-run")
         if code == 0 or "NO WEEK BRANCH" not in out or "COMMAND" in out:
             bad.append("no week branch must fail loudly with no command")

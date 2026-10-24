@@ -32,6 +32,36 @@ import agent_log
 COMPILE_RE = re.compile(r"Parse Error|Compile Error|Failed to compile|Failed to load script")
 HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|Lambda capture at index")
 
+# Engine pin: docs, CI and the Bot runners must name this version (check_tool_docs --stale-refs).
+VERSION = "4.7.2"
+BIN_NAME = f"Godot_v{VERSION}-stable_linux.x86_64"
+ZIP_NAME = BIN_NAME + ".zip"
+ZIP_URL = (
+    "https://github.com/godotengine/godot-builds/releases/download/"
+    f"{VERSION}-stable/" + ZIP_NAME
+)
+STEAM_WIN = (
+    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\"
+    "Godot Engine\\godot.windows.opt.tools.64.exe"
+)
+
+def pin_path() -> Path:
+    env = os.environ.get("GODOT_BIN", "").strip()
+    if env:
+        return Path(env)
+    if Path("/workspace").is_dir():
+        return Path("/workspace/godot") / BIN_NAME
+    return Path.home() / ".local" / "share" / "wdb-godot" / BIN_NAME
+
+def resolve_bin() -> Path | None:
+    pin = pin_path()
+    if pin.is_file():
+        return pin
+    steam = Path(STEAM_WIN)
+    if steam.is_file():
+        return steam
+    return None
+
 class GodotBusy(RuntimeError):
     pass
 
@@ -41,9 +71,7 @@ def godot_exe(override: str = "") -> Path:
         if not p.is_file():
             raise FileNotFoundError(f"godot_lib: Godot not found at {override}")
         return p
-    import bot_smokes
-
-    p = bot_smokes.resolve_bin()
+    p = resolve_bin()
     if p is None:
         raise FileNotFoundError("godot_lib: no Godot (set GODOT_BIN, or run tools/bot_smokes.py --setup)")
     return p

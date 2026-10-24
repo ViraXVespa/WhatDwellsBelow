@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 
 import agent_log
+import repo_lib
 import retry_lib
 import session_lib
 
@@ -196,17 +197,10 @@ def selftest(script: Path) -> int:
         p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", env={**os.environ, "GROK_SESSION_ID": env})
         return p.returncode, p.stdout + p.stderr
 
-    def git(cwd: Path, *a: str) -> None:
-        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=cwd, check=True, capture_output=True)
+    git = repo_lib.git_test
 
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td) / "main"
-        root.mkdir()
-        git(root, "init", "-q")
-        git(root, "commit", "-q", "--allow-empty", "-m", "a")
-        (root / "project.godot").write_text("")
-        (root / "scripts" / "data").mkdir(parents=True)
-        (root / "scripts" / "data" / "version.json").write_text('{"epoch": 0, "series": 9, "patch": 0}\n')
+        root = repo_lib.selftest_repo(td, empty_commit=True)
         if not step0_note("", "", "ui-demo", "") or "not a stop" not in step0_note("ui", "ui.x", "", "", "camp-a") or "camp-a" not in step0_note("ui", "ui.x", "", "", "camp-a"):
             bad.append("a visual slice with no flow must give the STEP 0 note (naming the door-only flows)")
         if step0_note("ui", "ui.pause", "", "camp-pause-menu") or step0_note("audio_visual", "", "", "") or step0_note("hub", "", "", ""):
@@ -351,8 +345,7 @@ def selftest(script: Path) -> int:
 def retry_selftest() -> int:
     """RETRY block in a throwaway git repo: with the original session recorded, without it, with a first-run --ref, without a base."""
     import json
-    def git(cwd: Path, *a: str) -> None:
-        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=cwd, check=True, capture_output=True)
+    git = repo_lib.git_test
 
     def state(wt: Path, **kv: str) -> None:
         (wt / "_logs").mkdir(exist_ok=True)

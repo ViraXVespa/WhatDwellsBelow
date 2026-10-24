@@ -102,3 +102,19 @@ def write_text_nl(path: Path, text: str) -> None:
     if not text.endswith("\n"):
         text += "\n"
     path.write_text(text, encoding="utf-8")
+
+def git_test(cwd: Path, *args: str) -> None:
+    """git with a throwaway identity, for selftests in temp repos (raises on failure)."""
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=cwd, check=True, capture_output=True)
+
+def selftest_repo(parent: Path | str, *, empty_commit: bool = False, version: str = '{"epoch": 0, "series": 9, "patch": 0}') -> Path:
+    """parent/main: a git repo with project.godot and scripts/data/version.json (uncommitted), for tool selftests."""
+    main = Path(parent) / "main"
+    main.mkdir()
+    git_test(main, "init", "-q")
+    if empty_commit:
+        git_test(main, "commit", "-q", "--allow-empty", "-m", "a")
+    (main / "project.godot").write_text("")
+    (main / "scripts" / "data").mkdir(parents=True)
+    (main / VERSION_FILE).write_text(version + "\n")
+    return main
