@@ -1,6 +1,7 @@
 extends Object
 
 const UiBuild := preload("res://scripts/ui/ui_build.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 
 static func esc_bb(t: String) -> String:
 	return t.replace("[", "[lb]")
@@ -30,7 +31,7 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 	var lab := str(e.get("label", "")).strip_edges()
 	if lab == "":
 		lab = App.tr("news_fmt.build")
-	var head := "[font_size=24][b]%s[/b][/font_size]" % esc_bb(lab)
+	var head := "[font_size=%d][b]%s[/b][/font_size]" % [UiText.font_px(24), esc_bb(lab)]
 	if is_new:
 		head = "[color=#e2b862]%s[/color]" % head
 	var lines: PackedStringArray = [head]

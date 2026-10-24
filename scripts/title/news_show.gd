@@ -54,7 +54,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.custom_minimum_size = Vector2(668, 0)
-	body.add_theme_font_size_override("normal_font_size", 18)
+	body.add_theme_font_size_override("normal_font_size", ThemeS.font_px(18))
 	body.add_theme_color_override("default_color", BtnSkin.palette("title")["words"][0])
 	body.add_theme_constant_override("outline_size", 0)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE

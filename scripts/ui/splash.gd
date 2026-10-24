@@ -199,7 +199,7 @@ func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", font_px)
+	l.add_theme_font_size_override("font_size", ThemeS.font_px(font_px))
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.04, 0.02, 0.06))
 	l.add_theme_constant_override("outline_size", 8 if font_px >= 28 else 5)

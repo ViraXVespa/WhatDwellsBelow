@@ -2,6 +2,7 @@ extends CanvasLayer
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 
 ## Menu load overlay. Lives on App so it survives the title → camp swap.
 
@@ -66,6 +67,8 @@ func begin(heading: String, status: String = "") -> void:
 	_title.text = heading
 	_status.text = status
 	_pct.text = tr("loader.text") % 0
+	for l: Label in [_title, _status, _pct]:
+		l.add_theme_font_size_override("font_size", UiText.font_px(int(l.get_meta("base_px"))))
 	set_solid(true)
 	_layout_bar()
 	_fill.position = Vector2.ZERO
@@ -185,7 +188,10 @@ func _lab(text: String, font_px: int, col: Color) -> Label:
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", font_px)
+	l.set_meta("base_px", font_px)
+	l.add_theme_font_size_override("font_size", UiText.font_px(font_px))
+	l.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	l.grow_vertical = Control.GROW_DIRECTION_BOTH
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
 	l.add_theme_constant_override("outline_size", 0)

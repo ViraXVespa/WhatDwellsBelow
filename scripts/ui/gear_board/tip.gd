@@ -3,6 +3,7 @@ const TipPlace := preload("res://scripts/ui/tip_place.gd")
 const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 
 static func on(ui: CanvasLayer, key: String) -> bool:
@@ -36,7 +37,7 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 	lab.name = "lab"
 	lab.clip_text = false
 	lab.custom_minimum_size = Vector2(360, 0)
-	UiBuild.tip_text(lab, 18)
+	UiBuild.tip_text(lab, UiText.font_px(18))
 	pad.add_child(lab)
 	ui.add_child(panel)
 	ui.gear_tip_host = panel

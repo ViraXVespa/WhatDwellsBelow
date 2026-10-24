@@ -73,6 +73,7 @@ static func paint_tip(ui: CanvasLayer) -> void:
 	ui.tip_lab.text = ThemeS.skill_tip(ui.tip_id, tip_lv(ui, ui.tip_id, ui.tip_kind))
 	ui.tip_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	ui.tip_lab.add_theme_font_override("font", ThemeS.ink_font())
+	ui.tip_lab.add_theme_font_size_override("font_size", ThemeS.font_px(18))
 	ui.tip_lab.add_theme_constant_override("outline_size", 0)
 	ui.tip_lab.custom_minimum_size = Vector2(w - 28.0, 0.0)
 	var h: float = maxf(120.0, ui.tip_lab.get_minimum_size().y + 28.0)

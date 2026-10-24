@@ -2,6 +2,7 @@ extends Node3D
 
 const Dbg := preload("res://scripts/app/dbg.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
@@ -170,7 +171,7 @@ func _hud() -> void:
 	hint.position = Vector2(48, 40)
 	hint.size = Vector2(608, 120)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_font_size_override("font_size", 20)
+	hint.add_theme_font_size_override("font_size", UiText.font_px(20))
 	hint.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
 	hint.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	hint.add_theme_constant_override("outline_size", 6)

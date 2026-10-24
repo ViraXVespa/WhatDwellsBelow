@@ -39,7 +39,7 @@ static func plain_lab(t: String, size: int, col: Color) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.clip_text = false
 	l.add_theme_font_override("font", ThemeS.ink_font())
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", ThemeS.font_px(size))
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", ThemeS.OUTLINE)
 	l.add_theme_constant_override("outline_size", 0)
@@ -125,7 +125,7 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 	if Text.has_unseen(slot):
 		b.text = "›"
 		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		b.add_theme_font_size_override("font_size", 18)
+		b.add_theme_font_size_override("font_size", ThemeS.font_px(18))
 		b.add_theme_color_override("font_color", ThemeS.INK)
 	return b
 
@@ -147,7 +147,7 @@ static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 		Icons.fit_btn(b, Icons.tex_for_item(it))
 	else:
 		b.text = Text.item_cell(it)
-		b.add_theme_font_size_override("font_size", 14)
+		b.add_theme_font_size_override("font_size", ThemeS.font_px(14))
 		b.add_theme_color_override("font_color", Fmt.item_color(it))
 	_paint_item_btn(b, it)
 	return b

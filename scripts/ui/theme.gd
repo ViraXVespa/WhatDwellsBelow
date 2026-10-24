@@ -38,8 +38,8 @@ static func ink_font() -> Font:
 static func text_scale() -> float:
 	return UiText.applied()
 
-static func font_px(size: int) -> int:
-	return UiText.font_px(size)
+static func font_px(size: int, capped: bool = true) -> int:
+	return UiText.font_px(size, capped)
 
 ## Full-rect anchors with both-way grow (overlay / backdrop fill).
 static func fill(c: Control) -> void:
@@ -61,7 +61,7 @@ static func lab(
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if autowrap else TextServer.AUTOWRAP_OFF
 	l.clip_text = false
 	l.add_theme_font_override("font", ink_font())
-	l.add_theme_font_size_override("font_size", font_px(size))
+	UiText.track(l, size)
 	l.add_theme_color_override("font_color", col)
 	if outline:
 		l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
@@ -73,7 +73,7 @@ static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "s
 	b.text = t
 	b.custom_minimum_size = UiText.min_size(0.0, 44.0)
 	b.add_theme_font_override("font", ink_font())
-	b.add_theme_font_size_override("font_size", font_px(20))
+	UiText.track(b, 20)
 	_apply(b, role, false)
 	b.disabled = not enabled
 	if enabled and not cb.is_null():

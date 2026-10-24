@@ -62,7 +62,7 @@ static func _row_lab(t: String, font_px: int, col: Color) -> Label:
 	l.add_theme_font_override("font", ThemeS.ink_font())
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.clip_text = false
-	l.add_theme_font_size_override("font_size", font_px)
+	l.add_theme_font_size_override("font_size", ThemeS.font_px(font_px))
 	l.add_theme_color_override("font_color", col)
 	UiBuild.halo(l, col, 6)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
