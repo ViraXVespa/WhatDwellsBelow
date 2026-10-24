@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Copy baked version/changelog JSON onto the Pages site as loose /data files."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+import sys
+
+_TOOLS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
+
+import agent_log
+from repo_lib import write_text_nl
+
+def _load(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+def publish(root: Path, site: Path) -> dict:
+    version = _load(root / "scripts" / "data" / "version.json")
+    changelog = _load(root / "scripts" / "data" / "changelog.json")
+    data_dir = site / "data"
+    write_text_nl(data_dir / "version.json", json.dumps(version, ensure_ascii=False, indent=2))
+    write_text_nl(
+        data_dir / "changelog.json",
+        json.dumps(changelog, ensure_ascii=False, indent=2),
+    )
+    payload = {"version": version, "changelog": changelog}
+    body = "window.__wdbNotes = %s;\n" % json.dumps(payload, ensure_ascii=False)
+    write_text_nl(data_dir / "notes.js", body)
+    label = str(version.get("label") or "")
+    entries = changelog.get("entries") if isinstance(changelog.get("entries"), list) else []
+    summary = (
+        "notes site %s\n"
+        "site=%s\n"
+        "label=%s entries=%s\n"
+        "wrote data/version.json data/changelog.json data/notes.js\n"
+        % (label, site, label, len(entries))
+    )
+    agent_log.write_summary("notes-site", root, summary, "PASS", f"label={label}")
+    return {"label": label, "entries": len(entries), "site": str(site)}
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = agent_log.std_parser("Publish loose version/changelog files for GitHub Pages.", writes=True)
+    parser.add_argument("--site", default="site", help="Site dir to write the notes data into (default site).")
+    return parser.parse_args(argv)
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    root = agent_log.resolve_root(args)
+    site = Path(args.site)
+    if not site.is_absolute():
+        site = (root / site).resolve()
+    if args.dry_run:
+        print("would publish to %s" % site.as_posix())
+        return agent_log.emit_result("PASS", dry_run=True)
+    info = publish(root, site)
+    print("label=%s entries=%s site=%s" % (info["label"], info["entries"], info["site"]))
+    return agent_log.emit_result("PASS", label=info["label"], entries=info["entries"])
+
+if __name__ == "__main__":
+    raise SystemExit(agent_log.guarded(main))

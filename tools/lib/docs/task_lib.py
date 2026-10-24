@@ -1,0 +1,285 @@
+"""Shared task files in design/tasks/ (library for docs.py task, handoff_lib.py, slice.py start and check.py load-graph; import only).
+
+One open task is one `design/tasks/<id>.md`. Its header (the lines before the first `## `) holds `key: value` fields: id, owner (build, web or
+bot), status (open, active or blocked), done-when, resume (or a Build handoff's `Your first command ...:` line), optional title and needs
+(comma-separated ids it waits on). The body is free sections. design/tasks/README.md holds the rules and a generated index between markers.
+A finished task is deleted, its dependants lose it from `needs:` (a blocked task with nothing left becomes open), and one changelog line is added.
+"""
+from __future__ import annotations
+
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+import md_format_lib as md
+
+TASKS_REL = "design/tasks"
+README = "README.md"
+BEGIN, END = "<!-- tasks:begin -->", "<!-- tasks:end -->"
+OWNERS = ("build", "web", "bot")
+STATUSES = ("open", "active", "blocked")
+KEYS = ("id", "title", "owner", "status", "done-when", "resume", "needs", "needs-local", "area", "door", "job", "units", "done", "from")  # needs-local: retired, read only so open_slice can refuse it
+ID_RE = re.compile(r"[a-z0-9][a-z0-9-]*$")
+FIRST_RE = re.compile(r"Your first command[^:]*:\s*(.+)$")
+FILL = "<fill"
+OPT_FLOOR = 4  # the old grok-bot-opt.md queue ended at opt-004; opt ids are never reused
+
+def tasks_dir(root: Path) -> Path:
+    return root / TASKS_REL
+
+def task_path(root: Path, tid: str) -> Path:
+    return tasks_dir(root) / f"{tid}.md"
+
+def split(raw: str) -> list[str]:
+    return [p.strip() for p in (raw or "").split(",") if p.strip() and p.strip() != "none"]
+
+def head(text: str) -> dict[str, str]:
+    """Header fields; `title` falls back to the `# ` heading, `resume` to a handoff's first-command line."""
+    out: dict[str, str] = {}
+    for line in text.splitlines():
+        if line.startswith("## "):
+            break
+        if line.startswith("# ") and "heading" not in out:
+            out["heading"] = line[2:].strip()
+            continue
+        m = re.match(r"([a-z-]+):\s*(.*)$", line)
+        if m and m.group(1) in KEYS and m.group(1) not in out:
+            out[m.group(1)] = m.group(2).strip()
+            continue
+        f = FIRST_RE.search(line)
+        if f and "first" not in out:
+            out["first"] = f.group(1).strip()
+    out.setdefault("title", out.get("heading", ""))
+    if not out.get("resume") and out.get("first"):
+        out["resume"] = out["first"]
+    return out
+
+def files(root: Path) -> list[Path]:
+    d = tasks_dir(root)
+    return sorted(p for p in d.glob("*.md") if p.name != README) if d.is_dir() else []
+
+def load(root: Path) -> dict[str, dict[str, str]]:
+    return {p.stem: {**head(md.read_text(p)), "path": f"{TASKS_REL}/{p.name}"} for p in files(root)}
+
+def set_head(path: Path, key: str, value: str) -> bool:
+    """Replace one header line `key: ...` (or a handoff's first-command line when key is 'first'); True when the file changed."""
+    text, eol, bom = md.read_text(path, with_meta=True)
+    lines = text.split("\n")
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            break
+        hit = FIRST_RE.search(line) if key == "first" else re.match(re.escape(key) + r":\s*", line)
+        if hit:
+            new = line[:hit.start(1)] + value if key == "first" else f"{key}: {value}"
+            if new == line:
+                return False
+            lines[i] = new
+            md.write_text(path, "\n".join(lines), eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+            return True
+    return False
+
+def set_section(path: Path, title: str, body: str) -> bool:
+    """Replace the body of `## title` (added at the end when missing); True when the file changed."""
+    text, eol, bom = md.read_text(path, with_meta=True)
+    lines = text.rstrip("\n").split("\n")
+    start = next((i for i, l in enumerate(lines) if l.strip() == f"## {title}"), -1)
+    new_body = body.strip("\n").split("\n")
+    if start < 0:
+        out = lines + ["", f"## {title}"] + new_body
+    else:
+        end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+        tail = [""] + lines[end:] if end < len(lines) else []
+        out = lines[:start + 1] + new_body + tail
+    new = "\n".join(out) + "\n"
+    if new == text:
+        return False
+    md.write_text(path, new, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+    return True
+
+def index_lines(tasks: dict[str, dict[str, str]]) -> list[str]:
+    rows = ["id | owner | status | title | needs", "--- | --- | --- | --- | ---"]
+    for tid, t in sorted(tasks.items(), key=lambda kv: (OWNERS.index(kv[1].get("owner")) if kv[1].get("owner") in OWNERS else 9, kv[0])):
+        rows.append(f"{tid} | {t.get('owner', '')} | {t.get('status', '')} | {t.get('title', '')} | {', '.join(split(t.get('needs', ''))) or '-'}")
+    return rows if tasks else ["(no open tasks)"]
+
+def write_index(root: Path, dry: bool = False) -> bool:
+    """Regenerate the README index block; True when it changed."""
+    p = tasks_dir(root) / README
+    if not p.is_file():
+        return False
+    text, eol, bom = md.read_text(p, with_meta=True)
+    block = "\n".join([BEGIN] + index_lines(load(root)) + [END])
+    new = md.splice_marker_block(text, BEGIN, END, block)
+    if new is None or new == text:
+        return False
+    if not dry:
+        md.write_text(p, new, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+    return True
+
+OPEN_RE = re.compile(r"^python tools/slice\.py open (\S+) --task (\S+)$")
+FROM_RE = re.compile(r"^python tools/slice\.py start --(door|job) (\S+) --from-task (\S+)$")
+
+def start_flag(area: str) -> str:
+    """The slice.py start flag for a resume area: --job for door.job, --door for a door."""
+    return "--job" if "." in area else "--door"
+
+def resume_area(t: dict[str, str]) -> str:
+    """The door or door.job a Build task's `resume:` line names ('' when it names none)."""
+    r = t.get("resume", "").strip()
+    m = OPEN_RE.match(r)
+    if m:
+        return m.group(1)
+    m = FROM_RE.match(r)
+    return m.group(2) if m else ""
+
+def resume_fails(root: Path, tid: str, t: dict[str, str]) -> list[str]:
+    """A Build task's resume line: `python tools/slice.py open AREA --task ID` (her launch) or a handoff's
+    `python tools/slice.py start --door D|--job D.J --from-task ID`; AREA a routes.yaml door or door.job; units/done coherent."""
+    from load_routes import check_route, load_routes
+    where, r, out = t["path"], t.get("resume", "").strip(), []
+    m, f = OPEN_RE.match(r), FROM_RE.match(r)
+    if not (m or f):
+        return [f"{where}: Build `resume:` must be `python tools/slice.py open AREA --task {tid}` (AREA a door or door.job)"]
+    area, rid = (m.group(1), m.group(2)) if m else (f.group(2), f.group(3))
+    if rid != tid:
+        out.append(f"{where}: `resume:` names task {rid}, not {tid}")
+    if f and (f.group(1) == "job") != ("." in area):
+        out.append(f"{where}: `resume:` passes --{f.group(1)} {area}: use {start_flag(area)} for {'a door.job' if '.' in area else 'a door'}")
+    bad = check_route(load_routes(root), "" if "." in area else area, area if "." in area else "")
+    if bad:
+        out.append(f"{where}: `resume:` {bad}")
+    units = split(t.get("units", ""))
+    done = [d for d in split(t.get("done", "")) if d != "none"]
+    if [d for d in done if d not in units]:
+        out.append(f"{where}: `done:` names units not in `units:`")
+    return out
+
+def fails(root: Path) -> list[str]:
+    """Lint for check.py load-graph and `docs.py task check`."""
+    out: list[str] = []
+    d = tasks_dir(root)
+    if not d.is_dir():
+        return [f"{TASKS_REL}/ is missing"]
+    if not (d / README).is_file():
+        out.append(f"{TASKS_REL}/README.md is missing")
+    for p in sorted(d.iterdir()):
+        if p.is_dir() or (p.suffix != ".md"):
+            out.append(f"{TASKS_REL}/{p.name}: tasks are <id>.md files (convert it with `python tools/docs.py task new`)")
+    tasks = load(root)
+    for tid, t in tasks.items():
+        where = t["path"]
+        if not ID_RE.match(tid):
+            out.append(f"{where}: file name must be a lowercase kebab id")
+        if t.get("id") != tid:
+            out.append(f"{where}: `id:` must equal the file name ({tid})")
+        if t.get("owner") not in OWNERS:
+            out.append(f"{where}: `owner:` must be one of {', '.join(OWNERS)}")
+        if t.get("status") not in STATUSES:
+            out.append(f"{where}: `status:` must be one of {', '.join(STATUSES)} (a done task is deleted: `python tools/docs.py task done {tid}`)")
+        for key in ("done-when", "resume"):
+            if not t.get(key) or FILL in t.get(key, ""):
+                out.append(f"{where}: `{key}:` is empty or unfilled")
+        if t.get("owner") == "build" and t.get("resume") and FILL not in t.get("resume", ""):
+            out += resume_fails(root, tid, t)
+        needs = split(t.get("needs", ""))
+        for n in needs:
+            if n not in tasks:
+                out.append(f"{where}: needs {n}, which is not an open task")
+        if t.get("status") == "blocked" and not needs:
+            out.append(f"{where}: blocked with no `needs:` (name what it waits on, or make it open)")
+    p = d / README
+    if p.is_file():
+        parts = md.split_marker_block(md.read_text(p), BEGIN, END)
+        want = "\n".join([BEGIN] + index_lines(tasks) + [END])
+        if parts is None:
+            out.append(f"{TASKS_REL}/README.md has no {BEGIN} ... {END} index")
+        elif parts[1].strip() != want:
+            out.append(f"{TASKS_REL}/README.md index is stale: run `python tools/docs.py task index`")
+    return out
+
+def changelog_target(root: Path, create: bool = False) -> Path | None:
+    """The newest design/changelog/X.Y.Z.md that main does not have yet (this branch's own entry).
+    If create and none exists, write the next label (with blank line after header) and return it."""
+    def key(p: Path) -> tuple[int, ...]:
+        return tuple(int(x) for x in p.stem.split("."))
+    logs = sorted((p for p in (root / "design" / "changelog").glob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)), key=key, reverse=True)
+    for p in logs:
+        rel = p.relative_to(root).as_posix()
+        on_main = any(subprocess.run(["git", "cat-file", "-e", f"{ref}:{rel}"], cwd=root, capture_output=True).returncode == 0 for ref in ("origin/main", "main"))
+        if not on_main:
+            return p
+        break
+    if not create:
+        return None
+    if logs:
+        parts = list(key(logs[0]))
+        parts[-1] += 1
+        label = ".".join(map(str, parts))
+    else:
+        label = "0.0.1"
+    path = root / "design" / "changelog" / f"{label}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("## " + label + "\n\n", encoding="utf-8")
+    return path
+
+def add_bullet(text: str, bullet: str) -> str:
+    """The bullet after the entry's last `- ` line (before its `Summary:` line), else at the end.
+    Ensures a blank line after a bare ## header."""
+    lines = text.rstrip("\n").split("\n") if text.strip() else []
+    if lines and lines[0].startswith("## ") and (len(lines) == 1 or lines[1] != ""):
+        lines.insert(1, "")
+    last = max((i for i, l in enumerate(lines) if l.startswith("- ")), default=-1)
+    if last < 0:
+        last = next((i - 1 for i, l in enumerate(lines) if l.startswith("Summary:")), len(lines) - 1)
+    return "\n".join(lines[:last + 1] + [bullet] + lines[last + 1:]) + "\n"
+
+def done(root: Path, tid: str, changelog: Path | None = None, dry: bool = False) -> list[str]:
+    """Delete the task, unblock its dependants, add one changelog line. Returns what changed."""
+    tasks = load(root)
+    t = tasks[tid]
+    title = t.get("title") or tid
+    out = [f"deleted {t['path']}"]
+    if changelog is not None:
+        out.append(f"changelog {changelog.relative_to(root).as_posix()}: - Finished task {tid}: {title}.")
+    for oid, o in tasks.items():
+        needs = split(o.get("needs", ""))
+        if tid in needs:
+            rest = [n for n in needs if n != tid]
+            out.append(f"{oid}: needs {', '.join(rest) or 'none'}" + ("; status open" if not rest and o.get("status") == "blocked" else ""))
+            if not dry:
+                op = root / o["path"]
+                set_head(op, "needs", ", ".join(rest) or "none")
+                if not rest and o.get("status") == "blocked":
+                    set_head(op, "status", "open")
+    if not dry:
+        (root / t["path"]).unlink()
+        refs = root / "design" / "refs" / tid
+        if refs.is_dir():
+            shutil.rmtree(refs)
+            out.append(f"deleted refs {refs.relative_to(root).as_posix()}")
+        if changelog is not None:
+            text, eol, bom = md.read_text(changelog, with_meta=True) if changelog.is_file() else ("", "\r\n", False)
+            bullet = f"- Finished task {tid}: {title}."
+            text = add_bullet(text, bullet)
+            if "Summary:" not in text:
+                # make the finished-task line the summary
+                summary_line = f"Summary: Finished task {tid}: {title}."
+                if not text.endswith("\n"):
+                    text += "\n"
+                text += "\n" + summary_line + "\n"
+            md.write_text(changelog, text, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+        write_index(root)
+    return out
+
+def next_opt(root: Path) -> str:
+    """`opt-next` for `docs.py task new`: one above every opt id open now or ever committed under design/tasks."""
+    p = subprocess.run(["git", "log", "--all", "--format=", "--name-only", "--", f"{TASKS_REL}/opt-*.md"], cwd=root, capture_output=True, text=True)
+    seen = [int(m) for m in re.findall(r"opt-(\d+)\.md", p.stdout + " ".join(f.name for f in files(root)))]
+    return f"opt-{max(seen + [OPT_FLOOR]) + 1:03d}"
+
+def skeleton(tid: str, owner: str, title: str, done_when: str, resume: str, needs: list[str], body: str) -> str:
+    lines = [f"# {title}", "", f"id: {tid}", f"owner: {owner}", f"status: {'blocked' if needs else 'open'}", f"done-when: {done_when}", f"resume: {resume}"]
+    if needs:
+        lines.append("needs: " + ", ".join(needs))
+    return "\n".join(lines + ["", body.strip() or "## Notes\nnone yet", ""])
