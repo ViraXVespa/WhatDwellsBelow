@@ -36,10 +36,8 @@ static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "stall_counter", Art.grain(160, 48, 0.12, 0))
 	UiBuild.piece(chrome, "stall_crate", Art.crate())
 	UiBuild.piece(chrome, "stall_pot", Art.pot())
-	Art.shelf(0.92, 2)
-	Art.shelf(0.98, 2)
-	Art.shelf(0.62, 4)
-	Art.shelf(0.5, 2)
+	for look: Array in FrameBase.SHELF_LOOKS:
+		Art.shelf(look[0], look[1])
 	for i: int in 7:
 		var kind: int = i % 3
 		var tex: Texture2D = Art.herb()

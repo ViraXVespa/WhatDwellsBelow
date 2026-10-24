@@ -63,81 +63,49 @@ static func prime_visible(host: Node) -> void:
 	if host.player == null:
 		return
 	ensure_meshes()
-	var origin := chunk_origin(host._player_cell())
-	var w: int = host.data.w
-	var h: int = host.data.h
-	var dy: int = -RING_IN
-	while dy <= RING_IN:
-		var dx: int = -RING_IN
-		while dx <= RING_IN:
-			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
-			dx += 1
-			if o.x < 0 or o.y < 0 or o.x >= w or o.y >= h:
-				continue
-			var job: Dictionary = job_at(host, o)
-			if str(job.state) != "pending":
-				continue
-			Dbg.hitch("geo_activate", Vector2i(job.origin))
-			activate_job(host, job)
-		dy += 1
+	for o in _ring_cells(host, chunk_origin(host._player_cell()), 0, RING_IN):
+		_wake(host, o, true)
 static func follow(host: Node, _delta: float) -> void:
 	if host.player == null:
 		return
 	ensure_meshes()
 	var pc: Vector2i = host._player_cell()
 	var origin := chunk_origin(pc)
-	var w: int = host.data.w
-	var h: int = host.data.h
-	var cur: Dictionary = job_at(host, origin)
-	if str(cur.state) == "pending":
-		Dbg.hitch("geo_activate", Vector2i(cur.origin))
-		activate_job(host, cur)
+	_wake(host, origin, true)
 	host.set_meta("wdb_geo_origin", origin)
 	var budget: int = PER_FRAME
 	if int(host.get("frame_n")) <= 2:
 		budget = 1
 	var built := 0
-	var dy: int = -RING_IN
-	while dy <= RING_IN:
-		var dx: int = -RING_IN
-		while dx <= RING_IN:
-			if dx == 0 and dy == 0:
-				dx += 1
-				continue
-			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
-			dx += 1
-			if o.x < 0 or o.y < 0 or o.x >= w or o.y >= h:
-				continue
-			var job: Dictionary = job_at(host, o)
-			if str(job.state) != "pending":
-				continue
-			if built >= budget:
-				continue
-			Dbg.hitch("geo_activate", Vector2i(job.origin))
-			activate_job(host, job)
+	for o in _ring_cells(host, origin, 1, RING_IN):
+		if _wake(host, o, built < budget):
 			built += 1
-		dy += 1
-	if built < budget:
-		var dy2: int = -RING_OUT
-		while dy2 <= RING_OUT and built < budget:
-			var dx2: int = -RING_OUT
-			while dx2 <= RING_OUT and built < budget:
-				if maxi(absi(dx2), absi(dy2)) <= RING_IN:
-					dx2 += 1
-					continue
-				var o2 := Vector2i(origin.x + dx2 * CHUNK, origin.y + dy2 * CHUNK)
-				dx2 += 1
-				if o2.x < 0 or o2.y < 0 or o2.x >= w or o2.y >= h:
-					continue
-				var job2: Dictionary = job_at(host, o2)
-				if str(job2.state) != "pending":
-					continue
-				Dbg.hitch("geo_activate", Vector2i(job2.origin))
-				activate_job(host, job2)
-				built += 1
-			dy2 += 1
+	for o in _ring_cells(host, origin, RING_IN + 1, RING_OUT):
+		if built >= budget:
+			break
+		if _wake(host, o, true):
+			built += 1
 	Dbg.lt_dnote("geo_built", str(built))
 	LightRt.maintain(host)
+## In-map chunk origins on rings lo..hi (chunk steps, Chebyshev) around `origin`, rows top to bottom.
+static func _ring_cells(host: Node, origin: Vector2i, lo: int, hi: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for dy: int in range(-hi, hi + 1):
+		for dx: int in range(-hi, hi + 1):
+			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
+			if maxi(absi(dx), absi(dy)) >= lo and o.x >= 0 and o.y >= 0 and o.x < host.data.w and o.y < host.data.h:
+				out.append(o)
+	return out
+
+## Activate the chunk job at `o` when it is pending and `can` (budget left); true when it was activated.
+static func _wake(host: Node, o: Vector2i, can: bool) -> bool:
+	var job: Dictionary = job_at(host, o)
+	if str(job.state) != "pending" or not can:
+		return false
+	Dbg.hitch("geo_activate", Vector2i(job.origin))
+	activate_job(host, job)
+	return true
+
 static func tick(host: Node, delta: float) -> void:
 	follow(host, delta)
 	if host.player == null:

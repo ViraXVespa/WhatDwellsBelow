@@ -16,12 +16,10 @@ static func page_playtest(host) -> void:
 	sum.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sum.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.root_box.add_child(sum)
-	host.root_box.add_child(host._btn("Apply fresh ideal", func(): host.status.text = host.play.apply_rec("fresh", 0)))
-	host.root_box.add_child(host._btn("Apply fresh alt A", func(): host.status.text = host.play.apply_rec("fresh", 1)))
-	host.root_box.add_child(host._btn("Apply fresh alt B", func(): host.status.text = host.play.apply_rec("fresh", 2)))
-	host.root_box.add_child(host._btn("Apply progressed ideal", func(): host.status.text = host.play.apply_rec("progressed", 0)))
-	host.root_box.add_child(host._btn("Apply progressed alt A", func(): host.status.text = host.play.apply_rec("progressed", 1)))
-	host.root_box.add_child(host._btn("Apply progressed alt B", func(): host.status.text = host.play.apply_rec("progressed", 2)))
+	for start: String in ["fresh", "progressed"]:
+		for i: int in 3:
+			var cap: String = "Apply %s %s" % [start, ["ideal", "alt A", "alt B"][i]]
+			host.root_box.add_child(host._btn(cap, func(): host.status.text = host.play.apply_rec(start, i)))
 	host.root_box.add_child(host._btn("Reset progressed save template", func(): host.status.text = host.play.reset_progressed_template()))
 	var n := Label.new()
 	n.text = "History rows: %d   queue: %d   live: %s" % [host.play.history.size(), host.play.queue.size(), str(host.play.live_running)]

@@ -6,6 +6,7 @@ const Disp := preload("res://scripts/display_mode.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const SplitView := preload("res://scripts/ui/split_menu/split_menu_view.gd")
+const UiBuild := preload("res://scripts/ui/ui_build.gd")
 
 var _kind: String = "web"
 var _action: Button
@@ -30,11 +31,7 @@ func _ready() -> void:
 	add_child(bg)
 
 	var card := VBoxContainer.new()
-	card.set_anchors_preset(Control.PRESET_CENTER)
-	card.offset_left = -420.0
-	card.offset_right = 420.0
-	card.offset_top = -320.0
-	card.offset_bottom = 340.0
+	UiBuild.center(card, 420, -320, 340)
 	card.alignment = BoxContainer.ALIGNMENT_CENTER
 	card.add_theme_constant_override("separation", 16)
 	add_child(card)

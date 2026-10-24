@@ -8,6 +8,23 @@ const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
 static var _empty: StyleBoxEmpty
 
+## Centre `c` on its parent: half-width `half_w` either side, `top`/`bottom` offsets from the centre line.
+static func center(c: Control, half_w: float, top: float, bottom: float) -> void:
+	c.set_anchors_preset(Control.PRESET_CENTER)
+	c.offset_left = -half_w
+	c.offset_right = half_w
+	c.offset_top = top
+	c.offset_bottom = bottom
+
+## Wire all six focus links of `c` (pad/keyboard neighbours, then Tab next/previous). Nodes must be in the tree.
+static func focus(c: Control, left: Control, right: Control, up: Control, down: Control, next: Control, prev: Control) -> void:
+	c.focus_neighbor_left = left.get_path()
+	c.focus_neighbor_right = right.get_path()
+	c.focus_neighbor_top = up.get_path()
+	c.focus_neighbor_bottom = down.get_path()
+	c.focus_next = next.get_path()
+	c.focus_previous = prev.get_path()
+
 ## A label for a frame's chrome: named, never takes the mouse.
 static func chrome_label(node_name: String, size_px: int, col: Color, wrap_on: bool, text: String = "") -> Label:
 	var lab: Label = ThemeS.lab(text, size_px, col, HORIZONTAL_ALIGNMENT_CENTER, wrap_on)
@@ -17,14 +34,19 @@ static func chrome_label(node_name: String, size_px: int, col: Color, wrap_on: b
 
 ## A stretched, nearest-filtered picture child that ignores the mouse.
 static func piece(parent: Control, node_name: String, tex: Texture2D) -> TextureRect:
-	var rect: TextureRect = TextureRect.new()
+	var rect: TextureRect = picture(tex)
 	rect.name = node_name
+	parent.add_child(rect)
+	return rect
+
+## A stretched picture that ignores the mouse (not parented). Nearest filtering unless `filter` says otherwise.
+static func picture(tex: Texture2D, filter: CanvasItem.TextureFilter = CanvasItem.TEXTURE_FILTER_NEAREST) -> TextureRect:
+	var rect: TextureRect = TextureRect.new()
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	rect.texture_filter = filter
 	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	rect.stretch_mode = TextureRect.STRETCH_SCALE
 	rect.texture = tex
-	parent.add_child(rect)
 	return rect
 
 static func place(chrome: Control, node_name: String, pos: Vector2, span: Vector2) -> void:
@@ -37,6 +59,19 @@ static func keep(cache: Dictionary, key: String, img: Image) -> Texture2D:
 	var tex: ImageTexture = ImageTexture.create_from_image(img)
 	cache[key] = tex
 	return tex
+
+## A w x (h + foot) row card image: `face` fill, an 8 px `tag` strip on the left, a 2 px `edge` border. Foot rows stay clear.
+static func row_card(w: int, h: int, foot: int, face: Color, tag: Color, edge: Color) -> Image:
+	var img: Image = Image.create(w, h + foot, false, Image.FORMAT_RGBA8)
+	for y: int in h:
+		for x: int in w:
+			var px: Color = face
+			if x < 8:
+				px = tag
+			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
+				px = edge
+			img.set_pixel(x, y, px)
+	return img
 
 static func dot(img: Image, cx: int, cy: int, radius: int, col: Color) -> void:
 	for y: int in range(cy - radius, cy + radius + 1):
@@ -79,11 +114,7 @@ static func button_base(button: Button) -> void:
 
 ## Ink-coloured text in every state (faint when disabled).
 static func ink_text(button: Button) -> void:
-	button.add_theme_color_override("font_color", ThemeS.INK)
-	button.add_theme_color_override("font_hover_color", ThemeS.INK)
-	button.add_theme_color_override("font_focus_color", ThemeS.INK)
-	button.add_theme_color_override("font_pressed_color", ThemeS.INK)
-	button.add_theme_color_override("font_disabled_color", ThemeS.INK_FAINT)
+	ThemeS.text_tones(button, ThemeS.INK, ThemeS.INK, ThemeS.INK, ThemeS.INK, ThemeS.INK_FAINT)
 
 ## The five button states from five boxes.
 static func states(button: Button, normal: StyleBox, hover: StyleBox, pressed: StyleBox, focus: StyleBox, disabled: StyleBox) -> void:

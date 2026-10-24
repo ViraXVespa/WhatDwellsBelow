@@ -44,18 +44,10 @@ static func shelf(lift: float, foot: int) -> Texture2D:
 		return _images[key]
 	var w: int = 96
 	var h: int = 32
-	var img: Image = Image.create(w, h + foot, false, Image.FORMAT_RGBA8)
 	var face: Color = PAGE_COL.lerp(Color(1, 1, 1, 1), clampf(lift - 0.7, 0.0, 0.3))
 	if lift < 0.75:
 		face = CLOTH_DK.lerp(PAGE_COL, 0.35)
-	for y: int in h:
-		for x: int in w:
-			var px: Color = face
-			if x < 8:
-				px = CLOTH
-			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
-				px = STITCH
-			img.set_pixel(x, y, px)
+	var img: Image = UiBuild.row_card(w, h, foot, face, CLOTH, STITCH)
 	if foot > 0:
 		_fill(img, Rect2i(4, h, w - 8, foot), Color(NIGHT, 0.45))
 	return UiBuild.keep(_images, key, img)

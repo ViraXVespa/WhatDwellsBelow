@@ -52,6 +52,18 @@ static func skill_name(id: String) -> String:
 static func _pct(v: float) -> String:
 	return "%d%%" % int(round(v * 100.0))
 
+## Tip keys per weapon skill (now, per level) and per style skill (now); same wording pattern, different weapon.
+const _WEAPON_TIP := {
+	"axe": ["theme.now_great_axe_damage_great", "theme.each_level_after_1_great"],
+	"staff": ["theme.now_staff_damage_staff_special", "theme.each_level_after_1_staff"],
+	"bow": ["theme.now_longbow_damage_longbow_speci", "theme.each_level_after_1_longbow"],
+}
+const _STYLE_TIP := {
+	"str": "theme.now_melee_style_damage_great",
+	"mag": "theme.now_magic_style_damage_staff",
+	"rng": "theme.now_ranged_style_damage_longbow",
+}
+
 static func skill_tip(id: String, lv: int) -> String:
 	lv = maxi(1, lv)
 	var ranks := maxi(0, lv - 1)
@@ -61,43 +73,16 @@ static func skill_tip(id: String, lv: int) -> String:
 	var spec := float(App.bal.skill_special_bonus)
 	var now := ""
 	var per := ""
+	if _WEAPON_TIP.has(id):
+		var wk: Array = _WEAPON_TIP[id]
+		now = App.tr("common.now_no_damage_bonus_yet") if ranks <= 0 else App.tr(wk[0]) % [_pct(ranks * wpn), _pct(ranks * spec)]
+		per = App.tr(wk[1]) % [_pct(wpn), _pct(spec)]
+		return App.tr("theme.level") % [n, lv, now, per]
+	if _STYLE_TIP.has(id):
+		now = App.tr("common.now_no_style_bonus_yet") if ranks <= 0 else App.tr(_STYLE_TIP[id]) % _pct(ranks * sty)
+		per = App.tr("common.each_level_after_1_style") % _pct(sty)
+		return App.tr("theme.level") % [n, lv, now, per]
 	match id:
-		"axe":
-			if ranks <= 0:
-				now = App.tr("common.now_no_damage_bonus_yet")
-			else:
-				now = App.tr("theme.now_great_axe_damage_great") % [_pct(ranks * wpn), _pct(ranks * spec)]
-			per = App.tr("theme.each_level_after_1_great") % [_pct(wpn), _pct(spec)]
-		"staff":
-			if ranks <= 0:
-				now = App.tr("common.now_no_damage_bonus_yet")
-			else:
-				now = App.tr("theme.now_staff_damage_staff_special") % [_pct(ranks * wpn), _pct(ranks * spec)]
-			per = App.tr("theme.each_level_after_1_staff") % [_pct(wpn), _pct(spec)]
-		"bow":
-			if ranks <= 0:
-				now = App.tr("common.now_no_damage_bonus_yet")
-			else:
-				now = App.tr("theme.now_longbow_damage_longbow_speci") % [_pct(ranks * wpn), _pct(ranks * spec)]
-			per = App.tr("theme.each_level_after_1_longbow") % [_pct(wpn), _pct(spec)]
-		"str":
-			if ranks <= 0:
-				now = App.tr("common.now_no_style_bonus_yet")
-			else:
-				now = App.tr("theme.now_melee_style_damage_great") % _pct(ranks * sty)
-			per = App.tr("common.each_level_after_1_style") % _pct(sty)
-		"mag":
-			if ranks <= 0:
-				now = App.tr("common.now_no_style_bonus_yet")
-			else:
-				now = App.tr("theme.now_magic_style_damage_staff") % _pct(ranks * sty)
-			per = App.tr("common.each_level_after_1_style") % _pct(sty)
-		"rng":
-			if ranks <= 0:
-				now = App.tr("common.now_no_style_bonus_yet")
-			else:
-				now = App.tr("theme.now_ranged_style_damage_longbow") % _pct(ranks * sty)
-			per = App.tr("common.each_level_after_1_style") % _pct(sty)
 		"def":
 			var dnow := float(ranks) * float(App.bal.skill_def_per_lv)
 			if ranks <= 0:

@@ -68,10 +68,9 @@ static func lid() -> Texture2D:
 		img.set_pixel(x, 8, STEEL_DARK)
 		img.set_pixel(x, 9, HUB)
 		img.set_pixel(x, 10, STEEL_DARK)
-	img.set_pixel(50, 11, STEEL_DARK)
-	img.set_pixel(51, 12, STEEL_DARK)
-	img.set_pixel(68, 11, STEEL_DARK)
-	img.set_pixel(69, 12, STEEL_DARK)
+	for x: int in [50, 68]:
+		img.set_pixel(x, 11, STEEL_DARK)
+		img.set_pixel(x + 1, 12, STEEL_DARK)
 	return UiBuild.keep(_images, "lid", img)
 
 static func mouth() -> Texture2D:

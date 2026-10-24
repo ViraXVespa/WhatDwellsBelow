@@ -14,12 +14,7 @@ static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wal
 	var fx1: int = x1 * n
 	var fy1: int = y1 * n
 	var hit: Array = []
-	for item in raw:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
+	for run: Dictionary in _runs(raw):
 		var o: Vector2 = run["origin"] as Vector2
 		var d: Vector2 = run["delta"] as Vector2
 		if _clip_span(o, d, float(fx0) - 2.0, float(fy0) - 2.0, float(fx1) + 2.0, float(fy1) + 2.0).is_empty():
@@ -28,20 +23,25 @@ static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wal
 	return _spans_on_chunk(WallMesh.prepare(hit), fx0, fy0, fx1, fy1)
 
 static func _outline_spans(host: Node) -> Array:
-	if host.data == null or not host.data.has("outline_spans"):
-		return []
-	var raw: Variant = host.data["outline_spans"]
-	if raw is Array:
-		return raw
-	return []
+	return _outline(host, "outline_spans")
 
 static func _outline_loops(host: Node) -> Array:
-	if host.data == null or not host.data.has("outline_loops"):
+	return _outline(host, "outline_loops")
+
+## host.data[key] when it is an Array, else [].
+static func _outline(host: Node, key: String) -> Array:
+	if host.data == null or not host.data.has(key):
 		return []
-	var raw: Variant = host.data["outline_loops"]
-	if raw is Array:
-		return raw
-	return []
+	var raw: Variant = host.data[key]
+	return raw if raw is Array else []
+
+## The span dictionaries of `items` (outline runs carry origin/delta/normal); anything else is skipped.
+static func _runs(items: Array) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for item in items:
+		if item is Dictionary and (item as Dictionary).has("delta"):
+			out.append(item)
+	return out
 
 static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int) -> Array[Dictionary]:
 	var kept: Array[Dictionary] = []
@@ -54,12 +54,7 @@ static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int
 	var y0: float = float(fy0) - 1.0
 	var x1: float = float(fx1) + 1.0
 	var y1: float = float(fy1) + 1.0
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
+	for run: Dictionary in _runs(spans):
 		var o: Vector2 = run["origin"] as Vector2
 		var d: Vector2 = run["delta"] as Vector2
 		if _clip_span(o, d, ix0, iy0, ix1, iy1).is_empty():

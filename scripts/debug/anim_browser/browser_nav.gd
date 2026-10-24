@@ -24,10 +24,7 @@ static func _anim_caption(nm: String) -> String:
 
 static func _mark(b: Button, on: bool) -> void:
 	var col: Color = COL_ON if on else COL_IDLE
-	b.add_theme_color_override("font_color", col)
-	b.add_theme_color_override("font_hover_color", col)
-	b.add_theme_color_override("font_pressed_color", col)
-	b.add_theme_color_override("font_focus_color", col)
+	ThemeS.text_tones(b, col, col, col, col)
 
 static func _dir_caption(host: CanvasLayer, key: String) -> String:
 	var n: int = 0

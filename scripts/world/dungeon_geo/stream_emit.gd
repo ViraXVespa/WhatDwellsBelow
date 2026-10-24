@@ -5,6 +5,7 @@
 const T := preload("res://scripts/data/tunables.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 const Commit := preload("res://scripts/graphics/mesh_commit.gd")
+const Clip := preload("res://scripts/world/dungeon_geo/stream_clip.gd")
 
 static var _floor_mesh: PlaneMesh
 
@@ -142,12 +143,7 @@ static func _add_ribbon_boxes(root: Node3D, spans: Array, fine_m: float) -> void
 	body.collision_layer = 1
 	body.collision_mask = 0
 	root.add_child(body)
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
+	for run: Dictionary in Clip._runs(spans):
 		var o: Vector2 = run["origin"] as Vector2
 		var d: Vector2 = run["delta"] as Vector2
 		var span_l: float = d.length()

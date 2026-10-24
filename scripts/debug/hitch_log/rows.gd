@@ -24,15 +24,16 @@ static var _keep_all: bool = false
 static var _mark_frame: int = -1
 static var started: bool = false
 
+## Seconds since the log started (0.1 s steps), 0 before it starts.
+static func _t_sec() -> float:
+	return snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1) if _t0_ms > 0 else 0.0
+
 static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
-	var t_sec: float = 0.0
-	if _t0_ms > 0:
-		t_sec = snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1)
 	var row: Dictionary = {
 		"ev": "hitch",
 		"ver": ver,
 		"at": Time.get_datetime_string_from_system(false, true),
-		"t": t_sec,
+		"t": _t_sec(),
 		"dt_ms": dt_ms,
 		"where": Ctx._where(host),
 		"fl": int(App.floor_n) if App else 0,
@@ -84,14 +85,11 @@ static func _sample_proc() -> void:
 	_last_proc = proc
 
 static func _write_mark(reason: String, gap_ms: int) -> void:
-	var t_sec: float = 0.0
-	if _t0_ms > 0:
-		t_sec = snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1)
 	var row: Dictionary = {
 		"ev": "mark",
 		"why": reason,
 		"dt_ms": gap_ms,
-		"t": t_sec,
+		"t": _t_sec(),
 		"play_s": snappedf(_play_s, 0.1),
 	}
 	if _phase != "":
@@ -99,14 +97,11 @@ static func _write_mark(reason: String, gap_ms: int) -> void:
 	_write_row(row)
 
 static func _write_gap(delta: float, reason: String) -> void:
-	var t_sec: float = 0.0
-	if _t0_ms > 0:
-		t_sec = snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1)
 	var row: Dictionary = {
 		"ev": "gap",
 		"why": reason,
 		"dt_ms": snappedf(delta * 1000.0, 0.1),
-		"t": t_sec,
+		"t": _t_sec(),
 		"play_s": snappedf(_play_s, 0.1),
 	}
 	if _phase != "":

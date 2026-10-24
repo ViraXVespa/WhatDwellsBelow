@@ -46,20 +46,14 @@ static func speech() -> Texture2D:
 		return _images["speech"]
 	var img: Image = Image.create(96, 96, false, Image.FORMAT_RGBA8)
 	img.fill(PAPER)
-	img.fill_rect(Rect2i(0, 0, 96, 10), EDGE)
-	img.fill_rect(Rect2i(0, 86, 96, 10), EDGE)
-	img.fill_rect(Rect2i(0, 0, 10, 96), EDGE)
-	img.fill_rect(Rect2i(86, 0, 10, 96), EDGE)
+	for i: int in 2:
+		img.fill_rect(Rect2i(0, 86 * i, 96, 10), EDGE)
+		img.fill_rect(Rect2i(86 * i, 0, 10, 96), EDGE)
 	img.fill_rect(Rect2i(4, 4, 88, 4), WOOD_LT)
 	img.fill_rect(Rect2i(4, 88, 88, 4), WOOD)
-	img.fill_rect(Rect2i(0, 0, 22, 22), WOOD)
-	img.fill_rect(Rect2i(74, 0, 22, 22), WOOD)
-	img.fill_rect(Rect2i(0, 74, 22, 22), WOOD)
-	img.fill_rect(Rect2i(74, 74, 22, 22), WOOD)
-	img.fill_rect(Rect2i(6, 6, 10, 10), GOLD)
-	img.fill_rect(Rect2i(80, 6, 10, 10), GOLD)
-	img.fill_rect(Rect2i(6, 80, 10, 10), GOLD)
-	img.fill_rect(Rect2i(80, 80, 10, 10), GOLD)
+	for c: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		img.fill_rect(Rect2i(c * 74, Vector2i(22, 22)), WOOD)
+		img.fill_rect(Rect2i(Vector2i(6, 6) + c * 74, Vector2i(10, 10)), GOLD)
 	img.fill_rect(Rect2i(24, 24, 48, 48), PAPER)
 	return UiBuild.keep(_images, "speech", img)
 

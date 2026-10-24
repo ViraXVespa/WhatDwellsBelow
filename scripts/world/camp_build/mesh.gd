@@ -90,36 +90,21 @@ static func grass_pad(
 
 	host.add_child(inst)
 
+# Wall sides as bottom edges (ax, az, bx, bz) in half-extent units, wound outward: front, back, west, east.
+const _SIDES: Array[Vector4] = [Vector4(-1, 1, 1, 1), Vector4(1, -1, -1, -1), Vector4(-1, -1, -1, 1), Vector4(1, 1, 1, -1)]
+
 static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var hx: float = box_size.x * 0.5
 	var hy: float = box_size.y * 0.5
 	var hz: float = box_size.z * 0.5
-	st.add_vertex(Vector3(-hx, -hy, hz))
-	st.add_vertex(Vector3(hx, -hy, hz))
-	st.add_vertex(Vector3(hx, hy, hz))
-	st.add_vertex(Vector3(-hx, -hy, hz))
-	st.add_vertex(Vector3(hx, hy, hz))
-	st.add_vertex(Vector3(-hx, hy, hz))
-	st.add_vertex(Vector3(hx, -hy, -hz))
-	st.add_vertex(Vector3(-hx, -hy, -hz))
-	st.add_vertex(Vector3(-hx, hy, -hz))
-	st.add_vertex(Vector3(hx, -hy, -hz))
-	st.add_vertex(Vector3(-hx, hy, -hz))
-	st.add_vertex(Vector3(hx, hy, -hz))
-	st.add_vertex(Vector3(-hx, -hy, -hz))
-	st.add_vertex(Vector3(-hx, -hy, hz))
-	st.add_vertex(Vector3(-hx, hy, hz))
-	st.add_vertex(Vector3(-hx, -hy, -hz))
-	st.add_vertex(Vector3(-hx, hy, hz))
-	st.add_vertex(Vector3(-hx, hy, -hz))
-	st.add_vertex(Vector3(hx, -hy, hz))
-	st.add_vertex(Vector3(hx, -hy, -hz))
-	st.add_vertex(Vector3(hx, hy, -hz))
-	st.add_vertex(Vector3(hx, -hy, hz))
-	st.add_vertex(Vector3(hx, hy, -hz))
-	st.add_vertex(Vector3(hx, hy, hz))
+	for w in _SIDES:
+		var a := Vector3(w.x * hx, -hy, w.y * hz)
+		var b := Vector3(w.z * hx, -hy, w.w * hz)
+		var up := Vector3(0.0, box_size.y, 0.0)
+		for v in [a, b, b + up, a, b + up, a + up]:
+			st.add_vertex(v)
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()

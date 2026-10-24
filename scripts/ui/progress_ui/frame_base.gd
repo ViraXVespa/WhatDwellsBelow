@@ -11,6 +11,8 @@ const Plate: GDScript = preload("res://scripts/ui/plate_chrome.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const PromptView: GDScript = preload("res://scripts/ui/prompt_view.gd")
 
+## Shelf-row looks (lift, foot) for normal, hover, pressed, disabled; shop and vendor bake them when built.
+const SHELF_LOOKS: Array = [[0.92, 2], [0.98, 2], [0.62, 4], [0.5, 2]]
 const PLATE_POS: Vector2 = Vector2(360, 80)
 const PLATE_SIZE: Vector2 = Vector2(1200, 920)
 const SCROLL_POS: Vector2 = Vector2(384, 104)

@@ -112,6 +112,15 @@ static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3A
 		if nsum.length_squared() < 0.0001:
 			nsum = Vector2.DOWN
 		_corner_post(p, nsum.normalized(), thick, T.WALL_H, verts, norms, uvs, indices)
+## Corner post faces: corners as (x, y, z) picks of (min, max) per axis, then the face normal. Bottom stays open.
+const _POST_FACES: Array = [
+	[[Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 1, 1), Vector3i(0, 1, 0)], Vector3.LEFT],
+	[[Vector3i(1, 0, 1), Vector3i(1, 0, 0), Vector3i(1, 1, 0), Vector3i(1, 1, 1)], Vector3.RIGHT],
+	[[Vector3i(0, 0, 1), Vector3i(1, 0, 1), Vector3i(1, 1, 1), Vector3i(0, 1, 1)], Vector3.FORWARD],
+	[[Vector3i(1, 0, 0), Vector3i(0, 0, 0), Vector3i(0, 1, 0), Vector3i(1, 1, 0)], Vector3.BACK],
+	[[Vector3i(0, 1, 0), Vector3i(0, 1, 1), Vector3i(1, 1, 1), Vector3i(1, 1, 0)], Vector3.UP],
+]
+
 static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var t: float = clampf(thick, 0.2, 0.3)
 	var nx: float = 0.0
@@ -137,38 +146,13 @@ static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts:
 		z1 = sz
 	var y0: float = 0.0
 	var y1: float = h
-	var west: PackedVector3Array = PackedVector3Array()
-	west.append(Vector3(x0, y0, z0))
-	west.append(Vector3(x0, y0, z1))
-	west.append(Vector3(x0, y1, z1))
-	west.append(Vector3(x0, y1, z0))
-	Quad._quad(west, Vector3.LEFT, verts, norms, uvs, indices)
-	Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
-	var east: PackedVector3Array = PackedVector3Array()
-	east.append(Vector3(x1, y0, z1))
-	east.append(Vector3(x1, y0, z0))
-	east.append(Vector3(x1, y1, z0))
-	east.append(Vector3(x1, y1, z1))
-	Quad._quad(east, Vector3.RIGHT, verts, norms, uvs, indices)
-	Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
-	var north: PackedVector3Array = PackedVector3Array()
-	north.append(Vector3(x0, y0, z1))
-	north.append(Vector3(x1, y0, z1))
-	north.append(Vector3(x1, y1, z1))
-	north.append(Vector3(x0, y1, z1))
-	Quad._quad(north, Vector3.FORWARD, verts, norms, uvs, indices)
-	Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
-	var south: PackedVector3Array = PackedVector3Array()
-	south.append(Vector3(x1, y0, z0))
-	south.append(Vector3(x0, y0, z0))
-	south.append(Vector3(x0, y1, z0))
-	south.append(Vector3(x1, y1, z0))
-	Quad._quad(south, Vector3.BACK, verts, norms, uvs, indices)
-	Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
-	var top: PackedVector3Array = PackedVector3Array()
-	top.append(Vector3(x0, y1, z0))
-	top.append(Vector3(x0, y1, z1))
-	top.append(Vector3(x1, y1, z1))
-	top.append(Vector3(x1, y1, z0))
-	Quad._quad(top, Vector3.UP, verts, norms, uvs, indices)
-	Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, t), Vector2(0.0, t))
+	var xs: Array[float] = [x0, x1]
+	var ys: Array[float] = [y0, y1]
+	var zs: Array[float] = [z0, z1]
+	for f: Array in _POST_FACES:
+		var q: PackedVector3Array = PackedVector3Array()
+		for c: Vector3i in f[0]:
+			q.append(Vector3(xs[c.x], ys[c.y], zs[c.z]))
+		Quad._quad(q, f[1], verts, norms, uvs, indices)
+		var v: float = t if f[1] == Vector3.UP else h
+		Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, v), Vector2(0.0, v))

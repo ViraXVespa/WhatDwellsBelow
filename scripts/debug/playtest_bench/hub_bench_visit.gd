@@ -12,10 +12,8 @@ static func _build_visits(host: Node) -> void:
 	if lay == null:
 		End._finish(host, "no_layout")
 		return
-	_add_visit(host, lay, "loadout_crystal", "Crystal", false)
-	_add_visit(host, lay, "anvil", "Anvil", false)
-	_add_visit(host, lay, "vendor", "Vendor", false)
-	_add_visit(host, lay, "quest_board", "Board", false)
+	for stop: Array in [["loadout_crystal", "Crystal"], ["anvil", "Anvil"], ["vendor", "Vendor"], ["quest_board", "Board"]]:
+		_add_visit(host, lay, stop[0], stop[1], false)
 	var rec: Vector3 = _call_vec(lay, "reception_pos", "")
 	_push_visit(host, "receptionist", rec, false)
 	_add_visit(host, lay, "dummy", "Dummy", true)

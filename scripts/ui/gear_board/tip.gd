@@ -29,10 +29,8 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 	panel.name = "gear_tip_host"
 	var pad := MarginContainer.new()
 	pad.name = "pad"
-	pad.add_theme_constant_override("margin_left", 10)
-	pad.add_theme_constant_override("margin_right", 10)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
+	for side: String in ["left", "right", "top", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, 10 if side == "left" or side == "right" else 8)
 	panel.add_child(pad)
 	var lab := Label.new()
 	lab.name = "lab"
