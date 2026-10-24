@@ -32,6 +32,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("sfx",              "media/make_sfx",               "Placeholder SFX wavs from tools/data/sfx-cues.json"),
     ("glyphs",           "media/gen_prompt_glyphs",      "Chunky pixel prompt glyphs"),
     ("anim-review",      "media/anim_review",            "Animation Browser review briefs: pack, regen, tree"),
+    ("clip",             "media/clip_edit",              "ffmpeg clip edits: trim, crossfade join, caption, side-by-side, X/GIF export"),
 ]
 
 if __name__ == "__main__":

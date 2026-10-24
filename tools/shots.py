@@ -13,6 +13,7 @@ import boot  # noqa: E402
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("capture",   "shots/run_shots",              "Posed-camera postcard of one scene (--scene, --mode build|web|user, --zoom, --px/--pz)"),
     ("flow",      "shots/run_shot_flow",          "Scripted shot flows from tools/data/shot-flows/*.json (--flow, --job door.job)"),
+    ("movie",     "shots/run_movie",              "Gameplay clip: scenario + input timeline recorded by Godot movie maker (tools/data/movies.json)"),
     ("diff",      "shots/shot_diff",              "Before/after pixel diff of two PNGs or folders (--tol, --mask, --max-ratio)"),
     ("crop",      "shots/shot_crop",              "Crop and enlarge one region of a shot (PNG --box X,Y,W,H --zoom N)"),
     ("inspect",   "shots/img_inspect",            "Named image checks: describe, layout, contrast, grid, zoom, diff, montage"),

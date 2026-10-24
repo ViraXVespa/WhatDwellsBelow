@@ -176,8 +176,16 @@ def _stats(fs: list[float], long_ms: float) -> dict:
             "avg_frame_ms": round(statistics.mean(fs), 1), "p95_frame_ms": round(fs[max(int(n * 0.95) - 1, 0)], 1),
             "max_frame_ms": round(fs[-1], 1), "long_frames": sum(1 for x in fs if x > long_ms)}
 
+def _save_video(ctx, page, video: str, tag: str) -> str:
+    """Playwright's page recording (WebM, whole run from page open) -> VIDEO/<tag>.webm; trim/convert with media.py clip."""
+    ctx.close()  # flushes the recording
+    dst = Path(video) / ("%s.webm" % tag)
+    page.video.save_as(str(dst))
+    page.video.delete()
+    return str(dst)
+
 def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s: int, size: tuple[int, int], out: Path,
-            tag: str, mbps: float = 0.0, query: str = "", audio: bool = False, vsync: bool = False) -> dict:
+            tag: str, mbps: float = 0.0, query: str = "", audio: bool = False, vsync: bool = False, video: str = "") -> dict:
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
@@ -185,7 +193,8 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
                                 args=["--enable-precise-memory-info", "--use-gl=angle", "--use-angle=swiftshader",
                                       "--enable-unsafe-swiftshader", "--autoplay-policy=no-user-gesture-required"]
                                 + ([] if vsync else UNCAP))
-        ctx = br.new_context(viewport={"width": size[0], "height": size[1]}, device_scale_factor=1, service_workers="block")
+        rec = {"record_video_dir": video, "record_video_size": {"width": size[0], "height": size[1]}} if video else {}
+        ctx = br.new_context(viewport={"width": size[0], "height": size[1]}, device_scale_factor=1, service_workers="block", **rec)
         page = ctx.new_page()
         errs: list[str] = []
         page.on("pageerror", lambda e: errs.append(str(e)[:80]))
@@ -211,6 +220,7 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
         m = {x["name"]: x["value"] for x in cdp.send("Performance.getMetrics")["metrics"]}
         res = page.evaluate("performance.getEntriesByType('resource').map(r=>[r.name.split('/').pop().split('?')[0],"
                             "r.transferSize||r.encodedBodySize||0,r.startTime,r.responseEnd])")
+        clip = _save_video(ctx, page, video, tag) if video else ""
         br.close()
     tm = {n: (s, e) for n, _, s, e in res if n.endswith((".wasm", ".pck"))}
     wasm, pck = tm.get("index.wasm", (0, 0)), tm.get("index.pck", (0, 0))
@@ -225,5 +235,5 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
            "wasm_mem_mb": round(w["wasm"] / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
            "transfer_mb": round(sum(b for _, b, _, _ in res) / 1048576, 2), "page_errors": len(errs) + w["errs"],
            "phases": ph, "marks": marks, "load_marks": _load_marks(w["load"]), "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "audio": aud, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
-           "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b, _, _ in res if b > 262144), key=lambda a: -a["kb"])}
+           "video": clip, "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b, _, _ in res if b > 262144), key=lambda a: -a["kb"])}
     return rep

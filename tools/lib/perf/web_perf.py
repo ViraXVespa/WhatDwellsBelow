@@ -157,6 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--strict", action="store_true", help="Exit 1 when a metric is WORSE or a flow is STUCK (default advisory).")
     ap.add_argument("--release-ref", action="store_true", help="Release reference: export preset Web (no debug code) to _logs/web-perf-release/site "
                     "(or use --site), run only flows with no in-game hook, mode=release in the report. Baseline: %s; never diff it against the debug one." % REL_BASE)
+    ap.add_argument("--video", default="", help="Also record each run as DIR/<flow>.webm (Playwright page video; edit with media.py clip).")
     ap.add_argument("--selftest", action="store_true", help="Offline checks of the report logic; no browser.")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
@@ -216,7 +217,7 @@ def main(argv: list[str] | None = None) -> int:
                 hitch_sink.STATE["run"] = "%s-%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), n, i)
                 r = web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
                                          n, flows[n].get("mbps", args.mbps), flows[n].get("query", ""), bool(flows[n].get("audio")),
-                                         args.vsync)
+                                         args.vsync, str(Path(args.video).resolve()) if args.video else "")
                 r["hitch"] = [h for h in hitch_sink.rows(root, hitch_sink.STATE["run"]) if h.get("ev") == "hitch"]
                 runs.append(r)
             for r in runs:

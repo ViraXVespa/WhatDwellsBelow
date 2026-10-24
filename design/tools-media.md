@@ -13,6 +13,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 - **Rekey stills:** `media.py rekey --only assets/...png` (live), `--out DIR` (review copy), `--check`; look first with `media.py rekey-preview --only ...`; full-set check `media.py rekey-check --new DIR`.
 - **Animation review briefs:** `media.py anim-review pack`, `media.py anim-review regen`, `media.py anim-review tree --out DIR`.
 - **Bible prompts and sheets:** `media.py bible-prompt --gender female` / `--enemy ID`; `media.py bible-normalize`.
+- **Gameplay clips:** see Gameplay clips below.
 - **Sound effects:** `media.py sfx --list`, `media.py sfx --only CUE`, `media.py sfx --check`.
 
 ### Media / art pipeline (Build only)
@@ -21,6 +22,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 |---|---|---|---|---|
 | `media.py anim-review` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree --out DIR` (wiped I2V test tree). Summary: `anim-review` | D | `--help` | N |
 | `media.py attack-keys` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
+| `media.py clip` | Thin ffmpeg wrapper: `info`, `trim --start --end`, `join A B ... --fade S` (crossfades), `caption --text [--start --end --pos]`, `sbs BEFORE AFTER [--labels]`, `export --for x\|gif` (checks the X limits); default out `_logs/clip/`. `--selftest` on synthetic clips. Summary: `clip`. | D | `--help` | N |
 | `media.py bible-normalize` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
 | `media.py bible-prompt` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
 | `media.py glyphs` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
@@ -61,6 +63,14 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 | `imglib/look.py` | the `shots.py inspect` checks as functions |
 | `imglib/scunet.py` | Optional SCUNet denoiser (vendored cszn/SCUNet, Apache-2.0); weights downloaded to `_cache/models/` with pinned sha256; needs `requirements-ml.txt` |
 
+## Gameplay clips
+
+Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (`--write-movie`, `--fixed-fps` = the movie fps, window = its width x height) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}` brings that flow's rooms, enemies, gear and camera); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap` (`shot-flows.md`). Before/after: record the same movie with `--game WORKTREE` (a `git worktree` at the old commit with this branch's `scripts/debug/shot_tool/` copied in, then `gate.py import` there).
+
+Web, real time: `perf.py web --flow camp-walk --video DIR` (Playwright WebM from page open, 25 fps, boot included; cut with `media.py clip trim`).
+
+Edit: `media.py clip sbs` then `caption`, then `export --for x` (H.264 yuv420p, fits 1280x720, at most 60 fps, faststart; FAIL over 140 s or 512 MB) or `--for gif` (15 fps, 640 wide; FAIL over 15 MB). Clips stay in `_logs/` or outside the repo; never commit video.
+
 ## Libs and data
 
 No CLI of their own; new code goes into the owner (`tools.md` rule 6).
@@ -70,6 +80,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/media/audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical |
 | `lib/media/anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. |
 | `data/attack_keyframes_log.json` | Sidecar data for the tool of the same stem |
+| `data/movies.json` | `shots.py movie` scenarios and movies |
 | `data/sfx-cues.json` | Cue specs read by `media.py sfx` (name, scale, graph) |
 | `data/keytest_expect.json` | Limits for `media.py keytest` (`default` plus per-name overrides). |
 | `requirements.txt` | Pip deps for the image tools |

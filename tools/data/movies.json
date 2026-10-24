@@ -1,0 +1,24 @@
+{
+ "_about": "shots.py movie: named scenarios (shot-flow header keys + setup steps, or {flow, state} = that flow cut at its state shot) and movies (scenario + input timeline, recorded between the start/end marks). design/tools-media.md.",
+ "scenarios": {
+  "camp-spawn": {"about": "Placeholdia, player at the floor crystal spawn, HUD off, close camera", "scene": "camp", "hud": 0, "zoom": 1.6, "settle_ms": 800, "steps": []},
+  "f1-slime-pack": {"about": "floor 1 seed 42 beside the slime+goblin pack, enemies live", "flow": "dungeon-f1-spawns", "state": "slime-goblin-pack",
+   "steps": [{"op": "freeze", "group": "enemies", "on": false}]},
+  "f1-boss": {"about": "floor 1 seed 42 at the Floor Guardian room, boss bar on", "flow": "dungeon-f1-boss", "state": "boss-bar"}
+ },
+ "movies": {
+  "hub-walk": {"about": "walk west along the guild front through its roof shadow, turn, swing, walk back", "scenario": "camp-spawn", "fps": 30,
+   "timeline": [
+    {"op": "wait", "ms": 300},
+    {"op": "walk_to", "x": 12.0, "z": 9.4, "must": false},
+    {"op": "walk_to", "x": 4.0, "z": 9.4, "must": false},
+    {"op": "drive", "aim": [0, 1], "attack": true, "ms": 600},
+    {"op": "walk_to", "x": 9.0, "z": 9.4, "must": false},
+    {"op": "wait", "ms": 300}]},
+  "f1-fight": {"about": "step into the slime+goblin pack and swing for three seconds", "scenario": "f1-slime-pack", "fps": 30,
+   "timeline": [
+    {"op": "drive", "move": [-1, 0], "ms": 700},
+    {"op": "drive", "attack": true, "aim": [-1, 0], "ms": 3000},
+    {"op": "wait", "ms": 500}]}
+ }
+}
