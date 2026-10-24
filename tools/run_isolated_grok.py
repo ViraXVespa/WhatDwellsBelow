@@ -55,7 +55,7 @@ LOCKED_BIBLES = (
 KINDS = ("tile", "character", "i2v", "ui", "npc", "still")
 # image_gen / image_edit `aspect_ratio` values in the bundled imagine skill (grok-build skills/imagine/SKILL.md)
 ASPECTS = ("1:1", "16:9", "9:16", "4:3", "3:4")
-# --kind ui stages the locked UI look: this section of the ui style doc as ui-style.md, plus the refs it names.
+# --kind ui stages the standing UI look: this section of the ui style doc as ui-style.md, plus any image it names (task refs go in with --copy).
 UI_STYLE_DOC = REPO / "design" / "ui-style.md"
 UI_STYLE_SECTION = "## Generated art look"
 INGEST_MAX_TURNS = 4
@@ -550,7 +550,7 @@ def selftest() -> int:
                      ("aspect in brief", 'aspect_ratio: "16:9"' in build_job(kind="ui", brief="", use_bibles=False, dest_name="a.png", aspect="16:9")),
                      ("npc no identity lock", "identity lock" not in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
                      ("npc reads characters.md", "Read `characters.md` only" in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
-                     ("style section", "No pink" in ui_style_text()), ("style refs", len(ui_style_refs(ui_style_text())) == 2)):
+                     ("style section", "No pink" in ui_style_text()), ("style refs exist", isinstance(ui_style_refs(ui_style_text()), list))):
         if not ok:
             bad.append(need)
     with tempfile.TemporaryDirectory(prefix="wdb-iso-st-") as tmp:
@@ -681,7 +681,7 @@ def main() -> None:
             copied.append(src.name)
         if args.kind == "ui":
             if ui_text:
-                write_job(scratch / "ui-style.md", ui_text.replace("`design/refs/ui-style/", "`") + "\n")
+                write_job(scratch / "ui-style.md", re.sub(r"`design/(?:[^`/]+/)*([^`/]+\.(?:png|jpg))`", r"`\1`", ui_text) + "\n")
                 copied.append("ui-style.md")
             print("ui_style=" + ("staged" if ui_text else "none (--no-ui-style)"))
         if args.kind == "i2v":
