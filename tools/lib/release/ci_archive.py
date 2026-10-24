@@ -59,7 +59,7 @@ def pin_week(root: Path, epoch: int, n: int, head: str, dry: bool, say) -> tuple
     """On the week-close merge of grok-build-wN:
     - pin grok_build_wN at the merge commit
     - pin grok_web_w{N-1} at the parent of the merge (tip of main before the branch)
-    - do not pin grok_web_wN (week_start creates that)
+    - do not pin grok_web_wN (the next week-close merge pins it as its parent; week-start only pins a missing row)
     Returns (paths to commit, new local tags)."""
     paths, tags = [], []
     parent = rev(root, f"{head}^1") or rev(root, f"{head}^") or ""
