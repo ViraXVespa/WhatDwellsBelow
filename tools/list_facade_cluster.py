@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """List a facade and its cluster helpers by byte size: the facade `<dir>/<stem>.gd` plus every `<dir>/<stem>/*.gd`
-(cluster folder layout, design/refactor.md). Also lists legacy loose `<stem>_*.gd` beside the facade if any remain.
+(cluster folder layout, design/refactor.md). Also lists any loose `<stem>_*.gd` left beside the facade.
 A helper path inside a cluster folder resolves to its facade. Facade-less families (no `<stem>.gd`): pass the cluster folder itself (lists its *.gd).
 
     python tools/list_facade_cluster.py --facade scripts/combat/enemy.gd

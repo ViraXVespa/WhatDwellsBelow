@@ -3,7 +3,8 @@
 
 Per tool: python3 shebang, argparse, main guard, `--help` exits 0 and writes
 nothing, ASCII print strings, --root on ops tools, --dry-run on writers, RESULT
-via agent_log. Libs (`*_lib.py`, agent_log's siblings without a main guard) are skipped.
+via agent_log, help text on every option, output paths named `--out` / `--out-<kind>`
+(OUT_NAMES), `--verbose` (agent_log.std_parser(verbose=True)) rather than a raised line budget. Libs (`*_lib.py`, agent_log's siblings without a main guard) are skipped.
 
 `--smoke-run` also executes every tool in a throwaway copy of the repo (never the live tree): bad flag and bad
 `--root` must exit 2 with an `error:` line, and each SMOKE case (read-only or `--dry-run` args) must not crash,
@@ -105,9 +106,12 @@ SMOKE: dict[str, list] = {
     "week_start": [["--dry-run"]],
 }
 ABS_ROOT_TOOLS = {"list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary", "check_shot_gaps", "run_shot_flow", "run_godot_import_check"}  # may print a WARN with an absolute path when the scanned root differs
-SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
+SMOKE_MAX_LINES = 30  # stdout line budget per smoke run (summary + RESULT; the rest goes to the summary file)
+SMOKE_LIST_LINES = 60  # a --list / list run prints the catalog itself
 TRACKED_GDIGNORE = ("_cache", "_logs", "_old", "_out", "_pages", "_src")  # root tool folders present in every clone
-SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
+SMOKE_LINES: dict[str, int] = {}  # per-tool budget override; prefer agent_log.fold + --verbose to raising a budget
+# Output-path flags must be `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); these names may only be aliases.
+OUT_NAMES = {"--output", "--outdir", "--out-dir", "--dest", "--md", "--png", "--json-out", "--findings-md", "--report-out"}
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
 NOISE_PAT = re.compile(r"^(DEBUG|debug:|TRACE)|\r|\d+%\|| ={5,}|^-{10,}$")  # debug prints, progress bars, banners
 STDERR_OK = {"agent_log"}  # stems whose stderr on success is expected
@@ -181,6 +185,14 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and not arg.value.isascii():
                     bad.append(f"ASCII   {path.name}: non-ASCII in print() line {node.lineno}")
                     break
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "add_argument"):
+            continue
+        names = [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
+        if not any(k.arg == "help" for k in node.keywords):
+            bad.append(f"HELPTXT {path.name}: {names[0] if names else '?'} (line {node.lineno}) has no help= text")
+        if names and names[0] in OUT_NAMES:
+            bad.append(f"OUTFLAG {path.name}: {names[0]} (line {node.lineno}) must be --out or --out-<kind>; keep {names[0]} as an alias after it")
     if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         return  # never execute a tool that cannot parse --help
     before = snapshot(root)
@@ -249,12 +261,11 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         return
     if proc.returncode == 2 and "error:" in err:
         pass  # clean failure with a message
-    elif stem not in SMOKE_NO_RESULT and proc.returncode != 0 and not last.startswith("RESULT ") and not last.startswith("{"):
-        # RESULT is required on stdout only when the run failed (exit != 0).
-        # On success an echo may already carry the useful lines, and finish() omits the RESULT line.
-        bad.append(f"RESULT  {label}: last line is not RESULT")
-    if lines > SMOKE_LINES.get(stem, SMOKE_MAX_LINES) and "--json" not in args:
-        bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
+    elif stem not in SMOKE_NO_RESULT and not last.startswith("RESULT ") and not last.startswith("{"):
+        bad.append(f"RESULT  {label}: last line is not RESULT")  # pass or fail: finish() always prints it last
+    budget = SMOKE_LINES.get(stem, SMOKE_LIST_LINES if {"--list", "list"} & set(args) else SMOKE_MAX_LINES)
+    if lines > budget and "--json" not in args:
+        bad.append(f"NOISE   {label}: {lines} lines (budget {budget}; fold with agent_log.fold and add --verbose)")
     for msg in console_noise(stem, proc.returncode, out, err):
         bad.append(f"CONSOLE {label}: {msg}")
     if not out.isascii() and stem not in PRINTERS:

@@ -5,7 +5,8 @@
     python tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
     python tools/tunables.py add --after <existing-key> --key NEW_KEY --set "Live cell" [--dry-run]
 
-Logic lives in tunables_lib. The two old script names stay as shims for one release.
+`get` prints one line per matching row (file:line, key, Live cell, section; first 8, `--verbose` for every
+row with its aliases). Logic lives in tunables_lib.
 Summaries: _logs/tunable-row/ and _logs/tunable-patch/.
 """
 from __future__ import annotations
@@ -49,9 +50,13 @@ def cmd_get(root: Path, args) -> int:
         print(f"error: no tunable row matches {args.key!r}; --key matches a name or alias substring in design/tunables*.md (try a shorter fragment)", file=sys.stderr)
     for hit in hits:
         lines += tl.format_hit(hit) + [""]
-    shown = [x for x in lines[4:] if x.strip()]  # the rows themselves, not only the summary file
+    if getattr(args, "verbose", False):
+        shown = [x for x in lines[4:] if x.strip()]
+    else:
+        shown = [f"{agent_log.rel(root, p)}:{h.index + 1}  {h.key_cell} = {h.live_cell}  [{h.section}]" for p, _r, h in found]
+        shown = agent_log.fold(shown, keep=8, limit=8)
     return agent_log.finish("tunable-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo="\n".join(shown[:30] + ([f"... +{len(shown) - 30} more lines (summary file); use a longer --key"] if len(shown) > 30 else [])) if hits else f"matches={len(hits)}", matches=len(hits))
+                            echo="\n".join(shown) if hits else f"matches={len(hits)}", matches=len(hits))
 
 def cmd_add(root: Path, args) -> int:
     """Insert one row after an existing key's row (same table); other cells are `-` for the caller to fill."""
@@ -104,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("get", help="Print one tunables row.")
     s.add_argument("key_pos", nargs="?", default="", metavar="KEY", help="Tunable key or unique alias (same as --key)")
     s.add_argument("--key", default="", help="Tunable key or unique alias")
+    s.add_argument("--verbose", "-v", action="store_true", help="Every matching row with all its fields (default: one line each, first 8).")
     s = sub.add_parser("set", help="Patch one Live cell.")
     s.add_argument("key_pos", nargs="?", default="", metavar="KEY", help="Tunable key or unique alias (same as --key)")
     s.add_argument("--key", default="", help="Tunable key or unique alias")

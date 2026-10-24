@@ -126,31 +126,23 @@ def save_images(page, images: list[dict], dest: Path, prefix: str, turn: int | N
 
 
 
-def _early_help() -> None:
-    if "--help" in sys.argv or "-h" in sys.argv:
-        parser = agent_log.std_parser("Pull conversation + images from a Grok share URL (Playwright).", json_out=True)
-        parser.add_argument("url", nargs="?", help="Grok share URL")
-        parser.print_help()
-        raise SystemExit(0)
-
 def main(argv: list[str] | None = None) -> int:
-    _early_help()
     parser = agent_log.std_parser(
         "Pull conversation + images from a Grok share URL (Playwright).",
         json_out=True,
     )
     parser.add_argument("url", help="Grok share URL")
-    parser.add_argument("--print-convo", action="store_true")
-    parser.add_argument("--list-images", action="store_true")
-    parser.add_argument("--save-images", type=Path, metavar="DEST")
-    parser.add_argument("--prefix", default="")
-    parser.add_argument("--turn", type=int, default=None)
-    parser.add_argument("--index", default=None)
-    parser.add_argument("--timeout", type=int, default=120000)
-    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--print-convo", action="store_true", help="Print the conversation text.")
+    parser.add_argument("--list-images", action="store_true", help="List the image URLs in the share.")
+    parser.add_argument("--save-images", type=Path, metavar="DEST", help="Save the share's images into this folder.")
+    parser.add_argument("--prefix", default="", help="File-name prefix for saved images.")
+    parser.add_argument("--turn", type=int, default=None, help="Only this conversation turn number (as printed in the turn headers).")
+    parser.add_argument("--index", default=None, help="Only these image indexes within the turn, e.g. 0,2.")
+    parser.add_argument("--timeout", type=int, default=120000, help="Page-load timeout in ms (default 120000).")
+    parser.add_argument("--debug", action="store_true", help="Add a DEBUG line with page diagnostics to the output.")
     parser.add_argument("--headed", action="store_true", help="Show the browser (use once to log in)")
     parser.add_argument("--channel", default="msedge", help="Browser channel (default: msedge)")
-    parser.add_argument("--user-data-dir", type=Path, default=None, help="Persistent profile directory (default: %USERPROFILE%/.grok-edge-profile)")
+    parser.add_argument("--user-data-dir", type=Path, default=None, help="Persistent profile directory (default: %%USERPROFILE%%/.grok-edge-profile)")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
 
     agent_log.resolve_root(args)

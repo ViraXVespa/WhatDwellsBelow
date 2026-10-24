@@ -81,15 +81,23 @@ class _Parser(argparse.ArgumentParser):
         _json_on(ns)
         return ns
 
-def std_parser(description: str, *, writes: bool = False, json_out: bool = True) -> argparse.ArgumentParser:
-    """Parser with --root, --json and (writes=True) --dry-run. json_out stays for old callers; every tool gets --json."""
-    ap = _Parser(description=description)
+def std_parser(description: str, *, writes: bool = False, json_out: bool = True, verbose: bool = False) -> argparse.ArgumentParser:
+    """Parser with --root, --json, (writes=True) --dry-run and (verbose=True) --verbose/-v. json_out stays for old callers."""
+    ap = _Parser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=None, help="Repo root (default: auto-discovered).")
     if writes:
         ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
+    if verbose:
+        ap.add_argument("--verbose", "-v", action="store_true", help="Print every row on stdout (default: the first few and a count; the summary file has all).")
     if json_out:
         ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object (status, summary, counts) instead of text.")
     return ap
+
+def fold(lines: list[str], verbose: bool = False, keep: int = 8, limit: int = 12) -> list[str]:
+    """Console rows: all of them with --verbose or when there are at most `limit`; else the first `keep` plus a count line."""
+    if verbose or len(lines) <= limit:
+        return list(lines)
+    return list(lines[:keep]) + [f"... {len(lines) - keep} more lines (summary file has all; --verbose prints them)"]
 
 def split_list(values: object, cast: type = str) -> list:
     """Flatten ['a,b', 'c'] (comma or space separated) into [a, b, c]."""
@@ -269,10 +277,7 @@ def finish(
             print(shown.rstrip("\n"))
         if legacy and path is not None:
             print(f"Summary -> {path}")
-        # RESULT is always written to the summary file. On stdout, omit it when an echo
-        # already carried the useful lines and the status is not FAIL.
-        if echo is None or status == "FAIL":
-            print(res)
+        print(res)  # always the last stdout line (and the last line of the summary file)
     return exit_code(status)
 
 def _call(fn, args):
@@ -377,7 +382,7 @@ def run_writer(tool: str, desc: str, run, argv: list[str] | None = None, g: "dic
     lines = [ln.replace(root.as_posix() + "/", "") for ln in buf.getvalue().splitlines()]
     wrote = sum(1 for ln in lines if ln.startswith(("wrote", "would write")))
     missing = sum(1 for ln in lines if ln.startswith("missing"))
-    shown = lines if args.verbose or len(lines) <= 12 else lines[:8] + [f"... {len(lines) - 8} more lines (summary file has all)"]
+    shown = fold(lines, args.verbose)
     body = "\n".join(lines)
     if err:
         if shown:

@@ -163,7 +163,7 @@ def metric_fails(row: dict, m: dict) -> None:
 def main(argv=None) -> int:
     ap = agent_log.std_parser("Full-set rekey quality check vs live assets and _src plates.", json_out=True)
     ap.add_argument("--new", required=True, help="Rekey output folder (rekey_all_stills.py --out).")
-    ap.add_argument("--only", default="")
+    ap.add_argument("--only", default="", help="Comma-separated asset names to check (default all).")
     ap.add_argument("--metrics", default="", help="Metrics file (default DIR/_metrics.json).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)

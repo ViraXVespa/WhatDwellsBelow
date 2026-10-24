@@ -73,8 +73,8 @@ def main(argv: list[str] | None = None) -> int:
     import agent_log
 
     ap = agent_log.std_parser(__doc__.splitlines()[0])
-    ap.add_argument("--site", default="_out/web")
-    ap.add_argument("--port", type=int, default=8060)
+    ap.add_argument("--site", default="_out/web", help="Web export folder to serve (default _out/web).")
+    ap.add_argument("--port", type=int, default=8060, help="HTTP port (default 8060).")
     a = ap.parse_args(argv)
     root = agent_log.resolve_root(a)
     srv = serve(root / a.site, root, a.port)

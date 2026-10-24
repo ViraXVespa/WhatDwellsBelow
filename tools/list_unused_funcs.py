@@ -588,16 +588,9 @@ def main() -> int:
                 break
             print("%s\t%s:%s\t%s\t%s" % (kind, rel, lineno, name, nbytes))
             shown += 1
-    print("funcs_scanned=%s" % len(defs))
-    print("unused_count=%s" % len(unused))
-    print("shadowed_count=%s" % len(shadowed))
-    print("decl_count=%s" % len(decls))
-    print("maybe_count=%s" % len(maybe))
-    print("dynamic_count=%s" % len(dynamic))
-    print("deleted=%s" % deleted)
-    print("seconds=%.2f" % elapsed)
-    print("full=%s" % agent_log.rel(root, summary))
-    print("report=PASS")
+    total = sum(len(found[k]) for k in ("unused", "shadowed", "decl", "maybe"))
+    if total > shown:
+        print(f"... {total - shown} more rows (summary file has all; --limit N prints more)")
     left = len(unused) + len(decls) + len(shadowed)
     return agent_log.emit_result("FAIL" if ns.apply and left else "PASS", summary=agent_log.rel(root, summary), scanned=len(defs), unused=len(unused), shadowed=len(shadowed), decl=len(decls), maybe=len(maybe), dynamic=len(dynamic), deleted=deleted)
 

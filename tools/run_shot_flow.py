@@ -298,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-pixels", action="store_true", help="headless: steps and asserts only, no PNGs, no display needed")
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent (default: the flow's scale, else 100)")
     p.add_argument("--timeout-sec", type=int, default=run_shots.TIMEOUT_SEC, help="Godot timeout per flow in seconds.")
-    p.add_argument("--out-dir", default="", help="frames root (default _logs/shot-flow)")
+    p.add_argument("--out", "--out-dir", dest="out_dir", default="", metavar="DIR", help="Frames root (default _logs/shot-flow; old name --out-dir).")
     p.add_argument("--baseline", default="", help="directory of earlier frames (BASE/<flow>/NN-name.png) to diff against")
     p.add_argument("--save-baseline", default="", help="copy this run's frames to DIR/<flow>/ (run before the change)")
     p.add_argument("--tol", type=int, default=0, help="per-channel diff tolerance")

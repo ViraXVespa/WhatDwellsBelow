@@ -20,7 +20,7 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 1. `design/reuse-map.md` (the brief)
 2. `design/refactor.md` when a touched file must split (recipe only)
 3. One `design/code-map.md` **system row** for each cluster the brief names
-   (Finding new candidates is a separate User-named sweep: `python tools/list_dupes.py --md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
+   (Finding new candidates is a separate User-named sweep: `python tools/list_dupes.py --out-md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
 4. After that: only the live `.gd` files in the active cluster
 
 Do not walk the live tree to rediscover copies the brief does not name.

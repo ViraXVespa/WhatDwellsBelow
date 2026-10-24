@@ -55,17 +55,17 @@ All sheets for that ask must already be written before the open. Do not open the
 
 Each says when it is enough. Image checks use `python tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; the library is `tools/imglib/`, `tools-media.md`). The `--json` flag gives one object.
 
-**Same as main (shots).** Enough for a change that must not alter pixels. Fixed seed flows only (`fixed_fps`, `seed`; two runs are byte-identical). On a `main` checkout and on the branch: `run_shot_flow.py --all --save-baseline DIR`; then `shot_diff.py MAIN_DIR BRANCH_DIR --out OUT`. Expected diffs are the ones the change asked for; any other changed region is a finding. Frame-level detail: `img_inspect.py diff A B --png OUT`.
+**Same as main (shots).** Enough for a change that must not alter pixels. Fixed seed flows only (`fixed_fps`, `seed`; two runs are byte-identical). On a `main` checkout and on the branch: `run_shot_flow.py --all --save-baseline DIR`; then `shot_diff.py MAIN_DIR BRANCH_DIR --out OUT`. Expected diffs are the ones the change asked for; any other changed region is a finding. Frame-level detail: `img_inspect.py diff A B --out OUT`.
 
 **Repeatable.** Enough to call a flow stable: run the same flow twice, `shot_diff.py RUN1 RUN2` reports 0 changed. A flow that differs from itself needs a seed, `freeze` or `mask` first (`shot-flows.md`).
 
 **Key is clean.** `python tools/keytest.py` passes and the sheets in `_logs/keytest/sheets/` look right on checker, dark and light. For a live still, `python tools/rekey_preview.py` too. Plate mixed into glow stays partial alpha. Solid outlines stay opaque. A veil the User asked to keep as alpha is not a rim to delete. "Looks the same as main" applies only when the live file is the accepted look.
 
-**Layout is clean.** Enough for a screen: `img_inspect.py layout SHOT [--png OUT]` lists off-screen, clipped, outside-safe-area and overlapping elements, near-aligned edges and gaps. Pass `--box X,Y,W,H` per node rect when same-coloured elements touch. Clean: no off-screen, clipped or overlap lines.
+**Layout is clean.** Enough for a screen: `img_inspect.py layout SHOT [--out OUT]` lists off-screen, clipped, outside-safe-area and overlapping elements, near-aligned edges and gaps. Pass `--box X,Y,W,H` per node rect when same-coloured elements touch. Clean: no off-screen, clipped or overlap lines.
 
-**Text readable.** Enough with `assert_texts` (font floor, length, wording; `shot-flows.md`) for the copy: `img_inspect.py contrast SHOT --box X,Y,W,H ...` gives the WCAG ratio per text box (4.5, or `--large` 3.0); `zoom SHOT --box X,Y,W,H --factor 4 --png OUT` for a close look.
+**Text readable.** Enough with `assert_texts` (font floor, length, wording; `shot-flows.md`) for the copy: `img_inspect.py contrast SHOT --box X,Y,W,H ...` gives the WCAG ratio per text box (4.5, or `--large` 3.0); `zoom SHOT --box X,Y,W,H --factor 4 --out OUT` for a close look.
 
-**Looks the same as main (one image).** Enough for a sprite, icon or panel: `img_inspect.py diff MAIN_PNG NEW_PNG --max-ratio 0.001 --png OUT` (changed px, regions, heatmap; `--mask` ignores live animation); `montage A B --png OUT` for a side-by-side.
+**Looks the same as main (one image).** Enough for a sprite, icon or panel: `img_inspect.py diff MAIN_PNG NEW_PNG --max-ratio 0.001 --out OUT` (changed px, regions, heatmap; `--mask` ignores live animation); `montage A B --out OUT` for a side-by-side.
 
 **Moves as intended.** `img_inspect.py motion F1 F2 F3 ...` gives the changed share per step; `find SHOT TEMPLATE` locates an icon or glyph.
 

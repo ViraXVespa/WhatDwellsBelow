@@ -5,11 +5,11 @@
   layout IMG [--box ...]       element boxes (segmented, or given with --box X,Y,W,H from node rects) and layout checks:
                                off-screen, clipped, overlap, alignment, gaps, safe area
   contrast IMG --box X,Y,W,H   WCAG text-vs-background ratio per box (repeatable; --large for 3:1)
-  grid IMG --png OUT           labeled coordinate grid     zoom IMG --box X,Y,W,H --png OUT   crop + zoom
-  diff BEFORE AFTER            pixel diff: score, changed regions, heatmap (--png)
-  montage IMG IMG ... --png OUT   labeled side-by-side (labels = file names)
+  grid IMG --out OUT           labeled coordinate grid     zoom IMG --box X,Y,W,H --out OUT   crop + zoom
+  diff BEFORE AFTER            pixel diff: score, changed regions, heatmap (--out)
+  montage IMG IMG ... --out OUT   labeled side-by-side (labels = file names)
   find SHOT TEMPLATE           where a sprite or crop appears (needs OpenCV)
-  halo IMG [--png OUT]         colour bleed on a keyed picture's rim and leftover plate colour
+  halo IMG [--out OUT]         colour bleed on a keyed picture's rim and leftover plate colour
   rimclean IMG OUT --refs ...  re-key the rim of a keyed picture against given plate colours (scratch copy)
   motion F1 F2 ...             changed-pixel % between consecutive frames
   selftest                     imglib checks on small synthetic images (about 2 s)
@@ -90,7 +90,7 @@ def run(args) -> tuple[str, list[str], dict]:
         im = imgio.load(_need(args, 1, "IMG")[0])
         out_im = look.grid_overlay(im, args.step) if cmd == "grid" else look.zoom(im, _box_corners(args), args.factor)
         out = _save(out_im, args.png, args.dry_run)
-        lines.append(f"{cmd} {out_im.size[0]}x{out_im.size[1]}" + (f" -> {out}" if out else " (give --png OUT to write it)"))
+        lines.append(f"{cmd} {out_im.size[0]}x{out_im.size[1]}" + (f" -> {out}" if out else " (give --out OUT to write it)"))
         status = "INFO"
     elif cmd == "diff":
         a, b = _need(args, 2, "BEFORE AFTER")[:2]
@@ -107,7 +107,7 @@ def run(args) -> tuple[str, list[str], dict]:
     elif cmd == "montage":
         ims = [imgio.load(p) for p in _need(args, 1, "IMG ...")]
         out = _save(compare.montage(ims, [Path(p).name for p in paths], cols=args.cols or None), args.png, args.dry_run)
-        lines.append(f"montage of {len(ims)}" + (f" -> {out}" if out else " (give --png OUT to write it)"))
+        lines.append(f"montage of {len(ims)}" + (f" -> {out}" if out else " (give --out OUT to write it)"))
         status = "INFO"
     elif cmd == "find":
         a, b = _need(args, 2, "SHOT TEMPLATE")[:2]
@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser(__doc__.split("\n\n")[0], writes=True, json_out=True)
     p.add_argument("cmd", choices=COMMANDS, help="what to inspect (see the list above)")
     p.add_argument("paths", nargs="*", help="image paths (meaning depends on the command)")
-    p.add_argument("--png", default="", help="write the annotated / zoomed / montage PNG here")
+    p.add_argument("--out", "--png", dest="png", default="", metavar="PNG", help="Write the annotated / zoomed / montage PNG here (old name --png).")
     p.add_argument("--box", action="append", default=[], metavar="X,Y,W,H", help="a region in pixels (repeatable for contrast)")
     p.add_argument("--mask", action="append", default=[], metavar="X,Y,W,H", help="diff: ignore this rectangle (repeatable)")
     p.add_argument("--merge", type=int, default=6, help="layout: merge elements closer than this many px")

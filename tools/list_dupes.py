@@ -235,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--min-lines", type=int, default=4, help="min function body lines for exact/shape groups")
     ap.add_argument("--min-block", type=int, default=8, help="min consecutive repeated code lines for block clones")
     ap.add_argument("--top", type=int, default=40, help="rows shown per kind in the console summary")
-    ap.add_argument("--md", default="", help="also write the ranked list as markdown to this path")
+    ap.add_argument("--out-md", "--md", dest="md", default="", metavar="PATH", help="Also write the ranked list as markdown to this file (old name --md).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     funcs, wins, seqs = build(root, args.lang, args.min_lines, args.min_block)

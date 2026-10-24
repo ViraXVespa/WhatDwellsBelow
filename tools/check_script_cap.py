@@ -37,6 +37,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--list", action="store_true", help=sup)
     parser.add_argument("--under-kb", type=float, default=0, help=sup)
     parser.add_argument("--sweep", action="store_true", help=sup)
+    parser.add_argument("--verbose", "-v", action="store_true", help="With --list/--sweep: print every row (default: first 10 and a count).")
     parser.add_argument(
         "--git-changed",
         dest="git_changed",
@@ -109,9 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         rows = gd_lib.sizes(root, limit, hi)
         under = f"{args.under_kb:g}" if hi else "none"
         body = ["root=.", f"overKb={args.over_kb:g} underKb={under} count={len(rows)}", "measure=on-disk bytes", "", "bytes\tpath"] + [f"{n}\t{r}" for n, r in rows]
-        echo = [f"{len(rows)} scripts >= {args.over_kb:g}KB" + (f" and < {args.under_kb:g}KB" if hi else "")] + [f"{n:6d}  {r}" for n, r in rows[:30]]
-        if len(rows) > 30:
-            echo.append(f"... +{len(rows) - 30} more (summary file)")
+        echo = [f"{len(rows)} scripts >= {args.over_kb:g}KB" + (f" and < {args.under_kb:g}KB" if hi else "")] + agent_log.fold([f"{n:6d}  {r}" for n, r in rows], args.verbose, keep=10, limit=15)
         return agent_log.finish("script-cap", root, "\n".join(body), "INFO", args=args, echo="\n".join(echo), count=len(rows))
 
     args.path = agent_log.split_list(args.path)

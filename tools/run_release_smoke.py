@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--modes", default="flag,stripped", help="flag,stripped (default both); '' skips the runs.")
     ap.add_argument("--pck", default="", metavar="DIR", help="Release export dir: its .pck must hold no scripts/debug/ path.")
     ap.add_argument("--pck-debug", dest="pck_debug", default="", metavar="DIR", help="Debug export dir: its .pck must hold scripts/debug/.")
-    ap.add_argument("--timeout-sec", type=int, default=240)
+    ap.add_argument("--timeout-sec", type=int, default=240, help="Per-run timeout in seconds (default 240).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     body, fail = [], 0

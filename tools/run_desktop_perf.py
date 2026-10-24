@@ -180,10 +180,10 @@ def table(res: dict[str, list[dict]]) -> list[str]:
 
 def main() -> int:
     ap = agent_log.std_parser(__doc__.splitlines()[0], writes=True)
-    ap.add_argument("--builds", default="release,debug")
+    ap.add_argument("--builds", default="release,debug", help="Comma-separated builds to measure (default release,debug).")
     ap.add_argument("--export", action="store_true", help="re-export the builds first")
     ap.add_argument("--sec", type=float, default=8.0, help="seconds per measured phase")
-    ap.add_argument("--runs", type=int, default=1)
+    ap.add_argument("--runs", type=int, default=1, help="Repeat each build this many times (default 1).")
     ap.add_argument("--write-md", action="store_true", help="append the table to design/benchmarks/desktop-release.md")
     args = ap.parse_args()
     root = agent_log.resolve_root(args)

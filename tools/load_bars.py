@@ -165,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--site", default="", help="Exported web build dir (tools/export_web.py --out DIR).")
     ap.add_argument("--mbps", type=float, default=16.0, help="Cold-run download throttle in Mbit/s (default 16).")
     ap.add_argument("--tag", default="load-bars", help="Output name under _logs/load-bars/.")
-    ap.add_argument("--timeout-sec", type=int, default=240)
+    ap.add_argument("--timeout-sec", type=int, default=240, help="Per-run timeout in seconds (default 240).")
     ap.add_argument("--desktop", action="store_true", help="Trace the desktop game (cold + warm shader cache) instead of web.")
     ap.add_argument("--chart", default="", help="Only redraw the chart from a saved _logs/load-bars JSON.")
     args = ap.parse_args(argv)

@@ -281,9 +281,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--renderer", choices=("headless", "real", "both"), default="headless",
                    help="headless (default), real (box display / xvfb, areas tagged @gui; no static) or both")
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
-    p.add_argument("--report", default="", help="also write the text report here")
-    p.add_argument("--json-out", dest="json", default="", metavar="PATH", help="Write findings as JSON to this file.")
-    p.add_argument("--findings-md", default="", help="write findings grouped by kind with counts as markdown here")
+    p.add_argument("--out", "--report", dest="report", default="", metavar="PATH", help="Also write the text report to this file (old name --report).")
+    p.add_argument("--out-json", "--json-out", dest="json", default="", metavar="PATH", help="Write findings as JSON to this file (old name --json-out).")
+    p.add_argument("--out-md", "--findings-md", dest="findings_md", default="", metavar="PATH", help="Write findings grouped by kind with counts as markdown to this file (old name --findings-md).")
     p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
     p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
