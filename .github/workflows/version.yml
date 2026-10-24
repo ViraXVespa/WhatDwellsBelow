@@ -96,8 +96,8 @@ jobs:
           pathlib.Path("/tmp/wdb_label").write_text(label)
           pathlib.Path("/tmp/wdb_ver_changed").write_text("1" if changed else "0")
           PY
-          python3 tools/archive_prior_changelogs.py
-          python3 tools/build_changelog.py
+          python3 tools/release.py park-changelogs
+          python3 tools/release.py changelog
 
       - name: Commit baked copy and tag
         run: |

@@ -49,10 +49,10 @@ jobs:
           for f in "${GD[@]}"; do
             args+=(--path "$f")
           done
-          python tools/check_script_cap.py --root . "${args[@]}"
+          python tools/check.py script-cap --root . "${args[@]}"
 
       - name: Load graph
-        run: python tools/check_load_graph.py --root .
+        run: python tools/check.py load-graph --root .
 
       - name: Allowlist on bot branches
         if: startsWith(github.head_ref, 'bot/')
