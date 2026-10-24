@@ -37,7 +37,7 @@ A helper is **moved code**, not new logic. The Bot's size targets are in `grok-b
 
 ## New shared modules and reuse (Grok Bot)
 
-Hunt for copies only after split work on the current cluster, or in the extract / staged reuse flow; not when the User already named the cluster.
+Hunt for copies only after split work on the current cluster, or in the extract / staged reuse flow; not when the User already named the cluster. Exception: the dupes gate (`lint.py dupes --gate`, run by `bot_status --prove`) always applies; when you write the second copy of a construction block (posts, faces, buttons, pixels) that differs only in literals, write a helper that returns the base piece, or a loop over a data table, before proving.
 
 - Near-identical = same control flow (renamed locals OK), not vaguely similar features. Do not merge pairs under **Do not merge** in the Bot extract job.
 - Copy lives inside one system: a sibling of that facade (the split shape), not a new global owner.

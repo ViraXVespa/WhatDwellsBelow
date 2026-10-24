@@ -21,6 +21,7 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 2. `design/refactor.md` when a touched file must split (recipe only)
 3. One `design/code-map.md` **system row** for each cluster the brief names
    (Finding new candidates is a separate User-named sweep: `python tools/lint.py dupes --out-md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
+   The dupes **gate** is not rediscovery: `bot_status --prove` runs `lint.py dupes --gate` on every flow, this one included. A NEW `run` / `clone` row (repeated calls or blocks that differ only in literals: positions, sizes, colors, names) is fixed in the same branch with a helper or a loop over data, or listed in `tools/data/dupes_allow.json` with a `why` (`"deferred: reason"` when it is real work for later). Never write such rows into `design/reuse-map.md`.
 4. After that: only the live `.gd` files in the active cluster
 
 Do not walk the live tree to rediscover copies the brief does not name.

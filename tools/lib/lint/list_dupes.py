@@ -41,7 +41,10 @@ SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git", "assets", "__pycache__", "r
 IDENT = re.compile(r"\b[A-Za-z_]\w*\b")
 LOCAL = re.compile(r"^\s*(?:var|for)\s+(\w+)")
 TRIVIAL = re.compile(r"^(pass|return|return null|return false|return true|else:|\)|\]|\})$")
-HEADER = re.compile(r"^(const |@|extends |class_name |import |from |static var |var \w+(:\s*\w+)?\s*(:=|=)\s*preload)")
+# Module header: imports / preloads and the tools/lib bootstrap every runner module repeats by contract (it is what
+# makes the shared libs importable, so it cannot itself be shared).
+HEADER = re.compile(r"^(const |@|extends |class_name |import |from |static var |var \w+(:\s*\w+)?\s*(:=|=)\s*preload"
+                    r"|sys\.path\.insert\(|_[A-Z]+ = Path\(__file__\)|\"\"\"$)")
 
 def strip_comment(line: str) -> str:
     q = ""
@@ -165,7 +168,7 @@ def build(root: Path, lang: str, min_lines: int, min_block: int):
             seqs[rel] = seq
             for i in range(len(seq) - min_block + 1):
                 w = [mask(s) for _, s in seq[i:i + min_block]]
-                if len(set(w)) < 4 or all(HEADER.match(s) or TRIVIAL.match(s) for s in w):
+                if len(set(w)) < 4 or sum(1 for s in w if HEADER.match(s) or TRIVIAL.match(s)) * 4 >= len(w) * 3:
                     continue
                 wins[hashlib.md5("\n".join(w).encode()).hexdigest()].append((rel, i))
     return funcs, wins, seqs

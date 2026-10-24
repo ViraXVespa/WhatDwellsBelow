@@ -69,9 +69,10 @@ def git_state(root: Path) -> dict[str, str]:
         "worktree": dirty,
     }
 
-def run_load_graph(root: Path) -> str:
+def run_check(root: Path, stem: str, *args: str) -> str:
+    """PASS, or FAIL plus the first non-RESULT line, for one read-only check run under the repo root."""
     proc = subprocess.run(
-        [*boot.cmd("check_load_graph"), "--root", str(root), "--bot"],
+        [*boot.cmd(stem), "--root", str(root), *args],
         cwd=root,
         check=False,
         capture_output=True,
@@ -79,8 +80,9 @@ def run_load_graph(root: Path) -> str:
     )
     if proc.returncode == 0:
         return "PASS"
-    err = [ln for ln in (proc.stderr or proc.stdout or "").strip().splitlines() if not ln.startswith(("RESULT", "Summary"))]
-    tail = err[0] if err else f"exit={proc.returncode}"
+    out = (proc.stderr or proc.stdout or "").strip().splitlines()
+    err = [ln for ln in out if ln.startswith(("NEW", "STALE", "NOWHY"))] or [ln for ln in out if not ln.startswith(("RESULT", "Summary"))]
+    tail = err[0][:160] if err else f"exit={proc.returncode}"
     return f"FAIL {tail}"
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -91,7 +93,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the allowlist on dirty paths and the load graph.",
+        help="Also check the allowlist on dirty paths, the load graph and the dupes gate.",
     )
     return parser.parse_args(argv)
 
@@ -166,9 +168,11 @@ def main(argv: list[str] | None = None) -> int:
                 lines.append(f"blocked\t{rel}")
         else:
             lines.append(f"allowlist=skip missing {ALLOW_FILE}")
-        graph = run_load_graph(root)
+        graph = run_check(root, "check_load_graph", "--bot")
         lines.append(f"load_graph={graph}")
-        if cap_fail or blocked or graph.startswith("FAIL"):
+        dupes = run_check(root, "list_dupes", "--gate")
+        lines.append(f"dupes_gate={dupes} (rows: python tools/lint.py dupes --gate -v)")
+        if cap_fail or blocked or graph.startswith("FAIL") or dupes.startswith("FAIL"):
             rc = 1
 
     status = "FAIL" if rc else "PASS"

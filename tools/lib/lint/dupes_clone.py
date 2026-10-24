@@ -10,7 +10,8 @@ positions, sizes, colors, names, signs or local variable names compare equal.
   clone  >= --min-clone consecutive loose lines repeated in 2+ places, same file or across files
          (4 wall builders that differ only in names, signs and corner order)
 Data rows (dict / array entries, bare literals) are not runs: a table is the fix, not the smell. Nor are calls
-that each carry prose (a string over 30 chars: argparse help, UI copy): that text is the content, not a literal.
+that each carry prose (a string over 32 chars: argparse help, UI copy) or feed an output sink (add_argument, print,
+.append/.extend of a string or list row): that text is the content, not a literal.
 """
 from __future__ import annotations
 
@@ -32,6 +33,8 @@ BINOP = re.compile(r"\s[+-]\s")
 DATA = re.compile(r'^(?:"S"|N|\[|\{|\(|L\s*,|"S"\s*:|L\s*:\s*[^=])')
 TRIVIAL = re.compile(r"^(pass|return|return L|else:|\)|\]|\}|\),|\],|\},)$")
 CALL = re.compile(r"^[\w.]+\(.*\)$")
+# Output / declaration sinks: CLI flags, printed or appended report text, appended data rows. The text is the content.
+SINK = re.compile(r"^(?:[\w.]+\.)?(?:add_argument|print)\(|^[\w.]+\.(?:append|extend)\(\s*(?:f?[\"']|\[)")
 
 def numeric(s: str) -> str:
     """Strings masked, numbers masked, unary minus and +/- dropped; names kept."""
@@ -58,7 +61,7 @@ def runs(seqs: dict[str, list[tuple[int, str]]], min_run: int) -> list[dict]:
                 j += 1
             n = j - i + 1
             raw = {s for _, s in seq[i:j + 1]}
-            prose = all(any(len(m) > 32 for m in STR.findall(s)) for s in raw)
+            prose = all(any(len(m) > 32 for m in STR.findall(s)) for s in raw) or all(SINK.match(s) for s in raw)
             if n >= min_run and len(raw) > 1 and CALL.match(lo[i]) and len({numeric(s) for s in raw}) == 1 and not prose:
                 out.append({"kind": "run", "lines": n, "copies": n, "score": n - 1, "key": _key([lo[i]]),
                             "where": ["%s:%d-%d" % (rel, seq[i][0], seq[j][0])]})
