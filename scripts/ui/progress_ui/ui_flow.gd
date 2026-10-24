@@ -42,6 +42,7 @@ static func close_ui(host: CanvasLayer) -> void:
 	host.extract_mailed = false
 	host._drop_sub()
 	host.open = false
+	FrameSet.UiText.cap = 0.0
 	host.visible = false
 	Confirm.close(host)
 	host.anvil_item = {}

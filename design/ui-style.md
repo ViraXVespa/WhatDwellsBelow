@@ -38,6 +38,11 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.
 - Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/gate.py smokes --phases 6` and `gate.py bot-smokes` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `gate.py bot-smokes` phase 6 only; run it by hand with `--wdb-load-timing-smoke --wdb-open-timing`.
 
+## Text size
+- Minimum: 10 CSS px glyph size on a 844x390 phone (DPR 3), checked by `shots.py textsize --gate` (`tools/data/text-size.json`: viewports, flows, `allow`). On screen px = font size x canvas scale x viewport scale; CSS px = that / DPR.
+- `ui_text.gd` owns it: the floor is in CSS px (x DPR from `--wdb-dpr` or the browser), sizes up to `UI_TEXT_REF` scale fully, bigger headings grow by the difference only. Route a raw `font_size` through `ThemeS.font_px` (or `UiText.track` for a label that stays alive); never a per-label phone size. Desktop 1080p stays at scale 1.
+- A frame skin with fixed art sets `TEXT_CAP` (its text stops growing there; `allow` lists it at a lower minimum). Raising one needs that board's layout redone.
+
 ## Object frames (`scripts/ui/progress_ui/`)
 A frame re-skins the progress panel host for one object (stall, bin). `frame_base.gd` owns what every frame shares: the chrome layer under the host, the cream plate every other mode keeps, the footer room, the button row (the host's scroll area) and its separation. `frame_set.gd` lists the skins.
 A skin is a script with static hooks:

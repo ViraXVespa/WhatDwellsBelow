@@ -6,6 +6,8 @@ extends Object
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+## Anvil art over the gear board: text scales up to this on small screens (ui_text.gd cap) so the tab row stays inside.
+const TEXT_CAP := 1.6
 const Art: GDScript = preload("res://scripts/ui/progress_ui/anvil_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(340, 24)

@@ -35,6 +35,7 @@ static func build(host: CanvasLayer) -> void:
 	host.tab_wrap.alignment = BoxContainer.ALIGNMENT_BEGIN
 	host.tab_wrap.position = Vector2(left_x, panel.position.y + Journal.TOP - 46.0)
 	host.tab_wrap.size = Vector2(content_w, 58)
+	host.tab_wrap.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	host.tab_wrap.add_theme_constant_override("separation", 8)
 	host.add_child(host.tab_wrap)
 	host.tab_left = HBoxContainer.new()

@@ -74,6 +74,8 @@ static func _shelf(it: Dictionary, line: String, on_press: Callable) -> Button:
 	else:
 		Icons.fit_btn(b, tex)
 	b.expand_icon = false
+	if ThemeS.text_scale() > 1.01:
+		b.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	VendorFrame.dress_shelf(b)
 	b.pressed.connect(on_press)
 	return b

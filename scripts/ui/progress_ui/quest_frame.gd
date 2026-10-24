@@ -5,6 +5,8 @@ extends Object
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+## Fixed board art: text scales up to this on small screens (ui_text.gd cap), then the board would overflow.
+const TEXT_CAP := 1.4
 const Art: GDScript = preload("res://scripts/ui/progress_ui/poster_art.gd")
 
 const BTN_SKIN := "neutral"
