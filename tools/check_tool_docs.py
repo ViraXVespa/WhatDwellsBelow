@@ -22,7 +22,7 @@ import agent_log
 import repo_lib
 from godot_lib import VERSION as ENGINE_PIN
 
-CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
+CATALOG_GLOB = "tools*.md"  # the door (tools.md) plus every tools-<area>.md sibling
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
 
 SKILL_DIR = Path("/home/box/agent-data/workflows")
@@ -106,8 +106,8 @@ def main(argv: list[str] | None = None) -> int:
     exact = {g[len("tools/"):] for g in globs if g.startswith("tools/") and not any(c in g for c in "*?[!")}
     rows: dict[str, tuple[str, str]] = {}
     bad: list[str] = []
-    for cat in CATALOGS:
-        for ln in (root / "design" / cat).read_text(encoding="utf-8").splitlines():
+    for cat in sorted((root / "design").glob(CATALOG_GLOB)):
+        for ln in cat.read_text(encoding="utf-8").splitlines():
             m = ROW.match(ln)
             if not m:
                 continue

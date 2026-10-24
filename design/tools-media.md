@@ -1,26 +1,35 @@
-# Tools catalog: media and art pipeline
+# Tools: media and art pipeline
 
 Status: protocol  
 Read when: running a still/I2V/pack/sprite/audio tool (Build / User only)  
 
-Rules, the CLI contract and the surface key are in `tools.md`; flows live in the `art-*.md` docs and the Imagine / I2V skills. The Bot uses only the `A=Y` rows.
+Door, rules, the CLI contract and the Surf / A key: `tools.md`. Flows live in the `art-*.md` docs and the Imagine / I2V skills. The Bot reads only the image library section.
+
+## Jobs
+
+- **Imagine a still (UI, NPC, tile, character):** `run_isolated_grok.py --kind ui --brief "..." --out DIR` (flow: the isolated-media gate).
+- **Rekey stills:** `rekey_all_stills.py --only assets/...png` (live), `--out DIR` (review copy), `--check` (two runs byte-identical); look first with `rekey_preview.py --only ...`; full-set check `rekey_check.py --new DIR`.
+- **Animation review briefs:** `anim_review.py pack`, `anim_review.py regen`, `anim_review.py tree --out DIR`.
+- **Bible prompts and sheets:** `bible_prompt.py --gender female` / `--enemy ID`; `bible_normalize.py`.
+- **Sound effects:** `make_sfx.py --list`, `make_sfx.py --only CUE`, `make_sfx.py --check`.
+- **Image facts for a proof:** `img_inspect.py` (`tools-shots.md`).
 
 ### Media / art pipeline (Build only)
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical | D | module docstring (no `--help`) | N |
-| `anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. | D | module docstring (no `--help`) | Y |
-| `anim_review.py` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree` (wiped I2V test tree, `--out DIR`). Summary: `anim-review` | D | `--help` | N |
+| `audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical | D | docstring | N |
+| `anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. | D | docstring | Y |
+| `anim_review.py` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree --out DIR` (wiped I2V test tree). Summary: `anim-review` | D | `--help` | N |
 | `attack_keyframes.py` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
 | `attack_keyframes_log.json` | Sidecar data for the tool of the same stem | D | - | N |
 | `bible_normalize.py` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
 | `bible_prompt.py` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
 | `gen_prompt_glyphs.py` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
-| `i2v_seeds.py` | I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma | D | `--help` | N |
+| `i2v_seeds.py` | I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma (`--out DIR`) | D | `--help` | N |
 | `make_sfx.py` | Placeholder SFX wavs from `tools/sfx-cues.json` (one entry per cue; sine, noise, mix, cat nodes). `--list`, `--only`, `--prefix`, `--dry-run`, `--check` (render to temp and compare with `assets/audio`; the 21 p2/p9 cues are byte-identical). A new cue is one JSON entry, not a new script | D | `--help` | N |
 | `sfx-cues.json` | Cue specs read by `make_sfx.py` (name, scale, graph) | D | - | N |
-| `match_keyed_region.py` | Match a keyed source region against a live sprite, and sort local sources | D | `--help` | N |
+| `match_keyed_region.py` | Match a keyed source region against a live sprite, and sort local sources (also the matcher library for the rekey tools) | D | `--help` | N |
 | `pack_locomotion.py` | Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips | D | `--help` | N |
 | `pack_oneshot.py` | Pack one-shot I2V clips into engine frames | D | `--help` | N |
 | `pack_turntable.py` | Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin | D | `--help` | N |
@@ -33,8 +42,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
 | `rekey_check.py` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
-| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job (`--kind ui`: generic UI still with the staged UI style; `--kind npc`: NPC redesign; `--aspect`; `--selftest` mocks grok) | D | `--help` | N |
-| `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
+| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job: `--kind ui\|npc\|tile\|character\|still\|i2v --brief "..." --out DIR` (`--dest-name`, `--copy REF`, `--aspect`); `--selftest` mocks grok | D | `--help` | N |
 | `sprite_pipeline.py` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
 
 ### Image library `tools/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)
@@ -43,7 +51,6 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `img_inspect.py` | Programmatic eyes, text facts plus optional PNG: `describe`, `layout` (off-screen, clipped, overlap, safe area, alignment, gaps; `--box` for node rects), `contrast` (WCAG per `--box`), `grid`, `zoom`, `diff` (heatmap, regions, `--mask`, `--max-ratio`), `montage`, `find` (template), `halo` (rim tint, leftover plate), `rimclean` (re-key a rim with `--refs`), `motion` (frame to frame), `selftest` | BWD | `--help` | N |
 | `requirements.txt` | Pip deps for the image tools | BWD | - | Y |
 | `requirements-ml.txt` | Optional torch + einops for the `bible_normalize.py` denoise (`imglib/scunet.py`) | D | - | N |
 

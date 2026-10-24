@@ -1,71 +1,58 @@
-# Tools catalog
+# Tools
 
 Status: protocol  
 Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)  
 
-Single source for what each tool is, which surface runs it, and its gotchas. Siblings: `tools-lint.md` (inventory, dupe, dead code, doc edits), `tools-build.md` (Windows runners, release), `tools-media.md` (media pipeline), `pc-offload.md` (Build-only rules). `check_tool_docs.py` keeps the tables in step with `tools/`.
+The door for every tool under `tools/`: which tool for which job, the rules, and the CLI contract. Open the one sibling the job names; each holds exact commands (Jobs) and the catalog rows. `check_tool_docs.py` keeps the rows in step with `tools/`.
 
-Commands: `python tools/X.py` (Windows has no `python3`).
+Commands: `python tools/X.py` (the Bot's box: `python3`). Flags: `python tools/X.py --help`. Surf: **B** Bot (Linux box), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run it.
 
-Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run the tool (A=N is fine either way).
+## Which tool for which job
+
+| Job | Start with | Sibling |
+|---|---|---|
+| Prove a change, commit a Build slice | `check_gd_load.py`, then `run_build_gate.py --batch [--visual door.job]`, then `commit_slice.py`; Bot: BOT.md Prove list | `tools-gates.md` |
+| Compile errors, import, warnings | `check_gd_load.py`; `run_godot_import_check.py`; `bot_warnscan.py --save-baseline B` then `--non-leak-diff B` | `tools-gates.md` |
+| Smokes | `run_smokes.py --door D` (PC); `bot_smokes.py --phases 1,2,6` or `--for FILE` (Bot) | `tools-gates.md` |
+| Screenshots, before/after, image facts | `run_shot_flow.py --job door.job`; `shot_diff.py A B --out OUT`; `img_inspect.py diff A B`; `shot_crop.py SHOT --box X,Y,W,H` | `tools-shots.md` |
+| Light, ground wear, frame art bakes | `run_bake_camp.py`, `check_hub_bake.py`, `bake_frame_art.py --check` | `tools-shots.md` |
+| Frame time, hitches, load time, web perf | `run_hub_bench.py --leg desktop`; `web_perf.py --site DIR --flow F`; `run_load_timing.py --leg hub` | `tools-perf.md` |
+| Find code, a function, a route, a tunable, a last run | `list_xref.py TEXT`; `show_func.py PATH NAME`; `list_route.py --job door.job`; `tunables.py get KEY`; `read_summary.py JOB` | `tools-lookup.md` |
+| Size, duplicates, dead code, splits, doc edits | `check_script_cap.py --bot --sweep`; `list_dupes.py`; `list_unused_funcs.py`; `split_funcs.py FILE --list`; `doc_patch.py` | `tools-lint.md` |
+| Tasks, code map, routing docs | `task.py list`; `code_map.py row --path P`; `check_load_graph.py` | `tools-gates.md` |
+| Localization (keys, copy on screen) | No dedicated tool: `list_xref.py KEY` (code and `en.po`), `list_xref.py TEXT --texts` after a shot flow, `img_inspect.py contrast` | `tools-lookup.md` |
+| Art, stills, I2V, rekey, audio | `run_isolated_grok.py --kind K --brief "..." --out DIR`; `rekey_all_stills.py --only PATH`; `anim_review.py`; `make_sfx.py` | `tools-media.md` |
+| Start a slice, logs, export, week, Pages | `open_slice.py` (User), `start_build_slice.py`, `clean_agent_logs.py`, `export_web.py` | `tools-build.md` |
+| Write or change a tool | `check_tool_cli.py --only STEM --smoke-run`, `check_tool_docs.py`; owners in `tools-libs.md` | `tools-libs.md` |
+
+Runner habits on the User PC: `pc-offload.md`. Retired one-off tools: `tools/retired/README.md` (not run, not catalogued).
+
+By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it never opens). **Web/chat** edits docs through `doc_patch.py` (`doc-library.md`); its scratch may call any tool, and the User runs only `python tools/_scratch.py` (`web-emit.md`). **Build** measures with tools (`file_stat.py`, not `python -c`) and runs `check_load_graph.py` after any design doc, agents file or `BOT.md` edit.
 
 ## Rules
 
-1. **Bot scope.** The Bot runs only tools marked `A=Y` here and changes only the paths its scope allows (`BOT.md`; CI `bot-gate.yml`).
+1. **Bot scope.** The Bot runs only `A=Y` tools and changes only the paths its scope allows (`BOT.md`; CI `bot-gate.yml`).
 2. **Platform.** Every tool is Python. Windows and Godot rules: `pc-offload.md`.
-3. **Usage truth.** `python tools/X.py --help` for every CLI tool; `*_lib.py` files have a module docstring. Docs do not repeat flags.
-4. **Summaries.** Every run writes its own `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten) and lists it in that folder's `index.txt`, newest first; the last 20 runs are kept. Every root `_*/` folder carries an empty `.gdignore`, committed for `_cache _logs _old _out _pages _src` (`.gitignore`: `/_x/*` + `!/_x/.gdignore`) so every clone has them, enforced by `check_tool_cli.py` and all export presets exclude `_*/*`, so tool output never enters an import or a `.pck`. `read_summary.py --job <name>` prints the index, then the newest. Worktrees have their own `_logs/`, cleared weekly. Read the final `RESULT` line, then the summary once, not raw logs or script bodies. Lookup tools (`list_xref.py`, `code_map.py row`, `tunables.py get`, `list_route.py`) print their rows.
-5. **New tool.** Build and Web create a tool on their own when it would reasonably help future tasks (not a one-off), then tell the User afterward: name, command, what it saves. Add its row here, then run `check_tool_docs.py` and `check_tool_cli.py`. The Bot adds a tool only when the User approved it this session. Generator scripts for assets land under `tools/`; the durable sources they produce land under `_src/` (matching the eventual `assets/` relative path).
-6. **Duplicates are shims.** A renamed or folded tool stays a shim (docstring starts `"""Shim`) for one release. New logic goes in the owner: `agent_log` (run helpers), `repo_lib` (git, version), `gd_lib` (`.gd` funcs), `md_format_lib` (text write), `doc_patch` (doc edits).
-7. **Tools, not scratches.** Would you need it again, or would the next session? Update the tool or add one. A scratch is only for a niche one-off, in temp. `run_agent_py.py` deletes a script under `_logs/agent-py/` after the run, and `--keep-script` still leaves it gitignored. Web doc edits: `doc_patch.py` CLI (`doc-library.md`). A proof with no tool: extend the library in the same job (`prove.md`).
-8. **Fix the tool.** A tool that does not work intuitively is designed wrong: fix it, do not work around it. Build treats a broken or unintuitive tool as a required fix in the same session (or immediately parks a Bot task if out of scope). Do not add workarounds.
-9. **Rough edges (end of every task).** List the rough edges you hit (a guessed flag, a re-run, a scratch, a doc that lied) and fix them in the same change when you can, else name them in the report.
-10. **No loops (gates and fixes).** One copy of the rule; entry docs, jobs and skills point here.
-    - Batch all same-kind fixes into one edit pass (every rename, every cast, every path), then run the gates once for the batch, not after each small edit.
-    - No prove or re-verify cycles on unchanged results. If a check reports nothing new, stop.
-    - **Prove is final verification.** All diagnosis, instrumentation, and the intended fix are completed in Gather, Prepare, and Change before the prove is run. A red prove allows at most one small corrective edit and one re-run. Still red: stop and report the log path; do not open a new diagnostic cycle inside the prove. Build's retry uses the original session ID from the end of Gather (`build-job-cycle.md`).
-    - Two fixes that do not move the metric mean the diagnosis is unproven: the cause is not named (`build-job-cycle.md` Gather step 4), so Prepare improves the instrumentation, not a third fix.
-    - Cap: at most 2 gate reruns per task (a full sweep such as `bot_warnscan` or `bot_smokes` counts as one). Anything not trivial becomes a question with options.
-    - Exempt: iterating one visual unit (a screen, a sprite) with the User. Shoot, look, ask, change as often as the User asks. The rerun and retry counts above do not apply to it. Each pass still runs the compile check (`check_gd_load.py`).
-
-11. **Python image deps.** `pip install -r tools/requirements.txt` (Pillow, numpy; opencv-python-headless optional). Shared image code is `tools/imglib/` (`tools-media.md`).
+3. **Usage truth.** `--help` for every CLI tool; `*_lib.py` files have a module docstring. Docs give the job's exact command, not every flag.
+4. **Summaries.** Every run writes `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten, last 20 kept, `index.txt` newest first). Read the `RESULT` line, then the summary once (`read_summary.py JOB`), not raw logs or script bodies. Every root `_*/` folder carries a committed `.gdignore`, so tool output never enters an import or a `.pck`.
+5. **New tool.** Build and Web add a tool when it would help future tasks (not a one-off) and tell the User afterward: name, command, what it saves. Add its row to the right sibling, then `check_tool_docs.py` and `check_tool_cli.py`. The Bot adds a tool only when the User approved it this session. Asset generators live in `tools/`; their durable sources in `_src/`.
+6. **One owner, no parallel copies.** Fold overlapping tools into one tool with subcommands or flags; shared code goes in the owner lib (`tools-libs.md`). A renamed flag keeps its old name as an alias. A tool nobody needs moves to `tools/retired/` with a README line.
+7. **Tools, not scratches.** If you or the next session would run it again, update or add a tool. A scratch is a niche one-off: `run_agent_py.py` deletes it after the run. Web doc edits: `doc_patch.py` (`doc-library.md`). A proof with no tool: extend the library in the same job (`prove.md`).
+8. **Fix the tool.** A tool that is not intuitive is designed wrong: fix it in the same session (or park a Bot task), do not work around it.
+9. **Rough edges (end of every task).** List what you hit (a guessed flag, a re-run, a scratch, a doc that lied); fix it in the same change when you can, else name it in the report.
+10. **No loops (gates and fixes).**
+    - Batch same-kind fixes into one edit pass, then run the gates once.
+    - No re-verify cycles on unchanged results.
+    - **Prove is final verification.** Diagnosis and the fix are finished before the prove (Gather, Prepare, Change). A red prove allows one small corrective edit and one re-run; still red: stop and report the log path. Build's retry uses the original session id (`build-job-cycle.md`).
+    - Two fixes that do not move the metric mean the cause is unnamed: Prepare improves the instrumentation, not a third fix.
+    - At most 2 gate reruns per task (a full `bot_warnscan` or `bot_smokes` sweep counts as one).
+    - Exempt: iterating one visual unit with the User; each pass still runs `check_gd_load.py`.
+11. **Python image deps.** `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all required). Shared image code: `tools/imglib/` (`tools-media.md`).
 
 ## Contract (enforced by `check_tool_cli.py`)
 
-- Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a non-mutating `--help`, ASCII output.
-- Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
-- Stdout is a short summary (at most 30 lines; long lists fold to the first rows plus a count via `agent_log.fold`, and `--verbose` prints them all), then always the last line `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`. Exempt: printers and `wdb_scratch_server`.
-- Every option has `help=` text. Output paths are `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); older names stay as aliases only.
-- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX. Tools that scan a project (`list_xref.py`, `show_func.py`, `file_stat.py`, `list_changed.py`, `read_summary.py`, `check_shot_gaps.py`, `run_shot_flow.py`, `run_godot_import_check.py`) print a WARN line only when the scanned root is not the current directory's project; they do not print a bare root= prefix.
-
-## Run when
-
-- **Bot:** `BOT.md` (boot, prove, smokes, Build-doc ban).
-- **Web/chat:** docs go through `doc_patch.py` (`doc-library.md`); the scratch may call any entry under `tools/` (including Godot launchers such as `run_bake_camp.py`, `run_shots.py --mode web`, `run_godot_import_check.py`). The only command the User runs is `python tools/_scratch.py`. Godot itself runs on the User’s machine.
-- **Build (User PC):** `file_stat.py` to measure (not `python -c`), `list_xref.py`, `list_changed.py`; `run_build_gate.py` after a `.gd` slice; `check_load_graph.py` after a design doc, the agents file, or `BOT.md` edit (RESULT PASS required, not deferred to ship); `list_changed.py --history` when a doc and its code disagree (`prove.md`); `web_perf.py` after a fresh `export_web.py --out DIR` (advisory, `tools-build.md`); `code_map.py patch` for one row; `task.py` for task files (`design/tasks/README.md`). Runner rules: `pc-offload.md`.
-
-## Catalog: shared and Bot tools
-
-### Gates and Bot flows
-
-| Tool | Does | Surf | Use | A |
-|---|---|---|---|---|
-| `bot_status.py` | Bot punch list (reuse brief, open opt tasks); `--prove` adds the Bot checks. Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
-| `check_script_cap.py` | Duplicate script-name check (`dupes=`): `--git-changed`, `--path`. The Bot's own checks run only with `--bot` (`BOT.md`). | BWD | `--help` | Y |
-| `check_load_graph.py` | Doc routing vs `design/routes.yaml` (PASS/FAIL, no summary): `smokes`/`shot_flows` keys, phases and flow files; the Bot adds boot budgets (`--bot`) | BWD | `--help` | Y |
-| `grok_share.py` | Pull conversation + images from a Grok share URL via Playwright (`--print-convo`, `--list-images`, `--save-images DEST`). Requires playwright installed. | W | `--help` | N |
-| `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks, now resolves bare basenames; exits 1 on new UNMAPPED or missing), `row --path P`, `patch --system S ...`, `sweep [--system NAME]` (coverage checklist: facade + resolved paths + cluster helpers + MISSING). | BD | `--help` | Y |
-| `bot_smokes.py` | Headless smokes on the Linux VM (`--phases`, or `--door` / `--job` for the `routes.yaml` `smokes` map; `--for FILE` prints the covering phases and warnscan areas, runs nothing). `--release` adds `run_release_smoke.py` (alone: only that). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install, `.uid` import: BOT.md Smokes. | B | `--help` | Y |
-| `bot_warnscan.py` | Warning sweep by area (leak / run-fail areas are rechecked and tagged stable / flaky). `--save-baseline` before, `--non-leak-diff` after (same `--areas`); `--changed` is the quick run; `--renderer real\|both` adds box-display runs. Procedure: BOT.md Smokes. | B | `--help` | Y |
-| `run_build_gate.py` | One batch gate: editor import (restores `.import` churn), `--batch` (import + `check_load_graph` + script-name check + `run_release_smoke.py --modes stripped` + `check_hub_bake`), `--visual JOB` adds the job's shot flows in the same call, `--warnscan-baseline B` adds the non-leak diff. A red result prints the RETRY prompt. Once per batch. Summary: `build-gate`. | BWD | `--help` | Y |
-| `bot_load_audit.py` | Audit of one Grok Build session's reads before its first ask (`--session DIR` / `--file chat_history.jsonl`, `--selftest`). Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
-| `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
-| `task.py` | Task files in `design/tasks/` for Web, Build and Bot: `list`, `show`, `new` (`opt-next` for a Bot opt item), `update`, `done`, `index`, `check`. Summary: `task`. | BWD | `--help` | Y |
-| `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. | BWD | - | Y |
-| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above); `--smoke-run` runs every tool in a throwaway copy. | BWD | `--help` | Y |
-| `check_tool_docs.py`
-| `review_shots.py` | Shot review in an isolated Grok session (`grok inspect` gate as `run_isolated_grok.py`): PNGs + `--question` [`--rubric`], prints only the text report and `VERDICT`; RESULT FAIL when isolation cannot run, never a placeholder. `--selftest` mocks grok. | BW | `--help` | Y |
-
-### Split, code map, doc edits, inventory and lint
-
-`tools-lint.md` (same columns) lists dupe inventory, split, `doc_patch`, `list_route` and the shared libs (`repo_lib`, `gd_lib`, `agent_log`, `run_log_lib`, `retry_lib`, `bot_gate_lib`).
+- Shebang `#!/usr/bin/env python3`, `agent_log.std_parser`, a non-mutating `--help`, ASCII output, `help=` on every option.
+- Ops tools take `--root`, writers `--dry-run`, every tool `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
+- Stdout is a short summary, at most 30 lines (a `--list` run 60): long lists fold to the first rows plus a count (`agent_log.fold`), `--verbose` prints all. The last line is always `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`. Exempt: printers and `wdb_scratch_server`.
+- Output paths are `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); older names stay only as aliases.
+- Text goes through `md_format_lib` (BOM and line endings kept). Printed paths are repo-relative POSIX. Project scanners print a WARN line only when the scanned root is not the current directory's project.
