@@ -169,6 +169,9 @@ def _parse_keyframe(spec: str) -> tuple[Path, float]:
         _die(f"--keyframe timestamp must be inside the clip: {spec}")
     return Path(raw), stamp
 
+# The walk wrapper's opening line, shared by i2v_seeds WALK_PROMPT and WALK_PROMPT_FEMALE_UP (one-shots say "Do not walk").
+WALK_MARK = "Hold this still first. Do not take a step on the first frames."
+
 def _walk_prompt(path: Path) -> bool:
     return WALK_MARK in path.read_text(encoding="utf-8")
 
@@ -551,6 +554,7 @@ def selftest() -> int:
                      ("aspect in brief", 'aspect_ratio: "16:9"' in build_job(kind="ui", brief="", use_bibles=False, dest_name="a.png", aspect="16:9")),
                      ("npc no identity lock", "identity lock" not in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
                      ("npc reads characters.md", "Read `characters.md` only" in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
+                     ("walk mark in both walk prompts", Path(__file__).with_name("i2v_seeds.py").read_text(encoding="utf-8").count(WALK_MARK) == 2),
                      ("style section", "No pink" in ui_style_text()), ("style refs exist", isinstance(ui_style_refs(ui_style_text()), list))):
         if not ok:
             bad.append(need)
