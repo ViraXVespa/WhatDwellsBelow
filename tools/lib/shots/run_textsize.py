@@ -135,7 +135,8 @@ def main(argv: list[str] | None = None) -> int:
     lines = table(rep, old, vps)
     gated = [v for v in vps if v in cfg["gate"]]
     under = sum(r["under"] for v in gated for r in rep.get(v, {}).values())
-    smallest = min((r["min"] for v in gated for r in rep.get(v, {}).values()), default=0.0)
+    pool = gated or vps  # no gated viewport in the run: report the smallest over all of them, not 0.0
+    smallest = min((r["min"] for v in pool for r in rep.get(v, {}).values()), default=None)
     status = "FAIL" if errs or (args.gate and under) else ("INFO" if under else "PASS")
     body = "\n".join(["textsize min_css=%g gate=%s out=%s" % (cfg["min_css"], ",".join(cfg["gate"]), rel(root, out))] + lines + errs)
     return agent_log.finish(JOB, root, body, status, args=args, screens=sum(len(v) for v in rep.values()), under=under,
