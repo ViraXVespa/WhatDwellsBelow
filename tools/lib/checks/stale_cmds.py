@@ -11,6 +11,8 @@ tools/retired or prove_rules.json, not selftest functions or *selftest*.py fixtu
 - BRANCH (branch_scan): a hand-rolled branch test (`startswith("bot/")`, `startswith("grok-build-w")`, `github.head_ref, 'bot/'`)
   outside repo_lib.branch_kind; or Build-only retry text (`grok -r ID --fork-session`, `git diff grok-build`...) in a module a shared,
   any-branch tool can reach (outside tools/lib/slice|release, or imported from outside them) with no repo_lib.head_kind gate.
+- SCOPE (branch_scan): a tools .py walking only scripts/ for .gd (`(root / "scripts").rglob("*.gd")`, `sub="scripts"`):
+  live .gd is gd_lib.live_gd / LIVE_GD_DIRS (scripts/ and tools/data/), no folder exempt.
 Flags are read from string literals, so argparse.SUPPRESS flags (`--bot`) count.
 """
 from __future__ import annotations
@@ -123,6 +125,7 @@ def scan(root: Path, tracked: set[str]) -> list[str]:
     return bad
 
 BUILD_DIRS = ("tools/lib/slice/", "tools/lib/release/")  # Build/week flow modules: their text may assume a Build branch
+SCOPE = re.compile(r"""\(\s*root\s*/\s*["']scripts["']\s*\)\.rglob\(\s*["']\*\.gd["']|iter_gd\([^)]*sub=["']scripts["']""")
 BUILD_TEXT = re.compile(r"grok -r \S+ --fork-session|`/fork`|git diff grok-build|RETRY: red prove")
 ADHOC = re.compile(r"""startswith\(\s*["'](?:bot/|grok-build|grok-web)|head_ref,\s*'(?:bot/|grok-)""")
 GATE = re.compile(r"\b(?:head_kind|branch_kind)\(")
@@ -145,6 +148,8 @@ def branch_scan(root: Path, tracked: set[str], texts: dict[str, str] | None = No
         lines = [(n, ln) for n, ln in enumerate(text.splitlines(), 1) if n not in skip]
         if not rel.endswith(("repo_lib.py", "stale_cmds.py")):
             bad += [f"BRANCH  {rel}:{n}: hand-rolled branch test; use repo_lib.branch_kind/head_kind" for n, ln in lines if ADHOC.search(ln)]
+        if not rel.endswith(("gd_lib.py", "stale_cmds.py")):
+            bad += [f"SCOPE  {rel}:{n}: walks scripts/ only for .gd; use gd_lib.live_gd (scripts/ + tools/data/)" for n, ln in lines if SCOPE.search(ln)]
         hit = next((n for n, ln in lines if BUILD_TEXT.search(ln)), 0)
         if not hit or not rel.endswith(".py") or GATE.search(text):
             continue
@@ -169,7 +174,9 @@ def selftest(root: Path) -> list[str]:
                "tools/lib/agent_log.py": "import retry_lib\n"}, 0),
              ({"tools/lib/slice/retry_lib.py": retry, "tools/lib/slice/slice_lib.py": "import retry_lib\n"}, 0),
              ({"tools/lib/bot_gate_lib.py": 'ok = ref.startswith("bot/")\n'}, 1),
-             ({".github/workflows/g.yml": "if: startsWith(github.head_ref, 'bot/')\n"}, 1))
+             ({".github/workflows/g.yml": "if: startsWith(github.head_ref, 'bot/')\n"}, 1),
+             ({"tools/lib/lint/u.py": 'found = sorted((root / "scripts").rglob("*.gd"))\n'}, 1),
+             ({"tools/lib/lint/u.py": "found = gd_lib.live_gd(root)\n"}, 0))
     for texts, want in cases:
         got = branch_scan(root, set(), texts)
         if len(got) != want:

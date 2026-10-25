@@ -126,7 +126,8 @@ def bad_callers(text: str, path: Path, root: Path) -> list[str]:
     gone = set(defs(old)) - set(defs(text))
     out = []
     alias = re.compile(r'(?:const|var)\s+(\w+)\s*(?::[^=]*)?:?=\s*(?:preload|load)\("res://' + re.escape(rel) + r'"\)')
-    for f in sorted((root / "scripts").rglob("*.gd")):
+    import gd_lib
+    for f in gd_lib.live_gd(root):
         if f.resolve() == path.resolve():
             continue
         t = f.read_text(encoding="utf-8-sig", errors="replace")

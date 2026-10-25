@@ -65,7 +65,8 @@ def scan(line: str):
 
 def files_of(root: Path) -> list[Path]:
     """GDScript plus every non-script file that can name a func (scenes, flow json, web shells)."""
-    found = sorted((root / "scripts").rglob("*.gd"))
+    import gd_lib
+    found = gd_lib.live_gd(root)
     for sub, pats in (("scenes", ("*.tscn", "*.tres")), ("tools", ("*.json", "*.js", "*.html")), ("site", ("*.js", "*.html"))):
         base = root / sub
         if base.is_dir():

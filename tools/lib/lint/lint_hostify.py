@@ -70,7 +70,7 @@ def main() -> int:
     ap = agent_log.std_parser("Advisory hostify / := lint over live scripts/**/*.gd (exit 0 always).", json_out=True)
     args = ap.parse_args()
     ROOT = agent_log.resolve_root(args)
-    files = gd_lib.iter_gd(ROOT)
+    files = gd_lib.live_gd(ROOT)
     all_hits: list[str] = []
     for p in files:
         all_hits.extend(lint_file(p))

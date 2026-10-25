@@ -47,7 +47,12 @@ import agent_log
 
 HOSTCALLS = ("get_tree get_node get_node_or_null get_viewport get_window add_child remove_child queue_free "
              "get_children get_child get_child_count get_parent get set has_method call call_deferred "
-             "is_inside_tree create_tween set_process set_process_input").split()
+             "is_inside_tree create_tween set_process set_process_input set_physics_process add_to_group remove_from_group "
+             "is_in_group tr tr_n emit_signal connect disconnect is_connected get_meta set_meta has_meta notification "
+             "to_global to_local look_at get_instance_id is_queued_for_deletion find_child get_index").split()
+HOSTVALS = frozenset(HOSTCALLS) - {"get", "set", "call"}  # bare (no `(`) = a bound Callable: tw.finished.connect(queue_free)
+HOSTPROPS = frozenset(("position global_position rotation global_rotation scale transform global_transform basis "
+                       "visible name owner modulate process_mode").split())  # bare Node/Node3D/CanvasItem members
 STRCALL = re.compile(r"(?:call_deferred|callv|call|has_method)\(\s*[\"'](\w+)[\"']")
 
 START = re.compile(
@@ -106,6 +111,8 @@ def host_body(it, facade, owner, inst, pre, stem, alias, htype="Node"):
     deps = set()
     loc = set(re.findall(r"\b(?:var|const|for)\s+(\w+)", t)) | set(re.findall(r"[(,]\s*(\w+)\s*[:,)=]", t[: t.index(":\n")]))
     head = re.search(r"^[ \t]*(?:static\s+)?func\s+" + re.escape(it["name"]) + r"\(", t, re.M)
+    if "host" in loc:
+        raise SystemExit(f"error: {it['name']} has a local or param named host (the injected node param); rename it first")
     out, last = [], 0
     for m in re.finditer(r"(?<![\w.$%&@\"'])[A-Za-z_]\w*", t):
         if cls[m.start()] != "c" or m.start() < head.end():
@@ -132,7 +139,7 @@ def host_body(it, facade, owner, inst, pre, stem, alias, htype="Node"):
             if facade[n] == "func" and not call:
                 raise SystemExit(f"error: {it['name']} uses func {n} without '('; wrap it by hand")
             rep_ = "host." + n
-        elif n in HOSTCALLS and call and n not in loc and n not in facade:
+        elif ((n in HOSTCALLS and call) or (not call and (n in HOSTVALS or n in HOSTPROPS))) and n not in loc and n not in facade:
             rep_ = "host." + n
         if rep_:
             out.append(t[last : m.start()] + rep_)
@@ -172,7 +179,7 @@ def outside(path: Path, root: Path) -> collections.Counter:
     rel = path.resolve().relative_to(root).as_posix()
     alias = re.compile(r'(?:const|var)\s+(\w+)\s*(?::[^=]*)?:?=\s*(?:preload|load)\("res://' + re.escape(rel) + r'"\)')
     cnt: collections.Counter = collections.Counter()
-    for f in (root / "scripts").rglob("*.gd"):
+    for f in gd_lib.live_gd(root):
         if f.resolve() == path.resolve():
             continue
         t = f.read_text(encoding="utf-8-sig", errors="replace")
@@ -267,7 +274,7 @@ def build(items, plan, path, root, in_folder=False):
     ext = outside(path, root)
     strs = outside_strs(root)
     hdir, hstem = helper_dir(path, in_folder)
-    taken = {f.stem for f in gd_lib.iter_gd(root)} - {s for s in plan if (hdir / (s + ".gd")).exists()}
+    taken = {f.stem for f in gd_lib.live_gd(root)} - {s for s in plan if (hdir / (s + ".gd")).exists()}
     fname = gd_lib.helper_basenames(hstem, list(plan), taken)
     hres = {s: f"res://{(hdir / (fname[s] + '.gd')).relative_to(root).as_posix()}" for s in plan}
     out = {}
@@ -283,6 +290,8 @@ def build(items, plan, path, root, in_folder=False):
         txt = parts[0] + "\n" + (pre + "\n\n" if pre else "") + ("\n".join(decls) + "\n\n" if decls else "") + "\n".join(funcs)
         out[hdir / (fname[stem] + ".gd")] = txt
     fac, added = [], False
+    keep = {n for n in owner if byname[n]["kind"] == "func" and (not n.startswith("_") or ext[n] or (n in inst and strs[n]))}
+    hostcall = re.compile(r"(?<![\w.$\"'])(" + "|".join(sorted(re.escape(n) for n in inst if n in owner and n not in keep) or ["(?!x)x"]) + r")\((\)?)")
     new_pre = "\n".join(f'const {alias[s]} := preload("{hres[s]}")' for s in plan)
     last_pre = max([i for i, it in enumerate(items) if it["name"] in preloads and it["name"] not in owner], default=-1)
     if last_pre < 0:
@@ -300,8 +309,8 @@ def build(items, plan, path, root, in_folder=False):
                 fac.append(sig + "\n\t" + ("" if ret == "void" else "return ") + call + "\n")
             elif it["kind"] == "const" and (ext[n] or any(re.search(r"(?<![\w.])" + n + r"\b", body(o)) for o in items if o["name"] not in owner)):
                 fac.append(f"const {n} := {alias[owner[n]]}.{n}")
-        else:
-            fac.append(body(it))
+        else:  # a moved instance func with no delegate is called as Mod.f(self, ...) from the facade
+            fac.append(hostcall.sub(lambda k: f"{alias[owner[k.group(1)]]}.{k.group(1)}(self" + (")" if k.group(2) else ", "), body(it)))
         if i == last_pre:
             fac.append(new_pre)
             added = True
@@ -312,19 +321,21 @@ def build(items, plan, path, root, in_folder=False):
 
 def outside_strs(root: Path) -> collections.Counter:
     cnt: collections.Counter = collections.Counter()
-    for d in ("scripts", "tests"):
-        for f in (root / d).rglob("*.gd"):
-            cnt.update(STRCALL.findall(f.read_text(encoding="utf-8-sig", errors="replace")))
+    for f in [*gd_lib.live_gd(root), *gd_lib.iter_gd(root, sub="tests")]:
+        cnt.update(STRCALL.findall(f.read_text(encoding="utf-8-sig", errors="replace")))
     return cnt
 
 def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
     p.formatter_class = argparse.RawDescriptionHelpFormatter
-    p.add_argument("file", help="The .gd file to split.")
+    p.add_argument("file", nargs="?", default="", help="The .gd file to split.")
     p.add_argument("--list", action="store_true", help="List the file's funcs with sizes and exit.")
     p.add_argument("--plan", help='JSON plan: {"<stem>_<rest>": [func names]}.')
+    p.add_argument("--selftest", action="store_true", help="split a throwaway Node3D script: refusals and a compile-clean result")
     p.add_argument("--in-folder", action="store_true", help="FILE is a helper in a facade-less cluster folder: new helpers go beside it")
     ns = p.parse_args()
+    if ns.selftest:
+        return _selftest()
     path = Path(ns.file)
     root = agent_log.resolve_root(ns) if ns.root else fr.project_root(path)
     text, bom, crlf = decode(path)
@@ -362,7 +373,39 @@ def main() -> int:
     print(f"requal --check problems in {bad} file(s)")
     for f in out:
         print(f"{os.path.getsize(f):>7}B {f}" + (f"  (was {before}B)" if f == path else ""))
-    return agent_log.emit_result("FAIL" if bad or miss else "PASS", mode="plan", files=len(out), requal_bad=bad, line_missing=sum(miss.values()))
+    rels = [Path(os.path.abspath(f)).relative_to(root.resolve()).as_posix() for f in out]
+    r = subprocess.run([*boot.cmd("check_gd_load"), "--root", str(root), "--files", *rels], capture_output=True, text=True)
+    comp = 0 if r.returncode == 0 else 1
+    print(f"compile (gate.py gd-load --files): {'PASS' if not comp else 'FAIL'}")
+    for ln in [l for l in r.stdout.splitlines() if "SCRIPT ERROR" in l][:4]:
+        print("  " + ln.strip()[:200])
+    return agent_log.emit_result("FAIL" if bad or miss or comp else "PASS", mode="plan", files=len(out), requal_bad=bad, line_missing=sum(miss.values()), compile_fail=comp)
+
+def _selftest() -> int:
+    """A Node3D facade: a local named host must be refused; bare queue_free / global_position and a private moved func
+    called from the facade must compile (all four wrote broken code that PASSed before)."""
+    import tempfile
+    src = ("extends Node3D\n\nvar dead := false\n\nfunc hit() -> void:\n\tif not dead:\n\t\t_die()\n\n"
+           "func _die() -> void:\n\tdead = true\n\tremove_from_group(\"x\")\n\tprint(global_position)\n"
+           "\tvar tw := create_tween()\n\ttw.finished.connect(queue_free)\n\n"
+           "func _drop() -> void:\n\tvar host := get_parent()\n\tprint(host)\n")
+    bad = []
+    with tempfile.TemporaryDirectory(prefix="wdb-split-st-") as td:
+        t = Path(td)
+        (t / "project.godot").write_text('config_version=5\n[application]\nconfig/name="t"\n', encoding="utf-8")
+        for plan, want in (({"brk_drop": ["_drop"]}, 2), ({"brk_die": ["_die"]}, 0)):
+            import shutil
+            shutil.rmtree(t / "scripts", ignore_errors=True)
+            (t / "scripts").mkdir()
+            (t / "scripts/brk.gd").write_text(src, encoding="utf-8")
+            (t / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+            r = subprocess.run([*boot.cmd("split_funcs"), "--root", td, str(t / "scripts/brk.gd"), "--plan", str(t / "plan.json")],
+                               capture_output=True, text=True, cwd=td)
+            if r.returncode != want:
+                bad.append(f"plan {plan}: rc={r.returncode} want {want}: {(r.stdout + r.stderr).strip().splitlines()[-3:]}")
+    for b in bad:
+        print("FAIL " + b)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

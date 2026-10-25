@@ -42,7 +42,8 @@ def pick(root: Path, args) -> list[str]:
     if args.files:
         return [f.replace("\\", "/") for f in agent_log.split_list(args.files)]
     if args.all:
-        return sorted(p.relative_to(root).as_posix() for p in (root / "scripts").rglob("*.gd"))
+        import gd_lib
+        return [p.relative_to(root).as_posix() for p in gd_lib.live_gd(root)]
     base = args.base or repo_lib.diff_base(root)
     code, out = repo_lib.run_git(root, "diff", "--name-only", base)
     names = out.splitlines() if code == 0 else []
@@ -100,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--changed", action="store_true", help="Changed and untracked .gd vs BASE (default).")
     ap.add_argument("--base", default="", help="Git ref for --changed (default: the week branch on Build, else the merge-base with origin/main).")
     ap.add_argument("--files", nargs="+", default=[], help="Repo-relative .gd paths to load.")
-    ap.add_argument("--all", action="store_true", help="Every scripts/**/*.gd.")
+    ap.add_argument("--all", action="store_true", help="Every live .gd (gd_lib.LIVE_GD_DIRS: scripts/, tools/data/).")
     ap.add_argument("--selftest", action="store_true", help="Throwaway project with an autoload: a good script passes, a stray ')' fails.")
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     args = ap.parse_args(argv)

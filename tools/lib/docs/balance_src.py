@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import bot_gate_lib
+import gd_lib
 
 CAP = bot_gate_lib.SHIP_BYTES
 BAL = "scripts/data/balance"
@@ -138,7 +139,7 @@ class Src:
 
     def write(self, dry: bool = False) -> list[str]:
         """Write every edited file (cap-checked first: nothing is written when one would exceed it)."""
-        over = [(r, self.size(r)) for r in sorted(self.dirty) if r.startswith("scripts/") and r.endswith(".gd") and self.size(r) > CAP]
+        over = [(r, self.size(r)) for r in sorted(self.dirty) if r.startswith(tuple(d + "/" for d in gd_lib.LIVE_GD_DIRS)) and r.endswith(".gd") and self.size(r) > CAP]
         if over:
             r, n = over[0]
             raise Fail(f"{r} would be {n} B (cap {CAP} B, +{n - (self.root / r).stat().st_size} B); nothing written. "
