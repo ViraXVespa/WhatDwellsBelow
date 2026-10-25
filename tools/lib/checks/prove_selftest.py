@@ -2,7 +2,7 @@
 
 Base -> head: a tool path is deleted while a task resume line still runs it, a subcommand and a flag are dropped
 while a doc names them, a data key is dropped while its reader still asks for it, a const is dropped (another moves) while a doc names both, a func and a common-word const vanish while a doc ticks them, a group is dropped while a shot
-flow targets it, a lib signature changes under an untouched importer, a docstring changes under an untouched doc
+flow and its own script still ask for it (a res:// path naming it is no node ref), a lib signature changes under an untouched importer, a docstring changes under an untouched doc
 (REVIEW) and under a doc line repeating its pin name (STALE), a new comment makes a claim about an untouched tool
 (CLAIM), and a UI script changes only a comment. The checks: each DRIFT / STALE / CLAIM / REVIEW line appears, the
 comment-only script is cosmetic, and the plan picks the selftests (changed tool, importer of the changed lib),
@@ -29,6 +29,7 @@ BASE = {
     "tools/data/shot-flows/f.json": '{"steps": [{"op": "click", "group": "hud_items"}]}\n',
     "scripts/ui/hud.gd": 'extends Node\nconst OLD_REV := 3\nfunc _ready():\n\tadd_to_group("hud_items")\n',
     "scripts/ui/bar.gd": 'extends Node\nconst MOVED_REV := 1\nconst NEEDED := [1]\n',
+    "scripts/ui/warm.gd": 'extends Node\nvar s = load("res://scripts/ui/hud_items.gd")  # warm hud_items\n',
     "scripts/ui/frame_a.gd": 'extends Node\nfunc dress(b):\n\tpass\n',
     "scripts/ui/frame_b.gd": 'extends Node\nfunc dress(b):\n\tpass\n',
     "design/tasks/t.md": "id: t\nresume: python tools/open_x.py --task t\n\n## Body\n",
@@ -42,7 +43,7 @@ HEAD = {
     "tools/lib/x/run_a.py": '"""Run A: pins grok_build_wN only."""\nimport lib_y\n# week_zz creates the web pin\nap.add_argument("--selftest")\nCFG = "d.json"\nv = cfg.get("oldkey")\n',
     "tools/lib/x/lib_y.py": '"""Lib Y."""\ndef helper(a, b):\n    return a + b\n',
     "tools/data/d.json": '{"keep": 1}\n',
-    "scripts/ui/hud.gd": 'extends Node\nconst MOVED_REV := 1\nfunc _ready():\n\tpass\n',
+    "scripts/ui/hud.gd": 'extends Node\nconst MOVED_REV := 1\nfunc _ready():\n\tprint(get_tree().get_nodes_in_group("hud_items"))\n',
     "scripts/ui/bar.gd": 'extends Node\n',
     "scripts/ui/frame_a.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
     "scripts/ui/frame_b.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
@@ -56,6 +57,7 @@ WANT_DRIFT = ["removed path tools/open_x.py (tools/open_x.py) still named at des
               "removed function dress (scripts/ui/frame_a.gd) still named at design/doc.md:3",
               "removed const/var NEEDED (scripts/ui/bar.gd) still named at design/doc.md:3",
               "removed node/group hud_items (scripts/ui/hud.gd) still named at tools/data/shot-flows/f.json:1",
+              "removed node/group hud_items (scripts/ui/hud.gd) still named at scripts/ui/hud.gd:4",
               "STALE   tools/lib/x/run_a.py docstring/help changed (line 1); design/pin.md:4",
               "CLAIM   tools/lib/x/run_a.py:3 new comment names week_zz (tools/lib/x/week_zz.py)"]
 WANT_REVIEW = ["signature of helper() changed in tools/lib/x/lib_y.py; caller tools/lib/x/run_b.py:3",

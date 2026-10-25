@@ -257,6 +257,7 @@ def head_nodes(tree: Tree) -> set[str]:
 def node_ref(name: str, line: str) -> bool:
     """The line uses `name` as a node path or group: $Name, %Name, "a/Name", get_node / group calls with "Name"."""
     q = re.escape(name)
+    line = re.sub(r'"(?:res|user)://[^"]*"', '""', line)  # a script/scene path is not a node path
     return bool(re.search(rf"[$%]{q}\b|/{q}\b[^\s]*\"|\"[^\"\s]*/{q}\b|(node|group|child)\w*\(\s*\"{q}\"|\"(node|group|path)\"\s*:\s*\"[^\"]*\b{q}\b", line))
 
 def gone(c: Change, old: Tree, new: Tree, ents_new: dict, basenames_new: dict) -> list[Gone]:

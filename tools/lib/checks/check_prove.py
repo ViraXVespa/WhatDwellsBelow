@@ -103,7 +103,7 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
                 continue
             users = deps.get(g.owner, set())
             for f, kind, no, line in hits.get(sym, []):
-                if f == g.owner or f"{f}|{g.symbol}" in allow:
+                if (f == g.owner and g.what != "node") or f"{f}|{g.symbol}" in allow:  # a node's own file may still ask for it
                     continue
                 where = f"{f}:{no} [{kind}]{' (resume/first line)' if kind == 'task' and re.match(r'(resume|first):', line) else ''}{' (untouched)' if f not in changed else ''}"
                 if g.what == "flag" and not any(t in line for t in g.ctx):
