@@ -169,10 +169,7 @@ def scanned_md_files(root: Path) -> list[Path]:
     if skills_root.is_dir():
         for path in sorted(skills_root.rglob("*.md")):
             out.append(path)
-    for extra in ("AGENTS.md", "BOT.md"):
-        p = root / extra
-        if p.is_file():
-            out.append(p)
+    out.extend(sorted(root.glob("*.md")))  # every root .md: a new one must be routed (or listed under human:)
     return out
 
 def citations(text: str) -> list[str]:
@@ -322,6 +319,8 @@ def route_memberships(routes: dict) -> dict[str, list[str]]:
         add(str(posix), f"bot_jobs.{name}")
     for posix in routes.get("notes_exempt") or []:
         add(str(posix), "notes_exempt")
+    for posix in routes.get("human") or []:
+        add(str(posix), "human")
     skills = routes.get("skills") or {}
     if isinstance(skills, dict):
         for name, posix in skills.items():
@@ -687,10 +686,43 @@ def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
                 )
     return fails
 
+def unclassified(root: Path, routes: dict) -> list[str]:
+    """Markdown on disk (design/, skills, every root .md) that routes.yaml does not list, and listed files that are gone."""
+    known = all_route_files(routes)
+    on_disk = {rel(p, root) for p in scanned_md_files(root)}
+    fails = [f"unclassified markdown: {p}" for p in sorted(on_disk - known) if p != "design/routes.yaml"]
+    return fails + [f"routes.yaml names missing file: {p}" for p in sorted(known - on_disk)]
+
+def selftest() -> int:
+    """A new root .md is unclassified; a human: root doc is routed and no agent role may cite it."""
+    import tempfile
+    from load_routes import allowed_citations
+    bad: list[str] = []
+    routes = {"boot": {"agents": "AGENTS.md", "paths": {"bot": "BOT.md"}}, "human": ["README.md"]}
+    with tempfile.TemporaryDirectory() as td:
+        t = Path(td)
+        (t / "design").mkdir()
+        for name in ("AGENTS.md", "BOT.md", "README.md"):
+            (t / name).write_text("# x\n", encoding="utf-8")
+        if unclassified(t, routes):
+            bad.append(f"routed root docs: got {unclassified(t, routes)}, want []")
+        (t / "NEW.md").write_text("# new\n", encoding="utf-8")
+        if unclassified(t, routes) != ["unclassified markdown: NEW.md"]:
+            bad.append(f"new root .md: got {unclassified(t, routes)}, want ['unclassified markdown: NEW.md']")
+    if role_of(routes, "README.md") != "human" or "README.md" in allowed_citations(routes, "AGENTS.md"):
+        bad.append("human: README.md must have role human and be uncitable from AGENTS.md")
+    for b in bad:
+        print(f"FAIL {b}")
+    print(f"RESULT {'FAIL' if bad else 'PASS'} selftest fail={len(bad)}")
+    return 1 if bad else 0
+
 def main() -> int:
     ap = agent_log.std_parser("Check design-doc routing against design/routes.yaml.", json_out=True)
     bot_gate_lib.add_flag(ap)
+    ap.add_argument("--selftest", action="store_true", help="Check unclassified-markdown detection on a scratch root (a new root .md must fail).")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
     root = agent_log.resolve_root(args)
     if not (root / "AGENTS.md").is_file() or not (root / "design").is_dir():
         agent_log.fail(f"not a WDB root: {root.as_posix()}")
@@ -700,19 +732,7 @@ def main() -> int:
     except RoutesError as exc:
         agent_log.fail(f"routes.yaml: {exc}")
 
-    fails: list[str] = []
-    known = all_route_files(routes)
-    on_disk = {rel(p, root) for p in scanned_md_files(root)}
-    extra_on_disk = sorted(
-        p for p in on_disk if p not in known and p != "design/routes.yaml"
-    )
-    missing = sorted(p for p in known if p not in on_disk)
-    if extra_on_disk:
-        for posix in extra_on_disk:
-            fails.append(f"unclassified markdown: {posix}")
-    if missing:
-        for posix in missing:
-            fails.append(f"routes.yaml names missing file: {posix}")
+    fails: list[str] = unclassified(root, routes)
 
     door_files: dict[str, str] = {}
     job_owner: dict[str, str] = {}

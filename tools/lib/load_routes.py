@@ -170,6 +170,7 @@ def all_route_files(data: dict[str, Any]) -> set[str]:
     bot_jobs = data.get("bot_jobs") or {}
     files.update(str(v) for v in bot_jobs.values())
     files.update(str(v) for v in (data.get("notes_exempt") or []))
+    files.update(str(v) for v in (data.get("human") or []))
     files.update(str(v) for v in (data.get("parked_jobs") or []))
     skills = data.get("skills") or {}
     if isinstance(skills, dict):
@@ -195,6 +196,8 @@ def role_of(data: dict[str, Any], posix: str) -> str:
         return "bot_job"
     if posix in {str(v) for v in (data.get("notes_exempt") or [])}:
         return "notes"
+    if posix in {str(v) for v in (data.get("human") or [])}:
+        return "human"  # for people (README, Grok Bot setup); no agent role may cite it
     skills = data.get("skills") or {}
     if isinstance(skills, dict) and posix in {str(v) for v in skills.values()}:
         return "skill"
@@ -410,7 +413,7 @@ def allowed_citations(data: dict[str, Any], posix: str) -> set[str]:
         return {posix} | gates | indexes | notes
     if role == "skill":
         return {posix} | gates | indexes | notes | skills | agents  # a skill may tell Build to read the agents file by hand (worktree sessions do not always auto-load it)
-    if role in {"index", "notes"}:
+    if role in {"index", "notes", "human"}:
         return all_route_files(data)
     if role == "door":
         return {posix} | door_job_targets(data, posix)

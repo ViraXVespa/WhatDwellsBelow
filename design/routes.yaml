@@ -20,6 +20,11 @@ indexes:
   live: design/code-map.md
   graph: design/load-graph.md
 
+# Root docs for people, not agents: no role may cite them; every other root .md must be routed.
+human:
+  - README.md
+  - GROK-BOT.md
+
 notes_exempt:
   - design/build-simulation.md
   - design/reuse-map.md
