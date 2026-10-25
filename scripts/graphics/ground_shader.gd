@@ -21,7 +21,7 @@ const TAP_BODY := """
 	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
 	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
 """
-## Baked wear sheet (tools/bake_ground_wear.py): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
+## Baked wear sheet (tools/bake.py ground): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
 ## darkest texel is WEAR_DEPTH darker (ground_wear 0.22 -> about 5%).
 const WEAR_PATH := "res://assets/baked/ground_wear.png"
 const WEAR_PX_PER_M := 32.0

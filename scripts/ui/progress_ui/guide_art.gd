@@ -1,7 +1,7 @@
 extends Object
 
 ## How-to-Play pamphlet: olive cover, ruled page, a ribbon. Separate from the cream plate and the desk.
-## Bake with tools/bake_frame_art.py.
+## Bake with tools/bake.py frames.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")

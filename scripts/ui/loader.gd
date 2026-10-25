@@ -131,7 +131,7 @@ func _process(delta: float) -> void:
 	_sync_bar()
 	_trace()
 
-## ?wdb-loader-trace / --wdb-loader-trace: one console row per drawn frame (ms, target, shown, label, status) for tools/load_bars.py.
+## ?wdb-loader-trace / --wdb-loader-trace: one console row per drawn frame (ms, target, shown, label, status) for `perf.py bars`.
 static var _trace_on := -1
 
 func _trace() -> void:

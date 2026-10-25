@@ -3,8 +3,8 @@
 (design/build-week-start.md); Grok Bot never runs it. In this order: seed version.json as epoch.{series+1}.0 + open_commit,
 archive prior changelogs, create and switch to the local branch grok-build-w{series+1} from HEAD, commit the seed
 there ("Grok Build Week N": version.json, changelogs, catalog), `grok worktree gc`, delete Godot locks, clean logs
-(--new-week). The weekly archives are NOT made here: CI pins both grok_web_wN and grok_build_wN when the squash-merge
-of that branch adds design/changelog/0.N.0.md (release.py ci-archive). Catch-up only: when the closing series has no
+(--new-week). The weekly archives are NOT made here: when the squash-merge of that branch adds
+design/changelog/0.N.0.md, CI pins grok_build_wN at the merge and grok_web_w{N-1} at its parent (release.py ci-archive). Catch-up only: when the closing series has no
 `grok_web_w{series}` / `grok_build_w{series}` row (CI did not run), the missing rows are pinned at HEAD with local
 tags. Never bumps the epoch, kills Godot, pushes, or writes leave-off. --dry-run prints "would ..." lines.
 

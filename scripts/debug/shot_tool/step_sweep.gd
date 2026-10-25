@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## Shot flow op "sweep": photograph the whole dungeon floor as overlapping tiles. The play camera is orthographic and
-## never yaws, so a tile is the same picture shifted: tools/run_shots.py --full-map stitches them from sweep.json.
+## never yaws, so a tile is the same picture shifted: tools/shots.py capture --full-map stitches them from sweep.json.
 ## Per tile: teleport the (hidden, frozen) player so geometry and the light window are built around it, move the rig
 ## there, grab the frame. Enemies are hidden and frozen, the HUD and map stay off. Only the centre of each tile is kept
 ## (keep_x / keep_y cells around the player, multiples of 8 px): lights are chosen by distance to the player, so the

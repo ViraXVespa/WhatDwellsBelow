@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## How-to-Play pages for the receptionist Ask? list. A new topic is one row here, one en.po title and body,
-## and one row in tools/tutorial_shots.json. The picture is res://assets/ui/tutorial/<id>.png. A missing picture
+## and one row in tools/data/tutorial_shots.json. The picture is res://assets/ui/tutorial/<id>.png. A missing picture
 ## is an error.
 
 const SHOT_DIR := "res://assets/ui/tutorial/"
@@ -33,7 +33,7 @@ static func page_of(id: String) -> Dictionary:
 static func shot_tex(id: String) -> Texture2D:
 	var path: String = shot_path(id)
 	if not ResourceLoader.exists(path):
-		push_error("tutorial screenshot missing: " + path + " (python tools/tutorial_shots.py --run, then copy into assets/ui/tutorial/)")
+		push_error("tutorial screenshot missing: " + path + " (python tools/shots.py tutorial --run, then copy into assets/ui/tutorial/)")
 		assert(false, "tutorial screenshot missing: " + path)
 		return null
 	var tex: Texture2D = load(path) as Texture2D

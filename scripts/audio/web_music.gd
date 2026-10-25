@@ -3,7 +3,7 @@ extends RefCounted
 ## Web music: the browser streams and decodes the track (HTMLAudioElement -> Web Audio gain), so playback never
 ## depends on the game's frame rate. Without threads Godot mixes on the main thread into a ~50 ms ring buffer: any
 ## frame longer than that starved it (gaps at low fps), and MP3 decode ran inside those frames (chunky fps).
-## Tracks are served next to index.html (tools/web_postexport.py copies them to music/; the pck excludes them).
+## Tracks are served next to index.html (`release.py postexport` copies them to music/; the pck excludes them).
 ## A missing or broken track is an error in the console and in Godot (no silent fallback).
 
 const JS := """

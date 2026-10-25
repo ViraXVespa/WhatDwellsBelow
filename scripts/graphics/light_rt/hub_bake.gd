@@ -10,8 +10,8 @@ const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
 ## Bake stamp: first 16 hex of the SHA-256 of hub_light.png's RGBA8 pixels. The hub loads only a baked image with this
 ## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
-## Layout boxes -> rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here
-## (tools/check_hub_bake.py checks the committed png against it).
+## Layout boxes -> rebake with tools/bake.py camp, review the shots, paste its `stamp=` here
+## (tools/bake.py check checks the committed png against it).
 const HUB_BAKE_STAMP := "ab9b36b66980d274"
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
@@ -40,7 +40,7 @@ static func _stamp_of(img: Image) -> String:
 	return ctx.finish().hex_encode().substr(0, 16)
 
 static func _fatal(msg: String) -> void:
-	var full: String = "FATAL hub light: %s Rebake with tools/run_bake_camp.py, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
+	var full: String = "FATAL hub light: %s Rebake with tools/bake.py camp, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
 	push_error(full)
 	OS.crash(full)
 

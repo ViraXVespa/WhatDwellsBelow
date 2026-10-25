@@ -1,7 +1,7 @@
 extends Object
 
 ## Reception desk for Talk: a wood and felt body, a 9-slice speech sheet (96, 24 px margins), and a 256 bust.
-## The world sprite stays on the guild prop. Bake with tools/bake_frame_art.py.
+## The world sprite stays on the guild prop. Bake with tools/bake.py frames.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
