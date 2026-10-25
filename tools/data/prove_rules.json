@@ -3,7 +3,7 @@
   "drift_allow": ["tools/lib/slice/handoff_lib.py|tools/open_slice.py"],
   "_drift_allow": "file|symbol pairs that name a removed thing on purpose (a selftest case that must reject the old form).",
   "checks": [
-    {"id": "bot-status", "cmd": "python3 tools/bot_status.py --bot --prove", "when": ["*"], "why": "allowlist on dirty paths, load graph, dupes gate (every diff)"},
+    {"id": "bot-status", "cmd": "python3 tools/bot_status.py --bot --prove --no-explore", "when": ["*"], "why": "allowlist on dirty paths, load graph, dupes gate (every diff; drift and textsize are this prove's own)"},
     {"id": "script-cap", "cmd": "python3 tools/check.py script-cap --bot --git-changed", "when": ["scripts/*.gd"], "why": "script sizes and unique names"},
     {"id": "load-graph", "cmd": "python3 tools/check.py load-graph --bot", "when": ["*.md", "design/routes.yaml", "tools/data/bot_budgets.json"], "why": "doc routing and boot budgets"},
     {"id": "code-map", "cmd": "python3 tools/docs.py code-map check", "when": ["scripts/*.gd", "design/code-map.md"], "why": "live scripts vs the code map"},

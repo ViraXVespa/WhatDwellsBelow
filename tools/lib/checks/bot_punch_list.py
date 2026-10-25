@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
+import json
 import re
 import subprocess
 import sys
@@ -85,6 +87,28 @@ def run_check(root: Path, stem: str, *args: str) -> str:
     tail = err[0][:160] if err else f"exit={proc.returncode}"
     return f"FAIL {tail}"
 
+def explore(root: Path, lines: list[str]) -> bool:
+    """check.py prove's diff scan: DRIFT rows, and textsize --gate when its rule fires (UI scripts). True on a failure."""
+    import check_prove
+    import prove_graph
+    base = prove_graph.git(root, "merge-base", "origin/main", "HEAD").strip()
+    if not base:
+        lines.append("drift=skip no merge-base with origin/main")
+        return False
+    a = check_prove.analyse(root, base, None)
+    drift = sorted(set(a["drift"]))
+    lines.append(f"drift={'FAIL' if drift else 'PASS'} count={len(drift)} (rows: python tools/check.py prove --plan)")
+    lines.extend(f"drift\t{row}" for row in drift[:8])
+    rules = json.loads(check_prove.RULES.read_text(encoding="utf-8"))["checks"]
+    rule = next(r for r in rules if r["id"] == "textsize")
+    hits = [c.path for c in a["changes"] if any(fnmatch.fnmatch(c.path, g) for g in rule["when"])]
+    text = "skip (no UI script changed)"
+    if hits:
+        proc = subprocess.run(rule["cmd"].split(), cwd=root, capture_output=True, text=True)
+        text = f"{'PASS' if proc.returncode == 0 else 'FAIL'} <- {hits[0]}" + (f" +{len(hits) - 1}" if len(hits) > 1 else "")
+    lines.append(f"textsize_gate={text}")
+    return bool(drift) or text.startswith("FAIL")
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser(
         "Print the Grok Bot punch list from live queues and file sizes.", json_out=True
@@ -93,8 +117,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the allowlist on dirty paths, the load graph and the dupes gate.",
+        help="Also check the allowlist on dirty paths, the load graph, the dupes gate, diff drift and (UI scripts changed) textsize --gate.",
     )
+    parser.add_argument("--no-explore", action="store_true", help="With --prove: skip the drift scan and textsize (check.py prove runs those itself).")
     return parser.parse_args(argv)
 
 def main(argv: list[str] | None = None) -> int:
@@ -172,7 +197,8 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"load_graph={graph}")
         dupes = run_check(root, "list_dupes", "--gate")
         lines.append(f"dupes_gate={dupes} (rows: python tools/lint.py dupes --gate -v)")
-        if cap_fail or blocked or graph.startswith("FAIL") or dupes.startswith("FAIL"):
+        explore_bad = False if args.no_explore else explore(root, lines)
+        if cap_fail or blocked or explore_bad or graph.startswith("FAIL") or dupes.startswith("FAIL"):
             rc = 1
 
     status = "FAIL" if rc else "PASS"
