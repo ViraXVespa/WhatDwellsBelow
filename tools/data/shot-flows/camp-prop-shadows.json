@@ -3,7 +3,7 @@
   "hud": 0,
   "zoom": 3.2,
   "settle_ms": 800,
-  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd; bake.py check --props).",
+  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd).",
   "steps": [
     {
       "op": "call",

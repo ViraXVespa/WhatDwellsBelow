@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Hub prop shadow check (bake.py check --props runs it through the camp-prop-shadows shot flow, a real renderer):
+## Hub prop shadow check (`shots.py flow --flow camp-prop-shadows` runs it in a real renderer):
 ## every yard prop with the player's hard mark (camp_build.gd MARKED) must lay its sun mark on the ground, on the
 ## sun-away side of its feet (K.SUN_AWAY), and the mark seen through the play camera must not sit on the prop's own
 ## visible face (its opaque sprite rect on screen). Flow: assert script:debug/hub_shadow_check.bad equals "".
