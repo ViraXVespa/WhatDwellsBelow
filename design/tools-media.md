@@ -13,7 +13,6 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 - **Rekey stills:** `media.py rekey --only assets/...png` (live), `--out DIR` (review copy), `--check`; look first with `media.py rekey-preview --only ...`; full-set check `media.py rekey-check --new DIR`.
 - **Animation review briefs:** `media.py anim-review pack`, `media.py anim-review regen`, `media.py anim-review tree --out DIR`.
 - **Bible prompts and sheets:** `media.py bible-prompt --gender female` / `--enemy ID`; `media.py bible-normalize`.
-- **Gameplay clips:** see Gameplay clips below.
 - **Sound effects:** `media.py sfx --list`, `media.py sfx --only CUE`, `media.py sfx --check`.
 
 ### Media / art pipeline (Build only)
@@ -47,9 +46,6 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 
 Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all required). New image logic goes in the library and the tools import it; per-asset key rules, banner and glyph drawing and the one-off `process_*` passes stay in their tools. The pack_* / process_* passes import these helpers (`imgio.load`, `geom.flip`, `scale_nearest`, `shrink`, `fit_box`, `fit_axis`); an adopted helper ships with a before/after pixel diff of 0. Proof recipes: `prove.md`.
 
-| Tool | Does | Surf | Use | A |
-|---|---|---|---|---|
-
 | Module | Owns |
 |---|---|
 | `imglib/imgio.py` | `load` / `save`, numpy round trip, `MAGENTA`, `hex_of` (named `imgio`, not `io`, to keep stdlib names free) |
@@ -65,29 +61,28 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 
 ## Gameplay clips
 
-Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (`--write-movie`, `--fixed-fps` = the movie fps; frames come at the project viewport size, 1920x1080, and are scaled to the movie's width x height) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}` brings that flow's rooms, enemies, gear and camera); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap`, `camera` (`shot-flows.md`; `camera` frames a point or node at a zoom, glides over `ms`, `follow` hands back to the player). A movie's `regions` names crop boxes (fractions of the frame) for `clip crop --box NAME --movie NAME`. One movie against another checkout: `--game DIR`.
+Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (frames scaled to the movie size) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}`); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap`, `camera` (`shot-flows.md`). A movie's `regions` names crop boxes (fractions of the frame) for `clip crop --box NAME --movie NAME`. One movie against another checkout: `--game DIR`.
 
-Web, real time: `perf.py web --flow camp-walk --video DIR` (Playwright WebM from page open, 25 fps, boot included; cut with `media.py clip trim`).
+Web, real time: `perf.py web --flow camp-walk --video DIR` (Playwright WebM from page open, boot included; cut with `media.py clip trim`).
 
-Edit: `media.py clip sbs` then `caption`, then `export --for x` (H.264 yuv420p, fits 1280x720, at most 60 fps, faststart; FAIL over 140 s or 512 MB) or `--for gif` (15 fps, 640 wide; FAIL over 15 MB). Clips stay in `_logs/` or outside the repo; never commit video.
+Edit: `media.py clip sbs` then `caption`, then `export --for x` (FAIL over 140 s or 512 MB) or `--for gif` (FAIL over 15 MB). Clips stay in `_logs/` or outside the repo; never commit video.
 
-Framing and overlays (`lib/media/clip_fx.py`): `--box X,Y,W,H` is pixels, fractions, or a movie region. `crop --box [--size x]` (static), `zoom --box FROM --to TO [--start --end]` (Ken Burns, eased), `fit --size x|x-square|x-portrait|WxH --fill pad|crop|blur`. `join --transition` takes any xfade name (`fade dissolve wipeleft slideup circleopen ...`). `wipe BEFORE AFTER` sweeps a reveal line (hold, sweep, hold, back; `--once`). `pip MAIN INSET --corner --scale`, `mark IN --box ... [--no-arrows]` (highlight box plus arrow, timed with `--start --end`).
+Framing and overlays (`lib/media/clip_fx.py`; flags: `media.py clip --help`): `--box` is pixels, fractions, or a movie region; `crop`, `zoom` (Ken Burns), `fit`, `join --transition` (any xfade name), `wipe` (reveal line), `pip`, `mark` (box plus arrow).
 
-Before/after recipe: `clip ba BEFORE AFTER` finds the changed area (frame diff); when it is small (padded box at most 35% of the frame) it zooms both clips in on it (at most 2.5x, 16:9 kept) and slider-wipes; a subtle change (mean difference at most 24 levels, e.g. a shade) is wiped however wide; only a strong wide change gets `sbs`. `--layout wipe|sbs|stack` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
+Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
 
 ## Ref compare and scenario catalog
 
-`shots.py movie --refs A,B NAMES` (`lib/shots/movie_refs.py`): any two git refs. Per ref it makes a temp detached worktree (`.godot` seeded from this checkout), injects this branch's `scripts/debug/shot_tool/`, `shot_tool.gd`, `shot_views.gd` (plus `smoke.gd`, `dungeon_map/`, `drop_stage.gd` when missing, and any `res://` script they preload that the ref lacks, with a fresh `.uid`; listed in `compare.json`), runs `gate.py import` there, then records every name with this checkout's tools. Each pair is diffed (clips: `change_box`; stills: share of pixels over 16 levels). Unchanged pairs print `no visible change` and stay out of the reel; each change gets a captioned `clip ba` segment. The out dir (default `_logs/movie/refs-A-B-NAMES/`, one per name list, so a subset rerun keeps the full run) holds `reel.mp4`, `reel-x.mp4`, `reel.gif`, `contact.png` (A | B | heat per change) and `compare.json`. Worktrees are removed (`--keep-worktrees` keeps them). Godot runs one at a time: about 1 to 3 min per name per ref plus the import.
-Every view still first calls `shot_views.gd` `still_hud`, which pins wall-clock pulses (the HUD danger gem) so animation never counts as a change.
+`shots.py movie --refs A,B NAMES` (`lib/shots/movie_refs.py`): any two git refs. Per ref a temp worktree gets this checkout's recording tooling (shot tool, `shot_views.gd`, and missing deps with a fresh `.uid`; listed in `compare.json`), `gate.py import`, then every name is recorded and the pair diffed. Unchanged pairs print `no visible change` and stay out of the reel; each change gets a captioned `clip ba` segment. The out dir (default `_logs/movie/refs-A-B-NAMES/`, one per name list, so a subset rerun keeps the full run) holds `reel.mp4`, `reel-x.mp4`, `reel.gif`, `contact.png` (A | B | heat per change) and `compare.json`. About 1 to 3 min per name per ref plus the import. Every view still first calls `shot_views.gd` `still_hud` (pins wall-clock pulses such as the HUD danger gem).
 
 The catalog lives in `data/movies.json`:
 - `movies`: clips.
-- `views`: stills. A view is a `{flow, state}`, a `scenario`, or `kind: full-map`: the stitched floor with `overlays` lift, rooms, spawns, torches, loot and legend, drawn by `lib/shots/map_overlay.py` from the sweep's marks (`shots.py capture --full-map --overlays ...`).
+- `views`: stills. A view is a `{flow, state}`, a `scenario`, or `kind: full-map`: the stitched floor with `overlays` (`shots.py capture --full-map --overlays`, drawn by `lib/shots/map_overlay.py`).
 - `sets`: named groups (`hub-ui`, `dungeon-gen`, `debug`).
 
-`shots.py movie --list` prints all of them with their descriptions. Views normal play cannot show (overhead hub, fly-through, overdraw and lighting debug draw, seeded drop roll) call `scripts/debug/shot_views.gd`.
+`shots.py movie --list` prints them. Views normal play cannot show (overhead hub, fly-through, debug draw, drop roll) call `scripts/debug/shot_views.gd`.
 
-Media-bot rule (move it into the media-bot design doc once that exists): the media bot picks from this catalog. It hands a request for a new shot system, view or scenario to the Refactorer and does not build one.
+Media-bot rule (until a media-bot doc exists): the media bot picks from this catalog. It hands a request for a new shot system, view or scenario to the Refactorer and does not build one.
 
 ## Libs and data
 

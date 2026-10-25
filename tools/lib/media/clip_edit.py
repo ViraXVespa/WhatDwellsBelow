@@ -7,7 +7,7 @@
   python tools/media.py clip caption IN --text "Roof shadows" [--start S --end E] [--pos top|bottom] --out O.mp4
   python tools/media.py clip sbs BEFORE AFTER [--labels Before,After] --out O.mp4   # shorter side holds its last frame
   python tools/media.py clip export IN --for x|gif [--width W] --out O               # X: H.264 <=1280x720, <=140 s, <=512 MB; GIF <=15 MB
-  python tools/media.py clip crop IN --box X,Y,W,H|--region NAME [--movie M] [--size x|WxH] --out O.mp4   # static crop
+  python tools/media.py clip crop IN --box X,Y,W,H|NAME [--movie M] [--size x|WxH] --out O.mp4   # static crop
   python tools/media.py clip zoom IN --box FROM --to TO [--start S --end E] [--size x] --out O.mp4        # Ken Burns
   python tools/media.py clip fit IN --size x|x-square|x-portrait|WxH [--fill pad|crop|blur] --out O.mp4
   python tools/media.py clip join A B --transition wipeleft|slideup|dissolve|...          # any xfade transition
