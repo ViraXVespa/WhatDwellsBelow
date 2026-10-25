@@ -22,7 +22,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 |---|---|---|---|---|
 | `media.py anim-review` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree --out DIR` (wiped I2V test tree). Summary: `anim-review` | D | `--help` | N |
 | `media.py attack-keys` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
-| `media.py clip` | Thin ffmpeg wrapper: `info`, `trim --start --end`, `join A B ... --fade S` (crossfades), `caption --text [--start --end --pos]`, `sbs BEFORE AFTER [--labels]`, `export --for x\|gif` (checks the X limits); default out `_logs/clip/`. `--selftest` on synthetic clips. Summary: `clip`. | D | `--help` | N |
+| `media.py clip` | Thin ffmpeg wrapper: `info`, `trim --start --end`, `join A B ... --fade S [--transition T]` (xfade), `caption --text [--start --end --pos]` or `--cue S,E,TEXT` (repeat), `sbs BEFORE AFTER [--labels --stack v]`, `crop`/`zoom`/`fit`, `wipe`, `pip`, `mark`, `ba` (Edit below), `export --for x\|gif [--size --fill]` (checks the X limits); default out `_logs/clip/`. `--selftest` on synthetic clips. Summary: `clip`. | D | `--help` | N |
 | `media.py bible-normalize` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
 | `media.py bible-prompt` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
 | `media.py glyphs` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
@@ -65,11 +65,15 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 
 ## Gameplay clips
 
-Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (`--write-movie`, `--fixed-fps` = the movie fps; frames come at the project viewport size, 1920x1080, and are scaled to the movie's width x height) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}` brings that flow's rooms, enemies, gear and camera); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap` (`shot-flows.md`). Before/after: record the same movie with `--game WORKTREE` (a `git worktree` at the old commit with this branch's `scripts/debug/shot_tool/` copied in, then `gate.py import` there).
+Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (`--write-movie`, `--fixed-fps` = the movie fps; frames come at the project viewport size, 1920x1080, and are scaled to the movie's width x height) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}` brings that flow's rooms, enemies, gear and camera); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap`, `camera` (`shot-flows.md`; `camera` frames a point or node at a zoom, glides over `ms`, `follow` hands back to the player). A movie's `regions` names crop boxes (fractions of the frame) for `clip crop --box NAME --movie NAME`. Before/after: record the same movie with `--game WORKTREE` (a `git worktree` at the old commit with this branch's `scripts/debug/shot_tool/` copied in, then `gate.py import` there).
 
 Web, real time: `perf.py web --flow camp-walk --video DIR` (Playwright WebM from page open, 25 fps, boot included; cut with `media.py clip trim`).
 
 Edit: `media.py clip sbs` then `caption`, then `export --for x` (H.264 yuv420p, fits 1280x720, at most 60 fps, faststart; FAIL over 140 s or 512 MB) or `--for gif` (15 fps, 640 wide; FAIL over 15 MB). Clips stay in `_logs/` or outside the repo; never commit video.
+
+Framing and overlays (`lib/media/clip_fx.py`): `--box X,Y,W,H` is pixels, fractions, or a movie region. `crop --box [--size x]` (static), `zoom --box FROM --to TO [--start --end]` (Ken Burns, eased), `fit --size x|x-square|x-portrait|WxH --fill pad|crop|blur`. `join --transition` takes any xfade name (`fade dissolve wipeleft slideup circleopen ...`). `wipe BEFORE AFTER` sweeps a reveal line (hold, sweep, hold, back; `--once`). `pip MAIN INSET --corner --scale`, `mark IN --box ... [--no-arrows]` (highlight box plus arrow, timed with `--start --end`).
+
+Before/after recipe: `clip ba BEFORE AFTER` finds the changed area (frame diff); when it is small (padded box at most 35% of the frame) it zooms both clips in on it (at most 2.5x, 16:9 kept) and slider-wipes; a big change gets `sbs`. `--layout wipe|sbs|stack` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
 
 ## Libs and data
 
@@ -78,6 +82,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | File (under `tools/`) | Owns |
 |---|---|
 | `lib/media/audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical |
+| `lib/media/clip_fx.py` | `media.py clip` framing, transitions and overlays (`crop`, `zoom`, `fit`, `wipe`, `pip`, `mark`, `change_box`, `ba`) on top of `clip_edit.py` |
 | `lib/media/anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. |
 | `data/attack_keyframes_log.json` | Sidecar data for the tool of the same stem |
 | `data/movies.json` | `shots.py movie` scenarios and movies |
