@@ -117,7 +117,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the allowlist on dirty paths, the load graph, the dupes gate, diff drift and (UI scripts changed) textsize --gate.",
+        help="Also check the allowlist on dirty paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), diff drift and (UI scripts changed) textsize --gate.",
     )
     parser.add_argument("--no-explore", action="store_true", help="With --prove: skip the drift scan and textsize (check.py prove runs those itself).")
     return parser.parse_args(argv)
@@ -197,8 +197,10 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"load_graph={graph}")
         dupes = run_check(root, "list_dupes", "--gate")
         lines.append(f"dupes_gate={dupes} (rows: python tools/lint.py dupes --gate -v)")
+        tunables = run_check(root, "tunables", "diff")
+        lines.append(f"tunables_diff={tunables} (rows: python tools/docs.py tunable diff)")
         explore_bad = False if args.no_explore else explore(root, lines)
-        if cap_fail or blocked or explore_bad or graph.startswith("FAIL") or dupes.startswith("FAIL"):
+        if cap_fail or blocked or explore_bad or graph.startswith("FAIL") or dupes.startswith("FAIL") or tunables.startswith("FAIL"):
             rc = 1
 
     status = "FAIL" if rc else "PASS"

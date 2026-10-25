@@ -7,6 +7,7 @@
     {"id": "script-cap", "cmd": "python3 tools/check.py script-cap --bot --git-changed", "when": ["scripts/*.gd"], "why": "script sizes and unique names"},
     {"id": "load-graph", "cmd": "python3 tools/check.py load-graph --bot", "when": ["*.md", "design/routes.yaml", "tools/data/bot_budgets.json"], "why": "doc routing and boot budgets"},
     {"id": "code-map", "cmd": "python3 tools/docs.py code-map check", "when": ["scripts/*.gd", "design/code-map.md"], "why": "live scripts vs the code map"},
+    {"id": "tunables-diff", "cmd": "python3 tools/docs.py tunable diff", "when": ["scripts/data/balance/*", "scripts/data/balance.gd", "scripts/data/tunables.gd", "scripts/debug/debug_menu/val_cat_map.gd", "design/tunables*.md", "tools/lib/docs/tunables*.py", "tools/lib/docs/balance_src.py"], "why": "balance defaults vs slider rows vs doc Live cells (drift)"},
     {"id": "tool-docs", "cmd": "python3 tools/check.py tool-docs", "when": ["tools/*", "design/tools*.md"], "why": "tool catalog rows, libs and data named"},
     {"id": "stale-refs", "cmd": "python3 tools/check.py tool-docs --stale-refs", "when": ["*.md", "tools/*.py", ".github/*"], "when_status": ["D", "R"], "why": "dead doc paths and members"},
     {"id": "tool-cli", "cmd": "python3 tools/check.py tool-cli --smoke-run", "when": ["tools/*.py"], "why": "CLI contract of the changed tools"},

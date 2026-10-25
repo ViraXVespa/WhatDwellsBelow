@@ -39,6 +39,9 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/gates/bot_warnscan_lib.py` | Log parser for `gate.py warnscan` |
 | `lib/docs/code_map_lib.py` | Code-map row parser/writer used by `docs.py code-map` |
 | `lib/docs/tunables_lib.py` | Tunables row parser and writer used by `docs.py tunable` |
+| `lib/docs/balance_src.py` | Balance source model for `docs.py tunable`: `vars_*.gd` defaults, slider rows, enemy stats, `val_cat_map.gd` categories; in-memory edits, 10 KB cap check before any write |
+| `lib/docs/tunables_code.py` | `docs.py tunable list`, `diff`, `range` and the code side of `set KEY VALUE` / `add KEY --default` |
+| `lib/docs/tunables_selftest.py` | `docs.py tunable --selftest`: set/range/add/diff on a scratch copy |
 | `lib/docs/task_lib.py` | Task files in `design/tasks/`: header fields, the README index, `done` (delete, unblock dependants, changelog line), next opt id, and the `check.py load-graph` lint |
 | `lib/slice/slice_lib.py` | `slice.py start` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, forked session, retry block, survey vs job, unit queue) and the `slice.py open` area check |
 | `lib/slice/slice_state.py` | `_logs/slice-state.json` and the `SLICE ALREADY STARTED` text of `slice.py start` (steps: import, baseline shots, original session, forked, handoff; resume at Gather or Prepare / Change / Prove / Complete) |

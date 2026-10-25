@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bot punch list (reuse brief, open opt tasks); `--prove` adds the Bot checks, diff drift and textsize --gate when UI scripts changed. Bot/CI only; elsewhere it prints "not run".
+"""Bot punch list (reuse brief, open opt tasks); `--prove` adds the Bot checks, tunables drift (docs.py tunable diff), diff drift and textsize --gate when UI scripts changed. Bot/CI only; elsewhere it prints "not run".
 
 Stable entry for CI (bot-gate.yml, bot-wake.yml) and BOT.md. The work lives in tools/lib/checks/bot_punch_list.py.
 """

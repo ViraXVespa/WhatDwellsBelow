@@ -13,7 +13,7 @@ import boot  # noqa: E402
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("patch",     "docs/doc_patch",              "Idempotent doc edits: replace, ensure-line, changelog, write, apply ..."),
     ("task",      "docs/task",                   "Task files in design/tasks/: list, show, new, update, done, index, check"),
-    ("tunable",   "docs/tunables",               "Tunables rows: get KEY, set KEY --set, add"),
+    ("tunable",   "docs/tunables",               "Tunables: get, set (doc cell or code default), add (row or whole key), range, list, diff"),
     ("code-map",  "docs/code_map",               "Code map: check, row --path P, patch"),
 ]
 
