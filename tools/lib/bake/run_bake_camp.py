@@ -90,6 +90,9 @@ def main(argv: list[str] | None = None) -> int:
             if ht2 != ht:
                 hub.write_text(ht2, encoding="utf-8")
                 print(f"updated HUB_BAKE_STAMP={stamp}")
+        import bake_inputs
+        print(f"recorded {bake_inputs.REC} for stamp {stamp}")
+        bake_inputs.record(root, stamp)
     clean = r["status"] == "EXIT=0" and not hard
     overlay = args.overlay or ""
     if overlay:

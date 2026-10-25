@@ -7,7 +7,9 @@ assets/baked/ground_wear.png must match GROUND_WEAR_STAMP in ground_shader.gd (t
 The game loads only a baked hub image whose size matches the Layout and whose RGBA8 pixels hash to HUB_BAKE_STAMP
 (first 16 hex of SHA-256), and crashes with a FATAL message otherwise. This is the same hash without Godot, so a stale
 bake fails here (gate.py build --batch) before it breaks the hub. Fix: tools/bake.py camp, review, paste stamp=.
-RESULT PASS = png present, size >= 16, stamp equal; FAIL otherwise. Summary: _logs/hub-bake/.
+Also FAILs when a bake input (light code, a layout_spec.gd const) changed since the bake (bake_inputs.py,
+tools/data/hub_bake_inputs.json); --record re-records the inputs for the current stamp without a rebake.
+RESULT PASS = png present, size >= 16, stamp equal, inputs as baked; FAIL otherwise. Summary: _logs/hub-bake/.
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
 import agent_log
+import bake_inputs
 
 PNG = "assets/baked/hub_light.png"
 SRC = "scripts/graphics/light_rt/hub_bake.gd"
@@ -33,7 +36,13 @@ def png_stamp(path: Path) -> tuple[str, int, int]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check that the committed hub_light.png matches HUB_BAKE_STAMP.", json_out=True)
+    ap.add_argument("--record", action="store_true", help="Re-record the bake inputs for the current HUB_BAKE_STAMP (no rebake).")
+    ap.add_argument("--selftest", action="store_true", help="Check the input record logic on a throwaway tree.")
     args = ap.parse_args(argv)
+    if args.selftest:
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            return agent_log.selftest_result(bake_inputs.selftest(Path(td)))
     root = agent_log.resolve_root(args)
     png, src = root / PNG, root / SRC
     lines: list[str] = []
@@ -51,6 +60,10 @@ def main(argv: list[str] | None = None) -> int:
         elif got != want:
             lines.append(f"FAIL {PNG} stamp {got} != HUB_BAKE_STAMP {want or '(empty)'}: rebake with tools/bake.py camp, "
                          "review, paste its stamp= into hub_bake.gd")
+    if m and args.record:
+        print(f"recorded {bake_inputs.record(root, want).relative_to(root)} for stamp {want}")
+    if m and not lines:
+        lines += bake_inputs.problems(root, want)
     wsrc = (root / WEAR_SRC).read_text(encoding="utf-8")
     wm = re.search(r'const GROUND_WEAR_STAMP := "([0-9a-f]*)"', wsrc)
     wpng = root / WEAR_PNG
