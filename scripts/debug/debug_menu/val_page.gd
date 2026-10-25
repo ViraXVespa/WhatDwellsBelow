@@ -2,6 +2,7 @@ extends Object
 
 const Grid := preload("res://scripts/debug/debug_menu/val_grid.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Ov := preload("res://scripts/debug/tunable_overrides.gd")
 
 static func page_values(host) -> void:
 	host.val_i = 0
@@ -55,6 +56,7 @@ static func add_row(host, parent: Control, name: String, lo: float, hi: float, s
 	sp.value_changed.connect(func(v):
 		if not host.val_edit:
 			App.bal.setv(name, v)
+			Ov.save(App.bal)
 	)
 	var nm: String = name
 	sp.mouse_entered.connect(func():

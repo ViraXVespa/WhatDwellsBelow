@@ -5,7 +5,8 @@
 flag:     a scratch copy of the project, debug folder kept, run with `--wdb-release` (a debug binary acting as release).
 stripped: the same copy with scripts/debug/ deleted, as a release export leaves it (proves no shared code needs it).
 Both add tools/data/release_smoke/release_drive.gd as an autoload in the copy only (title, hub, dungeon; REL: lines) and
-FAIL on a script error, a debug node at runtime, or the drive not reaching the dungeon.
+FAIL on a script error, a debug node at runtime, balance read from user://debug_tunables.json or an old save's
+`debug_bal`, or the drive not reaching the dungeon.
 --pck DIR: DIR/*.pck must hold no `scripts/debug/` path (a release export, release.py export-web). --pck-debug DIR: it must
 (a debug export, release.py export-web --debug). Logs: _logs/release-smoke/.
 """
@@ -38,7 +39,7 @@ def run_mode(root: Path, proj: Path, mode: str, timeout: int) -> tuple[bool, lis
     hits = godot_lib.grep_logs([se, so], r"^REL:|SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to")
     rel = " ".join(h for h in hits if h.startswith("REL:"))
     ok = (r["exit_code"] == 0 and not r["timed_out"] and not any(BAD.search(h) for h in hits)
-          and "dbg_on=false" in rel and "hub_ok=true dungeon_ok=true" in rel
+          and "dbg_on=false" in rel and "tunables_ignored=true" in rel and "hub_ok=true dungeon_ok=true" in rel
           and not re.search(r"(debug_menu|playtest|anim_browser)=true", rel) and "tel=true" in rel)
     return ok, [f"{mode} {r['status']} ms={r['ms']} -> {'PASS' if ok else 'FAIL'}"] + hits[:30]
 

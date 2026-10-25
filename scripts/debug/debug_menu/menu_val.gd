@@ -5,6 +5,7 @@ extends Object
 const Grid := preload("res://scripts/debug/debug_menu/val_grid.gd")
 const Page := preload("res://scripts/debug/debug_menu/val_page.gd")
 const Profile := preload("res://scripts/debug/debug_menu/profile.gd")
+const Ov := preload("res://scripts/debug/tunable_overrides.gd")
 
 static func page_values(host) -> void:
 	Page.page_values(host)
@@ -84,6 +85,7 @@ static func val_accept(host) -> void:
 	var sp: SpinBox = row.sp
 	if host.val_edit:
 		App.bal.setv(str(row.name), sp.value)
+		Ov.save(App.bal)
 		host.val_edit = false
 		host.val_mode = "vars"
 		val_paint(host)
@@ -104,6 +106,7 @@ static func val_cancel(host) -> bool:
 		var sp: SpinBox = row.sp
 		sp.value = host.val_backup
 		App.bal.setv(str(row.name), host.val_backup)
+		Ov.save(App.bal)
 		host.val_edit = false
 		host.val_mode = "vars"
 		val_paint(host)

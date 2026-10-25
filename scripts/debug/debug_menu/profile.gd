@@ -2,8 +2,10 @@
 
 ## Named balance profiles. Host is scripts/debug/debug_menu.gd.
 
+const Ov := preload("res://scripts/debug/tunable_overrides.gd")
+
 static func page_profiles(host) -> void:
-	host.status.text = "Unlimited named profiles. Saved under user://wdb_profiles/"
+	host.status.text = "Unlimited named profiles. Saved under user://wdb_profiles/. Value edits persist in user://debug_tunables.json"
 	var le := LineEdit.new()
 	le.text = host.profile_name
 	le.custom_minimum_size = Vector2(360, 36)
@@ -14,6 +16,7 @@ static func page_profiles(host) -> void:
 	host.root_box.add_child(host._btn("Load", func(): load_profile(host); host.status.text = "Loaded " + host.profile_name; host.page = "values"; host._rebuild()))
 	host.root_box.add_child(host._btn("Delete", func(): delete_profile(host); host.status.text = "Deleted " + host.profile_name))
 	host.root_box.add_child(host._btn("Rename current to field", func(): rename_profile(host); host.status.text = "Renamed"))
+	host.root_box.add_child(host._btn("Reset all values to defaults", func(): Ov.reset_bal(); host.status.text = "Defaults restored"))
 	host.root_box.add_child(Label.new())
 	for n in list_profiles():
 		var nm := n
@@ -59,6 +62,7 @@ static func load_profile(host) -> void:
 		for k in d.keys():
 			App.bal.setv(str(k), float(d[k]))
 		host.loaded_profile = host.profile_name
+		Ov.save(App.bal)
 
 static func delete_profile(host) -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s.json" % [dir(), host.profile_name]))

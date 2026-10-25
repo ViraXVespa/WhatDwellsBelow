@@ -13,6 +13,35 @@ func _ready() -> void:
 	printerr("REL: dbg_on=" + str(App.Dbg.on()) + " debug_menu=" + str(App.debug != null) + " playtest=" + str(App.playtest != null)
 		+ " anim_browser=" + str(App.anim_browser != null) + " tel=" + str(App.tel != null)
 		+ " debug_dir=" + str(ResourceLoader.exists("res://scripts/debug/smoke.gd")))
+	_tunables_ignored()
+
+## Release ignores balance from anywhere but code: the debug override file and an old save's `debug_bal` / `bal_rev`.
+## Shares user:// with the dev project, so any real override file is moved aside and put back.
+func _tunables_ignored() -> void:
+	const OV := "user://debug_tunables.json"
+	var keep := OV + ".relsmoke"
+	var had := FileAccess.file_exists(OV)
+	if had:
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(OV), ProjectSettings.globalize_path(keep))
+	var f := FileAccess.open(OV, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"special_mana": 77.0, "dash_cooldown": 3.0}))
+	f.close()
+	var bal0: Object = App.bal
+	var def: Object = (load("res://scripts/data/balance.gd") as GDScript).new()
+	App.bal = (load("res://scripts/data/balance.gd") as GDScript).new()
+	var data: Dictionary = App.Store.collect()
+	var clean := not data.has("debug_bal") and not data.has("bal_rev")
+	data["debug_bal"] = {"special_mana": 55.0}
+	data["bal_rev"] = 3
+	App.Store.apply(data)
+	var ok: bool = clean and is_equal_approx(App.bal.special_mana, def.special_mana) and is_equal_approx(App.bal.dash_cooldown, def.dash_cooldown)
+	var mana: float = App.bal.special_mana
+	App.bal = bal0
+	App.Store.apply(App.Store.collect())
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(OV))
+	if had:
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(keep), ProjectSettings.globalize_path(OV))
+	printerr("REL: tunables_ignored=" + str(ok) + " mana=" + str(mana))
 
 func _scene() -> String:
 	var s := get_tree().current_scene

@@ -6,6 +6,7 @@ const LocS := preload("res://scripts/app/app_loc.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
+const Dbg := preload("res://scripts/app/dbg.gd")
 
 ## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
 const DEF := {
@@ -67,13 +68,10 @@ static func apply(data: Dictionary) -> bool:
 	App.bank_root = int(data.get("bank_root", DEF.bank_root))
 	App.last_seen_game_ver = str(data.get("last_seen_game_ver", DEF.last_seen_game_ver))
 	LocS.apply_saved(str(data.get("locale", "")))
-	var db: Variant = data.get("debug_bal", {})
-	if db is Dictionary:
-		for k in (db as Dictionary).keys():
-			App.bal.setv(str(k), float((db as Dictionary)[k]))
-	var old_rev: int = int(data.get("bal_rev", 0))
-	if App.bal.has_method("migrate_from") and App.bal.migrate_from(old_rev):
+	# Saves never carry balance (code defaults win); an old save's keys are dropped by the migrated rewrite.
+	if data.has("debug_bal") or data.has("bal_rev"):
 		migrated = true
+	_debug_overrides()
 	var p: Variant = data.get("prog", {})
 	if p is Dictionary:
 		App.prog.from_meta(p)
@@ -110,6 +108,7 @@ static func fresh_delver() -> void:
 	App.bank_wood = DEF.bank_wood
 	App.bank_root = DEF.bank_root
 	App.bal = (load("res://scripts/data/balance.gd") as GDScript).new()
+	_debug_overrides()
 	App.character_type = DEF.character_type
 	App.character_chosen = DEF.character_chosen
 	App.last_seen_game_ver = DEF.last_seen_game_ver
@@ -133,6 +132,12 @@ static func fresh_delver() -> void:
 	App.render_scale = DEF.render_scale
 	App.reset_binds()
 	_apply_prefs()
+
+## Debug builds only: user://debug_tunables.json (scripts/debug/tunable_overrides.gd); release never loads it.
+static func _debug_overrides() -> void:
+	var s: GDScript = Dbg.script("tunable_overrides")
+	if s:
+		s.apply(App.bal)
 
 static func _apply_prefs() -> void:
 	App.set_volume("master", App.vol_master)

@@ -7,7 +7,6 @@ const Talk := preload("res://scripts/data/talk_lines.gd")
 static func collect() -> Dictionary:
 	return {
 		"v": 1,
-		"bal_rev": App.bal.BAL_REV,
 		"character_type": App.character_type,
 		"character_chosen": App.character_chosen,
 		"cam_zoom": App.cam_zoom,
@@ -37,7 +36,6 @@ static func collect() -> Dictionary:
 		"last_seen_game_ver": App.last_seen_game_ver,
 		"locale": LocS.current,
 		"binds": App.collect_binds(),
-		"debug_bal": App.bal.snapshot(),
 		"prog": App.prog.to_meta(),
 		"talk": Talk.to_save(),
 	}

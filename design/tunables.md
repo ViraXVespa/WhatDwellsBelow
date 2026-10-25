@@ -2,7 +2,7 @@
 
 Status: suggested starts  
 Read when: the work changes a number, formula, or debug default  
-Code: `scripts/data/balance.gd`, `access.gd`, `schema.gd`, `enemies.gd`, `migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance.gd`, `access.gd`, `schema.gd`, `enemies.gd`, `scripts/debug/tunable_overrides.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  
@@ -13,7 +13,7 @@ This is a curated table, not a list of every balance key. A number with no row h
 
 List one key with `python tools/docs.py tunable get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). Patch one Live cell with `python tools/docs.py tunable set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`). Do not open this whole file to change one number.
 
-`BAL_REV` is 15. Old saves pick up shipped default retunes through `migrate.gd`.
+**Saves and overrides.** Saves store no balance: code defaults ship as-is and reach every save on update (no migration, no forced rewrite). An old save's `debug_bal` / `bal_rev` is ignored and dropped on load; the aim-line prefs stay (own save keys). Debug builds (`Dbg.on()`, Web Debug too) keep debug-menu value edits in `user://debug_tunables.json` (non-default keys only, clamped to the slider range; `tunable_overrides.gd`); release and `--wdb-release` never read it. Profiles > "Reset all values to defaults" clears it.
 
 Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`; a slice that adds a key also adds it to balance and the debug menu.
 

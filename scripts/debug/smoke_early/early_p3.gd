@@ -31,6 +31,7 @@ static func p3(host: Node) -> void:
 
 static func p12(host: Node) -> void:
 	var _fac = load("res://scripts/debug/smoke_early.gd")
+	(load("res://scripts/debug/smoke/tunables_check.gd") as GDScript).run(host)
 	var player: Variant = host.get("player")
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	printerr("P1: res=" + ProjectSettings.globalize_path("res://"))
