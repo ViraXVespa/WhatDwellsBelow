@@ -20,6 +20,6 @@ Two columns. Only one column is active.
 - B / Esc on the left column closes the browser.
 - Inactive column is dimmed. A gold rail marks the active column. A chevron tracks the selected row. Path text reads `Snapshots › {label}` and deeper for Documents / reader.
 
-Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
+Documents: `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
 List MUST include every catalog row (archives catalog). Videos do not exist; the Video button stays disabled until they do.

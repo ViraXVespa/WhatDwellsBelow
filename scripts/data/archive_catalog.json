@@ -516,47 +516,7 @@
 				"design/ui.md",
 				"design/versioning-log.md",
 				"design/versioning.md",
-				"design/web-session.md",
-				"archives/docs/grok_build_w4/0.3.0.md",
-				"archives/docs/grok_build_w4/0.3.1.md",
-				"archives/docs/grok_build_w4/0.3.10.md",
-				"archives/docs/grok_build_w4/0.3.11.md",
-				"archives/docs/grok_build_w4/0.3.12.md",
-				"archives/docs/grok_build_w4/0.3.15.md",
-				"archives/docs/grok_build_w4/0.3.16.md",
-				"archives/docs/grok_build_w4/0.3.17.md",
-				"archives/docs/grok_build_w4/0.3.18.md",
-				"archives/docs/grok_build_w4/0.3.19.md",
-				"archives/docs/grok_build_w4/0.3.2.md",
-				"archives/docs/grok_build_w4/0.3.20.md",
-				"archives/docs/grok_build_w4/0.3.21.md",
-				"archives/docs/grok_build_w4/0.3.22.md",
-				"archives/docs/grok_build_w4/0.3.23.md",
-				"archives/docs/grok_build_w4/0.3.24.md",
-				"archives/docs/grok_build_w4/0.3.25.md",
-				"archives/docs/grok_build_w4/0.3.26.md",
-				"archives/docs/grok_build_w4/0.3.27.md",
-				"archives/docs/grok_build_w4/0.3.28.md",
-				"archives/docs/grok_build_w4/0.3.29.md",
-				"archives/docs/grok_build_w4/0.3.3.md",
-				"archives/docs/grok_build_w4/0.3.30.md",
-				"archives/docs/grok_build_w4/0.3.31.md",
-				"archives/docs/grok_build_w4/0.3.32.md",
-				"archives/docs/grok_build_w4/0.3.33.md",
-				"archives/docs/grok_build_w4/0.3.35.md",
-				"archives/docs/grok_build_w4/0.3.36.md",
-				"archives/docs/grok_build_w4/0.3.37.md",
-				"archives/docs/grok_build_w4/0.3.38.md",
-				"archives/docs/grok_build_w4/0.3.39.md",
-				"archives/docs/grok_build_w4/0.3.4.md",
-				"archives/docs/grok_build_w4/0.3.40.md",
-				"archives/docs/grok_build_w4/0.3.41.md",
-				"archives/docs/grok_build_w4/0.3.42.md",
-				"archives/docs/grok_build_w4/0.3.43.md",
-				"archives/docs/grok_build_w4/0.3.5.md",
-				"archives/docs/grok_build_w4/0.3.7.md",
-				"archives/docs/grok_build_w4/0.3.8.md",
-				"archives/docs/grok_build_w4/0.3.9.md"
+				"design/web-session.md"
 			]
 		},
 		{
@@ -764,8 +724,7 @@
 				"design/ui.md",
 				"design/versioning-log.md",
 				"design/versioning.md",
-				"design/web-session.md",
-				"archives/docs/grok_build_w5/0.4.0.md"
+				"design/web-session.md"
 			]
 		},
 		{
@@ -1213,20 +1172,7 @@
 				"design/web-emit.md",
 				"design/web-plan.md",
 				"design/web-session.md",
-				"design/web-test.md",
-				"archives/docs/grok_web_w5/0.5.0.md",
-				"archives/docs/grok_web_w5/0.5.1.md",
-				"archives/docs/grok_web_w5/0.5.10.md",
-				"archives/docs/grok_web_w5/0.5.2.md",
-				"archives/docs/grok_web_w5/0.5.21.md",
-				"archives/docs/grok_web_w5/0.5.22.md",
-				"archives/docs/grok_web_w5/0.5.3.md",
-				"archives/docs/grok_web_w5/0.5.4.md",
-				"archives/docs/grok_web_w5/0.5.5.md",
-				"archives/docs/grok_web_w5/0.5.6.md",
-				"archives/docs/grok_web_w5/0.5.7.md",
-				"archives/docs/grok_web_w5/0.5.8.md",
-				"archives/docs/grok_web_w5/0.5.9.md"
+				"design/web-test.md"
 			]
 		},
 		{
@@ -1477,8 +1423,7 @@
 				"design/web-emit.md",
 				"design/web-plan.md",
 				"design/web-session.md",
-				"design/web-test.md",
-				"archives/docs/grok_web_w6/0.6.0.md"
+				"design/web-test.md"
 			]
 		},
 		{
@@ -1729,8 +1674,7 @@
 				"design/web-emit.md",
 				"design/web-plan.md",
 				"design/web-session.md",
-				"design/web-test.md",
-				"archives/docs/grok_build_w6/0.6.0.md"
+				"design/web-test.md"
 			]
 		},
 		{
@@ -1998,8 +1942,7 @@
 				"design/web-plan.md",
 				"design/web-session.md",
 				"design/web-sweep.md",
-				"design/web-test.md",
-				"archives/docs/grok_web_w7/0.7.0.md"
+				"design/web-test.md"
 			]
 		},
 		{
@@ -2267,8 +2210,7 @@
 				"design/web-plan.md",
 				"design/web-session.md",
 				"design/web-sweep.md",
-				"design/web-test.md",
-				"archives/docs/grok_build_w7/0.7.0.md"
+				"design/web-test.md"
 			]
 		},
 		{
