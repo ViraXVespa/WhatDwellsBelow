@@ -27,8 +27,9 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	MeshS.wall_box(body, fit, row["wall"])
 	Util._slide(body, fit)
 	Util.face(body, fit, tex, 0.0, fit.x, row["crop"])
-	Lamps.on_face(body.get_child(body.get_child_count() - 1) as Sprite3D, row["crop"], row["lamps"])
 	var valance: float = fit.y * lay.awning_valance(which)
+	var hem := Vector3(fit.y * 0.5 - valance, fit.z * 0.5 + lay.awning_depth(which), float(row.get("hang_x", 0.0)))
+	Lamps.on_face(body.get_child(body.get_child_count() - 1) as Sprite3D, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
 	Tent.attach_awning(body, fit, lay.awning_depth(which), valance)
 	Tent.gable_on(body, fit, 0.0, row["rise"], lay.tile_for(which), uv_off)
 
@@ -58,19 +59,43 @@ static func stall(host: Node3D) -> void:
 	_wall(body, "StallRightWall", "StallRightHit", [Vector3(hx, foot, front_z), Vector3(hx, foot, rear_z), Vector3(hx, top, rear_z), Vector3(hx, top, front_z)])
 	_wall(body, "StallLeftWall", "StallLeftHit", [Vector3(-hx, foot, rear_z), Vector3(-hx, foot, front_z), Vector3(-hx, top, front_z), Vector3(-hx, top, rear_z)])
 	_wall(body, "StallBackWall", "StallBackHit", [Vector3(-hx, foot, rear_z), Vector3(hx, foot, rear_z), Vector3(hx, top, rear_z), Vector3(-hx, top, rear_z)])
-	var fz: float = front_z - 0.001  # just behind the face sprite, sealing the opening
+	var fz: float = front_z - 0.001
 	_wall(body, "StallFrontWall", "", [Vector3(-hx, foot - 0.5, fz), Vector3(hx, foot - 0.5, fz), Vector3(hx, top, fz), Vector3(-hx, top, fz)])
+	# The face art is the front: the wall only casts (live and baked shadow), it is never drawn, so nothing z-fights it.
+	(body.get_node("StallFrontWall") as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 
+## One stall wall quad (q: bottom-left, bottom-right, top-right, top-left), sun-lit planks like the guild walls.
 static func _wall(body: StaticBody3D, mesh_name: String, hit: String, q: Array) -> void:
 	var w := MeshInstance3D.new()
 	w.name = mesh_name
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var u := Vector2.ZERO
-	Prim._quad(st, q[0], q[1], q[2], q[3], u, u, u, u)
+	var k: float = float(Spec.STALL["plank_m"])
+	var uw: float = (q[1] - q[0]).length() / k
+	var vh: float = (q[3] - q[0]).length() / k
+	Prim._quad(st, q[0], q[1], q[2], q[3], Vector2(0.0, vh), Vector2(uw, vh), Vector2(uw, 0.0), Vector2.ZERO)
 	st.generate_normals()
 	w.mesh = st.commit()
-	w.material_override = Prim._timber(Spec.TIMBER)
+	w.material_override = _planks()
 	body.add_child(w)
 	if hit != "":
 		Prim._hit(body, w.mesh, hit)
+
+static var _plank_mat: StandardMaterial3D
+
+## Lit timber with vertical plank seams (one texture repeat = Spec.STALL plank_m metres).
+static func _planks() -> StandardMaterial3D:
+	if _plank_mat != null:
+		return _plank_mat
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for x in 16:
+		var board: int = x / 4
+		var tone: float = [1.0, 0.9, 1.06, 0.95][board]
+		for y in 16:
+			var c: Color = Spec.TIMBER * (0.76 if x % 4 == 0 else tone * (0.96 if (x * 7 + y * 3) % 11 == 0 else 1.0))
+			img.set_pixel(x, y, Color(c.r, c.g, c.b, 1.0))
+	_plank_mat = StandardMaterial3D.new()
+	_plank_mat.albedo_texture = ImageTexture.create_from_image(img)
+	_plank_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_plank_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	return _plank_mat

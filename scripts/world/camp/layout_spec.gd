@@ -34,22 +34,25 @@ const HALL := {
 	"crop": 0.32, "rise": 0.55, "wall": Color(0.45, 0.32, 0.22), "awning": Vector2(0.42, 0.16),
 	"lamps": [Vector2(99.0, 95.0), Vector2(219.0, 95.0)],
 }
-## The wing sits on the hall's east end (overlap metres into it), back walls flush.
+## The wing sits on the hall's east end (overlap metres into it), back walls flush. Its lantern sits under the awning,
+## so hang: that lantern's texels, cut out and hung from the awning hem at art x hang_x (beside the window, clear of the
+## receptionist) with its flame and halo; the baked pool stays at the painted lantern.
 const WING := {
 	"overlap": 0.12, "box": Vector3(3.8, 3.8, 3.2), "face": "res://assets/sprites/buildings/guild_reception.png",
 	"crop": 0.32, "rise": 0.48, "wall": Color(0.5, 0.38, 0.28), "awning": Vector2(0.36, 0.16),
-	"lamps": [Vector2(179.5, 101.0)],
+	"lamps": [Vector2(179.5, 101.0)], "hang": Rect2(172.0, 86.0, 16.0, 29.0), "hang_x": 262.0,
 }
 const TIMBER := Color(0.42, 0.28, 0.16)
 ## Building face art plane: this fraction of box depth in front of the body centre (stall front posts share it).
 const FACE_Z := 0.52
 ## Stall: posts at +-posts.x of box.x, front posts.y / rear posts.z of box.z (also the walls, collision, bake lid);
-## tarp eave at eave * box.y, ridge rise above it, front drop; counter collision (x, h, z fractions/metres, y).
+## tarp eave at eave * box.y, ridge rise above it, front drop; counter collision (x, h, z fractions/metres, y);
+## plank_m: metres per plank texture repeat on the timber walls.
 const STALL := {
 	"pos": Vector3(25.0, 1.2, 8.0), "box": Vector3(4.6, 2.4, 3.4), "face": "res://assets/sprites/buildings/stall.png",
 	"face_w": 0.96, "wall": Color(0.55, 0.35, 0.2), "post_col": Color(0.36, 0.22, 0.12),
 	"posts": Vector3(0.48, FACE_Z, 0.48), "post_half": 0.08, "eave": 0.42, "rise": 0.92, "drop": 0.22,
-	"counter": Vector4(0.72, 1.05, 0.46, 0.52),
+	"counter": Vector4(0.72, 1.05, 0.46, 0.52), "plank_m": 0.5,
 }
 
 ## Interact and actor spots (ground points). The vendor stands vendor_gap in front of the stall; the receptionist at

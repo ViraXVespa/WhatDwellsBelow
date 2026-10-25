@@ -79,11 +79,12 @@
         ],
         "zoom": 3.2,
         "face": "down",
-        "note": "player under tarp for occlusion + shadow check",
+        "note": "player under the tarp (hidden, intended): tarp occlusion, and the aim line stays behind the stall walls",
         "player": [
           0.0,
           -1.8
-        ]
+        ],
+        "id": "stall-tarp"
       }
     ]
   },
