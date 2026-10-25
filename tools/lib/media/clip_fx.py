@@ -113,13 +113,18 @@ def wipe(before: Path, after: Path, out: Path, labels: tuple[str, str] = ("Befor
     t1 = hold + sweep + max(hold, 1.0)
     total = max(a["sec"], b["sec"], t1 + (sweep + hold if back else hold))
     la, lb = _legs(a, b, total)
-    e1, e2 = _ease(hold, sweep).replace("t", "T"), _ease(t1, sweep).replace("t", "T")
+    e1, e2 = _ease(hold, sweep), _ease(t1, sweep)
     f = "(%s-%s)" % (e1, e2) if back else e1
-    expr = "if(lt(abs(X-W*%s),%d),255,if(lt(X,W*%s),B,A))" % (f, max(1, line), f)
+    w, h = a["w"] - a["w"] % 2, a["h"] - a["h"] % 2
+    # a sliding white mask (per-frame overlay x, not a per-pixel blend expression: ~40x faster) cuts the after clip in
+    mask = "color=c=black:s=%dx%d:r=%s:d=%.3f[k];color=c=white:s=%dx%d:r=%s:d=%.3f[wt];[k][wt]overlay=x='W*%s-W':eval=frame,format=gray[m]" % (
+        w, h, a["fps"], total, w, h, a["fps"], total, f)
     with tempfile.TemporaryDirectory() as td:
         caps = ",".join([ce._text(labels[1], a["h"], "top", font, x="w*0.03", tmp=Path(td)),
                          ce._text(labels[0], a["h"], "top", font, x="w*0.97-text_w", tmp=Path(td))])
-        fc = "[0:v]%s[a];[1:v]%s[b];[a][b]blend=all_expr='%s',trim=duration=%.3f,format=yuv420p,%s[o]" % (la, lb, expr, total, caps)
+        fc = ("[0:v]%s,scale=%d:%d[a];[1:v]%s,scale=%d:%d,format=yuva420p[b];%s;[b][m]alphamerge[bm];[a][bm]overlay=0:0,"
+              "drawbox=x='iw*%s-%d':y=0:w=%d:h=ih:color=white:t=fill,trim=duration=%.3f,format=yuv420p,%s[o]") % (
+            la, w, h, lb, w, h, mask, f, max(1, line) // 2, max(1, line), total, caps)
         ce._run(["-i", str(before), "-i", str(after), "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(out)])
     return out
 

@@ -6,7 +6,8 @@ Godot movie maker (--write-movie) and keep only the frames between the timeline'
   python tools/shots.py movie hub-walk                     # -> _logs/movie/hub-walk/hub-walk.mp4 (+ end.png, movie-flow.json)
   python tools/shots.py movie hub-walk --game DIR --out O  # same script against another checkout (before/after clips)
   python tools/shots.py movie hub-walk --dry-run           # print the composed shot flow, run nothing
-  python tools/shots.py movie --selftest                   # every movie composes; PNG-sequence trim math (ffmpeg only)
+  python tools/shots.py movie --selftest                   # every movie composes; trim math; --refs worktree, inject, diff, reel
+  python tools/shots.py movie --refs origin/main,HEAD hub-ui   # same movies/views/sets at two refs -> reel + contact sheet (movie_refs.py)
 
 A movie is `{about, scenario, fps, width, height, zoom?, timeline: [shot-flow ops]}`. A scenario is either shot-flow
 header keys plus setup `steps`, or `{flow, state}`: that flow's steps up to its `state` shot (gear, enemies, rooms and
@@ -29,6 +30,7 @@ import boot  # noqa: E402,F401
 
 import agent_log
 import clip_edit
+import movie_refs
 import run_shot_flow
 import run_shots
 from agent_log import rel
@@ -108,9 +110,27 @@ def selftest(root: Path) -> list[str]:
             bad.append("trim math: first=%d n=%d %s" % (first, n, got))
     return bad
 
+def refs_main(root: Path, data: dict, args) -> int:
+    tag = "refs-" + "-".join(re.sub(r"[^\w.-]+", "_", r) for r in args.refs.split(","))
+    out = Path(args.out).resolve() if args.out else agent_log.ensure_agent_log_dir(JOB, root) / tag
+    lines: list[str] = []
+    def log(x: str) -> None:
+        print(x, flush=True)
+        lines.append(x)
+    res = movie_refs.run(root, data, args.refs, args.movie, out, args.keep_worktrees, log)
+    changed = [r["name"] for r in res["items"] if r.get("diff", {}).get("changed")]
+    failed = [r["name"] for r in res["items"] if not (r.get("a") and r.get("b"))]
+    lines.append("changed: %s | no visible change: %s | failed: %s" % (", ".join(changed) or "-", ", ".join(
+        r["name"] for r in res["items"] if r.get("diff") and not r["diff"]["changed"]) or "-", ", ".join(failed) or "-"))
+    lines.append("reel: %s" % json.dumps(res["reel"]))
+    return agent_log.finish(JOB, root, "\n".join(lines), "FAIL" if failed else "PASS", args=args, refs=args.refs, changed=len(changed),
+                            same=len(res["items"]) - len(changed) - len(failed), failed=len(failed), out=rel(root, out))
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Scenario + input timeline -> Godot movie maker clip (MP4 between the marks).", writes=True)
-    ap.add_argument("movie", nargs="?", default="", help="movie name in tools/data/movies.json")
+    ap.add_argument("movie", nargs="?", default="", help="movie name in tools/data/movies.json (with --refs: comma movies, views, sets)")
+    ap.add_argument("--refs", default="", help="A,B: record the names at both git refs in temp worktrees, diff, build a before/after reel (movie_refs.py)")
+    ap.add_argument("--keep-worktrees", action="store_true", help="with --refs: leave the temp worktrees")
     ap.add_argument("--list", action="store_true", help="list movies and scenarios")
     ap.add_argument("--game", default="", help="Godot project to record (default this repo); e.g. a worktree at an older commit for the before clip")
     ap.add_argument("--out", default="", help="output MP4 (default _logs/movie/<name>/<name>.mp4)")
@@ -120,14 +140,18 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
     if args.selftest:
-        bad = selftest(root)
+        bad = selftest(root) + movie_refs.selftest(root)
         return agent_log.finish(JOB, root, "movie selftest\n" + "\n".join(bad or ["ok"]), "FAIL" if bad else "PASS", args=args, problems=len(bad))
     data = load(root)
     if args.list or not args.movie:
         rows = ["movie %s | %s | %s" % (n, m.get("scenario"), m.get("about", "")) for n, m in data["movies"].items()]
         rows += ["scenario %s | %s" % (n, s.get("about", "") or "%s@%s" % (s.get("flow"), s.get("state"))) for n, s in data["scenarios"].items()]
+        rows += ["view %s | %s" % (n, v.get("about", "")) for n, v in data.get("views", {}).items()]
+        rows += ["set %s | %s" % (n, ",".join(v)) for n, v in data.get("sets", {}).items()]
         print("\n".join(rows))
         return 0
+    if args.refs:
+        return refs_main(root, data, args)
     flow = compose(data, args.movie, root)
     game = Path(args.game).resolve() if args.game else root
     out = Path(args.out).resolve() if args.out else agent_log.ensure_agent_log_dir(JOB, root) / args.movie / (args.movie + ".mp4")
