@@ -47,14 +47,11 @@ Locked look: `design/ui-style.md` Generated art look (read first every session; 
 ## Keep code
 Settings and rebind rows, XP rows, stat lists, resource chips, toasts. Gear icons and pad glyphs are already PNG.
 
-## Not shot
-None. Gear board: `camp-gear-board` plus the inventory, anvil and popup flows. Journal pages, the teleport network and fs_gate are now shot (`camp-receptionist-menu`, `dungeon-map-crystal`, `fs-gate`).
-
 ## UX audit
 2026-10-20 gamepad-first audit of every shot menu: 31 issues (H 5, M 17, L 9), one line each with a ref link, tagged [art] (the items above cover it) or [ux] (layout work): [ui-ux-audit.md](../ui-ux-audit.md).
 
 ## Small screens
-Phone 844x390 @3 (`shots.py textsize --gate`, 10 CSS px minimum). New art and layouts must allow 10 CSS px text there. No decisions made here.
+Phone 844x390 @3 (`shots.py textsize --gate`, 10 CSS px minimum). New art and layouts must allow 10 CSS px text there.
 - Controls billboard: its 14 rows do not fit at a readable size; needs two columns or a taller board.
 - Fixed-art boards cap their text (frame skin `TEXT_CAP`): quest board 7.2 px, vendor 9.0, dumpster 9.8, anvil 9.4 (CSS px, smallest on the board). Vendor rows overlap the red jar.
 - In-play HUD art (minimap bezel, camp HUD bar) also meets the gate's `cover` cap (`tools/data/text-size.json`: dungeon 0.111, camp 0.073 of the frame).

@@ -51,7 +51,7 @@ The Bot alone enforces size; Build and Web never measure or split, and the size 
 - Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/data/bot_budgets.json` (`check.py load-graph --bot`).
 - Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
 
-Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
+Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
 
 ## Smokes
 
@@ -66,7 +66,7 @@ Tools: `design/tools.md` maps each job to a tool and names the sibling with its 
 
 ## Hard stops
 
-No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V (except User-named art-pipeline / rekey / stills work when the task file assigns it to Bot), locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
+No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V (except User-named art-pipeline / rekey / stills work when the task file assigns it to Bot), locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. Do not open the editor or enable Execution on Local Computer.
 Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named opt item lists them.
 Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ beyond this file and the one Job file. Do not pin weeks or run `tools/release.py week-start` (human-only). Do not invent numbers. Bot may save its own skill after two good clusters.
 
