@@ -7,12 +7,14 @@ binary only when the pin is missing. Editor playtest is out of scope.
   python tools/gate.py bot-smokes --doctor
   python tools/gate.py bot-smokes --setup
   python tools/gate.py bot-smokes --phases 1,2,6 [--release]   (--release: gate.py release too)
+Phases also run a static compile of every script and scene (--no-static skips it); a red phase prints its first errors.
   python tools/gate.py bot-smokes --door hub | --job hub.guild   (phases from routes.yaml smokes)
   python tools/gate.py bot-smokes --for scripts/world/player.gd   (which phases load a file; runs nothing)
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import stat
@@ -73,12 +75,43 @@ def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = 
 
 # Godot stderr lines that fail a phase. "SMOKE FAIL" is what a smoke check prints on a miss (e.g. smoke/marks_check.gd). A lambda whose captured node was freed runs with null (stale UI callback).
 FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index", "SMOKE FAIL")
+# A phase line reporting a failed check flag ("P5: extract_ok=false", "P5: campfire ... ok=false") also fails it.
+FALSE_OK = re.compile(r"^P\d+: .*?(?:^|[^A-Za-z0-9])ok=false\b")
+
+def _fatal(ln: str) -> bool:
+    return any(sig in ln for sig in FATAL_ERR) or bool(FALSE_OK.search(ln))
 
 # Phase 6 also runs the hub menu open timing (scripts/debug/open_timing.gd): real title -> hub load, then every
 # menu's first and second open; fails when a first open stalls on two runs in a row (one retry; see run_phase).
 OPEN_TIMING = ["--wdb-load-timing-smoke", "--wdb-open-timing"]
 # ...and the baked frame-art check (art_bake.gd): every committed assets/ui/frames PNG matches what the art code draws.
 FRAME_ART = ["--wdb-frame-art-check"]
+
+def fatal_lines(text: str, limit: int = 4) -> list[str]:
+    """The first distinct failing stderr lines (SCRIPT ERROR / SMOKE FAIL / ...) with Godot's `at:` line, so a red
+    phase says why without opening the log."""
+    out: list[str] = []
+    lines = text.splitlines()
+    for i, ln in enumerate(lines):
+        if _fatal(ln) and "  " + ln.strip() not in out:
+            out.append("  " + ln.strip())
+            at = lines[i + 1].strip() if i + 1 < len(lines) else ""
+            if at.startswith("at:"):
+                out.append("    " + at)
+            if sum(1 for o in out if not o.startswith("    ")) >= limit:
+                break
+    return out
+
+def _selftest() -> int:
+    red = ["SCRIPT ERROR: x", "P5: extract_ok=false", "P5: campfire hp 1->2 ok=false", "P3: genF2 ok=false gate=true",
+           "P6: bleed_chip closed=true leak=false fresh_ok=false"]
+    green = ["P5: extract_ok=true", "P5: prompt_no_a=false", "SHOT: ok=false err=host_gone", "P6: leak=false"]
+    bad = [ln for ln in red if not _fatal(ln)] + [ln for ln in green if _fatal(ln)]
+    if fatal_lines("SCRIPT ERROR: boom\n   at: f (res://a.gd:3)\nP5: x_ok=false") != ["  SCRIPT ERROR: boom", "    at: f (res://a.gd:3)", "  P5: x_ok=false"]:
+        bad.append("fatal_lines")
+    for ln in bad:
+        print(f"selftest miss\t{ln}")
+    return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(red) + len(green) + 1)
 
 def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, tag: str = "", flags: list[str] | None = None) -> int:
     log_dir = root / "_logs" / "smokes"
@@ -97,8 +130,10 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
         print(f"{tag or f'P{phase}'}=TIMEOUT")
         return 1
     text = err.read_text(encoding="utf-8", errors="replace")
-    bad = any(sig in text for sig in FATAL_ERR) or proc.returncode != 0
+    bad = any(_fatal(ln) for ln in text.splitlines()) or proc.returncode != 0
     print(f"{tag or f'P{phase}'}={'FAIL' if bad else 'PASS'}\texit={proc.returncode}")
+    if bad:
+        print("\n".join(fatal_lines(text) + [f"log\t{agent_log.rel(root, err)}"]))
     if bad and tag:
         print("\n".join(ln for ln in text.splitlines() if ln.startswith("OPEN:")))
     if tag.startswith("open_timing"):
@@ -116,6 +151,23 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
         art = run_phase(exe, root, 6, timeout, verbose, "frame_art", FRAME_ART)
         return max(1 if bad else 0, timing, art)
     return 1 if bad else 0
+
+# Static compile (bot_warnscan's `static` area: every scripts/**/*.gd and scenes/*.tscn) fails a smoke run on these kinds
+# only; its gdscript warnings are warnscan's job. Catches what no picked phase loads (a broken ext_resource, a dead script).
+STATIC_HARD = ("script-error", "load-failure", "crash", "error", "shader")
+
+def static_compile(root: Path) -> int:
+    out = root / "_logs" / "smokes" / "static.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.unlink(missing_ok=True)
+    subprocess.run([*boot.cmd("bot_warnscan"), "--areas", "static", "--recheck", "0", "--out-json", str(out), "--root", str(root)],
+                   cwd=root, capture_output=True, check=False)
+    rows = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else [{"kind": "error", "message": "no static report", "site": ""}]
+    hard = [f for f in rows if f.get("kind") in STATIC_HARD]
+    print(f"static={'FAIL' if hard else 'PASS'}\tcompile every script and scene (gate.py warnscan --areas static)")
+    for f in hard[:4]:
+        print(f"  {f.get('kind')}: {str(f.get('message', ''))[:200]}  ({f.get('site', '')})")
+    return 1 if hard else 0
 
 def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
     """(warnscan areas, smoke phases) that load these files: bot_warnscan_lib.changed_areas is the one source."""
@@ -137,9 +189,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--release", action="store_true", help="Also run gate.py release (release mode: no debug code, title to dungeon). Alone: just that.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (end gate: a new UI state without a shot flow FAILS this run)")
+    p.add_argument("--no-static", action="store_true", help="skip the static compile of every script and scene (on by default when phases run)")
     p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
     p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
+    p.add_argument("--selftest", action="store_true", help="Check which stderr lines fail a phase; runs no Godot.")
     ns = p.parse_args(argv)
+    if ns.selftest:
+        return _selftest()
     root = agent_log.resolve_root(ns)
     if ns.for_files:
         files = [f.replace("\\", "/") for f in ns.for_files]
@@ -210,6 +266,8 @@ def main(argv: list[str] | None = None) -> int:
             rc = 1
             continue
         rc |= run_phase(exe, root, n, ns.timeout, ns.verbose)
+    if phases and not ns.no_static:
+        rc |= static_compile(root)
     if ns.release:
         rrc = subprocess.run([*boot.cmd("run_release_smoke"), "--root", str(root)], check=False).returncode
         print(f"release={'PASS' if rrc == 0 else 'FAIL'}")

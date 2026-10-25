@@ -37,6 +37,8 @@ BASE = {
     "design/pin.md": "Weekly pins\n\nCI runs `ent.py a`:\nit pins grok_web_wN and grok_build_wN.\n",
     "scripts/ui/menu.gd": 'extends Node\n# old note\nvar s := "a # b"\n',
     "scripts/ui/glow.gd": 'extends Node\nconst CODE := """\n#define K 1\n"""\n',
+    "scripts/ui/gone_box.gd": 'extends Node\n',
+    "assets/box.tres": '[gd_resource type="Resource" format=3]\n',
 }
 HEAD = {
     "tools/ent.py": 'COMMANDS = [("a", "x/run_a", "A")]\n',
@@ -50,6 +52,8 @@ HEAD = {
     "scripts/ui/frame_b.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
     "scripts/ui/menu.gd": 'extends Node\n## new note\n\nvar s := "a # b"  # trailing\n',
     "scripts/ui/glow.gd": 'extends Node\nconst CODE := """\n#define K 2\n"""\n',
+    "scripts/ui/gone_box.gd": None,
+    "assets/box.tres": '[gd_resource type="Resource" format=3]\n[resource]\n',
 }
 WANT_DRIFT = ["removed path tools/open_x.py (tools/open_x.py) still named at design/tasks/t.md:2",
               "removed subcommand ent.py b (tools/ent.py) still named at design/doc.md:1",
@@ -95,10 +99,13 @@ def main() -> int:
         for want in WANT_PLAN:
             if want not in steps:
                 bad.append(f"plan lacks: {want}")
+        smoke = [why for _, cmd, why in check_prove.plan(root, a, False) if "bot-smokes" in cmd]
+        if not smoke or not smoke[0].endswith("<- 7 file(s)"):  # a deleted script and a .tres count (static compile); menu.gd is cosmetic
+            bad.append(f"smokes step {smoke} should count 7 files")
         if a["cosmetic"] != {"scripts/ui/menu.gd"}:
             bad.append(f"cosmetic {sorted(a['cosmetic'])} != ['scripts/ui/menu.gd']")
         if len(a["drift"]) != len(WANT_DRIFT):
             bad.append(f"drift count {len(a['drift'])} != {len(WANT_DRIFT)}: " + " | ".join(a["drift"]))
     for b in bad:
         print(b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(WANT_DRIFT) + len(WANT_REVIEW) + len(WANT_PLAN) + 2, bad=len(bad))
+    return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(WANT_DRIFT) + len(WANT_REVIEW) + len(WANT_PLAN) + 3, bad=len(bad))

@@ -180,8 +180,10 @@ def plan(root: Path, a: dict, run_all: bool) -> list[tuple[str, str, list[str]]]
             for cmd, w in _selftests(a):
                 out.append(("selftest", cmd, w))
         elif r["cmd"] == "@smokes":
-            gd = [p for p in hit if p.endswith((".gd", ".tscn")) and (root / p).is_file()]
-            phases = _phases(root, gd) if gd else ""
+            gd = [p for p in hit if p.endswith((".gd", ".tscn", ".tres", ".gdshader"))]
+            live = [p for p in gd if (root / p).is_file()]
+            # only deletions: P1 is the carrier; the run's static compile is what catches a dangling preload/ext_resource
+            phases = (_phases(root, live) if live else "") or ("1" if gd else "")
             if phases:
                 out.append(("smokes", f"python3 tools/gate.py bot-smokes --phases {phases} --no-gaps", r["why"] + f" <- {len(gd)} file(s)"))
         else:
