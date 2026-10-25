@@ -116,4 +116,7 @@ static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
 	if old_rev < 15:
 		b.special_recovery = 1.0
 		b.orb_mana = 25.0
+	if old_rev < 16:
+		b.special_mana = 20.0
+		b.special_recovery = 1.5
 	return true

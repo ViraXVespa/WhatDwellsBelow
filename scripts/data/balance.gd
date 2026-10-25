@@ -6,7 +6,7 @@ const Schema := preload("res://scripts/data/balance/schema.gd")
 const Enemies := preload("res://scripts/data/balance/enemies.gd")
 const Migrate := preload("res://scripts/data/balance/migrate.gd")
 const Access := preload("res://scripts/data/balance/access.gd")
-const BAL_REV := 15
+const BAL_REV := 16
 
 var enemy_stats: Dictionary = {}
 

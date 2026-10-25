@@ -14,8 +14,8 @@ Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|
 | Dash duration | 0.28 s | 0.28 | |
 | Dash cooldown | 1.1 s | 1.1 | |
 | Special (LT) wind-up | 0.22 s | 0.22 | Applies to all weapon specials |
-| Special recovery | 0.35 s | 1.0 |  |
-| `special_mana` | - | 40 | - |
+| Special recovery | 0.35 s | 1.5 | Special cooldown (HUD special meter) |
+| `special_mana` | - | 20 | - |
 | `mana_max` | - | 100 | - |
 | `mana_regen` | - | 3 | - |
 | Attack move mult | — | 0.45 | |

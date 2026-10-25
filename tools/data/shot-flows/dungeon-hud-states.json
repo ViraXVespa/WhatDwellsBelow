@@ -96,7 +96,7 @@
     {
       "op": "set",
       "target": "App.prog.mana",
-      "value": 20
+      "value": 10
     },
     {
       "op": "wait",
