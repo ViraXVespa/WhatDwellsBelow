@@ -23,6 +23,7 @@ TRANSITIONS = ("fade", "dissolve", "fadeblack", "fadewhite", "wipeleft", "wiperi
                "slideup", "slidedown", "smoothleft", "smoothright", "circleopen", "circleclose", "radial", "pixelize")
 SIZES = {"x": (1280, 720), "x-square": (720, 720), "x-portrait": (720, 1280)}
 SMALL = 0.35  # ba: a change covering less than this share of the frame (padded box) is zoomed in on and wiped
+SUBTLE = 24.0  # ba: a change whose mean difference (0-255 levels, changed cells) is at most this is wiped however wide
 
 def size_of(spec: str) -> tuple[int, int]:
     if spec in SIZES:
@@ -168,15 +169,16 @@ def _frame(src: Path, t: float, dst: Path):
     ce._run(["-ss", "%.3f" % t, "-i", str(src), "-frames:v", "1", str(dst)])
     return Image.open(dst).convert("L")
 
-def change_box(before: Path, after: Path, samples: int = 6, floor: float = 3.0) -> tuple[tuple[float, float, float, float] | None, float]:
+def change_box(before: Path, after: Path, samples: int = 6, floor: float = 3.0) -> tuple[tuple[float, float, float, float] | None, float, float]:
     """Where after differs from before: the 32x18 grid cells whose mean difference beats the noise (3x the median
     cell, between `floor` and 2.5x that) in at least half the sampled frames, so a subtle shade change counts; the box
-    spans the biggest connected patch and any patch at least a quarter its size (stray noise cells drop out). Returns (box in before-clip pixels or None, share of the frame changed)."""
+    spans the biggest connected patch and any patch at least a quarter its size (stray noise cells drop out). Also returns the mean difference over the changed cells (0-255). Returns (box in before-clip pixels or None, share of the frame changed, strength)."""
     from PIL import Image, ImageChops
     a, b = ce.info(before), ce.info(after)
     dur = min(a["sec"], b["sec"])
     gw, gh = 32, 18
     hits = [0] * (gw * gh)
+    level = [0.0] * (gw * gh)
     with tempfile.TemporaryDirectory() as td:
         for k in range(samples):
             t = dur * (k + 0.5) / samples
@@ -186,9 +188,11 @@ def change_box(before: Path, after: Path, samples: int = 6, floor: float = 3.0) 
             cut = max(floor, 3.0 * min(sorted(g)[len(g) // 2], 2.5 * floor / 3.0))
             for n, v in enumerate(g):
                 hits[n] += 1 if v > cut else 0
+                level[n] += v / samples
     on = {(n % gw, n // gw) for n, c in enumerate(hits) if c * 2 >= samples}
     if not on:
-        return None, 0.0
+        return None, 0.0, 0.0
+    strength = round(sum(level[x + y * gw] for x, y in on) / len(on), 1)
     share = len(on) / float(gw * gh)
     patches: list[list] = []
     while on:
@@ -207,22 +211,23 @@ def change_box(before: Path, after: Path, samples: int = 6, floor: float = 3.0) 
     cw, ch = a["w"] / gw, a["h"] / gh
     x0, y0 = min(c[0] for c in cells), min(c[1] for c in cells)
     x1, y1 = max(c[0] for c in cells) + 1, max(c[1] for c in cells) + 1
-    return (x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch), share
+    return (x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch), share, strength
 
 def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", labels=("Before", "After"), zoom_in: float = 0.8,
        max_zoom: float = 2.5, font: str = "") -> dict:
-    """Before/after recipe. auto: find the change; if its padded box is under SMALL of the frame, zoom both clips onto it
-    (Ken Burns from the full frame over zoom_in s, at most max_zoom) and slider-wipe; otherwise side by side."""
+    """Before/after recipe. auto: find the change; a small one (padded box under SMALL of the frame) is zoomed in on
+    (Ken Burns from the full frame over zoom_in s, at most max_zoom) and slider-wiped; a subtle one (strength at most
+    SUBTLE, e.g. a shade change) is wiped however wide, since side by side hides it; a strong wide one is side by side."""
     a = ce.info(before)
-    found, share = (box, -1.0) if box else change_box(before, after)
-    pick = {"layout": layout, "share": round(share, 3), "box": None}
+    found, share, strength = (box, -1.0, -1.0) if box else change_box(before, after)
+    pick = {"layout": layout, "share": round(share, 3), "strength": strength, "box": None}
     zb = None
     if found:
         zb = aspect_box(found, a["w"] / a["h"], a["w"], a["h"], pad=0.35, min_w=a["w"] / max_zoom)
         pick["box"] = [round(v) for v in zb]
     if layout == "auto":
         small = zb is not None and zb[2] * zb[3] <= SMALL * a["w"] * a["h"]
-        pick["layout"] = "wipe" if small or not found else "sbs"
+        pick["layout"] = "wipe" if small or not found or strength <= SUBTLE else "sbs"
     if pick["layout"] != "wipe":
         zb = None
     with tempfile.TemporaryDirectory() as td:
@@ -284,6 +289,10 @@ def selftest(t: Path) -> list[str]:
     if pick["layout"] != "wipe" or not pick["box"] or not (pick["box"][0] <= 420 <= pick["box"][0] + pick["box"][2]):
         bad.append("ba small change: %s" % pick)
     pick = ba(a, c, t / "ba2.mp4")
-    if pick["layout"] != "sbs":
+    if pick["layout"] != "sbs" or pick["strength"] <= SUBTLE:
         bad.append("ba big change: %s" % pick)
+    ce._run(["-i", str(a), "-vf", "drawbox=x=0:y=0:w=480:h=300:color=black@0.08:t=fill", *ce.H264, str(t / "d.mp4")])
+    pick = ba(a, t / "d.mp4", t / "ba3.mp4")
+    if pick["layout"] != "wipe" or pick["share"] < 0.3 or pick["strength"] > SUBTLE:
+        bad.append("ba subtle wide change: %s" % pick)
     return bad

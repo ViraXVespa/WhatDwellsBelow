@@ -73,7 +73,7 @@ Edit: `media.py clip sbs` then `caption`, then `export --for x` (H.264 yuv420p, 
 
 Framing and overlays (`lib/media/clip_fx.py`): `--box X,Y,W,H` is pixels, fractions, or a movie region. `crop --box [--size x]` (static), `zoom --box FROM --to TO [--start --end]` (Ken Burns, eased), `fit --size x|x-square|x-portrait|WxH --fill pad|crop|blur`. `join --transition` takes any xfade name (`fade dissolve wipeleft slideup circleopen ...`). `wipe BEFORE AFTER` sweeps a reveal line (hold, sweep, hold, back; `--once`). `pip MAIN INSET --corner --scale`, `mark IN --box ... [--no-arrows]` (highlight box plus arrow, timed with `--start --end`).
 
-Before/after recipe: `clip ba BEFORE AFTER` finds the changed area (frame diff); when it is small (padded box at most 35% of the frame) it zooms both clips in on it (at most 2.5x, 16:9 kept) and slider-wipes; a big change gets `sbs`. `--layout wipe|sbs|stack` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
+Before/after recipe: `clip ba BEFORE AFTER` finds the changed area (frame diff); when it is small (padded box at most 35% of the frame) it zooms both clips in on it (at most 2.5x, 16:9 kept) and slider-wipes; a subtle change (mean difference at most 24 levels, e.g. a shade) is wiped however wide; only a strong wide change gets `sbs`. `--layout wipe|sbs|stack` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
 
 ## Libs and data
 
