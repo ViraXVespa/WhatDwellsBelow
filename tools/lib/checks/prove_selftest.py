@@ -1,7 +1,7 @@
 """`check.py prove --selftest`: one throwaway repo whose head commit makes every kind of drift the prove must flag.
 
 Base -> head: a tool path is deleted while a task resume line still runs it, a subcommand and a flag are dropped
-while a doc names them, a data key is dropped while its reader still asks for it, a const is dropped (another moves) while a doc names both, a group is dropped while a shot
+while a doc names them, a data key is dropped while its reader still asks for it, a const is dropped (another moves) while a doc names both, a func and a common-word const vanish while a doc ticks them, a group is dropped while a shot
 flow targets it, a lib signature changes under an untouched importer, a docstring changes under an untouched doc
 (REVIEW) and under a doc line repeating its pin name (STALE), a new comment makes a claim about an untouched tool
 (CLAIM), and a UI script changes only a comment. The checks: each DRIFT / STALE / CLAIM / REVIEW line appears, the
@@ -28,9 +28,11 @@ BASE = {
     "tools/data/d.json": '{"keep": 1, "oldkey": 2}\n',
     "tools/data/shot-flows/f.json": '{"steps": [{"op": "click", "group": "hud_items"}]}\n',
     "scripts/ui/hud.gd": 'extends Node\nconst OLD_REV := 3\nfunc _ready():\n\tadd_to_group("hud_items")\n',
-    "scripts/ui/bar.gd": 'extends Node\nconst MOVED_REV := 1\n',
+    "scripts/ui/bar.gd": 'extends Node\nconst MOVED_REV := 1\nconst NEEDED := [1]\n',
+    "scripts/ui/frame_a.gd": 'extends Node\nfunc dress(b):\n\tpass\n',
+    "scripts/ui/frame_b.gd": 'extends Node\nfunc dress(b):\n\tpass\n',
     "design/tasks/t.md": "id: t\nresume: python tools/open_x.py --task t\n\n## Body\n",
-    "design/doc.md": "Run `ent.py a --gone` or `ent.py b`; `run_a.py` pins the week.\n`OLD_REV` and `MOVED_REV` gate old saves.\n",
+    "design/doc.md": "Run `ent.py a --gone` or `ent.py b`; `run_a.py` pins the week.\n`OLD_REV` and `MOVED_REV` gate old saves.\nEach `dress()` look; the `NEEDED` list (NEEDED when needed).\n",
     "design/pin.md": "Weekly pins\n\nCI runs `ent.py a`:\nit pins grok_web_wN and grok_build_wN.\n",
     "scripts/ui/menu.gd": 'extends Node\n# old note\nvar s := "a # b"\n',
 }
@@ -42,6 +44,8 @@ HEAD = {
     "tools/data/d.json": '{"keep": 1}\n',
     "scripts/ui/hud.gd": 'extends Node\nconst MOVED_REV := 1\nfunc _ready():\n\tpass\n',
     "scripts/ui/bar.gd": 'extends Node\n',
+    "scripts/ui/frame_a.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
+    "scripts/ui/frame_b.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
     "scripts/ui/menu.gd": 'extends Node\n## new note\n\nvar s := "a # b"  # trailing\n',
 }
 WANT_DRIFT = ["removed path tools/open_x.py (tools/open_x.py) still named at design/tasks/t.md:2",
@@ -49,6 +53,8 @@ WANT_DRIFT = ["removed path tools/open_x.py (tools/open_x.py) still named at des
               "removed flag --gone (tools/lib/x/run_a.py) still named at design/doc.md:1",
               'removed data key oldkey (tools/data/d.json) still named at tools/lib/x/run_a.py:6',
               "removed const/var OLD_REV (scripts/ui/hud.gd) still named at design/doc.md:2",
+              "removed function dress (scripts/ui/frame_a.gd) still named at design/doc.md:3",
+              "removed const/var NEEDED (scripts/ui/bar.gd) still named at design/doc.md:3",
               "removed node/group hud_items (scripts/ui/hud.gd) still named at tools/data/shot-flows/f.json:1",
               "STALE   tools/lib/x/run_a.py docstring/help changed (line 1); design/pin.md:4",
               "CLAIM   tools/lib/x/run_a.py:3 new comment names week_zz (tools/lib/x/week_zz.py)"]

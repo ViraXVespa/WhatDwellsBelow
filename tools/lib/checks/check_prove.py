@@ -84,14 +84,19 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
         elif g.what == "key":
             want.setdefault(f'"{g.symbol}"', []).append(g)
     hits = pg.scan(new, {k: "" for k in want})
+    docs_hits = pg.scan(new, {g.symbol: "" for g in gones if g.what == "def"})
     for g in gones:  # functions: look for calls in the files that already name the owner
         if g.what in ("def", "sig"):
             call = re.compile(rf"(?<![\w])(?:[\w]+\.)?{re.escape(g.symbol)}\s*\(|`[\w.]*\b{re.escape(g.symbol)}\b")
             rows = [(f, pg.kind_of(f), no, line.strip()) for f in sorted(deps.get(g.owner, set()))
                     for no, line in enumerate((new.text(f) or "").splitlines(), 1) if g.symbol in line and call.search(line)]
+            if g.what == "def" and g.symbol not in pg.head_defs(new, pg.GD_DEF, ".gd") | pg.head_defs(new, pg.PY_DEF, ".py"):
+                tick = re.compile(rf"`(?:[\w.]+\.)?{re.escape(g.symbol)}\([^`]*\)`")  # gone everywhere: any doc's `name()`
+                seen = {(f, no) for f, _k, no, _l in rows}
+                rows += [(f, k, no, ln) for f, k, no, ln in docs_hits.get(g.symbol, []) if k in DOC_KINDS and (f, no) not in seen and tick.search(ln)]
             want.setdefault(f"{g.what}:{g.symbol}", []).append(g)
             hits[f"{g.what}:{g.symbol}"] = rows
-    drift, review = [], []
+    drift, review, shown = [], [], set()
     for sym, gs in want.items():
         for g in gs:
             if g.what == "path" and g.symbol in new.set:
@@ -109,6 +114,8 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
                     continue
                 if g.what == "member" and kind not in DOC_KINDS and f not in users:
                     continue
+                if g.what == "member" and g.ctx and (kind not in DOC_KINDS or not re.search(rf"`(?:[\w.]+\.)?{g.symbol}`", line)):
+                    continue
                 if g.what in ("def", "sig"):
                     if g.what == "sig":
                         if f not in changed:
@@ -117,7 +124,9 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
                 label = {"path": "removed path", "command": "removed subcommand", "flag": "removed flag",
                          "def": "removed function", "node": "removed node/group", "key": "removed data key",
                          "member": "removed const/var"}[g.what]
-                drift.append(f"DRIFT   {label} {g.symbol} ({g.owner}) still named at {where}: {line[:90]}")
+                if (label, g.symbol, where) not in shown:  # one row per site, not per file that dropped the name
+                    shown.add((label, g.symbol, where))
+                    drift.append(f"DRIFT   {label} {g.symbol} ({g.owner}) still named at {where}: {line[:90]}")
     # a tool whose docstring or help text changed: dependents that describe it but were not touched
     stems = {Path(f).stem for f in new.files if f.endswith((".py", ".gd"))}
     for c in changes:

@@ -291,6 +291,8 @@ def gone(c: Change, old: Tree, new: Tree, ents_new: dict, basenames_new: dict) -
         for name in sorted(set(GD_MEMBER.findall(o)) - set(GD_MEMBER.findall(n)) - head_members(new)):
             if len(name) >= 5 and "_" in name.strip("_"):
                 out.append(Gone("member", name, c.path))
+            elif len(name) >= 4 and name.isupper():  # REQUIRED: too common a word, so only a backticked doc mention counts
+                out.append(Gone("member", name, c.path, ["`"]))
     if c.path.endswith((".gd", ".tscn")):
         for name in sorted(_nodes(o) - head_nodes(new)):
             if len(name) >= 4:
