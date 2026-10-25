@@ -9,7 +9,8 @@ FAIL on a script error, a debug node at runtime (App.debug/playtest/anim_browser
 scripts/debug/ script), balance read from user://debug_tunables.json or an old save's
 `debug_bal`, or the drive not reaching the dungeon.
 --pck DIR: DIR/*.pck must hold no `scripts/debug/` path (a release export, release.py export-web). --pck-debug DIR: it must
-(a debug export, release.py export-web --debug). Logs: _logs/release-smoke/. --selftest: the stray-debug-node case.
+(a debug export, release.py export-web --debug). Stripped also compiles every live .gd and scene in the copy (the drive
+loads only its own path). Logs: _logs/release-smoke/. --selftest: a stray debug node; a shared preload of scripts/debug/.
 """
 from __future__ import annotations
 
@@ -53,6 +54,15 @@ def pck_paths(d: Path) -> tuple[int, list[str]]:
         found += sorted({m.group(0).decode("utf-8", "replace") for m in re.finditer(rb"scripts/debug/[A-Za-z0-9_./-]+?\.(?:gdc|gd\.remap|tscn\.remap|tres\.remap)", p.read_bytes())})
     return len(pcks), found
 
+def stripped_static(proj: Path, ok: bool, lines: list[str]) -> tuple[bool, list[str]]:
+    import contextlib
+    import io
+    from bot_smokes import static_compile
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        bad = static_compile(proj)
+    return ok and not bad, lines + ["stripped " + ln for ln in buf.getvalue().splitlines()]
+
 def selftest(root: Path, timeout: int) -> int:
     """Flag mode on a copy with a stray scripts/debug/ node (an extra autoload, not App.debug/playtest/anim_browser): must FAIL."""
     with tempfile.TemporaryDirectory(prefix="wdb-rel-st-") as td:
@@ -62,7 +72,11 @@ def selftest(root: Path, timeout: int) -> int:
         pg = proj / "project.godot"
         pg.write_text(pg.read_text(encoding="utf-8").replace(DRIVE, DRIVE + '\nZzProbe="*res://scripts/debug/zz_probe.gd"'), encoding="utf-8")
         ok, lines = run_mode(root, proj, "flag", timeout)
+        (proj / "scripts/zz_shared.gd").write_text('extends Node\nconst Z := preload("res://scripts/debug/zz_probe.gd")\n', encoding="utf-8")
+        shutil.rmtree(proj / "scripts" / "debug")
+        sok, _ = stripped_static(proj, True, [])
     bad = [] if not ok and any("debug_nodes=1" in ln for ln in lines) else ["a stray scripts/debug/ node passed the release smoke"]
+    bad += [] if not sok else ["stripped: a shared script off the drive path preloading scripts/debug/ passed"]
     print("\n".join(lines[:3] + [f"FAIL {b}" for b in bad]))
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
@@ -87,6 +101,8 @@ def main(argv: list[str] | None = None) -> int:
                 if mode == "stripped":
                     shutil.rmtree(proj / "scripts" / "debug", ignore_errors=True)
                 ok, lines = run_mode(root, proj, mode, args.timeout_sec)
+                if mode == "stripped":  # the drive loads only its path: compile every live .gd and scene with debug gone
+                    ok, lines = stripped_static(proj, ok, lines)
                 fail += 0 if ok else 1
                 body += lines + [""]
     for d, want in ((args.pck, False), (args.pck_debug, True)):
