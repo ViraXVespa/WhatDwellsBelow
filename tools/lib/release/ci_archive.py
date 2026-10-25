@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Week-close archives in CI: both pins (web + build) for week N, created on the merge that adds design/changelog/0.N.0.md.
+"""Week-close archives in CI: pin grok_build_wN at the merge that adds design/changelog/0.N.0.md, and grok_web_w{N-1} at its parent.
 
     python tools/release.py ci-archive --before SHA --commit SHA --commit-changes --push origin   # what .github/workflows/archive.yml runs
     python tools/release.py ci-archive --dry-run [--before SHA] [--commit SHA]                    # same detection, writes nothing
@@ -8,10 +8,10 @@
 
 Trigger: a file `design/changelog/{epoch}.{N}.0.md` ADDED between --before and --commit (default HEAD^ .. HEAD), the
 squash-merge of grok-build-wN. Files moved into design/changelog/archive/ and [skip ci] stamp commits never match.
-For each of web and build (release.py week-pin rows: `grok_web_wN`, `grok_build_wN`): add the catalog row when absent (commit =
-the merge, or an existing tag's commit), copy that series' notes to archives/docs/<id>/, create tag
-archive/grok-web-wN and archive/grok-build-wN at that commit. Idempotent per row and per tag: a rerun does nothing.
---commit-changes commits the catalog and docs as `chore: archive week N [skip ci]`. --push REMOTE pushes the new tags,
+For the week-close merge of grok-build-wN: pin grok_build_wN at the merge and grok_web_w{N-1} at its parent
+(release.py week-pin). Add the catalog row when absent, create the local tag when absent, and do not copy changelog
+notes into archives/docs. Idempotent per row and per tag: a rerun does nothing.
+--commit-changes commits the catalog as `chore: archive week N [skip ci]`. --push REMOTE pushes the new tags,
 then the commit to --branch (default main; on a rejected push: fetch, rebase that one commit, retry, 3 times).
 Never forces, never deletes. Writes `changed=` and `weeks=` to $GITHUB_OUTPUT when set. Sequence: design/versioning.md.
 """
@@ -320,12 +320,12 @@ def selftest() -> tuple[list[str], int]:
     return bad, ran[0]
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("CI week-close archives: tag + catalog rows + docs for web and build when design/changelog/0.N.0.md lands.", writes=True)
+    ap = agent_log.std_parser("CI week-close archives: tag + catalog rows for web and build when design/changelog/0.N.0.md lands.", writes=True)
     ap.add_argument("--before", default="", help="Push base SHA (github.event.before). Default HEAD^.")
     ap.add_argument("--commit", default="", help="Commit to pin (the merge). Default HEAD.")
     ap.add_argument("--week", type=int, default=0, metavar="N", help="Pin week N without detection (manual run).")
     ap.add_argument("--epoch", type=int, default=None, help="Epoch for --week (default version.json).")
-    ap.add_argument("--commit-changes", action="store_true", help="Commit the catalog and docs as 'chore: archive week N [skip ci]'.")
+    ap.add_argument("--commit-changes", action="store_true", help="Commit the catalog as 'chore: archive week N [skip ci]'.")
     ap.add_argument("--push", default="", metavar="REMOTE", help="Push new tags, then the commit, to REMOTE (plain pushes; fetch + rebase retry).")
     ap.add_argument("--branch", default="main", help="Branch --push updates (default main).")
     ap.add_argument("--selftest", action="store_true", help="Prove detection, tags, rows, docs, idempotency, repair and a push race on a temp origin.")

@@ -6,15 +6,12 @@
     python tools/release.py week-pin --id ID --label L --desc D --commit SHA [--dry-run]   # any other row (no tag)
 --commit defaults to HEAD. Idempotent: a row that exists is left alone and a missing tag is created at the row's
 commit ("exists", exit 0). The tag is local; CI (release.py ci-archive) pushes it, else the User does. --web N and --build N
-both copy the changelog notes of series N into archives/docs/<id>/ (from design/changelog/ or
-design/changelog/archive/); docs[] lists design/ as it is on the pinned commit plus those copies. Does not bump
+do not copy changelog notes into archives/docs. docs[] lists design/ as it is on the pinned commit. Does not bump
 version.json. CI runs this on the week-close merge (release.py ci-archive); sequence: design/versioning.md.
 """
 from __future__ import annotations
 
 import json
-import re
-import shutil
 import sys
 from pathlib import Path
 
@@ -46,17 +43,6 @@ def design_docs(root: Path, commit: str) -> list[str]:
     names = out.splitlines() if code == 0 else [p.relative_to(root).as_posix() for p in sorted((root / "design").rglob("*")) if p.is_file()]
     return [n for n in names if n.lower().endswith((".md", ".yaml", ".yml"))]
 
-def copy_notes(root: Path, epoch: int, series: int, dest: Path, dry: bool) -> list[str]:
-    """Copy that series' per-build notes (flat, else archive/{epoch}.{series}/) to `dest`. Returns repo-relative targets."""
-    base = repo_lib.changelog_dir(root)
-    rx = re.compile(rf"^{epoch}\.{series}\.\d+\.md$")
-    srcs = sorted(p for p in base.glob("*.md") if rx.match(p.name)) or sorted(p for p in (base / "archive" / f"{epoch}.{series}").glob("*.md") if rx.match(p.name))
-    if not dry:
-        dest.mkdir(parents=True, exist_ok=True)
-        for p in srcs:
-            shutil.copy2(p, dest / p.name)
-    return [(dest / p.name).relative_to(root).as_posix() for p in srcs]
-
 def rows_of(data: dict) -> list:
     """The catalog rows the game and the Pages export read: the `archives` list."""
     return data.setdefault("archives", [])
@@ -84,7 +70,7 @@ def commit_exists(root: Path, sha: str) -> bool:
     return repo_lib.run_git(root, "cat-file", "-e", f"{sha}^{{commit}}")[0] == 0
 
 def pin_row(root: Path, spec: dict, sha: str, epoch: int, dry: bool) -> dict:
-    """Add the catalog row for `spec` (when absent), copy its notes and create its local tag (when absent).
+    """Add the catalog row for `spec` (when absent) and create its local tag (when absent).
 
     Returns {row: added|exists, tag: created|exists|none|no-commit, commit, docs, notes}. `dry` writes nothing.
     A row that exists keeps its commit; a tag that is missing then points at that commit."""

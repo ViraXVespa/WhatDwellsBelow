@@ -112,10 +112,16 @@ def main(argv: list[str] | None = None) -> int:
         py("release.py park-changelogs", "--dry-run")
     say(f"archive_changelogs={arch}")
     if not dry:
-        paths = ["scripts/data/version.json", "scripts/data/archive_catalog.json", "design/changelog", "archives/docs"]
-        if repo_lib.run_git(root, "add", "-A", "--", *paths)[0] != 0 or repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths)[0] != 0:
+        # archives/docs is retired (notes are not copied). A missing pathspec fails this add.
+        paths = ["scripts/data/version.json", "scripts/data/archive_catalog.json", "design/changelog"]
+        added = repo_lib.run_git(root, "add", "-A", "--", *paths)
+        committed = repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths) if added[0] == 0 else (1, "")
+        if added[0] != 0 or committed[0] != 0:
             br = "error"
+            detail = (added[1] if added[0] != 0 else committed[1]).strip()
             say(f"branch={branch} seed commit failed")
+            if detail:
+                say(detail)
         else:
             say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
     say(f"push=run: git push -u origin {branch}" + (f" and git push origin {' '.join(catch_tags)} (catch-up tags)" if catch else "") + " (never main; CI archives on the squash-merge)")
