@@ -35,7 +35,7 @@ def _same(a: float, b: float) -> bool:
 
 def drift(src: bs.Src) -> tuple[list[str], list[str]]:
     """(DRIFT rows that fail, INFO rows) across code, slider rows, categories and docs."""
-    bad, info = [], []
+    bad, info = [f"DRIFT {p}" for p in src.chain_problems()], []
     d = src.defaults()
     rows = src.rows()
     for k, r in rows.items():
@@ -60,6 +60,11 @@ def drift(src: bs.Src) -> tuple[list[str], list[str]]:
                 continue
             if not _same(dv, float(v.value)):
                 bad.append(f"DRIFT {k}: {rel}:{h.index + 1} Live {h.live_cell} != code {bs.fmt(v.type, v.value)} ({v.path}:{v.line + 1}); fix with: docs.py tunable set {k} {bs.fmt(v.type, v.value)}")
+    for name, (i, val, kind) in src.consts().items():  # tunables.gd consts with their own doc row (CAM_PITCH)
+        for rel, h in doc_rows(root, name):
+            dv = doc_value(h.live_cell)
+            if dv is not None and not _same(dv, float(val)):
+                bad.append(f"DRIFT {name}: {rel}:{h.index + 1} Live {h.live_cell} != code {bs.fmt(kind, val)} ({bs.TCONST}:{i + 1}); fix with: docs.py tunable set {name} {bs.fmt(kind, val)}")
     return bad, info
 
 def cmd_list(root: Path, args) -> int:
@@ -134,11 +139,16 @@ def cmd_set_code(root: Path, args) -> int:
         src = bs.Src(root)
         d, rows = src.defaults(), src.rows()
         v = d.get(args.key)
+        if v is None and args.key in src.consts():  # a tunables.gd const (CAM_PITCH): via the var that reads it, if any
+            v = next((x for x in d.values() if x.expr == f"T.{args.key}"), None)
+            if v is None:
+                i, cv, kind = src.consts()[args.key]
+                v = bs.Var(args.key, "const", bs.TCONST, i, kind, f"T.{args.key}", cv)
         if v is None:
-            raise bs.Fail(f"{args.key} is not a balance key (vars_*.gd / enemies.gd); a doc-only row takes --set TEXT")
+            raise bs.Fail(f"{args.key} is not a balance key (vars_*.gd / enemies.gd / tunables.gd); a doc-only row takes --set TEXT")
         val = bs.parse_value(v.type, args.code_value)
         out = []
-        r = rows.get(args.key)
+        r = rows.get(v.key)
         if r:
             lo, hi = r.lo, r.hi
             if not lo <= float(val) <= hi:
@@ -156,7 +166,7 @@ def cmd_set_code(root: Path, args) -> int:
                 i = src.consts()[ref.group(1)][0]
                 ln = src.lines(bs.TCONST)[i]
                 src.set_line(bs.TCONST, i, re.sub(r"(=\s*).+?(\s*)$", lambda m: m.group(1) + bs.fmt(v.type, val), ln.rstrip("\r\n")))
-                out.append(f"code={bs.TCONST}:{i + 1} {ref.group(1)} (vars_{v.system}.gd reads T.{ref.group(1)})")
+                out.append(f"code={bs.TCONST}:{i + 1} {ref.group(1)}" + (f" (vars_{v.system}.gd reads T.{ref.group(1)})" if v.system != "const" else ""))
             elif v.value is None:
                 raise bs.Fail(f"{args.key} = {v.expr} in {v.path}: not a literal (player prefs live in store_data.gd DEF); edit by hand")
             else:
@@ -165,7 +175,9 @@ def cmd_set_code(root: Path, args) -> int:
                 src.set_line(v.path, v.line, ln[: m.start(3)] + bs.fmt(v.type, val) + ln[m.end(3):])
         if not out or not out[-1].startswith("code="):
             out.append(f"code={v.path}:{v.line + 1} {bs.fmt(v.type, v.value) if v.value is not None else v.expr} -> {bs.fmt(v.type, val)}")
-        out += _patch_doc(src, args.key, v.type, val)
+        for k in dict.fromkeys((v.key, args.key, v.expr[2:] if v.expr.startswith("T.") else v.key)):
+            if doc_rows(src.root, k) or k == v.key:
+                out += _patch_doc(src, k, v.type, val)
         out += [f"wrote={','.join(src.write(args.dry_run))}" + (" (dry-run)" if args.dry_run else "")]
         out += _changelog(root, args.changelog, args.label, args.dry_run)
         return out
@@ -249,7 +261,7 @@ def cmd_add_code(root: Path, args) -> int:
         system = _system_for(src, key, args, nb)
         out = []
         # 1. default
-        rel = f"{bs.BAL}/vars_{system}.gd"
+        rel = nb.path if nb else f"{bs.BAL}/vars_{system}.gd"
         decl = f"var {key} := {bs.fmt(kind, val)}"
         at = nb.line + 1 if nb else len(src.lines(rel))
         src.insert(rel, at, decl)

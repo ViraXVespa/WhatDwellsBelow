@@ -13,7 +13,7 @@ Entries here: `find.py`, `docs.py`, `session.py`; their code: `tools/lib/docs/`,
 - **One function:** `find.py func scripts/x.gd func_name`.
 - **Which doc, flows and phases for a job:** `find.py route --job door.job` (no args lists doors; `--digest --door D`).
 - **Which system owns a file:** `docs.py code-map row --path scripts/x.gd`; edit the row: `docs.py code-map patch --system S --add P`.
-- **A tunable:** `docs.py tunable get KEY`; change it: `docs.py tunable set KEY --set "cell" --dry-run`, then without `--dry-run`.
+- **A tunable:** `docs.py tunable get KEY` (doc row) or `tunable list PREFIX` (code); change it: `docs.py tunable set KEY VALUE --dry-run` (code default + doc cell), then without `--dry-run`; `--set "cell"` patches the doc cell only.
 - **Scene nodes:** `find.py scenes --path scenes/x.tscn`. Facade and helpers: `find.py facade scripts/x.gd`.
 - **Bytes, BOM, EOL:** `find.py stat PATH` (`--glob`). Funcs per script: `find.py scripts --path P`.
 - **What changed / doc vs code:** `find.py changed`; `find.py changed --history DOC.md SCRIPT.gd`.

@@ -14,7 +14,7 @@ from pathlib import Path
 import agent_log
 import balance_src as bs
 
-COPY = ("project.godot", "scripts/data/balance", bs.TCONST, bs.CATMAP, "design/changelog") + tuple(f"design/{n}" for n in bs.DOC.values())
+COPY = ("project.godot", "scripts/data/balance", bs.FACADE, bs.TCONST, bs.CATMAP, "design/changelog") + tuple(f"design/{n}" for n in bs.DOC.values())
 
 def _hash(root: Path) -> str:
     h = hashlib.sha256()
@@ -100,6 +100,22 @@ def main() -> int:
         size0 = vrel.stat().st_size
         rc, out = _run(sc, "add", "gen_zz_big", "--default", "1.0", "--range", "0", "2", "0.05", "--system", "world", "--doc-after", "gen_w")
         ok("10 KB guard: refuses, writes nothing", rc != 0 and "would be" in out and vrel.stat().st_size == size0 and "gen_zz_big" not in txt(bs.CATMAP + "") + txt(f"{bs.BAL}/schema_b.gd"))
+        vrel.write_text(pad, encoding="utf-8")
+        tc = sc / bs.TCONST
+        tc.write_text(tc.read_text(encoding="utf-8").replace("const CAM_PITCH := -58.0", "const CAM_PITCH := -50.0"), encoding="utf-8")
+        rc, out = _run(sc, "diff")
+        ok("diff: tunables.gd const vs its doc row", rc != 0 and "DRIFT CAM_PITCH" in out)
+        rc, _ = _run(sc, "set", "CAM_PITCH", "-58")
+        ok("set a tunables.gd const (code + doc)", rc == 0 and "const CAM_PITCH := -58.0" in txt(bs.TCONST) and _run(sc, "diff")[0] == 0)
+        agg = sc / bs.BAL / "vars.gd"
+        a0 = agg.read_text(encoding="utf-8")
+        agg.write_text(a0 + "var zz_stray := 1.0\n", encoding="utf-8")
+        rc, out = _run(sc, "diff")
+        ok("diff: a var in the aggregate vars.gd", rc != 0 and "zz_stray: declared in" in out)
+        agg.write_text(a0, encoding="utf-8")
+        (sc / bs.BAL / "vars_combat_b.gd").write_text("extends Object\nvar zz_orphan := 1.0\n", encoding="utf-8")
+        rc, out = _run(sc, "diff")
+        ok("diff: a vars_*.gd off the extends chain", rc != 0 and "not on the extends chain" in out)
     ok("repo untouched", _hash(root) == before)
     bad = [n for n, c in checks if not c]
     body = "\n".join(f"{'PASS' if c else 'FAIL'}  {n}" for n, c in checks)

@@ -15,6 +15,7 @@ CAP = bot_gate_lib.SHIP_BYTES
 BAL = "scripts/data/balance"
 SYSTEMS = ("main", "combat", "world", "economy")
 DOC = {"main": "tunables.md", "combat": "tunables-combat.md", "world": "tunables-world.md", "economy": "tunables-economy.md"}
+FACADE = "scripts/data/balance.gd"  # extends vars.gd, which extends the vars_<system>[_part].gd chain
 SCHEMAS = (f"{BAL}/schema_a.gd", f"{BAL}/schema_b.gd")
 ENEMIES = f"{BAL}/enemies.gd"
 TCONST = "scripts/data/tunables.gd"
@@ -149,11 +150,45 @@ class Src:
         return sorted(self.dirty)
 
     # --- readers -------------------------------------------------------------------------------------------
+    def chain(self) -> list[str]:
+        """Scripts on the balance extends chain, facade first (what Godot actually loads)."""
+        out, rel = [], FACADE
+        while rel and rel not in out and (self.root / rel).is_file():
+            out.append(rel)
+            m = next((re.match(r'^extends\s+"res://([^"]+)"', ln.lstrip("\ufeff")) for ln in self.lines(rel) if ln.lstrip("\ufeff").startswith("extends")), None)
+            rel = m.group(1) if m else ""
+        return out
+
+    def var_files(self) -> list[tuple[str, str]]:
+        """(system, rel) for every vars_<system>[_part].gd on the chain, base file first."""
+        out = []
+        for rel in reversed(self.chain()):
+            m = re.fullmatch(re.escape(BAL) + r"/vars_([a-z]+)(?:_[a-z0-9_]+)?\.gd", rel)
+            if m and m.group(1) in SYSTEMS:
+                out.append((m.group(1), rel))
+        return out
+
+    def chain_problems(self) -> list[str]:
+        """Defaults Godot loads but the tool cannot see, or files the tool sees but Godot never loads."""
+        bad, chain = [], self.chain()
+        for p in sorted((self.root / BAL).glob("vars*.gd")):
+            rel = f"{BAL}/{p.name}"
+            if rel not in chain:
+                bad.append(f"{rel} is not on the extends chain from {FACADE}: Godot never loads its defaults")
+            elif p.name != "vars.gd" and rel not in dict((r, s) for s, r in self.var_files()):
+                bad.append(f"{rel}: name it vars_<{'|'.join(SYSTEMS)}>[_part].gd (one system per design/tunables*.md)")
+        for rel in chain:
+            if rel.endswith(("/balance.gd", "/vars.gd")):
+                for i, ln in enumerate(self.lines(rel)):
+                    m = VAR_RE.match(ln.rstrip("\r\n").lstrip("\ufeff"))
+                    if m and m.group(1) not in RESERVED:
+                        bad.append(f"{m.group(1)}: declared in {rel}:{i + 1}; defaults live in vars_<system>.gd (docs.py tunable add)")
+        return bad
+
     def vars(self) -> dict[str, Var]:
         out: dict[str, Var] = {}
         consts = self.consts()
-        for s in SYSTEMS:
-            rel = f"{BAL}/vars_{s}.gd"
+        for s, rel in self.var_files():
             for i, ln in enumerate(self.lines(rel)):
                 m = VAR_RE.match(ln.rstrip("\r\n").lstrip("\ufeff"))
                 if not m:
