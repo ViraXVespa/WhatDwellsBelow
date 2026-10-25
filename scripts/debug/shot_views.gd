@@ -94,3 +94,20 @@ func drop_grid(seed_n: int, n: int) -> void:
 			p.set("_block_t", 9999.0)
 			row += 1
 	printerr("SHOT: log drop_grid seed=%d kills=%d gear=%d" % [seed_n, n, gear])
+
+## Pin wall-clock HUD pulses (the danger gem alpha) after every frame's HUD refresh, so stills compare equal across refs
+## and runs; ref-compare views call this before their shot. Older refs work too: it only touches the hud's `gem` if any.
+func still_hud() -> void:
+	var hud: Node = _tree().current_scene.get("hud") as Node if _tree().current_scene != null else null
+	if hud == null:
+		return
+	var pin := GemPin.new()
+	pin.process_priority = 1000
+	hud.add_child(pin)
+	printerr("SHOT: log still_hud")
+
+class GemPin extends Node:
+	func _process(_d: float) -> void:
+		var g: CanvasItem = get_parent().get("gem") as CanvasItem
+		if g != null:
+			g.modulate.a = 1.0

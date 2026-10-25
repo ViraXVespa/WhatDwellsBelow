@@ -102,12 +102,15 @@ def gate_import(root: Path, wt: Path) -> str:
     except (ValueError, IndexError):
         return "rc=%d" % r.returncode
 
+# Before every view still: pin wall-clock pulses (HUD danger gem) so they never count as a change.
+STILL = [{"op": "call", "target": "script:debug/shot_views", "method": "still_hud"}, {"op": "wait", "ms": 100}]
+
 def view_flow(root: Path, data: dict, name: str) -> dict:
     v = data["views"][name]
     sc = data["scenarios"][v["scenario"]] if v.get("scenario") else v
     base = run_movie.scenario_flow(root, sc)
     return {"about": "view %s: %s" % (name, v.get("about", "")), **{k: x for k, x in base.items() if k != "steps"},
-            "steps": base["steps"] + list(v.get("steps", [])) + [{"op": "shot", "name": "view"}]}
+            "steps": base["steps"] + list(v.get("steps", [])) + STILL + [{"op": "shot", "name": "view"}]}
 
 def record(root: Path, data: dict, wt: Path, name: str, kind: str, out: Path) -> tuple[Path | None, str]:
     """One catalog entry at one worktree -> (file or None, note)."""
@@ -254,8 +257,8 @@ def selftest(root: Path) -> list[str]:
     for s in data.get("sets", {}):
         try:
             for n, k in expand(data, s):
-                if k == "view" and data["views"][n].get("kind") != "full-map":
-                    view_flow(root, data, n)
+                if k == "view" and data["views"][n].get("kind") != "full-map" and view_flow(root, data, n)["steps"][-3:-1] != STILL:
+                    bad.append("view %s: no still_hud pin before its shot" % n)
         except (SystemExit, KeyError) as exc:
             bad.append("set %s: %s" % (s, exc))
     with tempfile.TemporaryDirectory() as tdn:

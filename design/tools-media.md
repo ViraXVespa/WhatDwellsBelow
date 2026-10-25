@@ -78,6 +78,7 @@ Before/after recipe: `clip ba BEFORE AFTER` finds the changed area (frame diff);
 ## Ref compare and scenario catalog
 
 `shots.py movie --refs A,B NAMES` (`lib/shots/movie_refs.py`): any two git refs. Per ref it makes a temp detached worktree (`.godot` seeded from this checkout), injects this branch's `scripts/debug/shot_tool/`, `shot_tool.gd`, `shot_views.gd` (plus `smoke.gd`, `dungeon_map/`, `drop_stage.gd` when missing, and any `res://` script they preload that the ref lacks, with a fresh `.uid`; listed in `compare.json`), runs `gate.py import` there, then records every name with this checkout's tools. Each pair is diffed (clips: `change_box`; stills: share of pixels over 16 levels). Unchanged pairs print `no visible change` and stay out of the reel; each change gets a captioned `clip ba` segment. The out dir (default `_logs/movie/refs-A-B/`) holds `reel.mp4`, `reel-x.mp4`, `reel.gif`, `contact.png` (A | B | heat per change) and `compare.json`. Worktrees are removed (`--keep-worktrees` keeps them). Godot runs one at a time: about 1 to 3 min per name per ref plus the import.
+Every view still first calls `shot_views.gd` `still_hud`, which pins wall-clock pulses (the HUD danger gem) so animation never counts as a change.
 
 The catalog lives in `data/movies.json`:
 - `movies`: clips.
