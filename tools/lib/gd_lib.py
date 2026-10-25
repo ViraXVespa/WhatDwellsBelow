@@ -22,10 +22,16 @@ def iter_gd(root: Path, *, sub: str = "scripts") -> list[Path]:
         return []
     return sorted(p for p in base.rglob("*.gd") if p.is_file() and p.relative_to(root).parts[0] not in SKIP_PARTS)
 
+LIVE_GD_DIRS = ("scripts", "tools/data")  # every .gd Godot runs: game + debug code, and the release smoke driver (tools/data/release_smoke)
+
+def live_gd(root: Path) -> list[Path]:
+    """Every live .gd the size and dupes scans cover: LIVE_GD_DIRS, no folder exempt (archives/worktrees are not live)."""
+    return sorted(p for d in LIVE_GD_DIRS for p in iter_gd(root, sub=d))
+
 def sizes(root: Path, lo: int = 0, hi: int | None = None) -> list[tuple[int, str]]:
     """(bytes, repo-relative path) of live .gd files with lo <= size < hi, largest first. One owner for every size listing."""
     rows = []
-    for p in iter_gd(root):
+    for p in live_gd(root):
         n = p.stat().st_size
         if n >= lo and (hi is None or n < hi):
             rows.append((n, p.relative_to(root).as_posix()))

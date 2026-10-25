@@ -85,7 +85,11 @@ def selftest(root: Path, build) -> list[str]:
         (tmp / "tools").mkdir()
         for src in sorted((root / FIXTURE).glob("*.gd.txt")):
             shutil.copy(src, tmp / "scripts" / src.name[:-4])
+        (tmp / "tools/data/release_smoke").mkdir(parents=True)  # no live .gd folder is exempt (gd_lib.LIVE_GD_DIRS)
+        shutil.copy(tmp / "scripts" / "old_mesh_tent.gd", tmp / "tools/data/release_smoke/drive_parts.gd")
         rows = build(tmp)
+        if not any(w.startswith("tools/data/release_smoke/drive_parts.gd:") for r in rows for w in r["where"]):
+            errs.append("a .gd under tools/data (release smoke driver) is not scanned")
         where = lambda k: [w for r in rows if r["kind"] == k for w in r["where"]]
         runs, clones = where("run"), [r for r in rows if r["kind"] == "clone"]
         if not any(w.startswith("scripts/old_mesh_tent.gd:") for w in runs):

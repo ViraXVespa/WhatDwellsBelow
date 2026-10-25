@@ -47,7 +47,7 @@ Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read wi
 ## Caps (Bot-only)
 
 The Bot alone enforces size; Build and Web never measure or split, and the size tools run only for the Bot (`--bot`, `WDB_BOT`) or in CI (`bot-gate.yml`). Measure with `os.path.getsize`.
-- Scripts: every live `scripts/**/*.gd` under 10,000 bytes (ship floor); the 5,000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
+- Scripts: every live `.gd` (`scripts/**`, `tools/data/**`) under 10,000 bytes (ship floor); the 5,000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
 - Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/data/bot_budgets.json` (`check.py load-graph --bot`).
 - Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
 

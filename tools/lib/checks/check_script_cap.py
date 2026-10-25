@@ -106,6 +106,12 @@ def selftest() -> list[str]:
         if code != 1 or "STRAY\tscenes/door.gd" not in out:
             bad.append(f"stray .gd outside scripts/: exit={code}, want 1 with STRAY")
         (root / "scenes/door.gd").unlink()
+        (root / "tools/data/release_smoke").mkdir(parents=True)
+        (root / "tools/data/release_smoke/drive.gd").write_bytes(b"#" * 10000)
+        code, out = run("--bot")
+        if code != 1 or "tools/data/release_smoke/drive.gd" not in out:
+            bad.append(f"a tools/data .gd over the cap must fail like any live script: exit={code}")
+        (root / "tools/data/release_smoke/drive.gd").unlink()
         from unittest import mock
         for head, want in (("vendor-fixes", 1), ("bot/size", 1), ("grok-build-w9", 0)):  # CI PR: Bot branches get the cap, Build's week PR does not
             env = {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_HEAD_REF": head, "WDB_BOT": ""}
@@ -155,12 +161,12 @@ def main(argv: list[str] | None = None) -> int:
                 agent_log.fail(f"--path {raw}: not a file (give repo-relative .gd paths, or omit for all scripts)")
             files.append(path)
     elif args.git_changed:
-        found = repo_lib.git_changed(root, "scripts")
+        found = repo_lib.git_changed(root, *gd_lib.LIVE_GD_DIRS)
         if found is None:
             agent_log.fail("git status failed")
         files = [root / r for r in found if r.endswith(".gd") and (root / r).is_file()]
     else:
-        files = gd_lib.iter_gd(root)
+        files = gd_lib.live_gd(root)
 
     over: list[tuple[int, str]] = []
     for path in files if bot else []:
@@ -170,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
     over.sort(key=lambda row: (-row[0], row[1]))
     # basenames must stay unique repo-wide (editor tabs, quick-open, grep, bare code-map names): design/refactor.md Cluster folders
     by_name: dict[str, list[str]] = {}
-    for gp in gd_lib.iter_gd(root):
+    for gp in gd_lib.live_gd(root):
         by_name.setdefault(gp.name.lower(), []).append(agent_log.rel(root, gp))  # case-only twins collide on Windows tools and quick-open
     mine = {agent_log.rel(root, f) for f in files}
     dupes = sorted((n, ps) for n, ps in by_name.items() if len(ps) > 1 and mine & set(ps))

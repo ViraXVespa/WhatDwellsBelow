@@ -4,7 +4,7 @@
     python tools/lint.py dupes [--lang gd|py|all] [--gate] [--min-lines 4] [--min-block 8] [--min-run 4] [--min-clone 6]
                                [--gate-score 12] [--top 40] [--out-md PATH] [--json] [--selftest]
 
-gd = scripts/**/*.gd, py = tools/**/*.py (archives, tools/retired, _logs skipped). Kinds, ranked by score (copies-1)*lines:
+gd = every live .gd (scripts/, tools/data/: gd_lib.LIVE_GD_DIRS), py = tools/**/*.py (archives, tools/retired, _logs skipped). Kinds, ranked by score (copies-1)*lines:
   exact   function bodies identical after comments/blank lines are dropped (name ignored)
   shape   same control flow once params and locals are renamed (the shared-extract candidates in design/refactor.md)
   near    same shape once string and number literals are masked too (a shared helper takes the literals as args)
@@ -144,9 +144,9 @@ def py_funcs(text: str) -> list[dict]:
 
 def collect(root: Path, lang: str) -> dict[str, list[Path]]:
     files: dict[str, list[Path]] = {"gd": [], "py": []}
-    for kind, sub, pat in (("gd", "scripts", "*.gd"), ("py", "tools", "*.py")):
+    for kind, subs, pat in (("gd", gd_lib.LIVE_GD_DIRS, "*.gd"), ("py", ("tools",), "*.py")):
         if lang in (kind, "all"):
-            files[kind] = sorted(p for p in (root / sub).rglob(pat) if not SKIP & set(p.relative_to(root).parts))
+            files[kind] = sorted(p for sub in subs for p in (root / sub).rglob(pat) if not SKIP & set(p.relative_to(root).parts))
     return files
 
 def build(root: Path, lang: str, min_lines: int, min_block: int):

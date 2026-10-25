@@ -45,9 +45,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t GD < <(grep -E '(^|/)scripts/.*\.gd$' /tmp/changed_live.txt || true)
+          mapfile -t GD < <(grep -E '^(scripts|tools/data)/.*\.gd$' /tmp/changed_live.txt || true)
           if [ "${#GD[@]}" -eq 0 ]; then
-            echo "No changed scripts/**/*.gd"
+            echo "No changed live .gd (scripts/, tools/data/)"
             exit 0
           fi
           args=()
