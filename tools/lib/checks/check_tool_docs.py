@@ -108,7 +108,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
         if f.is_file() and f.is_relative_to(root):
             for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
                 bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
-    return bad + stale_cmds.scan(root, tracked), narr
+    return bad + stale_cmds.scan(root, tracked) + stale_cmds.branch_scan(root, tracked), narr
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)

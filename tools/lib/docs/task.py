@@ -13,13 +13,13 @@
 from __future__ import annotations
 
 import sys
-import subprocess
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
 import agent_log
 import md_format_lib as md
+import repo_lib
 import task_lib
 
 def main(argv: list[str] | None = None) -> int:
@@ -109,8 +109,7 @@ def main(argv: list[str] | None = None) -> int:
             task_lib.write_index(root)
         return end(f"{tasks[args.id]['path']}: " + (", ".join(changed) or ("would update" if dry else "no change")), "PASS", id=args.id, changed=len(changed))
     if args.cmd == "done":
-        branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
-        if branch.startswith("grok-build-w"):
+        if repo_lib.head_kind(root) == "build":
             # Build path: no changelog
             return end("\n".join(task_lib.done(root, args.id, None, dry)), "PASS", id=args.id, changed=0 if dry else 1)
         log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root, create=not dry)

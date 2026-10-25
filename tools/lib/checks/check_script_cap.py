@@ -105,6 +105,14 @@ def selftest() -> list[str]:
         code, out = run()
         if code != 1 or "STRAY\tscenes/door.gd" not in out:
             bad.append(f"stray .gd outside scripts/: exit={code}, want 1 with STRAY")
+        (root / "scenes/door.gd").unlink()
+        from unittest import mock
+        for head, want in (("vendor-fixes", 1), ("bot/size", 1), ("grok-build-w9", 0)):  # CI PR: Bot branches get the cap, Build's week PR does not
+            env = {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_HEAD_REF": head, "WDB_BOT": ""}
+            with mock.patch.dict("os.environ", env):
+                code, out = run("--path", "scripts/c/big.gd")
+            if code != want:
+                bad.append(f"CI PR from {head}: exit={code}, want {want}")
     return bad
 
 def main(argv: list[str] | None = None) -> int:

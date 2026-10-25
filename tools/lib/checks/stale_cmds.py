@@ -8,6 +8,9 @@ tools/retired or prove_rules.json, not selftest functions or *selftest*.py fixtu
 - SUB: `python tools/ENTRY.py WORD` (or a backticked `ENTRY.py WORD`) naming a subcommand ENTRY does not have, or
   `ENTRY.py SUB WORD` where SUB's module has its own subparsers (`docs.py tunable WORD`) and none is WORD;
 - TOOL: a `tools/...py` path that does not exist (one-letter or upper-case stems like X, ENTRY are placeholders; tools/_scratch.py is the untracked web scratch).
+- BRANCH (branch_scan): a hand-rolled branch test (`startswith("bot/")`, `startswith("grok-build-w")`, `github.head_ref, 'bot/'`)
+  outside repo_lib.branch_kind; or Build-only retry text (`grok -r ID --fork-session`, `git diff grok-build`...) in a module a shared,
+  any-branch tool can reach (outside tools/lib/slice|release, or imported from outside them) with no repo_lib.head_kind gate.
 Flags are read from string literals, so argparse.SUPPRESS flags (`--bot`) count.
 """
 from __future__ import annotations
@@ -119,6 +122,38 @@ def scan(root: Path, tracked: set[str]) -> list[str]:
                 bad += s.line(rel, no, line)
     return bad
 
+BUILD_DIRS = ("tools/lib/slice/", "tools/lib/release/")  # Build/week flow modules: their text may assume a Build branch
+BUILD_TEXT = re.compile(r"grok -r \S+ --fork-session|`/fork`|git diff grok-build|RETRY: red prove")
+ADHOC = re.compile(r"""startswith\(\s*["'](?:bot/|grok-build|grok-web)|head_ref,\s*'(?:bot/|grok-)""")
+GATE = re.compile(r"\b(?:head_kind|branch_kind)\(")
+
+def branch_scan(root: Path, tracked: set[str], texts: dict[str, str] | None = None) -> list[str]:
+    """BRANCH rows (see the module doc). texts: rel -> source override (selftest)."""
+    src = dict(texts or {})
+    for rel in tracked:
+        if rel not in src and rel.endswith((".py", ".yml")) and rel.startswith(("tools/", ".github/")) and not rel.startswith(SKIP) \
+                and "selftest" not in rel.rsplit("/", 1)[-1]:
+            src[rel] = (root / rel).read_text(encoding="utf-8-sig", errors="replace")
+    bad: list[str] = []
+    importers: dict[str, list[str]] = {}
+    for rel, text in src.items():
+        for m in IMPORT.finditer(text):
+            for name in re.split(r"[,\s]+", (m.group(1) or m.group(2) or "").strip()):
+                importers.setdefault(name.split(".")[-1], []).append(rel)
+    for rel, text in sorted(src.items()):
+        skip = _fixture_lines(rel, text)
+        lines = [(n, ln) for n, ln in enumerate(text.splitlines(), 1) if n not in skip]
+        if not rel.endswith(("repo_lib.py", "stale_cmds.py")):
+            bad += [f"BRANCH  {rel}:{n}: hand-rolled branch test; use repo_lib.branch_kind/head_kind" for n, ln in lines if ADHOC.search(ln)]
+        hit = next((n for n, ln in lines if BUILD_TEXT.search(ln)), 0)
+        if not hit or not rel.endswith(".py") or GATE.search(text):
+            continue
+        stem = rel.rsplit("/", 1)[-1][:-3]
+        shared = [i for i in importers.get(stem, []) if not i.startswith(BUILD_DIRS)]
+        if not rel.startswith(BUILD_DIRS) or shared:
+            bad.append(f"BRANCH  {rel}:{hit}: Build-only text reachable off Build ({', '.join(sorted(shared)) or 'shared module'}); gate it on repo_lib.head_kind")
+    return bad
+
 def selftest(root: Path) -> list[str]:
     s, bad = Scan(root), []
     for line, want in (("`python tools/media.py clip crop IN --box R`", []), ("`media.py clip crop --region R`", ["FLAG"]),
@@ -128,6 +163,17 @@ def selftest(root: Path) -> list[str]:
         got = [b.split()[0] for b in s.line("t.md", 1, line)]
         if got != want:
             bad.append(f"stale_cmds {line!r}: got {got}, want {want}")
+    retry = 'def block(root):\n    return "RETRY: red prove ... grok -r X --fork-session"\n'
+    cases = (({"tools/lib/slice/retry_lib.py": retry, "tools/lib/agent_log.py": "import retry_lib\n"}, 1),
+             ({"tools/lib/slice/retry_lib.py": "import repo_lib\n" + retry.replace("    return", "    if repo_lib.head_kind(root) != 'build':\n        return ''\n    return"),
+               "tools/lib/agent_log.py": "import retry_lib\n"}, 0),
+             ({"tools/lib/slice/retry_lib.py": retry, "tools/lib/slice/slice_lib.py": "import retry_lib\n"}, 0),
+             ({"tools/lib/bot_gate_lib.py": 'ok = ref.startswith("bot/")\n'}, 1),
+             ({".github/workflows/g.yml": "if: startsWith(github.head_ref, 'bot/')\n"}, 1))
+    for texts, want in cases:
+        got = branch_scan(root, set(), texts)
+        if len(got) != want:
+            bad.append(f"branch_scan {sorted(texts)}: got {got}, want {want} row(s)")
     if not _fixture_lines("t.py", "def selftest():\n    x = 1\n") == {1, 2}:
         bad.append("stale_cmds: selftest bodies must be skipped")
     return bad

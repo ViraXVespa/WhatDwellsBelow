@@ -74,7 +74,10 @@ def _q(p: Path) -> str:
     return f'"{p}"' if " " in str(p) else str(p)
 
 def block(root: Path, what: str, red: list[str]) -> str:
-    """The RETRY text for a red prove `what` (a command or check name); `red` = its red output lines."""
+    """The RETRY text for a red prove `what` (a command or check name); `red` = its red output lines. '' off Build
+    (repo_lib.head_kind): the fork/paste retry is a Build slice flow; a Bot or Web red prove just reads its log."""
+    if repo_lib.head_kind(root) != "build":
+        return ""
     entry = original(root)
     session = str(entry.get("session", ""))
     base = str(entry.get("ref", "")) or repo_lib.week_branch(root)

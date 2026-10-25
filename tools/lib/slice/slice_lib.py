@@ -389,6 +389,17 @@ def retry_selftest() -> int:
             bad.append("uncommitted and untracked files must be listed")
         if retry_lib.strip(["top", *dirty.splitlines(), "bottom"]) != ["top", "bottom"]:
             bad.append("a nested RETRY block must be stripped")
+        bot = Path(td) / "bot-wt"
+        git(main, "worktree", "add", "-q", "-b", "vendor-fixes", str(bot), "grok-build-w9")
+        state(bot, session="abc-123", ref="")
+        if retry_lib.block(bot, "gate", red) or retry_lib.block(main, "gate", red):
+            bad.append("a Bot branch (vendor-fixes, even with slice state) or main must get no Build RETRY block")
+        if repo_lib.diff_base(bot) == "grok-build-w9" or repo_lib.head_kind(wt) != "build" or repo_lib.head_kind(bot) != "bot":
+            bad.append("branch kind: detached wdb-* is Build (no changelog, week-branch base); vendor-fixes is Bot (never the week branch as base)")
+        kinds = [repo_lib.branch_kind(n) for n in ("grok-build-w9", "grok-web-w3", "main", "bot/x", "vendor-fixes", "grok-build-w9-fix", "HEAD")]
+        if kinds != ["build", "web", "main", "bot", "bot", "bot", "detached"]:
+            bad.append(f"branch_kind table wrong: {kinds}")
+        git(main, "worktree", "remove", "--force", str(bot))
         git(main, "branch", "-D", "grok-build-w9")
         gone = retry_lib.block(wt, "gate", red)
         if "NO BASE" not in gone or "git diff" in gone:

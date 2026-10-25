@@ -85,6 +85,38 @@ def week_branch(root: Path) -> str:
     keep = [n for n in names if int(n.rsplit("w", 1)[1]) == series or run_git(root, "merge-base", "--is-ancestor", n, "HEAD")[0] == 0]
     return max(keep, key=lambda n: int(n.rsplit("w", 1)[1]), default="")
 
+BUILD_BRANCH = re.compile(r"grok-build-w\d+")
+WEB_BRANCH = re.compile(r"grok-web-w\d+")
+
+def branch_kind(name: str) -> str:
+    """Who works on branch `name`: build (grok-build-wN), web (grok-web-wN), main, or bot (bot/* and every other named
+    branch, e.g. vendor-fixes). '' or HEAD (detached) is "detached"; head_kind() resolves that for a worktree."""
+    name = name.removeprefix("refs/heads/").removeprefix("origin/")
+    if BUILD_BRANCH.fullmatch(name):
+        return "build"
+    if WEB_BRANCH.fullmatch(name):
+        return "web"
+    if name in ("main", "master"):
+        return "main"
+    return "detached" if name in ("", "HEAD") else "bot"
+
+def head_kind(root: Path) -> str:
+    """branch_kind of the checked-out branch. Detached: build in a Build slice worktree (open_slice.py detaches
+    wdb-<area>-<stamp> at the week branch; slice.py start writes _logs/slice-state.json), else bot."""
+    code, out = run_git(root, "rev-parse", "--abbrev-ref", "HEAD")
+    kind = branch_kind(out.strip() if code == 0 else "")
+    if kind != "detached":
+        return kind
+    return "build" if root.name.startswith("wdb-") or (root / "_logs" / "slice-state.json").is_file() else "bot"
+
+def diff_base(root: Path) -> str:
+    """Default diff base for "what this work changed": the week branch on Build, else the merge-base with origin/main
+    (what prove uses), else HEAD."""
+    if head_kind(root) == "build" and week_branch(root):
+        return week_branch(root)
+    code, out = run_git(root, "merge-base", "origin/main", "HEAD")
+    return out.strip() if code == 0 and out.strip() else "HEAD"
+
 def next_label(root: Path) -> str:
     """Baked version.json epoch.series.(patch+1). Stamp commits are ignored."""
     v = read_version(root)

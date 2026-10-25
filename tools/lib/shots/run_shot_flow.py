@@ -399,7 +399,8 @@ def main(argv: list[str] | None = None) -> int:
     if status == "FAIL" and not args.dry_run:
         import retry_lib
 
-        lines += ["", retry_lib.block(root, "shots.py flow --flow " + ",".join(t.split("~")[0] for t in todo), lines)]
+        note = retry_lib.block(root, "shots.py flow --flow " + ",".join(t.split("~")[0] for t in todo), lines)
+        lines += ["", note] if note else []
     res = agent_log.write_run_file(root, out_root, JOB, "\n".join(lines), status, write=not args.dry_run, flows=len(rows),
                                    **{"pass": sum(1 for r in rows if r["ok"])}, fail=len(bad_run), stale=len(stale),
                                    changed=len(changed) + sum(1 for n in notes if "CHANGED" in n), frames=sum(r["frames"] for r in rows),

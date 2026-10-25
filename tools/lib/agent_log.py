@@ -252,10 +252,12 @@ def finish(
     """
     summary_rel = None
     path = None
+    note = ""
     if retry and status == "FAIL":
         import retry_lib
 
         note = retry_lib.block(root, retry[0], retry[1])
+    if note:
         body = "\n".join(retry_lib.strip(body))
         body = (body.rstrip("\n") + "\n\n" if body else "") + note
         echo = None if echo is None else "\n".join(retry_lib.strip(echo)).rstrip("\n") + "\n\n" + note

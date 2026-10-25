@@ -3,7 +3,7 @@
 
     python tools/gate.py gd-load [--changed [--base REF] | --files a.gd b.gd | --all] [--timeout-sec 180] | --selftest
 Default --changed: .gd files that differ from BASE in the working tree (committed or not) plus untracked ones; BASE = the
-week branch grok-build-w{N}, else HEAD. A script that does not compile, or that cannot be instantiated, is listed with the
+week branch grok-build-w{N} on Build, else the merge-base with origin/main (repo_lib.diff_base), else HEAD. A script that does not compile, or that cannot be instantiated, is listed with the
 Godot error lines that name it; every file is loaded even after the first failure. The editor import check does not load
 every script and a standalone `--script` parse has no autoloads, so neither stands in for this. Imports the project first
 when .godot/imported is missing. Summary: _logs/gd-load-check/; Godot's full stderr is saved next to it and the summary
@@ -43,7 +43,7 @@ def pick(root: Path, args) -> list[str]:
         return [f.replace("\\", "/") for f in agent_log.split_list(args.files)]
     if args.all:
         return sorted(p.relative_to(root).as_posix() for p in (root / "scripts").rglob("*.gd"))
-    base = args.base or repo_lib.week_branch(root) or "HEAD"
+    base = args.base or repo_lib.diff_base(root)
     code, out = repo_lib.run_git(root, "diff", "--name-only", base)
     names = out.splitlines() if code == 0 else []
     code, out = repo_lib.run_git(root, "ls-files", "--others", "--exclude-standard")
@@ -98,7 +98,7 @@ def d3d_scan(root: Path) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Load changed .gd files in the project; a parse or compile error fails.", json_out=True)
     ap.add_argument("--changed", action="store_true", help="Changed and untracked .gd vs BASE (default).")
-    ap.add_argument("--base", default="", help="Git ref for --changed (default: the week branch, else HEAD).")
+    ap.add_argument("--base", default="", help="Git ref for --changed (default: the week branch on Build, else the merge-base with origin/main).")
     ap.add_argument("--files", nargs="+", default=[], help="Repo-relative .gd paths to load.")
     ap.add_argument("--all", action="store_true", help="Every scripts/**/*.gd.")
     ap.add_argument("--selftest", action="store_true", help="Throwaway project with an autoload: a good script passes, a stray ')' fails.")
@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     bad = [f for f in files if seen.get("res://" + f) != "ok"]
     nul = nul_scan(root) + [e for e in errs if "Unexpected NUL" in e][:1]
     d3d = d3d_scan(root)
-    body = [f"root={root} base={args.base or 'week branch/HEAD'} files={len(files)} failed={len(bad)} status={r['status']} errBytes={r['err_bytes']}", ""]
+    body = [f"root={root} base={args.base or repo_lib.diff_base(root)} files={len(files)} failed={len(bad)} status={r['status']} errBytes={r['err_bytes']}", ""]
     for f in bad:
         body.append(f"FAIL {f}" + ("" if "res://" + f in seen else "  (never reported: the run ended first)"))
         body += ["    " + e for e in errs if f in e][:6]

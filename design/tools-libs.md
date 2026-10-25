@@ -29,11 +29,11 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/boot.py` | Entry dispatch: `entries()` (every entry's table), `cmd(stem, *args)` child argv, `display(stem)` (`shots.py capture`), area dirs on `sys.path` |
 | `lib/agent_log.py` | Run helpers for every tool: `std_parser(writes=, verbose=)` (`--root`, `--json`, `--dry-run`, `--verbose`), `resolve_root`, `finish` / `emit_result` (RESULT last; `echo=` replaces the stdout body; `retry=` for the red-prove prompt), `fold` (first rows + count), `run_writer` (one-shot art generators), `guarded`, stamped `_logs/<job>` paths. `--selftest`. |
 | `lib/md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks |
-| `lib/repo_lib.py` | Git, allowlist, version and changelog-label helpers (`under`, `write_text_nl`); selftest fixtures `git_test`, `selftest_repo`. |
+| `lib/repo_lib.py` | Git, allowlist, version and changelog-label helpers (`under`, `write_text_nl`); branch kind (`branch_kind`/`head_kind`: grok-build-wN Build, grok-web-wN Web, main, every other named branch Bot; `diff_base`); selftest fixtures `git_test`, `selftest_repo`. |
 | `lib/godot_lib.py` | Godot launch + per-path lock (kills only its own pid, never godot*); `gui=True` picks a display (`--display`). Owns the engine pin: `VERSION`, `resolve_bin` (`GODOT_BIN`, pin file, Steam, box path), `pin_path`; `timing_job` for the load-timing smokes. |
 | `lib/gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` |
 | `lib/run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean |
-| `lib/slice/retry_lib.py` | Red-prove RETRY block: `grok -r <original-session-id> --fork-session` for the User (the id the first `slice.py start` run recorded) plus the paste-ready prompt (failed prove, red lines, one small corrective edit). `--selftest` |
+| `lib/slice/retry_lib.py` | Red-prove RETRY block: `grok -r <original-session-id> --fork-session` for the User (the id the first `slice.py start` run recorded) plus the paste-ready prompt (failed prove, red lines, one small corrective edit); empty off Build (`repo_lib.head_kind`). `--selftest` |
 | `lib/bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` |
 | `data/bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode |
 | `lib/gates/bot_warnscan_lib.py` | Log parser for `gate.py warnscan` |
