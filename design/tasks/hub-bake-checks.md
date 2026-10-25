@@ -46,13 +46,13 @@ Measured before the fix (the new check FAILed): rim brighter than the yard by:
 The tolerance is 4.0 grey.
 
 Draft fix (rewrite it; about 9 KB of patch, lost on a cold box):
-- `hub_shadow.gd`: add `static var prot_rects: Array = []` and set `prot_rects = prot` after `var prot := feet.values()`. The file stays under 10 KB at 9961 B, so trim the comments.
+- `hub_shadow.gd`: add `static var prot_rects: Array = []` and set `prot_rects = prot` after `var prot := feet.values()`. Run `python tools/bot_status.py --bot` after the edit and trim comments if it flags the file.
 - `hub_blur.gd`:
   - Add `zones(img, origin, rects) -> PackedInt32Array`, giving a footprint id per texel and 0 for the yard.
   - Change `_blur_hub(img, zone := PackedInt32Array())` so it averages only same-zone texels (`_masked`) where a kernel spans two zones (`_mixed`).
 - `hub_bake.gd`: call `HubBlur._blur_hub(img, HubBlur.zones(img, Vector2(x0, z0), HubShadow.prot_rects))`.
-- New `tools/bake_leak.py`:
-  - `record()` writes the footprints to `tools/data/hub_bake_feet.json`, called from `run_bake_camp.py` after `bake_inputs.record`.
+- New `bake_leak.py` module in tools/:
+  - `record()` writes the footprints to a new `hub_bake_feet.json` in tools/data/, called from `run_bake_camp.py` after `bake_inputs.record`.
   - `problems()` compares each footprint side's rim (3-5 texels out) with the yard further out. LEAK_TOL is 4.0 and corners are skipped (CORNER 4).
   - `selftest()` plants a bright rim and expects a FAIL.
 - `check_hub_bake.py`: add those problems and the selftest. A `--props` option that runs the camp-prop-shadows flow is optional; if you add it, update the comments in the check and the flow.
