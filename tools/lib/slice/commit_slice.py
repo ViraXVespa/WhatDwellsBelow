@@ -156,9 +156,7 @@ def selftest() -> int:
         log = git(r, "log", "-1", "--format=%B").stdout
         if p.returncode != 0 or "Red gate: _logs/build-gate/red.txt" not in p.stdout or not log.startswith("RED GATE: slice") or "Red-gate: _logs/build-gate/red.txt" not in log or "Did not work" in p.stdout:
             bad.append("--red-gate commits with the RED GATE marker and prints the Red gate line: " + p.stdout + p.stderr + log)
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

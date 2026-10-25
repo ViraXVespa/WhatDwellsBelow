@@ -338,9 +338,7 @@ def selftest(script: list[str]) -> int:
         git(Path(td), "clone", "-q", str(root), str(plain))
         if worktree_kind(plain) != "" or worktree_kind(root) != "":
             bad.append("a full clone outside .grok/worktrees, and the main checkout, are not worktrees")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def retry_selftest() -> int:
     """RETRY block in a throwaway git repo: with the original session recorded, without it, with a first-run --ref, without a base."""
@@ -407,6 +405,4 @@ def retry_selftest() -> int:
         state(wt, session="abc-123", ref="my-ref")
         if "git diff my-ref`" not in retry_lib.block(wt, "gate", red):
             bad.append("the first run's --ref must be the base")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)

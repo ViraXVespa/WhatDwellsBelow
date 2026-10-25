@@ -277,9 +277,7 @@ def selftest() -> int:
     cut = state_flow(st, "b", Path("x.json"))
     if cut is None or [s["op"] for s in cut["steps"]] != ["device", "press", "shot"] or state_flow(st, "zz", Path("x.json")) is not None:
         bad.append("--state keeps the setup steps and the named shot, drops earlier shots and text asserts, and refuses an unknown state")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Run scripted shot flows: capture, assert, diff against a baseline, publish.",

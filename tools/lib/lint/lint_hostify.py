@@ -75,9 +75,7 @@ def _selftest() -> int:
         ROOT = Path(td)
         n = sum(" SHADOW_HOST " in h for h in lint_file(p))
     bad = [] if n == 3 else [f"SHADOW_HOST rows={n}, want 3 (var host :=, var host: Node =, for host in; not hostile)"]
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main() -> int:
     global ROOT

@@ -244,9 +244,7 @@ def _selftest() -> int:
                 bad.append(f"root NOTES.md not rewritten: {notes.strip()!r}")
             if (r.returncode != 0) != bool(want):
                 bad.append(f"relative preload={rel_pre}: rc={r.returncode}, want {'FAIL' if want else 'PASS'}: {r.stdout.strip().splitlines()[-1:]}")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main() -> int:
     global ROOT

@@ -59,9 +59,7 @@ def _selftest() -> int:
     bad = [f"{suf} {src!r}: got {collapse(src, suf)!r}" for suf, src, want in cases if collapse(src, suf) != want]
     if not any(r.startswith("design/changelog/") for r in SKIP_REL):
         bad.append("changelogs are not skipped")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def iter_files(root: Path, paths: list[str], exts: set[str]) -> list[Path]:
     hits: list[Path] = []

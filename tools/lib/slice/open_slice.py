@@ -238,9 +238,7 @@ def selftest(script: list[str]) -> int:
         code, out = run(clone, "--dry-run")
         if code == 0 or "IN A WORKTREE" not in out:
             bad.append("inside a Grok clone worktree (.git is a directory) it must refuse")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

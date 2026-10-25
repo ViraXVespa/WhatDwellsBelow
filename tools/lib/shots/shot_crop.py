@@ -102,9 +102,7 @@ def selftest() -> int:
             bad.append("box + zoom writes a 12x9 crop: " + p.stdout + p.stderr)
         if run_me("--box", "18,8,5,5").returncode == 0:
             bad.append("a box outside the image must fail")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Crop, zoom and probe a shot PNG.")

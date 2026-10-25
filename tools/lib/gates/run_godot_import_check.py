@@ -28,9 +28,7 @@ def _selftest() -> int:
             (t / rel).write_text(body, encoding="utf-8")
         r = subprocess.run([*boot.cmd("run_godot_import_check"), "--root", td, "--timeout-sec", "120"], capture_output=True, text=True, timeout=400)
     bad = [] if r.returncode != 0 and "scripts/a.gd" in r.stdout + r.stderr else [f"a parse error in scripts/a.gd did not FAIL the import check (rc={r.returncode})"]
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Headless editor import check.", json_out=True)

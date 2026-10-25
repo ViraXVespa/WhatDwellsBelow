@@ -403,9 +403,7 @@ def _selftest() -> int:
                                capture_output=True, text=True, cwd=td)
             if r.returncode != want:
                 bad.append(f"plan {plan}: rc={r.returncode} want {want}: {(r.stdout + r.stderr).strip().splitlines()[-3:]}")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

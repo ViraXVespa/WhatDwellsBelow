@@ -310,9 +310,7 @@ def _selftest() -> int:
         bad.append("a leak tagged flaky (1/3 runs) became a diff row")
     if diff_rows([], ran_rows(base, {"p5": 1}))[1]:
         bad.append("a baseline row from an area that did not run (static) shows as FIXED")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Headless runtime-warning sweep (zero-warning gate)")

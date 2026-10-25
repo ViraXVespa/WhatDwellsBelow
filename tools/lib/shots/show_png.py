@@ -184,9 +184,7 @@ def selftest() -> int:
         )
         if missing.returncode == 0 or "not a file" not in missing.stdout + missing.stderr:
             bad.append("a missing path must fail")
-    for item in bad:
-        print("FAIL " + item)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Stage prove sheets into one folder and open the first in Photos.")

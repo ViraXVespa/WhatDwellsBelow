@@ -180,6 +180,12 @@ def emit_result(status: str, summary: str | None = None, **kv: object) -> int:
         print(result_line(status, summary, **kv))
     return exit_code(status)
 
+def selftest_result(bad: list[str]) -> int:
+    """End a --selftest: print FAIL <problem> per entry, then the RESULT line (FAIL if any)."""
+    for b in bad:
+        print("FAIL " + b)
+    return emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+
 def exit_code(status: str) -> int:
     return 1 if status == "FAIL" else 0
 

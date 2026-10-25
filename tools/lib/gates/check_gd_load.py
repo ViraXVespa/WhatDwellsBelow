@@ -66,9 +66,7 @@ def selftest(timeout: int) -> int:
             bad.append("good script (uses an autoload) did not pass: " + ok.stdout[-300:])
         if "RESULT FAIL" not in no.stdout or "failed=1" not in no.stdout or "FAIL broken.gd" not in no.stdout or "FAIL good.gd" in no.stdout:
             bad.append("stray ')' not reported as the only failure: " + no.stdout[-400:])
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 TEXT_EXT = (".gd", ".tscn", ".tres", ".import", ".cfg", ".json", ".md", ".uid", ".godot", ".gdshader", ".csv", ".txt", ".svg")
 NUL_ESC = re.compile(r"\\(u0{4}|x00|U0{6})")

@@ -178,9 +178,7 @@ def _selftest() -> int:
     for want in ("tools/data/c.gd", "scripts/d.gd", "scripts/b.gd", "scenes/s.tscn"):
         if not any(want in r for r in rows):
             bad.append(f"no BAD-CALLER row for {want}: got {rows}")
-    for b in bad:
-        print("FAIL " + b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+    return agent_log.selftest_result(bad)
 
 def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
