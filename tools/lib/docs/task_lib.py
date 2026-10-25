@@ -141,9 +141,11 @@ def resume_area(t: dict[str, str]) -> str:
     m = OPEN_RE.match(t.get("resume", "").strip())
     return m.group(1) if m else ""
 
+REPO_PATH_RE = re.compile(r"(?<![\w/.-])((?:design|scripts|tools|scenes|assets|\.grok)/[\w./-]+\.\w+)")
+
 def command_fails(root: Path, where: str, key: str, text: str) -> list[str]:
     """Every tool a task line names must run today: `tools/E.py SUB` needs entry E with subcommand SUB; a bare `X.py`
-    must be an entry tool; a module name (open_slice, run_shots, ...) is never a command (say `slice.py open`)."""
+    must be an entry tool; a repo path (design/..., scripts/...) must exist; a module name (open_slice, run_shots, ...) is never a command (say `slice.py open`)."""
     import boot
     table = boot.entries(root / "tools" if any((root / "tools").glob("*.py")) else boot.TOOLS)
     out: list[str] = []
@@ -163,6 +165,9 @@ def command_fails(root: Path, where: str, key: str, text: str) -> list[str]:
     for w in sorted(set(WORD_RE.findall(re.sub(r"[\w-]+\.[\w.-]+", " ", text))) & mods.keys()):  # door.job ids and file names are not modules
         e, s = mods[w]
         out.append(f"{where}: `{key}:` names the module {w}, not a command: use `python tools/{e}.py{' ' + s if s else ''}`")
+    for rel in REPO_PATH_RE.findall(text):  # `open design/x.md`, `--from-handoff design/handoffs/h.md`: the file must exist
+        if not (root / rel.rstrip(".")).exists():
+            out.append(f"{where}: `{key}:` names {rel.rstrip('.')}, which is not in the tree")
     return out
 
 def resume_fails(root: Path, tid: str, t: dict[str, str]) -> list[str]:
