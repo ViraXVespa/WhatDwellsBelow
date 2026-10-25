@@ -164,8 +164,8 @@ def iter_text_files() -> list[Path]:
                 continue
             seen.add(rp)
             out.append(p)
-    # loose scenes under repo root
-    for p in ROOT.glob("*.tscn"):
+    # loose scenes and every root doc (a new root *.md is not in SCAN_FILES)
+    for p in [*ROOT.glob("*.tscn"), *ROOT.glob("*.md")]:
         rp = p.resolve()
         if rp not in seen:
             out.append(p)
@@ -202,18 +202,51 @@ def write_wrappers(moves: list[tuple[Path, Path]], dry_run: bool) -> list[str]:
             src.write_text(body, encoding="utf-8", newline="\n")
     return written
 
+RELPATH = re.compile(r"""\b(?:preload|load|ResourceLoader\.load)\(\s*["'](?!res://|uid://|user://)([^"':%{}]+\.\w+)["']""")
+
 def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
+    """Old paths left anywhere (res:// or bare), and relative preload/load paths in .gd that no longer resolve."""
     residuals = []
-    res_pairs = [(o, n) for o, n in pairs if o.startswith("res://")]
+    rx = [(o, re.compile(r"(?<![A-Za-z0-9_/.\-])" + re.escape(o) + r"(?![A-Za-z0-9_])")) for o, _ in pairs]
     for path in iter_text_files():
         try:
             text = path.read_bytes().decode("utf-8")
         except Exception:
             continue
-        for old, _new in res_pairs:
-            if old in text:
+        for old, r in rx:
+            if r.search(text.replace("res://" + old, "")) if not old.startswith("res://") else old in text:
                 residuals.append(f"{rel(path)} still has {old}")
+        if path.suffix == ".gd":
+            for m in RELPATH.finditer(text):
+                if not (path.parent / m.group(1)).exists():
+                    residuals.append(f"{rel(path)} relative {m.group(0)!s}) no longer resolves; use a res:// path")
     return residuals
+
+def _selftest() -> int:
+    """A root NOTES.md naming the moved file must be rewritten; a relative preload("x.gd") left behind must FAIL."""
+    import tempfile
+    bad = []
+    for rel_pre, want in ((False, 0), (True, 1)):
+        with tempfile.TemporaryDirectory(prefix="wdb-move-st-") as td:
+            t = Path(td)
+            files = {"project.godot": "config_version=5\n", "scripts/a/x.gd": "extends Node\n",
+                     "scripts/a/y.gd": "extends Node\nconst X := preload(%s)\n" % ('"x.gd"' if rel_pre else '"res://scripts/a/x.gd"'),
+                     "NOTES.md": "see `scripts/a/x.gd`\n"}
+            for r, body in files.items():
+                (t / r).parent.mkdir(parents=True, exist_ok=True)
+                (t / r).write_text(body, encoding="utf-8")
+            for args in (["init", "-q"], ["add", "-A"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "t"]):
+                subprocess.run(["git", "-C", td, *args], check=True, capture_output=True)
+            r = subprocess.run([*boot.cmd("move_script_cluster"), "--root", td, "--files", "scripts/a/x.gd", "--to-dir", "scripts/b"],
+                               capture_output=True, text=True, cwd=td)
+            notes = (t / "NOTES.md").read_text(encoding="utf-8")
+            if "scripts/b/x.gd" not in notes:
+                bad.append(f"root NOTES.md not rewritten: {notes.strip()!r}")
+            if (r.returncode != 0) != bool(want):
+                bad.append(f"relative preload={rel_pre}: rc={r.returncode}, want {'FAIL' if want else 'PASS'}: {r.stdout.strip().splitlines()[-1:]}")
+    for b in bad:
+        print("FAIL " + b)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
 def main() -> int:
     global ROOT
@@ -227,7 +260,10 @@ def main() -> int:
     ap.add_argument("--files", nargs="*", default=[], help="Explicit files to move instead of --stem.")
     ap.add_argument("--wrapper", action="store_true", help="Leave a one-line wrapper at each old .gd path.")
     ap.add_argument("--no-git", action="store_true", help="Use plain moves instead of git mv.")
+    ap.add_argument("--selftest", action="store_true", help="Throwaway repo: a root *.md is rewritten; a relative preload left behind FAILs.")
     args = ap.parse_args()
+    if args.selftest:
+        return _selftest()
     ROOT = agent_log.resolve_root(args)
 
     if args.list_cluster:
