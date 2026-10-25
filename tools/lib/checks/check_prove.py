@@ -9,10 +9,14 @@ class_name, json file name): doc links and routes.yaml, BOT.md / tools*.md job t
 workflow skills, CI workflows and hooks, tools importing a changed lib, scripts and scenes preloading a changed
 script, data consumers, shot flows. Checks: tools/data/prove_rules.json maps touched paths to commands; built in:
 @selftests (changed tools, importers of changed libs, readers of changed data) and @smokes (gate.py bot-smokes
---for the changed scripts). Each chosen check prints with why. Drift: a path, subcommand, flag, function, node,
-group or data key the diff removed that a file still names (DRIFT, fails); REVIEW (advisory): a changed signature
-with callers outside the diff, a tool whose docstring changed while its dependents did not, a new code comment that
-names a file this diff did not touch.
+--for the changed scripts). A .gd change that is comment-only (same code with comments stripped) skips the Godot
+checks. Each chosen check prints with why. Fails: DRIFT (a path, subcommand, flag, function, node, group or data key
+the diff removed that a file still names), CLAIM (a new comment naming a tool module this diff did not touch),
+STALE (an untouched dependent's line, in a paragraph naming a tool whose docstring changed, repeating a token of the
+new docstring). REVIEW (advisory): a changed signature with callers outside the diff, a tool whose docstring changed
+while a dependent that describes it did not.
+Per-cluster quick check: --base @{u} (only what this cluster adds over the pushed branch); the pre-push full prove
+keeps the merge-base with origin/main.
 --plan prints the plan and drift and runs nothing (a --head replay is always --plan). --all runs every rule.
 RESULT PASS = every chosen check exit 0 and no DRIFT. Summary: _logs/prove/.
 """
@@ -61,11 +65,17 @@ def analyse(root: Path, base: str, head: str | None) -> dict:
                 tag = " (resume/first line)" if kind == "task" and re.match(r"(resume|first):", line) else ""
                 edges.append((own, f, kind, name, no, tag))
     gones = [g for c in changes for g in pg.gone(c, old, new, ents_new, bn_new)]
-    drift, review = _drift(gones, changes, old, new, deps, changed)
-    review += _claims(changes, new, changed)
-    return {"changes": changes, "deps": deps, "edges": edges, "drift": drift, "review": review, "new": new, "ents": ents_new}
+    names_by: dict[str, list[str]] = {}
+    for n, own in owner_names.items():
+        names_by.setdefault(own, []).append(n)
+    drift, review = _drift(gones, changes, old, new, deps, changed, names_by)
+    drift += _claims(changes, new, changed)
+    cosmetic = {c.path for c in changes if c.status == "M" and c.path.endswith(".gd")
+                and pg.gd_code(old.text(c.old) or "") == pg.gd_code(new.text(c.path) or "")}
+    return {"changes": changes, "deps": deps, "edges": edges, "drift": drift, "review": review, "new": new, "ents": ents_new,
+            "cosmetic": cosmetic}
 
-def _drift(gones, changes, old, new, deps, changed) -> tuple[list[str], list[str]]:
+def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str], list[str]]:
     allow = set(json.loads(RULES.read_text(encoding="utf-8")).get("drift_allow", []))
     want: dict[str, list] = {}
     for g in gones:
@@ -106,12 +116,18 @@ def _drift(gones, changes, old, new, deps, changed) -> tuple[list[str], list[str
                          "def": "removed function", "node": "removed node/group", "key": "removed data key"}[g.what]
                 drift.append(f"DRIFT   {label} {g.symbol} ({g.owner}) still named at {where}: {line[:90]}")
     # a tool whose docstring or help text changed: dependents that describe it but were not touched
+    stems = {Path(f).stem for f in new.files if f.endswith((".py", ".gd"))}
     for c in changes:
         if not c.path.startswith("tools/"):
             continue
         at = pg.doc_changed(c, old.text(c.old) or "", new.text(c.path) or "")
+        src = new.text(c.path) or ""
+        prose = [ln for i, ln in enumerate(c.added) if pg.is_prose(c, i, src) or "help=" in ln] if at else []
         for f in sorted(deps.get(c.path, set()) - changed) if at else []:
-            if pg.kind_of(f) in DOC_KINDS:
+            stale = pg.stale_lines(c.path, names_by.get(c.path, []), prose, f, new.text(f) or "", stems)
+            for no, line in stale:
+                drift.append(f"STALE   {c.path} docstring/help changed (line {at}); {f}:{no} [{pg.kind_of(f)}] (untouched) repeats it: {line[:90]}")
+            if not stale and pg.kind_of(f) in DOC_KINDS:
                 review.append(f"REVIEW  {c.path} docstring/help changed (line {at}); {f} names it and is untouched")
     return drift, review
 
@@ -129,10 +145,10 @@ def _claims(changes, new, changed) -> list[str]:
         for i, line in enumerate(c.added):
             if not pg.is_prose(c, i, src):
                 continue
-            for w in sorted(set(re.findall(r"\b([a-z][a-z0-9]*_[a-z0-9_]+)\b", line))):
+            for w in sorted(set(re.findall(r"\b([a-z][a-z0-9]*_[a-z0-9_]+)\b(?!\.(?!py\b)\w)", line))):
                 p = stems.get(w)
                 if p and p != c.path and p not in changed:
-                    out.append(f"REVIEW  {c.path}:{c.added_at[i]} new comment names {w} ({p}), untouched here: check the claim: {line.strip()[:80]}")
+                    out.append(f"CLAIM   {c.path}:{c.added_at[i]} new comment names {w} ({p}), untouched here: check the claim: {line.strip()[:80]}")
     return out
 
 def plan(root: Path, a: dict, run_all: bool) -> list[tuple[str, str, list[str]]]:
@@ -142,7 +158,7 @@ def plan(root: Path, a: dict, run_all: bool) -> list[tuple[str, str, list[str]]]
     stats = {c.status for c in a["changes"]}
     out = []
     for r in rules:
-        hit = [p for p in paths if any(fnmatch.fnmatch(p, g) for g in r["when"])]
+        hit = [p for p in paths if any(fnmatch.fnmatch(p, g) for g in r["when"]) and not (r.get("godot") and p in a["cosmetic"])]
         st = sorted(stats & set(r.get("when_status", [])))
         if not (hit or st or run_all):
             continue
@@ -199,7 +215,7 @@ def run(root: Path, steps) -> list[tuple[int, str, str, float]]:
 
 def main() -> int:
     ap = agent_log.std_parser(__doc__.split("\n")[0], verbose=True)
-    ap.add_argument("--base", default=None, help="Diff base (default: merge-base of origin/main and HEAD).")
+    ap.add_argument("--base", default=None, help="Diff base (default: merge-base of origin/main and HEAD; @{u} = the per-cluster quick check).")
     ap.add_argument("--head", default=None, help="Diff head commit (default: the working tree); implies --plan.")
     ap.add_argument("--plan", action="store_true", help="Print the plan, graph and drift; run nothing.")
     ap.add_argument("--all", dest="run_all", action="store_true", help="Run every rule, not only the triggered ones.")
@@ -209,7 +225,9 @@ def main() -> int:
         import prove_selftest
         return prove_selftest.main()
     root = agent_log.resolve_root(args)
-    base = args.base or pg.git(root, "merge-base", "origin/main", "HEAD").strip()
+    base = pg.git(root, "rev-parse", "--verify", "-q", args.base + "^{commit}").strip() if args.base else pg.git(root, "merge-base", "origin/main", "HEAD").strip()
+    if not base:
+        agent_log.fail(f"no such base: {args.base or 'merge-base origin/main HEAD'}")
     t0 = time.time()
     a = analyse(root, base, args.head)
     steps = plan(root, a, args.run_all)

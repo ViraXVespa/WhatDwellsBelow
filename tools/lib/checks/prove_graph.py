@@ -322,3 +322,46 @@ def _doc_spans(src: str) -> list[tuple[int, int]]:
             if isinstance(first, ast.Expr) and isinstance(getattr(first, "value", None), ast.Constant) and isinstance(first.value.value, str):
                 out.append((first.lineno, first.end_lineno or first.lineno))
     return out
+
+def gd_code(src: str) -> str:
+    """GDScript with comments, blank lines and trailing space dropped (quotes respected): equal = a comment-only change."""
+    out = []
+    for line in src.splitlines():
+        q, i = "", 0
+        while i < len(line):
+            ch = line[i]
+            if q:
+                if ch == "\\":
+                    i += 1
+                elif ch == q:
+                    q = ""
+            elif ch in "\"'":
+                q = ch
+            elif ch == "#":
+                line = line[:i]
+                break
+            i += 1
+        if line.strip():
+            out.append(line.rstrip())
+    return "\n".join(out)
+
+TOKEN = re.compile(r"[A-Za-z][\w{}-]*_[\w{}-]+")
+
+def stale_lines(owner: str, names: list[str], added_prose: list[str], dep: str, text: str, skip: set[str]) -> list[tuple[int, str]]:
+    """Lines of an untouched dependent that sit in a paragraph naming `owner` (any of its `names`) and repeat a distinctive token
+    (has an underscore, 6+ chars, not a module stem in `skip`; help= lines count by their strings) of the owner's changed
+    docstring: the exact line that may now be stale."""
+    stem, own_stem = Path(owner).stem, Path(dep).stem
+    prose = [" ".join(re.findall(r"[\"']([^\"']*)[\"']", ln)) if "help=" in ln else ln for ln in added_prose]
+    toks = {t for ln in prose for t in TOKEN.findall(ln) if len(t) >= 6 and t not in skip | {stem, own_stem}}
+    if not toks:
+        return []
+    lines, out, para = text.splitlines(), [], []
+    for no, line in enumerate(lines + [""], 1):
+        if line.strip():
+            para.append((no, line))
+            continue
+        if para and any(n in ln for _, ln in para for n in names + [stem]):
+            out += [(n, ln.strip()) for n, ln in para if set(TOKEN.findall(ln)) & toks]
+        para = []
+    return out
