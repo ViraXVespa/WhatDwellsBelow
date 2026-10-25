@@ -18,6 +18,7 @@ Edit the result with `media.py clip` (trim, join, caption, sbs, export). Clips s
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
@@ -101,6 +102,8 @@ def selftest(root: Path) -> list[str]:
             bad.append("%s: marks or scene missing" % name)
     if marks(["x SHOT: mark name=start frame=12", "SHOT: mark name=end frame=40"]) != {"start": 12, "end": 40}:
         bad.append("mark parse")
+    if refs_tag("origin/main,HEAD", "hub-ui") == refs_tag("origin/main,HEAD", "hud-low-hp"):
+        bad.append("refs out dir ignores the names (a subset rerun would overwrite the full compare)")
     with tempfile.TemporaryDirectory() as td:
         t = Path(td)
         clip_edit._run(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=30:duration=1", "-start_number", "0", str(t / "f%08d.png")])
@@ -110,8 +113,14 @@ def selftest(root: Path) -> list[str]:
             bad.append("trim math: first=%d n=%d %s" % (first, n, got))
     return bad
 
+def refs_tag(refs: str, names: str) -> str:
+    """Out dir name: refs-<A>-<B>-<names>, so a rerun of a subset never overwrites another name list's compare.json."""
+    slug = lambda x: re.sub(r"[^\w.-]+", "_", x)
+    tag = "refs-" + "-".join(slug(r) for r in refs.split(",")) + "-" + slug(names)
+    return tag if len(tag) <= 80 else tag[:70] + "-" + hashlib.sha1(names.encode()).hexdigest()[:8]
+
 def refs_main(root: Path, data: dict, args) -> int:
-    tag = "refs-" + "-".join(re.sub(r"[^\w.-]+", "_", r) for r in args.refs.split(","))
+    tag = refs_tag(args.refs, args.movie)
     out = Path(args.out).resolve() if args.out else agent_log.ensure_agent_log_dir(JOB, root) / tag
     lines: list[str] = []
     def log(x: str) -> None:

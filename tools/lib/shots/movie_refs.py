@@ -6,7 +6,7 @@ tooling injected (INJECT: shot tool, shot_views; INJECT_MISSING only when the re
 every name recorded with this checkout's tools: a movie as a clip, a view as a still (flow state, scenario or a stitched
 full-map with overlays). Each pair is diffed: no change -> "no visible change" (left out of the reel); else a captioned
 `clip ba` segment (zoom + wipe for small or subtle changes, side by side for strong wide ones). Outputs in --out
-(default _logs/movie/refs-<A>-<B>/): reel.mp4, reel-x.mp4, reel.gif, contact.png (A | B | heat per change),
+(default _logs/movie/refs-<A>-<B>-<NAMES>/, one per name list): reel.mp4, reel-x.mp4, reel.gif, contact.png (A | B | heat per change),
 compare.json. Worktrees are removed afterwards (--keep-worktrees keeps them).
 """
 from __future__ import annotations
