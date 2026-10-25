@@ -18,15 +18,16 @@ Cheap by default: 1 run per area, areas in parallel (--jobs, each run gets its o
 user:// via XDG_DATA_HOME), then areas that logged a leak or run failure are re-run
 --recheck times (default 2) so each finding is tagged stable or flaky. Timing smokes
 (load-timing, dungeon-load-timing) run alone, after the pool.
-  python tools/gate.py warnscan --changed               # quick: static + areas for paths changed vs origin/main
+  python tools/gate.py warnscan --changed               # quick: static + areas for paths changed vs repo_lib.diff_base
   python tools/gate.py warnscan --repeat 3 --recheck 0  # force 3 runs of every area
 
 --renderer real|both runs the areas (except static) on the box display (godot_lib.pick_display, else
 xvfb-run) as `<area>@gui`. Findings in a re-run area are tagged `stable` (logged every run) or
 `flaky <area> n/m`; with --renderer both it also tags gui-only / headless-only.
 
---non-leak-diff ignores leak findings (they vary run to run) and ignores the
-site, so warnings in moved code are not NEW. Exit 0 if nothing NEW, else 1.
+--non-leak-diff ignores leak counts (they vary run to run) but an area that newly
+leaks (not tagged flaky) is NEW; it ignores the site, so warnings in moved code are
+not NEW, and baseline rows from areas not run now are not FIXED. Exit 0 if nothing NEW, else 1.
 
 Exit 0: zero warnings, errors and leaks. Exit 1: findings or a failed run
 (timeout, crash, nonzero exit). Exit 2: setup or usage problem.
@@ -68,7 +69,9 @@ func _walk(dir: String, exts: PackedStringArray, out: Array[String]) -> void:
 
 func _initialize() -> void:
 	var paths: Array[String] = []
-	_walk("res://scripts", PackedStringArray(["gd"]), paths)
+	for d: String in [LIVE_DIRS]:
+		if DirAccess.dir_exists_absolute(d):
+			_walk(d, PackedStringArray(["gd"]), paths)
 	_walk("res://scenes", PackedStringArray(["tscn", "tres", "scn"]), paths)
 	paths.sort()
 	var bad: int = 0
@@ -79,6 +82,11 @@ func _initialize() -> void:
 	print("WARNSCAN: loaded=%d failed=%d" % [paths.size(), bad])
 	quit(0)
 """
+
+def harness() -> str:
+    """HARNESS walking every live .gd dir (gd_lib.LIVE_GD_DIRS: no folder exempt)."""
+    import gd_lib
+    return HARNESS.replace("[LIVE_DIRS]", "[" + ", ".join(f'"res://{d}"' for d in gd_lib.LIVE_GD_DIRS) + "]")
 
 def area_table(floors: list[int], seed: int) -> dict[str, tuple[list[str], str]]:
     """name -> (user args after `--`, description). Insertion order = run order."""
@@ -107,7 +115,7 @@ def area_table(floors: list[int], seed: int) -> dict[str, tuple[list[str], str]]
             f"--wdb-dungeon-map-floor={fl}",
         ], f"dungeon generation dump, seed {seed} floor {fl}")
     t["boot"] = ([], f"[extra launch mode] main scene (splash/title) for {BOOT_FRAMES} frames, no smoke flag")
-    t["static"] = ([], "[extra launch mode] --script harness: compile every scripts/**/*.gd and scenes/*.tscn")
+    t["static"] = ([], "[extra launch mode] --script harness: compile every live .gd (scripts/, tools/data/) and scenes/*.tscn")
     return t
 
 def godot_cmd(exe: Path, root: Path, name: str, uargs: list[str], ns, log_dir: Path, gui: bool = False) -> list[str]:
@@ -222,9 +230,17 @@ def render(rows: list[tuple], findings: list, ns, secs: float) -> str:
     out.append(f"\nRESULT={'PASS' if not bad else 'FAIL'} unique={len(findings)} total={total} (env-artifact kinds do not fail)")
     return "\n".join(out) + "\n"
 
-def non_leak_rows(findings: list) -> list[dict]:
-    return [{"kind": f.kind, "norm": f.norm, "site": f.site, "areas": sorted(f.areas)}
+def non_leak_rows(findings: list, ran: dict[str, int] | None = None) -> list[dict]:
+    """Diff rows: every non-leak finding, plus one `leak-area` row per area with a leak that is not tagged flaky
+    (leak counts vary run to run, so a NEW leaky area is the signal, not the count)."""
+    rows = [{"kind": f.kind, "norm": f.norm, "site": f.site, "areas": sorted(f.areas)}
             for f in findings if f.kind not in ("leak", "env-artifact")]
+    leaky = sorted({a for f in findings if f.kind == "leak" and not flake_label(f, ran or {}).startswith("flaky") for a in f.areas})
+    return rows + [{"kind": "leak-area", "norm": f"leaks at exit in {a}", "site": "", "areas": [a]} for a in leaky]
+
+def ran_rows(base: list[dict], ran: dict[str, int]) -> list[dict]:
+    """Baseline rows from areas that ran this time (a row from a skipped area is not FIXED)."""
+    return [r for r in base if not r.get("areas") or set(r["areas"]) & set(ran)]
 
 def diff_rows(cur: list[dict], base: list[dict]) -> tuple[list[dict], list[dict]]:
     """NEW and FIXED rows by (kind, norm) count; sites only pick which row to show."""
@@ -266,6 +282,38 @@ def findings_md(findings: list, ns, secs: float) -> str:
             out.append(f"- x{f.count}{tags(f, ns)} `{f.site or '-'}` {first}" + (f" (hint: {f.hint})" if f.hint else ""))
     return "\n".join(out) + "\n"
 
+def _selftest() -> int:
+    """static in a throwaway project: a warning in tools/data/x/b.gd (a live .gd outside scripts/) must be a finding."""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="wdb-warn-st-") as td:
+        t = Path(td)
+        for rel, body in (("project.godot", 'config_version=5\n[application]\nconfig/name="t"\n'), ("scripts/a.gd", "extends Node\n"),
+                          ("scenes/.keep", ""), ("tools/data/x/b.gd", "extends Node\nfunc f() -> void:\n\tvar unused_zz := 3\n")):
+            (t / rel).parent.mkdir(parents=True, exist_ok=True)
+            (t / rel).write_text(body, encoding="utf-8")
+        subprocess.run([*boot.cmd("bot_warnscan"), "--root", td, "--areas", "static", "--recheck", "0", "--out-json", str(t / "o.json")],
+                       capture_output=True, text=True, timeout=180)
+        try:
+            found = [f for f in json.loads((t / "o.json").read_text(encoding="utf-8")) if "tools/data/x/b.gd" in str(f.get("site", ""))]
+        except (OSError, ValueError):
+            found = []
+    bad = [] if found else ["a warning in a tools/data .gd was not compiled/found by static"]
+    from types import SimpleNamespace as F
+    leak = F(kind="leak", norm="Leaked instance: Node", site="", areas={"p5": 3}, runs={"p5": [0]})
+    flaky = F(kind="leak", norm="Leaked instance: Node", site="", areas={"p3": 1}, runs={"p3": [0]})
+    base = [{"kind": "gdscript-warning", "norm": "w", "site": "a.gd:1", "areas": ["static"]}]
+    new, _ = diff_rows(non_leak_rows([leak], {"p5": 1}), ran_rows(base, {"p5": 1}))
+    if not any(r["kind"] == "leak-area" for r in new):
+        bad.append("a new leak in p5 is not NEW in --non-leak-diff")
+    if non_leak_rows([flaky], {"p3": 3}):
+        bad.append("a leak tagged flaky (1/3 runs) became a diff row")
+    if diff_rows([], ran_rows(base, {"p5": 1}))[1]:
+        bad.append("a baseline row from an area that did not run (static) shows as FIXED")
+    for b in bad:
+        print("FAIL " + b)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Headless runtime-warning sweep (zero-warning gate)")
     p.add_argument("--list", action="store_true", help="list areas and exit")
@@ -277,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--repeat", type=int, default=1, help="force this many runs of every area (default 1)")
     p.add_argument("--recheck", type=int, default=2, help="extra runs for areas that logged a leak/run failure, to tag stable vs flaky (default 2; 0 off; ignored with --repeat > 1)")
     p.add_argument("--jobs", type=int, default=3, help="areas run in parallel (default 3; each run gets its own user:// dir; 1 = serial)")
-    p.add_argument("--changed", nargs="?", const="origin/main", default="", metavar="BASE", help="quick mode: static + the areas that load the paths changed vs BASE (default origin/main) and the worktree")
+    p.add_argument("--changed", nargs="?", const="auto", default="", metavar="BASE", help="quick mode: static + the areas that load the paths changed vs BASE (default repo_lib.diff_base: the week branch on Build, else merge-base with origin/main) and the worktree")
     p.add_argument("--renderer", choices=("headless", "real", "both"), default="headless",
                    help="headless (default), real (box display / xvfb, areas tagged @gui; no static) or both")
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
@@ -287,7 +335,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
     p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
+    p.add_argument("--selftest", action="store_true", help="static on a throwaway project: a warning in a tools/data .gd must be found")
     ns = p.parse_args(argv)
+    if ns.selftest:
+        return _selftest()
     root = agent_log.resolve_root(ns)
     floors = [int(x) for x in ns.map_floors.split(",") if x.strip()]
     table = area_table(floors, ns.map_seed)
@@ -302,14 +353,15 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail("warnscan: no Godot binary; run python tools/gate.py bot-smokes --setup")
     names = pick_areas(ns, table) if (ns.areas or ns.phases or not ns.changed) else []
     if ns.changed:
-        paths = changed_paths(root, ns.changed)
+        import repo_lib
+        paths = changed_paths(root, repo_lib.diff_base(root) if ns.changed == "auto" else ns.changed)
         names = list(dict.fromkeys(names + [n for n in changed_areas(paths) if n in table]))
         print(f"changed paths={len(paths)} -> areas {','.join(names)}", flush=True)
     log_dir = root / "_logs" / "warnscan"
     log_dir.mkdir(parents=True, exist_ok=True)
     for old in log_dir.glob("*.txt"):
         old.unlink()
-    (log_dir / "_static_load.gd").write_text(HARNESS, encoding="utf-8", newline="\n")
+    (log_dir / "_static_load.gd").write_text(harness(), encoding="utf-8", newline="\n")
     gui_prefix, gui_env = gui_launch() if ns.renderer != "headless" else ([], None)
     modes = {"headless": [False], "real": [True], "both": [False, True]}[ns.renderer]
     labels = [(n, g) for n in names for g in modes if not (g and n == "static")]  # static has no renderer
@@ -369,13 +421,13 @@ def main(argv: list[str] | None = None) -> int:
                  "flake": flake_label(f, ns.ran), "mode": mode_label(f) if ns.renderer == "both" else ""}
                 for f in merged.values()]
         Path(ns.json).write_text(json.dumps(data, indent=2), encoding="utf-8")
-    rows_now = non_leak_rows(list(merged.values()))
+    rows_now = non_leak_rows(list(merged.values()), ns.ran)
     if ns.save_baseline:
         Path(ns.save_baseline).parent.mkdir(parents=True, exist_ok=True)
         Path(ns.save_baseline).write_text(json.dumps(rows_now, indent=2), encoding="utf-8")
         print(f"baseline saved: {len(rows_now)} non-leak findings -> {ns.save_baseline}")
     if ns.non_leak_diff:
-        base = json.loads(Path(ns.non_leak_diff).read_text(encoding="utf-8"))
+        base = ran_rows(json.loads(Path(ns.non_leak_diff).read_text(encoding="utf-8")), ns.ran)
         new, fixed = diff_rows(rows_now, base)
         for tag, rs in (("NEW", new), ("FIXED", fixed)):
             for r in rs:
