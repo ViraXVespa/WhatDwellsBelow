@@ -275,6 +275,8 @@ static func _input(host: CanvasLayer, event: InputEvent) -> void:
 			Confirm.close(host)
 			host.get_viewport().set_input_as_handled()
 		return
+	if Pad.typing(host.get_viewport(), event):
+		return
 	var td := Pad.tab_delta(event)
 	if td != 0:
 		host._cycle_tab(td)

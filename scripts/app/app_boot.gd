@@ -3,6 +3,7 @@ extends Object
 const Dbg := preload("res://scripts/app/dbg.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
+const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
 
 static func _ready(host: Node) -> void:
 	LocS.setup()
@@ -39,6 +40,7 @@ static func _ready(host: Node) -> void:
 	host.get_tree().root.size_changed.connect(host.refresh_ui_text_scale)
 	if not Dbg.smoke_active():
 		App.Store.load_slot("live")
+	Crash.begin(host)
 	host.set_zoom(host.cam_zoom)
 	host.set_hud_scale(host.hud_scale)
 	host.refresh_ui_text_scale()

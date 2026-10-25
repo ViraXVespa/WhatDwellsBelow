@@ -6,7 +6,7 @@ status: active
 done-when: Pause-menu Report Bug opens a GitHub issue on ViraXVespa/WhatDwellsBelow through the relay (no player GitHub account, no token in any build), with rate limit and spam filter live.
 resume: Vira names this task in a web session, which reads this file whole.
 
-Vira approved 2026-10-25 (t601u). Server side is live; game side not started.
+Vira approved 2026-10-25 (t601u). Server side is live; game side built (2026-10-25), waiting on a web-export send.
 
 ## Decisions (Vira, 2026-10-25)
 - Report Bug shows in **all** builds (web, desktop; release and debug).
@@ -26,10 +26,16 @@ Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira
 | `POST /github-webhook` | HMAC-verified. Maintainer comment queues an update, `/ask <text>` a question, `/quiet` nothing; close/reopen queue a note. Only for opted-in reporters; messages wait in D1 `outbox`. |
 | `GET\|POST /unsubscribe?r=&t=` | signed link in every email; turns opt-in off and drops queued mail |
 
+## Game side (built)
+- Pause > Settings > **Report Bug** page, every build (`scripts/ui/pause_settings/report_page.gd`): Area and What happened cycle on A (a pad-only player can send without typing), optional Details and Email fields, "Email me about this report", Attach a screenshot (menu hidden for two frames, JPEG <=1280 px), Send Report. Typed keys go to the field, not the tab binds (`menu_pad.typing`).
+- `scripts/app/bug_report/`: `bug_send.gd` (`RELAY_URL`, install id in `user://install_id.txt`, payload, HTTPRequest POST under App), `bug_state.gd` (state report, the relay's keys only: version label + week-open commit, platform, build, scene, floor, seed, pos, loadout, recent, perf, settings, run, uptime), `crash_mark.gd` (session marker; an unclean exit offers the scrubbed tail of the previous `user://logs` file; off on web and in smokes).
+- Areas map to doors; `scripts/data/bug_doors.gd` is generated with `src/doors.js` by `gen-doors.mjs` (the relay test fails when either is stale). Smoke: P1 `bug_report_ok` (`scripts/debug/smoke/bug_report_check.gd`). Shots: `camp-pause-pages` `settings-report`, `settings-report-open`.
+- Live dry run (stores nothing; counts toward the 10/h IP limit): a `--script` SceneTree that waits two frames, `load()`s `bug_send.gd` and calls `post(payload(form, "", true), cb)`; desktop 2026-10-25 returned 200 with labels `bug-report, door:ui, build:dev, platform:linux` and no email in the response.
+
 ## Left
-- **Game side** (needs Vira's go-ahead on layout): pause-menu Report Bug entry (description, category picker, optional email + opt-in, screenshot toggle), the state report builder, a stable `install_id` in `user://`, crash-log capture, relay URL constant. Prove with a dry run from web and desktop.
-- **Email sending:** Cloudflare Email Sending needs a domain Vira owns; then wire `sendEmail` in `tools/relay/src/hooks.js` and flip `EMAIL_SEND`. Player replies to `/ask` need the same domain.
-- **Webhook:** Vira adds it in repo Settings, Webhooks: URL `https://wdb-bug-relay.viraxvespa.workers.dev/github-webhook`, JSON, the secret handed over by the Bot, events Issues and Issue comments.
+- **Web proof:** send one dry run from a web export (HTTPRequest is fetch there; the relay sends CORS `*`).
+- **Email sending:** Cloudflare Email Sending needs a domain Vira owns (GoDaddy domain, "decide later"; mail stays stored, unsent); then wire `sendEmail` in `tools/relay/src/hooks.js` and flip `EMAIL_SEND`. Player replies to `/ask` need the same domain.
+- **Webhook:** live (id 703111592, issues + issue_comment, ping 200).
 
 ## Intent
 Players report bugs from inside the game without a GitHub account. Logged 2026-10-24.

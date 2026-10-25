@@ -5,7 +5,7 @@ import worker, { RATE } from "../src/worker.js";
 import { hmacHex } from "../src/util.js";
 import { unsubToken, classify } from "../src/hooks.js";
 import { scrub, spamReason, category } from "../src/report.js";
-import { parseDoors, render, ROUTES, OUT } from "../gen-doors.mjs";
+import { parseDoors, render, renderGd, ROUTES, OUT, GD_OUT } from "../gen-doors.mjs";
 import { fakeD1, fakeKV } from "./fakes.mjs";
 
 const EMAIL = "Player.One+wdb@Example.com";
@@ -39,6 +39,7 @@ async function hook(env, event, payload, delivery = String(Math.random()), secre
 
 test("doors.js matches design/routes.yaml", () => {
   assert.equal(readFileSync(OUT, "utf8"), render(parseDoors(readFileSync(ROUTES, "utf8"))));
+  assert.equal(readFileSync(GD_OUT, "utf8"), renderGd(parseDoors(readFileSync(ROUTES, "utf8"))));
 });
 
 test("health", async () => {

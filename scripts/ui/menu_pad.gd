@@ -92,3 +92,10 @@ static func page_delta(event: InputEvent) -> int:
 	if is_page_next(event):
 		return 1
 	return 0
+
+## A key press while a text field (Report Bug) has focus belongs to the field; only Esc still backs out.
+static func typing(vp: Viewport, event: InputEvent) -> bool:
+	if not (event is InputEventKey) or (event as InputEventKey).keycode == KEY_ESCAPE:
+		return false
+	var f: Control = vp.gui_get_focus_owner() if vp else null
+	return f is LineEdit or f is TextEdit
