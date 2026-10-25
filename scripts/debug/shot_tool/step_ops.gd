@@ -130,6 +130,9 @@ static func _dump_texts(st: Dictionary, step: Dictionary, stem: String) -> void:
 	var f: FileAccess = FileAccess.open(Args.frames_dir().path_join(stem + ".texts.json"), FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify(rows, "  "))
+	f = FileAccess.open(Args.frames_dir().path_join(stem + ".cover.json"), FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify(Texts.cover(st.host)))
 
 static func op_shot(st: Dictionary, step: Dictionary) -> void:
 	await settle(st)

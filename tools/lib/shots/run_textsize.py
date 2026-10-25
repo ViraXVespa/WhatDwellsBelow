@@ -11,6 +11,10 @@ Each screen is a shot flow run on the desktop build with the window at CSS size 
 and `--dpr` passed to the game (`--wdb-dpr`, read by ui_text.gd as on web). Every shot dumps its visible texts
 (`--texts-all`): px = font size x canvas, layer and stretch scale in window pixels; CSS px = px / dpr (the em size;
 a lowercase letter is about half). Frames and texts land in _logs/textsize/<viewport>/<flow>/; report.json beside them.
+
+HUD footprint: every shot also dumps what the overlays cover (`NN-state.cover.json`); the in-play screens in the
+data file's `cover` (flow/state -> largest share of the frame) are checked on the gated viewports, so text scaling
+cannot blow the HUD and minimap up over the play area again.
 """
 from __future__ import annotations
 
@@ -50,11 +54,33 @@ def summarize(root_dir: Path, cfg: dict) -> dict:
             for state, rows in screen_rows(fdir, float(dpr), cfg.get("skip", [])).items():
                 key = "%s/%s" % (fdir.name, state)
                 floor = min([float(v) for k, v in allow.items() if re.search(k, key)] or [cfg["min_css"]])
+                for r in rows:  # a key may also match "flow/state node-path" (in-play HUD rows)
+                    r["floor"] = min([float(v) for k, v in allow.items() if re.search(k, "%s %s" % (key, r.get("path", "")))] or [floor])
                 if rows:
                     rep.setdefault(vp, {})[key] = {
                         "min": rows[0]["css"], "text": rows[0]["text"][:40].replace("\n", " "), "path": rows[0].get("path", "")[-60:],
-                        "n": len(rows), "floor": floor, "allow": floor < cfg["min_css"], "under": sum(1 for r in rows if r["css"] < floor)}
+                        "n": len(rows), "floor": min(r["floor"] for r in rows), "allow": min(r["floor"] for r in rows) < cfg["min_css"], "under": sum(1 for r in rows if r["css"] < r["floor"])}
     return rep
+
+def cover_share(doc: dict) -> float:
+    """Share of the viewport under the union of the cover rects (window px)."""
+    import numpy as np
+    w, h = int(doc["vp"][0]), int(doc["vp"][1])
+    m = np.zeros((h, w), dtype=bool)
+    for x, y, rw, rh, *_ in doc["rects"]:
+        m[max(0, y):y + rh, max(0, x):x + rw] = True
+    return round(float(m.mean()), 3)
+
+def covers(root_dir: Path, cfg: dict, vps: list[str]) -> dict:
+    """{viewport: {flow/state: share}} for the in-play screens named in cfg['cover']."""
+    out: dict = {}
+    for vp in vps:
+        for key in cfg.get("cover", {}):
+            flow, state = key.split("/", 1)
+            hits = sorted((root_dir / vp / flow).glob("[0-9]*-%s.cover.json" % state))
+            if hits:
+                out.setdefault(vp, {})[key] = cover_share(json.loads(hits[-1].read_text(encoding="utf-8")))
+    return out
 
 def run(root: Path, out: Path, cfg: dict, flows: list[str], vps: list[str], timeout: int) -> list[str]:
     known = run_shot_flow.list_flows(root)
@@ -101,6 +127,14 @@ def selftest() -> list[str]:
         got = summarize(Path(td), cfg).get("phone-l", {}).get("f/menu", {})
         if got.get("under") != 0 or got.get("floor") != 8:
             bad.append("allow: %s" % got)
+        cfg["allow"] = {" /root/A$": 4}
+        got = summarize(Path(td), cfg).get("phone-l", {}).get("f/menu", {})
+        if got.get("under") != 1 or got.get("floor") != 4:
+            bad.append("allow by path: %s" % got)
+        (d / "01-menu.cover.json").write_text(json.dumps({"vp": [100, 50], "rects": [[0, 0, 50, 10, "a"], [40, 0, 20, 10, "b"], [0, 40, 10, 20, "c"]]}))
+        cv = covers(Path(td), {"cover": {"f/menu": 0.1}}, ["phone-l"])
+        if cv != {"phone-l": {"f/menu": 0.14}}:
+            bad.append("cover: %s" % cv)
     return bad
 
 def main(argv: list[str] | None = None) -> int:
@@ -137,10 +171,15 @@ def main(argv: list[str] | None = None) -> int:
     under = sum(r["under"] for v in gated for r in rep.get(v, {}).values())
     pool = gated or vps  # no gated viewport in the run: report the smallest over all of them, not 0.0
     smallest = min((r["min"] for v in pool for r in rep.get(v, {}).values()), default=None)
-    status = "FAIL" if errs or (args.gate and under) else ("INFO" if under else "PASS")
+    cov = covers(out, cfg, vps)
+    over = ["%s %s cover %.3f > %.3f" % (v, k, c, cfg["cover"][k]) for v in gated for k, c in cov.get(v, {}).items() if c > cfg["cover"][k]]
+    lines += ["%-8s %-44s cover %.3f%s" % (v, k, c, "  (max %.3f)" % cfg["cover"][k] if v in gated else "") for v in vps for k, c in cov.get(v, {}).items()]
+    lines += over
+    status = "FAIL" if errs or (args.gate and (under or over)) else ("INFO" if under or over else "PASS")
+    (out / "report.json").write_text(json.dumps({"min_css": cfg["min_css"], "screens": rep, "cover": cov}, indent=1) + "\n", encoding="utf-8")
     body = "\n".join(["textsize min_css=%g gate=%s out=%s" % (cfg["min_css"], ",".join(cfg["gate"]), rel(root, out))] + lines + errs)
     return agent_log.finish(JOB, root, body, status, args=args, screens=sum(len(v) for v in rep.values()), under=under,
-                            smallest=smallest, errors=len(errs))
+                            smallest=smallest, over_cover=len(over), errors=len(errs))
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
