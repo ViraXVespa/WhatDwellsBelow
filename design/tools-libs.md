@@ -37,6 +37,8 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` |
 | `data/bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode |
 | `lib/gates/bot_warnscan_lib.py` | Log parser for `gate.py warnscan` |
+| `lib/gates/phase_loads.py` | Which smoke phases load each live file (`tools/data/phase_loads.json`, written by `gate.py bot-smokes --record-loads`); `changed_areas` picks phases from it |
+| `lib/bake/bake_inputs.py` | Hub bake inputs (`tools/data/hub_bake_inputs.json`): `bake.py check` fails when a light code file or `layout_spec.gd` const changed since the bake; `bake.py camp` records it |
 | `lib/docs/code_map_lib.py` | Code-map row parser/writer used by `docs.py code-map` |
 | `lib/docs/tunables_lib.py` | Tunables row parser and writer used by `docs.py tunable` |
 | `lib/docs/balance_src.py` | Balance source model for `docs.py tunable`: `vars_*.gd` defaults, slider rows, enemy stats, `val_cat_map.gd` categories; in-memory edits, 10 KB cap check before any write |

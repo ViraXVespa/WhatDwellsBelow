@@ -117,7 +117,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the allowlist on uncommitted and unpushed paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), diff drift and (UI scripts changed) textsize --gate.",
+        help="Also check the allowlist on uncommitted and unpushed paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), the tool-docs catalog and --stale-refs, diff drift and (UI scripts changed) textsize --gate.",
     )
     parser.add_argument("--no-explore", action="store_true", help="With --prove: skip the drift scan and textsize (check.py prove runs those itself).")
     return parser.parse_args(argv)
@@ -199,8 +199,12 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"dupes_gate={dupes} (rows: python tools/lint.py dupes --gate -v)")
         tunables = run_check(root, "tunables", "diff")
         lines.append(f"tunables_diff={tunables} (rows: python tools/docs.py tunable diff)")
+        tool_docs = run_check(root, "check_tool_docs")
+        lines.append(f"tool_docs={tool_docs} (rows: python tools/check.py tool-docs)")
+        stale = run_check(root, "check_tool_docs", "--stale-refs")
+        lines.append(f"stale_refs={stale} (rows: python tools/check.py tool-docs --stale-refs)")
         explore_bad = False if args.no_explore else explore(root, lines)
-        if cap_fail or blocked or explore_bad or graph.startswith("FAIL") or dupes.startswith("FAIL") or tunables.startswith("FAIL"):
+        if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, tool_docs, stale)):
             rc = 1
 
     status = "FAIL" if rc else "PASS"
