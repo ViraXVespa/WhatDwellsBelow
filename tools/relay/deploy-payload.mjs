@@ -1,13 +1,12 @@
-// Writes .secrets/deploy.js: the code for the Cloudflare MCP `execute` tool that uploads this Worker.
-// Usage: node tools/relay/deploy-payload.mjs [--with-secrets]   then call execute with code "$file:<repo>/.secrets/deploy.js"
-// --with-secrets reads GITHUB_TOKEN from env WDB_ISSUES_TOKEN and .secrets/{gh_webhook_secret,relay_salt}; otherwise
-// existing secrets are kept (keep_bindings). Delete .secrets/deploy.js after the call; it may hold secrets.
-import { readFileSync, writeFileSync, readdirSync, chmodSync } from "node:fs";
+// Writes tools/relay/.secrets/deploy.js (git-ignored by tools/relay/.gitignore): the code for the Cloudflare MCP `execute` tool that uploads this Worker.
+// Usage: node tools/relay/deploy-payload.mjs [--with-secrets]   then call execute with code "$file:<repo>/tools/relay/.secrets/deploy.js"
+// --with-secrets reads GITHUB_TOKEN from env WDB_ISSUES_TOKEN and tools/relay/.secrets/{gh_webhook_secret,relay_salt}; otherwise
+// existing secrets are kept (keep_bindings). Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
+import { readFileSync, writeFileSync, readdirSync, chmodSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = join(here, "..", "..");
 export const CONFIG = {
   script: "wdb-bug-relay",
   d1: { name: "DB", id: "ac9512aa-20c5-45b0-932e-692609241ba6" },
@@ -25,7 +24,7 @@ const bindings = [
 ];
 const withSecrets = process.argv.includes("--with-secrets");
 if (withSecrets) {
-  const sec = (f) => readFileSync(join(root, ".secrets", f), "utf8").trim();
+  const sec = (f) => readFileSync(join(here, ".secrets", f), "utf8").trim();
   bindings.push({ type: "secret_text", name: "GH_WEBHOOK_SECRET", text: sec("gh_webhook_secret") });
   bindings.push({ type: "secret_text", name: "RELAY_SALT", text: sec("relay_salt") });
   if (process.env.WDB_ISSUES_TOKEN) bindings.push({ type: "secret_text", name: "GITHUB_TOKEN", text: process.env.WDB_ISSUES_TOKEN });
@@ -47,6 +46,6 @@ const code = `async () => {
   return { uploaded: up.success, modified_on: up.result && up.result.modified_on, workers_dev: sub.result,
     bindings: metadata.bindings.map((x) => x.type + ":" + x.name) };
 }`;
-const out = join(root, ".secrets", "deploy.js");
-writeFileSync(out, code); chmodSync(out, 0o600);
+const out = join(here, ".secrets", "deploy.js");
+mkdirSync(dirname(out), { recursive: true }); writeFileSync(out, code); chmodSync(out, 0o600);
 console.log("wrote", out, withSecrets ? "(with secrets)" : "(keeps existing secrets)");

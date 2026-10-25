@@ -16,7 +16,7 @@ Vira approved 2026-10-25 (t601u). Server side is live; game side not started.
 - GitHub issues are public, so private data (emails, opt-in, outbound mail) lives in Cloudflare D1, not GitHub.
 
 ## Relay (live)
-Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira's Cloudflare account, free tier only. Source and tests: `tools/relay/` (`npm test`; `node tools/relay/gen-doors.mjs` after a door/job change, a test fails when stale; redeploy via `node tools/relay/deploy-payload.mjs` and the Cloudflare connector). D1 `wdb-bug-relay` (tables in `tools/relay/schema.sql`); KV `wdb-bug-relay-shots` holds screenshots (R2 needs dashboard enabling, so not used). Secrets: `GITHUB_TOKEN`, `GH_WEBHOOK_SECRET`, `RELAY_SALT`; var `EMAIL_SEND=off`.
+Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira's Cloudflare account, free tier only. Source and tests: `tools/relay/` (`npm test`; `node tools/relay/gen-doors.mjs` after a door/job change, a test fails when stale; redeploy via `node tools/relay/deploy-payload.mjs` and the Cloudflare connector). D1 `wdb-bug-relay` (tables in `tools/relay/schema.sql`); KV `wdb-bug-relay-shots` holds screenshots (R2 needs dashboard enabling, so not used). Secrets: `GITHUB_TOKEN`, `GH_WEBHOOK_SECRET`, `RELAY_SALT`; var `EMAIL_SEND=off`. Local copies live in git-ignored `tools/relay/.secrets/` (the first deploy kept them in the `bot/bug-relay` worktree root; move them before a `--with-secrets` redeploy). JavaScript is the one exception to the every-tool-is-Python rule (`tools.md` rule 2).
 
 | Endpoint | Does |
 |---|---|
