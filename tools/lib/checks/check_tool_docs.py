@@ -8,7 +8,9 @@ no subcommands (`bot_status.py`). Every lib module (tools/lib/**/*.py that is no
 --stale-refs scans the docs (design/*.md without changelog/, root *.md, skills) for dead references:
 PATH (backticked path or file name that is not in the tree), IDENT (`Class.member` whose class_name
 script has no such member) and, with --narration, NARR lines (will be added, TODO, legacy, formerly,
-previously, no longer, old flat paths). PATH/IDENT fail the run; NARR is advisory (RESULT INFO).
+previously, no longer, old flat paths). It also runs `stale_cmds` over tracked docs, code, data and CI for
+FLAG/SUB/TOOL (a tool command naming a flag or subcommand that tool lacks, or a dead tools/*.py path).
+PATH/IDENT/FLAG/SUB/TOOL fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan.
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ import boot  # noqa: E402
 
 import agent_log
 import repo_lib
+import stale_cmds
 from godot_lib import VERSION as ENGINE_PIN
 
 CATALOG_GLOB = "tools*.md"  # the door (tools.md) plus every tools-<area>.md sibling
@@ -89,14 +92,18 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
         if f.is_file() and f.is_relative_to(root):
             for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
                 bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
-    return bad, narr
+    return bad + stale_cmds.scan(root, tracked), narr
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)
-    ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers instead of checking the catalog.")
+    ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers, and the repo for tool commands with unknown flags/subcommands, instead of checking the catalog.")
+    ap.add_argument("--selftest", action="store_true", help="Check the stale-refs command scan on fixed lines.")
     ap.add_argument("--narration", action="store_true", help="With --stale-refs: also list will-be-added / legacy / formerly / no-longer lines (advisory).")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
+    if args.selftest:
+        bad = stale_cmds.selftest(root)
+        return agent_log.finish("tool-docs-selftest", root, "\n".join(bad + [f"selftest: fail={len(bad)}"]), "FAIL" if bad else "PASS", args=args, legacy=False)
     if args.stale_refs:
         bad, narr = stale_refs(root, args.narration)
         head = f"stale-refs: dead={len(bad)} narration={len(narr)}"
