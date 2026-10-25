@@ -20,6 +20,8 @@ Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (`--layers`): every
 
 The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again.
 
+Stale baseline: the hub changed after these runs (layout moved to `layout_spec.gd`, guild roofs rebaked with shadows). Gather takes a fresh cold `perf.py hub --leg web` run as the before.
+
 ## Next
 The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--layers` (`perf.py hub --leg web --layers`) is the still-camera split; it does not score the 99% bar.
 
