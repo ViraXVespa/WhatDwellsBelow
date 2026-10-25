@@ -11,8 +11,9 @@ trimmed names). A name used bare in FILE but not defined in FILE, and defined (f
 or top-level var) in exactly one such module, becomes Mod.name. Functions match call sites
 only (`name(`), so a local variable of the same name is safe; consts and vars match any bare
 use. Only CODE is rewritten; comment/string matches are listed (--all rewrites them too).
---check also lists BAD-CALLER lines: other scripts that call Alias.name on FILE for a name
-that was defined in FILE at git HEAD but is gone now (a facade delegate is missing).
+--check also lists BAD-CALLER lines for a name defined in FILE at git HEAD but gone now (a facade delegate is
+missing): Alias.name from a preload alias or an autoload of FILE in any live .gd, a by-name call("name") /
+has_method("name") no other live script defines, and a .tscn [connection] method= in a scene using FILE.
 Manual: --sym NAME=Mod or NAME()=Mod (calls only) skips the auto lookup. Keeps BOM and EOLs.
 """
 from __future__ import annotations
@@ -124,27 +125,74 @@ def bad_callers(text: str, path: Path, root: Path) -> list[str]:
     except Exception:
         return []
     gone = set(defs(old)) - set(defs(text))
+    if not gone:
+        return []
     out = []
     alias = re.compile(r'(?:const|var)\s+(\w+)\s*(?::[^=]*)?:?=\s*(?:preload|load)\("res://' + re.escape(rel) + r'"\)')
+    pg = root / "project.godot"  # an autoload of FILE is a global alias in every script
+    auto = set(re.findall(r'^(\w+)="\*?res://' + re.escape(rel) + '"', pg.read_text(encoding="utf-8", errors="replace"), re.M)) if pg.is_file() else set()
     import gd_lib
-    for f in gd_lib.live_gd(root):
+    files = gd_lib.live_gd(root)
+    elsewhere = {n for f in files if f.resolve() != path.resolve() for n in defs(f.read_text(encoding="utf-8-sig", errors="replace"))}
+    strcall = re.compile(r"""(?:call_deferred|callv|call|has_method|Callable\(\s*\w+\s*,)\(?\s*["'](\w+)["']""")
+    for f in files:
         if f.resolve() == path.resolve():
             continue
         t = f.read_text(encoding="utf-8-sig", errors="replace")
-        for a in {m.group(1) for m in alias.finditer(t)}:
-            for m in re.finditer(r"\b" + re.escape(a) + r"\.(\w+)", t):
+        for a in {m.group(1) for m in alias.finditer(t)} | auto:
+            for m in re.finditer(r"(?<![\w.])" + re.escape(a) + r"\.(\w+)", t):
                 if m.group(1) in gone:
                     out.append(f"BAD-CALLER {f.relative_to(root)}:{line_of(t, m.start())}: {a}.{m.group(1)}")
+        for m in strcall.finditer(t):  # by-name call of a gone func no other live script defines
+            if m.group(1) in gone and m.group(1) not in elsewhere:
+                out.append(f"BAD-CALLER {f.relative_to(root)}:{line_of(t, m.start())}: \"{m.group(1)}\" by name")
+    for f in sorted(p for d in ("scenes", "scripts") for p in (root / d).rglob("*.tscn")):
+        t = f.read_text(encoding="utf-8", errors="replace")
+        if f'path="res://{rel}"' not in t:
+            continue
+        for m in re.finditer(r'^\[connection [^\n]*method="(\w+)"', t, re.M):  # signal wired in the scene FILE is attached to
+            if m.group(1) in gone:
+                out.append(f"BAD-CALLER {f.relative_to(root)}:{line_of(t, m.start())}: connection method=\"{m.group(1)}\"")
     return out
+
+def _selftest() -> int:
+    """Funcs removed from scripts/a.gd (committed at HEAD) and still called: preload alias in tools/data, autoload alias,
+    call("name"), and a .tscn connection. All four must be BAD-CALLER rows (only the scripts/ preload one was before)."""
+    import tempfile
+    bad = []
+    with tempfile.TemporaryDirectory(prefix="wdb-requal-st-") as td:
+        t = Path(td)
+        files = {"project.godot": 'config_version=5\n[autoload]\nAa="*res://scripts/a.gd"\n',
+                 "scripts/a.gd": "extends Node\nfunc foo() -> void:\n\tpass\nfunc bar() -> void:\n\tpass\nfunc baz() -> void:\n\tpass\nfunc qux() -> void:\n\tpass\n",
+                 "tools/data/c.gd": 'extends Node\nconst A := preload("res://scripts/a.gd")\nfunc f() -> void:\n\tA.foo()\n',
+                 "scripts/b.gd": 'extends Node\nfunc f(n: Node) -> void:\n\tn.call("bar")\n',
+                 "scripts/d.gd": "extends Node\nfunc f() -> void:\n\tAa.qux()\n",
+                 "scenes/s.tscn": '[gd_scene format=3]\n[ext_resource type="Script" path="res://scripts/a.gd" id="1"]\n[node name="S" type="Node"]\nscript = ExtResource("1")\n[connection signal="ready" from="." to="." method="baz"]\n'}
+        for rel, body in files.items():
+            (t / rel).parent.mkdir(parents=True, exist_ok=True)
+            (t / rel).write_text(body, encoding="utf-8")
+        for args in (["init", "-q"], ["add", "-A"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "t"]):
+            subprocess.run(["git", "-C", td, *args], check=True, capture_output=True)
+        (t / "scripts/a.gd").write_text("extends Node\n", encoding="utf-8")
+        rows = bad_callers("extends Node\n", t / "scripts/a.gd", t)
+    for want in ("tools/data/c.gd", "scripts/d.gd", "scripts/b.gd", "scenes/s.tscn"):
+        if not any(want in r for r in rows):
+            bad.append(f"no BAD-CALLER row for {want}: got {rows}")
+    for b in bad:
+        print("FAIL " + b)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
 def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
     p.formatter_class = argparse.RawDescriptionHelpFormatter
-    p.add_argument("file", help="GDScript file to rewrite.")
+    p.add_argument("file", nargs="?", default="", help="GDScript file to rewrite.")
+    p.add_argument("--selftest", action="store_true", help="BAD-CALLER rows for preload, autoload, by-name and .tscn callers (throwaway repo)")
     p.add_argument("--sym", action="append", default=[], metavar="NAME=Mod", help="NAME=Module: qualify NAME as Module.NAME (repeatable).")
     p.add_argument("--check", action="store_true", help="Report unqualified moved names and exit 1 if any; edit nothing.")
     p.add_argument("--all", action="store_true", help="Also rewrite matches inside comments and strings.")
     ns = p.parse_args()
+    if ns.selftest:
+        return _selftest()
     path = Path(ns.file)
     text = path.read_bytes().decode("utf-8")
     root = agent_log.resolve_root(ns) if ns.root else project_root(path)
