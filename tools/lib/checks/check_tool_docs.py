@@ -5,12 +5,12 @@ Catalog rows name commands: one row per entry subcommand (`shots.py capture`), o
 no subcommands (`bot_status.py`). Every lib module (tools/lib/**/*.py that is not a subcommand, plus
 `lib/imglib/`) and every data file (tools/data/*, tools/*.txt) must be named in backticks in some tools*.md.
 
---stale-refs scans the docs (design/*.md without changelog/, root *.md, skills) for dead references:
+--stale-refs scans the docs (design/*.md without changelog/, root *.md, repo and box skills) for dead references:
 PATH (backticked path or file name that is not in the tree), IDENT (`Class.member` whose class_name
-script has no such member) and, with --narration, NARR lines (will be added, TODO, legacy, formerly,
+or one-target preload alias script has no such member, inherited ones counted) and, with --narration, NARR lines (will be added, TODO, legacy, formerly,
 previously, no longer, old flat paths). It also runs `stale_cmds` over tracked docs, code, data and CI for
 FLAG/SUB/TOOL (a tool command naming a flag or subcommand that tool lacks, or a dead tools/*.py path).
-PATH/IDENT/FLAG/SUB/TOOL fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan.
+PATH/IDENT/FLAG/SUB/TOOL fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan and the doc set.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
@@ -40,11 +41,32 @@ ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI
 MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
 
 def _doc_files(root: Path, tracked: set[str]) -> list[Path]:
-    out = [root / n for n in sorted(tracked) if n.endswith(".md") and (n.startswith("design/") or "/" not in n)
+    out = [root / n for n in sorted(tracked) if n.endswith(".md") and (n.startswith(("design/", ".grok/skills/")) or "/" not in n)
            and not n.startswith("design/changelog/")]
     if SKILL_DIR.is_dir():
         out += sorted(SKILL_DIR.glob("*/SKILL.md"))
     return out
+
+PRELOAD = re.compile(r'^const\s+([A-Z]\w*)\s*(?::\s*\w+)?\s*:?=\s*preload\("res://([^"]+\.gd)"\)', re.M)
+
+def gd_classes(root: Path, tracked: set[str]) -> dict[str, set[str]]:
+    """Name -> members (inherited via `extends "res://..."` too) for each class_name and each preload alias
+    (`const Stamp := preload("res://...gd")`) that names one script everywhere; a doc's `Stamp.SUB` is checked against it."""
+    src = {g: (root / g).read_text(encoding="utf-8-sig", errors="replace") for g in tracked if g.endswith(".gd")}
+    def members(g: str, seen: tuple = ()) -> set[str]:
+        out = set(MEMBER.findall(src.get(g, "")))
+        m = re.search(r'^extends\s+"res://([^"]+\.gd)"', src.get(g, ""), re.M)
+        return out | members(m.group(1), seen + (g,)) if m and m.group(1) not in seen else out
+    targets: dict[str, set[str]] = {}
+    for g, text in src.items():
+        for alias, path in PRELOAD.findall(text):
+            targets.setdefault(alias, set()).add(path)
+    classes = {a: members(next(iter(ps))) for a, ps in targets.items() if len(ps) == 1 and next(iter(ps)) in src}
+    for g, text in src.items():
+        m = re.search(r"^class_name\s+(\w+)", text, re.M)
+        if m:
+            classes[m.group(1)] = members(g)
+    return classes
 
 def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     git = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split("\n")
@@ -55,13 +77,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     def ignored(tok: str) -> bool:
         """Gitignored runtime paths (tools/anim_review/...) are not dead refs even when the dir is absent."""
         return subprocess.run(["git", "check-ignore", "-q", "--", tok], cwd=root, capture_output=True).returncode == 0
-    classes: dict[str, set[str]] = {}
-    for g in tracked:
-        if g.endswith(".gd"):
-            src = (root / g).read_text(encoding="utf-8-sig", errors="replace")
-            m = re.search(r"^class_name\s+(\w+)", src, re.M)
-            if m:
-                classes[m.group(1)] = set(MEMBER.findall(src))
+    classes = gd_classes(root, tracked)
     bad: list[str] = []
     narr: list[str] = []
     for f in _doc_files(root, tracked):
@@ -80,7 +96,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 if " " in tok or any(c in tok for c in "*<>{}$%|=()[]\\:,;~") or tok.startswith(("-", ".", "/")) or any(tok.startswith(s) for s in PATH_SKIP):
                     pass
                 elif tok.endswith(SUFFIX) and "." in tok.rsplit("/", 1)[-1]:
-                    if tok.endswith("_scratch.py") or ignored(tok) or (not f.is_relative_to(root) and (f.parent / tok).exists()):
+                    if tok.endswith("_scratch.py") or ignored(tok) or (f.parent / tok).exists():
                         continue
                     if tok.rstrip("/") not in tracked and not (root / tok).exists() and not any(g.endswith("/" + tok) for g in tracked) and (("/" in tok) or tok in gone_names):
                         bad.append(f"PATH    {name}:{no}: {tok}")
@@ -97,12 +113,23 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)
     ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers, and the repo for tool commands with unknown flags/subcommands, instead of checking the catalog.")
-    ap.add_argument("--selftest", action="store_true", help="Check the stale-refs command scan on fixed lines.")
+    ap.add_argument("--selftest", action="store_true", help="Check the stale-refs command scan on fixed lines and the scanned doc set.")
     ap.add_argument("--narration", action="store_true", help="With --stale-refs: also list will-be-added / legacy / formerly / no-longer lines (advisory).")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
     if args.selftest:
         bad = stale_cmds.selftest(root)
+        docs = {f.relative_to(root).as_posix() for f in _doc_files(root, {".grok/skills/z/SKILL.md", "design/a.md", "design/changelog/x.md", "README.md", "scripts/a.md"}) if f.is_relative_to(root)}
+        if docs != {".grok/skills/z/SKILL.md", "design/a.md", "README.md"}:
+            bad.append(f"stale-refs doc set {sorted(docs)}: want repo skills, design/ (no changelog) and root *.md")
+        with tempfile.TemporaryDirectory() as tmp:  # IDENT: preload aliases and inherited members
+            t = Path(tmp)
+            for rel, text in (("k.gd", "const SUB := 4\n"), ("s.gd", 'extends "res://k.gd"\nfunc bake():\n\tpass\n'),
+                              ("a.gd", 'const Stamp := preload("res://s.gd")\nconst Two := preload("res://k.gd")\n'), ("b.gd", 'const Two := preload("res://s.gd")\n')):
+                (t / rel).write_text(text, encoding="utf-8")
+            got = gd_classes(t, {"k.gd", "s.gd", "a.gd", "b.gd"})
+            if got.get("Stamp") != {"SUB", "bake"} or "Two" in got:
+                bad.append(f"stale-refs classes {got}: want Stamp = s.gd + inherited SUB, no two-target alias Two")
         return agent_log.finish("tool-docs-selftest", root, "\n".join(bad + [f"selftest: fail={len(bad)}"]), "FAIL" if bad else "PASS", args=args, legacy=False)
     if args.stale_refs:
         bad, narr = stale_refs(root, args.narration)
@@ -150,12 +177,13 @@ def main(argv: list[str] | None = None) -> int:
             bad.append(f"ALLOWED {n}: catalog A=Y but tools/{n} is not allowed by bot_allow.txt (add a line or mark A=N)")
         if a == "Y" and "B" not in surf and "D" not in surf:
             bad.append(f"SURF    {n}: allowlisted but no B/D surface")
-    head = f"tool-docs: commands={len(files)} rows={len(rows)} libs_data={len(named)} allowlisted={len(allow)} problems={len(bad)}"
+    n_bad = len(bad)
+    head = f"tool-docs: commands={len(files)} rows={len(rows)} libs_data={len(named)} allowlisted={len(allow)} problems={n_bad}"
     if bad:
         bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); UNNAMED = name the lib or data file in its area doc; ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
     echo = "\n".join(agent_log.fold(bad[:-1], args.verbose, keep=20, limit=28) + bad[-1:] + [head]) if bad else None
     return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args, echo=echo,
-                            legacy=False, commands=len(files), rows=len(rows), problems=len(bad))
+                            legacy=False, commands=len(files), rows=len(rows), problems=n_bad)  # not the next: hint
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

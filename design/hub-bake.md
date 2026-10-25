@@ -38,7 +38,7 @@ The hub light is baked only: the game never renders it. Offline bake quality is 
 - One EnvKit on Camp only. It must not second-light a lid.
 
 ## Do not
-- Do not change dungeon `Stamp.SUB`.
+- Do not change the dungeon `SUB` (`light_stamp/stamp_k.gd`).
 - Do not occupancy-march walls.
 - Do not add a second EnvKit.
 - Do not fake a shed in place of the gable.
