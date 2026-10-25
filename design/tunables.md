@@ -8,7 +8,7 @@ These are recommended starting points for the current live implementation.
 Every value **MUST** be exposed in the debug menu and treated as non-final.  
 Suggested starts are seeds only.
 Live defaults are what `balance.gd` (`balance/vars_*.gd`) / `tunables.gd` ship today.  
-If you change a live default, update this table in the same slice.
+Change a balance default with `python tools/docs.py tunable set KEY VALUE` (var + this Live cell; `--range` widens the slider, `--changelog "bullet"` adds the player line). Slider bounds: `tunable range KEY MIN MAX [STEP]` (`e_*_hp` = the stat row all enemies share). New key end to end: `tunable add KEY --default V --range MIN MAX STEP --after NEIGHBOR --note "..."` (var in the system file, slider row, doc row, menu category; `--system` when it cannot tell; fails with the size if a file would pass 10 KB). `tunable diff` (prove runs it) flags code/slider/doc drift.
 This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python tools/docs.py tunable add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `docs.py patch replace`); do not hunt for a row that does not exist.
 
 List one key with `python tools/docs.py tunable get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). Patch one Live cell with `python tools/docs.py tunable set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`). Do not open this whole file to change one number.
