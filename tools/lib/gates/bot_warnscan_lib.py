@@ -213,7 +213,7 @@ CHANGED_MAP = [
     ("scripts/dungeon/", ["p3", "p4", "map-f1", "dungeon-load-timing"]),
     ("scripts/world/", ["p3", "p5", "p9", "dungeon-load-timing"]),
     ("scripts/ui/", ["p6", "p7", "p8"]),
-    ("scripts/data/", ["p3", "p4", "p6"]),
+    ("scripts/data/", ["p1", "p3", "p4", "p6"]),  # p1: tunables_check (save_store, balance chain, override file)
     ("scripts/input/", ["p1", "p7"]),
     ("scripts/graphics/", ["p1", "p3", "p9"]),
     ("scripts/title", ["boot", "load-timing"]),
