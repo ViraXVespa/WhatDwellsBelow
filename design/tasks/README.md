@@ -29,6 +29,8 @@ ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 bug-report-relay | web | active | In-game bug reports via pause menu and a GitHub issue relay | -
 hub-guild-reception | web | open | Guild receptionist bust + welcome banner | -
+hub-bake-checks | bot | open | Hub light leak + dumpster shadow, bake/shadow checks with planted faults | -
+shot-catalog-gaps | bot | open | Bottie Boop shot-catalog gaps: views, set/name fixes, new movies | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
