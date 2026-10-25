@@ -22,6 +22,8 @@ static func p3(host: Node) -> void:
 	printerr("P3: enemies=" + str(_fac.tree(host).get_nodes_in_group("enemies").size()))
 	printerr("P3: bosses=" + str(_fac.tree(host).get_nodes_in_group("boss").size()))
 	_fac.p3_roles()
+	if not data.get("ok", false) or (data.get("rooms", []) as Array).is_empty() or stairs == null or not stairs.locked or door == null or door.open:
+		printerr("SMOKE FAIL: P3 floor %d: generation not ok, no rooms, or stairs/boss door open before the boss dies (early_p3.gd)" % App.floor_n)
 	if App.floor_n > 1:
 		printerr("P3: descended_ok floor=" + str(App.floor_n))
 		printerr("P3: process_frames=" + str(Engine.get_process_frames()))

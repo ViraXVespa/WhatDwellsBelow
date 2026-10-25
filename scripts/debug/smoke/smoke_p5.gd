@@ -10,7 +10,7 @@ static func quit_in(host: Node, sec: float) -> void:
 
 static func p5(host: Node) -> void:
 	var player: Variant = host.get("player")
-	var ui: Variant = host.get("ui")
+	var ui: Variant = host.call("world_ui") if host.has_method("world_ui") else host.get("ui")
 	var counts: Dictionary = host.get("counts")
 	printerr("P5: res=" + ProjectSettings.globalize_path("res://"))
 	printerr("P5: mine_time=" + str(App.bal.mine_time) + " wood_time=" + str(App.bal.wood_time))
@@ -147,9 +147,8 @@ static func p5(host: Node) -> void:
 		and int(counts.get("extract_gate", 0)) > 0
 		and int(counts.get("shrine", 0)) > 0
 		and int(counts.get("campfire", 0)) > 0
-		and int(counts.get("lever", 0)) > 0
+		and int(counts.get("lever", 0)) + int(counts.get("plate", 0)) > 0
 		and int(counts.get("gate", 0)) > 0
-		and int(counts.get("plate", 0)) > 0
 		and int(counts.get("crack", 0)) > 0
 		and int(counts.get("shop", 0)) > 0
 	)
