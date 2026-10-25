@@ -168,10 +168,11 @@ def _frame(src: Path, t: float, dst: Path):
     ce._run(["-ss", "%.3f" % t, "-i", str(src), "-frames:v", "1", str(dst)])
     return Image.open(dst).convert("L")
 
-def change_box(before: Path, after: Path, samples: int = 6, tol: int = 24) -> tuple[tuple[float, float, float, float] | None, float]:
-    """Where after differs from before: union of the 32x18 grid cells that changed in at least half the sampled frames.
-    Returns (box in before-clip pixels or None, share of the frame changed)."""
-    from PIL import ImageChops
+def change_box(before: Path, after: Path, samples: int = 6, floor: float = 3.0) -> tuple[tuple[float, float, float, float] | None, float]:
+    """Where after differs from before: the 32x18 grid cells whose mean difference beats the noise (3x the median
+    cell, between `floor` and 2.5x that) in at least half the sampled frames, so a subtle shade change counts; the box
+    spans the biggest connected patch and any patch at least a quarter its size (stray noise cells drop out). Returns (box in before-clip pixels or None, share of the frame changed)."""
+    from PIL import Image, ImageChops
     a, b = ce.info(before), ce.info(after)
     dur = min(a["sec"], b["sec"])
     gw, gh = 32, 18
@@ -181,16 +182,32 @@ def change_box(before: Path, after: Path, samples: int = 6, tol: int = 24) -> tu
             t = dur * (k + 0.5) / samples
             x = _frame(before, t, Path(td) / ("a%d.png" % k))
             y = _frame(after, t, Path(td) / ("b%d.png" % k)).resize(x.size)
-            g = ImageChops.difference(x, y).point(lambda v: 255 if v > tol else 0).resize((gw, gh))
-            for n, v in enumerate(g.getdata()):
-                hits[n] += 1 if v > 24 else 0
-    cells = [(n % gw, n // gw) for n, c in enumerate(hits) if c * 2 >= samples]
-    if not cells:
+            g = list(ImageChops.difference(x, y).convert("L").resize((gw, gh), Image.BOX).getdata())
+            cut = max(floor, 3.0 * min(sorted(g)[len(g) // 2], 2.5 * floor / 3.0))
+            for n, v in enumerate(g):
+                hits[n] += 1 if v > cut else 0
+    on = {(n % gw, n // gw) for n, c in enumerate(hits) if c * 2 >= samples}
+    if not on:
         return None, 0.0
+    share = len(on) / float(gw * gh)
+    patches: list[list] = []
+    while on:
+        todo, patch = [on.pop()], []
+        while todo:
+            c = todo.pop()
+            patch.append(c)
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+                q = (c[0] + d[0], c[1] + d[1])
+                if q in on:
+                    on.discard(q)
+                    todo.append(q)
+        patches.append(patch)
+    big = max(len(p) for p in patches)
+    cells = [c for p in patches if len(p) * 4 >= big for c in p]
     cw, ch = a["w"] / gw, a["h"] / gh
     x0, y0 = min(c[0] for c in cells), min(c[1] for c in cells)
     x1, y1 = max(c[0] for c in cells) + 1, max(c[1] for c in cells) + 1
-    return (x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch), len(cells) / float(gw * gh)
+    return (x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch), share
 
 def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", labels=("Before", "After"), zoom_in: float = 0.8,
        max_zoom: float = 2.5, font: str = "") -> dict:

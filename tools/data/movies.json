@@ -16,7 +16,7 @@
     {"op": "walk_to", "x": 9.0, "z": 9.4, "must": false},
     {"op": "wait", "ms": 300}]},
   "guild-roof": {"about": "camera on the guild front at 2.4x; the player walks through the roof shadow while the camera eases west and closer, then hands back", "scenario": "camp-spawn", "fps": 30,
-   "regions": {"roof-shadow": [0.12, 0.3, 0.76, 0.6]},
+   "regions": {"roof-shadow": [0.3, 0.0, 0.7, 0.5]},
    "timeline": [
     {"op": "camera", "at": [8.2, 7.4], "zoom": 2.4},
     {"op": "wait", "ms": 400},
