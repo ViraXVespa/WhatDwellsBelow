@@ -30,7 +30,7 @@ def select(root: Path, paths: list[Path] | None) -> list[Path]:
             if p.is_file() and p.suffix == ".gd":
                 out.append(p)
         return sorted(out)
-    return gd_lib.iter_gd(root)
+    return gd_lib.live_gd(root)
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Func-level script inventory for live .gd files.", json_out=True)

@@ -32,13 +32,13 @@ def cmd_check(root: Path, args) -> int:
     if not path.is_file():
         return agent_log.finish("code-map-check", root, "\n".join(lines), "FAIL", args=args, error="missing-code-map")
     rows = cm.parse_rows(md.read_text(path))
-    scripts = [cm.posix(p.relative_to(root).as_posix()) for p in gd_lib.iter_gd(root)]
+    scripts = [cm.posix(p.relative_to(root).as_posix()) for p in gd_lib.live_gd(root)]
     unmapped = [r for r in scripts if not cm.file_is_mapped(r, rows)]
     missing = [r for r in cm.listed_file_paths(rows) if not (root / r).is_file()]
     mapped = len(scripts) - len(unmapped)
     lines += [
         f"rows_scanned={len(rows)} scripts={len(scripts)} mapped={mapped}",
-        "measure=scripts/**/*.gd vs code-map ticks; directory ticks cover children; do not read the map",
+        "measure=live .gd (gd_lib.live_gd: scripts/, tools/data/) vs code-map ticks; directory ticks cover children; do not read the map",
         "",
     ]
     lines += [f"UNMAPPED {r}" for r in unmapped] + [f"MISSING {r}" for r in missing]

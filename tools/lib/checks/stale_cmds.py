@@ -13,7 +13,8 @@ tools/retired or prove_rules.json, not selftest functions or *selftest*.py fixtu
 - BRANCH (branch_scan): a hand-rolled branch test (`startswith("bot/")`, `startswith("grok-build-w")`, `github.head_ref, 'bot/'`)
   outside repo_lib.branch_kind; or Build-only retry text (`grok -r ID --fork-session`, `git diff grok-build`...) in a module a shared,
   any-branch tool can reach (outside tools/lib/slice|release, or imported from outside them) with no repo_lib.head_kind gate.
-- SCOPE (branch_scan): a tools .py walking only scripts/ for .gd (`(root / "scripts").rglob("*.gd")`, `sub="scripts"`):
+- SCOPE (branch_scan): a tools .py walking only scripts/ for .gd (`(root / "scripts").rglob("*.gd")`, `sub="scripts"`, or
+  `iter_gd(root)` with its scripts/ default):
   live .gd is gd_lib.live_gd / LIVE_GD_DIRS (scripts/ and tools/data/), no folder exempt.
 Flags are read from add_argument calls (arg_flags), so argparse.SUPPRESS flags (`--bot`) count; a parser built in a loop or
 from non-literal flags falls back to every "--x" literal in that module.
@@ -189,7 +190,7 @@ def scan(root: Path, tracked: set[str]) -> list[str]:
     return bad
 
 BUILD_DIRS = ("tools/lib/slice/", "tools/lib/release/")  # Build/week flow modules: their text may assume a Build branch
-SCOPE = re.compile(r"""\(\s*root\s*/\s*["']scripts["']\s*\)\.rglob\(\s*["']\*\.gd["']|iter_gd\([^)]*sub=["']scripts["']""")
+SCOPE = re.compile(r"""\(\s*root\s*/\s*["']scripts["']\s*\)\.rglob\(\s*["']\*\.gd["']|iter_gd\([^)]*sub=["']scripts["']|iter_gd\(\s*\w+\s*\)""")
 BUILD_TEXT = re.compile(r"grok -r \S+ --fork-session|`/fork`|git diff grok-build|RETRY: red prove")
 ADHOC = re.compile(r"""startswith\(\s*["'](?:bot/|grok-build|grok-web)|head_ref,\s*'(?:bot/|grok-)""")
 GATE = re.compile(r"\b(?:head_kind|branch_kind)\(")
@@ -244,6 +245,8 @@ def selftest(root: Path) -> list[str]:
              ({"tools/lib/bot_gate_lib.py": 'ok = ref.startswith("bot/")\n'}, 1),
              ({".github/workflows/g.yml": "if: startsWith(github.head_ref, 'bot/')\n"}, 1),
              ({"tools/lib/lint/u.py": 'found = sorted((root / "scripts").rglob("*.gd"))\n'}, 1),
+             ({"tools/lib/lint/u.py": "found = gd_lib.iter_gd(root)\n"}, 1),
+             ({"tools/lib/lint/u.py": 'found = gd_lib.iter_gd(root, sub="tests")\n'}, 0),
              ({"tools/lib/lint/u.py": "found = gd_lib.live_gd(root)\n"}, 0))
     for texts, want in cases:
         got = branch_scan(root, set(), texts)
