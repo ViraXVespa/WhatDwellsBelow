@@ -17,7 +17,7 @@ Cached worktree + existing import: short “Opening snapshot…” beat, no re-i
 
 Live site root is the current HEAD export. Each archive is `https://viraxvespa.github.io/WhatDwellsBelow/<pages_slug>/`.
 
-Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built in CI from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Never commit web exports.
+Player-facing changelogs for the current series live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built in CI from flat `design/changelog/*.md`. Older notes stay in git history. Never commit web exports.
 
 GitHub Actions (`.github/workflows/pages.yml`) always exports HEAD. That live export is fatal: if it fails, Pages does not deploy.
 

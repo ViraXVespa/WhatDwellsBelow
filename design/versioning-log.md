@@ -10,12 +10,9 @@ Week pins and archive catalog ids stay on `design/versioning.md`. Open that file
 Authoring unit is **one markdown file per build** for the **current series only**, flat under:
 
 `design/changelog/{label}.md`  
-Example: `design/changelog/0.3.10.md`
+Example: `design/changelog/0.9.1.md`
 
-Prior series are parked under:
-
-`design/changelog/archive/{epoch}.{series}/{label}.md`  
-Example: `design/changelog/archive/0.2/0.2.53.md`
+A finished file stays at that path. Nothing moves older series into another folder. A note that is no longer in the tree is read from git history.
 
 Plain text, no code fence when emitted. Body shape:
 
@@ -28,7 +25,7 @@ Plain text, no code fence when emitted. Body shape:
 | Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Git + User-named work. |
 | Grok Build named pin / revert, or User asks what shipped | This file’s body shape. Name next work only if the User asked. Still not every `0.N.*` file. |
 | Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` for every PR (rule below). First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
-| Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
+| Named revert / what was 0.1.4? | Git history of `design/changelog/0.1.4.md`. |
 | Game | `version.json` + `changelog.json`. |
 
 **Week close.** One extra file per week, `design/changelog/0.N.0.md` (patch 0 of the closing series; a whole-week summary in the same body shape), written by a web session the User runs (never Build or the Bot: `versioning.md`). Name it explicitly (it is not patch + 1) and commit it on `grok-build-wN`; its arrival on `main` creates the week's archives (`versioning.md`).

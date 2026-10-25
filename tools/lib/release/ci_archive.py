@@ -7,7 +7,7 @@
     python tools/release.py ci-archive --selftest                                                # throwaway origin + clones, no GitHub
 
 Trigger: a file `design/changelog/{epoch}.{N}.0.md` ADDED between --before and --commit (default HEAD^ .. HEAD), the
-squash-merge of grok-build-wN. Files moved into design/changelog/archive/ and [skip ci] stamp commits never match.
+squash-merge of grok-build-wN. A [skip ci] stamp commit never matches.
 For the week-close merge of grok-build-wN: pin grok_build_wN at the merge and grok_web_w{N-1} at its parent
 (release.py week-pin). Add the catalog row when absent, create the local tag when absent, and do not copy changelog
 notes into archives/docs. Idempotent per row and per tag: a rerun does nothing.

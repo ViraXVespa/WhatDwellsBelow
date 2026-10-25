@@ -7,7 +7,6 @@
 !archives/*
 !docs/*
 !notes/*
-!design/changelog/archive/*
 !scenes/*
 !site/*
 !.grok/skills/imagine-isolated/*

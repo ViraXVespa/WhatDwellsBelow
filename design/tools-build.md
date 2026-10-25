@@ -24,11 +24,10 @@ Entries here: `slice.py`, `session.py`, `release.py`; their code: `tools/lib/rel
 | `session.py py` | Run a one-off script from `_logs/agent-py/` (`--script PATH [args]`) and delete it after (`--keep-script` keeps it). Prefer a real tool. Summary: `agent-py`. | D | `--help` | N |
 | `session.py clean` | Delete raw logs under `_logs/` (`--max-age-hours`, `--keep-raw`); `--new-week` also every stamped summary and index. Summary: `clean`. | D | `--help` | N |
 | `release.py export-web` | Export the GitHub Pages build (Godot Web, no threads; runs `release.py mips` before `--import`). `--archives` adds the `_pages/` site; `--out DIR` exports to a scratch dir; `--debug --out DIR` uses preset `Web Debug` (keeps `scripts/debug/`; release `Web` excludes it). | D | `--help` | N |
-| `release.py week-start` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs; pins a missing closing-week row. Build only, at a new week (`build-week-start.md`). | D | `--help` | N |
+| `release.py week-start` | Week start from main: seed `epoch.N.0`, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs; pins a missing closing-week row. Build only, at a new week (`build-week-start.md`). | D | `--help` | N |
 | `release.py week-pin` | Catalog row, notes, local tag: `--web N`, `--build N`, `--id`. Idempotent. | D | `--help` | N |
 | `release.py ci-archive` | CI: a merge adding `design/changelog/0.N.0.md` pins web + build week N (tags, rows, docs) and pushes. `--dry-run`, `--selftest`. | D | `--help` | N |
-| `release.py park-changelogs` | Move non-current-series changelogs into `archive/`. Human week ritual. | D | `--help` | N |
-| `release.py changelog` | Rewrite `scripts/data/changelog.json` from `design/changelog/*.md`. The Bot writes entries with `doc_patch`, not this. | BD | `--help` | Y |
+| `release.py changelog` | Rewrite `scripts/data/changelog.json` from the current series' flat `design/changelog/*.md`. The Bot writes entries with `doc_patch`, not this. | BD | `--help` | Y |
 | `release.py mips` | Turn on mipmaps for 3D world PNGs (`--dry-run`). | D | `--help` | N |
 | `release.py archives` | Export pinned catalog archives into a Pages site directory | D | `--help` | N |
 | `release.py pages-hash` | Hash game-affecting paths so Pages can skip a full Godot export | D | `--help` | N |

@@ -88,7 +88,6 @@ jobs:
           ver_path.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
           print("workspace stamp", payload["label"])
           PY
-          python3 tools/release.py park-changelogs
           python3 tools/release.py changelog
 
       - name: Game export hash
@@ -194,15 +193,14 @@ jobs:
       - name: Publish changelog pages
         run: |
           python3 - <<'PY'
-          import html, pathlib
+          import html, pathlib, re
           root = pathlib.Path(".")
           src = root / "design" / "changelog"
           dest = root / "site" / "changelog"
           dest.mkdir(parents=True, exist_ok=True)
           files = []
           if src.is_dir():
-              files.extend(src.glob("*.md"))
-              files.extend(src.glob("archive/*/*.md"))
+              files.extend(p for p in src.glob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+\.md", p.name))
           files = sorted(files, key=lambda p: p.stem, reverse=True)
           blocks = []
           for path in files:

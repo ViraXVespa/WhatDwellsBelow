@@ -7,7 +7,7 @@ This folder is the documentation database for humans and agents.
 It is not one design monolith. It is not a boot file.
 Never open `notes/` from an agent path.
 
-Pages is built in CI (`.github/workflows/pages.yml`); local exports go to untracked `_out/web/`. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/release.py park-changelogs`.
+Pages is built in CI (`.github/workflows/pages.yml`); local exports go to untracked `_out/web/`. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md`. Older notes stay in git history.
 
 `_logs/` holds local agent tool summaries (and optional Bot sweep notes). It is gitignored. Do not store design there and do not commit it. Tools: `design/tools.md` (which tool for which job; per-area siblings `design/tools-*.md`; Build runner habits: `design/pc-offload.md`).
 
@@ -60,7 +60,7 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Sprite / paper-doll door | `art-pipeline.md` |
 | Pinned archive commits (door) | `archives.md` |
 | Suggested starts + live defaults | `tunables.md` |
-Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
+Per-build player notes are flat `design/changelog/{label}.md`. They are not topic files. A note that is no longer in the tree is in git history (`versioning-log.md`).
 
 ## House rules for editing these files
 
