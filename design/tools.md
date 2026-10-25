@@ -13,7 +13,7 @@ Commands: `python tools/E.py SUB ...` (the Bot's box: `python3`). `python tools/
 
 | Job | Start with | Sibling |
 |---|---|---|
-| Prove a change, commit a Build slice | `gate.py gd-load`, then `gate.py build --batch [--visual door.job]`, then `slice.py commit`; Bot: BOT.md Prove list | `tools-gates.md` |
+| Prove a change, commit a Build slice | `gate.py gd-load`, then `gate.py build --batch [--visual door.job]`, then `slice.py commit`; Bot: `check.py prove` | `tools-gates.md` |
 | Compile errors, import, warnings | `gate.py gd-load`; `gate.py import`; `gate.py warnscan --save-baseline B` then `--non-leak-diff B` | `tools-gates.md` |
 | Smokes | `gate.py smokes --door D` (PC); `gate.py bot-smokes --phases 1,2,6` or `--for FILE` (Bot) | `tools-gates.md` |
 | Screenshots, before/after, image facts | `shots.py flow --job door.job`; `shots.py diff A B --out OUT`; `shots.py inspect diff A B`; `shots.py crop SHOT --box X,Y,W,H` | `tools-shots.md` |

@@ -10,7 +10,7 @@ Entries here: `gate.py`, `slice.py`, `bot_status.py`, `check.py`, `docs.py`, `ba
 ## Jobs
 
 - **Build slice prove (User PC):** `python tools/gate.py gd-load` (read every error) -> `python tools/gate.py build --batch` (`--visual door.job` for a visual change) -> `python tools/slice.py commit`. Red: one corrective edit, one re-run (`tools.md` rule 10).
-- **Bot prove:** the BOT.md Prove list (`bot_status.py --bot --prove`, `check.py script-cap --bot --git-changed`, `check.py load-graph --bot`, `docs.py code-map check`, ...).
+- **Bot prove:** `check.py prove` (BOT.md Prove).
 - **Docs or routing changed:** `check.py load-graph`. Tool rows or doc paths: `check.py tool-docs`, then `check.py tool-docs --stale-refs`.
 - **A tool changed:** `check.py tool-cli --only STEM --smoke-run` (default: every uncommitted or unpushed tool).
 - **Smokes:** PC `gate.py smokes --door D` (or `--job door.job`, `--phases 1 2`). Bot box `gate.py bot-smokes --phases 1,2,6` (or `--door D`); `gate.py bot-smokes --for FILE` names the covering phases without running.
@@ -37,6 +37,7 @@ Entries here: `gate.py`, `slice.py`, `bot_status.py`, `check.py`, `docs.py`, `ba
 | `docs.py code-map` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing), `row --path P` (the one row for a file), `patch --system S --add P [--remove P] [--rename OLD=NEW]`, `sweep [--system NAME]` (coverage checklist). Summaries: `code-map-check` / `-row` / `-patch`. | BD | `--help` | Y |
 | `check.py tool-cli` | CLI contract check over `tools/` (Contract in `tools.md`): help text, `--out` names, RESULT last, line budget. Default: tools with uncommitted or unpushed changes; `--only STEM`, `--full`; `--smoke-run` runs the SMOKE cases in a throwaway copy (`--full --smoke-run` about a minute). | BWD | `--help` | Y |
 | `check.py tool-docs` | Tool catalog gate: every `tools/` file has exactly one row in `design/tools-*.md` that matches `bot_allow.txt`; `--stale-refs` lists dead doc paths and members (`--narration` adds stale wording). Summary: `tool-docs` / `stale-refs`. | BD | `--help` | Y |
+| `check.py prove` | Exploratory prove: diff vs merge-base(origin/main) plus uncommitted, the files that name each changed file, the checks those paths need (`data/prove_rules.json`; selftests and smoke phases built in), each printed with why; FAILs on DRIFT (removed path, subcommand, flag, function, node or data key still named). `--plan`, `--all`, `--base`/`--head` replay. Summary: `prove`. | B | `--help` | Y |
 | `bake.py check` | Committed `hub_light.png` pixel hash vs `HUB_BAKE_STAMP` in `hub_bake.gd` (the game crashes on a mismatch), and `ground_wear.png` vs `GROUND_WEAR_STAMP`. Run by `gate.py build --batch`. Summary: `hub-bake`. | BWD | `--help` | Y |
 | `check.py load-audit` | Audit of one Grok Build session's reads before its first ask (`--session DIR` / `--file chat_history.jsonl`, `--selftest`). Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
 | `docs.py task` | Task files in `design/tasks/` for Web, Build and Bot: `list`, `show`, `new` (`opt-next` for a Bot opt item), `update`, `done`, `index`, `check`. Summary: `task`. | BWD | `--help` | Y |
@@ -47,5 +48,6 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 
 | File (under `tools/`) | Owns |
 |---|---|
+| `lib/checks/prove_graph.py`, `lib/checks/prove_selftest.py` | `check.py prove` change set, reference graph, drift; its selftest repo |
 | `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. |
 | `data/release_smoke/` | `release_drive.gd`: the autoload `gate.py release` adds to its scratch project copy (never in the game) |

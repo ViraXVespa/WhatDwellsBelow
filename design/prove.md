@@ -20,7 +20,7 @@ All sheets for that ask must already be written before the open. Do not open the
 
 | Surface | Runs the proof | Rules |
 |---|---|---|
-| Bot | its Prove gate, `gate.py bot-smokes`, `gate.py warnscan`, shots | `BOT.md` Prove and Smokes |
+| Bot | its Prove gate (`check.py prove`; a check it should pick but does not: add a rule to `tools/data/prove_rules.json`), `gate.py bot-smokes`, `gate.py warnscan`, shots | `BOT.md` Prove and Smokes |
 | Build | gather, change, prove: `gate.py gd-load` every pass; a visual change adds its `shot_flows` (one `shots.py show` folder, first sheet opened) and its UI load check; the flow is created at the START (step 0), and a missing or stale frame fails the prove at the END; `gate.py build --batch` once at the end. A red prove prints its RETRY prompt | `build-job-cycle.md` |
 | Web / chat | The User runs `python tools/_scratch.py`. The scratch may call any `tools/` script, including those that launch Godot (`bake.py camp`, `shots.py capture --mode web`, `gate.py import`, `gate.py build`, smokes, map, timing, etc.). It bases the printed `RESULT` solely on the runner’s exit code. The User pastes that RESULT (plus any clipboard shot or new bake stamp). Full hub bake + stamp and non-tiled asset processing are in scope for web. A Build brief is only for work that truly cannot be expressed as a scratch (complex animation packing, isolated Imagine tiled world assets, etc.). | `web-session.md`, `web-emit.md`, `web-test.md` |
 

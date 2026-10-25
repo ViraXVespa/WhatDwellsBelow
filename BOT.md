@@ -34,11 +34,7 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 
 ## Prove
 
-- python tools/check.py script-cap --bot --git-changed
-- python tools/check.py load-graph --bot (routes.yaml coverage; also run by `bot_status --prove`)
-- python tools/bot_status.py --bot --prove (+ dupes gate: NEW rows get a helper/data loop or a why in `tools/data/dupes_allow.json`)
-- python tools/docs.py code-map check (no new UNMAPPED for files you touched; older ones are expected)
-- python tools/check.py tool-docs (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
+- python tools/check.py prove: from the diff vs merge-base(origin/main) plus uncommitted, it prints the checks it runs and why (`tools/data/prove_rules.json`: `bot_status --prove` with the dupes gate, script-cap, load-graph, code-map, tool-docs, selftests, textsize, smokes, build gate) and FAILs on DRIFT. Dupes: NEW rows get a helper/data loop or a why in `tools/data/dupes_allow.json`. Code map: no new UNMAPPED for files you touched.
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 Proof rules: the agents file. Say plainly when a message or handoff to a worker did not arrive.

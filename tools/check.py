@@ -15,6 +15,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("load-graph",  "checks/check_load_graph",       "Doc routing vs design/routes.yaml"),
     ("tool-cli",    "checks/check_tool_cli",         "Tool CLI contract (help, --out names, RESULT last, line budget; --smoke-run)"),
     ("tool-docs",   "checks/check_tool_docs",        "Tool catalog vs the entry tools; --stale-refs for dead doc references"),
+    ("prove",       "checks/check_prove",            "Exploratory prove: changed set, dependents, the checks they need, drift"),
     ("load-audit",  "checks/bot_load_audit",         "Audit one Grok Build session's reads before its first ask"),
     ("docs-size",   "checks/list_oversize_docs",     "Bot-only doc size sweep (--boot, --dupes)"),
 ]
