@@ -18,11 +18,11 @@ On-screen prompts follow **last used** input. One scheme at a time: pad glyphs a
 
 This is a no-threads Web export so it runs on GitHub Pages without special COOP/COEP headers. Rebuild live locally with:
 
-python tools/export_web.py
+python tools/release.py export-web
 
 That writes into `_out/web/` (untracked; the live site is built by `.github/workflows/pages.yml`). Combined live + archived builds (preview):
 
-python tools/export_web.py --archives
+python tools/release.py export-web --archives
 
 That writes into `_pages/` (gitignored). GitHub Actions exports HEAD plus each pin in `scripts/data/archive_catalog.json` and deploys Pages. Pages **Source** is **GitHub Actions** (Settings → Pages). Archived builds are those commits, served at `/archives/<id>/`. Title Play always launches live.
 
@@ -42,7 +42,7 @@ Keyboard: WASD, mouse aim, LMB hold-attack, RMB special, Space dash, E interact,
 
 Chunky pixel glyphs live under `assets/ui/prompts/` (`kb/`, `pad/`, `mouse/`). Regenerate with:
 
-python tools/gen_prompt_glyphs.py
+python tools/media.py glyphs
 
 Code map:
 

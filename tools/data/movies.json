@@ -1,0 +1,429 @@
+{
+ "_about": "shots.py movie: named scenarios (shot-flow header keys + setup steps, or {flow, state} = that flow cut at its state shot) and movies (scenario + input timeline, recorded between the start/end marks). Timeline op camera frames a point or node (zoom, glide); a movie's regions name frame boxes [x,y,w,h] in fractions for media.py clip crop --box NAME --movie NAME. design/tools-media.md. views: stills (scenario + steps, {flow, state}, or kind full-map with overlays) for shots.py movie --refs; sets: named scenario groups to compare. Views and helpers normal play cannot show live in scripts/debug/shot_views.gd (script:debug/shot_views).",
+ "scenarios": {
+  "camp-spawn": {
+   "about": "Placeholdia, player at the floor crystal spawn, HUD off, close camera",
+   "scene": "camp",
+   "hud": 0,
+   "zoom": 1.6,
+   "settle_ms": 800,
+   "steps": []
+  },
+  "f1-slime-pack": {
+   "about": "floor 1 seed 42 beside the slime+goblin pack, enemies live",
+   "flow": "dungeon-f1-spawns",
+   "state": "slime-goblin-pack",
+   "steps": [
+    {
+     "op": "freeze",
+     "group": "enemies",
+     "on": false
+    }
+   ]
+  },
+  "f1-boss": {
+   "about": "floor 1 seed 42 at the Floor Guardian room, boss bar on",
+   "flow": "dungeon-f1-boss",
+   "state": "boss-bar"
+  },
+  "hub-overhead": {
+   "about": "Placeholdia from high above: the whole yard in frame (camp warm-up framing x0.85, pitch -75), HUD off",
+   "scene": "camp",
+   "hud": 0,
+   "settle_ms": 800,
+   "steps": [
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "hub_overhead",
+     "args": [
+      0.85,
+      -75.0
+     ]
+    },
+    {
+     "op": "wait",
+     "ms": 600
+    }
+   ]
+  },
+  "f1-overhead-flight": {
+   "about": "floor 1 seed 42, every chunk built, pitch -75, HUD off, enemies frozen (camera fly-throughs)",
+   "scene": "dungeon",
+   "seed": 42,
+   "floor": 1,
+   "hud": 0,
+   "settle_ms": 800,
+   "steps": [
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "stream_all"
+    },
+    {
+     "op": "freeze",
+     "group": "enemies",
+     "on": true
+    },
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "pitch",
+     "args": [
+      -75.0
+     ]
+    },
+    {
+     "op": "wait",
+     "ms": 600
+    }
+   ]
+  },
+  "f1-drop-roll": {
+   "about": "floor 1 seed 42 arrival: 24 normal kills rolled with RNG seed 7, each kill's drops laid out as one column of pickups (gear rolls counted in the log)",
+   "scene": "dungeon",
+   "seed": 42,
+   "floor": 1,
+   "hud": 0,
+   "zoom": 1.2,
+   "settle_ms": 800,
+   "steps": [
+    {
+     "op": "freeze",
+     "group": "enemies",
+     "on": true
+    },
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "drop_grid",
+     "args": [
+      7,
+      24
+     ]
+    },
+    {
+     "op": "wait",
+     "ms": 600
+    }
+   ]
+  },
+  "f1-overdraw": {
+   "about": "floor 1 seed 42 arrival, viewport overdraw debug draw (layer cost heat), HUD off",
+   "scene": "dungeon",
+   "seed": 42,
+   "floor": 1,
+   "hud": 0,
+   "settle_ms": 800,
+   "steps": [
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "debug_draw",
+     "args": [
+      "overdraw"
+     ]
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    }
+   ]
+  },
+  "f1-lighting": {
+   "about": "floor 1 seed 42 arrival, viewport lighting-only debug draw, HUD off",
+   "scene": "dungeon",
+   "seed": 42,
+   "floor": 1,
+   "hud": 0,
+   "settle_ms": 800,
+   "steps": [
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "debug_draw",
+     "args": [
+      "lighting"
+     ]
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    }
+   ]
+  }
+ },
+ "movies": {
+  "hub-walk": {
+   "about": "walk west along the guild front through its roof shadow, turn, swing, walk back",
+   "scenario": "camp-spawn",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "wait",
+     "ms": 300
+    },
+    {
+     "op": "walk_to",
+     "x": 12.0,
+     "z": 9.4,
+     "must": false
+    },
+    {
+     "op": "walk_to",
+     "x": 4.0,
+     "z": 9.4,
+     "must": false
+    },
+    {
+     "op": "drive",
+     "aim": [
+      0,
+      1
+     ],
+     "attack": true,
+     "ms": 600
+    },
+    {
+     "op": "walk_to",
+     "x": 9.0,
+     "z": 9.4,
+     "must": false
+    },
+    {
+     "op": "wait",
+     "ms": 300
+    }
+   ]
+  },
+  "guild-roof": {
+   "about": "camera on the guild front at 2.4x; the player walks through the roof shadow while the camera eases west and closer, then hands back",
+   "scenario": "camp-spawn",
+   "fps": 30,
+   "regions": {
+    "roof-shadow": [
+     0.3,
+     0.0,
+     0.7,
+     0.5
+    ]
+   },
+   "timeline": [
+    {
+     "op": "camera",
+     "at": [
+      8.2,
+      7.4
+     ],
+     "zoom": 2.4
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "camera",
+     "at": [
+      7.0,
+      7.6
+     ],
+     "zoom": 2.8,
+     "ms": 4000
+    },
+    {
+     "op": "walk_to",
+     "x": 12.0,
+     "z": 9.4,
+     "must": false
+    },
+    {
+     "op": "walk_to",
+     "x": 4.5,
+     "z": 9.4,
+     "must": false
+    },
+    {
+     "op": "drive",
+     "aim": [
+      0,
+      1
+     ],
+     "attack": true,
+     "ms": 600
+    },
+    {
+     "op": "camera",
+     "follow": true,
+     "ms": 1200,
+     "wait": true
+    },
+    {
+     "op": "wait",
+     "ms": 300
+    }
+   ]
+  },
+  "f1-fight": {
+   "about": "step into the slime+goblin pack and swing for three seconds",
+   "scenario": "f1-slime-pack",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "drive",
+     "move": [
+      -1,
+      0
+     ],
+     "ms": 700
+    },
+    {
+     "op": "drive",
+     "attack": true,
+     "aim": [
+      -1,
+      0
+     ],
+     "ms": 3000
+    },
+    {
+     "op": "wait",
+     "ms": 500
+    }
+   ]
+  },
+  "hub-overhead": {
+   "about": "hold the whole hub yard from above for 3 s (compares hub layout, lamps, buildings)",
+   "scenario": "hub-overhead",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "wait",
+     "ms": 3000
+    }
+   ]
+  },
+  "f1-flythrough": {
+   "about": "camera flies from the arrival through the 10 nearest rooms of floor 1 seed 42 (0.8 s per hop)",
+   "scenario": "f1-overhead-flight",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "call",
+     "target": "script:debug/shot_views",
+     "method": "fly_rooms",
+     "args": [
+      800,
+      0.0,
+      10
+     ]
+    },
+    {
+     "op": "wait",
+     "ms": 8400
+    }
+   ]
+  }
+ },
+ "views": {
+  "hub-overhead": {
+   "about": "still of the whole hub yard from above",
+   "scenario": "hub-overhead"
+  },
+  "hud-default": {
+   "about": "dungeon HUD at the floor 1 entrance (dungeon-hud-states@hud-default)",
+   "flow": "dungeon-hud-states",
+   "state": "hud-default"
+  },
+  "hud-low-hp": {
+   "about": "HUD with buffs and low HP (dungeon-hud-states@hud-buffs-low-hp)",
+   "flow": "dungeon-hud-states",
+   "state": "hud-buffs-low-hp"
+  },
+  "vendor-panel": {
+   "about": "vendor panel open in Placeholdia",
+   "flow": "camp-npc-panels",
+   "state": "vendor"
+  },
+  "quest-board": {
+   "about": "quest board open in Placeholdia",
+   "flow": "camp-npc-panels",
+   "state": "quest-board"
+  },
+  "pause-inventory": {
+   "about": "pause menu Inventory tab",
+   "flow": "camp-pause-pages",
+   "state": "pause-inventory"
+  },
+  "receptionist-menu": {
+   "about": "receptionist Talk / Ask? menu",
+   "flow": "camp-receptionist-menu",
+   "state": "menu-open"
+  },
+  "f1-drop-roll": {
+   "about": "fixed-seed kill-drop roll laid out as pickups",
+   "scenario": "f1-drop-roll"
+  },
+  "f1-overhead": {
+   "about": "whole floor 1 (seed 42) orthographic, stitched, with rooms, spawns, torches and loot",
+   "kind": "full-map",
+   "seed": 42,
+   "floor": 1,
+   "max_px": 4096,
+   "overlays": [
+    "lift",
+    "rooms",
+    "spawns",
+    "torches",
+    "loot",
+    "legend"
+   ]
+  },
+  "f2-overhead": {
+   "about": "whole floor 2 (seed 42) with overlays",
+   "kind": "full-map",
+   "seed": 42,
+   "floor": 2,
+   "max_px": 4096,
+   "overlays": [
+    "lift",
+    "rooms",
+    "spawns",
+    "torches",
+    "loot",
+    "legend"
+   ]
+  },
+  "f1-overdraw": {
+   "about": "floor 1 arrival in overdraw debug draw",
+   "scenario": "f1-overdraw"
+  },
+  "f1-lighting": {
+   "about": "floor 1 arrival, lighting only",
+   "scenario": "f1-lighting"
+  }
+ },
+ "sets": {
+  "hub-ui": [
+   "hub-walk",
+   "guild-roof",
+   "hub-overhead",
+   "hud-default",
+   "hud-low-hp",
+   "vendor-panel",
+   "quest-board",
+   "pause-inventory",
+   "receptionist-menu"
+  ],
+  "dungeon-gen": [
+   "f1-overhead",
+   "f2-overhead",
+   "f1-flythrough"
+  ],
+  "debug": [
+   "f1-overdraw",
+   "f1-lighting",
+   "f1-drop-roll",
+   "f1-flythrough"
+  ]
+ }
+}

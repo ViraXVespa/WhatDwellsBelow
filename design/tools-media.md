@@ -1,65 +1,50 @@
-# Tools catalog: media and art pipeline
+# Tools: media and art pipeline
 
 Status: protocol  
 Read when: running a still/I2V/pack/sprite/audio tool (Build / User only)  
 
-Rules, the CLI contract and the surface key are in `tools.md`; flows live in the `art-*.md` docs and the Imagine / I2V skills. The Bot uses only the `A=Y` rows.
+Door, rules, the CLI contract and the Surf / A key: `tools.md`. Flows live in the `art-*.md` docs and the Imagine / I2V skills. The Bot reads only the image library section.
+
+Entries here: `media.py`; their code: `tools/lib/media/`.
+
+## Jobs
+
+- **Imagine a still:** `media.py grok --kind ui --brief "..." --out DIR` (flow: the isolated-media gate).
+- **Rekey stills:** `media.py rekey --only assets/...png` (live), `--out DIR` (review copy), `--check`; look first with `media.py rekey-preview --only ...`; full-set check `media.py rekey-check --new DIR`.
+- **Animation review briefs:** `media.py anim-review pack`, `media.py anim-review regen`, `media.py anim-review tree --out DIR`.
+- **Bible prompts and sheets:** `media.py bible-prompt --gender female` / `--enemy ID`; `media.py bible-normalize`.
+- **Sound effects:** `media.py sfx --list`, `media.py sfx --only CUE`, `media.py sfx --check`.
 
 ### Media / art pipeline (Build only)
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical | D | module docstring (no `--help`) | N |
-| `anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. | D | module docstring (no `--help`) | Y |
-| `anim_review_pack.py` | Build a Grok-readable pack brief from Animation Browser review.json | D | `--help` | N |
-| `anim_review_regen.py` | Build a Grok-readable regen brief from Animation Browser review.json | D | `--help` | N |
-| `anim_review_tree.py` | Build a wiped I2V test tree for every Regenerate clip in review.json | D | `--help` | N |
-| `attack_keyframes.py` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
-| `attack_keyframes_log.json` | Sidecar data for the tool of the same stem | D | - | N |
-| `bible_normalize.py` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
-| `bible_prompt.py` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
-| `gen_prompt_glyphs.py` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
-| `harvest_walk.py` | Extract evenly spaced walk frames from I2V clips (Section 19) | D | `--help` | N |
-| `i2v_seeds.py` | I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma | D | `--help` | N |
-| `make_sfx.py` | Placeholder SFX wavs from `tools/sfx-cues.json` (one entry per cue; sine, noise, mix, cat nodes). `--list`, `--only`, `--prefix`, `--dry-run`, `--check` (render to temp and compare with `assets/audio`; the 21 p2/p9 cues are byte-identical). A new cue is one JSON entry, not a new script | D | `--help` | N |
-| `sfx-cues.json` | Cue specs read by `make_sfx.py` (name, scale, graph) | D | - | N |
-| `make_placeholder_audio.py` | Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira | D | `--help` | N |
-| `match_keyed_region.py` | Match a keyed source region against a live sprite, and sort local sources | D | `--help` | N |
-| `pack_facing_fix.py` | Pack corrected left-facing player sheets with magenta key + despill | D | `--help` | N |
-| `pack_locomotion.py` | Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips | D | `--help` | N |
-| `pack_oneshot.py` | Pack one-shot I2V clips into engine frames | D | `--help` | N |
-| `pack_p2_art.py` | pack_p2_art.py | D | `--help` | N |
-| `pack_p4_enemies.py` | Pack Phase 4 enemy stills: magenta key, 128 canvas, 8-dir copies | D | `--help` | N |
-| `pack_turntable.py` | Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin | D | `--help` | N |
-| `pack_walk.py` | Extract, key, and pack walk-cycle frames from Imagine videos | D | `--help` | N |
-| `plate_remap.py` | Remap a generated chroma plate to exact #FF00FF. Solid plate near a border reference only; a farther mix keeps its drawn RGB (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
-| `process_enemies.py` | process_enemies.py | D | `--help` | N |
-| `process_gear_icons.py` | Key `_src/sources/assets/ui/gear` plates into `assets/ui/gear`. `--check` fails if an expected icon has no plate or live png. The batch gate runs `--check`. | D | `--help` | N |
-| `slice_shop_icons.py` | Slice the ghost-shop Imagine sheet into gear source plates and keyed 64px icons. Sheet: `_src/sources/assets/ui/shop-icons/shop_icons.png`. | D | `--help` | N |
-| `process_gloam.py` | Key Imagine stills into assets/3d for the Gloam 3D view | D | `--help` | N |
-| `process_session_sprites.py` | Key whatever-magenta Imagine stills and fit them into engine sprites | D | `--help` | N |
-| `process_sprites.py` | process_sprites.py | D | `--help` | N |
-| `process_world.py` | process_world.py | D | `--help` | N |
-| `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
-| `keytest.py` | Golden-set keying regression: truth mattes in `_src/truth` keyed again from a drifting JPEG plate (alpha error, area, edge, halo, interior detail, repeat); sheets in `_logs/keytest/`. Summary: `keytest`. | BD | `--help` | N |
-| `keytest_expect.json` | Limits for `keytest.py` (`default` plus per-name overrides). | D | - | N |
-| `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
-| `rekey_all_stills.py` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
-| `rekey_check.py` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
-| `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
-| `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job (`--kind ui`: generic UI still with the staged UI style; `--kind npc`: NPC redesign; `--aspect`; `--selftest` mocks grok) | D | `--help` | N |
-| `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
-| `sprite_pipeline.py` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
+| `media.py anim-review` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree --out DIR` (wiped I2V test tree). Summary: `anim-review` | D | `--help` | N |
+| `media.py attack-keys` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
+| `media.py clip` | Thin ffmpeg wrapper: `info`, `trim --start --end`, `join A B ... --fade S [--transition T]` (xfade), `caption --text [--start --end --pos]` or `--cue S,E,TEXT` (repeat), `sbs BEFORE AFTER [--labels --stack v]`, `crop`/`zoom`/`fit`, `wipe`, `pip`, `mark`, `ba` (Edit below), `export --for x\|gif [--size --fill]` (checks the X limits); default out `_logs/clip/`. `--selftest` on synthetic clips. Summary: `clip`. | D | `--help` | N |
+| `media.py bible-normalize` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
+| `media.py bible-prompt` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
+| `media.py glyphs` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
+| `media.py i2v-seeds` | I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma (`--out DIR`) | D | `--help` | N |
+| `media.py sfx` | Placeholder SFX wavs from `tools/data/sfx-cues.json` (one entry per cue; sine, noise, mix, cat nodes). `--list`, `--only`, `--prefix`, `--dry-run`, `--check` (render to temp and compare with `assets/audio`; the 21 p2/p9 cues are byte-identical). A new cue is one JSON entry, not a new script | D | `--help` | N |
+| `media.py keyed-region` | Match a keyed source region against a live sprite, and sort local sources (also the matcher library for the rekey tools) | D | `--help` | N |
+| `media.py pack-loco` | Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips | D | `--help` | N |
+| `media.py pack-oneshot` | Pack one-shot I2V clips into engine frames | D | `--help` | N |
+| `media.py pack-turntable` | Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin | D | `--help` | N |
+| `media.py plate-remap` | Remap a generated chroma plate to exact #FF00FF. Solid plate near a border reference only; a farther mix keeps its drawn RGB (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
+| `media.py gear-icons` | Key `_src/sources/assets/ui/gear` plates into `assets/ui/gear`. `--check` fails if an expected icon has no plate or live png. The batch gate runs `--check`. | D | `--help` | N |
+| `media.py shop-icons` | Slice the ghost-shop Imagine sheet into gear source plates and keyed 64px icons. Sheet: `_src/sources/assets/ui/shop-icons/shop_icons.png`. | D | `--help` | N |
+| `media.py world` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
+| `media.py keytest` | Golden-set keying regression: truth mattes in `_src/truth` keyed again from a drifting JPEG plate (alpha error, area, edge, halo, interior detail, repeat); sheets in `_logs/keytest/`. Summary: `keytest`. | BD | `--help` | N |
+| `media.py rekey-preview` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
+| `media.py rekey` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
+| `media.py rekey-check` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
+| `media.py grok` | Stage a scratch directory outside the git tree and run a thin Grok Build media job: `--kind ui\|npc\|tile\|character\|still\|i2v --brief "..." --out DIR` (`--dest-name`, `--copy REF`, `--aspect`); `--selftest` mocks grok | D | `--help` | N |
+| `media.py sprites` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
 
-### Image library `tools/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)
+### Image library `tools/lib/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)
 
 Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all required). New image logic goes in the library and the tools import it; per-asset key rules, banner and glyph drawing and the one-off `process_*` passes stay in their tools. The pack_* / process_* passes import these helpers (`imgio.load`, `geom.flip`, `scale_nearest`, `shrink`, `fit_box`, `fit_axis`); an adopted helper ships with a before/after pixel diff of 0. Proof recipes: `prove.md`.
-
-| Tool | Does | Surf | Use | A |
-|---|---|---|---|---|
-| `img_inspect.py` | Programmatic eyes, text facts plus optional PNG: `describe`, `layout` (off-screen, clipped, overlap, safe area, alignment, gaps; `--box` for node rects), `contrast` (WCAG per `--box`), `grid`, `zoom`, `diff` (heatmap, regions, `--mask`, `--max-ratio`), `montage`, `find` (template), `halo` (rim tint, leftover plate), `rimclean` (re-key a rim with `--refs`), `motion` (frame to frame), `selftest` | BWD | `--help` | N |
-| `requirements.txt` | Pip deps for the image tools | BWD | - | Y |
-| `requirements-ml.txt` | Optional torch + einops for the `bible_normalize.py` denoise (`imglib/scunet.py`) | D | - | N |
 
 | Module | Owns |
 |---|---|
@@ -70,6 +55,49 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy, OpenCV; all req
 | `imglib/band.py` | edge band for `shrink_art`: 2 px, wider along a detected glow ramp |
 | `imglib/overlay.py` | post-key pixel text (5x7 font); manifest `"overlay"` rows (the welcome banner) are drawn by `rekey_all_stills` every run, centred on the detected cloth |
 | `imglib/matte.py` | the keyer: clean plate B(x), trimap, one alpha solve, decontaminate F = (I - (1-a)B)/a; `key(im, debug=DIR)` dumps each stage |
-| `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
-| `imglib/look.py` | the `img_inspect.py` checks as functions |
+| `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shots.py diff` and the `shots.py capture` seam check) |
+| `imglib/look.py` | the `shots.py inspect` checks as functions |
 | `imglib/scunet.py` | Optional SCUNet denoiser (vendored cszn/SCUNet, Apache-2.0); weights downloaded to `_cache/models/` with pinned sha256; needs `requirements-ml.txt` |
+
+## Gameplay clips
+
+Desktop, frame-exact: `shots.py movie NAME` boots one shot flow with Godot movie maker (frames scaled to the movie size) and keeps the frames between the timeline's `start` / `end` marks as H.264. A scenario reuses shot-flow state (`{flow, state}`); game code adds no hooks. Timeline ops: `walk_to`, `drive`, `tap`, `camera` (`shot-flows.md`). A movie's `regions` names crop boxes (fractions of the frame) for `clip crop --box NAME --movie NAME`. One movie against another checkout: `--game DIR`.
+
+Web, real time: `perf.py web --flow camp-walk --video DIR` (Playwright WebM from page open, boot included; cut with `media.py clip trim`).
+
+Edit: `media.py clip sbs` then `caption`, then `export --for x` (FAIL over 140 s or 512 MB) or `--for gif` (FAIL over 15 MB). Clips stay in `_logs/` or outside the repo; never commit video.
+
+Framing and overlays (`lib/media/clip_fx.py`; flags: `media.py clip --help`): `--box` is pixels, fractions, or a movie region; `crop`, `zoom` (Ken Burns), `fit`, `join --transition` (any xfade name), `wipe` (reveal line), `pip`, `mark` (box plus arrow).
+
+Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
+
+## Ref compare and scenario catalog
+
+`shots.py movie --refs A,B NAMES` (`lib/shots/movie_refs.py`): any two git refs. Per ref a temp worktree gets this checkout's recording tooling (shot tool, `shot_views.gd`, and missing deps with a fresh `.uid`; listed in `compare.json`), `gate.py import`, then every name is recorded and the pair diffed. Unchanged pairs print `no visible change` and stay out of the reel; each change gets a captioned `clip ba` segment. The out dir (default `_logs/movie/refs-A-B-NAMES/`, one per name list, so a subset rerun keeps the full run) holds `reel.mp4`, `reel-x.mp4`, `reel.gif`, `contact.png` (A | B | heat per change) and `compare.json`. About 1 to 3 min per name per ref plus the import. Every view still first calls `shot_views.gd` `still_hud` (pins wall-clock pulses such as the HUD danger gem).
+
+The catalog lives in `data/movies.json`:
+- `movies`: clips.
+- `views`: stills. A view is a `{flow, state}`, a `scenario`, or `kind: full-map`: the stitched floor with `overlays` (`shots.py capture --full-map --overlays`, drawn by `lib/shots/map_overlay.py`).
+- `sets`: named groups (`hub-ui`, `dungeon-gen`, `debug`).
+
+`shots.py movie --list` prints them. Views normal play cannot show (overhead hub, fly-through, debug draw, drop roll) call `scripts/debug/shot_views.gd`.
+
+Media bot (Bottie Boop): triggers, refs, commands and rules in `media-bot.md`. It picks from this catalog only.
+
+## Libs and data
+
+No CLI of their own; new code goes into the owner (`tools.md` rule 6).
+
+| File (under `tools/`) | Owns |
+|---|---|
+| `lib/media/audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical |
+| `lib/media/clip_fx.py` | `media.py clip` framing, transitions and overlays (`crop`, `zoom`, `fit`, `wipe`, `pip`, `mark`, `change_box`, `ba`) on top of `clip_edit.py` |
+| `lib/media/anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. |
+| `data/attack_keyframes_log.json` | Sidecar data for the tool of the same stem |
+| `data/movies.json` | `shots.py movie` scenarios, movies, views and sets (the scenario catalog) |
+| `lib/shots/movie_refs.py` | `shots.py movie --refs`: worktrees, tooling injection, record, diff, reel, contact sheet |
+| `lib/shots/map_overlay.py` | `--full-map --overlays`: room/spawn/torch/loot marks on the stitched floor |
+| `data/sfx-cues.json` | Cue specs read by `media.py sfx` (name, scale, graph) |
+| `data/keytest_expect.json` | Limits for `media.py keytest` (`default` plus per-name overrides). |
+| `requirements.txt` | Pip deps for the image tools |
+| `requirements-ml.txt` | Optional torch + einops for the `media.py bible-normalize` denoise (`imglib/scunet.py`) |

@@ -1,12 +1,14 @@
 @tool
 extends Node3D
 
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const Dbg := preload("res://scripts/app/dbg.gd")
 const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const View := preload("res://scripts/world/camp/camp_view.gd")
 const Warm := preload("res://scripts/world/camp/warm.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
 const Banner := preload("res://scripts/world/camp/banner.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
@@ -117,6 +119,8 @@ func _step_stall() -> void:
 	Build.stall(gen)
 	Build.strip_building_cubes(gen)
 	Build.quiet_shadows(gen)
+	for b in get_tree().get_nodes_in_group("hub_build"):
+		LightRt.rebind_tree(b)  # roofs, awnings, tarp sample the hub atlas; they are built after _step_light
 	Dbg.lt_mark("camp_buildings")
 	Dbg.hitch("hub_stall")
 
@@ -132,7 +136,7 @@ func _step_player() -> void:
 	player.position = _layout.spot_pos("Spawn")
 	add_child(player)
 	if player.body:
-		player.body.render_priority = 18
+		player.body.render_priority = Spec.DRAW["player"]
 	Dbg.lt_mark("camp_player")
 	Dbg.hitch("hub_player")
 
@@ -154,23 +158,21 @@ func _step_spot_receptionist() -> void:
 	var rec_spr: Sprite3D = rec.get("spr") as Sprite3D
 	if rec_spr:
 		if rec_spr.texture:
-			rec_spr.pixel_size = 1.22 / float(maxi(1, rec_spr.texture.get_height()))
+			rec_spr.pixel_size = Spec.RECEPTION_H / float(maxi(1, rec_spr.texture.get_height()))
 			rec_spr.material_override = Spot._bust_mat(rec_spr.texture)
 		rec_spr.position = Vector3(0.0, 0.0, 0.0)
 		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		rec_spr.render_priority = 1
+		rec_spr.render_priority = Spec.DRAW["receptionist"]
 	var rec_lab: Label3D = rec.get("label") as Label3D
 	if rec_lab:
-		rec_lab.position.y = 0.85
-	Spot._tune_label(rec)
+		rec_lab.position.y = Spec.RECEPTION_LABEL_Y
 	Dbg.hitch("hub_spot_receptionist")
 
 func _step_spot_vendor() -> void:
 	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
-	var v_lab: Label3D = v.get("label") as Label3D
-	if v_lab:
-		v_lab.position.y = 2.25
-	Spot._tune_label(v)
+	if v:
+		v.global_position.y = -0.02  # world FLOOR_Y
+		ActorLit.bind(v, v.get("spr") as Sprite3D)
 	Dbg.hitch("hub_spot_vendor")
 
 func _step_spot_dumpster() -> void:
@@ -285,8 +287,6 @@ func ensure_dummy() -> void:
 	n.position = _layout.spot_pos("Dummy")
 	dummy = n
 	add_child(n)
-	Build.stamp_actor_blobs(self)
-	Dbg.hitch("hub_blobs")
 
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):

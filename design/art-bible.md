@@ -17,7 +17,7 @@ art is already open when this sibling is loaded. Do not reopen art_pipeline from
 - All directional variants of the same animation state for a given character MUST contain exactly the same number of frames.
 - **One I2V clip per review gate.** After each clip, stop and wait for the User. Do not queue the next facing, action, gender, retry, or fill-in pass until the User says so.
 - **Do not seed I2V from a mid-action video extract** or name pack-slot indices in the prompt. Seed is the idle Bible cell. Packer chooses frames after accept.
-- **No fixed I2V duration.** The clip is as long as it needs to be to finish the motion in `tools/i2v_seeds.py`. Do not demand ten seconds or any other clock.
+- **No fixed I2V duration.** The clip is as long as it needs to be to finish the motion in `tools/media.py i2v-seeds`. Do not demand ten seconds or any other clock.
 - **Paper-doll means layers, not baked weapon characters.** Body animations ship unarmed. Equipped weapon and tool are separate overlay frames composited onto those body frames.
 - **Every I2V first frame keeps an opaque chroma plate.** Never seed I2V from a processed transparent frame. This applies to player, enemy, and any future I2V call.
 

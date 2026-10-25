@@ -17,6 +17,7 @@ AGENTS.md
             -> docs/routing may open this file and the topic index; write stays one door
     build -> design/grok-build.md -> protocol.md and constraints.md
             -> design/build-job-cycle.md when gathering, changing, or proving
+            -> design/build-week-start.md when the User says it is a new week (main checkout, no slice)
             -> listed runner from that cycle table when proving; do not invent a flag
             -> next unit is User-named
     bot   -> BOT.md -> exactly one Job sibling
@@ -33,7 +34,7 @@ Then, only if the User named work:
     and design/versioning.md iff the User named a pin or archive
     and design/isolated-media.md iff Grok Build is about to call Imagine
     and design/gdscript-law.md iff editing GDScript
-    and design/tools.md iff running, adding, or documenting a tool (sibling tools-lint.md; Build-only siblings tools-build.md, tools-media.md)
+    and design/tools.md iff picking, running, adding, or documenting a tool (then the one sibling its job table names: tools-gates, tools-shots, tools-perf, tools-lookup, tools-lint, tools-libs; Build-only tools-build, tools-media)
     and design/doc-library.md iff editing docs by script or changing doc_patch / md_format_lib
     and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
 
@@ -60,7 +61,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 
-1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`. `web-session.md` has none (`no_budget`): web sessions are limited by turns, not tokens.
+1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/data/bot_budgets.json`) are checked only with `check.py load-graph --bot`. `web-session.md` has none (`no_budget`): web sessions are limited by turns, not tokens.
 2. Bot boot is BOT.md + one Job sibling.
 3. No mutual See also.
 4. One job phrase belongs to one door.
@@ -68,7 +69,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 6. Path files never appear on topic See also.
 7. Versioning / changelog body is ship-only.
 8. Opening this file happens when the User names routing work, or on a web docs/routing pass. Open design/tasks/README.md only when the User names a task, a parked task or resume parked.
-9. Topic job siblings name no other `design/*.md` paths. A doc edit proves with `python tools/check_load_graph.py` in the same change. RESULT PASS is required. It is not deferred to ship.
+9. Topic job siblings name no other `design/*.md` paths. A doc edit proves with `python tools/check.py load-graph` in the same change. RESULT PASS is required. It is not deferred to ship.
 10. Opening the topic table is not a boot step.
 11. README and code-map are human indexes, not boot files.
 12. Door and job files start with an H1.

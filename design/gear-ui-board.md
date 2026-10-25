@@ -30,7 +30,7 @@ Opening the Floor Crystal focuses **Enter dungeon**. Up from there reaches the l
 Plates are icon-first. Names and stats live in the flyout, not on the cell.
 
 - Empty head / body / legs / potion / food show a dark imprint of that slot type (`assets/gear/slot_*.png`).
-- A filled slot or bag cell shows the item icon (`assets/gear/` keyed from `_src/gear/` through `tools/process_gear_icons.py`).
+- A filled slot or bag cell shows the item icon (`assets/gear/` keyed from `_src/gear/` through `tools/media.py gear-icons`).
 - Rarity wash is in-engine (white / green / blue). Do not bake rarity into the PNG.
 - AT RISK pieces (bank, unforged kit that is not a hold or starter) take a red plate border on the board and in the re-equip list. HOLD / starter pieces do not. Artifacts are dungeon-only and are not tagged AT RISK.
 - An unseen non-starter option MAY add a `▸` on the parent slot.

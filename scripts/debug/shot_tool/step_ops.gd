@@ -124,12 +124,15 @@ static func op_press(st: Dictionary, step: Dictionary) -> void:
 	printerr("SHOT: press %s x%d" % [JSON.stringify(step), times])
 
 static func _dump_texts(st: Dictionary, step: Dictionary, stem: String) -> void:
-	if not bool(step.get("texts", false)):
+	if not bool(step.get("texts", false)) and not Args.texts_all():
 		return
 	var rows: Array = op_texts(st, step)
 	var f: FileAccess = FileAccess.open(Args.frames_dir().path_join(stem + ".texts.json"), FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify(rows, "  "))
+	f = FileAccess.open(Args.frames_dir().path_join(stem + ".cover.json"), FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify(Texts.cover(st.host)))
 
 static func op_shot(st: Dictionary, step: Dictionary) -> void:
 	await settle(st)
@@ -218,5 +221,7 @@ static func run(st: Dictionary, op: String, step: Dictionary) -> void:
 			await (load("res://scripts/debug/shot_tool/step_sweep.gd") as GDScript).call("run", st, step)
 		"log":
 			printerr("SHOT: log %s" % str(step.get("msg", "")))
+		"walk_to", "drive", "tap", "mark", "camera":
+			await (load("res://scripts/debug/shot_tool/step_play.gd") as GDScript).call("run", st, op, step)
 		_:
 			fail(st, op, "unknown op")

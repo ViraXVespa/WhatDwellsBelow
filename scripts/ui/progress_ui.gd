@@ -14,7 +14,10 @@ const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
 const Reception := preload("res://scripts/ui/progress_ui/receptionist.gd")
 
 var open := false
-var mode := ""
+var mode := "":
+	set(v):
+		mode = v
+		FrameSet.UiText.cap = FrameSet.text_cap(v)
 var shop_spot: Node = null
 var extract_spot: Node = null
 var extract_mailed := false

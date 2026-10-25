@@ -2,18 +2,18 @@
 
 Status: suggested starts  
 Read when: the work changes a number, formula, or debug default  
-Code: `scripts/data/balance.gd`, `access.gd`, `schema.gd`, `enemies.gd`, `migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance.gd`, `scripts/data/balance/vars.gd` (aggregate) + `vars_main.gd` (this file's keys; `vars_combat|world|economy.gd` match the other tunables files), `access.gd`, `schema.gd`, `enemies.gd`, `scripts/debug/tunable_overrides.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  
 Suggested starts are seeds only.
-Live defaults are what `balance.gd` / `tunables.gd` ship today.  
-If you change a live default, update this table in the same slice.
-This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python tools/tunables.py add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `doc_patch.py replace`); do not hunt for a row that does not exist.
+Live defaults are what `balance.gd` (`balance/vars_*.gd`) / `tunables.gd` ship today.  
+Change a balance default with `python tools/docs.py tunable set KEY VALUE` (var + this Live cell; `--range` widens the slider, `--changelog "bullet"` adds the player line). Slider bounds: `tunable range KEY MIN MAX [STEP]` (`e_*_hp` = the stat row all enemies share). New key end to end: `tunable add KEY --default V --range MIN MAX STEP --after NEIGHBOR --note "..."` (var in the system file, slider row, doc row, menu category; `--system` when it cannot tell; fails with the size if a file would pass 10 KB). `tunable diff` (prove runs it) flags code/slider/doc drift.
+This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python tools/docs.py tunable add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `docs.py patch replace`); do not hunt for a row that does not exist.
 
-List one key with `python tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). Patch one Live cell with `python tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`). Do not open this whole file to change one number.
+List one key with `python tools/docs.py tunable get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). A `tunables.gd` const changes the same way: `python tools/docs.py tunable set CAM_PITCH -58` (code + Live cell). `tunable set --key KEY --set TEXT` patches only the doc cell (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`): for non-number cells; on a number row `tunable diff` fails until code agrees. Do not open this whole file to change one number.
 
-`BAL_REV` is 15. Old saves pick up shipped default retunes through `migrate.gd`.
+**Saves and overrides.** Saves store no balance: code defaults ship as-is and reach every save on update (no migration, no forced rewrite). An old save's `debug_bal` / `bal_rev` is ignored and dropped on load; the aim-line prefs stay (own save keys). Debug builds (`Dbg.on()`, Web Debug too) keep debug-menu value edits in `user://debug_tunables.json` (non-default keys only, clamped to the slider range; `tunable_overrides.gd`); release and `--wdb-release` never read it. Profiles > "Reset all values to defaults" clears it.
 
 Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`; a slice that adds a key also adds it to balance and the debug menu.
 
@@ -86,5 +86,5 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 
 ## Other tunables files
 
-Movement and combat, Gathering, Enemy drops and Consumables are in `tunables-combat.md`. Dungeon generation and Enemies and combat level are in `tunables-world.md`; Progression and economy, Anvil / affixes and UI / feel targets are in `tunables-economy.md`. `tools/tunables.py` finds a key in any of them.
+Movement and combat, Gathering, Enemy drops and Consumables are in `tunables-combat.md`. Dungeon generation and Enemies and combat level are in `tunables-world.md`; Progression and economy, Anvil / affixes and UI / feel targets are in `tunables-economy.md`. `tools/docs.py tunable` finds a key in any of them.
 - `max_clerks` 12. Hall-torch cadence 7–11 on runs of 8+. Hall-traveler cadence 14–18 on runs of 10+.

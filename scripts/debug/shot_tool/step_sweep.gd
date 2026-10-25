@@ -1,15 +1,16 @@
 extends RefCounted
 
 ## Shot flow op "sweep": photograph the whole dungeon floor as overlapping tiles. The play camera is orthographic and
-## never yaws, so a tile is the same picture shifted: tools/run_shots.py --full-map stitches them from sweep.json.
+## never yaws, so a tile is the same picture shifted: tools/shots.py capture --full-map stitches them from sweep.json.
 ## Per tile: teleport the (hidden, frozen) player so geometry and the light window are built around it, move the rig
 ## there, grab the frame. Enemies are hidden and frozen, the HUD and map stay off. Only the centre of each tile is kept
 ## (keep_x / keep_y cells around the player, multiples of 8 px): lights are chosen by distance to the player, so the
-## picture edge is not lit as in play. Step keys: margin (cells), frames (settle frames per tile), keep_x, keep_y.
+## picture edge is not lit as in play. sweep.json also carries overlay marks (sweep_marks.gd). Step keys: margin (cells), frames (settle frames per tile), keep_x, keep_y.
 
 const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
 const Capture := preload("res://scripts/debug/shot_tool/capture.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
+const Marks := preload("res://scripts/debug/shot_tool/sweep_marks.gd")
 
 static func _bounds(host: Node, margin: int) -> Rect2i:
 	var w: int = host.data.w
@@ -108,6 +109,7 @@ static func run(st: Dictionary, step: Dictionary) -> void:
 			tiles.append({"file": name, "r": r, "c": c, "px": px, "pz": pz, "ux": u.x, "uy": u.y})
 	var meta: Dictionary = {"x0": area.position.x, "z0": area.position.y, "w": area.size.x, "h": area.size.y, "ppu": ppu,
 		"sinp": sinp, "tile_w": int(size.x), "tile_h": int(size.y), "crop_x": mx, "crop_y": my, "cols": cols, "rows": rows, "tiles": tiles}
+	meta["marks"] = Marks.collect(host)
 	var f: FileAccess = FileAccess.open(Args.frames_dir().path_join("sweep.json"), FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify(meta, "  "))

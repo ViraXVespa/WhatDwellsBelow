@@ -1,15 +1,15 @@
 # Postcard shot tool: flows and process
 
 Status: current plan
-Read when: writing or running a `tools/shot-flows/*.json` flow, updating guide images, adding a shot for a new UI state, or a task needs a shot the tool cannot stage
+Read when: writing or running a `tools/data/shot-flows/*.json` flow, updating guide images, adding a shot for a new UI state, or a task needs a shot the tool cannot stage
 
 Rendering, modes, worker, bands, display, knobs and troubleshooting live in the shot-tool door. A tool that misbehaves gets fixed, not worked around.
 
-Before guessing a `--state` or `--flow` name, run `python tools/run_shot_flow.py --list` or `--survey`. The tool also prints the valid state names when a `--state` misses.
+Before guessing a `--state` or `--flow` name, run `python tools/shots.py flow --list` or `--survey`. The tool also prints the valid state names when a `--state` misses.
 
 ## Flows
 
-A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale fixed_fps`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `covered_by` (another flow that shoots and asserts everything this one does: `run_shot_flow.py` skips this flow when that one is picked too; `check_shot_gaps.py` fails a name that is no flow), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
+A flow is `tools/data/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale fixed_fps`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `covered_by` (another flow that shoots and asserts everything this one does: `shots.py flow` skips this flow when that one is picked too; `shots.py gaps` fails a name that is no flow), `smoke` (true = also run headless by `gate.py bot-smokes --flows`), optional `publish` `{dir, prefix}`, and `steps`.
 
 | Op | Keys | Does |
 |---|---|---|
@@ -22,20 +22,22 @@ A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`
 | `set` / `call` | `target`, `value` / `method`, `args` | Seeds state (`App.prog.quests_offered`, `App.gold`) or calls a method |
 | `repeat` | `max`, `until`, `steps` | Pages: loop steps until the `until` assert holds (or `max`) |
 | `freeze` | `group`, `on` | Disables (or restores) processing of a node group, e.g. `enemies`; the HUD host keeps running |
-| `sweep` | `margin` (3), `frames` (8), `keep_x` (192), `keep_y` (112) | Full-floor capture: streams the whole floor, tiles it with the play camera (one PNG per tile in the frames dir plus `sweep.json`), player and enemies hidden. Driven by `run_shots.py --full-map` (`shot-tool.md`) |
+| `sweep` | `margin` (3), `frames` (8), `keep_x` (192), `keep_y` (112) | Full-floor capture: streams the whole floor, tiles it with the play camera (one PNG per tile in the frames dir plus `sweep.json`), player and enemies hidden. Driven by `shots.py capture --full-map` (`shot-tool.md`) |
+| `walk_to` / `drive` / `tap` / `mark` | `x z near must max_ms` / `move aim attack ms` / `action` / `name` | Play through `App.playtest` like a pad: walk to a ground point, hold a world-space stick (and attack), one-frame press; `mark` prints the frame for `shots.py movie` cuts. Proof flow: `camp-walk-drive` |
+| `camera` | `at [x,z]` or `target REF` (+ `offset`), `zoom`, `ms`, `ease linear\|inout`, `wait`, `follow` | Movies: frame a ground point or node at a zoom (rig hooks, no game change), glide over `ms` and hold; `follow` glides back to the player and returns control |
 | `wait` `settle` `seed` `hud` `texts` `log` | | `ms` or `frames`; two frames plus a draw; global RNG seed; HUD on or off; text dump alone; a marker |
 
-Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Seed or set any random state (the quest board rolls its own `randomize()`, so a flow sets `quests_offered`), or two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
+Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`, a vector's `x`/`y`/`z`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Seed or set any random state (the quest board rolls its own `randomize()`, so a flow sets `quests_offered`), or two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
 
 A screen that lists what the delver is carrying is stocked before the shot. A fresh dungeon boot only has the starter potion and ration, which hides the gear board, the unsafe pile, and the resources. The extract flow calls `App.prog.stock_extract_shot` before it opens the gate: a worn green weapon, a worn blue helm, an unsafe body in the bag, an artifact that stays, and ore, wood, gold, and root. Do not shoot that screen on the starter kit.
 
-Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1`. Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump) in `scripts/debug/shot_tool/`.
+Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1`. Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_play.gd` (play ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump) in `scripts/debug/shot_tool/`.
 
 Commands:
-- `python tools/run_shots.py --steps tools/shot-flows/X.json [--no-pixels] [--out P]` one flow, summary `shots`.
-- `python tools/run_shot_flow.py --list | --flow N | --all | --smoke [--no-pixels] [--baseline D] [--save-baseline D] [--publish] [--check-published]` flows by name; frames in `_logs/shot-flow/<flow>/`; summary `shot-flow`.
-- `python tools/shot_diff.py BEFORE AFTER [--max-ratio R] [--mask X,Y,W,H] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Other checks on a frame (layout, contrast, diff heatmap): `img_inspect.py` (`prove.md`).
-- `python tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict]` which states (`tools/shot-flows/states.json` sources) have no flow, which states are new since REF (uncovered ones FAIL; `--advisory` prints only), flows without a shot or assert, stale or hand-edited published shots.
+- `python tools/shots.py capture --steps tools/data/shot-flows/X.json [--no-pixels] [--out P]` one flow, summary `shots`.
+- `python tools/shots.py flow --list | --flow N | --all | --smoke [--no-pixels] [--baseline D] [--save-baseline D] [--publish] [--check-published]` flows by name; frames in `_logs/shot-flow/<flow>/`; summary `shot-flow`.
+- `python tools/shots.py diff BEFORE AFTER [--max-ratio R] [--mask X,Y,W,H] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Other checks on a frame (layout, contrast, diff heatmap): `shots.py inspect` (`prove.md`).
+- `python tools/shots.py gaps [--changed [REF]] [--advisory] [--strict]` which states (`tools/data/shot-flows/states.json` sources) have no flow, which states are new since REF (uncovered ones FAIL; `--advisory` prints only), flows without a shot or assert, stale or hand-edited published shots.
 
 ## Dungeon flows (seed 42)
 
@@ -45,24 +47,24 @@ Teleport recipe (the whole floor is populated at boot; the camera follows the pl
 
 ## Screenshot update step (docs and guide images)
 
-`run_shot_flow.py --flow N --publish` copies the frames to `_out/shots/<flow>/` (git-ignored) and writes `<prefix>shots.json` (file, sha256, size); a flow's `publish: {"dir","prefix"}` or `--publish-dir` picks another folder. Packing and image tools may write under `assets/` when that is their job. A published shot still lives under `_out/shots/<flow>/` until a tool copies it. Grok Build decides where a guide image lives and copies the frames there. After a UI change `--flow N --check-published` FAILs with the stale files; re-run `--publish` and hand the frames over. `check_shot_gaps.py` flags a published file that differs from `shots.json`.
+`shots.py flow --flow N --publish` copies the frames to `_out/shots/<flow>/` (git-ignored) and writes `<prefix>shots.json` (file, sha256, size); a flow's `publish: {"dir","prefix"}` or `--publish-dir` picks another folder. Packing and image tools may write under `assets/` when that is their job. A published shot still lives under `_out/shots/<flow>/` until a tool copies it. Grok Build decides where a guide image lives and copies the frames there. After a UI change `--flow N --check-published` FAILs with the stale files; re-run `--publish` and hand the frames over. `shots.py gaps` flags a published file that differs from `shots.json`.
 
 ## New UI state checklist (Build)
 
-This is STEP 0 of a visual slice with no flow for its screen: `start_build_slice.py` prints a note (exit 0), not a stop. Do 2, map it (3), shoot the baseline and look at it before the questions; `show_png.py` opens it for her; say whether that PNG is the screen being changed and put its path in the message. Flow files and the `routes.yaml` mapping may be edited before the User answers. The end gates stay (1).
+This is STEP 0 of a visual slice with no flow for its screen: `slice.py start` prints a note (exit 0), not a stop. Do 2, map it (3), shoot the baseline and look at it before the questions; `shots.py show` opens it for her; say whether that PNG is the screen being changed and put its path in the message. Flow files and the `routes.yaml` mapping may be edited before the User answers. The end gates stay (1).
 
-1. A new menu, NPC panel or page: add its mode/kind strings to a `states.json` source if the regexes miss them; `check_shot_gaps.py --changed` must list it as covered. Gate: **required for Bot and for Build** (`bot_smokes.py`, `run_build_gate.py --batch`, and a Build UI or theme prove FAIL on a new uncovered state). `routes.yaml` `shot_gaps` sets the mode. `--shot-gaps off|advisory|required` overrides it.
+1. A new menu, NPC panel or page: add its mode/kind strings to a `states.json` source if the regexes miss them; `shots.py gaps --changed` must list it as covered. Gate: **required for Bot and for Build** (`gate.py bot-smokes`, `gate.py build --batch`, and a Build UI or theme prove FAIL on a new uncovered state). `routes.yaml` `shot_gaps` sets the mode. `--shot-gaps off|advisory|required` overrides it.
 2. Copy the nearest flow (`camp-receptionist-menu` NPC menu, `camp-anvil-tabs` pages, `camp-billboard-controls` static panel, `camp-npc-panels` several NPC panels, `camp-inventory` panel opened by its method, `dungeon-gate-shop` dungeon-only panels, `camp-pause-menu` pause/split menu, `camp-pause-inventory` pause Inventory tab, `camp-recap` delve recap), change the `interact`, state and asserts, set `covers`, add `smoke: true`.
-3. `run_shot_flow.py --flow N`, or `--job J` for every flow the job maps (one call, one summary, the frame lists; `--changed` picks the flows whose file or job doc changed). To re-shoot one state while iterating: `--flow N --state NAME` (the steps up to that shot; says changed or same); a unit job whose flow is shared (`shot_states` in `routes.yaml`) does the same by itself under `--job J`. Details of a frame: `shot_crop.py`. Look at the frames, `show_png.py` the ones the ask refers to, and say what is on them. Each flow is one Godot boot (the tool runs one steps file per boot), so a job maps a flow only when no other flow of the job already shoots and asserts its frames; one that does is marked `covered_by` it. A visual change then stops for the User (`build-job-cycle.md`). `--no-pixels` is the cheap rerun after the frames have been opened. Map the flow by its job in `routes.yaml` `shot_flows` (a job maps only to its own key) so `start_build_slice.py` prints it.
-4. The report names the flow, the frames and the `check_shot_gaps.py` RESULT.
+3. `shots.py flow --flow N`, or `--job J` for every flow the job maps (one call, one summary, the frame lists; `--changed` picks the flows whose file or job doc changed). To re-shoot one state while iterating: `--flow N --state NAME` (the steps up to that shot; says changed or same); a unit job whose flow is shared (`shot_states` in `routes.yaml`) does the same by itself under `--job J`. Details of a frame: `shots.py crop`. Look at the frames, `shots.py show` the ones the ask refers to, and say what is on them. Each flow is one Godot boot (the tool runs one steps file per boot), so a job maps a flow only when no other flow of the job already shoots and asserts its frames; one that does is marked `covered_by` it. A visual change then stops for the User (`build-job-cycle.md`). `--no-pixels` is the cheap rerun after the frames have been opened. Map the flow by its job in `routes.yaml` `shot_flows` (a job maps only to its own key) so `slice.py start` prints it.
+4. The report names the flow, the frames and the `shots.py gaps` RESULT.
 
 ## Gap process: the task needs a shot the tool cannot stage
 
 Extending the tool is part of the task (no hand-driven Godot, no scratch, no PNG edits, no stand-in older image).
 1. Name the missing state in one line.
 2. Try a flow first (ops above cover input, state, text and pages). A new op goes in `step_ops.gd`/`step_input.gd` with one flow that proves it.
-3. A new worker flag or `run_shots.py` argument is the last resort: parse in `tool_args.gd`, add the matching argument.
-4. Document it in the table below and in `--help` (`check_tool_cli.py`).
+3. A new worker flag or `shots.py capture` argument is the last resort: parse in `tool_args.gd`, add the matching argument.
+4. Document it in the table below and in `--help` (`check.py tool-cli`).
 
 Menu screens boot from a flow header `"scene": "title"` (flow `title-menu`), `"splash"` (`splash-credit`) or `"fs_gate"` (`fs-gate`). They run on an isolated save: a shot boot never loads `user://live`, a dismiss writes only the smoke slot, and the flow fails (`isolation`) if the live save changes or the isolation cannot be proven. The title shows its first-launch card (choose a delver). Not staged: the touch overlay (needs a touch device). A screen the worker cannot stage is reported as "not pictured" in the survey with the reason; whether to extend the worker (this gap process) is her call. Do not stand in a picture of another screen.
 

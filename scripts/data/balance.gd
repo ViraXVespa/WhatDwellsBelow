@@ -1,12 +1,10 @@
 ﻿extends "res://scripts/data/balance/vars.gd"
 
-## All Phase 2 combat numbers. Mutated by the secret debug menu.
-## Bump BAL_REV when shipping new defaults that old saves should receive.
+## All Phase 2 combat numbers. Mutated by the secret debug menu. Saves never store them: code defaults ship as-is;
+## debug builds persist menu edits to user://debug_tunables.json (scripts/debug/tunable_overrides.gd).
 const Schema := preload("res://scripts/data/balance/schema.gd")
 const Enemies := preload("res://scripts/data/balance/enemies.gd")
-const Migrate := preload("res://scripts/data/balance/migrate.gd")
 const Access := preload("res://scripts/data/balance/access.gd")
-const BAL_REV := 15
 
 var enemy_stats: Dictionary = {}
 
@@ -30,9 +28,6 @@ static func f(key: String, fallback: float) -> float:
 
 func getv(name: String) -> float:
 	return Access.getv(self, name)
-
-func migrate_from(old_rev: int) -> bool:
-	return Migrate.run(self, old_rev, BAL_REV)
 
 func setv(name: String, value: float) -> void:
 	Access.setv(self, name, value)

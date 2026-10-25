@@ -36,14 +36,14 @@ Do not enable Execution on Local Computer. Build-only docs and skills: BOT.md.
 No new player-facing systems, tunables, combat feel, editor playtest, art/I2V,
 locale sweeps, or pause redesign. Do not invent reuse-map rows or opt tasks.
 Smokes are headless; shots and bakes use the box display (BOT.md Smokes). Do not install Steam Godot. Do not open the editor.
-Live scripts/**/*.gd must ship under 10KB.
+Every live .gd (scripts/**, tools/data/**) must ship under 10KB.
 
 ## Off-limits
 
 - Extra connectors (every Bot on the account shares those logins)
 - Push main, gh pr merge, force-push
-- week_start.py, Windows / Steam / WDB_ROOT / pc-offload
-- Editor playtest, Steam Godot, and any Godot install except tools/bot_smokes.py on the Linux pin
+- release.py week-start, Windows / Steam / WDB_ROOT / pc-offload
+- Editor playtest, Steam Godot, and any Godot install except tools/gate.py bot-smokes on the Linux pin
 - Two Bots as disk isolation (they share the VM)
 
 ## First message

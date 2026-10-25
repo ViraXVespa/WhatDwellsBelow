@@ -1,47 +1,32 @@
-# Tools catalog: inventory, lint, split and doc edits
+# Tools: size, duplicates, dead code, splits and doc edits
 
 Status: protocol  
-Read when: running a dupe, dead-code, stat, split, code-map or doc-edit tool, or reading a shared lib row  
+Read when: running a size, dupe, dead-code, split, relocate or doc-edit tool  
 
-Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same table shape; `check_tool_docs.py` reads this file too.
+Door, rules, the CLI contract and the Surf / A key: `tools.md`. Bot flows: the Bot job files; doc edit detail: `doc-library.md`.
 
-### Inventory and lint
+Entries here: `lint.py`, `check.py`, `docs.py`; their code: `tools/lib/checks/`, `tools/lib/docs/`, `tools/lib/lint/`. `lint.py dupes` helpers: `tools/lib/lint/dupes_clone.py` (run / clone finder), `tools/lib/lint/dupes_gate.py` (gate, exceptions, selftest).
 
-| Tool | Does | Surf | Use | A |
-|---|---|---|---|---|
-| `normalize_blanks.py` | Collapse consecutive blank lines to one (BOM/EOL kept). Paths or dirs; `--ext`, `--dry-run`. Summary: `normalize-blanks`. | BD | `--help` | Y |
-| `check_tool_docs.py` | Tool catalog gate: every `tools/` file has one row in `design/tools*.md` that matches `bot_allow.txt`; `--stale-refs` lists dead doc paths (`--narration` adds narration lines). Summary: `tool-docs` / `stale-refs`. | BD | `--help` | Y |
-| `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them); prints the absolute root it read. Summary: `file-stat`. | BD | `--help` | Y |
-| `session_dump.py` | Interactive dump of a recent Grok session (chat, events, updates, usage, prompt_context, system prompt, terminal logs) into one .txt on the clipboard. Skips wdb-iso worktrees. | D | `--help` | N |
-| `summarize_scripts.py` | Func inventory per `.gd` (`--path`, `--top-funcs`) | BD | `--help` | Y |
-| `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
-| `list_dupes.py` | Duplicate finder (read-only): exact / shape / near function clones and verbatim or literal-masked line blocks across `scripts/**/*.gd` and `tools/*.py`, ranked by (copies-1) x lines. `--lang gd\|py\|all`, `--min-lines`, `--min-block`, `--md PATH`. Feeds `design/reuse-map.md`. Summary: `dupes`. | B | `--help` | Y |
-| `list_unused_funcs.py` | Dead-code report (`--limit N`): `unused` funcs, `shadowed` (name defined in 2+ files, nothing resolves to that def: alias/class_name/extends aware), `decl` (unused const/signal/preload alias; `tunables.gd` knobs never listed), `maybe` (bare-name string only: check by hand). Funcs named in `call_deferred`/`call`/`connect`/`Callable`, scenes, flow json or web shells are `dynamic` (live, summary only). **`--apply` DELETES** unused+shadowed+decl, repeating until nothing is left: only when the opt item says so. | B | `--help` | Y |
-| `move_script_cluster.py` | `git mv` a facade + helpers and rewrite `res://`, bare paths and renamed basenames repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--map map.json` exact old->new, `--list-cluster FACADE`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
-| `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools (`under`, `write_text_nl` for path guard and LF text writes) | BWD | module docstring (no `--help`) | Y |
-| `gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` | BD | module docstring (no `--help`) | Y |
-| `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line, `retry=` for the red-prove prompt), stamped `_logs/<job>` paths. `--selftest` checks the log layout. | BD | `--help` | Y |
-| `run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean | BD | module docstring (no `--help`) | Y |
-| `retry_lib.py` | Red-prove RETRY block: `grok -r <original-session-id> --fork-session` for the User to run from the worktree (the id the first `start_build_slice.py` run recorded; placeholder plus where to find it when none), plus the paste-ready prompt (failed prove, red lines, files in the diff from the week branch, one small corrective edit). `--selftest` | BD | module docstring (no `--help`) | Y |
-| `unit_lib.py` | Unit queue of a door (`unit_queue`, `unit_docs`, `unit_files`, `shot_states` in `routes.yaml`): the unit block of a card (position, flow and state, doc line ranges, files), the queue plan from the slice state or a handoff's `units:` / `done:`, and the `check_load_graph.py` lint for those keys | D | module docstring (no `--help`) | Y |
-| `handoff_lib.py` | The survey -> implement handoff, a Build task file (`ID.md` in `design/tasks/`; `units:` / `done:` header lines carry a unit queue): skeleton, validation, saved survey edits and the compact start summary for `start_build_slice.py --handoff` / `--from-handoff` / `--from-task`; `open_slice.py` validates a `# Handoff:` prompt | D | module docstring (no `--help`) | Y |
-| `session_lib.py` | Finds a Grok session folder and reads `prompt_context.json`, the early skills reminder, `prompt_history.jsonl` and `chat_history.jsonl` for the session facts of `start_build_slice.py` and the `Did not work:` lines (`failed_block`: failed tool results since the last ask) | D | module docstring (no `--help`) | Y |
-| `slice_state.py` | `_logs/slice-state.json` and the `SLICE ALREADY STARTED` text of `start_build_slice.py` (steps: import, baseline shots, original session, forked, handoff; resume at Gather or Prepare / Change / Prove / Complete) | D | module docstring (no `--help`) | Y |
-| `task_lib.py` | Task files in `design/tasks/`: header fields, the README index, `done` (delete, unblock dependants, changelog line), next opt id, and the `check_load_graph.py` lint | BWD | module docstring (no `--help`) | Y |
-| `slice_lib.py` | `start_build_slice.py` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, forked session, retry block, survey vs job, unit queue) and the `open_slice.py` area check | D | module docstring (no `--help`) | Y |
-| `bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` | BWD | module docstring (no `--help`) | Y |
-| `bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode | B | - | Y |
+## Jobs
 
-### Split, code map and doc edits
+- **Script sizes:** `check.py script-cap --bot --sweep` (Bot; `--verbose` for every row). Doc sizes: `check.py docs-size --bot --boot --dupes`.
+- **Duplicates:** `lint.py dupes` (summary first; `--out-md PATH` for the ranked list); the Bot gate is `lint.py dupes --gate` (run by `bot_status.py --bot --prove`).
+- **Dead code:** `lint.py unused --limit 30` (report only).
+- **Split a script:** `lint.py split FILE --list`, write `plan.json`, `lint.py split FILE --plan plan.json --dry-run`, then without `--dry-run`.
+- **Move a cluster:** `lint.py move --list-cluster FACADE`, then `--to-dir DIR --dry-run`.
+- **Host pitfalls (advisory):** `lint.py hostify`. Blank lines: `lint.py blanks PATH --dry-run`.
+- **Doc edits:** `docs.py patch replace FILE --old A --new B`, `ensure-line FILE --line L`, `replace-file FILE --from-file NEW`, `changelog --bullet "..."`, `apply plan.json`.
+
+## Catalog
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `split_funcs.py` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
-| `facade_requal.py` | Qualify names that moved to helpers (same folder or the facade's stem folder; `FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
-| `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `replace-file`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
-| `check_hub_bake.py` | Committed `hub_light.png` pixel hash vs `HUB_BAKE_STAMP` in `hub_bake.gd` (the game crashes on a mismatch), and `ground_wear.png` vs `GROUND_WEAR_STAMP`. Run by `run_build_gate.py --batch`. Summary: `hub-bake`. | BWD | `--help` | Y |
-| `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
-| `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
-| `bench_env.py` | One `env:` line (machine, CPU, GPU, RAM, OS, browser, Godot, renderer, vsync, cap, resolution, headless; unknown stays `unknown`) for benchmark summaries (`web_perf.py`, `run_hub_bench.py`, `bot_smokes.py` open_timing) | BWD | module docstring (no `--help`) | Y |
-| `list_oversize_docs.py` | Bot-only doc sweep (runs with `--bot`): `design/*.md` by size, `--boot` boot-chain bytes, `--dupes` sentences repeated across docs | B | `--help` | Y |
-| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`) with its read list (the one doc to read, others only on their trigger; `--digest --door D` prints one line per doc, `--digest --job J` that doc's headings with line numbers; a door with several jobs lists the flows per job), incl. smoke phases and shot flows; gates print as a count (`--gates` lists names and triggers), `flows: none` when empty (a job shows only its own key); no args lists the doors | BD | `--help` | Y |
+| `lint.py dupes` | Duplicate finder over every live `.gd` (`scripts/**`, `tools/data/**`) and `tools/**/*.py` (not `tools/retired`): exact / shape / near function clones, `block` / `nblock` line blocks, `run` (4+ adjacent calls differing only in literals or signs, one file) and `clone` (6+ lines equal once literals, signs and local names are masked; one file or across files). Summary first (counts, finding files, top files), then rows ranked by (copies-1) x lines, each with a stable `key`. Not counted: module-header lines (imports, preloads, the `tools/lib` bootstrap) and pure output sinks (`add_argument` / `print` / `append` of literals). `--gate`: every run and every row scoring `--gate-score` (12)+ must be refactored or listed with a `why` in `tools/data/dupes_allow.json`; new or stale keys FAIL. `--selftest`: the pre-fix stall builder fixture (`tools/data/dupes-fixture/`) must be flagged. `--lang`, `--min-lines`, `--min-block`, `--min-run`, `--min-clone`, `--top`, `--out-md PATH`. Summary: `dupes`. | B | `--help` | Y |
+| `lint.py unused` | Dead-code report (`--limit N` rows on stdout): `unused` funcs, `shadowed` (defined in 2+ files, nothing resolves to that def), `decl` (unused const/signal/preload alias), `maybe` (bare-name string only: check by hand); `dynamic` (called by name) counts only. **`--apply` DELETES** unused+shadowed+decl until none are left: only when the opt item says so. Summary: `unused-funcs`. | B | `--help` | Y |
+| `check.py docs-size` | Bot-only doc sweep (runs with `--bot`): root `*.md`, `design/**/*.md` (tasks, benchmarks; not changelog or refs) and skill .md by size, `--boot` boot-chain bytes, `--dupes` sentences repeated across docs; `--selftest` | B | `--help` | Y |
+| `lint.py split` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first (a local named `host` is refused); runs `lint.py requal`, a line-multiset check and `gate.py gd-load` on the written files (FAIL if they do not compile). Flow: grok-bot-size.md. | B | `--help` | Y |
+| `lint.py requal` | Qualify names that moved to helpers (same folder or the facade's stem folder; `FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `lint.py split` runs it itself. | B | `--help` | Y |
+| `lint.py move` | `git mv` a facade + helpers and rewrite `res://`, bare paths and renamed basenames repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--map map.json` exact old->new, `--list-cluster FACADE`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
+| `lint.py hostify` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
+| `lint.py blanks` | Collapse consecutive blank lines to one (BOM/EOL kept). Paths or dirs; `--ext`, `--dry-run`. Summary: `normalize-blanks`. | BD | `--help` | Y |
+| `docs.py patch` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `replace-file`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |

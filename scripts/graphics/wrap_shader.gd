@@ -15,6 +15,7 @@ uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enabl
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
+uniform vec2 light_shift = vec2(0.0);
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
@@ -22,6 +23,7 @@ uniform float russet = 0.0;
 uniform float shade_use = 0.0;
 uniform float shade_lo = 1.0;
 uniform float shade_hi = 1.0;
+uniform float ignore_actor_shadow = 0.0;
 varying vec3 wpos;
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -42,9 +44,12 @@ void fragment() {
 	if (shade_use > 0.5) {
 		c *= mix(shade_lo, shade_hi, clamp(UV.y, 0.0, 1.0));
 	}
-	vec2 span = max(light_span, vec2(0.001));
-	vec2 luv = clamp((wpos.xz - light_origin) / span, vec2(0.0), vec2(1.0));
-	vec3 lit = texture(light_tex, luv).rgb;
+	vec3 lit = vec3(1.0);
+	if (ignore_actor_shadow < 0.5) {
+		vec2 span = max(light_span, vec2(0.001));
+		vec2 luv = clamp((wpos.xz + light_shift - light_origin) / span, vec2(0.0), vec2(1.0));
+		lit = texture(light_tex, luv).rgb;
+	}
 	ALBEDO = c * lit;
 	ROUGHNESS = 1.0;
 	ALPHA = 1.0;

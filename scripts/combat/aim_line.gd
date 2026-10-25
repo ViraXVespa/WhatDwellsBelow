@@ -29,7 +29,7 @@ func _shader() -> Shader:
 	var sh := Shader.new()
 	sh.code = """
 shader_type spatial;
-render_mode unshaded, cull_disabled, depth_test_disabled;
+render_mode unshaded, cull_disabled;
 uniform vec4 col : source_color = vec4(1.0, 0.92, 0.55, 0.85);
 uniform float fade = 0.22;
 varying float along;

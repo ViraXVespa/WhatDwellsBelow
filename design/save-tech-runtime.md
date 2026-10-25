@@ -15,7 +15,7 @@ Read when: borderless exclusive, mip decode ban, Compatibility preferred
 
 60 FPS bar: the constraints file. Title → Play hitch work: hub. Floor streaming budget: dungeon.
 
-`SpriteFilt.ensure_mips` must not decode a `CompressedTexture2D` into `ImageTexture` at runtime. Web export bakes mip chains via `tools/enable_texture_mips.py`. Local play uses the imported texture as-is.
+`SpriteFilt.ensure_mips` must not decode a `CompressedTexture2D` into `ImageTexture` at runtime. Web export bakes mip chains via `tools/release.py mips`. Local play uses the imported texture as-is.
 
 Measured frame time and per-function costs: benchmarks. Whenever a benchmark is rerun, add its row there with the machine it ran on; numbers compare only within one machine.
 

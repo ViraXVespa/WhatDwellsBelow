@@ -84,6 +84,7 @@ static func paint_tip(host: Node) -> void:
 	host.tip_lab.text = ThemeS.skill_tip(host.tip_id, tip_lv(host, host.tip_id, host.tip_kind))
 	host.tip_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	host.tip_lab.add_theme_font_override("font", ThemeS.ink_font())
+	host.tip_lab.add_theme_font_size_override("font_size", ThemeS.font_px(18))
 	host.tip_lab.add_theme_constant_override("outline_size", 0)
 	var w: float = sheet.size.x - 36.0
 	host.tip_lab.custom_minimum_size = Vector2(w - 28.0, 0.0)

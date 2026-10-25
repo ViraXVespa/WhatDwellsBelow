@@ -1,0 +1,10 @@
+[
+  {"key": "3a2ba8173b27", "kind": "clone", "where": "controls_art.gd face/post, dumpster_art.gd painters",
+   "why": "bake-time pixel painters: the shared lines are the ArtBake.hit/UiBuild.keep cache contract plus a w*h raster loop; each body paints a different picture (frames --check pins the bytes)"},
+  {"key": "630533c24de2", "kind": "clone", "where": "anvil_art.gd, controls_art.gd, dumpster_art.gd painters",
+   "why": "same painter contract as 3a2ba8173b27 (cache hit, blank RGBA canvas, raster loop); the per-pixel bodies differ"},
+  {"key": "b09cf67600e3", "kind": "clone", "where": "goals_best.gd / goals_near.gd foe picks",
+   "why": "the shared part is the Cache.foes scan prologue; each pick has its own radius, filter and score, and a Callable-per-foe helper would cost more in the per-tick playtest driver than it saves"},
+  {"key": "936cae54a52f", "kind": "clone", "where": "torch_plan/hall.gd vs dungeon_stream/queue.gd flood fill",
+   "why": "queue.gd's walk predicate reads two grids and runs on the web floor-gen path; sharing a mask helper with torch_hall would add a full-map pass in web floor gen"}
+]

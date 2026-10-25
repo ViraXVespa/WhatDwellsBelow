@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Branch kind
+        id: kind
+        # repo_lib.branch_kind: grok-build-wN = Build, grok-web-wN = Web, every other named branch (bot/*, vendor-fixes) = Bot
+        run: python -c "import sys; sys.path.insert(0, 'tools/lib'); import repo_lib; print('kind=' + repo_lib.branch_kind(sys.argv[1]))" "${GITHUB_HEAD_REF}" >> "$GITHUB_OUTPUT"
+
       - name: Changed paths vs base
         id: changed
         shell: bash
@@ -36,26 +41,26 @@ jobs:
           cat /tmp/changed.txt || true
 
       - name: Script cap on changed gd
-        if: startsWith(github.head_ref, 'bot/')
+        if: steps.kind.outputs.kind == 'bot'
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t GD < <(grep -E '(^|/)scripts/.*\.gd$' /tmp/changed_live.txt || true)
+          mapfile -t GD < <(grep -E '^(scripts|tools/data)/.*\.gd$' /tmp/changed_live.txt || true)
           if [ "${#GD[@]}" -eq 0 ]; then
-            echo "No changed scripts/**/*.gd"
+            echo "No changed live .gd (scripts/, tools/data/)"
             exit 0
           fi
           args=()
           for f in "${GD[@]}"; do
             args+=(--path "$f")
           done
-          python tools/check_script_cap.py --root . "${args[@]}"
+          python tools/check.py script-cap --root . "${args[@]}"
 
       - name: Load graph
-        run: python tools/check_load_graph.py --root .
+        run: python tools/check.py load-graph --root .
 
-      - name: Allowlist on bot branches
-        if: startsWith(github.head_ref, 'bot/')
+      - name: Allowlist on Bot branches
+        if: steps.kind.outputs.kind == 'bot'
         shell: bash
         run: |
           set -euo pipefail
@@ -99,5 +104,5 @@ jobs:
           PY
 
       - name: Bot status snapshot
-        if: startsWith(github.head_ref, 'bot/')
+        if: steps.kind.outputs.kind == 'bot'
         run: python tools/bot_status.py --root .

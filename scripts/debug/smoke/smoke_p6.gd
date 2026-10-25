@@ -66,6 +66,10 @@ static func p6(host: Node) -> void:
 	App.prog.quest_active = {}
 	App.quest_named_type = ""
 	var named_q: bool = false
+	for _r: int in 20:
+		if App.prog.quests_offered.any(func(q: Dictionary) -> bool: return str(q.kind) == "named"):
+			break
+		App.prog.roll_quests(false)
 	for i: int in App.prog.quests_offered.size():
 		if str(App.prog.quests_offered[i].kind) == "named":
 			App.prog.accept_quest(i)

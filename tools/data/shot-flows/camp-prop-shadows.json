@@ -1,0 +1,107 @@
+{
+  "scene": "camp",
+  "hud": 0,
+  "zoom": 3.2,
+  "settle_ms": 800,
+  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd).",
+  "steps": [
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            6.2,
+            0.0,
+            11.6
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "shot",
+      "name": "dumpster"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            22.2,
+            0.0,
+            13.4
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "shot",
+      "name": "anvil"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            17.1,
+            0.0,
+            8.4
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "shot",
+      "name": "board"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            21.5,
+            0.0,
+            18.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "shot",
+      "name": "billboard"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.report",
+      "contains": "away="
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.bad",
+      "equals": ""
+    }
+  ]
+}

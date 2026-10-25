@@ -14,7 +14,7 @@ Cut routing tokens without losing comprehension. Do not change what the docs say
 
 ## Caps
 
-The Bot's doc size targets live in `grok-bot-docs.md`; `tools/list_oversize_docs.py --bot` lists sizes.
+The Bot's doc size targets live in `grok-bot-docs.md`; `tools/check.py docs-size --bot` lists sizes.
 
 ## Scope
 

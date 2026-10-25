@@ -65,29 +65,21 @@ static func pick_btn(it: Dictionary) -> Button:
 static func has_item_icon(it: Dictionary) -> bool:
 	return _item_path(it) != ""
 
+## Icon frame fill / border per rarity (white and unknown use the fallback in each func).
+const _FILL := {"green": Color(0.16, 0.28, 0.16), "blue": Color(0.14, 0.2, 0.34)}
+const _BORDER := {"green": Color(0.35, 0.72, 0.34), "blue": Color(0.4, 0.58, 0.95)}
+
 static func rarity_fill(it: Dictionary) -> Color:
 	if it.is_empty():
 		return Color(0.16, 0.13, 0.1)
-	match str(it.get("rarity", "white")):
-		"green":
-			return Color(0.16, 0.28, 0.16)
-		"blue":
-			return Color(0.14, 0.2, 0.34)
-		_:
-			return Color(0.28, 0.24, 0.18)
+	return Fmt.by_rarity(it, _FILL, Color(0.28, 0.24, 0.18))
 
 static func rarity_border(it: Dictionary) -> Color:
 	if _at_risk(it):
 		return RISK
 	if it.is_empty():
 		return Color(0.4, 0.3, 0.18)
-	match str(it.get("rarity", "white")):
-		"green":
-			return Color(0.35, 0.72, 0.34)
-		"blue":
-			return Color(0.4, 0.58, 0.95)
-		_:
-			return Color(0.78, 0.7, 0.48)
+	return Fmt.by_rarity(it, _BORDER, Color(0.78, 0.7, 0.48))
 
 static func _at_risk(it: Dictionary) -> bool:
 	return Fmt.is_risk(it)

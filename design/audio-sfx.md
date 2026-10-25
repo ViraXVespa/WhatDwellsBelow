@@ -9,7 +9,7 @@ The required SFX list stays on the audio-visual page.
 ## Where cues come from, and how Build wires one
 - Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `FILES` is the one cue table (id to path; `_ready()` loads each; smoke 9 checks every path exists); a missing file loads silent, so check the path.
 - Play: `App.sfx("id")` at the event (`App.sfx` forwards to the `sfx.gd` node). `hurt`, `warcry` and `hurk` resolve to `_male` / `_female` by `App.character_type`. The adrenaline loop is `set_adrenaline(true/false)` from `app_run.gd`.
-- Volume: every player is on the Master bus at `vol_sfx * vol_master`; there are no custom buses. Music is `music.gd`. On the web the browser plays both music tracks (`web_music.gd`: HTMLAudio into a Web Audio gain, buffered by time off the game loop); `web_postexport.py` copies them to `music/` and `export_presets.cfg` keeps them out of the pck. A missing track is a console and Godot error. Regression: `web_perf.py --flow dungeon-music-cold`.
+- Volume: every player is on the Master bus at `vol_sfx * vol_master`; there are no custom buses. Music is `music.gd`. On the web the browser plays both music tracks (`web_music.gd`: HTMLAudio into a Web Audio gain, buffered by time off the game loop); `release.py postexport` copies them to `music/` and `export_presets.cfg` keeps them out of the pck. A missing track is a console and Godot error. Regression: `perf.py web --flow dungeon-music-cold`.
 - New cue: reuse a file already under `assets/audio/` when one fits. A new file is an access confirm (new asset location) and `isolated-media.md` if Imagined. Then add one `FILES` row and one `App.sfx` call, and run smoke 9.
 - `sfx_dash`, `sfx_hit`, `sfx_level`, `sfx_slam` are second recordings (`ALTS`): each play of `dash`, `hit`, `level`, `slam` picks the `p2_*` / `p9_*` file or its alt at random (private RNG). `sfx_hurt` is the body hit layered under the hurt voice (`LAYERS`).
 - An event listed under Missing SFX stays silent until the User approves wiring it: ask, do not add.
@@ -26,4 +26,4 @@ Same rules as above: new file under `assets/audio/`, one `FILES` row, one `App.s
 | Chest open | `interact_act.gd` `open_chest` chest branch (today plays `pickup`) | `chest` / `p10_chest.wav` | 0.4 s creak then latch click |
 | Quest accept | `quest_roll.gd` `accept_quest` | `quest_accept` / `p10_quest_accept.wav` | 0.3 s two-note stamp or seal, hopeful |
 
-Generate a placeholder wav with `python tools/make_sfx.py --only <id>`: add one entry to `tools/sfx-cues.json` (sine, noise, mix, cat nodes; the 21 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.
+Generate a placeholder wav with `python tools/media.py sfx --only <id>`: add one entry to `tools/data/sfx-cues.json` (sine, noise, mix, cat nodes; the 21 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.

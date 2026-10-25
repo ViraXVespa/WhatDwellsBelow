@@ -10,7 +10,10 @@ extends Object
 const Plate: GDScript = preload("res://scripts/ui/plate_chrome.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const PromptView: GDScript = preload("res://scripts/ui/prompt_view.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 
+## Shelf-row looks (lift, foot) for normal, hover, pressed, disabled; shop and vendor bake them when built.
+const SHELF_LOOKS: Array = [[0.92, 2], [0.98, 2], [0.62, 4], [0.5, 2]]
 const PLATE_POS: Vector2 = Vector2(360, 80)
 const PLATE_SIZE: Vector2 = Vector2(1200, 920)
 const SCROLL_POS: Vector2 = Vector2(384, 104)
@@ -34,7 +37,10 @@ static func mount(host: CanvasLayer, skin: GDScript) -> void:
 	chrome.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(chrome)
 	host.move_child(chrome, 1)
+	var was: float = UiText.cap
+	UiText.cap = float(skin.get("TEXT_CAP")) if skin.get("TEXT_CAP") != null else 0.0
 	skin.build(chrome)
+	UiText.cap = was
 
 ## Skin hook BTN_SKIN (optional const): the control skin (ui_tokens SKINS) for buttons and gear slots while that
 ## frame is open. Other modes use "neutral".

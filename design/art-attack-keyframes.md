@@ -2,28 +2,28 @@
 
 Status: parked experiment. Not the live I2V plan.
 Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.
-Code: `tools/attack_keyframes.py`
+Code: `tools/media.py attack-keys`
 
 Do not read when: the job is walk or idle I2V, pack, overlay, Godot, combat numbers, or a general art-pipeline session.
 
-Log: `tools/attack_keyframes_log.json`
+Log: `tools/data/attack_keyframes_log.json`
 Seed: locked Bible Down cell, 4x NN, `#FF00FF`. User file name used in testing: `seed_i2v_down_x4.png`. Chat image ids die with the session. Do not ask for old ones.
 
 ## Resume commands (run these; paste the printed block)
 
-    python tools/attack_keyframes.py --resume
+    python tools/media.py attack-keys --resume
 
 Same prompt without the log:
 
-    python tools/attack_keyframes.py --print --gender female --facing down --action attack_great_axe --beat coil
+    python tools/media.py attack-keys --print --gender female --facing down --action attack_great_axe --beat coil
 
 After a roll:
 
-    python tools/attack_keyframes.py --log --verdict parked --note "short note"
+    python tools/media.py attack-keys --log --verdict parked --note "short note"
 
 `verdict` is `keeper`, `fail`, or `parked`.
 
-    python tools/attack_keyframes.py --beats --action attack_great_axe
+    python tools/media.py attack-keys --beats --action attack_great_axe
 
 Imagine-edit the Bible cell only. Never edit a previous generate. Success means the desired pose appears from that seed on a fresh generate.
 
@@ -47,7 +47,7 @@ idle (Bible, do not generate), coil (in progress), mid_swing, contact, follow, r
 
 ## Locked coil sheet
 
-Sheet id `coil_v31`. Live text is whatever `attack_keyframes.py --resume` prints. That is the source of truth if this file and the script drift. 
+Sheet id `coil_v31`. Live text is whatever `media.py attack-keys --resume` prints. That is the source of truth if this file and the script drift. 
 
 Do not add: stomach, navel, C-shape, fingernails, thumbs on top, strip of jacket between hands, shoulder twist, clearer coil, belt, buckle, middle of the chest, her left, his left.
 
@@ -79,7 +79,7 @@ Allowed extras on top of the v31 sheet: drop "same hair"; "small body coil"; "ha
 4. Generate `coil_v32` from that seed only, using the printed `coil_v31` sheet.
 5. Score against: stacked fists on the sternum, camera-right high (Down), idle feet, square Down, no prop, optional small coil, seed belt copied without naming it.
 6. Log the roll. Do not invent mid-swing until coil is accepted as finished product.
-7. If quota dies, stop. Pickup is this file plus `python tools/attack_keyframes.py --resume`.
+7. If quota dies, stop. Pickup is this file plus `python tools/media.py attack-keys --resume`.
 
 ## Parked pickup (2026-09-16)
 

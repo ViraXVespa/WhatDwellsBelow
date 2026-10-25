@@ -4,6 +4,7 @@ extends Object
 ## Mount order is list order; the host mounts once and re-applies on every open.
 
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 const ControlsFrame: GDScript = preload("res://scripts/ui/progress_ui/controls_frame.gd")
@@ -20,6 +21,13 @@ const SKINS: Array = [VendorFrame, DumpsterFrame, ControlsFrame, AnvilFrame, Cry
 static func mount(host: CanvasLayer) -> void:
 	for skin: GDScript in SKINS:
 		FrameBase.mount(host, skin)
+
+## Text scale cap of the frame `mode` wears (skin const TEXT_CAP: fixed art that cannot grow with the text); 0 = none.
+static func text_cap(mode: String) -> float:
+	for skin: GDScript in SKINS:
+		if str(skin.spec()["mode"]) == mode:
+			return float(skin.get("TEXT_CAP")) if skin.get("TEXT_CAP") != null else 0.0
+	return 0.0
 
 static func btn_skin(host: CanvasLayer) -> String:
 	return FrameBase.btn_skin(host, SKINS)

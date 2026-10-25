@@ -33,7 +33,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 
 After a hostify batch, run the **editor import** compile check via `design/pc-offload.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 
-Optional advisory scan: `lint_hostify.py`, always exit 0; it is not a compile substitute. After a size-split batch: Bot, `bot_warnscan.py --non-leak-diff` per BOT.md; PC, `run_post_split_gate.py` (`-WithSmokes` when coverage matters). Tool details: design/tools.md.
+Optional advisory scan: `lint.py hostify`, always exit 0; it is not a compile substitute. After a size-split batch: Bot, `gate.py warnscan --non-leak-diff` per BOT.md; PC, `gate.py build --batch`, then `gate.py smokes` when coverage matters. Tool details: design/tools.md.
 
 ## Shared calculations (gameplay + smoke)
 

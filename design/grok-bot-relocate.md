@@ -21,6 +21,6 @@ Do not open the staged reuse brief. Do not read every caller first — run the m
 ## Pass
 
 1. User names the source facade and destination folder. Stop and ask if either is missing.
-2. Run `move_script_cluster.py` (modes, wrapper rule, what it rewrites: `refactor.md` Parked folder moves).
+2. Run `lint.py move` (modes, wrapper rule, what it rewrites: `refactor.md` Parked folder moves).
 3. Update `design/code-map.md` rows in the same PR. Do the manual checks from `refactor.md` Cluster folders.
 4. Prove: `BOT.md`.

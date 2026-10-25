@@ -7,6 +7,8 @@ extends Object
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+## Fixed board art: text scales up to this on small screens (ui_text.gd cap), then the board would overflow.
+const TEXT_CAP := 1.4
 const Art: GDScript = preload("res://scripts/ui/progress_ui/vendor_art.gd")
 const UiText: GDScript = preload("res://scripts/ui/ui_text.gd")
 
@@ -36,10 +38,8 @@ static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "stall_counter", Art.grain(160, 48, 0.12, 0))
 	UiBuild.piece(chrome, "stall_crate", Art.crate())
 	UiBuild.piece(chrome, "stall_pot", Art.pot())
-	Art.shelf(0.92, 2)
-	Art.shelf(0.98, 2)
-	Art.shelf(0.62, 4)
-	Art.shelf(0.5, 2)
+	for look: Array in FrameBase.SHELF_LOOKS:
+		Art.shelf(look[0], look[1])
 	for i: int in 7:
 		var kind: int = i % 3
 		var tex: Texture2D = Art.herb()

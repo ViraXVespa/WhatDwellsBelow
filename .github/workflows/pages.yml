@@ -88,14 +88,14 @@ jobs:
           ver_path.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
           print("workspace stamp", payload["label"])
           PY
-          python3 tools/archive_prior_changelogs.py
-          python3 tools/build_changelog.py
+          python3 tools/release.py park-changelogs
+          python3 tools/release.py changelog
 
       - name: Game export hash
         id: gamehash
         run: |
           set -euo pipefail
-          python3 tools/pages_game_hash.py --out /tmp/wdb_game_hash
+          python3 tools/release.py pages-hash --out /tmp/wdb_game_hash
           HASH="$(tr -d '[:space:]' </tmp/wdb_game_hash)"
           echo "hash=$HASH" >> "$GITHUB_OUTPUT"
           echo "WDB_GAME_HASH=$HASH" >> "$GITHUB_ENV"
@@ -133,10 +133,10 @@ jobs:
           set -euo pipefail
           SITE="$PWD/site"
           mkdir -p "$SITE"
-          python3 tools/enable_texture_mips.py --root "$PWD"
+          python3 tools/release.py mips --root "$PWD"
           "$GODOT_BIN" --headless --path "$PWD" --import
           "$GODOT_BIN" --headless --path "$PWD" --export-release Web "$SITE/index.html"
-          python3 tools/web_postexport.py "$SITE"
+          python3 tools/release.py postexport "$SITE"
           touch "$SITE/.nojekyll"
           rm -rf .live_export_cache
           mkdir -p .live_export_cache
@@ -150,7 +150,7 @@ jobs:
           SITE="$PWD/site"
           mkdir -p "$SITE"
           cp -a .live_export_cache/. "$SITE"/
-          python3 tools/web_postexport.py --notes-only "$SITE"
+          python3 tools/release.py postexport --notes-only "$SITE"
           touch "$SITE/.nojekyll"
 
       - name: Save live export cache
@@ -161,7 +161,7 @@ jobs:
           key: wdb-pages-live-${{ steps.gamehash.outputs.hash }}
 
       - name: Publish loose notes
-        run: python3 tools/publish_notes_site.py --root "$PWD" --site "$PWD/site"
+        run: python3 tools/release.py notes-site --root "$PWD" --site "$PWD/site"
 
       - name: Restore archive export cache
         if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
@@ -177,7 +177,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
         run: |
           set -euo pipefail
-          python3 tools/export_archives.py \
+          python3 tools/release.py archives \
             --root "$PWD" \
             --site "$PWD/site" \
             --godot "$GODOT_BIN" \

@@ -33,7 +33,7 @@ Plain text, no code fence when emitted. Body shape:
 
 **Week close.** One extra file per week, `design/changelog/0.N.0.md` (patch 0 of the closing series; a whole-week summary in the same body shape), written by a web session the User runs (never Build or the Bot: `versioning.md`). Name it explicitly (it is not patch + 1) and commit it on `grok-build-wN`; its arrival on `main` creates the week's archives (`versioning.md`).
 
-**Every PR ships an entry; never omit it.** The note is player-facing in tone (plain words, so players know what is being worked on) but is not limited to player-visible changes: docs, tooling and refactor work get a short plain-language bullet too. Shape: the short `Summary:` line plus bullets. `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python tools/doc_patch.py next-label`). Pages `/changelog/` is the public index.
+**Every PR ships an entry; never omit it.** The note is player-facing in tone (plain words, so players know what is being worked on) but is not limited to player-visible changes: docs, tooling and refactor work get a short plain-language bullet too. Shape: the short `Summary:` line plus bullets. `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python tools/docs.py patch next-label`). Pages `/changelog/` is the public index.
 
 ## In-game
 

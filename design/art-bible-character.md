@@ -9,7 +9,7 @@ art is already open when this sibling is loaded. Do not reopen art_pipeline from
 
 Create and lock one primary 3×3 Character Bible on a solid chroma plate for each character type (male and female).
 
-Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure). Print the locked Imagine text with `python tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template.
+Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure). Print the locked Imagine text with `python tools/media.py bible-prompt --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template.
 
 **Requirements:**
 
@@ -41,16 +41,16 @@ These files are updated from the live lock (**Bible procedure** below) only afte
 
 **Plate colour:** Grok often paints near-magenta instead of pure `#FF00FF` (example: `#F50487`, `#EE22DD`, other hot pinks / violets). Do not lock that raw plate. Do not punch it to alpha yet.
 
-Run `tools/plate_remap.py` on the accepted Bible (and on any later raw still used as an I2V seed):
+Run `tools/media.py plate-remap` on the accepted Bible (and on any later raw still used as an I2V seed):
 
 1. Sample the start chroma from the border.
 2. Magic-wand the background from the border on that chroma.
-3. Fill enclosed plate pockets the border wand cannot reach (armpits, crotch, between arm and torso). Use the same enclosed-island rule as `tools/sprite_pipeline.py` `_fill_pockets`.
+3. Fill enclosed plate pockets the border wand cannot reach (armpits, crotch, between arm and torso). Use the same enclosed-island rule as `tools/media.py sprites` `_fill_pockets`.
 4. Hue-correct wand / pocket pixels from start chroma to `#FF00FF`.
 5. Analyse pixels on the wand frontier for start-chroma bleed and hue-correct that influence to `#FF00FF` influence.
 6. Leave the plate **opaque**.
 
-The remapped Bible / still is still a chroma source. It is the legal I2V seed. `sprite_pipeline.py` key-to-alpha runs only after the User accepts extracted frames.
+The remapped Bible / still is still a chroma source. It is the legal I2V seed. `media.py sprites` key-to-alpha runs only after the User accepts extracted frames.
 
 **Square the Bible before any 3×3 split:** A generated Bible MAY not be a perfect square and MAY include extra margin. Hug the grid, not the silhouettes. Outer-cell plate padding stays in the sprites; only leftover canvas outside the 3×3 is cut.
 
@@ -71,10 +71,10 @@ Instead, recover the intended grid and crop to that:
 
 ### Bible procedure
 
-1. Generate one single-pass 3×3 (`python tools/bible_prompt.py`, Imagine as above).
+1. Generate one single-pass 3×3 (`python tools/media.py bible-prompt`, Imagine as above).
 2. Square it on the lattice (above). Crop only.
 3. Archive the squared raw as `_src/new_bibles/source/male.png` / `female.png`. Archive only; nothing downstream reads it.
-4. Run `python tools/bible_normalize.py _src/new_bibles/source/female.png _src/new_bibles/female.png` (same for male). It remaps the plate, removes JPEG damage, normalizes and rebuilds each cell. Read its per-cell table and flags. Install: `tools/requirements-ml.txt` (`--no-denoise` runs without torch).
+4. Run `python tools/media.py bible-normalize _src/new_bibles/source/female.png _src/new_bibles/female.png` (same for male). It remaps the plate, removes JPEG damage, normalizes and rebuilds each cell. Read its per-cell table and flags. Install: `tools/requirements-ml.txt` (`--no-denoise` runs without torch).
 5. The output is the live lock `_src/new_bibles/{male,female}.png`. Seeds, mid-clip pins and style refs use the live lock.
 6. After the User accepts the live lock, copy it to `assets/sprites/player/bible_locked_*.png`.
 
@@ -87,7 +87,7 @@ Rules:
 
 ## Appendix C — Character Bible prompt template
 
-Print the locked 3×3 Imagine text with `python tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template. Magenta plate `#FF00FF`. Printer only — do not send Imagine from that path unless the User says to.
+Print the locked 3×3 Imagine text with `python tools/media.py bible-prompt --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template. Magenta plate `#FF00FF`. Printer only — do not send Imagine from that path unless the User says to.
 
 ## Appendix D — Method reliability
 
@@ -98,15 +98,15 @@ Load this appendix only when choosing a generation method.
 | Soft identity language after Bible lock | High | Use always after lock |
 | Single-pass 3×3 for the Bible | Highest for identity | Preferred for Bible |
 | Chained image-edits for Bible cells | Low | Drift; avoid for Bible |
-| `i2v_seeds.py` walk prompt (in-place steps, short arm swing, settle and hold the still) | High | Only locomotion I2V method |
-| `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | Mixed | Walk-class I2V is high; unarmed two-hand attack I2V invents props |
-| `attack_keyframes.py` Bible-cell stills | Parked | Coil sheet only; open art_pipeline.attack_keyframes when the User resumes that pipeline |
+| `media.py i2v-seeds` walk prompt (in-place steps, short arm swing, settle and hold the still) | High | Only locomotion I2V method |
+| `media.py i2v-seeds` one-shot MOTION keys (per weapon / tool, death, Dispel) | Mixed | Walk-class I2V is high; unarmed two-hand attack I2V invents props |
+| `media.py attack-keys` Bible-cell stills | Parked | Coil sheet only; open art_pipeline.attack_keyframes when the User resumes that pipeline |
 | One 400% NN spliced still as the I2V seed | High | Default seed |
-| `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
+| `media.py i2v-seeds --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | Full-Bible seed | Medium | Only if the User asks after a still-seed miss |
 | Video-fill from last accepted clip | Medium | Last resort, User-asked |
 | Staged keyer on the raw plate (`imglib/matte.py`) | High | Samples a drifted plate itself; maroon / purple paint stays |
 | Automatic multi-pass fill-in | Forbidden | One unit, then User review |
 | Overlay I2V / stills for weapons and tools | High | Layers, not baked body props |
-| Isolated Imagine / I2V via `tools/run_isolated_grok.py` | High | Default generate path; see isolated_media |
+| Isolated Imagine / I2V via `tools/media.py grok` | High | Default generate path; see isolated_media |
 | Nearest-neighbor / scripted pixel-grid cleanup | Mandatory | Always perform after accept |

@@ -1,0 +1,71 @@
+name: media-bot
+
+# Wakes Bottie Boop, the media bot (design/media-bot.md), to record promo shots on main. Only pings; the box records.
+# week-start: a grok-build-wN branch was pushed (Web Week End). refs = last Build merge on main, main where wN was cut.
+# week-merge: grok-build-wN was merged into main. refs = merge^1, merge.
+# Skips quietly while BOTTIE_BOOP_WEBHOOK_URL / BOTTIE_BOOP_WEBHOOK_KEY are unset.
+on:
+  create:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  ping:
+    if: >-
+      (github.event_name == 'create' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'grok-build-w')) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'grok-build-w'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout (history only, no blobs)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Ping Bottie Boop webhook
+        env:
+          URL: ${{ secrets.BOTTIE_BOOP_WEBHOOK_URL }}
+          KEY: ${{ secrets.BOTTIE_BOOP_WEBHOOK_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          BRANCH: ${{ github.event_name == 'create' && github.event.ref || github.event.pull_request.head.ref }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${URL}" ] || [ -z "${KEY}" ]; then echo "Bottie Boop webhook unset; not woken"; exit 0; fi
+          R="${GITHUB_REPOSITORY}"
+          A=""; B=""
+          if [ "${EVENT}" = "create" ]; then
+            N="${BRANCH#grok-build-w}"
+            B=$(git merge-base origin/main "origin/${BRANCH}" || true)
+            if [[ "${N}" =~ ^[0-9]+$ ]]; then
+              A=$(gh pr list -R "${R}" --state merged --head "grok-build-w$((N - 1))" --json mergeCommit --jq '.[0].mergeCommit.oid // ""' || true)
+            fi
+            JOB=week-start
+          else
+            B="${MERGE_SHA}"
+            A=$(git rev-parse --verify -q "${MERGE_SHA}^1" || true)
+            JOB=week-merge
+          fi
+          export A B JOB
+          python3 - <<'PY'
+          import json, os, urllib.request
+          a, b = os.environ.get("A", ""), os.environ.get("B", "")
+          body = {"repo": os.environ.get("GITHUB_REPOSITORY", ""), "job": os.environ["JOB"], "branch": os.environ["BRANCH"],
+                  "sha": os.environ.get("GITHUB_SHA", ""), "merge_sha": os.environ.get("MERGE_SHA", ""),
+                  "pr": os.environ.get("PR_URL", ""), "refs": f"{a},{b}" if a and b else ""}
+          print(json.dumps(body))
+          req = urllib.request.Request(os.environ["URL"], data=json.dumps(body).encode(), method="POST",
+                  headers={"Content-Type": "application/json", "Authorization": "Bearer " + os.environ["KEY"]})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              print("webhook", r.status)
+          PY

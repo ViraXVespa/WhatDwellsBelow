@@ -1,7 +1,7 @@
 extends Object
 
-const FENCE_TEX := "res://assets/sprites/props/fence.png"
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
 static var _fence_mat: StandardMaterial3D
 
@@ -15,13 +15,15 @@ static func fence(host: Node3D) -> void:
     var oz: int = slab.y
     var gw: int = slab.z
     var gd: int = slab.w
-    var y: float = 0.58
-    var h: float = 1.05
-    var t: float = 0.22
-    fence_run(host, Vector3(float(ox) + float(gw) * 0.5, y, float(oz) + 0.08), Vector3(float(gw), h, t), true)
-    fence_run(host, Vector3(float(ox) + float(gw) * 0.5, y, float(oz + gd) - 0.08), Vector3(float(gw), h, t), true)
-    fence_run(host, Vector3(float(ox) + 0.08, y, float(oz) + float(gd) * 0.5), Vector3(t, h, float(gd)), false)
-    fence_run(host, Vector3(float(ox + gw) - 0.08, y, float(oz) + float(gd) * 0.5), Vector3(t, h, float(gd)), false)
+    var f: Dictionary = Spec.FENCE
+    var y: float = f["y"]
+    var h: float = f["h"]
+    var t: float = f["t"]
+    var i: float = f["inset"]
+    fence_run(host, Vector3(float(ox) + float(gw) * 0.5, y, float(oz) + i), Vector3(float(gw), h, t), true)
+    fence_run(host, Vector3(float(ox) + float(gw) * 0.5, y, float(oz + gd) - i), Vector3(float(gw), h, t), true)
+    fence_run(host, Vector3(float(ox) + i, y, float(oz) + float(gd) * 0.5), Vector3(t, h, float(gd)), false)
+    fence_run(host, Vector3(float(ox + gw) - i, y, float(oz) + float(gd) * 0.5), Vector3(t, h, float(gd)), false)
 
 static func fence_run(host: Node3D, pos: Vector3, box_size: Vector3, along_x: bool) -> void:
     var body := StaticBody3D.new()
@@ -35,16 +37,20 @@ static func fence_run(host: Node3D, pos: Vector3, box_size: Vector3, along_x: bo
     cs.shape = sh
     body.add_child(cs)
     var span: float = box_size.x if along_x else box_size.z
-    var n: int = maxi(2, int(round(span / 2.0)) + 1)
+    var f: Dictionary = Spec.FENCE
+    var n: int = maxi(2, int(round(span / float(f["post_step"]))) + 1)
     var wood: StandardMaterial3D = fence_mat()
-    var rail_len: float = span - 0.2
-    fence_box(body, fence_rail_size(along_x, rail_len, 0.1, 0.12), Vector3(0.0, -0.12, 0.0), wood)
-    fence_box(body, fence_rail_size(along_x, rail_len, 0.1, 0.12), Vector3(0.0, 0.22, 0.0), wood)
+    var rail_len: float = span - float(f["trim"])
+    var rail: Vector2 = f["rail"]
+    for ry: float in f["rails"]:
+        fence_box(body, fence_rail_size(along_x, rail_len, rail.x, rail.y), Vector3(0.0, ry, 0.0), wood)
+    var pw: float = f["post"]
+    var py: float = f["post_y"]
     for i in n:
         var u: float = 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
-        var off: float = u * (span - 0.2)
-        var ppos: Vector3 = Vector3(off, 0.02, 0.0) if along_x else Vector3(0.0, 0.02, off)
-        fence_box(body, Vector3(0.18, box_size.y, 0.18), ppos, wood)
+        var off: float = u * (span - float(f["trim"]))
+        var ppos: Vector3 = Vector3(off, py, 0.0) if along_x else Vector3(0.0, py, off)
+        fence_box(body, Vector3(pw, box_size.y, pw), ppos, wood)
 
 static func fence_rail_size(along_x: bool, length: float, thick: float, tall: float) -> Vector3:
     if along_x:
@@ -67,9 +73,9 @@ static func fence_mat() -> StandardMaterial3D:
     var mat := StandardMaterial3D.new()
     mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
     mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-    mat.albedo_color = Color(0.45, 0.32, 0.2)
-    if ResourceLoader.exists(FENCE_TEX):
-        mat.albedo_texture = load(FENCE_TEX)
+    mat.albedo_color = Spec.FENCE["col"]
+    if ResourceLoader.exists(Spec.FENCE["tex"]):
+        mat.albedo_texture = load(Spec.FENCE["tex"])
         mat.albedo_color = Color.WHITE
     _fence_mat = mat
     return mat

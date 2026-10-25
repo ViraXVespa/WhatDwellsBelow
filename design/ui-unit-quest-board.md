@@ -3,7 +3,7 @@
 Status: queued unit  
 Read when: pinned parchment, offer cutouts  
 
-- Shot: flow `camp-npc-panels`, state quest-board (`python tools/run_shot_flow.py --job ui.quest_board`).
+- Shot: flow `camp-npc-panels`, state quest-board (`python tools/shots.py flow --job ui.quest_board`).
 - Her ruling: "notice board should show quest posters instead of buttons."
 - Task: task `ui-quest-board-posters` (posters, tips on focus, refresh rules, the pause Quest tab).
 - Quest tab: one row in `pause_menu.gd` `TABS` (id, label, builder); flows name tabs by id (`camp-pause-pages` shoots the pause tabs), and the new `pause:quest` state needs a flow shot. Poster tips: `scripts/ui/tip_hover.gd`. A two-sheet layout: `scripts/ui/journal_spread.gd`.

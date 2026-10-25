@@ -1,4 +1,4 @@
-# Optional ML deps for tools/bible_normalize.py denoise (imglib/scunet.py); not needed with --no-denoise.
+# Optional ML deps for tools/media.py bible-normalize denoise (imglib/scunet.py); not needed with --no-denoise.
 # CPU torch: pip install -r tools/requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.2
 einops>=0.7

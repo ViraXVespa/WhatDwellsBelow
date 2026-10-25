@@ -154,7 +154,8 @@ static func _row_action(row: Dictionary) -> String:
 		return Prompts.page_next()
 	return str(row.get("action", ""))
 
-static func _paint(host: Control, parts: Array, font_size: int, color: Color) -> void:
+static func _paint(host: Control, parts: Array, base_size: int, color: Color) -> void:
+	var font_size: int = ThemeS.font_px(base_size, host.name != BAR_NAME)
 	var sig := "%s|%d|%s" % [str(parts), font_size, color]
 	if host.get_meta("prompt_sig", "") == sig and _swap_glyphs(host, font_size, color):
 		return
@@ -257,6 +258,6 @@ static func glyph_col(actions: Array, font_size: int) -> float:
 	for a: Variant in actions:
 		var tex: Texture2D = Prompts.texture_for(str(a))
 		if tex and tex.get_size().y > 0.0:
-			var h := float(maxi(font_size + 14, 28))
+			var h := float(maxi(ThemeS.font_px(font_size) + 14, 28))
 			w = maxf(w, h * tex.get_size().x / tex.get_size().y)
 	return w

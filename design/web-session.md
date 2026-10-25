@@ -56,7 +56,7 @@ Move only when the User names the next phase (except the multi-slice loop below)
 The User tells the agent to review the repo.
 
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
-If the first message names a park (a task id or its words), load only that task file after the law pair, and continue; with a mandate, Phase 2 is optional. Web tasks have no resume line. A finished park is closed with `task.py done` (`design/tasks/README.md`).
+If the first message names a park (a task id or its words), load only that task file after the law pair, and continue; with a mandate, Phase 2 is optional. A web task's `resume:` is one plain line, not a command to run. A finished park is closed with `docs.py task done` (`design/tasks/README.md`).
 If the User names build-coop or build-week, there is no gather tool: use `read_summary` only if the User also named a PC job (no game writes). `_logs/sess/` is PC job output.
 If no park or gather is named, confirm ready (brainstorm; no implementation).
 
@@ -70,7 +70,7 @@ Goal, questions, Source/Docs emit list; the User accepts it before Phase 4. Rule
 
 ### Phase 4 — Emit
 
-One action, one `tools/_scratch.py`. Always create, update, or close tasks via `doc_patch.task([...])` (`tools/task.py`); never hand-edit a task skeleton. The scratch must call the matching prove runner and base RESULT solely on the integer it returns—do not print RESULT until the runner has returned, and never hard-code PASS. The rest of the emit rules (scratch shape, revise-from-fetch, docs in the pass, prove table, py_compile rule), Build co-op prompts, scratch helpers and the fetch recipe live in the emit sibling. Open it at Phase 4 and not before: `web-emit.md`.
+One action, one `tools/_scratch.py`. Always create, update, or close tasks via `doc_patch.task([...])` (`tools/docs.py task`); never hand-edit a task skeleton. The scratch must call the matching prove runner and base RESULT solely on the integer it returns—do not print RESULT until the runner has returned, and never hard-code PASS. The rest of the emit rules (scratch shape, revise-from-fetch, docs in the pass, prove table, py_compile rule), Build co-op prompts, scratch helpers and the fetch recipe live in the emit sibling. Open it at Phase 4 and not before: `web-emit.md`.
 
 ### Phase 5 — Test
 

@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""Hub bake check: the committed assets/baked/hub_light.png must match HUB_BAKE_STAMP in hub_bake.gd, and
+assets/baked/ground_wear.png must match GROUND_WEAR_STAMP in ground_shader.gd (tools/bake.py ground).
+
+    python tools/bake.py check [--root R] [--json]
+
+The game loads only a baked hub image whose size matches the Layout and whose RGBA8 pixels hash to HUB_BAKE_STAMP
+(first 16 hex of SHA-256), and crashes with a FATAL message otherwise. This is the same hash without Godot, so a stale
+bake fails here (gate.py build --batch) before it breaks the hub. Fix: tools/bake.py camp, review, paste stamp=.
+Also FAILs when a bake input (light code, a layout_spec.gd const) changed since the bake (bake_inputs.py,
+tools/data/hub_bake_inputs.json); --record re-records the inputs for the current stamp without a rebake.
+RESULT PASS = png present, size >= 16, stamp equal, inputs as baked; FAIL otherwise. Summary: _logs/hub-bake/.
+"""
+from __future__ import annotations
+
+import hashlib
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
+import boot  # noqa: E402,F401
+import agent_log
+import bake_inputs
+
+PNG = "assets/baked/hub_light.png"
+SRC = "scripts/graphics/light_rt/hub_bake.gd"
+WEAR_PNG = "assets/baked/ground_wear.png"
+WEAR_SRC = "scripts/graphics/ground_shader.gd"
+
+def png_stamp(path: Path) -> tuple[str, int, int]:
+    from PIL import Image
+    with Image.open(path) as im:
+        rgba = im.convert("RGBA")
+        return hashlib.sha256(rgba.tobytes()).hexdigest()[:16], rgba.width, rgba.height
+
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Check that the committed hub_light.png matches HUB_BAKE_STAMP.", json_out=True)
+    ap.add_argument("--record", action="store_true", help="Re-record the bake inputs for the current HUB_BAKE_STAMP (no rebake).")
+    ap.add_argument("--selftest", action="store_true", help="Check the input record logic on a throwaway tree.")
+    args = ap.parse_args(argv)
+    if args.selftest:
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            return agent_log.selftest_result(bake_inputs.selftest(Path(td)))
+    root = agent_log.resolve_root(args)
+    png, src = root / PNG, root / SRC
+    lines: list[str] = []
+    m = re.search(r'const HUB_BAKE_STAMP := "([0-9a-f]*)"', src.read_text(encoding="utf-8"))
+    want = m.group(1) if m else ""
+    got, w, h = ("", 0, 0)
+    if not m:
+        lines.append(f"FAIL {SRC}: no `const HUB_BAKE_STAMP := \"<hex>\"` line")
+    elif not png.is_file():
+        lines.append(f"FAIL {PNG} is missing: the game crashes at the hub")
+    else:
+        got, w, h = png_stamp(png)
+        if min(w, h) < 16:
+            lines.append(f"FAIL {PNG} is {w}x{h}")
+        elif got != want:
+            lines.append(f"FAIL {PNG} stamp {got} != HUB_BAKE_STAMP {want or '(empty)'}: rebake with tools/bake.py camp, "
+                         "review, paste its stamp= into hub_bake.gd")
+    if m and args.record:
+        print(f"recorded {bake_inputs.record(root, want).relative_to(root)} for stamp {want}")
+    if m and not lines:
+        lines += bake_inputs.problems(root, want)
+    wsrc = (root / WEAR_SRC).read_text(encoding="utf-8")
+    wm = re.search(r'const GROUND_WEAR_STAMP := "([0-9a-f]*)"', wsrc)
+    wpng = root / WEAR_PNG
+    if not wm or not wpng.is_file():
+        lines.append(f"FAIL {WEAR_PNG} or GROUND_WEAR_STAMP in {WEAR_SRC} missing")
+    else:
+        from PIL import Image
+        with Image.open(wpng) as im:
+            ws = hashlib.sha256(im.convert("L").tobytes()).hexdigest()[:16]
+        if ws != wm.group(1):
+            lines.append(f"FAIL {WEAR_PNG} stamp {ws} != GROUND_WEAR_STAMP {wm.group(1)}: run tools/bake.py ground, paste stamp=")
+    ok = not lines
+    if ok:
+        lines.append(f"hub bake ok: {PNG} {w}x{h} stamp={got}")
+    status = "PASS" if ok else "FAIL"
+    out_dir = agent_log.ensure_agent_log_dir("hub-bake", root)
+    res = agent_log.write_run_file(root, out_dir, "hub-bake", "\n".join(lines), status, stamp=got or "none", want=want or "none")
+    if args.json:
+        agent_log.print_json({"status": status, "stamp": got, "want": want, "size": [w, h], "lines": lines})
+    else:
+        print("\n".join(lines + [res]))
+    return agent_log.exit_code(status)
+
+if __name__ == "__main__":
+    raise SystemExit(agent_log.guarded(main))

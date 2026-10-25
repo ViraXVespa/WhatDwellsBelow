@@ -7,7 +7,7 @@ static func rows() -> Array:
 		["dash_duration", 0.05, 1.2, 0.01],
 		["dash_cooldown", 0.1, 4.0, 0.05],
 		["special_windup", 0.05, 1.0, 0.01],
-		["special_recovery", 0.05, 1.5, 0.01],
+		["special_recovery", 0.05, 2.25, 0.01],
 		["special_mana", 0.0, 100.0, 1.0],
 		["mana_max", 10.0, 300.0, 1.0],
 		["mana_regen", 0.0, 20.0, 0.1],

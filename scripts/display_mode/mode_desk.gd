@@ -84,11 +84,15 @@ static func try_fullscreen_gesture() -> bool:
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	return true
 
-static func is_standalone() -> bool:
+## Run a JS snippet that returns '1' or '0' (false off the web).
+static func _web_flag(js: String) -> bool:
 	var _fac = load("res://scripts/display_mode.gd")
 	if not _fac.is_web():
 		return false
-	return _fac._js_flag("""
+	return _fac._js_flag(js)
+
+static func is_standalone() -> bool:
+	return _web_flag("""
 		(function () {
 			try {
 				if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return '1';
@@ -99,10 +103,7 @@ static func is_standalone() -> bool:
 	""")
 
 static func try_install_prompt() -> bool:
-	var _fac = load("res://scripts/display_mode.gd")
-	if not _fac.is_web():
-		return false
-	return _fac._js_flag("""
+	return _web_flag("""
 		(function () {
 			try {
 				var p = window.__wdbInstallPrompt;

@@ -18,9 +18,9 @@ You are the **parent** in the game repo. Do not call `image_to_video` here unles
 
 In this repo first:
 
-1. Build the seed and prompt with `tools/i2v_seeds.py` (opaque `#FF00FF` plate, idle Bible cell, one gender × facing × action).
+1. Build the seed and prompt with `python tools/media.py i2v-seeds --cell <png> | --bible <png> --out <dir> --facing <f> --action <a> [--gender male|female]` (opaque `#FF00FF` plate, idle Bible cell, one gender × facing × action).
 2. Stop if the User has not approved that seed / prompt yet.
-3. Run `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>`. Same seed hash reuses the ingest session (fork); a new seed ingests again.
+3. Run `python tools/media.py grok --kind i2v --seed <png> --prompt-file <txt>` (a walk prompt pins the seed as both end frames; `--no-pin-ends` turns that off). Same seed hash reuses the ingest session (fork); a new seed ingests again.
 
 The child follows bundled `imagine` and `game-assets`, and reads `animation.md` for the clip. Motion text is the staged prompt, not cinematic 6s/10s shot language. The child does not harvest or pack.
 

@@ -1,0 +1,22 @@
+{
+  "_doc": "check.py prove: which check runs for which touched paths (fnmatch, * spans folders). when_status adds a trigger on git statuses (D deleted, R renamed). cmd @selftests / @smokes are built in (check_prove.py). Order is run order; Godot runs stay last and one at a time.",
+  "drift_allow": ["tools/lib/slice/handoff_lib.py|tools/open_slice.py"],
+  "_drift_allow": "file|symbol pairs that name a removed thing on purpose (a selftest case that must reject the old form).",
+  "checks": [
+    {"id": "bot-status", "cmd": "python3 tools/bot_status.py --bot --prove --no-explore", "when": ["*"], "why": "allowlist on uncommitted and unpushed paths, load graph, dupes gate (every diff; drift and textsize are this prove's own)"},
+    {"id": "script-cap", "cmd": "python3 tools/check.py script-cap --bot --git-changed", "when": ["scripts/*.gd"], "why": "script sizes and unique names"},
+    {"id": "load-graph", "cmd": "python3 tools/check.py load-graph --bot", "when": ["*.md", "design/routes.yaml", "tools/data/bot_budgets.json"], "why": "doc routing and boot budgets"},
+    {"id": "code-map", "cmd": "python3 tools/docs.py code-map check", "when": ["scripts/*.gd", "design/code-map.md"], "why": "live scripts vs the code map"},
+    {"id": "tunables-diff", "cmd": "python3 tools/docs.py tunable diff", "when": ["scripts/data/balance/*", "scripts/data/balance.gd", "scripts/data/tunables.gd", "scripts/debug/debug_menu/val_cat_map.gd", "design/tunables*.md", "tools/lib/docs/tunables*.py", "tools/lib/docs/balance_src.py"], "why": "balance defaults vs slider rows vs doc Live cells (drift)"},
+    {"id": "tool-docs", "cmd": "python3 tools/check.py tool-docs", "when": ["tools/*", "design/tools*.md"], "why": "tool catalog rows, libs and data named"},
+    {"id": "stale-refs", "cmd": "python3 tools/check.py tool-docs --stale-refs", "when": ["*.md", "tools/*.py", ".github/*"], "when_status": ["D", "R"], "why": "dead doc paths and members"},
+    {"id": "tool-cli", "cmd": "python3 tools/check.py tool-cli --smoke-run", "when": ["tools/*.py"], "why": "CLI contract of the changed tools"},
+    {"id": "task-check", "cmd": "python3 tools/docs.py task check", "when": ["design/tasks/*", "tools/*.py"], "why": "task headers; resume/first lines name live tools"},
+    {"id": "selftests", "cmd": "@selftests", "when": ["tools/*.py", "tools/data/*"], "why": "selftest of each changed tool, tool importing a changed lib, or tool reading changed data"},
+    {"id": "bake-check", "cmd": "python3 tools/bake.py check", "when": ["scripts/graphics/light_rt/*", "scripts/graphics/ground_shader.gd", "assets/baked/*", "scripts/world/camp/*"], "why": "hub layout or bake inputs: committed bake still matches its stamp"},
+    {"id": "shot-gaps", "cmd": "python3 tools/shots.py gaps --changed", "when": ["tools/data/shot-flows/*", "tools/data/shot-recipes.json", "scripts/ui/progress_ui*", "scripts/ui/archives_ui*", "scripts/ui/pause_menu.gd", "scripts/world/interact/interact_act.gd"], "why": "shot flows still match the UI states (states.json sources)"},
+    {"id": "textsize", "cmd": "python3 tools/shots.py textsize --gate", "when": ["scripts/ui/*", "scripts/title/*", "scripts/world/camp/*hud*", "scripts/*/hud*", "scripts/world/foundation.gd", "scripts/world/dungeon.gd", "tools/data/text-size.json", "tools/lib/shots/run_textsize.py"], "why": "UI scripts: text size and in-play HUD cover on phone/tablet", "godot": true},
+    {"id": "smokes", "cmd": "@smokes", "when": ["scripts/*.gd", "tools/data/*.gd", "*.tscn", "*.tres", "*.gdshader"], "why": "smoke phases that load the changed scripts (gate.py bot-smokes --for), plus a static compile of every script and scene", "godot": true},
+    {"id": "build-gate", "cmd": "python3 tools/gate.py build --batch", "when": ["scripts/*", "*.tscn", "*.tres", "project.godot", "assets/*", "export_presets.cfg"], "why": "editor import, load graph, shot gaps, release smoke", "godot": true}
+  ]
+}

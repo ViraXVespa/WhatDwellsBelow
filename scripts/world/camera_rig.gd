@@ -4,6 +4,8 @@ const T := preload("res://scripts/data/tunables.gd")
 
 var cam: Camera3D
 var warm_hold := false
+## Shot tool only: a camera size that apply_zoom keeps (zoom below ZOOM_MIN for wide shots). 0 = off.
+var size_pin := 0.0
 
 func _ready() -> void:
 	cam = Camera3D.new()
@@ -47,6 +49,9 @@ func apply_zoom(z: float) -> void:
 	if warm_hold:
 		return
 	if cam == null:
+		return
+	if size_pin > 0.0:
+		apply_size(size_pin)
 		return
 	var zoom: float = clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
 	cam.size = T.base_size().y / T.PX / zoom

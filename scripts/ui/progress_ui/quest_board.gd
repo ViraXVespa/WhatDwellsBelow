@@ -57,12 +57,7 @@ static func rebuild(ui: CanvasLayer) -> void:
 	_neighbors(offers)
 
 static func pinned(parent: Control, q: Dictionary, span: Vector2) -> void:
-	var paper: TextureRect = TextureRect.new()
-	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	paper.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	paper.stretch_mode = TextureRect.STRETCH_SCALE
-	paper.texture = Art.tex("poster.png")
+	var paper: TextureRect = UiBuild.picture(Art.tex("poster.png"), CanvasItem.TEXTURE_FILTER_LINEAR)
 	paper.position = Vector2.ZERO
 	paper.size = span
 	parent.add_child(paper)
@@ -109,12 +104,7 @@ static func _scrap(layer: Control, spot: Dictionary) -> void:
 	scrap.pivot_offset = span * 0.5
 	scrap.rotation = deg_to_rad(float(spot["turn"]))
 	layer.add_child(scrap)
-	var paper: TextureRect = TextureRect.new()
-	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	paper.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	paper.stretch_mode = TextureRect.STRETCH_SCALE
-	paper.texture = Art.tex("poster.png")
+	var paper: TextureRect = UiBuild.picture(Art.tex("poster.png"), CanvasItem.TEXTURE_FILTER_LINEAR)
 	paper.modulate = spot["tint"]
 	paper.size = span
 	scrap.add_child(paper)
@@ -166,12 +156,7 @@ static func _neighbors(offers: Array[Button]) -> void:
 		btn.focus_neighbor_bottom = btn.get_path()
 
 static func _pin(parent: Control, span: Vector2) -> void:
-	var pin: TextureRect = TextureRect.new()
-	pin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pin.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	pin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pin.stretch_mode = TextureRect.STRETCH_SCALE
-	pin.texture = Art.tex("pin.png")
+	var pin: TextureRect = UiBuild.picture(Art.tex("pin.png"), CanvasItem.TEXTURE_FILTER_LINEAR)
 	pin.size = Vector2(32, 32)
 	pin.position = Vector2(span.x * 0.5 - 16.0, 2)
 	parent.add_child(pin)

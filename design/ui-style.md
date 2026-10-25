@@ -36,7 +36,13 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Chips have `focus_mode` NONE: no tab, highlight or select focus, and the menu keeps its focus.
 - A strip that only lists binds (the controls sign rows, the world HUD prompt) sets `prompt_tap` false on its host.
 - A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.
-- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/run_smokes.py --phases 6` and `bot_smokes.py` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `bot_smokes.py` phase 6 only; run it by hand with `--wdb-load-timing-smoke --wdb-open-timing`.
+- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/gate.py smokes --phases 6` and `gate.py bot-smokes` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `gate.py bot-smokes` phase 6 only; run it by hand with `--wdb-load-timing-smoke --wdb-open-timing`.
+
+## Text size
+- Minimum: 10 CSS px glyph size on a 844x390 phone (DPR 3), checked by `shots.py textsize --gate` (`tools/data/text-size.json`: viewports, flows, `allow`). On screen px = font size x canvas scale x viewport scale; CSS px = that / DPR.
+- `ui_text.gd` owns it: the floor is in CSS px (x DPR from `--wdb-dpr` or the browser), sizes up to `UI_TEXT_REF` scale fully, bigger headings grow by the difference only. Route a raw `font_size` through `ThemeS.font_px` (or `UiText.track` for a label that stays alive); never a per-label phone size. Desktop 1080p stays at scale 1.
+- In-play overlays (HUD strip, minimap, toasts, the camp hint layer, named `PlayHud`) do not follow the text floor: they scale by `UiText.play_scale()`, at most `PLAY_GROW` (1.1) past their pre-floor size, so a phone keeps its play area. `text-size.json` `cover` caps their share of the frame (1.25 x the old footprint); their text sits under the floor (`allow` `/PlayHud/`).
+- A frame skin with fixed art sets `TEXT_CAP` (its text stops growing there; `allow` lists it at a lower minimum). Raising one needs that board's layout redone.
 
 ## Object frames (`scripts/ui/progress_ui/`)
 A frame re-skins the progress panel host for one object (stall, bin). `frame_base.gd` owns what every frame shares: the chrome layer under the host, the cream plate every other mode keeps, the footer room, the button row (the host's scroll area) and its separation. `frame_set.gd` lists the skins.
@@ -47,14 +53,14 @@ A skin is a script with static hooks:
 Add a frame: write `<object>_frame.gd` (+ `<object>_art.gd` for code-drawn pictures), list it in `frame_set.gd`, set the host `mode` when it opens. A frame takes the hooks it needs and adds its own pieces; it need not look like another.
 First open: `ui_warm.gd` loads every listed skin's art on a worker from the title screen and opens the heavy menus once behind the hub loader. A new menu or frame gets a row in `scripts/debug/open_timing.gd` (pause tabs are timed from `TABS`), and a warm step if its first open is over budget.
 
-Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake_frame_art.py` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake_frame_art.py --check` (also in `bot_smokes.py` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is the open task `ui-png-art`.
+Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake.py frames` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake.py frames --check` (also in `gate.py bot-smokes` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is the open task `ui-png-art`.
 
 ## Generated art look
-Locked look for generated UI art (her call, `ui-png-art`); `run_isolated_grok.py --kind ui` stages this section and the refs below.
-- Pixel-art feel of the title-screen background + professionalism of the Journal UI.
+Standing look for generated UI art (her call); `media.py grok --kind ui` stages this section as `ui-style.md`.
+- The game's pixel-art feel, with a professional, polished finish.
 - No pink. Gamepad-first, readable at a glance. 9-slice where a panel or button stretches.
 - Outside the pause journal, every screen keeps the game's pixel-art style and reads as one system.
-- Style refs (look and finish only, not layouts): `design/refs/ui-style/title-background.png`, `design/refs/ui-style/journal-ui.png`.
+- Reference images belong to the task that needs them: its task file names them and the run passes each with `--copy PATH`. This section names none.
 
 ## Web export (flagged, not changed)
 - `journal_page._tex_at` loads `res://assets/ui/journal/paper.png` and `leather.png` with `load()` so the imported textures ship in the web pack. A missing page texture errors; it does not cache an empty image.

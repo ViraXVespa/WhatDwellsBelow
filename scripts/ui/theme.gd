@@ -38,8 +38,8 @@ static func ink_font() -> Font:
 static func text_scale() -> float:
 	return UiText.applied()
 
-static func font_px(size: int) -> int:
-	return UiText.font_px(size)
+static func font_px(size: int, capped: bool = true) -> int:
+	return UiText.font_px(size, capped)
 
 ## Full-rect anchors with both-way grow (overlay / backdrop fill).
 static func fill(c: Control) -> void:
@@ -61,7 +61,7 @@ static func lab(
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if autowrap else TextServer.AUTOWRAP_OFF
 	l.clip_text = false
 	l.add_theme_font_override("font", ink_font())
-	l.add_theme_font_size_override("font_size", font_px(size))
+	UiText.track(l, size)
 	l.add_theme_color_override("font_color", col)
 	if outline:
 		l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
@@ -73,7 +73,7 @@ static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "s
 	b.text = t
 	b.custom_minimum_size = UiText.min_size(0.0, 44.0)
 	b.add_theme_font_override("font", ink_font())
-	b.add_theme_font_size_override("font_size", font_px(20))
+	UiText.track(b, 20)
 	_apply(b, role, false)
 	b.disabled = not enabled
 	if enabled and not cb.is_null():
@@ -123,20 +123,23 @@ static func skin_slider(slider: HSlider) -> void:
 	slider.add_theme_icon_override("grabber_disabled", _knob_tex())
 	slider.add_theme_constant_override("center_grabber", 1)
 
+## Text colour per button state; `disabled` is set only when given.
+static func text_tones(c: Control, normal: Color, hover: Color, focus: Color, pressed: Color, disabled: Variant = null) -> void:
+	c.add_theme_color_override("font_color", normal)
+	c.add_theme_color_override("font_hover_color", hover)
+	c.add_theme_color_override("font_focus_color", focus)
+	c.add_theme_color_override("font_pressed_color", pressed)
+	if disabled != null:
+		c.add_theme_color_override("font_disabled_color", disabled)
+
 static func skin_check(box: CheckBox) -> void:
-	box.add_theme_color_override("font_color", INK)
-	box.add_theme_color_override("font_hover_color", INK)
-	box.add_theme_color_override("font_focus_color", INK)
-	box.add_theme_color_override("font_pressed_color", INK)
-	box.add_theme_color_override("font_disabled_color", INK_FAINT)
+	text_tones(box, INK, INK, INK, INK, INK_FAINT)
 	box.add_theme_icon_override("unchecked", _tick_tex(false))
 	box.add_theme_icon_override("checked", _tick_tex(true))
 	box.add_theme_icon_override("unchecked_disabled", _tick_tex(false))
 	box.add_theme_icon_override("checked_disabled", _tick_tex(true))
-	box.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	box.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
-	box.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
-	box.add_theme_stylebox_override("disabled", StyleBoxEmpty.new())
+	for st: String in ["normal", "hover", "pressed", "disabled"]:
+		box.add_theme_stylebox_override(st, StyleBoxEmpty.new())
 	box.add_theme_stylebox_override("focus", Box._box(Color(0, 0, 0, 0), INK, 0, 3))
 
 static func _apply(b: Button, role: String, lit: bool) -> void:
@@ -164,11 +167,7 @@ static func _apply(b: Button, role: String, lit: bool) -> void:
 	var hover: Color = PAPER_LIFT if lit or role == "primary" else PAPER_HOVER
 	var foot: int = 4 if lit else width
 	var focus_edge: Color = DANGER if role == "danger" else INK
-	b.add_theme_color_override("font_color", word)
-	b.add_theme_color_override("font_hover_color", word)
-	b.add_theme_color_override("font_focus_color", focus_edge)
-	b.add_theme_color_override("font_pressed_color", word)
-	b.add_theme_color_override("font_disabled_color", INK_FAINT)
+	text_tones(b, word, word, focus_edge, word, INK_FAINT)
 	b.add_theme_stylebox_override("normal", Box._box(face, edge, width, foot))
 	b.add_theme_stylebox_override("hover", Box._box(hover, edge, width, 4))
 	b.add_theme_stylebox_override("pressed", Box._box(PAPER_DEEP, edge, width, 4))

@@ -2,7 +2,7 @@ extends Object
 
 ## Object-frame art ships as baked PNGs: res://assets/ui/frames/<art>/<key>.png. The *_art.gd scripts still hold
 ## the drawing code; at runtime each picture comes from its PNG (hit() fills the script's cache), and a missing PNG
-## is an error, never redrawn. Re-bake after editing any *_art.gd: `python tools/bake_frame_art.py` (runs the game
+## is an error, never redrawn. Re-bake after editing any *_art.gd: `python tools/bake.py frames` (runs the game
 ## with --wdb-bake-frame-art: draws every skin in code and writes the PNGs). --wdb-frame-art-time prints how long
 ## building every skin takes (draw cost before a bake, load cost after).
 
@@ -41,7 +41,7 @@ static func hit(cache: Dictionary, art: String, key: String) -> bool:
 	var path: String = path_of(art, key)
 	var tex: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
 	if tex == null:
-		push_error("frame art PNG missing: %s (run tools/bake_frame_art.py)" % path)
+		push_error("frame art PNG missing: %s (run tools/bake.py frames)" % path)
 		assert(false, "frame art PNG missing: " + path)
 		return false
 	cache[key] = tex

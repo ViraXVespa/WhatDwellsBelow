@@ -31,11 +31,11 @@ CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 2. Set `patch` = baked patch + user commits since `version.json` last changed. Ignore stamp / `[skip ci]` subjects. Never go below the baked patch.
 3. Write `scripts/data/version.json` (`epoch`, `series`, `patch`, `label`).
 4. Create annotated tag `v{label}` if missing.
-5. Run `tools/build_changelog.py`.
+5. Run `tools/release.py changelog`.
 6. If generated outputs changed, commit them with `[skip ci]`.
 7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs, because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
 
-Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `doc_patch.py next-label` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) comes from `week_start.py` (Week sequence), not that tool.
+Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `docs.py patch next-label` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) comes from `release.py week-start` (Week sequence), not that tool.
 
 ### Merge shape (Grok Bot and multi-commit PRs)
 
@@ -53,10 +53,10 @@ Grok Bot PRs squash-merge. A multi-commit branch is fine on the PR; it must beco
 
 Series `N` is week `N`. The epoch is the User's alone; no tool changes it. In order:
 
-1. **Week start.** On an up-to-date `main` the User runs `tools/week_start.py` (`--dry-run` first). It seeds `version.json` as `{epoch}.{N}.0` with `open_commit` = HEAD, parks older changelogs, creates and switches to the local branch `grok-build-w{N}`, commits the seed there (`Grok Build Week N`), runs `grok worktree gc`, deletes Godot locks and clears logs. It pins nothing (catch-up only, below). Then `git push -u origin grok-build-w{N}`.
-2. **Work.** Build cuts worktrees from `grok-build-w{N}` and merges back into it (`grok-build.md`). Build never touches `main`, and `main` stays untouched while Build work is going on (nothing from `main` is merged into the week branch). With no week branch (and no `--ref`) `open_slice.py` and `start_build_slice.py` fail: Build asks the User whether to start a new week; main is never the fallback.
+1. **Week start.** The User opens Build in the main checkout and says it is a new week; on an up-to-date `main` Build runs `tools/release.py week-start` (`--dry-run` first; `build-week-start.md`). It seeds `version.json` as `{epoch}.{N}.0` with `open_commit` = HEAD, parks older changelogs, creates and switches to the local branch `grok-build-w{N}`, commits the seed there (`Grok Build Week N`), runs `grok worktree gc`, deletes Godot locks and clears logs. It pins nothing (catch-up only, below). Build then pushes the branch (`git push -u origin grok-build-w{N}`); never `main`.
+2. **Work.** Build cuts worktrees from `grok-build-w{N}` and merges back into it (`grok-build.md`). Build never touches `main`, and `main` stays untouched while Build work is going on (nothing from `main` is merged into the week branch). With no week branch (and no `--ref`) `slice.py open` and `slice.py start` fail: Build tells the User a new week has not started (step 1); main is never the fallback.
 3. **Week close.** A web session the User runs writes the one week-close changelog `design/changelog/0.N.0.md` onto the branch (`versioning-log.md`). Build never writes it, and neither does the Bot. This is the one statement of who writes it.
 4. **Merge.** The User squash-merges `grok-build-w{N}` into `main`: one commit, the `0.N.0` build. If `main` moved and `version.json` conflicts, merge `main` into the branch first and keep the branch's `version.json`; CI regenerates `changelog.json`.
-5. **Archives (CI, nothing to do).** On that push `.github/workflows/archive.yml` runs `tools/ci_archive.py` after the Version stamp. It tags `archive/grok-build-w{N}` on the merge commit and `archive/grok-web-w{N-1}` on the parent of that merge, adds the corresponding catalog rows, commits `chore: archive week N [skip ci]`, pushes commit and tags, and re-runs Pages so the rows export. Detection, recovery, manual run: `archives-catalog.md`.
+5. **Archives (CI, nothing to do).** On that push `.github/workflows/archive.yml` runs `tools/release.py ci-archive` after the Version stamp. It tags `archive/grok-build-w{N}` on the merge commit and `archive/grok-web-w{N-1}` on the parent of that merge, adds the corresponding catalog rows, commits `chore: archive week N [skip ci]`, pushes commit and tags, and re-runs Pages so the rows export. Detection, recovery, manual run: `archives-catalog.md`.
 
-Resume after corruption and mid-week catch-up chats pin nothing. Archive `docs` list `design/` as it is on the pinned commit plus the copied notes. No other new archives unless the User asks. `open_commit` in `version.json` is the commit the series opened from. Rows older than the CI flow are not rewritten (`grok_build_w5` is a seed pin); if the closing series has no web or build row, `week_start.py` pins the missing one at HEAD as catch-up and prints the tag to push.
+Resume after corruption and mid-week catch-up chats pin nothing. Archive `docs` list `design/` as it is on the pinned commit plus the copied notes. No other new archives unless the User asks. `open_commit` in `version.json` is the commit the series opened from. Rows older than the CI flow are not rewritten (`grok_build_w5` is a seed pin); if the closing series has no web or build row, `release.py week-start` pins the missing one at HEAD as catch-up and prints the tag to push.

@@ -4,6 +4,7 @@ const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const Fmt := preload("res://scripts/title/news_fmt.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const UiBuild := preload("res://scripts/ui/ui_build.gd")
 
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	var Fac = load("res://scripts/title/news.gd")
@@ -15,11 +16,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	host.add_child(host._news_layer)
 	Plate.dim(host._news_layer)
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.offset_left = -380
-	box.offset_right = 380
-	box.offset_top = -280
-	box.offset_bottom = 280
+	UiBuild.center(box, 380, -280, 280)
 	box.add_theme_constant_override("separation", 12)
 	host._news_layer.add_child(box)
 	box.add_child(host._lab(App.tr("news_show.what_s_new"), 32, ThemeS.INK))
@@ -57,7 +54,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.custom_minimum_size = Vector2(668, 0)
-	body.add_theme_font_size_override("normal_font_size", 18)
+	body.add_theme_font_size_override("normal_font_size", ThemeS.font_px(18))
 	body.add_theme_color_override("default_color", BtnSkin.palette("title")["words"][0])
 	body.add_theme_constant_override("outline_size", 0)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -9,11 +9,11 @@ For **web / chat** only. Grok Build and Grok Bot ignore it. Phases, flows and th
 
 One action. Prefer one `tools/_scratch.py` for every revise/delete path and the docs in this pass. A packed pass is still one action and one scratch. New source files emit one at a time (path line, blank line, full body in one language fence) until the User says `Next`.
 
-Revise from a fetched raw body plus the artifact byte check, or from a User paste already in this conversation. Fetch budget: one pull per path. After a failed check, do not fetch again. Do not assemble a revision from a tool-card summary. Do not put a markdown fence opener inside a fenced emit. Do not reimplement `tools/doc_patch.py`.
+Revise from a fetched raw body plus the artifact byte check, or from a User paste already in this conversation. Fetch budget: one pull per path. After a failed check, do not fetch again. Do not assemble a revision from a tool-card summary. Do not put a markdown fence opener inside a fenced emit. Do not reimplement `tools/docs.py patch`.
 
 Scratch shape. One file, `tools/_scratch.py`. The runner imports `doc_patch` before the scratch body, so a scratch cannot repair a broken `doc_patch`. That repair is a direct `python` file.
 
-The block below is an example only (docs/load-graph checker). A real scratch must call the prove tools that match the work that landed (see the prove table). The full suite is available: check_load_graph, run_build_gate, run_load_timing, run_dungeon_load_timing, run_dungeon_map, run_smokes, run_godot_import_check, run_shots, and task.py list/show. Always print RESULT checker=PASS|FAIL (or gate=...) from the exit code.
+The block below is an example only (docs/load-graph checker). A real scratch must call the prove tools that match the work that landed (see the prove table). The full suite is available: check_load_graph, run_build_gate, run_load_timing (`--leg hub|dungeon`), run_dungeon_map, run_smokes, run_godot_import_check, run_shots, and docs.py task list/show. Always print RESULT checker=PASS|FAIL (or gate=...) from the exit code.
 
 ```python
 import sys
@@ -34,25 +34,25 @@ if __name__ == "__main__":
     raise SystemExit(rc)
 ```
 
-Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `task`, `run_checker`, `dump_job`) and the matching `doc_patch.py` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
+Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `task`, `run_checker`, `dump_job`) and the matching `docs.py patch` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
 
-A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `run_shots.py` stays hidden. `--show` only when the User asks to see the window.
+A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `shots.py capture` stays hidden. `--show` only when the User asks to see the window.
 
-Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
+Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check.py load-graph`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
-When a slice needs a visual proof, run `python tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks, taken from the int returned by `main()`. `main()` returns the checker (or gate) exit code. The `if __name__` guard prints the RESULT line and does `raise SystemExit(rc)`. Do not hardcode PASS or call `sys.exit` inside `main()`. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
+When a slice needs a visual proof, run `python tools/shots.py capture --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks, taken from the int returned by `main()`. `main()` returns the checker (or gate) exit code. The `if __name__` guard prints the RESULT line and does `raise SystemExit(rc)`. Do not hardcode PASS or call `sys.exit` inside `main()`. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
 
 | Work that landed | Prove | Dump |
 |------|-------|------|
-| design / AGENTS / routes / load-graph | `tools/check_load_graph.py` | checker line |
-| GDScript / scenes / project.godot | `tools/run_build_gate.py` | gate summary |
-| Title to Play load | `tools/run_load_timing.py` | load-timing summary |
-| Hub to dungeon load | `tools/run_dungeon_load_timing.py` | dungeon-load-timing summary |
-| Gen / map shape | `tools/run_dungeon_map.py` | dungeon-map summary |
-| Named phase assert | `tools/run_smokes.py` | smokes summary |
-| GDScript import / COMPILE | `tools/run_godot_import_check.py` via `dump_job(..., "godot-import-check", script="run_godot_import_check.py")` | godot-import-check summary; fail on COMPILE or clean=false |
-| Postcard shot | `python tools/run_shots.py --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
-| Hub light bake / stamp | `python tools/run_bake_camp.py` (invoked by the scratch) | bake summary + stamp line; User pastes RESULT and (if the scratch did not already) commits the new `hub_light.png` + `HUB_BAKE_STAMP` |
+| design / AGENTS / routes / load-graph | `tools/check.py load-graph` | checker line |
+| GDScript / scenes / project.godot | `tools/gate.py build` | gate summary |
+| Title to Play load | `tools/perf.py load` | load-timing summary |
+| Hub to dungeon load | `tools/perf.py load --leg dungeon` | dungeon-load-timing summary |
+| Gen / map shape | `tools/perf.py map` | dungeon-map summary |
+| Named phase assert | `tools/gate.py smokes` | smokes summary |
+| GDScript import / COMPILE | `tools/gate.py import` via `dump_job(..., "godot-import-check", script="gate.py import")` | godot-import-check summary; fail on COMPILE or clean=false |
+| Postcard shot | `python tools/shots.py capture --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
+| Hub light bake / stamp | `python tools/bake.py camp` (invoked by the scratch) | bake summary + stamp line; User pastes RESULT and (if the scratch did not already) commits the new `hub_light.png` + `HUB_BAKE_STAMP` |
 
 A slice that only edits protocol docs does not boot Godot. If there is no runner for that work, say so and prove with the load-graph / gate only.
 
@@ -64,13 +64,13 @@ Web writes a Build brief only when the User asks for one, and only for work Web 
 
 ## Scratch helpers
 
-Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/task.py`. Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file. Extra header fields that `task.py new` does not emit may be added afterward with `ensure_line`.
+Always create, update, or close tasks via `doc_patch.task([...])` which runs `tools/docs.py task`. Never `write_text`, `replace_file`, or hand-edit the skeleton of a task file. Extra header fields that `docs.py task new` does not emit may be added afterward with `ensure_line`.
 The scratch must call the matching prove runner (`dp.run_checker`, `dp.dump_job`, etc.) and base the RESULT line solely on the integer it returns. Do not print RESULT until the runner has returned. Do not hard-code PASS.
 
-Tool catalog (what each runner is, which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
+Which tool for which job (and which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
 Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
-Code-map rows: `code_map.py patch` (code_map_lib), not a hand regex on the table.
+Code-map rows: `docs.py code-map patch` (code_map_lib), not a hand regex on the table.
 Markdown bytes: md_format_lib write helpers. Always run doc_patch.run_checker and print RESULT checker=PASS|FAIL.
 lint_hostify out-dir takes ROOT, not root.
 

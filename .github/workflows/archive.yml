@@ -2,8 +2,8 @@ name: Archive
 
 # Week-close archives. A push to main that adds design/changelog/{epoch}.{N}.0.md (the squash-merge of
 # grok-build-wN) tags archive/grok-web-wN and archive/grok-build-wN on it, adds both catalog rows and the
-# archives/docs copies, pushes them, and re-runs Pages. All logic lives in tools/ci_archive.py
-# (python3 tools/ci_archive.py --selftest proves it with no GitHub). Idempotent; never forces or deletes.
+# archives/docs copies, pushes them, and re-runs Pages. All logic lives in tools/release.py ci-archive
+# (python3 tools/release.py ci-archive --selftest proves it with no GitHub). Idempotent; never forces or deletes.
 # The archive commit is "[skip ci]", so Version, Pages and this workflow ignore it.
 
 on:
@@ -81,7 +81,7 @@ jobs:
           else
             args+=(--before "$BEFORE" --commit "$PUSHED")
           fi
-          python3 tools/ci_archive.py "${args[@]}"
+          python3 tools/release.py ci-archive "${args[@]}"
 
       - name: Re-run Pages so the new archives export
         if: ${{ steps.archive.outputs.changed == '1' }}

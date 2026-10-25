@@ -3,7 +3,7 @@
 Status: record
 Read when: a menu open feels slow, or `open_timing` is rerun
 
-Source: `python tools/bot_smokes.py` (open_timing smoke, `OPEN:` lines, pass 1 = first open). Each run writes `_logs/smokes/open_timing.env.txt` (machine fields from `tools/bench_env.py` plus the engine's `OPEN: env` line: renderer, GPU, display, vsync, max_fps, resolution); copy it with the row. Rows before 2026-10-20 15:00 predate that line: their vsync / cap / resolution are unknown.
+Source: `python tools/gate.py bot-smokes` (open_timing smoke, `OPEN:` lines, pass 1 = first open). Each run writes `_logs/smokes/open_timing.env.txt` (machine fields from `tools/lib/perf/bench_env.py` plus the engine's `OPEN: env` line: renderer, GPU, display, vsync, max_fps, resolution); copy it with the row. Rows before 2026-10-20 15:00 predate that line: their vsync / cap / resolution are unknown.
 
 | Date | Machine | Commit | Menu | First open call_ms | Note |
 |------|---------|--------|------|--------------------|------|

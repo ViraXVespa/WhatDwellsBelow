@@ -23,10 +23,8 @@ static func spec() -> Dictionary:
 
 static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "shop_body", Art.body())
-	Art.shelf(0.92, 2)
-	Art.shelf(0.98, 2)
-	Art.shelf(0.62, 4)
-	Art.shelf(0.5, 2)
+	for look: Array in FrameBase.SHELF_LOOKS:
+		Art.shelf(look[0], look[1])
 	Art.bar()
 
 static func place(chrome: Control) -> void:
@@ -38,11 +36,7 @@ static func dress(button: Button) -> void:
 	var box: StyleBoxTexture = UiBuild.tex_box(face, 6, 4, 2, false, 12, 6)
 	UiBuild.states(button, box, box, box, box, box)
 	var ink := Color(0.93, 0.96, 0.97, 1)
-	button.add_theme_color_override("font_color", ink)
-	button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
-	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
-	button.add_theme_color_override("font_pressed_color", ink)
-	button.add_theme_color_override("font_disabled_color", Color(ink, 0.45))
+	ThemeS.text_tones(button, ink, Color(1, 1, 1, 1), Color(1, 1, 1, 1), ink, Color(ink, 0.45))
 	button.add_theme_font_override("font", ThemeS.ink_font())
 
 static func dress_shelf(button: Button) -> void:

@@ -22,6 +22,8 @@ static func p3(host: Node) -> void:
 	printerr("P3: enemies=" + str(_fac.tree(host).get_nodes_in_group("enemies").size()))
 	printerr("P3: bosses=" + str(_fac.tree(host).get_nodes_in_group("boss").size()))
 	_fac.p3_roles()
+	if not data.get("ok", false) or (data.get("rooms", []) as Array).is_empty() or stairs == null or not stairs.locked or door == null or door.open:
+		printerr("SMOKE FAIL: P3 floor %d: generation not ok, no rooms, or stairs/boss door open before the boss dies (early_p3.gd)" % App.floor_n)
 	if App.floor_n > 1:
 		printerr("P3: descended_ok floor=" + str(App.floor_n))
 		printerr("P3: process_frames=" + str(Engine.get_process_frames()))
@@ -31,6 +33,8 @@ static func p3(host: Node) -> void:
 
 static func p12(host: Node) -> void:
 	var _fac = load("res://scripts/debug/smoke_early.gd")
+	(load("res://scripts/debug/smoke/tunables_check.gd") as GDScript).run(host)
+	(load("res://scripts/debug/smoke/bug_report_check.gd") as GDScript).run(host)
 	var player: Variant = host.get("player")
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	printerr("P1: res=" + ProjectSettings.globalize_path("res://"))

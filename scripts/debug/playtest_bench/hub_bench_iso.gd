@@ -114,7 +114,7 @@ static func _iso_apply(host: Node, kind: String) -> void:
 
 static func _iso_stand(host: Node, actor: Node3D) -> void:
 	if host._iso_spot == Vector3.ZERO:
-		host._iso_spot = Vector3(8.5, 0.0, 15.5)
+		host._iso_spot = load("res://scripts/world/camp/layout_spec.gd").SPOTS["Dummy"]
 		var camp: Node = Visit._camp(host)
 		if camp != null:
 			var dummy_v: Variant = camp.get("dummy")

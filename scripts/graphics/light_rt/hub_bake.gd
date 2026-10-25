@@ -5,13 +5,14 @@ extends Object
 const Dbg := preload("res://scripts/app/dbg.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
+const HubBlur := preload("res://scripts/graphics/light_rt/hub_blur.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
 ## Bake stamp: first 16 hex of the SHA-256 of hub_light.png's RGBA8 pixels. The hub loads only a baked image with this
 ## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
-## Layout boxes -> rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here
-## (tools/check_hub_bake.py checks the committed png against it).
-const HUB_BAKE_STAMP := "1f48ce7bf7438c36"
+## Layout boxes -> rebake with tools/bake.py camp, review the shots, paste its `stamp=` here
+## (tools/bake.py check checks the committed png against it).
+const HUB_BAKE_STAMP := "ab9b36b66980d274"
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
 static func _baked_image(path: String) -> Image:
@@ -39,7 +40,7 @@ static func _stamp_of(img: Image) -> String:
 	return ctx.finish().hex_encode().substr(0, 16)
 
 static func _fatal(msg: String) -> void:
-	var full: String = "FATAL hub light: %s Rebake with tools/run_bake_camp.py, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
+	var full: String = "FATAL hub light: %s Rebake with tools/bake.py camp, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
 	push_error(full)
 	OS.crash(full)
 
@@ -155,7 +156,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 		y += 1
 	if rt.hub_crystal.length() < 0.2:
 		return
-	var cr: float = 4.2
+	var cr: float = load("res://scripts/world/camp/layout_spec.gd").CRYSTAL_GLOW_R
 	# Only pixels within cr of the crystal change; skip the rest of the image.
 	var gx0: int = clampi(int(floor((rt.hub_crystal.x - cr - float(x0)) * sub)) - 2, 0, w)
 	var gx1: int = clampi(int(ceil((rt.hub_crystal.x + cr - float(x0)) * sub)) + 2, 0, w)
@@ -230,11 +231,11 @@ static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) ->
 		else:
 			lo = m + 1
 	return lo
-## Day gradient, prop skirts, mesh shadows (each shadow takes the darker of what is there, so nothing darkens twice),
+## Day gradient, tarp lid, mesh shadows (each shadow takes the darker of what is there, so nothing darkens twice),
 ## one blur, on a field-filled image. Only the bake (save_hub_bake) calls this.
 static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
 	_hub_paint_day(img, x0, z0, layout)
-	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout, true)
+	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout)
 	wrote += HubShadow._hub_mesh_shadows(img, Vector2(float(x0), float(z0)), layout)
-	HubShadow._blur_hub(img)
+	HubBlur._blur_hub(img)
 	return wrote

@@ -1,6 +1,6 @@
 ﻿extends Object
 
-## Local / localhost hitch JSONL. Append on miss. Tail 256. Localhost web also POSTs rows to tools/hitch_sink.py.
+## Local / localhost hitch JSONL. Append on miss. Tail 256. Localhost web also POSTs rows to `perf.py hitch`.
 
 const CAP := 256
 const REL_DIR := "hitch"

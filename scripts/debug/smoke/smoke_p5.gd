@@ -10,7 +10,7 @@ static func quit_in(host: Node, sec: float) -> void:
 
 static func p5(host: Node) -> void:
 	var player: Variant = host.get("player")
-	var ui: Variant = host.get("ui")
+	var ui: Variant = host.call("world_ui") if host.has_method("world_ui") else host.get("ui")
 	var counts: Dictionary = host.get("counts")
 	printerr("P5: res=" + ProjectSettings.globalize_path("res://"))
 	printerr("P5: mine_time=" + str(App.bal.mine_time) + " wood_time=" + str(App.bal.wood_time))
@@ -48,6 +48,7 @@ static func p5(host: Node) -> void:
 	var wood0: int = App.wood
 	var mine_hits: int = 0
 	var wood_hits: int = 0
+	seed(5)  # strike odds clamp at 0.95: a fixed seed keeps the 1-in-20 miss from flaking P5
 	if mine_n and mine_n.has_method("strike"):
 		var r1: Dictionary = mine_n.strike()
 		mine_hits = 1
@@ -61,14 +62,16 @@ static func p5(host: Node) -> void:
 	var want_wood: float = GatherRules.interval_for("wood")
 	printerr("P5: nodes_ok=" + str(mine_hits == 1 and wood_hits == 1 and mine_n != null and wood_n != null and is_equal_approx(float(mine_n.get("interval")), want_mine) and is_equal_approx(float(wood_n.get("interval")), want_wood)))
 	var smashed: int = 0
+	var smash_n: Node = null
 	for b: Node in tree(host).get_nodes_in_group("breakables"):
 		if str(b.get("kind")) == "crack":
 			continue
 		if b.has_method("take_hit"):
 			b.take_hit(99.0, Vector2.DOWN, false)
 			smashed += 1
+			smash_n = b
 			break
-	printerr("P5: smash=" + str(smashed) + " gold=" + str(App.gold))
+	printerr("P5: smash=" + str(smashed) + " gold=" + str(App.gold) + " smash_ok=" + str(_gone(smash_n)))
 	var shrine: Node = null
 	var fire: Node = null
 	var clerk: Node = null
@@ -114,6 +117,7 @@ static func p5(host: Node) -> void:
 		ui.close_ui()
 	printerr("P5: extract bank_g=" + str(App.bank_gold) + " bank_o=" + str(App.bank_ore) + " bank_w=" + str(App.bank_wood) + " extracted=" + str(App.extracted))
 	App.gold = 80
+	var arts0: int = App.run_artifacts.size()
 	if shop:
 		shop.interact(player)
 	if ui:
@@ -122,24 +126,30 @@ static func p5(host: Node) -> void:
 			var a: Dictionary = shop.stock[0]
 			ui._buy_art(str(a.id), str(load("res://scripts/data/catalog.gd").by_id(str(a.id)).name))
 		ui.close_ui()
-	printerr("P5: shop artifacts=" + str(App.run_artifacts.size()) + " snack_buys=" + str(App.shop_buys))
-	var gate_open0: bool = false
+	var shop_ok: bool = shop != null and App.run_artifacts.size() > arts0 and App.gold < 80
+	printerr("P5: shop artifacts=" + str(App.run_artifacts.size()) + " snack_buys=" + str(App.shop_buys) + " shop_ok=" + str(shop_ok))
+	# lever, else a pressure plate: the paired gate must flip
+	var trig: Node = lever if lever else (tree(host).get_nodes_in_group("plates").front() if tree(host).get_nodes_in_group("plates").size() > 0 else null)
+	var gate: Node = null
 	for g: Node in tree(host).get_nodes_in_group("gates"):
-		gate_open0 = bool(g.get("open"))
+		if trig and g != trig and g.get("pair") == trig.get("pair"):
+			gate = g
+	var gate_open0: bool = gate != null and bool(gate.get("open"))
 	if lever:
 		lever.interact(player)
-	var gate_open1: bool = false
-	for g2: Node in tree(host).get_nodes_in_group("gates"):
-		gate_open1 = bool(g2.get("open"))
-	printerr("P5: lever_gate " + str(gate_open0) + "->" + str(gate_open1))
+	elif trig:
+		trig.call("plate_held", true)
+	var gate_open1: bool = gate != null and bool(gate.get("open"))
+	printerr("P5: lever_gate " + str(gate_open0) + "->" + str(gate_open1) + " gate_ok=" + str(gate != null and gate_open0 != gate_open1))
 	if crack and crack.has_method("take_hit"):
 		for i: int in 10:
 			if is_instance_valid(crack):
 				crack.take_hit(40.0, Vector2.DOWN, false)
-	printerr("P5: crack_dead=" + str(crack == null or not is_instance_valid(crack) or bool(crack.get("dead"))))
+	printerr("P5: crack_dead=" + str(crack != null and _gone(crack)) + " crack_ok=" + str(crack != null and _gone(crack)))
+	var arts1: int = App.run_artifacts.size()
 	if chest:
 		chest.interact(player)
-	printerr("P5: chest_arts=" + str(App.run_artifacts.size()))
+	printerr("P5: chest_arts=" + str(App.run_artifacts.size()) + " chest_ok=" + str(chest != null and App.run_artifacts.size() > arts1))
 	var present: bool = (
 		int(counts.get("mine", 0)) > 0
 		and int(counts.get("wood", 0)) > 0
@@ -147,9 +157,8 @@ static func p5(host: Node) -> void:
 		and int(counts.get("extract_gate", 0)) > 0
 		and int(counts.get("shrine", 0)) > 0
 		and int(counts.get("campfire", 0)) > 0
-		and int(counts.get("lever", 0)) > 0
+		and int(counts.get("lever", 0)) + int(counts.get("plate", 0)) > 0
 		and int(counts.get("gate", 0)) > 0
-		and int(counts.get("plate", 0)) > 0
 		and int(counts.get("crack", 0)) > 0
 		and int(counts.get("shop", 0)) > 0
 	)
@@ -175,3 +184,7 @@ static func p5(host: Node) -> void:
 	printerr("P5: orb_hurt_ate=" + str(ate) + " hp=" + str(player.get("hp")) + " orb_ok=" + str(kept and ate))
 	player.set("hp", hp_keep)
 	quit_in(host, 0.35)
+
+## A smashed breakable: freed, or flagged dead (crack).
+static func _gone(n: Variant) -> bool:
+	return n != null and (not is_instance_valid(n) or bool((n as Node).get("dead")))

@@ -93,7 +93,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	back.text = App.tr("common.back")
 	back.custom_minimum_size = Vector2(0, 40)
 	back.focus_mode = Control.FOCUS_ALL
-	back.add_theme_font_size_override("font_size", 18)
+	back.add_theme_font_size_override("font_size", ThemeS.font_px(18))
 	ThemeS.BtnSkin.watch(back, "btn", ["secondary"])
 	back.pressed.connect(func(): load("res://scripts/ui/gear_board/board_sub.gd").close_sub(ui))
 	back.focus_entered.connect(func():

@@ -1,0 +1,27 @@
+extends RefCounted
+## Selftest fixture (synthetic): a second builder that pasted the stall post body with other literals.
+const Prim := preload("res://scripts/world/camp_build/mesh_prim.gd")
+static func kiosk_post(body: Node3D, pos: Vector3, height: float) -> void:
+	var foot: float = -height * 0.5
+	var t: float = 0.06
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var p0 := Vector3(pos.x - t, foot, pos.z - t)
+	var p1 := Vector3(pos.x + t, foot, pos.z - t)
+	var p2 := Vector3(pos.x + t, foot, pos.z + t)
+	var p3 := Vector3(pos.x - t, foot, pos.z + t)
+	var p4 := Vector3(pos.x - t, pos.y, pos.z - t)
+	var p5 := Vector3(pos.x + t, pos.y, pos.z - t)
+	var p6 := Vector3(pos.x + t, pos.y, pos.z + t)
+	var p7 := Vector3(pos.x - t, pos.y, pos.z + t)
+	var z := Vector2.ZERO
+	Prim._quad(tool, p3, p2, p6, p7, z, z, z, z)
+	Prim._quad(tool, p0, p4, p5, p1, z, z, z, z)
+	Prim._quad(tool, p0, p3, p7, p4, z, z, z, z)
+	Prim._quad(tool, p1, p5, p6, p2, z, z, z, z)
+	tool.generate_normals()
+	var mesh: ArrayMesh = tool.commit()
+	var node := MeshInstance3D.new()
+	node.name = "KioskPost"
+	node.mesh = mesh
+	body.add_child(node)

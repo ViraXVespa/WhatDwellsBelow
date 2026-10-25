@@ -1,0 +1,62 @@
+{
+ "_about": "shots.py textsize: viewports (CSS width, height, device pixel ratio), the screens (shot flows) measured, and the minimum text size in CSS px on the gated viewports. allow: screen regex (flow/state) -> lower minimum, for fixed-art frames whose text is capped (frame skin TEXT_CAP); each is an open layout question; a key may also match \"flow/state node-path\" (/PlayHud/: in-play HUD text, which grows only with ui_text.gd PLAY_GROW; ' [3d]': world-space Label3D text, measured through the camera: the hub station names are 9.2 CSS px on phone-l, an open layout question). cover: in-play screen -> largest share of the frame its overlays may cover on the gated viewports (1.25 x the pre-CSS-px footprint, 3c3c1cf6: dungeon 0.089, camp 0.058). design/ui-style.md (Text size).",
+ "min_css": 10,
+ "gate": [
+  "phone-l"
+ ],
+ "viewports": {
+  "phone-l": [
+   844,
+   390,
+   3
+  ],
+  "phone-p": [
+   390,
+   844,
+   3
+  ],
+  "tablet-l": [
+   1133,
+   744,
+   2
+  ],
+  "desktop": [
+   1920,
+   1080,
+   1
+  ]
+ },
+ "flows": [
+  "title-menu",
+  "fs-gate",
+  "splash-credit",
+  "camp-pause-menu",
+  "camp-pause-pages",
+  "camp-pause-inventory",
+  "camp-inventory",
+  "camp-npc-panels",
+  "camp-receptionist-menu",
+  "camp-anvil-tabs",
+  "camp-gear-board",
+  "camp-gear-popups",
+  "camp-billboard-controls",
+  "camp-overlays",
+  "camp-recap",
+  "dungeon-hud-states",
+  "dungeon-gate-shop",
+  "dungeon-map-crystal",
+  "dungeon-f1-boss"
+ ],
+ "skip": [],
+ "cover": {
+  "dungeon-hud-states/hud-default": 0.111,
+  "camp-receptionist-menu/menu-closed": 0.073
+ },
+ "allow": {
+  "/PlayHud/": 5,
+  "^camp-npc-panels/(vendor|quest-board|dumpster)$": 7,
+  "^camp-billboard-controls/": 7,
+  "^camp-(anvil-tabs|gear-popups)/(tab|anvil-)": 9,
+  " \\[3d\\]$": 9
+ }
+}

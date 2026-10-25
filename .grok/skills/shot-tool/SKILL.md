@@ -2,7 +2,7 @@
 name: shot-tool
 description: >
   Capture a play-camera postcard from What Dwells Below with
-  tools/run_shots.py. Use when a web, Build, or User session needs a
+  tools/shots.py capture. Use when a web, Build, or User session needs a
   visual proof of a fixed seed/floor. Do not use for numbered smokes,
   Imagine, or tiled world assets.
 when-to-use: >
@@ -15,8 +15,8 @@ user-invocable: true
 Read design/shot-tool.md once per session and follow it.
 Do not reopen this skill or that file after compact.
 
-Run from repo root: `python tools/run_shots.py --mode web|build|user`.
-Read only `python tools/read_summary.py --job shots` (index first, newest run; last line is the RESULT line).
+Run from repo root: `python tools/shots.py capture --mode web|build|user`.
+Read only `python tools/session.py summary --job shots` (index first, newest run; last line is the RESULT line).
 Web mode: paste the clipboard image with the printed RESULT (no scratch needed). Do not dump PNG bytes into chat text.
 
 Do not pass Godot `--headless` or `--display-driver headless` for a postcard.

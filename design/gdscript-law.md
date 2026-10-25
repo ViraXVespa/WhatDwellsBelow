@@ -7,7 +7,7 @@ Tabs, types, and warnings live only here. Do not copy these rules back into the 
 
 ## Indent
 
-Live `.gd` uses tabs. Web / chat scratches must not emit four-space GDScript against tabbed files. `tools/md_format_lib.py` maps a leading run of four spaces to one tab on `.gd` write and on replace-once retry. Only the line prefix. Mid-line spaces stay. `.py` / `.md` / other suffixes are untouched.
+Live `.gd` uses tabs. Web / chat scratches must not emit four-space GDScript against tabbed files. `tools/lib/md_format_lib.py` maps a leading run of four spaces to one tab on `.gd` write and on replace-once retry. Only the line prefix. Mid-line spaces stay. `.py` / `.md` / other suffixes are untouched.
 
 ## Types
 

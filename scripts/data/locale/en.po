@@ -2305,3 +2305,105 @@ msgstr "Death recap"
 
 msgid "tutorial.recap.body"
 msgstr "Dying or Dispelling opens the recap. It shows the run, then each skill's run experience draining down to the fragment you keep. After that you see the new permanent totals, and any gold and items you had already sent home. Continue sends you back to Placeholdia."
+
+msgid "pause_settings.report_bug"
+msgstr "Report Bug"
+
+msgid "bug_report.area"
+msgstr "Area: %s"
+
+msgid "bug_report.kind"
+msgstr "What happened: %s"
+
+msgid "bug_report.area_unsure"
+msgstr "Not sure"
+
+msgid "bug_report.area_combat"
+msgstr "Combat"
+
+msgid "bug_report.area_enemies"
+msgstr "Enemies"
+
+msgid "bug_report.area_controls"
+msgstr "Controls"
+
+msgid "bug_report.area_gear"
+msgstr "Gear and inventory"
+
+msgid "bug_report.area_menus"
+msgstr "Menus and HUD"
+
+msgid "bug_report.area_graphics"
+msgstr "Graphics"
+
+msgid "bug_report.area_camp"
+msgstr "Placeholdia"
+
+msgid "bug_report.area_dungeon"
+msgstr "Dungeon"
+
+msgid "bug_report.area_sound"
+msgstr "Sound and effects"
+
+msgid "bug_report.area_saving"
+msgstr "Saving and loading"
+
+msgid "bug_report.kind_looks_wrong"
+msgstr "Something looks wrong"
+
+msgid "bug_report.kind_stuck"
+msgstr "I got stuck"
+
+msgid "bug_report.kind_controls"
+msgstr "Input did the wrong thing"
+
+msgid "bug_report.kind_crash"
+msgstr "The game froze or crashed"
+
+msgid "bug_report.kind_other"
+msgstr "Something else"
+
+msgid "bug_report.details_hint"
+msgstr "Details (optional): what you did and what you expected"
+
+msgid "bug_report.email_hint"
+msgstr "Email (optional, kept private)"
+
+msgid "bug_report.opt_in"
+msgstr "Email me about this report"
+
+msgid "bug_report.shot"
+msgstr "Attach a screenshot"
+
+msgid "bug_report.crash"
+msgstr "Attach the log from the session that crashed"
+
+msgid "bug_report.send"
+msgstr "Send Report"
+
+msgid "bug_report.privacy"
+msgstr "Sends your note and a game state report (version, area, settings). Your email is never shown publicly."
+
+msgid "bug_report.sending"
+msgstr "Sending..."
+
+msgid "bug_report.sent"
+msgstr "Thanks! Report sent (reporter %s)."
+
+msgid "bug_report.sent_dry"
+msgstr "Test report accepted (not filed)."
+
+msgid "bug_report.dupe"
+msgstr "This report was already sent."
+
+msgid "bug_report.rate"
+msgstr "Too many reports for now. Try again later."
+
+msgid "bug_report.offline"
+msgstr "Could not reach the report server. Check your connection."
+
+msgid "bug_report.bad_email"
+msgstr "That email does not look right."
+
+msgid "bug_report.failed"
+msgstr "Report failed (error %d)."

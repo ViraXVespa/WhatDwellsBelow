@@ -74,6 +74,15 @@ static func p3_after_kill(host: Node) -> void:
 	printerr("P3: after_kill_dead=" + str(App.boss_dead))
 	printerr("P3: after_kill_stairs_locked=" + str(stairs.locked if stairs else true))
 	printerr("P3: after_kill_door_open=" + str(door.open if door else false))
+	var fails: Array[String] = []
+	if not App.boss_dead:
+		fails.append("boss not dead")
+	if stairs == null or stairs.locked:
+		fails.append("stairs still locked")
+	if door == null or not door.open:
+		fails.append("boss door still shut")
+	if fails.size():
+		printerr("SMOKE FAIL: P3 boss kill (smoke_early.gd p3_after_kill): " + "; ".join(fails))
 	App.next_floor()
 
 static func p4(host: Node) -> void:

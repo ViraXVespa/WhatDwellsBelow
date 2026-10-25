@@ -11,15 +11,15 @@ static func item_color(it: Dictionary) -> Color:
 		return Color(0.45, 0.36, 0.28)
 	if is_risk(it):
 		return Color(0.55, 0.16, 0.11)
-	match str(it.get("rarity", "white")):
-		"green":
-			return Color(0.16, 0.40, 0.14)
-		"blue":
-			return Color(0.14, 0.26, 0.48)
-		_:
-			if str(it.get("kind", "")) == "artifact":
-				return Color(0.42, 0.24, 0.08)
-			return Tok.INK
+	var other: Color = Color(0.42, 0.24, 0.08) if str(it.get("kind", "")) == "artifact" else Tok.INK
+	return by_rarity(it, _ITEM_TONE, other)
+
+## Item text tone per rarity (white and unknown rarities use the caller's fallback).
+const _ITEM_TONE := {"green": Color(0.16, 0.40, 0.14), "blue": Color(0.14, 0.26, 0.48)}
+
+## tones[rarity] for item `it`, or `other` when its rarity has no entry. Gear text and icon frames share it.
+static func by_rarity(it: Dictionary, tones: Dictionary, other: Color) -> Color:
+	return tones.get(str(it.get("rarity", "white")), other)
 
 static func is_risk(it: Dictionary) -> bool:
 	if it.is_empty():

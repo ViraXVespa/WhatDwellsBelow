@@ -7,6 +7,8 @@ extends Object
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+## Fixed board art: text scales up to this on small screens (ui_text.gd cap), then the board would overflow.
+const TEXT_CAP := 1.4
 const Art: GDScript = preload("res://scripts/ui/progress_ui/controls_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(650, 16)
@@ -35,10 +37,8 @@ static func build(chrome: Control) -> void:
 	UiBuild.piece(chrome, "sign_stile_r", Art.grain(false))
 	UiBuild.piece(chrome, "sign_rail_t", Art.grain(true))
 	UiBuild.piece(chrome, "sign_rail_b", Art.grain(true))
-	UiBuild.piece(chrome, "sign_br_tl", Art.bracket())
-	UiBuild.piece(chrome, "sign_br_tr", Art.bracket())
-	UiBuild.piece(chrome, "sign_br_bl", Art.bracket())
-	UiBuild.piece(chrome, "sign_br_br", Art.bracket())
+	for corner: String in ["tl", "tr", "bl", "br"]:
+		UiBuild.piece(chrome, "sign_br_" + corner, Art.bracket())
 	chrome.add_child(UiBuild.chrome_label("sign_title", 32, ThemeS.PAPER, false))
 	chrome.add_child(UiBuild.chrome_label("sign_line", 18, ThemeS.PAPER, true))
 

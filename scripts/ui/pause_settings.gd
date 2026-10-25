@@ -11,6 +11,7 @@ const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Journal := preload("res://scripts/ui/pause_menu/journal_page.gd")
+const Report := preload("res://scripts/ui/pause_settings/report_page.gd")
 
 var pause: CanvasLayer
 var open := true
@@ -67,6 +68,7 @@ func split_rows() -> Array:
 		{"id": "audio", "label": tr("pause_settings.audio"), "kind": "page"},
 		{"id": "graphics", "label": tr("pause_settings.graphics"), "kind": "page"},
 		{"id": "controls", "label": tr("pause_settings.controls"), "kind": "page"},
+		{"id": "report", "label": tr("pause_settings.report_bug"), "kind": "page"},
 		{"id": "patreon", "label": tr("pause_settings.patreon"), "kind": "leaf"},
 	]
 	if App.in_dungeon:
@@ -137,6 +139,8 @@ func split_build_page(id: String) -> void:
 			Pages.page_graphics(self)
 		"controls":
 			BindsPage.build(self)
+		"report":
+			Report.build(self)
 		"patreon":
 			_leaf_copy(tr("pause_settings.support_development_on_patreon_o"))
 		"leave":

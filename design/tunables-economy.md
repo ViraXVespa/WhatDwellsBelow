@@ -2,8 +2,9 @@
 
 Status: suggested starts  
 Read when: the work changes a progression, economy, anvil or UI-feel number  
+Code: `scripts/data/balance/vars_economy.gd` (live defaults for this file's keys)  
 
-Same table shape and rules as the tunables door; `tools/tunables.py get|set|add --key KEY` reads every tunables file.
+Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|add --key KEY` reads every tunables file.
 
 ## Progression and economy
 
@@ -24,7 +25,7 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 
 ## Anvil / affixes
 
-Live defaults are in `balance.gd` (single source). Code fallbacks in `forge_act.gd` / `gear_roll.gd` only apply when `App.bal` is missing and mirror these. Root is no forge material.
+Live defaults are in `balance/vars_economy.gd` (single source). Code fallbacks in `forge_act.gd` / `gear_roll.gd` only apply when `App.bal` is missing and mirror these. Root is no forge material.
 
 | Key | Default | Role |
 |-----|----------|------|
@@ -74,7 +75,7 @@ Roll rules and the holds cap: inventory (gear job).
 | Hitch budget | 1/60 s | Frame budget used by the hitch log |
 | Hitch multiplier | 4 | Trip when `delta >= budget × 4` (~66.7 ms) |
 | Hitch cap | 256 | Newest hitch rows kept in `user://hitch/hitch.jsonl` |
-| `potion_cooldown` | **8.0 s** | `balance.gd` only; potions carry no baked cooldown; `BAL_REV` 14 migrates old saves |
+| `potion_cooldown` | **8.0 s** | `balance/vars_economy.gd` only; potions carry no baked cooldown |
 | `RENDER_SCALE_OPTS` | Auto, 1.0, 0.8, 0.6 | Settings > Graphics "Render scale", saved as `render_scale` (0 = Auto, the default: `dyn_res.gd` dynamic scale). A fixed pick stops Auto. |
 | Aim-line prefs | on, 0.85 | `store_data.gd` `DEF` is the home; `balance.gd` reads it |
 

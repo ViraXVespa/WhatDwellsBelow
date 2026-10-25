@@ -3,6 +3,7 @@ extends Object
 ## Camp build shared leaf helpers: box/face emit, stall parts.
 
 const Roof := preload("res://scripts/world/camp_build/roof.gd")
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
 static func box(host: Node3D, pos: Vector3, box_size: Vector3, col: Color) -> StaticBody3D:
 	return Roof.box(host, pos, box_size, col)
@@ -28,7 +29,8 @@ static func face(
 	var fw: float = maxf(face_w, 0.2)
 	spr.pixel_size = fw / tw
 	var sh: float = spr.pixel_size * rh
-	spr.position = Vector3(x_off, -box_size.y * 0.5 + sh * 0.5 - 0.06, box_size.z * 0.5 + 0.01)
+	spr.position = Vector3(x_off, -box_size.y * 0.5 - 0.02 + sh * 0.5 - 0.06, box_size.z * Spec.FACE_Z - 0.001)
+	spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	body.add_child(spr)
 static func face_height(tex: String, face_w: float) -> float:
 	if not ResourceLoader.exists(tex):
@@ -57,35 +59,12 @@ static func _counter(body: StaticBody3D, box_size: Vector3) -> void:
 	var shape := CollisionShape3D.new()
 	shape.name = "StallCounter"
 	var block := BoxShape3D.new()
-	block.size = Vector3(box_size.x * 0.72, 1.05, box_size.z * 0.46)
+	var c: Vector4 = Spec.STALL["counter"]
+	block.size = Vector3(box_size.x * c.x, c.y, box_size.z * c.z)
 	shape.shape = block
-	shape.position = Vector3(0.0, 0.52, 0.0)
+	shape.position = Vector3(0.0, c.w, 0.0)
 	body.add_child(shape)
 
-static func _stall_walls(body: StaticBody3D, box_size: Vector3) -> void:
-	var foot: float = -box_size.y * 0.5
-	var wall_h: float = box_size.y * 0.72
-	var mid_y: float = foot + wall_h * 0.5
-	var specs: Array = [
-		Vector3(0.0, mid_y, -box_size.z * 0.46),
-		Vector3(box_size.x * 0.46, mid_y, 0.0),
-		Vector3(-box_size.x * 0.46, mid_y, 0.0),
-	]
-	var sizes: Array = [
-		Vector3(box_size.x * 0.9, wall_h, 0.28),
-		Vector3(0.28, wall_h, box_size.z * 0.8),
-		Vector3(0.28, wall_h, box_size.z * 0.8),
-	]
-	var i: int = 0
-	while i < specs.size():
-		var shape := CollisionShape3D.new()
-		shape.name = "StallWall"
-		var block := BoxShape3D.new()
-		block.size = sizes[i]
-		shape.shape = block
-		shape.position = specs[i]
-		body.add_child(shape)
-		i += 1
 static func _blob(parent: Node3D, at: Vector3) -> void:
 	var mesh := MeshInstance3D.new()
 	mesh.name = "Blob"

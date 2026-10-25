@@ -1,5 +1,8 @@
 extends Object
 
+const UiBuild := preload("res://scripts/ui/ui_build.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
+
 static func esc_bb(t: String) -> String:
 	return t.replace("[", "[lb]")
 
@@ -28,7 +31,7 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 	var lab := str(e.get("label", "")).strip_edges()
 	if lab == "":
 		lab = App.tr("news_fmt.build")
-	var head := "[font_size=24][b]%s[/b][/font_size]" % esc_bb(lab)
+	var head := "[font_size=%d][b]%s[/b][/font_size]" % [UiText.font_px(24), esc_bb(lab)]
 	if is_new:
 		head = "[color=#e2b862]%s[/color]" % head
 	var lines: PackedStringArray = [head]
@@ -67,21 +70,8 @@ static func news_text(rows: Array, new_labs: Dictionary) -> String:
 	return "\n\n".join(parts)
 
 static func lock_news_focus(close_btn: Button, older_btn: Button) -> void:
-	close_btn.focus_neighbor_left = close_btn.get_path()
-	close_btn.focus_neighbor_right = close_btn.get_path()
 	if older_btn == null:
-		close_btn.focus_neighbor_top = close_btn.get_path()
-		close_btn.focus_neighbor_bottom = close_btn.get_path()
-		close_btn.focus_next = close_btn.get_path()
-		close_btn.focus_previous = close_btn.get_path()
+		UiBuild.focus(close_btn, close_btn, close_btn, close_btn, close_btn, close_btn, close_btn)
 		return
-	close_btn.focus_neighbor_top = older_btn.get_path()
-	close_btn.focus_neighbor_bottom = older_btn.get_path()
-	close_btn.focus_next = older_btn.get_path()
-	close_btn.focus_previous = older_btn.get_path()
-	older_btn.focus_neighbor_left = older_btn.get_path()
-	older_btn.focus_neighbor_right = older_btn.get_path()
-	older_btn.focus_neighbor_top = close_btn.get_path()
-	older_btn.focus_neighbor_bottom = close_btn.get_path()
-	older_btn.focus_next = close_btn.get_path()
-	older_btn.focus_previous = close_btn.get_path()
+	UiBuild.focus(close_btn, close_btn, close_btn, older_btn, older_btn, older_btn, older_btn)
+	UiBuild.focus(older_btn, older_btn, older_btn, close_btn, close_btn, close_btn, close_btn)

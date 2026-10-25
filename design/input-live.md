@@ -47,4 +47,4 @@ Web builds on GitHub Pages do not get a reliable Godot joypad. When `OS.has_feat
 - Player must click the canvas once so the page can receive keyboard / gamepad input. The fullscreen gate focuses `#canvas` itself and then re-grabs the action button.
 - Xbox pads work in Chromium-based browsers.
 - After scene changes, `App.wake_web_pad()` refreshes the bridge.
-- A connected browser pad hides the web touch overlay. `WebPad.browser_pad_connected()` is the shared probe.
+- A connected browser pad hides the web touch overlay. `WebPad.js_pad_any()` is the shared probe.

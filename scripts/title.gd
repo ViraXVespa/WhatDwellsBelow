@@ -5,6 +5,7 @@ const GameVer := preload("res://scripts/data/game_ver.gd")
 const News := preload("res://scripts/title/news.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
+const UiBuild := preload("res://scripts/ui/ui_build.gd")
 
 var _busy := false
 var _archives_open := false
@@ -39,11 +40,7 @@ func _ready() -> void:
 	plate.add_theme_stylebox_override("panel", BtnSkin.panel_box("title"))
 	add_child(plate)
 	var card := VBoxContainer.new()
-	card.set_anchors_preset(Control.PRESET_CENTER)
-	card.offset_left = -420
-	card.offset_right = 420
-	card.offset_top = -320
-	card.offset_bottom = 340
+	UiBuild.center(card, 420, -320, 340)
 	card.alignment = BoxContainer.ALIGNMENT_CENTER
 	card.add_theme_constant_override("separation", 14)
 	add_child(card)
@@ -100,28 +97,10 @@ func _wire_focus(play_a: Button, play_b: Button, updates: Button, archives: Butt
 		archives.focus_next = play_a.get_path()
 		archives.focus_previous = updates.get_path()
 		return
-	play_a.focus_neighbor_left = play_b.get_path()
-	play_a.focus_neighbor_right = play_b.get_path()
-	play_a.focus_neighbor_top = archives.get_path()
-	play_a.focus_neighbor_bottom = updates.get_path()
-	play_a.focus_next = play_b.get_path()
-	play_a.focus_previous = archives.get_path()
-	play_b.focus_neighbor_left = play_a.get_path()
-	play_b.focus_neighbor_right = play_a.get_path()
-	play_b.focus_neighbor_top = archives.get_path()
-	play_b.focus_neighbor_bottom = updates.get_path()
-	play_b.focus_next = updates.get_path()
-	play_b.focus_previous = play_a.get_path()
-	_loop_btn(updates, play_a, archives)
-	updates.focus_neighbor_left = play_a.get_path()
-	updates.focus_neighbor_right = play_b.get_path()
-	updates.focus_next = archives.get_path()
-	updates.focus_previous = play_b.get_path()
-	_loop_btn(archives, updates, play_a)
-	archives.focus_neighbor_left = play_a.get_path()
-	archives.focus_neighbor_right = play_b.get_path()
-	archives.focus_next = play_a.get_path()
-	archives.focus_previous = updates.get_path()
+	UiBuild.focus(play_a, play_b, play_b, archives, updates, play_b, archives)
+	UiBuild.focus(play_b, play_a, play_a, archives, updates, updates, play_a)
+	UiBuild.focus(updates, play_a, play_b, play_a, archives, archives, play_b)
+	UiBuild.focus(archives, play_a, play_b, updates, play_a, play_a, updates)
 
 func _loop_btn(b: Button, up: Button, down: Button) -> void:
 	b.focus_neighbor_top = up.get_path()

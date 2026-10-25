@@ -48,10 +48,9 @@ static func body() -> Texture2D:
 	ArtFill.poly(img, [Vector2i(220, 34), Vector2i(PALE.position.x, PALE.position.y), Vector2i(PALE.position.x, PALE.end.y), Vector2i(PALE.end.x, PALE.end.y), Vector2i(PALE.end.x, PALE.position.y)], FACE)
 	_wash_face(img)
 	_plinth(img)
-	_spark(img, 36, 332, 8)
-	_spark(img, 404, 332, 8)
-	_spark(img, 78, 292, 5)
-	_spark(img, 362, 292, 5)
+	for s: Vector3i in [Vector3i(36, 332, 8), Vector3i(78, 292, 5)]:
+		_spark(img, s.x, s.y, s.z)
+		_spark(img, 440 - s.x, s.y, s.z)
 	_core(img, 220, 26)
 	_outline(img)
 	return UiBuild.keep(_images, "body", img)

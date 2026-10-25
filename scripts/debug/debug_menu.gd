@@ -91,10 +91,8 @@ func _rebuild() -> void:
 	chrome_box.add_child(title)
 	var nav := HBoxContainer.new()
 	nav.add_theme_constant_override("separation", 10)
-	nav.add_child(_tab_btn("Values", "values"))
-	nav.add_child(_tab_btn("Settings", "settings"))
-	nav.add_child(_tab_btn("Profiles", "profiles"))
-	nav.add_child(_tab_btn("Playtest", "playtest"))
+	for tab: String in ["values", "settings", "profiles", "playtest"]:
+		nav.add_child(_tab_btn(tab.capitalize(), tab))
 	anim_btn = _tab_btn("Animation Browser", "anim")
 	nav.add_child(anim_btn)
 	nav.add_child(_chrome_btn("Close (B)", func(): hide_menu()))

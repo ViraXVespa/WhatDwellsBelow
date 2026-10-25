@@ -1,119 +1,101 @@
 extends Object
 
-## Camp build buildings: guild hall and wings, stall solids, awnings, roof planes.
+## Camp build buildings from the Layout spec (layout_spec.gd): guild hall and wing, the stall's walls, posts, tarp and collision.
 
+const Lamps := preload("res://scripts/world/camp/lamps.gd")
 const MeshS := preload("res://scripts/world/camp_build/mesh.gd")
+const Tent := preload("res://scripts/world/camp_build/mesh_tent.gd")
 const Util := preload("res://scripts/world/camp_build/build_util.gd")
 const Prim := preload("res://scripts/world/camp_build/mesh_prim.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
-
-const ROOF_EAVE := 0.42
-const TILE_W := 3.2
+const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
 static func guild_hall(host: Node3D) -> void:
 	var lay: Node3D = LayoutS.of(host)
-	var hall_at: Vector3 = lay.hall_pos()
-	var hall_box: Vector3 = lay.hall_box
-	var hall_body: StaticBody3D = Util.box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
-	var hall_fit: Vector3 = Util.seat(hall_body, hall_box, "res://assets/sprites/buildings/guild.png")
-	MeshS.wall_box(hall_body, hall_fit, Color(0.45, 0.32, 0.22))
-	Util._slide(hall_body, hall_fit)
-	Util.face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.32)
-	var hall_valance: float = hall_fit.y * lay.awning_valance("Hall")
-	awning(hall_body, hall_fit, lay.awning_depth("Hall"), lay.awning_slope("Hall"), hall_valance, 0.0, 0.0, 0.0)
-	MeshS.gable_on(hall_body, hall_fit, 0.0, 0.55, lay.tile_for("Hall"), lay.hall_uv_off)
+	_guild(host, lay, "Hall", lay.hall_pos(), lay.hall_box, lay.hall_uv_off)
 
 static func guild_wing(host: Node3D) -> void:
 	var lay: Node3D = LayoutS.of(host)
-	var wing_at: Vector3 = lay.wing_pos()
-	var wing_box: Vector3 = lay.wing_box
-	var wing_body: StaticBody3D = Util.box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
-	var wing_fit: Vector3 = Util.seat(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png")
-	MeshS.wall_box(wing_body, wing_fit, Color(0.5, 0.38, 0.28))
-	Util._slide(wing_body, wing_fit)
-	Util.face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.32)
-	var wing_valance: float = wing_fit.y * lay.awning_valance("Wing")
-	awning(wing_body, wing_fit, lay.awning_depth("Wing"), lay.awning_slope("Wing"), wing_valance, 0.0, 0.0, 0.0)
-	MeshS.gable_on(wing_body, wing_fit, 0.0, 0.48, lay.tile_for("Wing"), lay.wing_uv_off)
-static func awning(
-	body: Node3D,
-	box_size: Vector3,
-	depth: float = 0.48,
-	slope: float = 0.10,
-	valance: float = 0.16,
-	eave: float = ROOF_EAVE,
-	inset_l: float = 0.0,
-	inset_r: float = 0.0
-) -> void:
-	MeshS.attach_awning(body, box_size, depth, slope, valance, eave, inset_l, inset_r)
-static func solid(
-	host: Node3D, pos: Vector3, box_size: Vector3, col: Color, tex: String, tarp: bool = false
-) -> void:
-	var body: StaticBody3D = Util.box(host, pos, box_size, col)
-	var x0: float = pos.x - box_size.x * 0.5
-	var z0: float = pos.z - box_size.z * 0.5
-	if tarp:
-		MeshS.pitched_tarp(body, box_size, 0.0, Vector3(x0, 0.0, z0))
-		Util.face(body, box_size, tex, 0.0, box_size.x * 0.92)
-		Util._counter(body, box_size)
-		Util._stall_walls(body, box_size)
-		# Full front collision plane
-		var front := CollisionShape3D.new()
-		front.name = "StallFront"
-		var fblock := BoxShape3D.new()
-		fblock.size = Vector3(box_size.x * 0.92, box_size.y * 0.75, 0.18)
-		front.shape = fblock
-		front.position = Vector3(0.0, box_size.y * 0.32, box_size.z * 0.46)
-		body.add_child(front)
-		# Right wall mesh so bake can shadow it (matches left/right collision)
-		var rw := MeshInstance3D.new()
-		rw.name = "StallRightWall"
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var hx := box_size.x * 0.49
-		var hy := box_size.y * 0.72
-		var hz := box_size.z * 0.49
-		var a := Vector3(hx, -box_size.y * 0.5, -hz)
-		var b := Vector3(hx, -box_size.y * 0.5, hz)
-		var c := Vector3(hx, -box_size.y * 0.5 + hy, hz)
-		var d := Vector3(hx, -box_size.y * 0.5 + hy, -hz)
-		Prim._quad(st, a, b, c, d, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-		st.generate_normals()
-		rw.mesh = st.commit()
-		rw.material_override = Prim._timber(Color(0.42, 0.28, 0.16))
-		body.add_child(rw)
-		Prim._hit(body, rw.mesh, "StallRightHit")
-		Util._blob(body, Vector3(0.0, 0.0, box_size.z * 0.2))
-	else:
-		roof_plane(
-			body,
-			Vector3(0.0, box_size.y * 0.5 + 0.03, 0.0),
-			Vector2(box_size.x, box_size.z),
-			Vector3(x0, 0.0, z0),
-			false,
-			LayoutS.of(host).tile_for("Stall"),
-			LayoutS.of(host).stall_uv_off
-		)
-		Util.face(body, box_size, tex, 0.0, box_size.x)
-static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
-	return MeshS.roof_mat(dim, world_min, tile, uv_off)
+	_guild(host, lay, "Wing", lay.wing_pos(), lay.wing_box, lay.wing_uv_off)
 
-static func roof_plane(
-	host: Node3D,
-	local: Vector3,
-	dim: Vector2,
-	world_min: Vector3,
-	tarp: bool = false,
-	tile: float = TILE_W,
-	uv_off: Vector2 = Vector2.ZERO
-) -> void:
-	var roof := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = dim
-	roof.mesh = plane
-	roof.position = local
-	if tarp:
-		roof.material_override = MeshS.tarp_mat(dim, world_min)
-	else:
-		roof.material_override = roof_mat(dim, world_min, tile, uv_off)
-	host.add_child(roof)
+## One guild building: walls seated to its face art, slide collision, cropped face with its lamps, awning, gable.
+static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_size: Vector3, uv_off: Vector2) -> void:
+	var row: Dictionary = LayoutS.body(which)
+	var tex: String = row["face"]
+	var body: StaticBody3D = Util.box(host, at, box_size, row["wall"])
+	var fit: Vector3 = Util.seat(body, box_size, tex)
+	MeshS.wall_box(body, fit, row["wall"])
+	Util._slide(body, fit)
+	Util.face(body, fit, tex, 0.0, fit.x, row["crop"])
+	var valance: float = fit.y * lay.awning_valance(which)
+	var hem := Vector3(fit.y * 0.5 - valance, fit.z * 0.5 + lay.awning_depth(which), float(row.get("hang_x", 0.0)))
+	Lamps.on_face(body.get_child(body.get_child_count() - 1) as Sprite3D, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
+	Tent.attach_awning(body, fit, lay.awning_depth(which), valance)
+	Tent.gable_on(body, fit, 0.0, row["rise"], lay.tile_for(which), uv_off)
+
+## The stall: tarp and posts, face, counter, one collision block over the post rectangle, and timber walls just
+## outside the posts (so the posts sort in front) from the floor to the post tops.
+static func stall(host: Node3D) -> void:
+	var lay: Node3D = LayoutS.of(host)
+	var pos: Vector3 = lay.stall_pos()
+	var box_size: Vector3 = lay.stall_box
+	var body: StaticBody3D = Util.box(host, pos, box_size, Spec.STALL["wall"])
+	var posts: Vector3 = lay.stall_posts()
+	Tent.pitched_tarp(body, box_size, posts, lay.stall_eave_y())
+	Util.face(body, box_size, Spec.STALL["face"], 0.0, box_size.x * float(Spec.STALL["face_w"]))
+	Util._counter(body, box_size)
+	var front_z: float = posts.y
+	var rear_z: float = posts.z
+	var coll := CollisionShape3D.new()
+	coll.name = "StallUniform"
+	var block := BoxShape3D.new()
+	block.size = Vector3(posts.x * 2.0, box_size.y, front_z - rear_z)
+	coll.shape = block
+	coll.position = Vector3(0.0, 0.0, (front_z + rear_z) * 0.5)
+	body.add_child(coll)
+	var hx: float = posts.x + float(Spec.STALL["post_half"]) - 0.001
+	var foot: float = -pos.y + -0.02  # world FLOOR_Y
+	var top: float = lay.stall_eave_y() - 0.01  # the post tops
+	_wall(body, "StallRightWall", "StallRightHit", [Vector3(hx, foot, front_z), Vector3(hx, foot, rear_z), Vector3(hx, top, rear_z), Vector3(hx, top, front_z)])
+	_wall(body, "StallLeftWall", "StallLeftHit", [Vector3(-hx, foot, rear_z), Vector3(-hx, foot, front_z), Vector3(-hx, top, front_z), Vector3(-hx, top, rear_z)])
+	_wall(body, "StallBackWall", "StallBackHit", [Vector3(-hx, foot, rear_z), Vector3(hx, foot, rear_z), Vector3(hx, top, rear_z), Vector3(-hx, top, rear_z)])
+	var fz: float = front_z - 0.001
+	_wall(body, "StallFrontWall", "", [Vector3(-hx, foot - 0.5, fz), Vector3(hx, foot - 0.5, fz), Vector3(hx, top, fz), Vector3(-hx, top, fz)])
+	# The face art is the front: the wall only casts (live and baked shadow), it is never drawn, so nothing z-fights it.
+	(body.get_node("StallFrontWall") as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+
+## One stall wall quad (q: bottom-left, bottom-right, top-right, top-left), sun-lit planks like the guild walls.
+static func _wall(body: StaticBody3D, mesh_name: String, hit: String, q: Array) -> void:
+	var w := MeshInstance3D.new()
+	w.name = mesh_name
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var k: float = float(Spec.STALL["plank_m"])
+	var uw: float = (q[1] - q[0]).length() / k
+	var vh: float = (q[3] - q[0]).length() / k
+	Prim._quad(st, q[0], q[1], q[2], q[3], Vector2(0.0, vh), Vector2(uw, vh), Vector2(uw, 0.0), Vector2.ZERO)
+	st.generate_normals()
+	w.mesh = st.commit()
+	w.material_override = _planks()
+	body.add_child(w)
+	if hit != "":
+		Prim._hit(body, w.mesh, hit)
+
+static var _plank_mat: StandardMaterial3D
+
+## Lit timber with vertical plank seams (one texture repeat = Spec.STALL plank_m metres).
+static func _planks() -> StandardMaterial3D:
+	if _plank_mat != null:
+		return _plank_mat
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for x in 16:
+		var board: int = x / 4
+		var tone: float = [1.0, 0.9, 1.06, 0.95][board]
+		for y in 16:
+			var c: Color = Spec.TIMBER * (0.76 if x % 4 == 0 else tone * (0.96 if (x * 7 + y * 3) % 11 == 0 else 1.0))
+			img.set_pixel(x, y, Color(c.r, c.g, c.b, 1.0))
+	_plank_mat = StandardMaterial3D.new()
+	_plank_mat.albedo_texture = ImageTexture.create_from_image(img)
+	_plank_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_plank_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	return _plank_mat

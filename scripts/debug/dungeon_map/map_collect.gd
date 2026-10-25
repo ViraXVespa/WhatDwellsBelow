@@ -5,10 +5,8 @@ const Util := preload("res://scripts/debug/dungeon_map/map_util.gd")
 static func _collect(host: Node, data: Dictionary, overlays: Dictionary) -> Array:
 	var out: Array = []
 	var seen: Dictionary = {}
-	Util._mark(overlays, Vector2i(data.get("spawn", Vector2i.ZERO)), "spawn")
-	Util._mark(overlays, Vector2i(data.get("stairs", Vector2i.ZERO)), "stairs")
-	Util._mark(overlays, Vector2i(data.get("door", Vector2i.ZERO)), "boss_door")
-	Util._mark(overlays, Vector2i(data.get("boss", Vector2i.ZERO)), "boss")
+	for key: String in ["spawn", "stairs", "door", "boss"]:
+		Util._mark(overlays, Vector2i(data.get(key, Vector2i.ZERO)), "boss_door" if key == "door" else key)
 	var tree: SceneTree = host.get_tree()
 	var groups: PackedStringArray = PackedStringArray(["interact", "gates", "breakables", "floor_crystals", "boss_door", "boss", "plates"])
 	for g: String in groups:

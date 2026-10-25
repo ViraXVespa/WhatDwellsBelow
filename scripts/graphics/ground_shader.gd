@@ -21,7 +21,7 @@ const TAP_BODY := """
 	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
 	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
 """
-## Baked wear sheet (tools/bake_ground_wear.py): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
+## Baked wear sheet (tools/bake.py ground): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
 ## darkest texel is WEAR_DEPTH darker (ground_wear 0.22 -> about 5%).
 const WEAR_PATH := "res://assets/baked/ground_wear.png"
 const WEAR_PX_PER_M := 32.0
@@ -49,7 +49,18 @@ uniform float wear_uv = 0.03125;
 uniform float wear = 0.0;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
+uniform vec4 feather_rect = vec4(0.0);
+uniform float feather = 0.0;
+uniform vec4 feather_rect2 = vec4(0.0);
+uniform sampler2D under_tex : source_color, filter_nearest_mipmap, repeat_enable;
+uniform vec2 under_uv = vec2(1.0);
 varying vec3 world_pos;
+float hash2(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+float vnoise(vec2 g) {
+	vec2 i = floor(g);
+	vec2 f = smoothstep(0.0, 1.0, fract(g));
+	return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0)), f.x), f.y);
+}
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -58,14 +69,37 @@ void vertex() {
 
 void fragment() {
 	vec2 xz = world_pos.xz;
-	vec2 uv = xz * uv_scale + uv_off;
-	vec3 c = texture(albedo_tex, uv).rgb;
+	vec3 c = texture(albedo_tex, xz * uv_scale + uv_off).rgb;
+	if (feather > 0.0) {
+		// Transition, not a cut: blend toward the surface below (under_tex) across the fade, alpha in 4 steps on the
+		// 1/16 m texel grid; the blend centre wobbles a little (0.25 m at ~2 m plus 0.12 m at ~0.6 m).
+		vec2 q = (floor(xz * 16.0) + 0.5) / 16.0;
+		float d = min(min(q.x - feather_rect.x, feather_rect.z - q.x), min(q.y - feather_rect.y, feather_rect.w - q.y));
+		if (feather_rect2.z > feather_rect2.x) {
+			d = max(d, min(min(q.x - feather_rect2.x, feather_rect2.z - q.x), min(q.y - feather_rect2.y, feather_rect2.w - q.y)));
+		}
+		float k = smoothstep(0.0, feather, d - 0.25 * vnoise(q * 0.5) - 0.12 * vnoise(q * 1.7 + 9.0));
+		k = floor(k * 4.0 + 0.5) / 4.0;
+		c = mix(texture(under_tex, xz * under_uv).rgb, c, k);
+	}
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
 """ + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * worn * lit;
 }
 """
 	_sh = sh
 	return sh
+
+## feather > 0: inside rect (x0, z0, x1, z1), or the union with rect2, the plane blends to under_path's texture over its
+## last `feather` metres (4 alpha steps on the 1/16 m texel grid, small slow wobble), so surfaces meet in a soft transition.
+static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float, under_path: String, rect2: Vector4 = Vector4.ZERO) -> ShaderMaterial:
+	var mat: ShaderMaterial = material(tex_path, fallback)
+	mat.set_shader_parameter("feather_rect", rect)
+	mat.set_shader_parameter("feather_rect2", rect2)
+	mat.set_shader_parameter("feather", width)
+	var under: ShaderMaterial = material(under_path, fallback)
+	mat.set_shader_parameter("under_tex", under.get_shader_parameter("albedo_tex"))
+	mat.set_shader_parameter("under_uv", under.get_shader_parameter("uv_scale"))
+	return mat
 
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()

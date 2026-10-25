@@ -166,20 +166,12 @@ static func shelf(lift: float, foot: int) -> Texture2D:
 		return _images[key]
 	var w: int = 96
 	var h: int = 32
-	var img: Image = Image.create(w, h + foot, false, Image.FORMAT_RGBA8)
 	var face: Color = Color(0.95, 0.90, 0.78, 1).lerp(Color(1, 1, 1, 1), clampf(lift - 0.7, 0.0, 0.3))
 	if lift < 0.75:
 		face = Color(0.78, 0.70, 0.52, 1)
 	var edge: Color = Color(0.42, 0.30, 0.18, 1)
 	var tag: Color = Color(0.62, 0.46, 0.28, 1)
-	for y: int in h:
-		for x: int in w:
-			var px: Color = face
-			if x < 8:
-				px = tag
-			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
-				px = edge
-			img.set_pixel(x, y, px)
+	var img: Image = UiBuild.row_card(w, h, foot, face, tag, edge)
 	return UiBuild.keep(_images, key, img)
 
 static func _icon_file(path: String) -> Image:

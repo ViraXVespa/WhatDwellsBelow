@@ -20,5 +20,6 @@ design/*
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
+.github/workflows/media-bot.yml
 README.md
 GROK-BOT.md
