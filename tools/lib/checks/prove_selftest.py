@@ -5,7 +5,7 @@ while a doc names them, a data key is dropped while its reader still asks for it
 flow and its own script still ask for it (a res:// path naming it is no node ref), a lib signature changes under an untouched importer, a docstring changes under an untouched doc
 (REVIEW) and under a doc line repeating its pin name (STALE), a new comment makes a claim about an untouched tool
 (CLAIM), and a UI script changes only a comment. The checks: each DRIFT / STALE / CLAIM / REVIEW line appears, the
-comment-only script is cosmetic, and the plan picks the selftests (changed tool, importer of the changed lib),
+comment-only script is cosmetic (a `#` line in a shader string is not), and the plan picks the selftests (changed tool, importer of the changed lib),
 textsize for the UI script and task check.
 """
 from __future__ import annotations
@@ -36,6 +36,7 @@ BASE = {
     "design/doc.md": "Run `ent.py a --gone` or `ent.py b`; `run_a.py` pins the week.\n`OLD_REV` and `MOVED_REV` gate old saves.\nEach `dress()` look; the `NEEDED` list (NEEDED when needed).\n",
     "design/pin.md": "Weekly pins\n\nCI runs `ent.py a`:\nit pins grok_web_wN and grok_build_wN.\n",
     "scripts/ui/menu.gd": 'extends Node\n# old note\nvar s := "a # b"\n',
+    "scripts/ui/glow.gd": 'extends Node\nconst CODE := """\n#define K 1\n"""\n',
 }
 HEAD = {
     "tools/ent.py": 'COMMANDS = [("a", "x/run_a", "A")]\n',
@@ -48,6 +49,7 @@ HEAD = {
     "scripts/ui/frame_a.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
     "scripts/ui/frame_b.gd": 'extends Node\nfunc dress_up(b):\n\tpass\n',
     "scripts/ui/menu.gd": 'extends Node\n## new note\n\nvar s := "a # b"  # trailing\n',
+    "scripts/ui/glow.gd": 'extends Node\nconst CODE := """\n#define K 2\n"""\n',
 }
 WANT_DRIFT = ["removed path tools/open_x.py (tools/open_x.py) still named at design/tasks/t.md:2",
               "removed subcommand ent.py b (tools/ent.py) still named at design/doc.md:1",

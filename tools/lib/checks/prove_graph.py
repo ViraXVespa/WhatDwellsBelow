@@ -338,24 +338,29 @@ def _doc_spans(src: str) -> list[tuple[int, int]]:
     return out
 
 def gd_code(src: str) -> str:
-    """GDScript with comments, blank lines and trailing space dropped (quotes respected): equal = a comment-only change."""
-    out = []
+    """GDScript with comments, blank lines and trailing space dropped (quotes respected, a triple-quoted string
+    spans lines): equal = a comment-only change."""
+    out, q = [], ""
     for line in src.splitlines():
-        q, i = "", 0
+        held, i = bool(q), 0
         while i < len(line):
             ch = line[i]
             if q:
                 if ch == "\\":
                     i += 1
-                elif ch == q:
-                    q = ""
+                elif line.startswith(q, i):
+                    i, q = i + len(q) - 1, ""
+            elif line.startswith(('"""', "'''"), i):
+                q, i = line[i:i + 3], i + 2
             elif ch in "\"'":
                 q = ch
             elif ch == "#":
                 line = line[:i]
                 break
             i += 1
-        if line.strip():
+        if len(q) == 1:
+            q = ""
+        if line.strip() or held:
             out.append(line.rstrip())
     return "\n".join(out)
 
