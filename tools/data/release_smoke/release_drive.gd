@@ -68,7 +68,21 @@ func _process(delta: float) -> void:
 	elif _t > 120.0:
 		_finish()
 
+## Every node in the tree running a scripts/debug/ script (its own or a base class), whoever added it.
+func _debug_nodes(n: Node, out: Array[String]) -> void:
+	var s: Script = n.get_script() as Script
+	while s != null:
+		if s.resource_path.begins_with("res://scripts/debug/"):
+			out.append(str(n.get_path()) + " " + s.resource_path)
+			break
+		s = s.get_base_script()
+	for c: Node in n.get_children():
+		_debug_nodes(c, out)
+
 func _finish() -> void:
+	var dbg: Array[String] = []
+	_debug_nodes(get_tree().root, dbg)
+	printerr("REL: debug_nodes=" + str(dbg.size()) + (" first=" + dbg[0] if dbg else ""))
 	printerr("REL: debug_menu=" + str(App.debug != null) + " playtest=" + str(App.playtest != null) + " anim_browser=" + str(App.anim_browser != null))
 	printerr("REL: hub_ok=" + str(_hub_ok) + " dungeon_ok=" + str(_dun_ok) + " step=" + str(_step) + " scene=" + _scene() + " in_dungeon=" + str(App.in_dungeon))
 	get_tree().quit(0 if _hub_ok and _dun_ok else 1)
