@@ -36,7 +36,24 @@ static func dpr() -> float:
 			_dpr = maxf(DisplayServer.screen_get_scale(), 1.0) if OS.has_feature("web") else 1.0
 	return _dpr
 
-static func compute(floor_px: float) -> float:
+## In-play overlays (HUD strip, minimap, toasts, camp hint) grow at most this much past their pre-DPR size, so a
+## phone keeps its play area (shots.py textsize `cover`); text there can stay under the floor. Desktop: 1.
+const PLAY_GROW := 1.1
+static var _frame: float = 1.0
+
+## The scale without the device pixel ratio (what in-play overlays were sized by before the CSS px floor).
+static func frame_scale() -> float:
+	return _frame
+
+## Scale for in-play overlay containers: the text scale, capped at PLAY_GROW x frame_scale().
+static func play_scale() -> float:
+	return minf(applied(false), _frame * PLAY_GROW)
+
+## play_scale() / frame_scale(): 1 on desktop, at most PLAY_GROW; for overlay text that was a fixed size.
+static func play_grow() -> float:
+	return play_scale() / maxf(_frame, 0.001)
+
+static func compute(floor_px: float, k: float = -1.0) -> float:
 	var win: Vector2i = DisplayServer.window_get_size()
 	var vp: Vector2 = _vp_size()
 	var sx: float = float(win.x) / maxf(vp.x, 1.0)
@@ -45,7 +62,7 @@ static func compute(floor_px: float) -> float:
 	var design_px: float = T.UI_TEXT_REF * spd
 	if design_px <= 0.001:
 		return T.UI_TEXT_SCALE_MIN
-	return clampf(floor_px * dpr() / design_px, T.UI_TEXT_SCALE_MIN, T.UI_TEXT_SCALE_MAX)
+	return clampf(floor_px * (dpr() if k < 0.0 else k) / design_px, T.UI_TEXT_SCALE_MIN, T.UI_TEXT_SCALE_MAX)
 
 const GROUP := "ui_text_px"
 
@@ -66,6 +83,7 @@ static func refresh() -> void:
 	App.ui_text_floor = clamp_floor(float(App.ui_text_floor))
 	var was: float = App.ui_text_scale
 	App.ui_text_scale = compute(App.ui_text_floor)
+	_frame = compute(App.ui_text_floor, 1.0)
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree and not is_equal_approx(was, App.ui_text_scale):
 		for n: Node in tree.get_nodes_in_group(GROUP):

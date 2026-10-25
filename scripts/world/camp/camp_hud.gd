@@ -6,6 +6,7 @@ const UiText := preload("res://scripts/ui/ui_text.gd")
 
 static func _hud(host: Node3D) -> void:
 	var layer := CanvasLayer.new()
+	layer.name = "PlayHud"
 	host.hud = layer
 	host.add_child(layer)
 	follow_menus(layer)
@@ -18,7 +19,7 @@ static func _hud(host: Node3D) -> void:
 	host.hint.position = Vector2(48, 40)
 	host.hint.size = Vector2(950, 80)
 	host.hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	host.hint.add_theme_font_size_override("font_size", UiText.font_px(20))
+	host.hint.add_theme_font_size_override("font_size", int(round(20.0 * UiText.play_grow())))
 	host.hint.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
 	host.hint.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	host.hint.add_theme_constant_override("outline_size", 6)
@@ -26,7 +27,7 @@ static func _hud(host: Node3D) -> void:
 	host.prompt = Label.new()
 	host.prompt.position = Vector2(48, 118)
 	host.prompt.size = Vector2(900, 40)
-	host.prompt.add_theme_font_size_override("font_size", UiText.font_px(22))
+	host.prompt.add_theme_font_size_override("font_size", int(round(22.0 * UiText.play_grow())))
 	host.prompt.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
 	host.prompt.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	host.prompt.add_theme_constant_override("outline_size", 6)

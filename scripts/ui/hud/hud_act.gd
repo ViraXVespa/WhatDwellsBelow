@@ -10,8 +10,7 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
-	var text_sc: float = App.ui_text_applied() if App.has_method("ui_text_applied") else 1.0
-	var lay_key := Vector3(App.hud_scale * text_sc, host.get_viewport().get_visible_rect().size.x, 0.0)
+	var lay_key := Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, 0.0)
 	if lay_key != host._lay_key:
 		host._lay_key = lay_key
 		View.layout(host)
@@ -110,11 +109,12 @@ static func paint_prompt(host: CanvasLayer) -> void:
 	if text == "":
 		PromptView.fill(host.prompt_row, [])
 		return
-	var locked: bool = App.interact_locked
-	if locked:
-		PromptView.fill(host.prompt_row, [{"text": text}], 16, View.STRIP_INK)
+	# The strip already scales by play_scale(); keep the row's own font at its pre-DPR size (16 x frame_scale()).
+	var px: int = maxi(1, int(round(16.0 * View.UiText.frame_scale() / maxf(View.UiText.applied(), 0.001))))
+	if App.interact_locked:
+		PromptView.fill(host.prompt_row, [{"text": text}], px, View.STRIP_INK)
 	else:
-		PromptView.fill(host.prompt_row, [{"action": "interact", "verb": text}], 16, View.STRIP_INK)
+		PromptView.fill(host.prompt_row, [{"action": "interact", "verb": text}], px, View.STRIP_INK)
 
 static func style_name() -> String:
 	if App.weapon == "staff":

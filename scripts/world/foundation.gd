@@ -156,6 +156,7 @@ func _sort_props() -> void:
 
 func _hud() -> void:
 	var layer := CanvasLayer.new()
+	layer.name = "PlayHud"
 	add_child(layer)
 	var panel := ColorRect.new()
 	panel.color = Color(0.08, 0.07, 0.06, 0.82)
@@ -171,7 +172,7 @@ func _hud() -> void:
 	hint.position = Vector2(48, 40)
 	hint.size = Vector2(608, 120)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_font_size_override("font_size", UiText.font_px(20))
+	hint.add_theme_font_size_override("font_size", int(round(20.0 * UiText.play_grow())))
 	hint.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
 	hint.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	hint.add_theme_constant_override("outline_size", 6)

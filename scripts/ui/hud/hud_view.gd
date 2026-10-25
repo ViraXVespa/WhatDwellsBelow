@@ -1,6 +1,7 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 
 const CARD_TEX := "res://assets/ui/hud/card.png"
 const BAR_TEX := "res://assets/ui/hud/bar.png"
@@ -112,10 +113,7 @@ static func build(host: CanvasLayer) -> void:
 	load_portrait(host)
 
 static func layout(host: CanvasLayer) -> void:
-	var text_sc: float = 1.0
-	if App.has_method("ui_text_applied"):
-		text_sc = App.ui_text_applied()
-	var sc: float = App.hud_scale * text_sc
+	var sc: float = App.hud_scale * UiText.play_scale()
 	var vp := host.get_viewport().get_visible_rect().size
 	host.strip.scale = Vector2(sc, sc)
 	host.strip.position = Vector2(host.MARGIN, 16)

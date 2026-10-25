@@ -41,6 +41,7 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 ## Text size
 - Minimum: 10 CSS px glyph size on a 844x390 phone (DPR 3), checked by `shots.py textsize --gate` (`tools/data/text-size.json`: viewports, flows, `allow`). On screen px = font size x canvas scale x viewport scale; CSS px = that / DPR.
 - `ui_text.gd` owns it: the floor is in CSS px (x DPR from `--wdb-dpr` or the browser), sizes up to `UI_TEXT_REF` scale fully, bigger headings grow by the difference only. Route a raw `font_size` through `ThemeS.font_px` (or `UiText.track` for a label that stays alive); never a per-label phone size. Desktop 1080p stays at scale 1.
+- In-play overlays (HUD strip, minimap, toasts, the camp hint layer, named `PlayHud`) do not follow the text floor: they scale by `UiText.play_scale()`, at most `PLAY_GROW` (1.1) past their pre-floor size, so a phone keeps its play area. `text-size.json` `cover` caps their share of the frame (1.25 x the old footprint); their text sits under the floor (`allow` `/PlayHud/`).
 - A frame skin with fixed art sets `TEXT_CAP` (its text stops growing there; `allow` lists it at a lower minimum). Raising one needs that board's layout redone.
 
 ## Object frames (`scripts/ui/progress_ui/`)

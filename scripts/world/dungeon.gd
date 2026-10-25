@@ -91,6 +91,7 @@ func _reveal_around(c: Vector2i, rad: int) -> bool:
 
 func _hud() -> void:
 	hud = HudS.new()
+	hud.name = "PlayHud"  # in-play overlay (shots.py textsize cover / allow)
 	add_child(hud)
 	App.interact_prompt = ""
 	hint = null
