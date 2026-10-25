@@ -1,0 +1,13 @@
+{
+  "name": "wdb-bug-relay",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker: in-game bug reports -> GitHub issues (design/tasks/bug-report-relay.md)",
+  "scripts": {
+    "test": "node --test test/",
+    "doors": "node gen-doors.mjs"
+  },
+  "devDependencies": {
+    "sql.js": "^1.12.0"
+  }
+}
