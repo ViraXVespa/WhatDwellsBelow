@@ -1,8 +1,9 @@
 # Redraw the receptionist sprite to her new design
 
 id: receptionist-redesign
+needs: hub-guild-reception
 owner: build
-status: open
+status: blocked
 done-when: assets/sprites/npcs/receptionist.png shows the new look in hub-guild.md (the window bust is that sprite clipped, not a second file); hub shot reviewed.
 resume: python tools/slice.py open art_pipeline.pack --task receptionist-redesign
 

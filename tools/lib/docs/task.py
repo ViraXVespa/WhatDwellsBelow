@@ -101,10 +101,9 @@ def main(argv: list[str] | None = None) -> int:
             return end("", "FAIL", error="bad-update")
         changed = []
         if not dry:
-            if args.status and task_lib.set_head(p, "status", args.status):
-                changed.append("status")
-            if needs is not None and task_lib.set_head(p, "needs", ", ".join(needs) or "none"):
-                changed.append("needs")
+            for key, val in (("status", args.status), ("needs", None if needs is None else ", ".join(needs) or "none")):
+                if val and (task_lib.set_head(p, key, val) or task_lib.ensure_head(p, key, val)):  # ensure: a header without the line
+                    changed.append(key)
             if args.section and task_lib.set_section(p, args.section, body):
                 changed.append(args.section)
             task_lib.write_index(root)
