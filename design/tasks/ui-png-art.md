@@ -52,3 +52,10 @@ None. Gear board: `camp-gear-board` plus the inventory, anvil and popup flows. J
 
 ## UX audit
 2026-10-20 gamepad-first audit of every shot menu: 31 issues (H 5, M 17, L 9), one line each with a ref link, tagged [art] (the items above cover it) or [ux] (layout work): [ui-ux-audit.md](../ui-ux-audit.md).
+
+## Small screens
+Phone 844x390 @3 (`shots.py textsize --gate`, 10 CSS px minimum). New art and layouts must allow 10 CSS px text there. No decisions made here.
+- Controls billboard: its 14 rows do not fit at a readable size; needs two columns or a taller board.
+- Fixed-art boards cap their text (frame skin `TEXT_CAP`): quest board 7.2 px, vendor 9.0, dumpster 9.8, anvil 9.4 (CSS px, smallest on the board). Vendor rows overlap the red jar.
+- Portrait phones: decide whether to support them (today a rotate-to-landscape screen).
+- Allowances to remove from `tools/data/text-size.json` `allow` when the art lands: `^camp-npc-panels/(vendor|quest-board|dumpster)$` 7, `^camp-billboard-controls/` 7, `^camp-(anvil-tabs|gear-popups)/(tab|anvil-)` 9.
