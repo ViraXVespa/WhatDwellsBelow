@@ -6,11 +6,12 @@ no subcommands (`bot_status.py`). Every lib module (tools/lib/**/*.py that is no
 `lib/imglib/`) and every data file (tools/data/*, tools/*.txt) must be named in backticks in some tools*.md.
 
 --stale-refs scans the docs (design/*.md without changelog/, root *.md, repo and box skills) for dead references:
-PATH (backticked path or file name that is not in the tree), IDENT (`Class.member` whose class_name
+PATH (backticked path or file name that is not in the tree; a bare repo path like design/x.md outside backticks), LINK
+(a markdown link target that does not resolve from the doc's folder), IDENT (`Class.member` whose class_name
 or one-target preload alias script has no such member, inherited ones counted) and, with --narration, NARR lines (will be added, TODO, legacy, formerly,
 previously, no longer, old flat paths). It also runs `stale_cmds` over tracked docs, code, data and CI for
 FLAG/SUB/TOOL (a tool command naming a flag or subcommand that tool lacks, or a dead tools/*.py path).
-PATH/IDENT/FLAG/SUB/TOOL fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan and the doc set.
+PATH/LINK/IDENT/FLAG/SUB/TOOL fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan and the doc set.
 """
 
 from __future__ import annotations
@@ -38,7 +39,26 @@ TICK = re.compile(r"`([^`\n]+)`")
 PATH_SKIP = ("_logs/", "_out/", "user://", "http", ".godot/", "docs/", "design/changelog/")
 NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previously|no longer|used to|not yet|for now|old flat|temporary|deprecated|obsolete|superseded)\b", re.I)
 ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI must equal godot_lib.VERSION
+LINK = re.compile(r"\]\(<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\)")
+BARE = re.compile(r"(?<![\w/.$@~-])((?:design|tools|scripts|scenes|assets|\.grok|\.github)/[\w./-]*\w\.(?:md|py|gd|json|ya?ml|tscn|tres|txt|cfg|gdshader|png|jpg|html))\b")
 MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
+
+def link_bare(line: str, here: Path, root: Path, gone=lambda t: False) -> list[str]:
+    """LINK / PATH rows for one doc line outside backticks: markdown link targets resolve from `here` (the doc's folder),
+    bare repo paths from the root; `gone(path)` may excuse one (gitignored runtime paths)."""
+    bad: list[str] = []
+    plain = TICK.sub(" ", line)
+    for t in LINK.findall(plain):
+        t = t.split("#", 1)[0]
+        if t and not re.match(r"^[a-z][\w+.-]*:", t) and not (here / t).exists() and not gone(t):
+            bad.append(f"LINK {t}")
+    for t in BARE.findall(LINK.sub(" ", plain)):
+        stem = t.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        if re.search(r"(?:^|[-_])[A-Z]{1,6}(?:[-_]|$)", stem):  # placeholders: tools/X.py, opt-N.md
+            continue
+        if not (root / t).exists() and not t.endswith("_scratch.py") and not gone(t):
+            bad.append(f"PATH {t}")
+    return bad
 
 def _doc_files(root: Path, tracked: set[str]) -> list[Path]:
     out = [root / n for n in sorted(tracked) if n.endswith(".md") and (n.startswith(("design/", ".grok/skills/")) or "/" not in n)
@@ -89,6 +109,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 continue
             if narration and not in_fence and NARR.search(line):
                 narr.append(f"NARR    {name}:{no}: {line.strip()[:110]}")
+            bad += [f"{k:<8}{name}:{no}: {t}" for k, t in (r.split(" ", 1) for r in link_bare(line, f.parent, root, ignored))]
             for tok in TICK.findall(line):
                 tok = tok.strip()
                 if tok.startswith("res://"):
@@ -122,6 +143,12 @@ def main(argv: list[str] | None = None) -> int:
         docs = {f.relative_to(root).as_posix() for f in _doc_files(root, {".grok/skills/z/SKILL.md", "design/a.md", "design/changelog/x.md", "README.md", "scripts/a.md"}) if f.is_relative_to(root)}
         if docs != {".grok/skills/z/SKILL.md", "design/a.md", "README.md"}:
             bad.append(f"stale-refs doc set {sorted(docs)}: want repo skills, design/ (no changelog) and root *.md")
+        for line, want in (("see design/no-such.md, [x](tools.md#a) and [y](missing.md)", ["LINK missing.md", "PATH design/no-such.md"]),
+                           ("`design/no-such.md` [web](https://x.y/z.md) [m](mailto:a@b) design/tools.md tools/X.py", []),
+                           ("[up](../README.md) [gone](../NOPE.md)", ["LINK ../NOPE.md"])):
+            got = link_bare(line, root / "design", root)
+            if got != want:
+                bad.append(f"link_bare {line!r}: got {got}, want {want}")
         with tempfile.TemporaryDirectory() as tmp:  # IDENT: preload aliases and inherited members
             t = Path(tmp)
             for rel, text in (("k.gd", "const SUB := 4\n"), ("s.gd", 'extends "res://k.gd"\nfunc bake():\n\tpass\n'),
