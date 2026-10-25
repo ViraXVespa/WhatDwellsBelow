@@ -13,6 +13,7 @@ const CliArgs := preload("res://scripts/app/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const LoadedDump := preload("res://scripts/debug/smoke/loaded_dump.gd")
 const PlaytestLive := preload("res://scripts/debug/playtest/live_smoke.gd")
 const HubBench := preload("res://scripts/debug/playtest_bench/hub_bench.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
@@ -49,6 +50,7 @@ static func hold_player() -> bool:
 	return phase(3) or phase(4) or phase(5) or phase(7)
 
 static func route_boot() -> bool:
+	LoadedDump.maybe_start(App.get_tree(), args())
 	if ArtBake.active():
 		ArtBake.run_and_quit.call_deferred(App.get_tree())
 		return true

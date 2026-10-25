@@ -109,9 +109,31 @@ def _selftest() -> int:
     bad = [ln for ln in red if not _fatal(ln)] + [ln for ln in green if _fatal(ln)]
     if fatal_lines("SCRIPT ERROR: boom\n   at: f (res://a.gd:3)\nP5: x_ok=false") != ["  SCRIPT ERROR: boom", "    at: f (res://a.gd:3)", "  P5: x_ok=false"]:
         bad.append("fatal_lines")
+    from bot_warnscan_lib import changed_areas
+    loads = {"tools/data/release_drive.gd": "5", "scripts/world/sign.gd": "8", "scripts/debug/zz.gd": ""}
+    for files, want, why in [(["tools/data/release_drive.gd"], ["p5", "static"], "a tools/data script loaded by p5 picks p5"),
+                             (["scripts/world/sign.gd"], ["dungeon-load-timing", "p8", "static"], "a world script only p8 loads picks p8, not p3/p5/p9"),
+                             (["scripts/debug/zz.gd"], ["p1", "p7", "p9", "static"], "a script no phase was seen loading keeps the folder map (boot.tscn records empty)"),
+                             (["scripts/world/new.gd"], ["p3", "p5", "p9", "dungeon-load-timing", "static"], "an unrecorded file uses the folder map")]:
+        if changed_areas(files, loads) != want:
+            bad.append(f"{why}: got {changed_areas(files, loads)}")
     for ln in bad:
         print(f"selftest miss\t{ln}")
     return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(red) + len(green) + 1)
+
+def record_loads(exe: Path, root: Path, timeout: int, verbose: bool) -> int:
+    import phase_loads
+    dumps, rc = {}, 0
+    for n in SMOKE_PHASES:
+        dumps[n] = root / "_logs" / "smokes" / f"phase{n}.loads.txt"
+        dumps[n].unlink(missing_ok=True)
+        rc |= run_phase(exe, root, n, timeout, verbose, f"loads{n}", [f"--wdb-phase{n}-smoke", f"--wdb-dump-loaded={dumps[n]}"])
+    gone = [n for n, d in dumps.items() if not d.is_file()]
+    if gone:
+        return agent_log.emit_result("FAIL", None, missing_dumps=",".join(map(str, gone)))
+    out, hit = phase_loads.record(root, dumps)
+    print(f"wrote {agent_log.rel(root, out)}: {hit} files loaded by some phase")
+    return agent_log.emit_result("FAIL" if rc else "PASS", None, loaded=hit)
 
 def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, tag: str = "", flags: list[str] | None = None) -> int:
     log_dir = root / "_logs" / "smokes"
@@ -192,6 +214,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-static", action="store_true", help="skip the static compile of every script and scene (on by default when phases run)")
     p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
     p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
+    p.add_argument("--record-loads", action="store_true",
+                   help="Run every phase with --wdb-dump-loaded and rewrite tools/data/phase_loads.json (which phases load each file).")
     p.add_argument("--selftest", action="store_true", help="Check which stderr lines fail a phase; runs no Godot.")
     ns = p.parse_args(argv)
     if ns.selftest:
@@ -221,7 +245,7 @@ def main(argv: list[str] | None = None) -> int:
         ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))
     pin = pin_path()
     found = resolve_bin()
-    if ns.doctor or (not ns.setup and not ns.phases and not ns.release):
+    if ns.doctor or (not ns.setup and not ns.phases and not ns.release and not ns.record_loads):
         print(f"version={VERSION}")
         print(f"pin={pin}")
         print(f"bin={'missing' if found is None else found}")
@@ -231,6 +255,8 @@ def main(argv: list[str] | None = None) -> int:
     exe = found
     if ns.setup or exe is None:
         exe = setup(pin)
+    if ns.record_loads:
+        return record_loads(exe, root, ns.timeout, ns.verbose)
     if (ns.flows or ns.release) and not ns.phases:
         ns.phases = "0"
     if not ns.phases:

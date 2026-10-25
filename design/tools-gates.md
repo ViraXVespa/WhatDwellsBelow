@@ -13,7 +13,7 @@ Entries here: `gate.py`, `slice.py`, `bot_status.py`, `check.py`, `docs.py`, `ba
 - **Bot prove:** `check.py prove` (BOT.md Prove).
 - **Docs or routing changed:** `check.py load-graph`. Tool rows or doc paths: `check.py tool-docs`, then `check.py tool-docs --stale-refs`.
 - **A tool changed:** `check.py tool-cli --only STEM --smoke-run` (default: every uncommitted or unpushed tool).
-- **Smokes:** PC `gate.py smokes --door D` (or `--job door.job`, `--phases 1 2`). Bot box `gate.py bot-smokes --phases 1,2,6` (or `--door D`); `gate.py bot-smokes --for FILE` names the covering phases without running.
+- **Smokes:** PC `gate.py smokes --door D` (or `--job door.job`, `--phases 1 2`). Bot box `gate.py bot-smokes --phases 1,2,6` (or `--door D`); `gate.py bot-smokes --for FILE` names the covering phases without running (from `tools/data/phase_loads.json`, what each phase really loaded; `--record-loads` re-records it after code moves between phases).
 - **Compile or import errors:** `gate.py gd-load` (`--files A.gd B.gd`, `--all`); editor import and script reload: `gate.py import`.
 - **Warnings before/after a change:** `gate.py warnscan --save-baseline B --areas A1,A2`, change, then `gate.py warnscan --non-leak-diff B --areas A1,A2`. In one gate call: `gate.py build --batch --warnscan-baseline B --areas A1,A2`.
 - **Release build safety:** `gate.py release` (`--pck DIR` / `--pck-debug DIR` on an export).

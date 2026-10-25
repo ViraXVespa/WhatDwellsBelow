@@ -205,8 +205,10 @@ def mode_label(f: Finding) -> str:
         return "headless-only"
     return ""
 
-# Quick mode (--changed): path prefix -> areas that load that code. Longest prefix wins; unmapped
-# scripts/scenes/project files fall back to QUICK_DEFAULT. static (compile everything) always runs.
+# Quick mode (--changed): smoke phases come from the recorded loads (phase_loads.py, tools/data/phase_loads.json: the
+# phases whose real run loaded the file); the non-phase areas, and phases for a file the record does not know or saw no
+# phase load, come
+# from this path-prefix map (longest prefix wins; unmapped code falls back to QUICK_DEFAULT). static always runs.
 CHANGED_MAP = [
     ("scripts/audio/", ["p1", "p2", "p8", "p9"]),
     ("scripts/combat/", ["p1", "p2", "p4"]),
@@ -222,15 +224,22 @@ CHANGED_MAP = [
     ("scenes/", ["boot", "load-timing", "dungeon-load-timing"]),
 ]
 QUICK_DEFAULT = ["p1", "p3", "p7"]
-CODE_PREFIXES = ("scripts/", "scenes/", "project.godot", "assets/shaders/")
+CODE_PREFIXES = ("scripts/", "scenes/", "project.godot", "assets/shaders/", "tools/data/")
 
-def changed_areas(paths: list[str]) -> list[str]:
+def changed_areas(paths: list[str], loads: dict[str, str] | None = None) -> list[str]:
     """Areas for a list of changed repo paths (posix). Only static when nothing code-like changed."""
+    if loads is None:
+        import phase_loads
+        from agent_log import repo_root
+        loads = phase_loads.load(repo_root())
     out: list[str] = []
     code = [p for p in paths if p.startswith(CODE_PREFIXES) and (p.endswith((".gd", ".tscn", ".tres", ".gdshader", ".godot")) or "/" not in p)]
     for p in code:
         hits = [(len(pre), areas) for pre, areas in CHANGED_MAP if p.startswith(pre)]
-        for a in (max(hits)[1] if hits else QUICK_DEFAULT):
+        mapped = max(hits)[1] if hits else QUICK_DEFAULT
+        if loads.get(p):  # "" = no phase's cache held it (a main scene freed at boot, a lazy load): keep the folder map
+            mapped = [a for a in mapped if not re.fullmatch(r"p\d", a)] + ["p" + d for d in loads[p]]
+        for a in mapped:
             if a not in out:
                 out.append(a)
     return out + ["static"]
