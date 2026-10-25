@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Shot flow text dump: every visible Label / Button / RichTextLabel / LineEdit under a root.
+## Shot flow text dump: every visible Label / Button / RichTextLabel / LineEdit under a root, plus on-screen Label3D.
 ## Rows: text, font_size, px (glyph em size in window pixels after canvas, layer and stretch scale), rect [x, y, w, h],
 ## path. Lets a flow assert copy and size rules without pixels; shots.py textsize turns px into CSS px.
 
@@ -48,7 +48,35 @@ static func collect_ui(host: Node, root: Node) -> Array:
 	var out: Array = []
 	for n: Node in host.get_tree().root.get_children():
 		_walk(n, out)
+	var cam: Camera3D = host.get_viewport().get_camera_3d()
+	if cam != null:
+		_walk3d(host.get_tree().root, cam, out)
 	return out
+
+## World-space text (Label3D: pickups, hit numbers, interact prompts) on screen: px = the em projected through the
+## camera (fixed_size labels as if 1 m away) in window pixels; rect = the text box's projected bounds. Path gains
+## " [3d]" so textsize can tell world text from UI.
+static func _walk3d(n: Node, cam: Camera3D, out: Array) -> void:
+	if n is Node3D and not (n as Node3D).is_visible_in_tree():
+		return
+	var l := n as Label3D
+	if l != null and not l.text.strip_edges().is_empty() and l.modulate.a > 0.05 and not cam.is_position_behind(l.global_position):
+		var vp: Rect2 = cam.get_viewport().get_visible_rect()
+		var k: float = cam.get_viewport().get_final_transform().get_scale().y
+		var at: Vector3 = l.global_position
+		var em: float = float(l.font_size) * l.pixel_size * l.global_transform.basis.get_scale().y
+		if l.fixed_size:
+			em *= absf((at - cam.global_position).dot(-cam.global_transform.basis.z))
+		var px: float = cam.unproject_position(at).distance_to(cam.unproject_position(at + cam.global_transform.basis.y * em))
+		var box := Rect2(cam.unproject_position(at), Vector2.ZERO)
+		var a: AABB = l.get_aabb()
+		for i: int in 8:
+			box = box.expand(cam.unproject_position(l.global_transform * a.get_endpoint(i)))
+		if box.intersects(vp):
+			out.append({"text": l.text.strip_edges(), "font_size": l.font_size, "px": snappedf(px * k, 0.1),
+				"rect": [int(box.position.x), int(box.position.y), int(box.size.x), int(box.size.y)], "path": str(l.get_path()) + " [3d]"})
+	for ch: Node in n.get_children():
+		_walk3d(ch, cam, out)
 
 ## What the overlays cover: one [x, y, w, h, path] per visible drawing leaf on every CanvasLayer (texture, colour
 ## rect, panel, text ink box), in viewport px; full-screen fills are left out. shots.py textsize unions them into a

@@ -135,7 +135,50 @@ def selftest() -> list[str]:
         cv = covers(Path(td), {"cover": {"f/menu": 0.1}}, ["phone-l"])
         if cv != {"phone-l": {"f/menu": 0.14}}:
             bad.append("cover: %s" % cv)
-    return bad
+    return bad + world_selftest()
+
+WORLD_PROBE = """extends SceneTree
+var _n := 0
+func _initialize() -> void:
+	var cam := Camera3D.new()
+	root.add_child(cam)
+	cam.current = true
+	for z: float in [-5.0, 5.0]:
+		var l := Label3D.new()
+		l.text = "pick up" if z < 0.0 else "behind"
+		l.font_size = 32
+		root.add_child(l)
+		l.position = Vector3(0.0, 0.0, z)
+func _process(_d: float) -> bool:
+	_n += 1
+	if _n == 2:
+		print("VPH:%f" % root.get_visible_rect().size.y)
+		print("ROWS:" + JSON.stringify(load("res://step_texts.gd").collect_ui(root, null)))
+		quit(0)
+	return false
+"""
+
+def world_selftest() -> list[str]:
+    """Godot: a Label3D 5 m in front of the camera is a [3d] row at its projected em size; one behind is not."""
+    import subprocess
+    import tempfile
+    import godot_lib
+    with tempfile.TemporaryDirectory() as td:
+        t = Path(td)
+        (t / "project.godot").write_text('config_version=5\n[application]\nconfig/name="t"\n', encoding="utf-8")
+        shutil.copy(agent_log.repo_root() / "scripts/debug/shot_tool/step_texts.gd", t / "step_texts.gd")
+        (t / "probe.gd").write_text(WORLD_PROBE, encoding="utf-8")
+        p = subprocess.run([str(godot_lib.godot_exe()), "--headless", "--path", td, "-s", "res://probe.gd"], capture_output=True, text=True, timeout=120)
+        hit = [ln[5:] for ln in p.stdout.splitlines() if ln.startswith("ROWS:")]
+        rows = json.loads(hit[0]) if hit else []
+        vph = float(next((ln[4:] for ln in p.stdout.splitlines() if ln.startswith("VPH:")), "0"))
+    w = [r for r in rows if str(r.get("path", "")).endswith(" [3d]")]
+    if [r["text"] for r in w] != ["pick up"]:
+        return ["world text: want one [3d] row (the label in front), got %s %s" % (rows, p.stderr[-300:])]
+    want = vph * 0.16 / (10.0 * 0.7673)  # em 32 x 0.005 m, 5 m away, fov 75: tan(37.5) = 0.7673
+    if abs(float(w[0]["px"]) - want) > max(0.15, want * 0.1):
+        return ["world text: projected em px %s, want %.1f (0.16 m em from 5 m, viewport %g px high)" % (w[0]["px"], want, vph)]
+    return []
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Text size per screen in CSS px at phone / tablet / desktop viewports (shot flows + texts dumps).")
