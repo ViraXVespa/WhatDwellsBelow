@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Overlays on a stitched full-map PNG (`shots.py capture --full-map --overlays ...`): the sweep's marks (sweep_marks.gd,
-saved as <png>.marks.json) drawn in grid cells. Layers: rooms (bounds coloured by kind), spawns (enemy spawn jobs sized
+saved as NAME.marks.json beside NAME.png; also a CLI) drawn in grid cells. Layers: rooms (bounds coloured by kind), spawns (enemy spawn jobs sized
 by pack, ambush red, named purple; the arrival spawn, stairs, boss door and boss), torches, loot (placed props and
 interactables), lift (brighten the dark floor first), legend.
 
@@ -115,9 +115,25 @@ def selftest() -> list[str]:
             bad.append("save_marks keeps tiles")
     return bad
 
-if __name__ == "__main__":
-    if "--selftest" in sys.argv:
+def main(argv: list[str] | None = None) -> int:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
+    import agent_log
+    ap = agent_log.std_parser("Draw full-map overlays (rooms, spawns, torches, loot, legend) from NAME.marks.json onto a stitched map.")
+    ap.add_argument("png", nargs="?", help="Stitched full-map PNG (captured without --overlays) with its NAME.marks.json beside it")
+    ap.add_argument("--layers", default=",".join(LAYERS), help="Comma list of %s" % ", ".join(LAYERS))
+    ap.add_argument("--out", default="", help="Output PNG (default: overwrite png)")
+    ap.add_argument("--selftest", action="store_true", help="Synthetic map + marks round trip")
+    ns = ap.parse_args(argv)
+    if ns.selftest:
         b = selftest()
         print("\n".join(b) or "map_overlay selftest ok")
-        raise SystemExit(1 if b else 0)
-    print(__doc__)
+        return 1 if b else 0
+    if not ns.png:
+        ap.error("png is required (or --selftest)")
+    png = Path(ns.png)
+    marks = json.loads(png.with_suffix(".marks.json").read_text())
+    print(json.dumps(draw(png, marks, [x for x in ns.layers.split(",") if x], Path(ns.out or png))))
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())
