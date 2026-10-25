@@ -2,6 +2,7 @@
 
 Status: suggested starts  
 Read when: the work changes a movement, combat, gathering, drop or consumable number  
+Code: `scripts/data/balance/vars_combat.gd` (live defaults for this file's keys)  
 
 Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|add --key KEY` reads every tunables file.
 

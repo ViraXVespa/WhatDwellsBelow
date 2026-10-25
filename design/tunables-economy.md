@@ -2,6 +2,7 @@
 
 Status: suggested starts  
 Read when: the work changes a progression, economy, anvil or UI-feel number  
+Code: `scripts/data/balance/vars_economy.gd` (live defaults for this file's keys)  
 
 Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|add --key KEY` reads every tunables file.
 
@@ -24,7 +25,7 @@ Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|
 
 ## Anvil / affixes
 
-Live defaults are in `balance.gd` (single source). Code fallbacks in `forge_act.gd` / `gear_roll.gd` only apply when `App.bal` is missing and mirror these. Root is no forge material.
+Live defaults are in `balance/vars_economy.gd` (single source). Code fallbacks in `forge_act.gd` / `gear_roll.gd` only apply when `App.bal` is missing and mirror these. Root is no forge material.
 
 | Key | Default | Role |
 |-----|----------|------|

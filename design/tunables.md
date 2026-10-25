@@ -2,12 +2,12 @@
 
 Status: suggested starts  
 Read when: the work changes a number, formula, or debug default  
-Code: `scripts/data/balance.gd`, `access.gd`, `schema.gd`, `enemies.gd`, `scripts/debug/tunable_overrides.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance.gd`, `scripts/data/balance/vars.gd` (aggregate) + `vars_main.gd` (this file's keys; `vars_combat|world|economy.gd` match the other tunables files), `access.gd`, `schema.gd`, `enemies.gd`, `scripts/debug/tunable_overrides.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  
 Suggested starts are seeds only.
-Live defaults are what `balance.gd` / `tunables.gd` ship today.  
+Live defaults are what `balance.gd` (`balance/vars_*.gd`) / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
 This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python tools/docs.py tunable add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `docs.py patch replace`); do not hunt for a row that does not exist.
 

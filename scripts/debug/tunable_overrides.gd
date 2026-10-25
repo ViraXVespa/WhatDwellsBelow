@@ -1,7 +1,7 @@
 extends Object
 
 ## Debug-only balance overrides (design/tunables.md). `path` holds only the keys whose value differs from the shipped
-## default (balance/vars.gd, enemies.gd). Shared code reaches this file through Dbg.script("tunable_overrides"), so a
+## default (balance/vars_*.gd, enemies.gd). Shared code reaches this file through Dbg.script("tunable_overrides"), so a
 ## release build (or --wdb-release) never reads it, and saves never carry balance values. Values clamp to the schema range.
 
 const PATH := "user://debug_tunables.json"
