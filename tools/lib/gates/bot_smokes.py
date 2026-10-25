@@ -164,7 +164,7 @@ def static_compile(root: Path) -> int:
                    cwd=root, capture_output=True, check=False)
     rows = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else [{"kind": "error", "message": "no static report", "site": ""}]
     hard = [f for f in rows if f.get("kind") in STATIC_HARD]
-    print(f"static={'FAIL' if hard else 'PASS'}\tcompile every script and scene (gate.py warnscan --areas static)")
+    print(f"static={'FAIL' if hard else 'PASS'}\tcompile every live .gd and scene (gate.py warnscan --areas static)")
     for f in hard[:4]:
         print(f"  {f.get('kind')}: {str(f.get('message', ''))[:200]}  ({f.get('site', '')})")
     return 1 if hard else 0

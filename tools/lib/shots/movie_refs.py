@@ -96,7 +96,7 @@ def drop_worktree(root: Path, wt: Path) -> None:
     subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True)
 
 def gate_import(root: Path, wt: Path) -> str:
-    r = subprocess.run(["python3", str(root / "tools/gate.py"), "import", "--root", str(wt), "--json"], capture_output=True, text=True)
+    r = subprocess.run(["python3", str(root / "tools/gate.py"), "import", "--root", str(wt), "--json", "--no-static"], capture_output=True, text=True)
     try:
         return str(json.loads(r.stdout.strip().splitlines()[-1]).get("status", "?"))
     except (ValueError, IndexError):
