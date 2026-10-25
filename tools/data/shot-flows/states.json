@@ -1,10 +1,12 @@
 {
   "about": "Where shots.py gaps finds UI states. A state is '<prefix><match>' for every regex match in a source file. Add a source when a new menu or NPC flow gets its own mode/kind strings. 'ignore' = states that need no shot (state id: reason).",
   "sources": [
-    {"glob": "scripts/ui/progress_ui.gd", "regex": "\\bmode = \"(\\w+)\"", "prefix": "ui:"},
-    {"glob": "scripts/ui/progress_ui/*.gd", "regex": "\\bmode = \"(\\w+)\"", "prefix": "ui:"},
-    {"glob": "scripts/world/interact/interact_act.gd", "regex": "\\.kind == \"(\\w+)\"", "prefix": "interact:"},
-    {"glob": "scripts/ui/pause_menu.gd", "regex": "const TAB_\\w+ := \"(\\w+)\"", "prefix": "pause:"}
+    {"glob": "scripts/ui/progress_ui.gd", "regex": "\\bmode\\s*=\\s*[\"'](\\w+)[\"']", "prefix": "ui:"},
+    {"glob": "scripts/ui/progress_ui/**/*.gd", "regex": "\\bmode\\s*=\\s*[\"'](\\w+)[\"']", "prefix": "ui:"},
+    {"glob": "scripts/ui/archives_ui.gd", "regex": "\\bmode\\s*=\\s*[\"'](\\w+)[\"']", "prefix": "archives:"},
+    {"glob": "scripts/ui/archives_ui/**/*.gd", "regex": "\\bmode\\s*=\\s*[\"'](\\w+)[\"']", "prefix": "archives:"},
+    {"glob": "scripts/world/interact/interact_act.gd", "regex": "\\.kind\\s*==\\s*[\"'](\\w+)[\"']", "prefix": "interact:"},
+    {"glob": "scripts/ui/pause_menu.gd", "regex": "const TAB_\\w+\\s*(?::\\s*\\w+\\s*)?:?=\\s*[\"'](\\w+)[\"']", "prefix": "pause:"}
   ],
   "ignore": {
     "interact:quest_item": "pickup, no panel",

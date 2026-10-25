@@ -5,6 +5,7 @@
   "hud": 0,
   "settle_ms": 1500,
   "smoke": true,
+  "covers": ["archives:info"],
   "steps": [
     {"op": "device", "kind": "pad"},
     {"op": "call", "target": "App.loader", "method": "begin", "args": ["Descending", "The stairs take you"]},

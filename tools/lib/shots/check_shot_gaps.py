@@ -46,7 +46,7 @@ def _files_at(root: Path, ref: str, glob: str) -> list[str]:
     if not ref:
         return sorted(rel(root, p) for p in root.glob(glob) if p.is_file())
     r = subprocess.run(["git", "ls-tree", "-r", "--name-only", ref], cwd=root, capture_output=True, text=True)
-    pat = re.compile("^" + re.escape(glob).replace(r"\*", "[^/]*") + "$")
+    pat = re.compile("^" + re.escape(glob).replace(r"\*\*/", "(?:.*/)?").replace(r"\*", "[^/]*") + "$")
     return sorted(f for f in r.stdout.splitlines() if pat.match(f))
 
 def find_states(root: Path, cfg: dict, ref: str = "") -> dict[str, str]:
@@ -105,6 +105,32 @@ def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
                     probs.append(f"{name}: published {row['file']} differs from shots.json (edited by hand?)")
     return probs
 
+def selftest(root: Path) -> int:
+    """The real states.json sources find every way a state gets written (spacing, quotes, typed const, nested file),
+    in the tree and at a git ref, and skip comparisons."""
+    import tempfile
+    cfg = json.loads((root / CFG).read_text(encoding="utf-8"))
+    files = {"scripts/ui/progress_ui.gd": 'mode = "inv"\nmode="shop"\nif mode == "nope":\n',
+             "scripts/ui/progress_ui/sub/forge.gd": "ui.mode = 'forge'\n",
+             "scripts/ui/archives_ui/ui_act.gd": 'host.mode = "read"\n',
+             "scripts/world/interact/interact_act.gd": 'if host.kind=="anvil":\n',
+             "scripts/ui/pause_menu.gd": 'const TAB_MAP := "map"\nconst TAB_GEAR: String = "gear"\n'}
+    want = {"ui:inv", "ui:shop", "ui:forge", "archives:read", "interact:anvil", "pause:map", "pause:gear"}
+    bad = []
+    with tempfile.TemporaryDirectory() as td:
+        t = Path(td)
+        for rp, txt in files.items():
+            (t / rp).parent.mkdir(parents=True, exist_ok=True)
+            (t / rp).write_text(txt, encoding="utf-8")
+        git = lambda *a: subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=t, capture_output=True)
+        git("init", "-q"), git("add", "-A"), git("commit", "-qm", "t")
+        for ref in ("", "HEAD"):
+            got = set(find_states(t, cfg, ref))
+            if got != want:
+                bad.append(f"ref={ref or 'tree'}: missing {sorted(want - got)} extra {sorted(got - want)}")
+    print("\n".join(bad + [f"RESULT {'FAIL' if bad else 'PASS'} checks=2 bad={len(bad)}"]))
+    return 1 if bad else 0
+
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Report UI states with no shot flow, new states in this diff, and flow/published-shot problems.",
                              json_out=True)
@@ -113,8 +139,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--advisory", action="store_true",
                    help="print everything but never FAIL (Build gate); the Bot gate runs without it")
     p.add_argument("--strict", action="store_true", help="FAIL on any uncovered state, not just new ones")
+    p.add_argument("--selftest", action="store_true", help="offline check that states.json finds each state form")
     args = p.parse_args(argv)
     root, where = agent_log.cwd_scan_root(args)
+    if args.selftest:
+        return selftest(root)
     cfg = json.loads((root / CFG).read_text(encoding="utf-8"))
     ignore = cfg.get("ignore", {})
     states = find_states(root, cfg)
