@@ -29,6 +29,7 @@ import boot  # noqa: E402,F401
 
 import agent_log
 import godot_lib
+import map_overlay
 import run_log_lib
 import shot_clip_lib
 from agent_log import rel
@@ -239,6 +240,7 @@ def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict
     full = (cw, ch)
     png.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(png, optimize=False, compress_level=6)
+    map_overlay.save_marks(d, png)
     if not keep:
         shutil.rmtree(tiles_dir, ignore_errors=True)
     return {"tiles": len(d["tiles"]), "full": full, "out": canvas.size, "ppu": ppu, "reduce": f, "offset_resid": round(resid, 3),
@@ -276,6 +278,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--movie", default="", help="with --steps: Godot movie maker writes every rendered frame here (.png = numbered PNGs, .avi = MJPEG) at the project viewport size (1920x1080); shots.py movie drives this")
     p.add_argument("--full-map", action="store_true", help="photograph the whole dungeon floor in overlapping tiles and stitch one PNG (seed 42 floor 1 unless --seed/--floor) at the real game scale (64 px per cell)")
     p.add_argument("--max-px", type=int, default=8192, help="with --full-map: longest side of the output PNG, 0 = native size (about 27000 px wide on a 432-cell floor); reduced by exact 2x steps")
+    p.add_argument("--overlays", default="", help="with --full-map: draw comma layers on the PNG: lift, rooms, spawns, torches, loot, legend (marks kept in <png>.marks.json)")
     p.add_argument("--keep-tiles", action="store_true", help="with --full-map: keep the raw tiles and sweep.json next to the PNG")
     p.add_argument("--taskbar", type=int, default=0, help=argparse.SUPPRESS)
     return p
@@ -366,6 +369,8 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     shot_ok = any("ok=true" in line for line in shot_hits)
     if args.full_map and shot_ok and (res["frames_dir"] / "sweep.json").is_file():
         st = stitch_full_map(res["frames_dir"], png, args.max_px, args.keep_tiles)
+        if args.overlays and png.with_suffix(".marks.json").is_file():
+            st["overlays"] = map_overlay.draw(png, json.loads(png.with_suffix(".marks.json").read_text(encoding="utf-8")), args.overlays.split(","), png)
         shot_hits.append("SHOT: stitch " + " ".join(f"{k}={v}" for k, v in st.items()))
     nbytes, width, height = _png_info(png)
     flow = {}
