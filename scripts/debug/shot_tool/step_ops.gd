@@ -218,7 +218,7 @@ static func run(st: Dictionary, op: String, step: Dictionary) -> void:
 			await (load("res://scripts/debug/shot_tool/step_sweep.gd") as GDScript).call("run", st, step)
 		"log":
 			printerr("SHOT: log %s" % str(step.get("msg", "")))
-		"walk_to", "drive", "tap", "mark":
+		"walk_to", "drive", "tap", "mark", "camera":
 			await (load("res://scripts/debug/shot_tool/step_play.gd") as GDScript).call("run", st, op, step)
 		_:
 			fail(st, op, "unknown op")
