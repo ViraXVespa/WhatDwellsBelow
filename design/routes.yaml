@@ -150,6 +150,9 @@ gates:
   tools_media:
     file: design/tools-media.md
     when: media_pipeline_tool
+  media_bot:
+    file: design/media-bot.md
+    when: media_bot_promo_shots
   pc_offload:
     file: design/pc-offload.md
     when: inventory_verify_or_windows_write

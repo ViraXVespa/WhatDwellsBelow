@@ -82,7 +82,7 @@ The catalog lives in `data/movies.json`:
 
 `shots.py movie --list` prints them. Views normal play cannot show (overhead hub, fly-through, debug draw, drop roll) call `scripts/debug/shot_views.gd`.
 
-Media-bot rule (until a media-bot doc exists): the media bot picks from this catalog. It hands a request for a new shot system, view or scenario to the Refactorer and does not build one.
+Media bot (Bottie Boop): triggers, refs, commands and rules in `media-bot.md`. It picks from this catalog only.
 
 ## Libs and data
 
