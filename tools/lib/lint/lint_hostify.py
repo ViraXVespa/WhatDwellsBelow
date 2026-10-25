@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan live scripts for common hostify / := pitfalls. Writes a short hit list.
+"""Scan live .gd (scripts/, tools/data/) for common hostify / := pitfalls. Writes a short hit list.
 
 Usage (from repo root):
   python tools/lint.py hostify
@@ -25,7 +25,7 @@ import gd_lib
 
 ROOT = agent_log.repo_root()
 
-RE_SHADOW_HOST = re.compile(r"^\s*var\s+host\s*:=")
+RE_SHADOW_HOST = re.compile(r"^\s*(?:var\s+host\b|for\s+host\s+in\b)")  # `var host :=`, `var host: Node =`, `for host in`
 RE_INFER_LOAD = re.compile(r"^\s*var\s+\w+\s*:=.*\bload\s*\(")
 RE_INFER_FAC = re.compile(r"^\s*var\s+\w+\s*:=.*\b_fac\s*\.")
 RE_INFER_HOST_GET = re.compile(r"^\s*var\s+\w+\s*:=.*\b(?:host|p|pt|ui)\.get\s*\(")
@@ -65,10 +65,27 @@ def lint_file(path: Path) -> list[str]:
             hits.append(f"{rel(path)}:{i}: HOST_TRAILING_COMMA {stripped}")
     return hits
 
+def _selftest() -> int:
+    import tempfile
+    src = "extends Node\nfunc f() -> void:\n\tvar host := get_parent()\n\tvar host: Node = null\n\tfor host in get_children():\n\t\tpass\n\tvar hostile := 1\n"
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "a.gd"
+        p.write_text(src, encoding="utf-8")
+        global ROOT
+        ROOT = Path(td)
+        n = sum(" SHADOW_HOST " in h for h in lint_file(p))
+    bad = [] if n == 3 else [f"SHADOW_HOST rows={n}, want 3 (var host :=, var host: Node =, for host in; not hostile)"]
+    for b in bad:
+        print("FAIL " + b)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+
 def main() -> int:
     global ROOT
-    ap = agent_log.std_parser("Advisory hostify / := lint over live scripts/**/*.gd (exit 0 always).", json_out=True)
+    ap = agent_log.std_parser("Advisory hostify / := lint over live .gd (scripts/, tools/data/; exit 0 always).", json_out=True)
+    ap.add_argument("--selftest", action="store_true", help="SHADOW_HOST rows on a fixed snippet.")
     args = ap.parse_args()
+    if args.selftest:
+        return _selftest()
     ROOT = agent_log.resolve_root(args)
     files = gd_lib.live_gd(ROOT)
     all_hits: list[str] = []
