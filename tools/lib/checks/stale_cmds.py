@@ -5,7 +5,8 @@ paths in design/*.md only).
 Scans tracked design/, root, .grok/, .github/, tools/ and scripts/ text (md, py, gd, json, yml, txt, cfg; not changelogs,
 tools/retired or prove_rules.json, not selftest functions or *selftest*.py fixtures) for:
 - FLAG: `ENTRY.py [SUB] --flag` where the subcommand's module (and the tools/lib modules it imports) defines no "--flag";
-- SUB: `python tools/ENTRY.py WORD` (or a backticked `ENTRY.py WORD`) naming a subcommand ENTRY does not have;
+- SUB: `python tools/ENTRY.py WORD` (or a backticked `ENTRY.py WORD`) naming a subcommand ENTRY does not have, or
+  `ENTRY.py SUB WORD` where SUB's module has its own subparsers (`docs.py tunable WORD`) and none is WORD;
 - TOOL: a `tools/...py` path that does not exist (one-letter or upper-case stems like X, ENTRY are placeholders; tools/_scratch.py is the untracked web scratch).
 Flags are read from string literals, so argparse.SUPPRESS flags (`--bot`) count.
 """
@@ -57,6 +58,16 @@ class Scan:
             self.cache[(entry, sub)] = out
         return self.cache[(entry, sub)]
 
+    def nested(self, entry: str, sub: str) -> set:
+        """add_parser names in SUB's own module (empty: SUB takes no second word)."""
+        key = ("nested", entry, sub)
+        if key not in self.cache:
+            mods = [m.rsplit("/", 1)[-1] for s, m, _ in self.table[entry] if s == sub]
+            src = "".join(self.mods[m].read_text(encoding="utf-8", errors="replace") for m in mods if m in self.mods)
+            names = set(re.findall(r"""add_parser\(\s*["']([a-z][\w-]*)["']""", src))
+            self.cache[key] = set() if re.search(r"""add_parser\(\s*[^"'\s]""", src) else names  # names built in a loop: unknown
+        return self.cache[key]
+
     def line(self, rel: str, no: int, line: str) -> list[str]:
         bad: list[str] = []
         for m in self.ent_re.finditer(line):
@@ -71,6 +82,10 @@ class Scan:
                     bad.append(f"SUB     {rel}:{no}: {entry}.py {word}")
                 if sub is None:
                     continue
+                inner, word2 = self.nested(entry, sub), toks[1] if len(toks) > 1 else ""
+                if inner and re.fullmatch(r"[a-z][\w-]*", word2) and word2 not in inner | WORDS \
+                        and (m.group(1) or m.group(2) or line[max(0, m.start() - 1):m.start()] == "`"):
+                    bad.append(f"SUB     {rel}:{no}: {entry}.py {sub} {word2}")
             have = self.flags(entry, sub)
             bad += [f"FLAG    {rel}:{no}: {entry}.py {sub or ''} {f}".replace("  ", " ") for t in toks
                     for f in re.findall(r"(?<![\w-])(--[a-z][\w-]*)", t) if f not in have]
@@ -107,7 +122,8 @@ def scan(root: Path, tracked: set[str]) -> list[str]:
 def selftest(root: Path) -> list[str]:
     s, bad = Scan(root), []
     for line, want in (("`python tools/media.py clip crop IN --box R`", []), ("`media.py clip crop --region R`", ["FLAG"]),
-                       ("python tools/shots.py capturez", ["SUB"]), ("`shots.py` and the rest", []), ("`check.py script-cap --bot`", []),
+                       ("python tools/shots.py capturez", ["SUB"]),
+                       ("`docs.py tunable frobnicate`", ["SUB"]), ("`docs.py tunable range KEY 0 1`", []), ("`media.py sprites key IN OUT`", []), ("`shots.py` and the rest", []), ("`check.py script-cap --bot`", []),
                        ("see tools/no_such_tool.py", ["TOOL"]), ("tools/lib/shots/run_movie.py --refs A", []), ("python tools/X.py", [])):
         got = [b.split()[0] for b in s.line("t.md", 1, line)]
         if got != want:

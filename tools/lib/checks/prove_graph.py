@@ -204,6 +204,7 @@ def scan(tree: Tree, names: dict[str, str]) -> dict[str, list[tuple[str, str, in
 PY_DEF = re.compile(r"^\s*def\s+(\w+)\s*\(([^)]*)", re.M)
 GD_DEF = re.compile(r"^\s*(?:static\s+)?func\s+(\w+)\s*\(([^)]*)", re.M)
 FLAG = re.compile(r"add_argument\(\s*[\"'](--[\w-]+)")
+GD_MEMBER = re.compile(r"^(?:static\s+)?(?:const|var|signal)\s+([A-Za-z]\w*)", re.M)  # top-level only
 NODE = re.compile(r"\[node name=\"(\w+)\"|\.name\s*=\s*\"(\w+)\"|add_to_group\(\s*\"(\w+)\"|^\s*(?:var|const)\s+\w+[^=\n]*=\s*\"(\w+)\"\s*#\s*node", re.M)
 LIVE_KINDS = ("routes", "job-table", "task", "skill", "ci", "hook", "shot-flow", "data", "tool", "script", "scene", "resource", "doc", "other")
 
@@ -240,6 +241,12 @@ def head_defs(tree: Tree, rx: re.Pattern, ext: str) -> set[str]:
     if not hasattr(tree, key):
         setattr(tree, key, set().union(*(set(_defs(rx, tree.text(p) or "")) for p in tree.files if p.endswith(ext) and in_scope(p))))
     return getattr(tree, key)
+
+def head_members(tree: Tree) -> set[str]:
+    """Top-level const/var/signal names any .gd in the tree still declares: a member that moved is not removed."""
+    if not hasattr(tree, "_members"):
+        tree._members = set().union(*(set(GD_MEMBER.findall(tree.text(p) or "")) for p in tree.files if p.endswith(".gd")))
+    return tree._members
 
 def head_nodes(tree: Tree) -> set[str]:
     """Every node name and group the tree still declares (scenes, `.name =`, add_to_group)."""
@@ -280,6 +287,10 @@ def gone(c: Change, old: Tree, new: Tree, ents_new: dict, basenames_new: dict) -
             for name in sorted(set(do) & set(dn)):
                 if do[name] != dn[name] and not name.startswith("_"):
                     out.append(Gone("sig", name, c.path))
+    if c.path.endswith(".gd"):  # a dropped const/var/signal (an old *_REV const): docs and dependents that still name it
+        for name in sorted(set(GD_MEMBER.findall(o)) - set(GD_MEMBER.findall(n)) - head_members(new)):
+            if len(name) >= 5 and "_" in name.strip("_"):
+                out.append(Gone("member", name, c.path))
     if c.path.endswith((".gd", ".tscn")):
         for name in sorted(_nodes(o) - head_nodes(new)):
             if len(name) >= 4:

@@ -79,7 +79,7 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
     allow = set(json.loads(RULES.read_text(encoding="utf-8")).get("drift_allow", []))
     want: dict[str, list] = {}
     for g in gones:
-        if g.what in ("path", "command", "flag", "node"):
+        if g.what in ("path", "command", "flag", "node", "member"):
             want.setdefault(g.symbol, []).append(g)
         elif g.what == "key":
             want.setdefault(f'"{g.symbol}"', []).append(g)
@@ -107,13 +107,16 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
                     continue
                 if g.what == "key" and f not in users:
                     continue
+                if g.what == "member" and kind not in DOC_KINDS and f not in users:
+                    continue
                 if g.what in ("def", "sig"):
                     if g.what == "sig":
                         if f not in changed:
                             review.append(f"REVIEW  signature of {g.symbol}() changed in {g.owner}; caller {where}")
                         continue
                 label = {"path": "removed path", "command": "removed subcommand", "flag": "removed flag",
-                         "def": "removed function", "node": "removed node/group", "key": "removed data key"}[g.what]
+                         "def": "removed function", "node": "removed node/group", "key": "removed data key",
+                         "member": "removed const/var"}[g.what]
                 drift.append(f"DRIFT   {label} {g.symbol} ({g.owner}) still named at {where}: {line[:90]}")
     # a tool whose docstring or help text changed: dependents that describe it but were not touched
     stems = {Path(f).stem for f in new.files if f.endswith((".py", ".gd"))}
