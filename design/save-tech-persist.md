@@ -22,7 +22,7 @@ Read when: primary backup wipe, game_ver stamp, isolated AI profiles
   - Target-lock preference (`target_lock_pref`)
   - Rebound gameplay actions (`binds.collect` / `binds.apply`)
   - Last acknowledged game version (`last_seen_game_ver`) for the title “what’s new” overlay
-  - Any other player settings and debug overrides that should persist
+  - Any other player settings that should persist (no balance values: debug-menu edits live in the debug-only override file, `tunables.md` Saves and overrides)
 
 Live player slot name: `"live"`. `App.save_now()` / `App.wipe_save()`.
 
@@ -46,7 +46,7 @@ CI stamps `version.json` on each user push to `main`, then Pages exports that sa
 
 ## Restock-on-return
 
-Player-facing restock rule: inventory.meta. Thresholds stay tunable and persist with the other debug overrides.
+Player-facing restock rule: inventory.meta. Thresholds stay tunable; debug-menu edits to them persist with the other debug overrides (`user://debug_tunables.json`, debug builds only).
 
 ## Debug profiles
 

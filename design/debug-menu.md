@@ -31,7 +31,7 @@ A new key needs a rule line in `val_cat_map.gd` to leave Other.
 - D-pad / left-stick Left / Right move between the two category columns.
 - **A** on a category expands that category’s variables in a single column under that category cell. Focus moves to the first variable. Navigation locks to that list (Up / Down). Left / Right do nothing in the var list.
 - **A** on a variable enters edit. Up / Down then changes the value by that row’s step. The live balance value is not committed until confirm.
-- **A** again writes the value and returns to the var list.
+- **A** again writes the value and returns to the var list. Debug builds keep it in `user://debug_tunables.json` (`tunables.md` Saves and overrides); Profiles > "Reset all values to defaults" clears it.
 - **B** while editing restores the previous number and returns to the var list.
 - **B** on the var list collapses it and returns focus to the two-column category grid.
 - **B** on the category grid closes the secret menu (Values is the home page).
