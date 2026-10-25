@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Script name check: FAIL (exit 1) when two live scripts/**/*.gd share a basename (dupes=).
+"""Script name check: FAIL (exit 1) when two live scripts/**/*.gd share a basename, any casing (dupes=),
+or a .gd sits outside scripts/ (stray=; tools/ and addons/ excepted), where no cap, dupes or code-map scan sees it.
 
     check.py script-cap [--git-changed | --path P]    basenames must stay unique repo-wide
     check.py script-cap --selftest                    the checks below in a throwaway repo
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import io
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -53,6 +55,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--selftest", action="store_true", help="Check the deleted-path skip, dupes and the Bot checks in a throwaway repo.")
     return parser.parse_args(argv)
 
+STRAY_OK = ("scripts", "tools", "addons", *gd_lib.SKIP_PARTS)
+
+def stray_gd(root: Path) -> list[str]:
+    """Tracked or untracked .gd files outside scripts/ (tools/, addons/, archives skipped)."""
+    try:
+        out = subprocess.run(["git", "ls-files", "-co", "--exclude-standard", "--", "*.gd"], cwd=root,
+                             capture_output=True, text=True, check=True).stdout.splitlines()
+    except (OSError, subprocess.CalledProcessError):
+        out = [p.relative_to(root).as_posix() for p in root.rglob("*.gd")]
+    return sorted(r for r in out if r.split("/")[0] not in STRAY_OK and not r.startswith(".") and (root / r).is_file())
+
 def selftest() -> list[str]:
     """Run main() in a temp repo: deleted --path skipped, dupes still fail, a directory --path exits 2, Bot cap still bites."""
     bad: list[str] = []
@@ -82,10 +95,16 @@ def selftest() -> list[str]:
             code, out = run(*argv)
             if code != want or text not in out:
                 bad.append(f"{name}: exit={code} (want {want}), missing {text!r}")
-        (root / "scripts/b/one.gd").write_bytes(b"#")
+        (root / "scripts/b/One.gd").write_bytes(b"#")
         code, out = run("--path", "scripts/gone.gd", "--path", "scripts/a/one.gd")
         if code != 1 or "DUPE" not in out:
-            bad.append(f"dupe next to a deleted path: exit={code}, want 1 with DUPE")
+            bad.append(f"case-only dupe next to a deleted path: exit={code}, want 1 with DUPE")
+        (root / "scripts/b/One.gd").unlink()
+        (root / "scenes").mkdir()
+        (root / "scenes/door.gd").write_bytes(b"#")
+        code, out = run()
+        if code != 1 or "STRAY\tscenes/door.gd" not in out:
+            bad.append(f"stray .gd outside scripts/: exit={code}, want 1 with STRAY")
     return bad
 
 def main(argv: list[str] | None = None) -> int:
@@ -94,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         bad = selftest()
         for b in bad:
             print(f"selftest: {b}")
-        return agent_log.emit_result("FAIL" if bad else "PASS", None, checks=5, problems=len(bad))
+        return agent_log.emit_result("FAIL" if bad else "PASS", None, checks=6, problems=len(bad))
     root = agent_log.resolve_root(args)
     bot = bot_gate_lib.enabled(args)
     if (args.sweep or args.list or args.over_kb is not None) and not bot:
@@ -144,9 +163,10 @@ def main(argv: list[str] | None = None) -> int:
     # basenames must stay unique repo-wide (editor tabs, quick-open, grep, bare code-map names): design/refactor.md Cluster folders
     by_name: dict[str, list[str]] = {}
     for gp in gd_lib.iter_gd(root):
-        by_name.setdefault(gp.name, []).append(agent_log.rel(root, gp))
+        by_name.setdefault(gp.name.lower(), []).append(agent_log.rel(root, gp))  # case-only twins collide on Windows tools and quick-open
     mine = {agent_log.rel(root, f) for f in files}
     dupes = sorted((n, ps) for n, ps in by_name.items() if len(ps) > 1 and mine & set(ps))
+    stray = stray_gd(root)
 
     lines = ["script cap" if bot else "script names", "root=."]
     if bot:
@@ -159,16 +179,20 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"skipped={len(skipped)} (not on disk, deleted by the change): " + ", ".join(skipped))
     for name, paths in dupes:
         lines.append(f"DUPE\t{name}\t" + " | ".join(paths))
+    for rel in stray:
+        lines.append(f"STRAY\t{rel}")
+    if stray:
+        lines.append("next: STRAY = move the script under scripts/ (lint.py move); only tools/ and addons/ hold .gd elsewhere")
     if over:
         lines.append("next: split the file (BOT.md size flow, design/refactor.md); do not raise --over-kb")
     if dupes:
         lines.append("next: DUPE = rename one file; basenames are unique repo-wide")
-    kv = dict(checked=len(files), dupes=len(dupes))
+    kv = dict(checked=len(files), dupes=len(dupes), stray=len(stray))
     if skipped:
         kv["skipped"] = len(skipped)
     if bot:
         kv.update(over=len(over), limit=limit)
-    return agent_log.finish("script-cap", root, "\n".join(lines), "FAIL" if over or dupes else "PASS", args=args, **kv)
+    return agent_log.finish("script-cap", root, "\n".join(lines), "FAIL" if over or dupes or stray else "PASS", args=args, **kv)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

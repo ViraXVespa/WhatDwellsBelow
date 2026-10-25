@@ -117,7 +117,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the allowlist on dirty paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), diff drift and (UI scripts changed) textsize --gate.",
+        help="Also check the allowlist on uncommitted and unpushed paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), diff drift and (UI scripts changed) textsize --gate.",
     )
     parser.add_argument("--no-explore", action="store_true", help="With --prove: skip the drift scan and textsize (check.py prove runs those itself).")
     return parser.parse_args(argv)
@@ -139,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
     opts = parse_opt_queue(root)
     pending_opts = [item for item in opts if item["status"] not in ("done", "dropped")]
     globs = repo_lib.load_allowlist(root)
-    dirty = repo_lib.git_changed(root) or []
+    dirty = sorted(set(repo_lib.git_changed(root, renames=False) or []) | set(repo_lib.unpushed(root)))  # uncommitted + unpushed
     blocked = [rel for rel in dirty if globs and not repo_lib.allowed(rel, globs)]
 
     lines: list[str] = [
@@ -187,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"script_cap={'FAIL' if cap_fail else 'PASS'} over={cap_fail}")
         if globs:
             lines.append(
-                f"allowlist={'FAIL' if blocked else 'PASS'} dirty={len(dirty)} blocked={len(blocked)}"
+                f"allowlist={'FAIL' if blocked else 'PASS'} changed={len(dirty)} blocked={len(blocked)}"
             )
             for rel in blocked:
                 lines.append(f"blocked\t{rel}")

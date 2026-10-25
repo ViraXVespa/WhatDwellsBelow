@@ -23,9 +23,9 @@ def run_git(root: Path, *args: str) -> tuple[int, str]:
     out = (proc.stdout or "").rstrip()
     return proc.returncode, out if out else (proc.stderr or "").rstrip()
 
-def git_changed(root: Path, *pathspec: str, untracked: bool = True) -> list[str] | None:
-    """Repo-relative POSIX paths from `git status --porcelain`. None if git fails."""
-    cmd = ["status", "--porcelain"] + (["-u"] if untracked else [])
+def git_changed(root: Path, *pathspec: str, untracked: bool = True, renames: bool = True) -> list[str] | None:
+    """Repo-relative POSIX paths from `git status --porcelain`. None if git fails. renames=False: both sides of a move."""
+    cmd = ["status", "--porcelain"] + (["-u"] if untracked else []) + ([] if renames else ["--no-renames"])
     if pathspec:
         cmd += ["--", *pathspec]
     code, out = run_git(root, *cmd)
@@ -41,6 +41,11 @@ def git_changed(root: Path, *pathspec: str, untracked: bool = True) -> list[str]
         if rel:
             paths.append(rel.strip('"').replace("\\", "/"))
     return paths
+
+def unpushed(root: Path) -> list[str]:
+    """Paths the commits not yet on @{u} touch (both sides of a move); [] with no upstream."""
+    code, out = run_git(root, "diff", "--name-only", "--no-renames", "@{u}...HEAD")
+    return out.splitlines() if code == 0 else []
 
 def load_allowlist(root: Path) -> list[str]:
     """Globs from tools/bot_allow.txt (comments stripped, `!` negations kept)."""
