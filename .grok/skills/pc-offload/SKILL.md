@@ -28,24 +28,24 @@ You are on a local checkout. Do not measure files by reading their bodies.
 Do not paste raw Godot logs, whole .gd files, whole .tscn files, or
 unbounded search output into the session.
 
-Intercept (raw tool is a failed lookup, not a fallback):
-- grep / rg on scripts/, design/, tools/, scenes/ -> tools/find.py xref
+Intercept (raw tool is a failed lookup, not a fallback). `.grok/hooks/bin/wdb-pretool.py` denies these in the game repo, including the same command in the shell. Grep of one file stays allowed. `gate.py build` and reading a file you are editing stay allowed.
+- grep / rg of a directory under scripts/, design/, tools/, scenes/, or site/ -> tools/find.py xref (`--path site` for site/)
 - list_dir of those trees -> find.py xref or find.py scenes
-- git status / git log / git diff in chat -> tools/find.py changed
+- list_dir of the repo root -> tools/find.py route
+- git status / git log / git diff / git show -> tools/find.py changed
+- python -c -> tools/find.py stat, or tools/docs.py patch write for a script body
+- any read of `_logs/` -> tools/session.py summary --job <name>
 - open whole design/code-map.md -> tools/docs.py code-map (row / patch / check)
-- list_dir of the repo root -> tools/find.py route (lists the doors)
 - open a whole script of the system being edited -> tools/find.py func
-- bytes / newlines / indent / BOM on a live path -> tools/find.py stat (not python -c)
-- python -c for bytes, newlines, tabs, or indent -> tools/find.py stat
-- python -c / double-quoted PowerShell body / echo Set-Content of a script ->
-  single-quoted here-string piped to tools/docs.py patch write FILE, then
+- bytes / newlines / indent / BOM on a live path -> tools/find.py stat
+- a script body goes through a single-quoted here-string piped to tools/docs.py patch write FILE, then
   tools/session.py py. A script this session or the next one will run again
   is FILE under tools/ with a catalog row. session.py py deletes FILE when
   it is under _logs/agent-py/
 - open tools/*.py to learn flags -> catalog row only
 - read the same job summary again this slice -> stop;
   one read via tools/session.py summary --job <name> (index first, newest run;
-  every run has its own stamped file, never open _logs files directly)
+  the hook denies opening any `_logs/` file directly)
 - a design doc, the agents file, or BOT.md edit -> python tools/check.py load-graph
   before the change is reported done. RESULT PASS is required. Do not defer it to ship
 - door or job routing by opening README / load-graph / memory topics ->
