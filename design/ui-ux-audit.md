@@ -23,7 +23,7 @@ Gamepad-first check of the shot flows. H/M/L severity; [art] = the PNG items abo
 - [Anvil](refs/ui-png-art/camp-anvil-tabs_01-tab.jpg): L FIXED slot tooltip covered the "Bonuses from this kit" header (now above the slot). [ux]
 - [Vendor](refs/ui-png-art/camp-npc-panels_01-vendor.jpg): H hanging decor covers the header and blurb; the 4th row is cut (FIXED: scroll cue). [art+ux]
 - Vendor, quest board, dumpster: M prompts are unlabelled icons under the panel. [ux]
-- [Receptionist](refs/ui-png-art/camp-receptionist-menu_01-menu-open.jpg): M menu fills the top 15% of an empty panel; FIXED camp HUD bar hidden while camp menus are open. [ux]
+- [Receptionist](refs/ui-png-art/camp-receptionist-menu_01-menu-open.jpg): M menu fills the top 15% of an empty panel; FIXED camp HUD bar hidden while camp menus are open. [ux] Layout only. The clerk's look is the live sprite `assets/sprites/npcs/receptionist.png` (`hub-guild.md`). The goth/metal brief and task `receptionist-redesign` are retired. Do not open this jpg to recover a character design, and do not open it in the shared gather.
 - [Journal pages](refs/ui-png-art/camp-receptionist-menu_04-page-forging.jpg): M own frame (green, lined, bookmark over the edge); tiny screenshot and text. [art+ux]
 - [Teleport local](refs/ui-png-art/dungeon-map-crystal_03-crystal-local.jpg): M black map void, tiny map, no legend. [ux]
 - [Teleport floors](refs/ui-png-art/dungeon-map-crystal_04-crystal-floors.jpg): L disabled row only lighter. [art]

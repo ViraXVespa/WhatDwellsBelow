@@ -53,6 +53,12 @@ BARE_LIST = re.compile(
     re.I | re.M,
 )
 LENGTH = re.compile(r"\bLength\b")
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+IMAGE_READ = (
+    "Reading an image into this session is denied. "
+    "Use python tools/shots.py review PNG --question Q (only the text report comes back). "
+    "shots.py show opens pictures for the User."
+)
 
 def out(decision: str, reason: str = "") -> int:
     payload = {"decision": decision}
@@ -148,6 +154,10 @@ def hits_tree(text: str, repo: Path | None) -> bool:
 
 def hits_scenes(text: str, repo: Path | None) -> bool:
     return mentions_root(text, "scenes", repo)
+
+def is_image_path(text: str) -> bool:
+    low = norm(text).split("?", 1)[0].rstrip("/")
+    return low.endswith(IMAGE_EXT)
 
 def is_logs_path(text: str) -> bool:
     low = norm(text)
@@ -246,6 +256,8 @@ def decide(event: dict) -> tuple[str, str]:
 
     if name in READ_TOOLS or low_name in {"read", "read_file", "readfile"}:
         for item in input_paths(inp):
+            if is_image_path(item):
+                return "deny", IMAGE_READ
             if is_logs_path(item):
                 return "deny", "Reading _logs/ is denied. Use tools/session.py summary --job <name>."
 
@@ -285,6 +297,10 @@ def selftest() -> int:
         (ev("read_file", {"target_file": root + "/_logs/godot.log"}), "deny"),
         (ev("read_file", {"target_file": "design/build-week-start.md"}), "allow"),
         (ev("read_file", {"target_file": "tools/lib/release/week_start.py"}), "allow"),
+        (ev("read_file", {"target_file": "design/refs/ui-png-art/x.jpg"}), "deny"),
+        (ev("read_file", {"target_file": root + "/assets/sprites/npcs/receptionist.png"}), "deny"),
+        (ev("read_file", {"target_file": root + "/_logs/shot-flow/title-menu/01-title-card.png"}), "deny"),
+        (ev("read_file", {"target_file": "a.png"}, cwd=outside), "allow"),
         (ev("run_terminal_command", {"command": "git status --porcelain=v1 -b"}), "deny"),
         (ev("run_terminal_command", {"command": "git log -8 --oneline"}), "deny"),
         (ev("run_terminal_command", {"command": "git diff -- design/pc-offload.md"}), "deny"),

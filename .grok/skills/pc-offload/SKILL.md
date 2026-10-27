@@ -35,6 +35,7 @@ Intercept (raw tool is a failed lookup, not a fallback). `.grok/hooks/bin/wdb-pr
 - git status / git log / git diff / git show -> tools/find.py changed
 - python -c -> tools/find.py stat, or tools/docs.py patch write for a script body
 - any read of `_logs/` -> tools/session.py summary --job <name>
+- a PNG or JPG, including under `_logs/` or `design/refs/` -> `shots.py review` in the forked session whose unit needs it. Do not read_file it. The shared gather does not open pictures. The summary is for logs, not pictures.
 - open whole design/code-map.md -> tools/docs.py code-map (row / patch / check)
 - open a whole script of the system being edited -> tools/find.py func
 - bytes / newlines / indent / BOM on a live path -> tools/find.py stat

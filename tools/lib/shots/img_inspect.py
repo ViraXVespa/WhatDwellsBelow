@@ -61,9 +61,10 @@ def run(args) -> tuple[str, list[str], dict]:
         kv.update(checks=len(res), failing=sum(not ok for _n, ok, _d in res))
         status = "FAIL" if kv["failing"] else "PASS"
     elif cmd == "describe":
-        im = imgio.load(_need(args, 1, "IMG")[0])
-        d = look.describe(im)
-        lines.append(look.fmt_describe(d))
+        for pth in _need(args, 1, "IMG"):
+            im = imgio.load(pth)
+            d = look.describe(im)
+            lines.append(f"{Path(pth).name}: {look.fmt_describe(d)}")
         status = "INFO"
     elif cmd == "layout":
         im = imgio.load(_need(args, 1, "IMG")[0])
@@ -97,7 +98,10 @@ def run(args) -> tuple[str, list[str], dict]:
         ia, ib = imgio.load(a), imgio.load(b)
         ign = [_box(m) for m in args.mask]
         d = compare.diff(ia, ib, args.tol_px, ign)
-        lines.append(f"{d['status']} score {d.get('score')} changed_px {d['changed_px']} ratio {d['ratio']} max_delta {d.get('max_delta')} bbox {d.get('bbox')}")
+        if d["status"] == "size":
+            lines.append(f"size {d.get('before')} vs {d.get('after')} (not a pixel diff)")
+        else:
+            lines.append(f"{d['status']} score {d.get('score')} changed_px {d['changed_px']} ratio {d['ratio']} max_delta {d.get('max_delta')} bbox {d.get('bbox')}")
         for r in d.get("regions", []):
             lines.append(f"  region x{r[0]} y{r[1]} {r[2] - r[0]}x{r[3] - r[1]}")
         kv.update(changed_px=d["changed_px"], ratio=d["ratio"], score=d.get("score"))

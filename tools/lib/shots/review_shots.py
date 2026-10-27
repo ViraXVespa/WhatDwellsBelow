@@ -26,16 +26,28 @@ import run_isolated_grok as iso  # noqa: E402
 REPORT = "report.md"
 MAX_REPORT = 6000
 
+def turn_budget(n_images: int, requested: int) -> int:
+    """Turns for one read of each image plus the report. A low --max-turns still rises with the image count."""
+    auto = min(16, max(8, 2 + 2 * max(n_images, 1)))
+    if requested <= 0:
+        return auto
+    return max(requested, auto)
+
 def build_job(names: list[str], question: str, rubric: str) -> str:
     lines = ["# Shot review (isolated)", "",
-             "You review game screenshots for a developer who will NOT see them. Look at each file below.",
-             "Answer only from what is visible. Do not generate or edit images. Do not walk a parent repo.", "",
+             "You review game screenshots. The developer will not see the images, only your report.",
+             "The files are in this directory. They are real screenshots.",
+             "Call read_file once on each file. That call shows you the picture. Trust it.",
+             "Do not run a terminal command, Python, OCR, or a crop. Do not re-read a file.",
+             "Do not walk any other directory. Do not generate or edit images.", "",
              "Files: " + ", ".join(f"`{n}`" for n in names), "", f"Question: {question}"]
     if rubric:
         lines += ["", "Rubric (check each item):", rubric]
-    lines += ["", f"Write `{REPORT}` in this directory, plain text, under 400 words:",
-              "one section per file (what is visible, defects, the answer for that file), then a last line",
-              "exactly `VERDICT: PASS`, `VERDICT: FAIL` or `VERDICT: UNSURE`. Then stop."]
+    lines += ["", f"Then write `{REPORT}` in this directory with the write tool, plain text, under 400 words.",
+              "One section per file: what is visible, and the answer for that file.",
+              "Last line exactly `VERDICT: PASS`, `VERDICT: FAIL`, or `VERDICT: UNSURE`.",
+              "Use UNSURE when the question asks for a description rather than a pass or fail.",
+              "Write the file in the same turn you finish looking. Then stop."]
     return "\n".join(lines) + "\n"
 
 def fail(why: str) -> int:
@@ -65,11 +77,17 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
         n = iso.inspect_instruction_count(text)
         if ins.returncode != 0 or iso.inspect_mentions_repo_agents(text) or n != 0:
             return fail(f"isolation not proven (inspect exit {ins.returncode}, project instructions {n})")
-        argv = iso.grok_child_argv(grok, job, scratch, max_turns)
+        budget = turn_budget(len(paths), max_turns)
+        argv = iso.grok_child_argv(grok, job, scratch, budget)
         child = subprocess.run(argv, cwd=scratch, text=True, capture_output=True, check=False)
         if child.returncode != 0:
-            sys.stderr.write((child.stderr or "")[-1500:])
-            return fail(f"isolated session exited {child.returncode}")
+            err = (child.stderr or "").strip()
+            if err:
+                sys.stderr.write(err[-1500:] + "\n")
+            why = f"isolated session exited {child.returncode}"
+            if "max turns" in err.lower():
+                why += f" (turn budget {budget} spent before {REPORT}; {len(paths)} image(s))"
+            return fail(why)
         rep = scratch / REPORT
         if not rep.is_file() or not rep.read_text(encoding="utf-8").strip():
             return fail(f"isolated session wrote no {REPORT}")
@@ -96,16 +114,27 @@ if mode != "silent":
 
 def selftest() -> int:
     bad = []
+    sample = build_job(["01-a.png"], "Is the panel visible?", "- panel")
+    if "Do not run a terminal" not in sample or "VERDICT: UNSURE" not in sample or "01-a.png" not in sample:
+        bad.append("prompt")
+    if turn_budget(3, 6) != 8 or turn_budget(1, 6) != 8 or turn_budget(3, 20) != 20 or turn_budget(12, 0) != 16:
+        bad.append("budget")
     with tempfile.TemporaryDirectory(prefix="wdb-review-st-") as tmp:
         t = Path(tmp)
-        fake = t / "grok"
-        fake.write_text(FAKE, encoding="utf-8")
-        fake.chmod(0o755)
+        script = t / ("grok_fake.py" if os.name == "nt" else "grok")
+        script.write_text(FAKE, encoding="utf-8")
+        script.chmod(0o755)
+        if os.name == "nt":
+            launcher = t / "grok.cmd"
+            launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")
+            grok_bin = str(launcher)
+        else:
+            grok_bin = str(script)
         png = t / "a.png"
         png.write_bytes(b"\x89PNG\r\n\x1a\n")
         me = [*boot.cmd("review_shots")]
-        cases = [("ok", str(fake), 0, "VERDICT: PASS"), ("leak", str(fake), 1, "isolation not proven"),
-                 ("crash", str(fake), 1, "exited 4"), ("silent", str(fake), 1, "no report.md"),
+        cases = [("ok", grok_bin, 0, "VERDICT: PASS"), ("leak", grok_bin, 1, "isolation not proven"),
+                 ("crash", grok_bin, 1, "exited 4"), ("silent", grok_bin, 1, "no report.md"),
                  ("ok", str(t / "nogrok"), 1, "not on PATH")]
         for mode, grok, want, needle in cases:
             env = dict(os.environ, FAKE_MODE=mode)
@@ -116,6 +145,7 @@ def selftest() -> int:
             print(f"{'ok ' if ok else 'BAD'} {mode} grok={Path(grok).name} exit={r.returncode}")
             if not ok:
                 bad.append(mode)
+                print(out[-400:].replace("\n", " | "))
     return agent_log.emit_result("PASS" if not bad else "FAIL", cmd="selftest", problems=len(bad))
 
 def main() -> int:
@@ -124,7 +154,7 @@ def main() -> int:
     ap.add_argument("--question", default="", help="What to answer about the shots (required)")
     ap.add_argument("--rubric", default="", help="Checklist text, or @FILE to read it from a file")
     ap.add_argument("--grok", default="grok", help="Grok Build executable (default: grok)")
-    ap.add_argument("--max-turns", type=int, default=6, help="Max child turns (default 6)")
+    ap.add_argument("--max-turns", type=int, default=6, help="Max child turns. The run rises with the image count (at least 8, +2 per image, cap 16) when this is lower.")
     ap.add_argument("--selftest", action="store_true", help="Run against a mock grok; no Grok needed")
     args = ap.parse_args()
     root = agent_log.resolve_root(args)
