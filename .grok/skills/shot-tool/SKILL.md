@@ -20,7 +20,7 @@ Read only `python tools/session.py summary --job shots` (index first, newest run
 Web mode: paste the clipboard image with the printed RESULT (no scratch needed). Do not dump PNG bytes into chat text.
 
 Do not pass Godot `--headless` or `--display-driver headless` for a postcard.
-Default hides the window off-screen and strips the taskbar tab from the Godot HWND. `--show` or `--taskbar 1` only when the User wants to watch.
+Default hides the window off-screen and strips the taskbar tab from the Godot HWND. `--show` only when the User wants to watch.
 
 Source map, adding a knob, troubleshooting: the doc above. If the tool is awkward, fix the tool, do not work around it.
 Gap: when the picture needs a UI page or staged state the tool cannot set, extend the tool as part of the task (one knob at a time, one prove shot, documented in the doc's gap process). Do not work around it. A new tool is fine when it will help later tasks; tell the User afterward (design/tools.md rule 5).

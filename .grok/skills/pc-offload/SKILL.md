@@ -8,12 +8,12 @@ description: >
   Do not use for Imagine stills or I2V (those stay Build-only).
 when-to-use: >
   measure files (find.py stat; not python -c), inventory scripts, list changed files, git inventory,
-  docs-vs-code history (list_changed --history),
+  docs-vs-code history (find.py changed --history),
   repo search (list_xref, not grep), code-map row, patch code-map row,
   check code-map coverage, scene nodes, Godot import,
   smokes, load timing, dungeon map, build gate, post-split gate,
-  Windows write (docs.py patch write), run_agent_py, show_func, task files (docs.py task),
-  read_summary, list_route, show_png, add a new local runner. If this session already opened this skill
+  Windows write (docs.py patch write), session.py py, show_func, task files (docs.py task),
+  session.py summary, find.py route, shots.py show, add a new local runner. If this session already opened this skill
   or design/pc-offload.md, do not open them again.
 user-invocable: true
 metadata:
