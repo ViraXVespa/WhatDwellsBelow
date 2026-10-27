@@ -9,7 +9,7 @@
     {"id": "code-map", "cmd": "python3 tools/docs.py code-map check", "when": ["scripts/*.gd", "design/code-map.md"], "why": "live scripts vs the code map"},
     {"id": "tunables-diff", "cmd": "python3 tools/docs.py tunable diff", "when": ["scripts/data/balance/*", "scripts/data/balance.gd", "scripts/data/tunables.gd", "scripts/debug/debug_menu/val_cat_map.gd", "design/tunables*.md", "tools/lib/docs/tunables*.py", "tools/lib/docs/balance_src.py"], "why": "balance defaults vs slider rows vs doc Live cells (drift)"},
     {"id": "tool-docs", "cmd": "python3 tools/check.py tool-docs", "when": ["tools/*", "design/tools*.md"], "why": "tool catalog rows, libs and data named"},
-    {"id": "stale-refs", "cmd": "python3 tools/check.py tool-docs --stale-refs", "when": ["*.md", "tools/*.py", ".github/*"], "when_status": ["D", "R"], "why": "dead doc paths and members"},
+    {"id": "stale-refs", "cmd": "python3 tools/check.py tool-docs --stale-refs", "when": ["*.md", "tools/*.py", ".github/*", ".grok/*"], "when_status": ["D", "R"], "why": "dead doc paths and members; .grok skill/hook commands"},
     {"id": "tool-cli", "cmd": "python3 tools/check.py tool-cli --smoke-run", "when": ["tools/*.py"], "why": "CLI contract of the changed tools"},
     {"id": "task-check", "cmd": "python3 tools/docs.py task check", "when": ["design/tasks/*", "tools/*.py"], "why": "task headers; resume/first lines name live tools"},
     {"id": "selftests", "cmd": "@selftests", "when": ["tools/*.py", "tools/data/*"], "why": "selftest of each changed tool, tool importing a changed lib, or tool reading changed data"},
