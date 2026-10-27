@@ -27,6 +27,14 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	MeshS.wall_box(body, fit, row["wall"])
 	Util._slide(body, fit)
 	Util.face(body, fit, tex, 0.0, fit.x, row["crop"])
+	# Thin collider on the painted front so the player cannot walk through the wall
+	var front_col := CollisionShape3D.new()
+	front_col.name = "FrontFaceCollider"
+	var front_box := BoxShape3D.new()
+	front_box.size = Vector3(fit.x, fit.y, 0.08)
+	front_col.shape = front_box
+	front_col.position = Vector3(0.0, fit.y * 0.5, fit.z * 0.5 + 0.04)
+	body.add_child(front_col)
 	var valance: float = fit.y * lay.awning_valance(which)
 	var hem := Vector3(fit.y * 0.5 - valance, fit.z * 0.5 + lay.awning_depth(which), float(row.get("hang_x", 0.0)))
 	Lamps.on_face(body.get_child(body.get_child_count() - 1) as Sprite3D, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
@@ -53,7 +61,7 @@ static func stall(host: Node3D) -> void:
 	coll.shape = block
 	coll.position = Vector3(0.0, 0.0, (front_z + rear_z) * 0.5)
 	body.add_child(coll)
-	var hx: float = posts.x + float(Spec.STALL["post_half"]) - 0.001
+	var hx: float = posts.x + float(Spec.STALL["post_half"]) - 0.08  # pull sides in to avoid trap
 	var foot: float = -pos.y + -0.02  # world FLOOR_Y
 	var top: float = lay.stall_eave_y() - 0.01  # the post tops
 	_wall(body, "StallRightWall", "StallRightHit", [Vector3(hx, foot, front_z), Vector3(hx, foot, rear_z), Vector3(hx, top, rear_z), Vector3(hx, top, front_z)])
@@ -62,7 +70,10 @@ static func stall(host: Node3D) -> void:
 	var fz: float = front_z - 0.001
 	_wall(body, "StallFrontWall", "", [Vector3(-hx, foot - 0.5, fz), Vector3(hx, foot - 0.5, fz), Vector3(hx, top, fz), Vector3(-hx, top, fz)])
 	# The face art is the front: the wall only casts (live and baked shadow), it is never drawn, so nothing z-fights it.
-	(body.get_node("StallFrontWall") as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	var front_wall := body.get_node("StallFrontWall") as MeshInstance3D
+	front_wall.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	front_wall.visible = false  # never draw the wood; face sprite is the visible front
+	(body.get_node("StallFrontWall") as MeshInstance3D).position.z += 0.005  # bias to stop any residual z-fight
 
 ## One stall wall quad (q: bottom-left, bottom-right, top-right, top-left), sun-lit planks like the guild walls.
 static func _wall(body: StaticBody3D, mesh_name: String, hit: String, q: Array) -> void:
