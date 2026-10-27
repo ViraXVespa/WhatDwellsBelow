@@ -2,6 +2,8 @@ extends Object
 
 ## Split from hub_bench.gd: _iso_kinds, _iso_gather, _iso_counts....
 
+const CliArgs := preload("res://scripts/app/cli_args.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 const Visit := preload("res://scripts/debug/playtest_bench/hub_bench_visit.gd")
 
@@ -146,8 +148,9 @@ static func _iso_report(host: Node, kind: String) -> void:
 	if n > 0:
 		pct = 100.0 * float(good) / float(n)
 	var draws: int = int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
-	host._hb("HB: isolate layer=%s n=%d p50=%.1f p95=%.1f fps=%.1f draw=%d proc=%.1f" % [
-		kind, n, _iso_mid(host._iso_dts) * 1000.0, _iso_p95(host) * 1000.0, pct, draws, _iso_mid(host._iso_proc),
+	var walking: int = 1 if CliArgs.has(host.WALK_FLAG) else 0
+	host._hb("HB: isolate layer=%s n=%d p50=%.1f p95=%.1f fps=%.1f draw=%d proc=%.1f phys=%.1f submit=%.1f walk=%d" % [
+		kind, n, _iso_mid(host._iso_dts) * 1000.0, _iso_p95(host) * 1000.0, pct, draws, _iso_mid(host._iso_proc), _iso_mid(host._iso_phys), _iso_mid(host._iso_submit), walking,
 	])
 
 static func _iso_p95(host: Node) -> float:
@@ -157,6 +160,56 @@ static func _iso_p95(host: Node) -> float:
 	ordered.sort()
 	var at: int = int(round(float(ordered.size() - 1) * 0.95))
 	return ordered[at]
+
+static func _iso_sample(host: Node, delta: float) -> void:
+	if host._iso_t < 0.35:
+		return
+	host._iso_dts.append(delta)
+	host._iso_proc.append(float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0)
+	host._iso_phys.append(float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0)
+	host._iso_submit.append(HitchLog.frame_submit_ms())
+
+static func _fill_layers(host: Node, delta: float) -> void:
+	# Full bench has already walked the facings, stations, and the strike.
+	# The scored fill is the miss, so the layer times start there.
+	if not host._iso_ready:
+		_iso_gather(host)
+		host._iso_ready = true
+		host._hb("HB: isolate counts %s" % _iso_counts(host))
+	var kinds: PackedStringArray = _iso_kinds()
+	kinds.append("base")
+	if host._iso_i >= kinds.size():
+		End._finish(host, "isolate")
+		return
+	var kind: String = kinds[host._iso_i]
+	if host._iso_applied != host._iso_i:
+		host._iso_applied = host._iso_i
+		host._iso_t = 0.0
+		host._iso_dts.clear()
+		host._iso_proc.clear()
+		host._iso_phys.clear()
+		host._iso_submit.clear()
+	_iso_apply(host, kind)
+	var leg: int = int(host._fill_i / 2.0) % host._dirs.size()
+	var dir: Vector2 = host._dirs[leg]
+	if host._fill_i % 2 == 1:
+		dir = -dir
+	App.playtest.move = dir
+	App.playtest.aim = dir
+	host._sub_t += delta
+	if host._sub_t >= 0.8:
+		host._sub_t = 0.0
+		host._fill_i += 1
+	_iso_sample(host, delta)
+	host._iso_t += delta
+	var hold: float = 1.5 if kind == "warm" else 2.5
+	if host._iso_t < hold:
+		return
+	_iso_report(host, kind)
+	host._iso_i += 1
+	host._iso_applied = -1
+	if host._iso_i >= kinds.size():
+		End._finish(host, "isolate")
 
 static func _isolate(host: Node, actor: Node3D, delta: float) -> void:
 	if not host._iso_ready:
@@ -174,10 +227,10 @@ static func _isolate(host: Node, actor: Node3D, delta: float) -> void:
 		host._iso_t = 0.0
 		host._iso_dts.clear()
 		host._iso_proc.clear()
+		host._iso_phys.clear()
+		host._iso_submit.clear()
 	_iso_apply(host, kind)
-	if host._iso_t >= 0.35:
-		host._iso_dts.append(delta)
-		host._iso_proc.append(float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0)
+	_iso_sample(host, delta)
 	host._iso_t += delta
 	var hold: float = 1.5 if kind == "warm" else 2.5
 	if host._iso_t < hold:

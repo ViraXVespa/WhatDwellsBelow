@@ -50,6 +50,18 @@ static func set_phase(phase_name: String) -> void:
 static func set_play_s(sec: float) -> void:
 	Rows.set_play_s(sec)
 
+static func set_tree_ms(ms: float) -> void:
+	Rows.set_tree_ms(ms)
+
+static func set_submit_ms(ms: float) -> void:
+	Rows.set_submit_ms(ms)
+
+static func set_after_ms(ms: float) -> void:
+	Rows.set_after_ms(ms)
+
+static func frame_submit_ms() -> float:
+	return Rows.frame_submit_ms()
+
 ## One HB line in the hitch file. The web console never reaches the runner.
 static func hb(msg: String) -> void:
 	if not enabled():

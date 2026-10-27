@@ -16,14 +16,25 @@ Both legs walk a full 30 s. Eight facings, the stations, one strike on the dummy
 ## Where it stands
 Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. Not re-run since.
 
-Web, capped Edge, vsync on, 1920x1080. Standing at the dummy (`--layers`): every hidden layer stayed at p50 and p95 16.7 ms, base draw 68. Fence, ground, buildings, sprites, light marks, and the HUD are not the still-camera cost. The full walk: fps_pct 77.0, frames 1236, slow 284, p50 16.7, p95 41.7, worst 144.8, ok 1. The sustained miss is the ending fill only (266 slow frames, median 38.9 ms, west-arm cells, phys about 2-4 ms, draw 48-78). The station walk is not that run. Uncapping (`--disable-frame-rate-limit` / `--disable-gpu-vsync`) bugchecked this GPU; `perf.py hub` refuses both, and only `perf.py web`'s headless SwiftShader (software GL) runs uncapped. A hitch-log scene walk on every frame latched the whole bench.
+Web scored cold, capped Edge, vsync on, 1920x1080. The full sequence is required. Scored runs on 2026-10-27 sit at fps_pct 75.7 to 77.9, p50 about 17, p95 about 45, one fill run of about 245 frames at median about 40 ms, cells along 8,15-12,15. `proc_ms` still repeats and can exceed the frame.
 
-The single-sheet yard from e4c632f was reverted. The ground is the week-7 band planes again.
+The frame split on those fill rows adds up to `dt_ms`. `tree_ms` is about 3 to 9. `submit_ms` (pre-draw to post-draw) is about 39 to 47. `after_ms` is about 9 to 13. Physics stays a few milliseconds. Draw calls stay about 75. The fill cost is inside the draw. One worst row can show `submit_ms` several times `dt_ms`; ignore that row. Viewport render-time queries returned 0 and are off the row.
 
-Stale baseline: the hub changed after these runs (layout moved to `layout_spec.gd`, guild roofs rebaked with shadows). Gather takes a fresh cold `perf.py hub --leg web` run as the before.
+A one-refresh scored p50 with a slow fill came back after the 1.1 run (slow from the facings, p50 49.6). That 1.1 run is not the number to chase. The draw hooks are not that collapse.
+
+`--walk-layers` once, just after a 77.9 scored run: whole window fps_pct 99.3, and every fill layer including both base passes was p50 16.7 with submit about 4. The miss was absent, so the hides named nothing. The next scored run was 75.7. A layer time counts only when that same run's base fill stays near a 40 ms submit.
+
+Ground is the week-7 band planes. Uncapping is refused. A per-frame hitch-log scene walk latches the bench. `--walk-layers` gathers the groups once, when the fill starts.
 
 ## Next
-The walk stays. Still at the dummy is one refresh; the fill walk there is two to three refreshes the whole time. Do not spend the web leg on the light tap: textureLod and the four texelFetches both sat near fps_pct 75. Do not stack a second path plane on the dirt. Do not sample `hub_light.png` with `texture()`. `--layers` (`perf.py hub --leg web --layers`) is the still-camera split; it does not score the 99% bar.
+No hub-draw change yet. The named cost is the draw window during the scored fill, not a mesh group. Next measurement: in one scored run, time a normal fill, then one hidden group, then the normal fill again. Discard the run unless the first fill's submit stays near 40 ms. Then two consecutive cold scored PASS runs close the task.
+
+Do not spend a web leg on the light tap, a second path plane, `texture()` on `hub_light.png`, uncapping, a desktop rescore, or a walk that skips the full sequence. Do not treat a `--walk-layers` RESULT PASS as the bar. That mode is not scored.
+
+## Handoff
+Gather reset: `grok -r 01a17ec2-2017-75a0-9ed2-e148e542fe49 --fork-session` from this worktree. Do not re-gather. Latest measured session: `01a17ee9-cc42-7ff1-b4a2-750249612e04`.
+
+The draw split stays (`tree_ms`, `submit_ms`, `after_ms` on the hitch row, `submit` on a layer line). `gd-load` passed after the last script edit. `check.py load-graph` passed after the doc edits. The scored bar is still red.
 
 ## Notes from Vira
 That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.

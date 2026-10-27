@@ -118,7 +118,7 @@ def _slow_lines(rows: list[dict]) -> list[str]:
         if int(row.get("paused", 0) or 0) == 1 or int(row.get("bar", 0) or 0) == 1:
             continue
         slow.append(
-            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s draw=%s"
+            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s phys_ms=%s draw=%s tree_ms=%s submit_ms=%s after_ms=%s"
             % (
                 row.get("t", ""),
                 row.get("dt_ms", ""),
@@ -128,7 +128,11 @@ def _slow_lines(rows: list[dict]) -> list[str]:
                 row.get("ui", ""),
                 row.get("cell", ""),
                 row.get("proc_ms", ""),
+                row.get("phys_ms", ""),
                 row.get("draw", ""),
+                row.get("tree_ms", ""),
+                row.get("submit_ms", ""),
+                row.get("after_ms", ""),
             )
         )
         if len(slow) >= 8:
@@ -195,6 +199,11 @@ def _run_line(rows: list[dict]) -> str:
     held = 0
     paused = 0
     prev_proc = None
+    phys_vals: list[float] = []
+    draw_vals: list[float] = []
+    tree_vals: list[float] = []
+    submit_vals: list[float] = []
+    after_vals: list[float] = []
     for row in rows:
         try:
             dts.append(float(row.get("dt_ms", 0) or 0))
@@ -217,11 +226,24 @@ def _run_line(rows: list[dict]) -> str:
         if int(row.get("proc_held", 0) or 0) == 1 or (prev_proc is not None and proc == prev_proc):
             held += 1
         prev_proc = proc
+        try:
+            phys_vals.append(float(row.get("phys_ms", 0) or 0))
+        except (TypeError, ValueError):
+            phys_vals.append(0.0)
+        try:
+            draw_vals.append(float(row.get("draw", 0) or 0))
+        except (TypeError, ValueError):
+            draw_vals.append(0.0)
+        for key, bucket in (("tree_ms", tree_vals), ("submit_ms", submit_vals), ("after_ms", after_vals)):
+            try:
+                bucket.append(float(row.get(key, 0) or 0))
+            except (TypeError, ValueError):
+                bucket.append(0.0)
     cell_txt = ""
     if cells:
         cell_txt = cells[0] if cells[0] == cells[-1] else "%s..%s" % (cells[0], cells[-1])
     return (
-        "n=%d t=%s-%s play=%s-%s dt_med=%s phase=%s anim=%s cell=%s why_empty=%d proc_held=%d paused=%d"
+        "n=%d t=%s-%s play=%s-%s dt_med=%s phase=%s anim=%s cell=%s why_empty=%d proc_held=%d paused=%d phys_med=%s draw_med=%s tree_med=%s submit_med=%s after_med=%s"
         % (
             len(rows),
             rows[0].get("t", ""),
@@ -235,6 +257,11 @@ def _run_line(rows: list[dict]) -> str:
             why_empty,
             held,
             paused,
+            _median(phys_vals),
+            _median(draw_vals),
+            _median(tree_vals),
+            _median(submit_vals),
+            _median(after_vals),
         )
     )
 
@@ -495,7 +522,9 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     if not ready:
         return 1, ["web", "hitch sink not listening on %d" % port]
     url = "http://127.0.0.1:%d/index.html?wdb-hub-bench&wdb-hitch-mult=1" % port
-    if args.isolate:
+    if args.walk_layers:
+        url += "&wdb-hub-walk-layers"
+    elif args.isolate:
         url += "&wdb-hub-isolate"
     print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (Path(browser).name, kind, url))
     # Fullscreen at device pixels. A 1280x720 window makes the adaptive canvas
@@ -574,7 +603,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         for item in ordered_all
         if "isolate layer=" in str(item.get("msg", ""))
     ]
-    if args.isolate:
+    if args.isolate or args.walk_layers:
         fail = 0 if isolate_lines else 1
     else:
         fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
@@ -663,6 +692,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a walk.")
     ap.add_argument("--layers", dest="isolate", action="store_true", help="Web only: stand at the dummy and time each hidden layer group. Does not score the 99 percent bar.")
     ap.add_argument("--isolate", dest="isolate", action="store_true", help=argparse.SUPPRESS)  # old name of --layers
+    ap.add_argument("--walk-layers", action="store_true", help="Web only: run the full bench, then time each hidden layer during the fill walk. Does not score the 99 percent bar.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
@@ -702,11 +732,11 @@ def main(argv: list[str] | None = None) -> int:
     body = ["hub bench root=.", "leg=%s" % args.leg]
     body.append(bench_env.env_line(godot=bench_env.godot_version(str(godot_lib.godot_exe())), renderer="gl_compatibility",
         browser="see web leg" if args.leg in ("both", "web") else "n/a", vsync="see present line", cap="max_fps 120", headless=bool(args.headless)))
-    if args.leg in ("both", "desktop") and not args.isolate:
+    if args.leg in ("both", "desktop") and not args.isolate and not args.walk_layers:
         d_fail, d_body = _desktop(root, args, out_log, err_log)
         fail += d_fail
         body += d_body
-    if args.leg in ("both", "web") or args.isolate:
+    if args.leg in ("both", "web") or args.isolate or args.walk_layers:
         w_fail, w_body = _web(root, args)
         fail += w_fail
         body += w_body

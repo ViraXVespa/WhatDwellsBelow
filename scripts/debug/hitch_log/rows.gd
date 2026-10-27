@@ -8,6 +8,9 @@ const Web := preload("res://scripts/debug/hitch_log/log_web.gd")
 
 static var _phase: String = ""
 static var _play_s: float = 0.0
+static var _submit_ms: float = -1.0
+static var _tree_ms: float = -1.0
+static var _after_ms: float = -1.0
 static var _proc_held: int = 0
 static var _t0_ms: int = 0
 static var _whys: PackedStringArray = PackedStringArray()
@@ -59,6 +62,9 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["gy"] = gy
 	if str(row.get("where", "")) == "hub":
 		Ctx._hub_ctx(host, row)
+	row["tree_ms"] = snappedf(_tree_ms, 0.1)
+	row["submit_ms"] = snappedf(_submit_ms, 0.1)
+	row["after_ms"] = snappedf(_after_ms, 0.1)
 	return row
 
 static func _session_row() -> Dictionary:
@@ -113,6 +119,18 @@ static func set_phase(phase_name: String) -> void:
 
 static func set_play_s(sec: float) -> void:
 	_play_s = sec
+
+static func set_tree_ms(ms: float) -> void:
+	_tree_ms = ms
+
+static func set_submit_ms(ms: float) -> void:
+	_submit_ms = ms
+
+static func set_after_ms(ms: float) -> void:
+	_after_ms = ms
+
+static func frame_submit_ms() -> float:
+	return _submit_ms
 
 static func _write_row(row: Dictionary) -> void:
 	row["bench_gen"] = _bench_gen
