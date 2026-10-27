@@ -15,7 +15,7 @@
           "text": "Session pack skips empty plan stubs; tool histogram ignores shell title junk."
         },
         {
-          "text": "Baked version.json to 0.4.0 after week-4 series-open was left under design/changelog/archive/0.4/0.4.0.md."
+          "text": "Baked version.json to 0.4.0 after week-4 series-open was left in the old changelog archive."
         }
       ],
       "summary": "Offload intercepts and session pack reports to cut agent token burn."
