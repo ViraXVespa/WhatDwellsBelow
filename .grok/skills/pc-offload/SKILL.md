@@ -58,7 +58,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 4. If no row exists and the work would be expensive in-session, write the
    runner yourself when it would help future tasks (design/tools.md rule 5)
    and tell the User afterward.
-5. Build slices: the first command is python tools/slice.py start,
+5. A new week is `design/build-week-start.md` and does not run `slice.py start`. Build slices: the first command is python tools/slice.py start,
    before any file read or memory topic. Pass --job <door.job> or --door <name>, then run python tools/docs.py task show <id> and read that task file whole. It prints the slice rules (session facts, Q0,
    ledger, "Did not work:" from slice.py start --failed, shots.py show for
    pictures she should see, handoff, slice.py commit, merge-back) and the docs

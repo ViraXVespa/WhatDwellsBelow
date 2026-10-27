@@ -28,7 +28,7 @@ import week_pin
 TOOLS = Path(__file__).resolve().parents[2]
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, changelog archive, catch-up pins, gc, clean.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, catch-up pins, gc, clean. A seed-commit failure returns before gc and clean.", writes=True, json_out=True)
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = args.dry_run
@@ -119,8 +119,13 @@ def main(argv: list[str] | None = None) -> int:
             say(f"branch={branch} seed commit failed")
             if detail:
                 say(detail)
-        else:
-            say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
+            say("STOP report the RESULT line; hand-fix nothing")
+            return agent_log.finish(
+                "week-start", root, "\n".join(out), "FAIL", args=args, echo="",
+                catchup_pins=catch, seed=seed, branch=br, gc="skipped",
+                locks_deleted=0, clean="skipped", dry_run=dry, reason="seed-commit",
+            )
+        say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
     say(f"push=run: git push -u origin {branch}" + (f" and git push origin {' '.join(catch_tags)} (catch-up tags)" if catch else "") + " (never main; CI archives on the squash-merge)")
     # 4. housekeeping
     gc = "skipped"
