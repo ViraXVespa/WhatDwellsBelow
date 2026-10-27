@@ -16,25 +16,25 @@ Both legs walk a full 30 s. Eight facings, the stations, one strike on the dummy
 ## Where it stands
 Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. Not re-run since.
 
-Web scored cold, capped Edge, vsync on, 1920x1080. The full sequence is required. Scored runs on 2026-10-27 sit at fps_pct 75.7 to 77.9, p50 about 17, p95 about 45, one fill run of about 245 frames at median about 40 ms, cells along 8,15-12,15. `proc_ms` still repeats and can exceed the frame.
+A cold web run is a new `_logs/hub-bench-web-<stamp>` on a free port, capped Edge, vsync on, 1920x1080, full 30 s sequence. Publishing again to `_logs/hub-bench-web` on port 8060 is warm: that origin is the service worker scope, and the shell keeps the worker when the build id matches. A wiped profile on that origin is still warm. `--guest` joins an Edge that is already open. Vira says the hub bake in `49fb157` did not touch performance and did not fix the hitch.
 
-The frame split on those fill rows adds up to `dt_ms`. `tree_ms` is about 3 to 9. `submit_ms` (pre-draw to post-draw) is about 39 to 47. `after_ms` is about 9 to 13. Physics stays a few milliseconds. Draw calls stay about 75. The fill cost is inside the draw. One worst row can show `submit_ms` several times `dt_ms`; ignore that row. Viewport render-time queries returned 0 and are off the row.
+Same-origin scored runs on 2026-10-27 (the warm publish) sit at fps_pct 75.7 to 77.9, p50 about 17, p95 about 45, one fill of about 245 frames at median about 40 ms, cells along 8,15-12,15. On those fill rows `submit_ms` is about 39 to 47, `tree_ms` about 3 to 9, `after_ms` about 9 to 13, physics a few milliseconds, draw calls about 75. The fill cost is inside the draw. One worst row can show `submit_ms` several times `dt_ms`; ignore that row.
 
-A one-refresh scored p50 with a slow fill came back after the 1.1 run (slow from the facings, p50 49.6). That 1.1 run is not the number to chase. The draw hooks are not that collapse.
+One scored run after the cold publish, `20261027-165026` at `127.0.0.1:10379`: fps_pct 97.9, frames 1589, slow 33, p50 16.7, p95 18.1, sustained none, worst 127.7 at cell 9,15 `idle_left`. That single run does not close the task and does not retire the fill tail.
 
-`--walk-layers` once, just after a 77.9 scored run: whole window fps_pct 99.3, and every fill layer including both base passes was p50 16.7 with submit about 4. The miss was absent, so the hides named nothing. The next scored run was 75.7. A layer time counts only when that same run's base fill stays near a 40 ms submit.
+`--fill-aba` times a normal fill, hides every tagged group for 3 s, then times the normal fill again. The one run was on the old origin and was discarded (`base` submit 4.6). Keep a layer time only when that same run's first fill submit stays near 40 ms. `--walk-layers` and `--fill-aba` do not score the bar.
 
-Ground is the week-7 band planes. Uncapping is refused. A per-frame hitch-log scene walk latches the bench. `--walk-layers` gathers the groups once, when the fill starts.
+Ground is the week-7 band planes. Uncapping is refused. A per-frame hitch-log scene walk latches the bench.
 
 ## Next
-No hub-draw change yet. The named cost is the draw window during the scored fill, not a mesh group. Next measurement: in one scored run, time a normal fill, then one hidden group, then the normal fill again. Discard the run unless the first fill's submit stays near 40 ms. Then two consecutive cold scored PASS runs close the task.
+Two consecutive cold scored `python tools/perf.py hub --leg web` PASS runs close the task. The cold publish is now the default. If a cold run shows the fill tail again (submit near 40 ms), run `--fill-aba` and discard it unless the first fill submit stays near 40 ms. If cold runs stay near 98 with no sustained fill, the remaining miss is the isolated frames: cell 9,15 `idle_left` and the facing-start frames that miss one refresh. No hub-draw change until a cold run names the cost.
 
-Do not spend a web leg on the light tap, a second path plane, `texture()` on `hub_light.png`, uncapping, a desktop rescore, or a walk that skips the full sequence. Do not treat a `--walk-layers` RESULT PASS as the bar. That mode is not scored.
+Do not spend a web leg on the light tap, a second path plane, `texture()` on `hub_light.png`, uncapping, a desktop rescore, a walk that skips the full sequence, or another publish to port 8060.
 
 ## Handoff
-Gather reset: `grok -r 01a17ec2-2017-75a0-9ed2-e148e542fe49 --fork-session` from this worktree. Do not re-gather. Latest measured session: `01a17ee9-cc42-7ff1-b4a2-750249612e04`.
+Gather reset: `grok -r 01a17ec2-2017-75a0-9ed2-e148e542fe49 --fork-session` from this worktree. Do not re-gather. Latest measured session: `01a17f3a-7a84-7831-bd00-3d7a09599856`.
 
-The draw split stays (`tree_ms`, `submit_ms`, `after_ms` on the hitch row, `submit` on a layer line). `gd-load` passed after the last script edit. `check.py load-graph` passed after the doc edits. The scored bar is still red.
+The draw split stays (`tree_ms`, `submit_ms`, `after_ms` on the hitch row, `submit` on a layer line). `gd-load` passed after the bench script edit. The scored bar is still red.
 
 ## Notes from Vira
 That hitching on web during that last walk phase looks like a similar issue I've seen happening on the web builds but wasn't able to track down or reproduce. I've gotten it to occur in other places in the hub and without attacking the dummy. That's something I'd really like to get out of the game ASAP. I don't know if the logging is failing to catch whatever's causing it, but do whatever you need to do to diagnose and solve that issue.
@@ -43,9 +43,9 @@ That hitching on web during that last walk phase looks like a similar issue I've
 Settled; do not re-investigate: hub FPS below dungeon FPS is this same web fill tail; the blocky/grainy ground is on main and not this task; vsync stays on (uncapping is refused).
 - GLES quit leaks (N5GLES34MeshE / N5GLES37TextureE leaked at exit, and the raw Texture with GL ID / Buffer with GL ID leaked N bytes lines) are Compatibility-renderer artifacts on web exit. They are not the fail.
 - Desktop hub-bench already clears the 99% bar (99.7-99.8%, p50/p95 8.3 ms).
-- Web is refresh-paced (vsync=1 paced=1). fps_pct stuck mid-70s, dt_p50_ms ~17, dt_p95_ms ~44, worst 100-140. The fail is that tail.
+- Web is refresh-paced (vsync=1 paced=1). The mid-70s fill tail was measured on the repeated 8060 publish. A wiped profile on that origin is warm. `--guest` is not a cold window.
 - Do not open shader or mesh files because a quit-leak line named a texture or buffer.
 - Attack does not clear the walk cache. ensure_loco and ensure_attack fill separate dictionaries and return once the key is present. The only clear is load_sprites at init.
 - Preloading every facing in warmup (ensure_loco + ensure_attack, then apply_tex) did not move the web number. Still fps_pct 76.8.
-- A warm Edge process can report 99 %. That is not the cold number the task measures.
+- A warm Edge process, or the same folder on port 8060, can report a one-refresh fill. That is not the cold number the task measures.
 - Chrome task-manager lines (fallback_task_provider) are Edge internals, not the fail.

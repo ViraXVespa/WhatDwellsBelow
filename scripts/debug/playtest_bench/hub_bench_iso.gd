@@ -211,6 +211,55 @@ static func _fill_layers(host: Node, delta: float) -> void:
 	if host._iso_i >= kinds.size():
 		End._finish(host, "isolate")
 
+## One scored-length fill: normal, every tagged group hidden, normal again.
+## The first window has to stay near a 40 ms submit or the run is discarded.
+static func _fill_aba(host: Node, delta: float) -> void:
+	if host._iso_i >= 3:
+		return
+	if not host._iso_ready:
+		_iso_gather(host)
+		host._iso_ready = true
+		host._iso_i = 0
+		host._iso_applied = -1
+		host._hb("HB: isolate counts %s" % _iso_counts(host))
+	var kind: String = "base"
+	if host._iso_i == 1:
+		kind = "bare"
+	elif host._iso_i == 2:
+		kind = "base2"
+	if host._iso_applied != host._iso_i:
+		host._iso_applied = host._iso_i
+		host._iso_t = 0.0
+		host._iso_dts.clear()
+		host._iso_proc.clear()
+		host._iso_phys.clear()
+		host._iso_submit.clear()
+	var apply_kind: String = "base" if kind == "base2" else kind
+	_iso_apply(host, apply_kind)
+	var leg: int = int(host._fill_i / 2.0) % host._dirs.size()
+	var dir: Vector2 = host._dirs[leg]
+	if host._fill_i % 2 == 1:
+		dir = -dir
+	App.playtest.move = dir
+	App.playtest.aim = dir
+	host._sub_t += delta
+	if host._sub_t >= 0.8:
+		host._sub_t = 0.0
+		host._fill_i += 1
+	_iso_sample(host, delta)
+	host._iso_t += delta
+	var closed: bool = host._clock >= host.PLAY_SEC
+	if host._iso_i < 2 and host._iso_t >= 3.0:
+		closed = true
+	if not closed:
+		return
+	_iso_report(host, kind)
+	host._iso_i += 1
+	host._iso_applied = -1
+	if host._iso_i >= 3 or host._clock >= host.PLAY_SEC:
+		_iso_restore(host)
+		host._iso_i = 3
+
 static func _isolate(host: Node, actor: Node3D, delta: float) -> void:
 	if not host._iso_ready:
 		_iso_gather(host)

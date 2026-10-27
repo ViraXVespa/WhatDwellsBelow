@@ -23,6 +23,7 @@ const ST_FILL := 7
 const ST_ISO := 8
 const ISO_FLAG := "--wdb-hub-isolate"
 const WALK_FLAG := "--wdb-hub-walk-layers"
+const ABA_FLAG := "--wdb-hub-fill-aba"
 
 const PLAY_SEC := 30.0
 const HARD_SEC := 45.0
@@ -221,7 +222,9 @@ func _process(delta: float) -> void:
 	elif _state == ST_STRIKE:
 		Step._strike(self, actor, delta)
 	elif _state == ST_FILL:
-		if CliArgs.has(WALK_FLAG):
+		if CliArgs.has(ABA_FLAG):
+			Iso._fill_aba(self, delta)
+		elif CliArgs.has(WALK_FLAG):
 			Iso._fill_layers(self, delta)
 		else:
 			Step._fill(self, delta)
