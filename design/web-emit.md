@@ -19,7 +19,7 @@ The block below is an example only (docs/load-graph checker). A real scratch mus
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib" / "docs"))
 import doc_patch as dp
 
 ROOT = Path(__file__).resolve().parents[1]

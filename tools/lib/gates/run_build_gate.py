@@ -5,7 +5,7 @@
     python tools/gate.py build --batch --warnscan-baseline B.json [--areas p6,static]
     python tools/gate.py build --batch --visual ui.pause     (the job's shot flows in the same call; look at the frames, then shots.py show)
 --batch = import + restore `.import` churn + check_load_graph + the script-name check (duplicate
-basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + process_gear_icons --check (each expected gear icon has a plate under _src/sources) + rekey_all_stills --check (two runs byte-identical) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). `assets/keytest` is retired. Run it once
+basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + process_gear_icons --check (each expected gear icon has a plate under _src/sources) + rekey_all_stills --check (two runs byte-identical; only if _src/ or rekey scripts have uncommitted changes) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). `assets/keytest` is retired. Run it once
 per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with session.py summary --job build-gate.
 """
 from __future__ import annotations
@@ -27,6 +27,33 @@ def child(root: Path, stem: str, job: str, *flags: str) -> tuple[int, list[str]]
                        cwd=root)
     s = agent_log.agent_summary_path(job, root)
     return p.returncode, (s.read_text(encoding="utf-8").splitlines() if s.is_file() else [])
+
+
+def _rekey_needed(root: Path) -> bool:
+    """True if uncommitted working-tree changes exist under _src/ or in rekey scripts."""
+    try:
+        p = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=root, capture_output=True, text=True, timeout=30,
+        )
+        if p.returncode != 0:
+            return True
+        for line in p.stdout.splitlines():
+            if len(line) < 4:
+                continue
+            path = line[3:].strip().replace("\\", "/")
+            if (path.startswith("_src/")
+                or path.startswith("tools/rekey")
+                or path == "tools/media.py"
+                or "/rekey" in path
+                or path.endswith("rekey_all_stills.py")
+                or path.endswith("rekey_stills.py")
+                or path.endswith("rekey_preview.py")):
+                return True
+        return False
+    except Exception:
+        return True
+
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Post-slice gate: editor import check, load graph and script names.", json_out=True)
@@ -85,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         code, lines = child(root, "process_gear_icons", "process_gear_icons", "--check")
         body += [f"--- gear sources exit={code} ---"] + lines[-6:] + [""]
         fail += int(code != 0)
-        if (root / "_src" / "manifest.json").is_file():
+        if (root / "_src" / "manifest.json").is_file() and _rekey_needed(root):
             print("== rekey determinism ==")
             code, lines = child(root, "rekey_all_stills", "rekey-all-stills", "--check", "--jobs", "4")
             body += [f"--- rekey determinism exit={code} ---"] + lines[-4:] + [""]
