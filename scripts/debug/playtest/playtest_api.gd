@@ -90,6 +90,19 @@ func queue_batch() -> String:
 			})
 	return "Queued %d live runs." % queue.size()
 
+func queue_campaign() -> String:
+	interrupted = false
+	enqueue({
+		"save": "campaign",
+		"weapon": "",
+		"tool": "pickaxe",
+		"gender": "male",
+		"scale": App.bal.playtest_scale,
+		"limit": App.bal.playtest_limit,
+		"cfg": {},
+	})
+	return "Queued campaign."
+
 func enqueue(j: Dictionary) -> void:
 	queue.append(j)
 	if not live_running:

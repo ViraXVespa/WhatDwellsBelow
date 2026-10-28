@@ -64,6 +64,11 @@ static func start_next(pt: Node) -> void:
 	reset_ai_state(pt)
 	pt.slot = str(pt.job.get("save", "fresh"))
 	pt._prep_slot()
+	if pt.slot == "campaign" and str(pt.job.get("weapon", "")) == "":
+		var picked: String = PlaytestDb.pick_weapon(PlaytestDb.owned_levels(), "")
+		pt.job["weapon"] = picked
+		if picked == "staff":
+			pt.job["tool"] = "hatchet"
 	var cfg: Dictionary = pt.job.get("cfg", {})
 	for k: Variant in cfg.keys():
 		App.bal.setv(str(k), float(cfg[k]))
@@ -71,6 +76,8 @@ static func start_next(pt: Node) -> void:
 	App.prog.pick_weapon = str(pt.job.get("weapon", "great_axe"))
 	App.prog.tool_type = str(pt.job.get("tool", "pickaxe"))
 	App.weapon = App.prog.pick_weapon
+	if pt.slot == "campaign":
+		_wear_campaign_weapon()
 	App.prog.begin_run_loadout()
 	App.tel.reset(pt.slot, true)
 	App.tel.start_weapon = App.weapon
@@ -84,6 +91,10 @@ static func start_next(pt: Node) -> void:
 	App.begin_run()
 
 static func prep_slot(pt: Node) -> void:
+	if pt.slot == "campaign":
+		if Store.load_slot("campaign") == "fresh":
+			Store.save_slot("campaign")
+		return
 	if pt.slot == "progressed":
 		Store.fresh_delver()
 		for id: String in App.prog.SKILLS:
@@ -100,6 +111,60 @@ static func prep_slot(pt: Node) -> void:
 		Store.fresh_delver()
 		Store.save_slot("fresh")
 		Store.load_slot("fresh")
+
+static func _campaign_follow(pt: Node) -> Dictionary:
+	var wpn: String = PlaytestDb.pick_weapon(PlaytestDb.owned_levels(), "")
+	var tool: String = str(pt.job.get("tool", "pickaxe"))
+	if tool == "":
+		tool = "hatchet" if wpn == "staff" else "pickaxe"
+	var cfg_v: Variant = pt.job.get("cfg", {})
+	var cfg: Dictionary = {}
+	if cfg_v is Dictionary:
+		cfg = cfg_v
+	return {
+		"save": "campaign",
+		"weapon": wpn,
+		"tool": tool,
+		"gender": str(pt.job.get("gender", "male")),
+		"scale": float(pt.job.get("scale", 1.0)),
+		"limit": float(pt.job.get("limit", App.bal.playtest_limit)),
+		"cfg": cfg,
+	}
+
+static func _wear_campaign_weapon() -> void:
+	var wpn: String = str(App.prog.pick_weapon)
+	App.prog.hold_pick["weapon"] = _best_weapon_hold(wpn)
+
+static func _best_weapon_hold(wpn: String) -> int:
+	var raw: Variant = App.prog.holds.get("weapon", [])
+	if not (raw is Array):
+		return -1
+	var best_i: int = -1
+	var best_lv: int = -1
+	var best_aff: float = -1.0
+	var i: int = 0
+	for piece: Variant in raw:
+		if piece is Dictionary:
+			var it: Dictionary = piece
+			if str(it.get("weapon", "")) == wpn:
+				var lv: int = int(it.get("ilvl", 0))
+				var aff: float = _affix_sum(it)
+				if best_i < 0 or lv > best_lv or (lv == best_lv and aff > best_aff):
+					best_i = i
+					best_lv = lv
+					best_aff = aff
+		i += 1
+	return best_i
+
+static func _affix_sum(it: Dictionary) -> float:
+	var raw: Variant = it.get("affixes", [])
+	if not (raw is Array):
+		return 0.0
+	var total: float = 0.0
+	for one: Variant in raw:
+		if one is Dictionary:
+			total += float((one as Dictionary).get("value", 0.0))
+	return total
 
 static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	if not pt.live_running:
@@ -118,10 +183,16 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	PlaytestLogBatch.note_run()
 	if App.tel:
 		PlaytestDb.append_finish(App.tel, "", true)
-	pt.history.append(App.tel.to_dict())
-	WebHook.publish(App.tel.to_dict())
-	LiveSmoke.report(App.tel.to_dict())
-	pt._save_history()
+	if str(pt.slot) == "campaign":
+		Store.save_slot("campaign")
+		if not pt.interrupted and end_s != "stalled":
+			pt.enqueue(_campaign_follow(pt))
+	else:
+		pt.history.append(App.tel.to_dict())
+		pt._save_history()
+	if App.tel:
+		WebHook.publish(App.tel.to_dict())
+		LiveSmoke.report(App.tel.to_dict())
 	reset_ai_state(pt)
 	if pt.queue.is_empty() or pt.interrupted:
 		pt._stop_live()

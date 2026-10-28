@@ -9,7 +9,7 @@ area: debug
 door: debug
 job: playtest
 units: store, campaign, hub
-done: store
+done: store, campaign
 
 ## Intent
 
