@@ -239,13 +239,19 @@ def build_job(
     keyframes: list[tuple[str, float]] | None = None,
     ingested: bool = False,
     aspect: str = "",
+    edit: bool = False,
+    edit_name: str = "",
 ) -> str:
     skills, specialist = STACK[kind]
     ref = REFERENCE[kind]
     still_note = " Do not read `animation.md`." if kind == "still" else ""
     body = brief.strip() if brief.strip() else DEFAULT_BRIEF[kind]
     brief_block = f"Brief:\n{body}\n\n" if body else ""
-    if aspect:
+    if edit:
+        if not edit_name:
+            _die("--edit needs the staged file name")
+        brief_block += "Do not pass aspect_ratio. A single-image edit keeps this file's ratio.\n\n"
+    elif aspect:
         brief_block += (f"Aspect ratio {aspect}: pass `aspect_ratio: \"{aspect}\"` to `image_gen`, or to `image_edit` with several images. "
                         f"A single-image `image_edit` keeps its source's ratio, so for {aspect} from one source use `image_gen`.\n\n")
     i2v_block = ""
@@ -275,14 +281,24 @@ def build_job(
         f"{already}"
         + (f"Bundled skills for this job: {skills}. Read `{ref}` only.{still_note} "
            "Do not open the other `game-assets` references.\n\n" if ref else
-           f"Bundled skills for this job: {skills}. Do not open `game-assets` references; staged images are style references.\n\n")
+           f"Bundled skills for this job: {skills}. Do not open `game-assets` references. "
+           + ("The staged file is the picture to edit.\n\n" if edit else
+              "Staged images are style references.\n\n"))
         + f"{specialist}\n\n"
-        f"{_tool_lines(kind, pinned=bool(last_name))}\n"
-        f"{_style_lines(use_bibles=use_bibles, kind=kind, staged=ingested)}\n\n"
-        f"{i2v_block}"
-        f"{brief_block}"
-        "One media call. Do not retry. Do not composite. Do not inspect the result beyond copying it.\n"
-        f"Imagine may write under the session `images/` folder. Copy that file to `{dest_name}` "
+        + (f"Tools:\n"
+           f"- Call `image_edit` once.\n"
+           f"- Pass `image` as the absolute path of `{edit_name}` in this directory.\n"
+           f"- Do not call `image_gen`.\n"
+           f"- Do not call `image_to_video` in this job.\n\n"
+           f"`{edit_name}` is the picture to edit, not a style hint. "
+           f"Keep its framing and layout. Change only what the brief names.\n\n"
+           if edit else
+           f"{_tool_lines(kind, pinned=bool(last_name))}\n"
+           f"{_style_lines(use_bibles=use_bibles, kind=kind, staged=ingested)}\n\n")
+        + f"{i2v_block}"
+        + f"{brief_block}"
+        + "One media call. Do not retry. Do not composite. Do not inspect the result beyond copying it.\n"
+        + f"Imagine may write under the session `images/` folder. Copy that file to `{dest_name}` "
         "in this scratch directory (convert to PNG if needed) and stop.\n"
         "Do not walk a parent repo. Do not edit Godot scenes.\n"
     )
@@ -552,6 +568,9 @@ def selftest() -> int:
     for need, ok in (("ui allows text", "Text and labels are allowed" in ui), ("ui no icon rule", "No text in the art" not in ui),
                      ("ui no ui-icons.md", "ui-icons.md" not in ui), ("ui default dest", DEFAULT_DEST["ui"] == "ui.png"),
                      ("aspect in brief", 'aspect_ratio: "16:9"' in build_job(kind="ui", brief="", use_bibles=False, dest_name="a.png", aspect="16:9")),
+                     ("edit calls image_edit", "Call `image_edit` once" in build_job(kind="ui", brief="Remove the buttons.", use_bibles=False, dest_name="a.png", aspect="16:9", edit=True, edit_name="shot.jpg")),
+                     ("edit skips image_gen", "use `image_gen`" not in build_job(kind="ui", brief="Remove the buttons.", use_bibles=False, dest_name="a.png", aspect="16:9", edit=True, edit_name="shot.jpg")),
+                     ("edit names source", "`shot.jpg`" in build_job(kind="ui", brief="Remove the buttons.", use_bibles=False, dest_name="a.png", aspect="16:9", edit=True, edit_name="shot.jpg")),
                      ("npc no identity lock", "identity lock" not in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
                      ("npc reads characters.md", "Read `characters.md` only" in build_job(kind="npc", brief="b", use_bibles=False, dest_name="n.png")),
                      ("walk mark in both walk prompts", Path(__file__).with_name("i2v_seeds.py").read_text(encoding="utf-8").count(WALK_MARK) == 2),
@@ -607,6 +626,7 @@ def main() -> None:
     p.add_argument("--no-pin-ends", action="store_true", help="Do not auto-pin a walk. One-shots stay on image_to_video.")
     p.add_argument("--no-ui-style", action="store_true", help="--kind ui: do not stage the locked UI look (design/ui-style.md) and its refs")
     p.add_argument("--aspect", choices=ASPECTS, default="", help="aspect_ratio for image_gen (and multi-image image_edit); single-image edits keep the source ratio")
+    p.add_argument("--edit", action="store_true", help="image_edit the one --copy file. Do not pass --aspect; the source keeps its ratio")
     p.add_argument("--skip-inspect", action="store_true", help="Skip the `grok inspect` isolation check.")
     p.add_argument(
         "--no-reuse",
@@ -644,6 +664,14 @@ def main() -> None:
     if args.out is not None:
         args.out = args.out.resolve()
         args.out.mkdir(parents=True, exist_ok=True)
+
+    if args.edit:
+        if args.kind not in ("ui", "still"):
+            _die("--edit is for a ui or still job")
+        if len(args.copy) != 1:
+            _die("--edit needs exactly one --copy, the picture to edit")
+        if args.aspect:
+            _die("--edit keeps the source ratio; do not pass --aspect")
 
     sources: list[Path] = []
     ui_text = ui_style_text() if args.kind == "ui" and not args.no_ui_style else ""
@@ -735,6 +763,8 @@ def main() -> None:
                     keyframes=keyframe_names,
                     ingested=ingested,
                     aspect=args.aspect,
+                    edit=args.edit,
+                    edit_name=args.copy[0].name if args.edit else "",
                 ),
             )
 

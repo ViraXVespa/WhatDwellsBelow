@@ -16,7 +16,7 @@ Entries here: `shots.py`, `bake.py`; their code: `tools/lib/bake/`, `tools/lib/s
 - **Screen checks:** `shots.py inspect layout SHOT` (clipped, off-screen, overlap, alignment), `shots.py inspect contrast SHOT --box X,Y,W,H` (WCAG), `shots.py inspect grid SHOT --out OUT` (coordinates).
 - **Posed camera or the whole floor:** `shots.py capture --scene camp` (`hub`, `dungeon`, `title`, ...), `shots.py capture --full-map`.
 - **UI state without a flow:** `shots.py gaps --changed`; add a small flow in `tools/data/shot-flows/`.
-- **Show the User:** `shots.py show PATH=description ...` once per ask. A session looks with `shots.py review A.png --question "..."` (text report only; do not `read_file` the PNG). Turn budget is at least 8 and rises by 2 per image, cap 16, or `--max-turns` when that is higher. The shared gather does not run it. The forked session whose unit needs the frames does.
+- **Show the User:** `shots.py show PATH=description ...` once per ask. A pair scales the larger frame down to the smaller one's size. A session looks with `shots.py review A.png --question "..."` (text report only; do not `read_file` the PNG). Turn budget is at least 8 and rises by 2 per image, cap 16, or `--max-turns` when that is higher. The shared gather does not run it. The forked session whose unit needs the frames does.
 - **Bake:** `bake.py camp` (hub light and ground wear; `--overlay` draws the debug boxes), `bake.py ground` alone, `bake.py check` (stamps match the code), `bake.py frames` after frame-art code changes (`--check` only compares).
 - **How-to-Play pictures:** `shots.py tutorial --run`.
 

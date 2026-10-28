@@ -106,11 +106,12 @@ def grid_shape(n: int, cell_w: int, cell_h: int) -> tuple[int, int]:
     return cols, -(-n // cols)
 
 def compose_group(images: list, labels: list | None = None, max_side: int = 1920):
-    """One sheet for one area. Scales so the long side stays within max_side."""
+    """One sheet for one area. Every frame is fit to the smallest frame, then the long side stays within max_side."""
     if not images:
         raise ValueError("compose_group needs at least one image")
-    cols, _rows = grid_shape(len(images), max(im.width for im in images), max(im.height for im in images))
-    sheet = montage([im.copy() for im in images], labels, cols=cols)
+    cell = (min(im.width for im in images), min(im.height for im in images))
+    cols, _rows = grid_shape(len(images), cell[0], cell[1])
+    sheet = montage([im.copy() for im in images], labels, cols=cols, cell=cell)
     long_side = max(sheet.size)
     if long_side > max_side:
         scale = max_side / long_side
