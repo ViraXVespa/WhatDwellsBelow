@@ -137,3 +137,105 @@ static func _clear_lock(pt: Node) -> void:
 	if pt.has_meta("lock_n"):
 		pt.remove_meta("lock_n")
 	pt.set_meta("lock_t", 0.0)
+
+static func campaign_depth(pt: Node, p: Node, delta: float) -> bool:
+	if str(pt.slot) != "campaign":
+		return false
+	var goal: Node = _living_boss(pt, p)
+	if goal == null:
+		goal = _floor_stairs(pt)
+	if goal == null:
+		return false
+	var slip: float = U._meta_f(pt, "campaign_slip", 0.0)
+	if slip <= 0.0 and _tight(pt, p, delta):
+		slip = 1.6
+		pt.set_meta("campaign_hold", 0.0)
+		pt.set_meta("campaign_side", _slip_side(pt, p, goal))
+	if slip > 0.0:
+		pt.set_meta("campaign_slip", maxf(0.0, slip - delta))
+		pt.path.clear()
+		pt.path_goal = null
+		var side: Vector2 = _slip_side(pt, p, goal)
+		if pt.has_meta("campaign_side") and pt.get_meta("campaign_side") is Vector2:
+			side = pt.get_meta("campaign_side")
+		pt.move = pt._steer(p, side)
+		pt.dash = true
+		pt.just["dash"] = true
+		L.decide(pt, p, "wander", "campaign_slip", L.target(goal))
+		return true
+	var boss: Node = _living_boss(pt, p)
+	if boss != null:
+		var dist: float = pt._dist(p, boss)
+		L.decide(pt, p, "hunt", "campaign_boss", L.target(boss))
+		if dist <= 28.0:
+			A.approach_boss(pt, p, boss)
+		else:
+			pt._follow_goal(p, boss)
+			pt.aim = pt._xz_to(p, boss)
+		return true
+	var stairs: Node = goal
+	if bool(stairs.get("locked")):
+		L.decide(pt, p, "door", "campaign_boss", L.target(stairs))
+		pt._follow_goal(p, stairs)
+		pt.aim = pt._xz_to(p, stairs)
+		return true
+	if U._banned(pt, stairs):
+		return false
+	U._lock(pt, stairs, 4.0)
+	L.decide(pt, p, "extract_stairs", "campaign_stairs", L.target(stairs))
+	use_prop(pt, p, stairs)
+	return true
+
+static func _tight(pt: Node, p: Node, delta: float) -> bool:
+	var here: Vector2i = pt._cell_of_node(p)
+	var ax: int = here.x
+	var ay: int = here.y
+	if pt.has_meta("campaign_ax"):
+		ax = int(pt.get_meta("campaign_ax"))
+		ay = int(pt.get_meta("campaign_ay"))
+	if absi(here.x - ax) + absi(here.y - ay) > 2:
+		pt.set_meta("campaign_ax", here.x)
+		pt.set_meta("campaign_ay", here.y)
+		pt.set_meta("campaign_hold", 0.0)
+		return false
+	var hold: float = U._meta_f(pt, "campaign_hold", 0.0) + delta
+	pt.set_meta("campaign_hold", hold)
+	return hold > 2.0
+
+static func _slip_side(pt: Node, p: Node, goal: Node) -> Vector2:
+	var to_goal: Vector2 = pt._xz_to(p, goal)
+	var side: Vector2 = Vector2(-to_goal.y, to_goal.x)
+	if side.length_squared() < 0.0001:
+		return pt._any_open(p)
+	side = side.normalized()
+	if not pt._dir_open(p, side):
+		side = -side
+	if not pt._dir_open(p, side):
+		if to_goal.length_squared() > 0.0001:
+			return -to_goal.normalized()
+		return pt._any_open(p)
+	return side
+
+static func _living_boss(pt: Node, p: Node) -> Node:
+	var tree: SceneTree = pt.get_tree()
+	if tree == null:
+		return null
+	var best: Node = null
+	var best_d: float = 100000.0
+	for n: Node in tree.get_nodes_in_group("boss"):
+		if not U.alive_enemy(n):
+			continue
+		var dist: float = pt._dist(p, n)
+		if best == null or dist < best_d:
+			best = n
+			best_d = dist
+	return best
+
+static func _floor_stairs(pt: Node) -> Node:
+	var dungeon: Node = pt._dungeon()
+	if dungeon == null:
+		return null
+	var stairs: Variant = dungeon.get("stairs")
+	if stairs is Node and is_instance_valid(stairs):
+		return stairs as Node
+	return null

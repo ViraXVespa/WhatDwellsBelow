@@ -142,3 +142,4 @@ static func spawn_shot(host: Node, dir: Vector2) -> void:
 		tex = "res://assets/fx/lightning.png"
 	p.setup(host.global_position, dir, App.bal.enemy_proj_speed, host.atk_range + 1.5, host.damage * Threat.dealt_mult(host.combat_lv), true, false, true, tex)
 	p.source = host.kill_tag()
+	p.hit_lv = int(host.combat_lv)

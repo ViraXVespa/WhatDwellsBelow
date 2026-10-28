@@ -117,7 +117,8 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 			L.decide(pt, p, "clerk", "cargo_local", L.target(local))
 			Misc.use_prop(pt, p, local)
 			return
-		if lk.find("door") >= 0 or lk.find("stairs") >= 0:
+		var stairs_locked: bool = lk.find("stairs") >= 0 and bool(local.get("locked"))
+		if not stairs_locked and (lk.find("door") >= 0 or lk.find("stairs") >= 0):
 			U._lock(pt, local, 2.5)
 			L.decide(pt, p, "door", "local_exit", L.target(local))
 			Misc.use_prop(pt, p, local)
@@ -130,6 +131,8 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 			return
 		if pt.has_meta("flee_c"):
 			pt.remove_meta("flee_c")
+	if Misc.campaign_depth(pt, p, delta):
+		return
 	var why: String = "explore"
 	if U.really_extracted():
 		why = "no_stairs"
