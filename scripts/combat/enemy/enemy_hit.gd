@@ -44,6 +44,8 @@ static func float_num(host: CharacterBody3D, amount: int, crit: bool) -> void:
 static func die(host: CharacterBody3D) -> void:
 	if host.dead:
 		return
+	if App.tel:
+		App.tel.note_kill_levels(int(host.combat_lv), App.prog.combat_lv())
 	host.dead = true
 	App.on_kill()
 	App.prog.note_kill(host.type_id, host.named_name)

@@ -5,13 +5,19 @@ const FloatS := preload("res://scripts/combat/float_num.gd")
 const Near := preload("res://scripts/world/player/near_interact.gd")
 const Ground := preload("res://scripts/world/player/ground.gd")
 
-static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
+static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src := "", hit_lv := -1) -> void:
 	if host.hp <= 0.0 or host.exiting:
 		return
 	if host.iframe > 0.0:
 		return
 	if src != "":
 		host.last_hit = src
+	if int(hit_lv) >= 0:
+		host.last_hit_lv = int(hit_lv)
+		host.last_hit_lv_set = true
+	else:
+		host.last_hit_lv = -1
+		host.last_hit_lv_set = false
 	var dmg: float = App.bal.apply_defense(raw, App.prog.gear_def() + App.prog.skill_def())
 	if crit:
 		dmg *= App.bal.crit_mult
@@ -39,6 +45,8 @@ static func player_die(host: Node) -> void:
 	if Dbg.smoke_hold_player():
 		host.hp = host.max_hp
 		return
+	if host.last_hit_lv_set and App.tel:
+		App.tel.note_death_levels(int(host.last_hit_lv), App.prog.combat_lv())
 	play_exit(host, "death", host.last_hit)
 
 static func heal(host: Node, amount: float) -> void:

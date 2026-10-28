@@ -124,6 +124,47 @@ Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
 
 `scripts/app/cli_args.gd` also reads URL params that start with `wdb-` on web (`?wdb-seed=42` reads as `--wdb-seed=42`). `AppRun.begin_run` reads it with `CliArgs.int_arg("--wdb-seed", 0)` (not `seed_arg`, which maps 0 to 1) and, when positive, uses it as the run seed and seeds the global RNG; without the param the seed stays `randi()`. `?wdb-playtest` makes `scripts/debug/web_hook.gd` register `window.wdbPlaytest(sec)` and `window.wdbEnter()` (the player's own dungeon entry with cover and reveal; web_perf flow `dungeon-arrive`) and `window.wdbZoom(z)` (camera zoom; flow `camp-zoom` shoots the hub ground at zoom 1, 2 and 4). `wdbPlaytest` enqueues one fresh Great Axe live run at real time (`scale` 1) through the playtester above; the finished run's telemetry (plus `stuck_t`) lands in `window.__wdbPlay`; `perf.py web` marks a run INVALID when it ends early, makes no kills, is stuck (`stuck_t`, or `stuck_max` over 6 s), has a gate that never opened, runs at a time scale other than 1.0, stalls or logs console errors. `tools/perf.py web` flow `dungeon-fight` uses both. Normal URLs register nothing.
 
+## Local run store
+
+Debug desktop builds append one JSON object per line under `user://playtest/db/` (Windows: `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\db`). Web and release builds skip the write. The game does not link SQLite. `scripts/debug/playtest_db.gd` owns the spool.
+
+Files: `runs.jsonl`, `decisions.jsonl`, `weapon_band.json`. `curve.sqlite` is written only by `perf.py curve --sqlite`.
+
+A human finish (`finish_end` on extract, death, or dispel, when the run is not a playtest) appends a run row and does not write decisions. A bot `finish_job` appends a run row, updates `weapon_band.json` from that row, and, when the journal is on, appends the journal events already coalesced, each tagged with `run_id`. `--wdb-pt-nolog` and web skip the journal, so they skip decision rows. These spool rows do not enter `history.json` or `coefs.json`. `fresh` and `progressed` keep wiping and restamping for recommendations.
+
+Each run line carries the existing telemetry fields plus `run_id`, `seed`, `save_kind` (`human`, `fresh`, `progressed`, `campaign`), eleven `skill_lv` values (`axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood`, `smith`), equipped pieces (`slot`, `type`, `ilvl`, `rarity`, affix `id` and `v`), `floors`, `changes`, `kill_delta`, and `death_delta` when a killing hit carried an enemy level.
+
+`floors` closes a bucket when `App.floor_n` changes. Each bucket is `n`, `dt`, `dmg_taken`, `deaths`, `near_death`. A death or dispel increments `deaths` on the floor that was open when the run ended.
+
+`changes` records a `skill_lv` crossing from `add_run_xp` or `add_perm_xp`, and an equipped-piece change from `equip_uid`, at the call that changes the value. `phase` is `run` while `App.in_dungeon` is set, otherwise `hub`. A hub equip that belongs on the next run is performed after that run's telemetry `reset`, while the scene is still the hub, so the crossing lands on the new row with phase `hub`.
+
+`kill_delta` counts kills by `enemy.combat_lv - player.combat_lv`. `death_delta` is that same subtraction for the hit that killed the player, and only when that hit carried `combat_lv` (the strike in `enemy_atk.gd`). A hit that does not carry a level clears the stored level, so a killing blow without one leaves `death_delta` off the row. Dispel with no enemy leaves it off the row.
+
+`weapon_band.json` keeps, per weapon id and that weapon's item level, `runs`, `deaths`, `duration`, and `dmg_taken` summed from bot rows. `death` and `dispel` count as a death.
+
+## Curve
+
+`python tools/perf.py curve` reads the spool and `curve.sqlite` when that file exists. It prints four slices, then the level-gap histogram. Slice numbers are runs, death rate, mean duration, and mean damage taken. Death rate counts `death` and `dispel`.
+
+- Floor and cycle, one observation per floor bucket (`dt`, that bucket's damage, a death when the bucket's `deaths` is above zero).
+- Weapon skill `axe` / `staff` / `bow` by that weapon's item level. The skill is the worn weapon (`great_axe`, `staff`, `longbow`).
+- Weapon by floor and weapon item level, from the floor buckets.
+- Each combat affix id by that piece's item level. The same affix on two pieces counts in each piece's band. Tool affixes stay out of this slice.
+
+The level-gap block sums `kill_delta` and counts runs by `death_delta`. That histogram, with the weapon slices, is how a series shows whether the three weapons stay even (`feel.md`).
+
+`--dir` selects the folder. The default is the AppData `user://playtest/db` path. `--sqlite` imports the spool into `curve.sqlite` beside it and, only after that commit succeeds, deletes `runs.jsonl` and `decisions.jsonl`. `weapon_band.json` stays. A failed import leaves the spool. A second import of a new spool adds those rows and deletes the new spool. `--cleanup`, and a successful `--sqlite`, drop decision rows whose `wall` unix time is older than `--keep-days` (default 30) and VACUUM. Run rows stay, so the four slices and the histogram stay. The tool refuses `--sqlite` and `--cleanup` when `--dir` is inside the repo.
+
+## Campaign slot
+
+One slot, `user://playtest/campaign`, primary plus backup, same rules as the fresh and progressed playtest slots. The first start creates a fresh delver and saves it. Later starts load it and do not wipe or restamp it.
+
+One save wears one weapon at a time. After each run that was not interrupted, the next weapon is the one furthest behind on death rate, duration, and damage taken at the shared item level (the lowest current item level among the three weapons' best owned piece, or the starter). A weapon with no runs at that level is furthest behind. Otherwise each mean is divided by the max of the three and the three terms are added with equal weight. A tie prefers fewer runs, then Great Axe, then Staff, then Longbow. If that level has no rows, use the previous item level. If none exist, seed Great Axe, then Staff, then Longbow until each has one run. Choose the weapon before the hub forge. The next dive uses it even if the forge raises its item level. Armor stays worn. The series runs until interrupted. `--wdb-pt-fast` applies only while the dungeon AI is acting. Recap and the hub pass stay at time scale 1.0.
+
+## Hub pass
+
+After recap, before the next campaign job, call the real analyze, pay, forge, and equip functions. Do not stamp items and do not open anvil screens. Analyze every legal AT RISK green and blue. For the chosen weapon type, the tool, and head, body, and legs: quantity one, zero locks, blue when that type and rarity is analyzed and affordable, else green. Forge the highest analyzed item level `can_pay` accepts only when that item level is above the worn piece, or it is equal and a book-peak affix (combat on gear, tool affixes on the tool) is above the worn value. After the roll, equip only when the score beats the worn piece. Score is item level, then the sum of combat affix values. Tools use tool affix values. A weaker roll stays in the results and is not equipped. Save the campaign slot, then enqueue the next job.
+
 ## Known non-fatal signals (hub-bench)
 - `docs.py code-map row hub_bench` matches the stem (map lists `hub_bench.gd`).
 - Web exit may print 3 Mesh + 1 Texture GLES RID leaks (`N5GLES34MeshE`, `N5GLES37TextureE`). These are Compatibility-renderer quit artifacts and do not fail the bench when `fps_pct >= 99` and no other ERROR lines are present.

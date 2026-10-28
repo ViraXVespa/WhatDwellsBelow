@@ -14,6 +14,7 @@ Entries here: `perf.py`; their code: `tools/lib/perf/`.
 - **Load time:** `perf.py load` (title to Placeholdia), `perf.py load --leg dungeon`. Web loading bars: `perf.py bars --site DIR` (`--desktop` for the desktop game). First menu opens: `gate.py bot-smokes --phases 6` (open timing).
 - **Desktop release vs debug:** `perf.py desktop --export` (`--write-md` records it).
 - **Dungeon generation:** `perf.py map` (one seed), `--seeds 42 7 9`, `--sweep --count N`.
+- **Playtest curve:** `perf.py curve` (four slices and the level-gap histogram from `user://playtest/db`). `--sqlite` imports the JSONL spool into `curve.sqlite` and then deletes `runs.jsonl` and `decisions.jsonl`. `--cleanup` drops decision rows older than `--keep-days` (default 30). Refuses to write inside the repo.
 - **Raw hitch rows while playing a web build:** `perf.py hitch --site DIR`, open http://127.0.0.1:8060.
 
 ## Catalog
@@ -27,6 +28,7 @@ Entries here: `perf.py`; their code: `tools/lib/perf/`.
 | `perf.py load` | Load-timing smoke. `--leg hub` (default): Title -> Placeholdia, summary `load-timing`. `--leg dungeon`: Placeholdia -> Dungeon, summary `dungeon-load-timing`. | WD | `--help` | N |
 | `perf.py desktop` | Desktop release vs debug perf: `--export` exports `Linux` / `Linux Debug` to `_out/linux*/`, runs each on its own Xvfb with empty XDG data, drives it with keys (title, camp, crystal, dungeon) and times frames from `--print-fps`; screenshots per phase. `--builds`, `--sec`, `--runs`; `--write-md` appends to the desktop-release benchmark. Software GL; not a gate. Summary: `desktop-perf`. | D | `--help` | N |
 | `perf.py map` | Dungeon generation map smoke, summary `dungeon-map`. `--seeds 42,7,9` or `--sweep --count N`: one row per seed, summary `dungeon-map-sweep`. | WD | `--help` | N |
+| `perf.py curve` | Local playtest curve from the debug-desktop spool. Prints floor and cycle, weapon skill by item level, weapon by floor and item level, combat affix by piece item level, and the level-gap histogram. `--dir` defaults to the AppData `user://playtest/db` folder. `--sqlite` imports `runs.jsonl` and `decisions.jsonl` into `curve.sqlite` and then deletes those two files (`weapon_band.json` stays). `--cleanup` and a successful `--sqlite` drop decision rows older than `--keep-days` (default 30) and VACUUM. Run rows stay. Refuses to write inside the repo. Summary: `playtest-curve`. | D | `--help` | N |
 
 ## Libs and data
 
@@ -34,6 +36,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 
 | File (under `tools/`) | Owns |
 |---|---|
+| `lib/perf/curve.py` | `perf.py curve`: four slices, the level-gap histogram, sqlite import, decision cleanup. |
 | `data/web-perf-flows.json` | Flows for `perf.py web` (`_boot` is the shared prefix). `dungeon-fight` runs the playtester: compare its fps only with itself; INVALID runs are never baselined; `expect_change` pairs must differ (else STUCK). `dungeon-music-cold` is the web music regression: cold cache, `mbps`, a `cpu` throttle step, an audio-thread probe (`audio`, `audio_reset`) and `assert` limits (audio gaps 0, music-phase frame p95); an ASSERT fails the run. |
 | `data/web-perf-baseline.json` | `--save-baseline` numbers (box, w7 tip, median of 2, Chrome frame pacing off: uncapped, the default). Compare in the same mode (not `--vsync`); re-save per machine. |
 | `data/web-perf-release-baseline.json` | `perf.py web --release-ref --save-baseline` numbers: release export, hook-free flows, with the `env` line. Not comparable to `web-perf-baseline.json`. |

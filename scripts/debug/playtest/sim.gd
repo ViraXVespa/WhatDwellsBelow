@@ -6,6 +6,7 @@ const WebHook := preload("res://scripts/debug/web_hook.gd")
 const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
+const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 
 static func reset_ai_state(pt: Node) -> void:
@@ -115,6 +116,8 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 		fail_s = "time_limit"
 	PlaytestLog.finish(pt, end_s, fail_s)
 	PlaytestLogBatch.note_run()
+	if App.tel:
+		PlaytestDb.append_finish(App.tel, "", true)
 	pt.history.append(App.tel.to_dict())
 	WebHook.publish(App.tel.to_dict())
 	LiveSmoke.report(App.tel.to_dict())

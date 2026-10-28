@@ -108,7 +108,11 @@ func remove_uid(uid: int) -> Dictionary:
 	return Gear.remove_uid(self, uid)
 
 func equip_uid(uid: int) -> String:
-	return Gear.equip_uid(self, uid)
+	var before: Array = gear_snap()
+	var msg: String = Gear.equip_uid(self, uid)
+	if App.tel:
+		App.tel.note_equip_changes(before, gear_snap())
+	return msg
 
 func drop_uid(uid: int) -> String:
 	return Gear.drop_uid(self, uid)
@@ -143,11 +147,66 @@ func clear_food() -> void:
 func skill_lv(id: String) -> int:
 	return CombatP.skill_lv(self, id)
 
+func skill_snap() -> Dictionary:
+	var out: Dictionary = {}
+	for id: String in SKILLS:
+		out[id] = skill_lv(id)
+	return out
+
+func gear_snap() -> Array:
+	var out: Array = []
+	for slot_name: String in ["weapon", "tool", "head", "body", "legs"]:
+		var it: Variant = slots.get(slot_name, {})
+		if not (it is Dictionary):
+			continue
+		var piece: Dictionary = it as Dictionary
+		if piece.is_empty():
+			continue
+		out.append(_piece_row(slot_name, piece))
+	return out
+
+func _piece_row(slot_name: String, it: Dictionary) -> Dictionary:
+	var aff: Array = []
+	var raw: Variant = it.get("affixes", [])
+	if raw is Array:
+		for one: Variant in raw:
+			if one is Dictionary:
+				aff.append({
+					"id": str(one.get("id", "")),
+					"v": float(one.get("value", 0.0)),
+				})
+	var type_id := ""
+	if slot_name == "weapon":
+		type_id = str(it.get("weapon", ""))
+	elif slot_name == "tool":
+		type_id = str(it.get("tool", ""))
+	else:
+		type_id = slot_name
+	return {
+		"slot": slot_name,
+		"type": type_id,
+		"ilvl": int(it.get("ilvl", 0)),
+		"rarity": str(it.get("rarity", "")),
+		"affixes": aff,
+	}
+
 func add_run_xp(id: String, amt: float) -> void:
+	var before: int = skill_lv(id)
 	CombatP.add_run_xp(self, id, amt)
+	_note_skill(id, before)
 
 func add_perm_xp(id: String, amt: float) -> void:
+	var before: int = skill_lv(id)
 	CombatP.add_perm_xp(self, id, amt)
+	_note_skill(id, before)
+
+func _note_skill(id: String, before: int) -> void:
+	if App.tel == null:
+		return
+	var after: int = skill_lv(id)
+	if after == before:
+		return
+	App.tel.note_skill_change(id, before, after)
 
 func skill_dmg_mult(is_special := false) -> float:
 	return CombatP.skill_dmg_mult(self, is_special)

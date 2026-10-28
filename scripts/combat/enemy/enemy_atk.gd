@@ -128,7 +128,7 @@ static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: fl
 	if not glance:
 		crit = Combat.roll_crit(App.bal.crit_chance)
 	player.set("last_glance", glance)
-	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag())
+	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag(), int(host.combat_lv))
 
 static func spawn_shot(host: Node, dir: Vector2) -> void:
 	var p: Node3D = ProjS.new()

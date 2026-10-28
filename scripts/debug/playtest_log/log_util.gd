@@ -235,6 +235,12 @@ static func _flush(file_name: String, events: Array, end_cond: String, end_fail:
 		cond = str(tel.get("end_cond", ""))
 	if fail == "" and cond != "":
 		fail = cond
+	if App.tel != null:
+		var rid: String = str(App.tel.run_id)
+		if rid != "":
+			for ev: Variant in events:
+				if ev is Dictionary:
+					(ev as Dictionary)["run_id"] = rid
 	var body: Dictionary = {
 		"kind": "wdb_playtest_journal",
 		"ver": 2,

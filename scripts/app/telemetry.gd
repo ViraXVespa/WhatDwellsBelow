@@ -48,6 +48,18 @@ var save_type := "human"
 var cfg_hash := ""
 var cfg: Dictionary = {}
 var run_start := 0.0
+var run_id := ""
+var floors: Array = []
+var floor_n := 0
+var floor_dt := 0.0
+var floor_dmg := 0.0
+var floor_deaths := 0
+var floor_near := 0
+var changes: Array = []
+var kill_delta: Dictionary = {}
+var death_delta := 0
+var death_delta_set := false
+var _seq := 0
 
 func reset(save_kind: String, is_playtest: bool) -> void:
 	end_cond = ""
@@ -100,6 +112,18 @@ func reset(save_kind: String, is_playtest: bool) -> void:
 	cfg = _snap()
 	cfg_hash = _hash()
 	run_start = App.clock
+	floors = []
+	floor_n = int(App.floor_n)
+	floor_dt = 0.0
+	floor_dmg = 0.0
+	floor_deaths = 0
+	floor_near = 0
+	changes = []
+	kill_delta = {}
+	death_delta = 0
+	death_delta_set = false
+	_seq += 1
+	run_id = "%d-%d" % [int(Time.get_unix_time_from_system()), _seq]
 
 func _snap() -> Dictionary:
 	var d := {}
@@ -111,7 +135,9 @@ func _w() -> Dictionary:
 	return {"time": 0.0, "dmg": 0.0, "kills": 0, "deaths": 0, "spec": 0, "spec_hit": 0}
 
 func tick(delta: float, fighting: bool) -> void:
+	_sync_floor()
 	duration += delta
+	floor_dt += delta
 	if fighting:
 		combat_t += delta
 		in_combat = true
@@ -135,9 +161,13 @@ func note_damage_dealt(n: float, crit: bool) -> void:
 		wpn[key].dmg = float(wpn[key].dmg) + n
 
 func note_damage_taken(n: float, hp: float, max_hp: float) -> void:
+	if floor_n == 0:
+		floor_n = int(App.floor_n)
 	dmg_taken += n
+	floor_dmg += n
 	if max_hp > 0.0 and hp / max_hp <= App.bal.near_death_hp:
 		near_death += 1
+		floor_near += 1
 
 func note_kill() -> void:
 	kills += 1
@@ -167,10 +197,66 @@ func note_extract(g: int, o: int, w: int) -> void:
 	ore_extracted += o
 	wood_extracted += w
 
+func note_kill_levels(enemy_lv: int, player_lv: int) -> void:
+	var gap: int = enemy_lv - player_lv
+	var key: String = str(gap)
+	kill_delta[key] = int(kill_delta.get(key, 0)) + 1
+
+func note_death_levels(enemy_lv: int, player_lv: int) -> void:
+	death_delta = enemy_lv - player_lv
+	death_delta_set = true
+
+func note_skill_change(id: String, before: int, after: int) -> void:
+	changes.append({
+		"phase": _phase(),
+		"kind": "skill_lv",
+		"id": id,
+		"from": before,
+		"to": after,
+	})
+
+func note_equip_changes(before: Array, after: Array) -> void:
+	var prev: Dictionary = {}
+	var nxt: Dictionary = {}
+	for row: Variant in before:
+		if row is Dictionary:
+			prev[str(row.get("slot", ""))] = row
+	for row: Variant in after:
+		if row is Dictionary:
+			nxt[str(row.get("slot", ""))] = row
+	var seen: Dictionary = {}
+	for key_v: Variant in prev.keys():
+		seen[str(key_v)] = true
+	for key_v: Variant in nxt.keys():
+		seen[str(key_v)] = true
+	for key_v: Variant in seen.keys():
+		var slot_key: String = str(key_v)
+		var left: Dictionary = prev.get(slot_key, {}) as Dictionary
+		var right: Dictionary = nxt.get(slot_key, {}) as Dictionary
+		if JSON.stringify(left) == JSON.stringify(right):
+			continue
+		if right.is_empty():
+			changes.append({
+				"phase": _phase(),
+				"kind": "equip",
+				"slot": slot_key,
+				"ilvl": 0,
+				"rarity": "",
+				"affixes": [],
+			})
+			continue
+		var piece: Dictionary = right.duplicate(true)
+		piece["phase"] = _phase()
+		piece["kind"] = "equip"
+		changes.append(piece)
+
 func note_end(cond: String, killer: String) -> void:
 	end_cond = cond
 	death_by = killer
 	if cond == "death" or cond == "dispel":
+		if floor_n == 0:
+			floor_n = int(App.floor_n)
+		floor_deaths += 1
 		if extract_t < 0.0:
 			deaths_before_extract += 1
 		gold_lost += App.gold
@@ -186,8 +272,42 @@ func _hash() -> String:
 		s += str(row[0]) + "=" + str(App.bal.getv(str(row[0]))) + ";"
 	return str(s.hash())
 
-func to_dict() -> Dictionary:
+func _phase() -> String:
+	if App.in_dungeon:
+		return "run"
+	return "hub"
+
+func _sync_floor() -> void:
+	var n: int = int(App.floor_n)
+	if floor_n == 0:
+		floor_n = n
+		return
+	if n == floor_n:
+		return
+	floors.append(_open_floor())
+	floor_dt = 0.0
+	floor_dmg = 0.0
+	floor_deaths = 0
+	floor_near = 0
+	floor_n = n
+
+func _open_floor() -> Dictionary:
 	return {
+		"n": floor_n,
+		"dt": floor_dt,
+		"dmg_taken": floor_dmg,
+		"deaths": floor_deaths,
+		"near_death": floor_near,
+	}
+
+func floor_rows() -> Array:
+	var rows: Array = floors.duplicate(true)
+	if floor_n != 0:
+		rows.append(_open_floor())
+	return rows
+
+func to_dict() -> Dictionary:
+	var row: Dictionary = {
 		"end_cond": end_cond,
 		"duration": duration,
 		"deepest": deepest,
@@ -232,4 +352,11 @@ func to_dict() -> Dictionary:
 		"save_type": save_type,
 		"cfg_hash": cfg_hash,
 		"cfg": cfg.duplicate(),
+		"run_id": run_id,
+		"floors": floor_rows(),
+		"changes": changes.duplicate(true),
+		"kill_delta": kill_delta.duplicate(),
 	}
+	if death_delta_set:
+		row["death_delta"] = death_delta
+	return row

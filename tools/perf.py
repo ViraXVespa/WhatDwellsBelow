@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Performance: hub bench, exported-web perf, hitch sink, load bars and timing, desktop perf, dungeon map.
+"""Performance: hub bench, exported-web perf, hitch sink, load bars and timing, desktop perf, dungeon map, playtest curve.
 
 `python tools/perf.py` lists the subcommands; `python tools/perf.py SUB --help` prints that one's flags.
 The work lives in tools/lib/perf/ (one module per subcommand); this file only maps names to modules.
@@ -18,6 +18,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("load",     "perf/run_load_timing",        "Load-timing smoke (--leg hub|dungeon)"),
     ("desktop",  "perf/run_desktop_perf",       "Desktop release vs debug perf (--export)"),
     ("map",      "perf/run_dungeon_map",        "Dungeon generation map smoke (--seeds, --sweep)"),
+    ("curve",    "perf/curve",                  "Local playtest curve from user://playtest/db (--sqlite, --cleanup)"),
 ]
 
 if __name__ == "__main__":
