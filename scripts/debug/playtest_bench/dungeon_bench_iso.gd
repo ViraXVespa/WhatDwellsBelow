@@ -1,6 +1,7 @@
 extends Object
 
 ## --wdb-dungeon-walk-layers: during visible play, hide one group at a time.
+## After bare, noenv / linear / rest / empty time what is still submitted.
 ## The playtest keeps acting. This does not score the 99% bar.
 
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -8,12 +9,20 @@ const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 const FLAG := "--wdb-dungeon-walk-layers"
 
+static var _env_nodes: Array[WorldEnvironment] = []
+static var _env_saved: Array[Environment] = []
+static var _tone_saved: Array[int] = []
+static var _rest_nodes: Array[Node] = []
+static var _rest_on: Array[bool] = []
+static var _rest_cls: Dictionary[String, int] = {}
+
 static func active() -> bool:
 	return CliArgs.has(FLAG)
 
 static func _kinds() -> PackedStringArray:
 	return PackedStringArray([
-		"base", "floor", "walls", "sprites", "props", "lights", "hud", "bare", "base2",
+		"base", "floor", "walls", "sprites", "props", "lights", "hud", "bare",
+		"noenv", "linear", "rest", "empty", "base2",
 	])
 
 static func _tag(n: Node) -> String:
@@ -34,16 +43,70 @@ static func _tag(n: Node) -> String:
 		return "props"
 	return ""
 
+static func _clear_extra() -> void:
+	_env_nodes.clear()
+	_env_saved.clear()
+	_tone_saved.clear()
+	_rest_nodes.clear()
+	_rest_on.clear()
+	_rest_cls.clear()
+
+static func _note_env(n: Node) -> bool:
+	if not (n is WorldEnvironment):
+		return false
+	var env_node: WorldEnvironment = n as WorldEnvironment
+	var e: Environment = env_node.environment
+	if e == null:
+		return true
+	_env_nodes.append(env_node)
+	_env_saved.append(e)
+	_tone_saved.append(int(e.tonemap_mode))
+	return true
+
+static func _note_rest(n: Node) -> void:
+	if _note_env(n):
+		return
+	var shown: bool = false
+	if n is CanvasItem:
+		shown = (n as CanvasItem).visible
+	elif n is VisualInstance3D:
+		shown = (n as VisualInstance3D).visible
+	else:
+		return
+	if not shown:
+		return
+	var cls_name: String = n.get_class()
+	var prev: int = int(_rest_cls.get(cls_name, 0))
+	_rest_cls[cls_name] = prev + 1
+	_rest_nodes.append(n)
+	_rest_on.append(true)
+
+static func _child_covered(n: Node, tag: String, under: bool) -> bool:
+	if tag != "":
+		return true
+	if under:
+		return true
+	if n is Node3D and not (n as Node3D).visible:
+		return true
+	if n is CanvasItem and not (n as CanvasItem).visible:
+		return true
+	if n is CanvasLayer and not (n as CanvasLayer).visible:
+		return true
+	return false
+
 static func _gather(host: Node) -> void:
 	host._iso_all.clear()
 	host._iso_on.clear()
 	host._iso_tag = PackedStringArray()
+	_clear_extra()
 	var tree: SceneTree = host.get_tree()
 	if tree == null or tree.root == null:
 		return
 	var stack: Array[Node] = [tree.root]
+	var covered: Array[bool] = [false]
 	while stack.size() > 0:
 		var n: Node = stack.pop_back()
+		var under: bool = covered.pop_back()
 		var tag: String = _tag(n)
 		if tag != "":
 			if n is Node3D:
@@ -56,10 +119,14 @@ static func _gather(host: Node) -> void:
 				host._iso_all.append(layer)
 				host._iso_on.append(layer.visible)
 				host._iso_tag.append(tag)
-			if tag == "floor" or tag == "walls" or tag == "sprites" or tag == "hud":
-				continue
+		elif not under:
+			_note_rest(n)
+		if tag == "floor" or tag == "walls" or tag == "sprites" or tag == "hud":
+			continue
+		var child_under: bool = _child_covered(n, tag, under)
 		for c in n.get_children():
 			stack.append(c)
+			covered.append(child_under)
 
 static func _counts(host: Node) -> String:
 	var floor_n: int = 0
@@ -84,7 +151,47 @@ static func _counts(host: Node) -> String:
 		elif tag == "hud":
 			hud_n += 1
 		i += 1
-	return "floor=%d walls=%d sprites=%d props=%d lights=%d hud=%d" % [floor_n, wall_n, sprite_n, prop_n, light_n, hud_n]
+	var vp_px: String = "0x0"
+	var scale_s: String = "0"
+	var msaa_s: String = "0"
+	var vp: Viewport = host.get_viewport()
+	if vp != null:
+		vp_px = "%dx%d" % [vp.size.x, vp.size.y]
+		scale_s = "%.2f" % vp.scaling_3d_scale
+		msaa_s = str(int(vp.msaa_3d))
+	return "floor=%d walls=%d sprites=%d props=%d lights=%d hud=%d env=%d rest=%d vp=%s scale=%s msaa=%s cls=%s" % [floor_n, wall_n, sprite_n, prop_n, light_n, hud_n, _env_nodes.size(), _rest_nodes.size(), vp_px, scale_s, msaa_s, _cls_text()]
+
+static func _cls_text() -> String:
+	var keys: Array = _rest_cls.keys()
+	keys.sort()
+	if keys.is_empty():
+		return "-"
+	var parts: PackedStringArray = PackedStringArray()
+	var i: int = 0
+	while i < keys.size():
+		var cls_name: String = str(keys[i])
+		parts.append("%s:%d" % [cls_name, int(_rest_cls[cls_name])])
+		i += 1
+	return ",".join(parts)
+
+static func _restore_env() -> void:
+	var i: int = 0
+	while i < _env_nodes.size():
+		var e: Environment = _env_saved[i]
+		e.tonemap_mode = _tone_saved[i] as Environment.ToneMapper
+		_env_nodes[i].environment = e
+		i += 1
+
+static func _restore_rest() -> void:
+	var i: int = 0
+	while i < _rest_nodes.size():
+		var n: Node = _rest_nodes[i]
+		var on: bool = _rest_on[i]
+		if n is CanvasItem:
+			(n as CanvasItem).visible = on
+		elif n is Node3D:
+			(n as Node3D).visible = on
+		i += 1
 
 static func _restore(host: Node) -> void:
 	var i: int = 0
@@ -96,6 +203,33 @@ static func _restore(host: Node) -> void:
 		elif n is CanvasLayer:
 			(n as CanvasLayer).visible = on
 		i += 1
+	_restore_env()
+	_restore_rest()
+
+static func _clear_env() -> void:
+	var i: int = 0
+	while i < _env_nodes.size():
+		_env_nodes[i].environment = null
+		i += 1
+
+static func _set_linear() -> void:
+	var i: int = 0
+	while i < _env_saved.size():
+		_env_saved[i].tonemap_mode = Environment.TONE_MAPPER_LINEAR
+		i += 1
+
+static func _hide_rest() -> void:
+	var i: int = 0
+	while i < _rest_nodes.size():
+		var n: Node = _rest_nodes[i]
+		if n is CanvasItem:
+			(n as CanvasItem).visible = false
+		elif n is Node3D:
+			(n as Node3D).visible = false
+		i += 1
+
+static func _bare_kind(kind: String) -> bool:
+	return kind == "bare" or kind == "noenv" or kind == "linear" or kind == "rest" or kind == "empty"
 
 static func _hide(host: Node, tag: String) -> void:
 	var i: int = 0
@@ -113,10 +247,16 @@ static func _apply(host: Node, kind: String) -> void:
 	var hide_kind: String = kind
 	if kind == "base2":
 		hide_kind = "base"
-	if hide_kind == "bare":
+	if _bare_kind(hide_kind):
 		_hide(host, "bare")
 	elif hide_kind != "base":
 		_hide(host, hide_kind)
+	if kind == "noenv" or kind == "empty":
+		_clear_env()
+	if kind == "linear":
+		_set_linear()
+	if kind == "rest" or kind == "empty":
+		_hide_rest()
 
 static func _mid(vals: Array[float]) -> float:
 	if vals.is_empty():
