@@ -69,6 +69,16 @@ static func set_after_ms(ms: float) -> void:
 static func frame_submit_ms() -> float:
 	return Rows.frame_submit_ms()
 
+## Dungeon bench. Later ticks subtract the playtest physics tick from the scored delta.
+static func arm_harness() -> void:
+	Rows.arm_harness()
+
+static func add_harness_us(us: int) -> void:
+	Rows.add_harness_us(us)
+
+static func harness_in_after_ms() -> float:
+	return Rows.harness_in_after_ms()
+
 ## One HB line in the hitch file. The web console never reaches the runner.
 static func hb(msg: String) -> void:
 	if not enabled():
@@ -122,6 +132,8 @@ static func bench_reset(mult_value: float) -> void:
 	pause_slow_n = 0
 	bar_slow_n = 0
 	Present._dts = PackedFloat32Array()
+	Present._pts = PackedFloat32Array()
+	Rows.clear_harness()
 	Rows._phase = ""
 	Rows._play_s = 0.0
 	Rows._last_proc = -1.0
@@ -175,37 +187,46 @@ static func tick(host: Node, delta: float) -> void:
 		return
 	if Engine.time_scale != 1.0:
 		return
+	# Harness credit is the previous iteration's playtest tick. Rotate on every
+	# real-time tick so a paused or loader frame does not apply it one frame late.
+	var scored: float = delta
+	if Rows.harness_on():
+		scored = delta - Rows.rotate_harness()
+		if scored < 0.0:
+			scored = 0.0
 	Rows._sample_proc()
 	if _skip_gap:
 		_skip_gap = false
 		Run._break_run()
-		Rows._write_gap(delta, "skip_gap")
+		Rows._write_gap(scored, "skip_gap")
 		return
 	var tree: SceneTree = host.get_tree()
 	if tree != null and tree.paused:
 		Run._break_run()
-		if Present._over_budget(delta):
+		if Present._over_budget(scored):
 			pause_slow_n += 1
-			_note_paused(host, delta)
+			_note_paused(host, scored)
 		return
 	# The 99% bar is the whole time the scored scene is on screen (hub camp, or
 	# the dungeon when the dungeon bench set that). Loader-up frames are not it.
 	if not Ctx._score_on_screen(host):
 		Run._break_run()
-		if Present._over_budget(delta):
+		if Present._over_budget(scored):
 			bar_slow_n += 1
-			Rows._note_bar(host, delta)
+			Rows._note_bar(host, scored)
 		return
 	frame_n += 1
-	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
+	var dt_ms: float = snappedf(scored * 1000.0, 0.1)
 	if Rows._keep_all:
 		Present._dts.append(dt_ms)
-	var slow: bool = Present._over_budget(delta)
+		if Rows.harness_on():
+			Present._pts.append(Rows.pt_ms())
+	var slow: bool = Present._over_budget(scored)
 	Run._track_run(dt_ms, slow)
 	if not slow:
 		return
 	slow_n += 1
-	_note(host, delta)
+	_note(host, scored)
 
 static func copy_text() -> String:
 	var txt: String = LogFile._read_all()
@@ -223,6 +244,7 @@ static func clear_log() -> void:
 	frame_n = 0
 	slow_n = 0
 	Present._dts = PackedFloat32Array()
+	Present._pts = PackedFloat32Array()
 	if enabled():
 		begin()
 
@@ -273,6 +295,9 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 		Present._dts.sort()
 	row["dt_p50_ms"] = Present._percentile(0.50)
 	row["dt_p95_ms"] = Present._percentile(0.95)
+	if Present._pts.size() > 0:
+		Present._pts.sort()
+		row["pt_p50_ms"] = Present._pt_percentile(0.50)
 	Present._stamp_present(row)
 	row["bench_gen"] = Rows._bench_gen
 	if Rows.started and Rows._fh != null:

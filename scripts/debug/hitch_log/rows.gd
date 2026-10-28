@@ -26,6 +26,12 @@ static var _mark_ms: int = 0
 static var _keep_all: bool = false
 static var _mark_frame: int = -1
 static var started: bool = false
+## Dungeon bench only. The playtest tick is the harness, not the frame the player pays.
+## open = this iteration's physics (not in this delta). hold = previous iteration, which is.
+static var _harness_on: bool = false
+static var _harness_open_us: int = 0
+static var _harness_hold_us: int = 0
+static var _pt_ms: float = 0.0
 
 ## Seconds since the log started (0.1 s steps), 0 before it starts.
 static func _t_sec() -> float:
@@ -65,6 +71,8 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 	row["tree_ms"] = snappedf(_tree_ms, 0.1)
 	row["submit_ms"] = snappedf(_submit_ms, 0.1)
 	row["after_ms"] = snappedf(_after_ms, 0.1)
+	if _harness_on:
+		row["pt_ms"] = _pt_ms
 	return row
 
 static func _session_row() -> Dictionary:
@@ -131,6 +139,47 @@ static func set_after_ms(ms: float) -> void:
 
 static func frame_submit_ms() -> float:
 	return _submit_ms
+
+static func harness_on() -> bool:
+	return _harness_on
+
+static func pt_ms() -> float:
+	return _pt_ms
+
+static func arm_harness() -> void:
+	_harness_on = true
+	_harness_open_us = 0
+	_harness_hold_us = 0
+	_pt_ms = 0.0
+
+static func clear_harness() -> void:
+	_harness_on = false
+	_harness_open_us = 0
+	_harness_hold_us = 0
+	_pt_ms = 0.0
+
+static func add_harness_us(us: int) -> void:
+	if _harness_on and us > 0:
+		_harness_open_us += us
+
+## Once per idle frame, before the bench closes after_ms. Godot samples delta at the
+## start of the iteration, then runs physics, then idle. This delta therefore holds
+## the previous iteration's playtest, and the after window the bench is about to
+## close holds the playtest that just ran. submit (pre_draw to post_draw) holds neither.
+static func rotate_harness() -> float:
+	if not _harness_on:
+		_pt_ms = 0.0
+		return 0.0
+	var credit_us: int = _harness_hold_us
+	_harness_hold_us = _harness_open_us
+	_harness_open_us = 0
+	_pt_ms = snappedf(float(credit_us) / 1000.0, 0.1)
+	return float(credit_us) / 1000000.0
+
+static func harness_in_after_ms() -> float:
+	if not _harness_on:
+		return 0.0
+	return snappedf(float(_harness_hold_us) / 1000.0, 0.1)
 
 static func _write_row(row: Dictionary) -> void:
 	row["bench_gen"] = _bench_gen

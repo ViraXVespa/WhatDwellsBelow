@@ -118,7 +118,7 @@ def _slow_lines(rows: list[dict]) -> list[str]:
         if int(row.get("paused", 0) or 0) == 1 or int(row.get("bar", 0) or 0) == 1:
             continue
         slow.append(
-            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s phys_ms=%s draw=%s tree_ms=%s submit_ms=%s after_ms=%s"
+            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s phys_ms=%s draw=%s tree_ms=%s submit_ms=%s after_ms=%s%s"
             % (
                 row.get("t", ""),
                 row.get("dt_ms", ""),
@@ -133,6 +133,7 @@ def _slow_lines(rows: list[dict]) -> list[str]:
                 row.get("tree_ms", ""),
                 row.get("submit_ms", ""),
                 row.get("after_ms", ""),
+                (" pt_ms=%s" % row.get("pt_ms")) if "pt_ms" in row else "",
             )
         )
         if len(slow) >= 8:
@@ -204,6 +205,8 @@ def _run_line(rows: list[dict]) -> str:
     tree_vals: list[float] = []
     submit_vals: list[float] = []
     after_vals: list[float] = []
+    pt_vals: list[float] = []
+    saw_pt = False
     for row in rows:
         try:
             dts.append(float(row.get("dt_ms", 0) or 0))
@@ -239,6 +242,12 @@ def _run_line(rows: list[dict]) -> str:
                 bucket.append(float(row.get(key, 0) or 0))
             except (TypeError, ValueError):
                 bucket.append(0.0)
+        if "pt_ms" in row:
+            saw_pt = True
+            try:
+                pt_vals.append(float(row.get("pt_ms", 0) or 0))
+            except (TypeError, ValueError):
+                pt_vals.append(0.0)
     cell_txt = ""
     if cells:
         cell_txt = cells[0] if cells[0] == cells[-1] else "%s..%s" % (cells[0], cells[-1])
@@ -263,7 +272,7 @@ def _run_line(rows: list[dict]) -> str:
             _median(submit_vals),
             _median(after_vals),
         )
-    )
+    ) + (" pt_med=%s" % _median(pt_vals) if saw_pt else "")
 
 def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
     refresh = _refresh_ms(bench)
@@ -373,7 +382,7 @@ def _present_line(row: dict | None) -> str:
             row.get("dt_p50_ms", ""),
             row.get("dt_p95_ms", ""),
         )
-    )
+    ) + (" pt_p50_ms=%s" % row.get("pt_p50_ms") if "pt_p50_ms" in row else "")
 
 def _present_fail(row: dict | None) -> int:
     if not row:

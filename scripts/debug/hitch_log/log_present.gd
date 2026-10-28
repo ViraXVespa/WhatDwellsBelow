@@ -14,6 +14,7 @@ const BUDGET_SEC := 1.0 / 60.0
 ## Refresh-paced frames cluster a few ms over one refresh. That cluster is the present, not a stall.
 const PRESENT_SLACK_SEC := 0.003
 static var _dts: PackedFloat32Array = PackedFloat32Array()
+static var _pts: PackedFloat32Array = PackedFloat32Array()
 const MULT := 4.0
 static var _mult: float = 0.0
 
@@ -117,11 +118,17 @@ static func _slow_shape() -> Dictionary:
 	}
 
 static func _percentile(p: float) -> float:
-	var n: int = _dts.size()
+	return _pct_of(_dts, p)
+
+static func _pt_percentile(p: float) -> float:
+	return _pct_of(_pts, p)
+
+static func _pct_of(vals: PackedFloat32Array, p: float) -> float:
+	var n: int = vals.size()
 	if n <= 0:
 		return 0.0
 	var i: int = int(float(n - 1) * p)
-	return snappedf(_dts[i], 0.1)
+	return snappedf(vals[i], 0.1)
 
 static func mult() -> float:
 	return _mult if _mult > 0.0 else MULT

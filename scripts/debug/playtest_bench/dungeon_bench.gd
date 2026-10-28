@@ -44,6 +44,7 @@ static func start() -> void:
 	var mult: float = CliArgs.float_arg("--wdb-hitch-mult", 1.0)
 	HitchLog.bench_reset(mult)
 	HitchLog.set_score_where("dungeon")
+	HitchLog.arm_harness()
 	HitchLog.set_phase("wait")
 	_hb("HB: fresh=1")
 	App.character_type = "male"
@@ -126,7 +127,10 @@ func _wall_s() -> float:
 func _process(delta: float) -> void:
 	var now: int = Time.get_ticks_usec()
 	if _post_us > 0:
-		HitchLog.set_after_ms(float(now - _post_us) / 1000.0)
+		var after_ms: float = float(now - _post_us) / 1000.0 - HitchLog.harness_in_after_ms()
+		if after_ms < 0.0:
+			after_ms = 0.0
+		HitchLog.set_after_ms(after_ms)
 	_proc_us = now
 	_post_t += delta
 	if _post_t >= 0.5:

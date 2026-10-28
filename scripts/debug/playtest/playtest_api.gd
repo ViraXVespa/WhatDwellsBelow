@@ -9,6 +9,7 @@ const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PtGate := preload("res://scripts/debug/playtest/pt_gate.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const THINK_DT := 0.12
 
 var history: Array = []
@@ -225,6 +226,7 @@ func _physics_process(delta: float) -> void:
 	_tick(delta)
 	var us: int = Time.get_ticks_usec() - t0
 	PtGate.note(self, "phys", us)
+	HitchLog.add_harness_us(us)
 
 func _tick(delta: float) -> void:
 	if not PlaytestLog.started:
