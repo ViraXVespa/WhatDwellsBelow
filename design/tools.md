@@ -18,7 +18,7 @@ Commands: `python tools/E.py SUB ...` (the Bot's box: `python3`). `python tools/
 | Smokes | `gate.py smokes --door D` (PC); `gate.py bot-smokes --phases 1,2,6` or `--for FILE` (Bot) | `tools-gates.md` |
 | Screenshots, before/after, image facts | `shots.py flow --job door.job`; `shots.py diff A B --out OUT`; `shots.py inspect diff A B`; `shots.py crop SHOT --box X,Y,W,H` | `tools-shots.md` |
 | Light, ground wear, frame art bakes | `bake.py camp`, `bake.py check`, `bake.py frames --check` | `tools-shots.md` |
-| Frame time, hitches, load time, web perf | `perf.py hub --leg desktop`; `perf.py web --site DIR --flow F`; `perf.py load --leg hub` | `tools-perf.md` |
+| Frame time, hitches, load time, web perf | `perf.py hub --leg desktop`; `perf.py dungeon --leg desktop`; `perf.py web --site DIR --flow F`; `perf.py load --leg hub` | `tools-perf.md` |
 | Playtest curve | `perf.py curve` | `tools-perf.md` |
 | Find code, a function, a route, a tunable, a last run | `find.py xref TEXT`; `find.py func PATH NAME`; `find.py route --job door.job`; `docs.py tunable get KEY`; `session.py summary JOB` | `tools-lookup.md` |
 | Size, duplicates, dead code, splits, doc edits | `check.py script-cap --bot --sweep`; `lint.py dupes`; `lint.py unused`; `lint.py split FILE --list`; `docs.py patch` | `tools-lint.md` |

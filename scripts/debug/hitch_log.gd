@@ -47,6 +47,13 @@ static func skip_gap() -> void:
 static func set_phase(phase_name: String) -> void:
 	Rows.set_phase(phase_name)
 
+## "hub" (default) counts camp. "dungeon" counts the dungeon scene. Anything else stays hub.
+static func set_score_where(where_name: String) -> void:
+	Ctx.set_score_where(where_name)
+
+static func scoring(host: Node) -> bool:
+	return Ctx._score_on_screen(host)
+
 static func set_play_s(sec: float) -> void:
 	Rows.set_play_s(sec)
 
@@ -129,6 +136,7 @@ static func bench_reset(mult_value: float) -> void:
 	Ctx._counted = false
 	Ctx._mesh_n = 0
 	Ctx._light_n = 0
+	Ctx.set_score_where("hub")
 	_emit_at = -100000
 	Rows._bench_gen += 1
 	file_path = ""
@@ -180,9 +188,9 @@ static func tick(host: Node, delta: float) -> void:
 			pause_slow_n += 1
 			_note_paused(host, delta)
 		return
-	# The 99% bar is the whole time the player can see the hub. Frames while the
-	# loading bar is up, and frames before camp is showing, are not that time.
-	if not Ctx._hub_on_screen(host):
+	# The 99% bar is the whole time the scored scene is on screen (hub camp, or
+	# the dungeon when the dungeon bench set that). Loader-up frames are not it.
+	if not Ctx._score_on_screen(host):
 		Run._break_run()
 		if Present._over_budget(delta):
 			bar_slow_n += 1

@@ -63,12 +63,22 @@ static func _where(host: Node) -> String:
 		return "hub"
 	return scn
 
-static func _hub_on_screen(host: Node) -> bool:
+static var _score_where: String = "hub"
+
+static func set_score_where(where_name: String) -> void:
+	_score_where = where_name if where_name == "dungeon" else "hub"
+
+static func _loader_up(host: Node) -> bool:
 	var loader_v: Variant = host.get("loader")
 	if loader_v is Node:
 		var loader: Node = loader_v as Node
 		if bool(loader.get("open")) or bool(loader.get("visible")):
-			return false
+			return true
+	return false
+
+static func _hub_on_screen(host: Node) -> bool:
+	if _loader_up(host):
+		return false
 	var tree: SceneTree = host.get_tree()
 	if tree == null:
 		return false
@@ -78,6 +88,25 @@ static func _hub_on_screen(host: Node) -> bool:
 	if str(scene.name) == "Camp":
 		return true
 	return str(scene.scene_file_path).find("camp") >= 0
+
+## Dungeon bench: the player can see the dungeon scene and the loader bar is down.
+static func _dungeon_on_screen(host: Node) -> bool:
+	if _loader_up(host):
+		return false
+	var tree: SceneTree = host.get_tree()
+	if tree == null:
+		return false
+	var scene: Node = tree.current_scene
+	if scene == null:
+		return false
+	if str(scene.name) == "Dungeon":
+		return true
+	return str(scene.scene_file_path).find("dungeon.tscn") >= 0
+
+static func _score_on_screen(host: Node) -> bool:
+	if _score_where == "dungeon":
+		return _dungeon_on_screen(host)
+	return _hub_on_screen(host)
 
 static func _ver_label() -> String:
 	var txt: String = FileAccess.get_file_as_string("res://scripts/data/version.json")

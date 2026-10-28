@@ -440,18 +440,30 @@ def _stop_profile(profile: Path) -> None:
             capture_output=True,
         )
 
-def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[str]]:
+def _desktop(
+    root: Path,
+    args,
+    out_log: Path,
+    err_log: Path,
+    flag: str = "--wdb-hub-bench",
+    fresh_name: str = "hub-bench-fresh",
+    label: str = "hub bench",
+    extra: list[str] | None = None,
+) -> tuple[int, list[str]]:
     kind = "headless" if args.headless else godot_lib.pick_display()[0]
     gui = kind != "headless" and kind != "none"
-    fresh = Path(root) / "_logs" / "hub-bench-fresh"
+    fresh = Path(root) / "_logs" / fresh_name
     if fresh.exists():
         shutil.rmtree(fresh)
     fresh.mkdir(parents=True)
-    print("Running hub bench desktop (display=%s, fresh=%s)..." % (kind, fresh))
+    print("Running %s desktop (display=%s, fresh=%s)..." % (label, kind, fresh))
+    user = [flag, "--wdb-hitch-mult=1"]
+    if extra:
+        user.extend(extra)
     gargs = (
-        godot_lib.headless_args(root, "--wdb-hub-bench", "--wdb-hitch-mult=1")
+        godot_lib.headless_args(root, *user)
         if not gui
-        else GUI_HEAD + ["--path", str(root), "--", "--wdb-hub-bench", "--wdb-hitch-mult=1"]
+        else GUI_HEAD + ["--path", str(root), "--", *user]
     )
     # Fresh user:// (the bench refuses a warm save): APPDATA on Windows, XDG_DATA_HOME on Linux.
     old = {k: os.environ.get(k) for k in ("APPDATA", "XDG_DATA_HOME")}
@@ -500,24 +512,35 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
         body.append("headless is not an FPS reading")
     return fail, body
 
-def _fresh_web_site(root: Path) -> Path:
+def _fresh_web_site(root: Path, prefix: str = "hub-bench-web") -> Path:
     """A new folder every run. The same path on port 8060 is the service worker's scope."""
     logs = root / "_logs"
     logs.mkdir(parents=True, exist_ok=True)
-    for old in logs.glob("hub-bench-web*"):
+    for old in logs.glob(prefix + "*"):
         if old.is_dir():
             shutil.rmtree(old, ignore_errors=True)
-    return logs / ("hub-bench-web-%s" % time.strftime("%Y%m%d-%H%M%S"))
+    return logs / ("%s-%s" % (prefix, time.strftime("%Y%m%d-%H%M%S")))
 
-def _web(root: Path, args) -> tuple[int, list[str]]:
+def _web(
+    root: Path,
+    args,
+    flag: str = "--wdb-hub-bench",
+    site_prefix: str = "hub-bench-web",
+    profile_name: str = "hub-bench-browser",
+    label: str = "hub bench",
+    extra_query: str = "",
+) -> tuple[int, list[str]]:
     import hitch_sink
     import web_perf_lib
 
+    fill_aba = bool(getattr(args, "fill_aba", False))
+    walk_layers = bool(getattr(args, "walk_layers", False))
+    isolate = bool(getattr(args, "isolate", False))
     browser, kind = web_perf_lib.find_browser(args.browser)
     if not browser:
         return 1, ["web", "no Edge or Chrome: pass --browser or set CHROME_BIN"]
-    site = _fresh_web_site(root)
-    print("Exporting web build for hub bench -> %s" % site)
+    site = _fresh_web_site(root, site_prefix)
+    print("Exporting web build for %s -> %s" % (label, site))
     exp = subprocess.run(
         [*boot.cmd("export_web"), "--debug", "--out", str(site)],
         cwd=str(root),
@@ -532,7 +555,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     hitch = Path(root) / "_logs" / "web-perf" / "hitch.jsonl"
     if hitch.exists():
         hitch.unlink()
-    profile = Path(root) / "_logs" / "hub-bench-browser"
+    profile = Path(root) / "_logs" / profile_name
     _stop_profile(profile)
     if profile.exists():
         shutil.rmtree(profile, ignore_errors=True)
@@ -554,14 +577,15 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
             time.sleep(0.1)
     if not ready:
         return 1, ["web", "hitch sink not listening on %d" % port]
-    url = "http://127.0.0.1:%d/index.html?wdb-hub-bench&wdb-hitch-mult=1" % port
-    if args.fill_aba:
+    qflag = flag[2:] if flag.startswith("--") else flag
+    url = "http://127.0.0.1:%d/index.html?%s&wdb-hitch-mult=1%s" % (port, qflag, extra_query)
+    if fill_aba:
         url += "&wdb-hub-fill-aba"
-    elif args.walk_layers:
+    elif walk_layers:
         url += "&wdb-hub-walk-layers"
-    elif args.isolate:
+    elif isolate:
         url += "&wdb-hub-isolate"
-    print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (Path(browser).name, kind, url))
+    print("Running %s web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (label, Path(browser).name, kind, url))
     # Fullscreen at device pixels. A 1280x720 window makes the adaptive canvas
     # render small. These flags do not disable GPU vsync or the frame cap.
     argv = [
@@ -638,7 +662,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         for item in ordered_all
         if "isolate layer=" in str(item.get("msg", ""))
     ]
-    if args.isolate or args.walk_layers or args.fill_aba:
+    if isolate or walk_layers or fill_aba:
         fail = 0 if isolate_lines else 1
     else:
         fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
@@ -657,7 +681,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     body += _hb_lines(ordered_all) or ["(no HB: lines)"]
     body += ["", "--- slow shape ---"] + _shape_lines(ordered, row)
     body += ["", "--- slowest hitches ---"] + (slow or ["(none)"])
-    if args.fill_aba:
+    if fill_aba:
         body.append(_aba_line(isolate_lines))
     notes = _browser_notes(profile)
     if any("ERROR" in line.upper() or "WASM" in line.upper() for line in notes):
