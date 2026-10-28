@@ -18,6 +18,9 @@ tools/retired or prove_rules.json, not selftest functions or *selftest*.py fixtu
   live .gd is gd_lib.live_gd / LIVE_GD_DIRS (scripts/ and tools/data/), no folder exempt.
 Flags are read from add_argument calls (arg_flags), so argparse.SUPPRESS flags (`--bot`) count; a parser built in a loop or
 from non-literal flags falls back to every "--x" literal in that module.
+- GROK (grok_scan, .grok/ only: skills are agent instructions, so they name only what `--help` shows): a flag only
+  argparse.SUPPRESS defines (`shots.py capture --taskbar`), and a flag on a skill line with no command that no command in
+  that skill takes (`--show` or `--taskbar 1`); the Godot CLI flags the tools pass (`--headless`) are not tool flags.
 """
 from __future__ import annotations
 
@@ -46,6 +49,28 @@ class Scan:
         ent = "|".join(sorted(self.table, key=len, reverse=True))
         self.ent_re = re.compile(r"(?<![\w/.-])(python3? +)?(tools/)?(" + ent + r")\.py\b([^`\n\"')|;]*)")
         self.cut = re.compile(r"(?<![\w/.-])(?:tools/)?(?:" + ent + r")\.py\b")
+        self.godot = set(FLAG_LIT.findall((root / "tools/lib/godot_lib.py").read_text(encoding="utf-8", errors="replace")))
+
+    def hidden(self, entry: str, sub: str | None) -> set:
+        """Flags of ENTRY [SUB] that only argparse.SUPPRESS defines (hidden from `--help`): entry, SUB's module, its helpers."""
+        key = ("hidden", entry, sub)
+        if key not in self.cache:
+            todo = [self.root / "tools" / f"{entry}.py"] + [self.mods[m.rsplit("/", 1)[-1]] for s, m, _ in self.table[entry]
+                                                          if s == sub and m.rsplit("/", 1)[-1] in self.mods]
+            hid, vis, seen = set(), set(), set()
+            while todo:
+                path = todo.pop()
+                if path in seen:
+                    continue
+                seen.add(path)
+                src = path.read_text(encoding="utf-8", errors="replace")
+                h, v = suppressed(src)
+                hid, vis = hid | h, vis | v
+                if path.parent.name != "tools":
+                    todo += [self.mods[n] for a, b in IMPORT.findall(src) for n in ([a] if a else [x.strip().split(" ")[0] for x in b.split(",")])
+                             for n in [n.split(".")[-1]] if n in self.mods and n not in self.cli]
+            self.cache[key] = hid - vis
+        return self.cache[key]
 
     def _mod_flags(self, stem: str, seen: set, sub2: str | None = None, depth: int = 0) -> set:
         """add_argument flags of STEM (only SUB2's parser plus the shared ones when STEM has subparsers) and of the
@@ -91,7 +116,8 @@ class Scan:
             toks, subs = rest.split(), {s for s, _, _ in self.table[entry] if s}
             sub = sub2 = None
             if subs:
-                word = toks[0] if toks and re.fullmatch(r"[a-z][\w-]*", toks[0]) else ""
+                first = toks[0].rstrip(".,:") if toks else ""  # `Use tools/find.py xref.` names xref
+                word = first if re.fullmatch(r"[a-z][\w-]*", first) else ""
                 if word in subs:
                     sub = word
                 elif word and word not in WORDS and (m.group(1) or m.group(2) or line[max(0, m.start() - 1):m.start()] == "`"):
@@ -108,12 +134,60 @@ class Scan:
                 if t in inner and i:
                     sub2 = t
                 for f in re.findall(r"(?<![\w-])(--[a-z][\w-]*)", t):
+                    cmd = " ".join(x for x in (f"{entry}.py", sub, sub2 if sub else None, f) if x)
                     if f not in self.flags(entry, sub, sub2 if sub else None):
-                        bad.append(f"FLAG    {rel}:{no}: " + " ".join(x for x in (f"{entry}.py", sub, sub2 if sub else None, f) if x))
+                        bad.append(f"FLAG    {rel}:{no}: {cmd}")
+                    elif rel.startswith(".grok/") and f in self.hidden(entry, sub):
+                        bad.append(f"GROK    {rel}:{no}: {cmd} is hidden (argparse.SUPPRESS); name a --help flag")
         for m in re.finditer(r"(?<![\w/.-])(tools/[\w/]*?(\w+)\.py)\b", line):
             if len(m.group(2)) > 1 and not m.group(2).isupper() and m.group(2) != "_scratch" and not (self.root / m.group(1)).exists():
                 bad.append(f"TOOL    {rel}:{no}: {m.group(1)}")
         return bad
+
+def suppressed(src: str) -> tuple[set, set]:
+    """(flags of add_argument calls with help=argparse.SUPPRESS, flags of the other add_argument calls)."""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return set(), set()
+    hid: set = set()
+    vis: set = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "add_argument":
+            fl = {a.value for a in n.args if isinstance(a, ast.Constant) and isinstance(a.value, str) and a.value.startswith("--")}
+            h = next((k.value for k in n.keywords if k.arg == "help"), None)
+            sup = isinstance(h, ast.Attribute) and h.attr == "SUPPRESS" or isinstance(h, ast.Name) and h.id in ("SUPPRESS", "sup")
+            (hid if sup else vis).update(fl)
+    return hid, vis
+
+GROK_FLAG = re.compile(r"(?<![\w-])(--[a-z][\w-]*)")
+
+def grok_scan(root: Path, tracked: set[str], texts: dict[str, str] | None = None) -> list[str]:
+    """GROK rows (see the module doc) for .grok/skills/**/*.md: a flag on a line with no tool command must belong to a
+    command that skill names, and not only as a hidden flag. texts: rel -> source override (selftest)."""
+    src = dict(texts or {})
+    for rel in tracked:
+        if rel not in src and rel.startswith(".grok/skills/") and rel.endswith(".md"):
+            src[rel] = (root / rel).read_text(encoding="utf-8-sig", errors="replace")
+    s, bad = Scan(root), []
+    for rel, text in sorted(src.items()):
+        cmds: set = set()
+        for m in s.ent_re.finditer(text):
+            entry, toks = m.group(3), s.cut.split(m.group(4))[0].split()
+            first = toks[0].rstrip(".,:") if toks else ""
+            cmds.add((entry, first if first in {x for x, _, _ in s.table[entry] if x} else None))
+        for no, line in enumerate(text.splitlines(), 1):
+            if s.ent_re.search(line) or line.lstrip().startswith(("name:", "description:")):
+                continue
+            for f in GROK_FLAG.findall(line):
+                owners = [c for c in cmds if f in s.flags(c[0], c[1])]
+                if f in s.godot and not owners:
+                    continue
+                if not owners:
+                    bad.append(f"GROK    {rel}:{no}: {f} - no command this skill names takes it")
+                elif all(f in s.hidden(*c) for c in owners):
+                    bad.append(f"GROK    {rel}:{no}: {f} is hidden (argparse.SUPPRESS) on " + ", ".join(sorted(f"{c[0]}.py" + (f" {c[1]}" if c[1] else "") for c in owners)))
+    return bad
 
 def _recv(node) -> tuple[str | None, str | None]:
     """(base variable, add_parser("NAME") seen on the way) for the receiver of an .add_argument call."""
@@ -233,7 +307,8 @@ def selftest(root: Path) -> list[str]:
                        ("`docs.py tunable diff --after X`", ["FLAG"]), ("`docs.py tunable add K --after X`", []),
                        ("`docs.py code-map check` or `docs.py code-map patch --system S --add P`", []),
                        ("docs.py code-map check or patch --system S --add P", []), ("`docs.py code-map sweep --add P`", ["FLAG"]),
-                       ("see tools/no_such_tool.py", ["TOOL"]), ("tools/lib/shots/run_movie.py --refs A", []), ("python tools/X.py", [])):
+                       ("see tools/no_such_tool.py", ["TOOL"]), ('"Use tools/find.py xrefz."', ["SUB"]), ('"Use tools/find.py xref."', []),
+                       ("`python tools/shots.py capture --taskbar 1`", []), ("tools/lib/shots/run_movie.py --refs A", []), ("python tools/X.py", [])):
         got = [b.split()[0] for b in s.line("t.md", 1, line)]
         if got != want:
             bad.append(f"stale_cmds {line!r}: got {got}, want {want}")
@@ -252,6 +327,16 @@ def selftest(root: Path) -> list[str]:
         got = branch_scan(root, set(), texts)
         if len(got) != want:
             bad.append(f"branch_scan {sorted(texts)}: got {got}, want {want} row(s)")
+    for line, want in (("`python tools/shots.py capture --taskbar 1`", ["GROK"]), ("`python tools/shots.py capture --show`", [])):
+        got = [b.split()[0] for b in s.line(".grok/skills/t/SKILL.md", 1, line)]
+        if got != want:
+            bad.append(f"stale_cmds .grok {line!r}: got {got}, want {want}")
+    head = "Run `python tools/shots.py capture --mode web`.\nDo not pass Godot `--headless`.\n"
+    for tail, want in (("`--show` only when the User wants to watch.\n", 0), ("`--show` or `--taskbar 1` when watching.\n", 1),
+                       ("`--frobnicate` too.\n", 1), ("`--pattern` is a real flag of another tool.\n", 1)):
+        got = grok_scan(root, set(), {".grok/skills/t/SKILL.md": head + tail})
+        if len(got) != want:
+            bad.append(f"grok_scan {tail.strip()!r}: got {got}, want {want} row(s)")
     loop = 'for n in ("a", "b"):\n    s = sub.add_parser(n)\n    s.add_argument("--x")\n'
     two = 's = sub.add_parser("a")\ns.add_argument("--x")\ns = sub.add_parser("b")\nap.add_argument("--root")\n'
     if arg_flags(loop) is not None or arg_flags(two) != ({"--root"}, {"a": {"--x"}, "b": set()}):

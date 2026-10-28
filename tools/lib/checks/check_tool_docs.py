@@ -5,13 +5,14 @@ Catalog rows name commands: one row per entry subcommand (`shots.py capture`), o
 no subcommands (`bot_status.py`). Every lib module (tools/lib/**/*.py that is not a subcommand, plus
 `lib/imglib/`) and every data file (tools/data/*, tools/*.txt) must be named in backticks in some tools*.md.
 
---stale-refs scans the docs (design/*.md without changelog/, root *.md, repo and box skills) for dead references:
+--stale-refs scans the docs (design/*.md without changelog/, root *.md, repo and box skills, .grok/hooks/) for dead references:
 PATH (backticked path or file name that is not in the tree; a bare repo path like design/x.md outside backticks), LINK
 (a markdown link target that does not resolve from the doc's folder), IDENT (`Class.member` whose class_name
 or one-target preload alias script has no such member, inherited ones counted) and, with --narration, NARR lines (will be added, TODO, legacy, formerly,
 previously, no longer, old flat paths). It also runs `stale_cmds` over tracked docs, code, data and CI for
-FLAG/SUB/TOOL (a tool command naming a flag or subcommand that tool lacks, or a dead tools/*.py path).
-PATH/LINK/IDENT/FLAG/SUB/TOOL fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan and the doc set.
+FLAG/SUB/TOOL (a tool command naming a flag or subcommand that tool lacks, or a dead tools/*.py path), and over
+.grok/ skills for GROK (a hidden argparse.SUPPRESS flag, or a bare flag no command in that skill takes).
+PATH/LINK/IDENT/FLAG/SUB/TOOL/GROK fail the run; NARR is advisory (RESULT INFO). --selftest checks the command scan and the doc set.
 """
 
 from __future__ import annotations
@@ -62,7 +63,7 @@ def link_bare(line: str, here: Path, root: Path, gone=lambda t: False) -> list[s
 
 def _doc_files(root: Path, tracked: set[str]) -> list[Path]:
     out = [root / n for n in sorted(tracked) if n.endswith(".md") and (n.startswith(("design/", ".grok/skills/")) or "/" not in n)
-           and not n.startswith("design/changelog/")]
+           and not n.startswith("design/changelog/") or n.startswith(".grok/hooks/")]  # hooks: bare paths (bin/*.py) too
     if SKILL_DIR.is_dir():
         out += sorted(SKILL_DIR.glob("*/SKILL.md"))
     return out
@@ -129,7 +130,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
         if f.is_file() and f.is_relative_to(root):
             for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
                 bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
-    return bad + stale_cmds.scan(root, tracked) + stale_cmds.branch_scan(root, tracked), narr
+    return bad + stale_cmds.scan(root, tracked) + stale_cmds.branch_scan(root, tracked) + stale_cmds.grok_scan(root, tracked), narr
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)
@@ -140,9 +141,9 @@ def main(argv: list[str] | None = None) -> int:
     root = agent_log.resolve_root(args)
     if args.selftest:
         bad = stale_cmds.selftest(root)
-        docs = {f.relative_to(root).as_posix() for f in _doc_files(root, {".grok/skills/z/SKILL.md", "design/a.md", "design/changelog/x.md", "README.md", "scripts/a.md"}) if f.is_relative_to(root)}
-        if docs != {".grok/skills/z/SKILL.md", "design/a.md", "README.md"}:
-            bad.append(f"stale-refs doc set {sorted(docs)}: want repo skills, design/ (no changelog) and root *.md")
+        docs = {f.relative_to(root).as_posix() for f in _doc_files(root, {".grok/skills/z/SKILL.md", ".grok/hooks/h.json", "design/a.md", "design/changelog/x.md", "README.md", "scripts/a.md"}) if f.is_relative_to(root)}
+        if docs != {".grok/skills/z/SKILL.md", ".grok/hooks/h.json", "design/a.md", "README.md"}:
+            bad.append(f"stale-refs doc set {sorted(docs)}: want repo skills, .grok/hooks, design/ (no changelog) and root *.md")
         for line, want in (("see design/no-such.md, [x](tools.md#a) and [y](missing.md)", ["LINK missing.md", "PATH design/no-such.md"]),
                            ("`design/no-such.md` [web](https://x.y/z.md) [m](mailto:a@b) design/tools.md tools/X.py", []),
                            ("[up](../README.md) [gone](../NOPE.md)", ["LINK ../NOPE.md"])):

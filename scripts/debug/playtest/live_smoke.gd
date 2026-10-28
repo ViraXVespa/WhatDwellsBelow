@@ -1,14 +1,19 @@
 extends Object
 
 ## --wdb-playtest-live-smoke: boots straight into one live AI run on floor 1, prints `PT:` lines, quits.
+## --wdb-pt-campaign: boots one campaign series on the kept slot. A time-limit end chains the next job. Interrupt, a stall, or the watchdog stops it.
 ## Args (after --): --wdb-seed=N (run seed), --wdb-pt-weapon=great_axe|staff|longbow, --wdb-pt-sec=S (sim seconds), --wdb-pt-scale=X (time scale while acting; only with --wdb-pt-fast, else 1.0).
 ## Debug only: run `godot --headless --path . -- --wdb-playtest-live-smoke --wdb-seed=42`.
 
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const FLAG := "--wdb-playtest-live-smoke"
+const CAMPAIGN_FLAG := "--wdb-pt-campaign"
 
 static func active() -> bool:
-	return CliArgs.has(FLAG)
+	return CliArgs.has(FLAG) or CliArgs.has(CAMPAIGN_FLAG)
+
+static func campaign_active() -> bool:
+	return CliArgs.has(CAMPAIGN_FLAG)
 
 static func _str(key: String, fallback: String) -> String:
 	for a: String in CliArgs.args():
@@ -22,7 +27,10 @@ static func start() -> void:
 	var sec: float = float(_str("--wdb-pt-sec", "30"))
 	var wpn: String = _str("--wdb-pt-weapon", "great_axe")
 	var scale: float = float(_str("--wdb-pt-scale", "1"))
-	App.playtest.enqueue({"save": "fresh", "weapon": wpn, "tool": "hatchet" if wpn == "staff" else "pickaxe", "gender": "male", "scale": scale, "limit": sec, "cfg": {}})
+	if campaign_active():
+		App.playtest.enqueue({"save": "campaign", "weapon": "", "tool": "pickaxe", "gender": "male", "scale": scale, "limit": sec, "cfg": {}})
+	else:
+		App.playtest.enqueue({"save": "fresh", "weapon": wpn, "tool": "hatchet" if wpn == "staff" else "pickaxe", "gender": "male", "scale": scale, "limit": sec, "cfg": {}})
 	App.get_tree().create_timer(sec * 2.0 / maxf(1.0, scale) + 90.0, true, false, true).timeout.connect(func() -> void:
 		printerr("PT: timeout=1 sim_t=%.1f act_t=%.1f live=%s" % [App.playtest.sim_t, App.playtest.act_t, str(App.playtest.live_running)])
 		App.get_tree().quit()
@@ -37,5 +45,7 @@ static func report(d: Dictionary) -> void:
 	for k: String in perf:
 		printerr("PT: %s=%s" % [k, str(perf[k])])
 	printerr("PT: stuck_t=%.1f seed=%d moved=%s" % [App.playtest.stuck_t, App.run_seed, str(App.playtest.moved)])
+	if campaign_active():
+		return
 	printerr("PT: done=1")
 	App.get_tree().quit()

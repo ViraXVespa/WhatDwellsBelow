@@ -96,6 +96,17 @@ static func end_run(host: Node, cond: String, killer := "") -> void:
 		return
 	host.finish_end(cond, killer)
 
+static func _spool_human(tel: Object) -> void:
+	# Runtime load so a release tree with scripts/debug removed still parses.
+	if not OS.is_debug_build() or OS.has_feature("web"):
+		return
+	var path := "res://scripts/debug/playtest_db.gd"
+	if not ResourceLoader.exists(path):
+		return
+	var db: GDScript = load(path) as GDScript
+	if db:
+		db.call("append_finish", tel, "", false)
+
 static func finish_end(host: Node, cond: String, killer := "") -> void:
 	if host.recap and bool(host.recap.get("open")):
 		return
@@ -105,6 +116,8 @@ static func finish_end(host: Node, cond: String, killer := "") -> void:
 		host.sfx("hurk")
 	if host.tel:
 		host.tel.note_end(cond, killer)
+		if not bool(host.tel.playtest):
+			_spool_human(host.tel)
 	host.get_tree().paused = false
 	if host.recap and host.recap.has_method("play"):
 		host.recap.play(cond)

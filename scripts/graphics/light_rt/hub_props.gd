@@ -7,26 +7,42 @@ const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 
 ## Warm pool on the yard under each "hub_lamp" (guild lanterns): lifts toward LAMP.pool within pool_r metres, centred
 ## pool_ahead metres in front of the lamp.
-static func lamp_glow(img: Image, org: Vector2, sub: float, root: Node) -> int:
+static func lamp_glow(img: Image, org: Vector2, sub: float, layout: Node) -> int:
+	if layout == null or not layout.has_method("hall_pos"):
+		return 0
 	var wrote: int = 0
 	var glow: Color = Spec.LAMP["pool"]
 	var r: float = Spec.LAMP["pool_r"]
-	for lamp in root.get_tree().get_nodes_in_group("hub_lamp"):
-		var p: Vector3 = (lamp as Node3D).global_position
-		var cx: float = p.x
-		var cz: float = p.z + float(Spec.LAMP["pool_ahead"])
-		for y in range(maxi(0, int((cz - r - org.y) * sub)), mini(img.get_height(), int((cz + r - org.y) * sub))):
-			for x in range(maxi(0, int((cx - r - org.x) * sub)), mini(img.get_width(), int((cx + r - org.x) * sub))):
-				var d: float = Vector2(org.x + (x + 0.5) / sub - cx, org.y + (y + 0.5) / sub - cz).length() / r
-				if d >= 1.0:
-					continue
-				var k: float = (1.0 - d) * (1.0 - d) * 0.45
-				img.set_pixel(x, y, img.get_pixel(x, y).lerp(glow, k))
-				wrote += 1
+	var ahead: float = float(Spec.LAMP["pool_ahead"])
+	# Hall lamps (texel centers projected to face; approximate face-local X from known art width)
+	var hall: Vector3 = layout.hall_pos()
+	var hall_face_z: float = hall.z + layout.hall_box.z * 0.5
+	var hall_lamps: Array = Spec.HALL["lamps"]
+	for tex: Vector2 in hall_lamps:
+		var lx: float = hall.x + (tex.x - 160.0) * 0.012  # rough texel-to-metre on guild face
+		var lz: float = hall_face_z + ahead
+		wrote += _paint_pool(img, org, sub, lx, lz, r, glow)
+	# Wing lamp (the painted lantern above the reception window)
+	var wing: Vector3 = layout.wing_pos()
+	var wing_face_z: float = layout.wing_face_z()
+	var wing_lamps: Array = Spec.WING["lamps"]
+	for tex: Vector2 in wing_lamps:
+		var lx: float = wing.x + (tex.x - 160.0) * 0.010
+		var lz: float = wing_face_z + ahead
+		wrote += _paint_pool(img, org, sub, lx, lz, r, glow)
 	return wrote
 
-## Overlay lines (tools/lib/bake/run_bake_camp.py draw_overlay): image origin and scale, every Layout spot, every
-## collision box in the realized camp plus the banner poles (not realized in the bake), and every lamp pool.
+static func _paint_pool(img: Image, org: Vector2, sub: float, cx: float, cz: float, r: float, glow: Color) -> int:
+	var wrote: int = 0
+	for y in range(maxi(0, int((cz - r - org.y) * sub)), mini(img.get_height(), int((cz + r - org.y) * sub))):
+		for x in range(maxi(0, int((cx - r - org.x) * sub)), mini(img.get_width(), int((cx + r - org.x) * sub))):
+			var d: float = Vector2(org.x + (x + 0.5) / sub - cx, org.y + (y + 0.5) / sub - cz).length() / r
+			if d >= 1.0:
+				continue
+			var k: float = (1.0 - d) * (1.0 - d) * 0.45
+			img.set_pixel(x, y, img.get_pixel(x, y).lerp(glow, k))
+			wrote += 1
+	return wrote
 static func overlay_dbg(org: Vector2, sub: float, root: Node, layout: Node) -> void:
 	printerr("bake_dbg: org %.3f %.3f %.3f" % [org.x, org.y, sub])
 	for id: String in layout.spot_ids():

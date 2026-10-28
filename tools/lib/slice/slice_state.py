@@ -78,13 +78,16 @@ def next_step(st: dict, s: dict) -> str:
         return "the survey message, Q0 and the first ask (nothing to shoot); after her answers `python tools/slice.py start --handoff`"
     if not s["import"]:
         return "`python tools/gate.py gd-load` and `python tools/gate.py import`"
-    if not s["baseline shots"]:
-        return "the baseline (the handoff's PNGs, else shoot the flows), look at it, `python tools/shots.py show`, then the restate and Q0"
     unit = f" ({st['unit']})" if st.get("units") and st.get("unit") else ""
     if not s["forked"]:
-        return f"Gather{unit}: restate, Q0 and her answers, the observable outcome and its signal; then tell her to run `/fork` and continue in the new peer session"
+        return (f"Gather{unit}: shared context only (task, docs, code, outcome). Do not shoot or read pictures. "
+                "Restate, Q0 and her answers; then tell her to run `/fork` and continue in the new peer session")
     tail = " (`python tools/slice.py start --unit-done` updates the task's done: line)" if unit else ""
-    return f"Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)"
+    return (f"Gather continues{unit}: the first fork, when nothing earlier on the task has changed, starts unit 1 and does not run `find.py changed`. "
+            "A later fork runs `python tools/find.py changed` for earlier sessions' committed and uncommitted work, "
+            "then only this unit's pictures (`shots.py review`, never read_file). "
+            f"Then Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; "
+            "then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)")
 
 def short(root: Path, st: dict) -> str:
     """The SLICE ALREADY STARTED text for a later run."""

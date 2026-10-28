@@ -45,7 +45,7 @@ EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-r
 WRITERS = {
     "doc_patch", "code_map", "tunables", "build_changelog",
     "week_pin", "list_unused_funcs", "task", "split_funcs", "facade_requal",
-    "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips", "ci_archive",
+    "move_script_cluster", "enable_texture_mips", "ci_archive",
 }
 # flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
 REQUIRED_HELP = {"web_perf": ("--flow", "--baseline", "--save-baseline", "--strict", "--repeat", "--site"), "export_web": ("--out",)}
@@ -59,7 +59,6 @@ SMOKE: dict[str, list] = {
     "run_isolated_grok": [["--selftest"]],
     "agent_log": [["smoke-job"], ["--selftest"]],
     "anim_review": [["pack", "--dry-run"], ["regen", "--dry-run"], ["tree", "--dry-run"]],
-    "archive_prior_changelogs": [["--dry-run"]],
     "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"], ["--dry-run", "update", "opt-003", "--status", "open"]],

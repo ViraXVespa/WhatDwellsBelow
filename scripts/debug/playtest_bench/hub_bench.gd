@@ -22,6 +22,8 @@ const ST_STRIKE := 6
 const ST_FILL := 7
 const ST_ISO := 8
 const ISO_FLAG := "--wdb-hub-isolate"
+const WALK_FLAG := "--wdb-hub-walk-layers"
+const ABA_FLAG := "--wdb-hub-fill-aba"
 
 const PLAY_SEC := 30.0
 const HARD_SEC := 45.0
@@ -129,13 +131,24 @@ var _iso_t: float = 0.0
 var _iso_spot: Vector3 = Vector3.ZERO
 var _iso_dts: Array[float] = []
 var _iso_proc: Array[float] = []
+var _iso_phys: Array[float] = []
+var _iso_submit: Array[float] = []
 var _iso_all: Array[Node] = []
 var _iso_on: Array[bool] = []
 var _iso_tag: PackedStringArray = PackedStringArray()
 var _iso_lits: Array[Node] = []
 
+var _pre_us: int = 0
+var _proc_us: int = 0
+var _post_us: int = 0
+var _tree_ms: float = -1.0
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if not RenderingServer.frame_pre_draw.is_connected(_on_pre_draw):
+		RenderingServer.frame_pre_draw.connect(_on_pre_draw)
+	if not RenderingServer.frame_post_draw.is_connected(_on_post_draw):
+		RenderingServer.frame_post_draw.connect(_on_post_draw)
 	if CliArgs.has(ISO_FLAG):
 		process_priority = 100
 	_vsync_off()
@@ -157,7 +170,23 @@ func _ready() -> void:
 		"loadout_crystal", "anvil", "vendor", "quest_board", "receptionist", "dummy",
 	])
 
+func _on_pre_draw() -> void:
+	var now: int = Time.get_ticks_usec()
+	if _proc_us > 0:
+		_tree_ms = float(now - _proc_us) / 1000.0
+	_pre_us = now
+
+func _on_post_draw() -> void:
+	var now: int = Time.get_ticks_usec()
+	HitchLog.set_tree_ms(_tree_ms)
+	HitchLog.set_submit_ms(float(now - _pre_us) / 1000.0)
+	_post_us = now
+
 func _process(delta: float) -> void:
+	var now: int = Time.get_ticks_usec()
+	if _post_us > 0:
+		HitchLog.set_after_ms(float(now - _post_us) / 1000.0)
+	_proc_us = now
 	HitchLog.set_phase(_phase_name())
 	HitchLog.set_play_s(_clock)
 	_post_t += delta
@@ -176,7 +205,8 @@ func _process(delta: float) -> void:
 		return
 	End._sample(self, actor)
 	_blank()
-	if _clock >= HARD_SEC and _state != ST_HOLD:
+	var cap: float = 90.0 if CliArgs.has(WALK_FLAG) else HARD_SEC
+	if _clock >= cap and _state != ST_HOLD:
 		End._finish(self, "")
 		return
 	if _state == ST_FACE:
@@ -192,10 +222,15 @@ func _process(delta: float) -> void:
 	elif _state == ST_STRIKE:
 		Step._strike(self, actor, delta)
 	elif _state == ST_FILL:
-		Step._fill(self, delta)
+		if CliArgs.has(ABA_FLAG):
+			Iso._fill_aba(self, delta)
+		elif CliArgs.has(WALK_FLAG):
+			Iso._fill_layers(self, delta)
+		else:
+			Step._fill(self, delta)
 	elif _state == ST_ISO:
 		Iso._isolate(self, actor, delta)
-	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC:
+	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC:
 		End._finish(self, "")
 
 func _actor() -> Node3D:

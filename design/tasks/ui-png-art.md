@@ -16,19 +16,41 @@ The goal of this task is to update all of the menus to be high-quality, professi
 
 ## Process / Review
 
-Follow the start-card ORDER: baseline shot + restate before any generation or edit.
-Shot review: `grok-build.md` Pictures rule (`shots.py review` when text is enough, `shots.py show` when you need the image).
-Unit 1, mockups: one 16:9 starting mockup per major screen (title, pause inventory, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, journal pages, HUD, camp HUD bar, extract/gate). The title background and journal UI are style references only, not edit sources. Layout and content come from the current shots and `ui-ux-audit.md`. Talk screens use new NPC bust views; the receptionist uses her new design. Show the first three for approval, then do the rest. Generate each with `python tools/media.py grok --kind ui --aspect 16:9 --dest-name mockups/<screen>.png --out design/refs/ui-png-art --brief "..."` (lands in `design/refs/ui-png-art/mockups/`); later units build to them.
+Follow the start-card ORDER. The session `slice.py open` started gathers the shared context (this task, `ui-style.md`, `ui-ux-audit.md`) and `/fork`s. It does not shoot or open pictures. `/fork` does not finish gather. The first fork, when nothing earlier on the task has changed, starts unit 1 and does not run `find.py changed`. A later peer gathers only that unit's frames with `shots.py review` (text only; do not `read_file` a PNG or JPG) and gathers earlier sessions' committed and uncommitted changes with `python tools/find.py changed`.
+Shot review: `grok-build.md` Pictures rule (`shots.py review` for the text, `shots.py show` when she should see the image).
+Unit 1, mockups: edit the live shot of each major screen (title, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, HUD, camp HUD bar, extract/gate). The pause menu is not a mockup. It stays as it is. A shell is the frame, the panel material, and the empty interior. No buttons, slots, lists, icons, prompts, or words. Code draws those later. The title background and journal UI are style references only, not edit sources. A world prop may be a second reference so the object survives. Call: `python tools/media.py grok --kind ui --edit --copy <live shot> --dest-name mockups/<screen>.png --out design/refs/ui-png-art --brief "..."` (lands in `design/refs/ui-png-art/mockups/`). Do not pass `--aspect` on an edit. Without `--edit`, one `--copy` plus `--aspect` redraws a new picture and treats the copy as a loose reference. The closer plates are the title and loadout edits below. Other screens wait. Later units build to the edited plates.
 Unit 2 works the crystal UI only. Deliver before/after shots and inform that the unit is done.
 Finish the task in one session when it fits; unfinished work keeps its notes in this task. Vira says when a new session is needed.
 
 ## Style
 Locked look: `design/ui-style.md` Generated art look (read first every session; `--kind ui` stages it). 9-slice rules as listed per row. Load `imagine-isolated` before any image generation.
 
+Her note, 2026-10-27, revised the same day: mockups are shell studies. Preserving the controls was crowding the art. Do not paint controls into a mockup. No buttons, slots, lists, icons, prompts, or words. The picture is the frame, the panel material, and the empty interior where the menu will sit. Code draws the controls later. The pause menu stays as it is. A menu that comes from a world sprite takes that sprite, or its `_src` source, as a `--copy` reference so the prop and its base survive. That sprite is a detail reference. The result is the empty shell. Do not run a second `shots.py review` on a still the generator already returned. Prove sheets scale the larger frame down to the smaller one (`tools/lib/imglib/compare.py` `compose_group` fits every frame to the smallest one).
+
+## Handoff (2026-10-27, mockups unit)
+
+Vira: the `--edit` results are much closer to what she wants. Work from these. They still need fine tuning. Do not go back to `image_gen` redraws.
+
+Next session, first, before any new image:
+1. Expand the Generated art look lines in `design/ui-style.md`. That section is the only style text `--kind ui` stages, and the four lines are not enough for the finish. She corrects the words before another image.
+2. Add any other routes or configurations the fine tuning needs on `media.py grok` (`tools/lib/media/run_isolated_grok.py`, catalog row in `design/tools-media.md`). The call that worked is `--kind ui --edit --copy <live shot>` with no `--aspect`.
+
+Closer plates (edit of the live shot, controls cleared, layout kept):
+- Title: `design/refs/ui-png-art/mockups/title-edit.png` from `design/refs/ui-png-art/title-menu_01-title-card.jpg`. Sheet: `_logs/prove-view/ui-png-art-edits/01-title.png`.
+- Loadout: `design/refs/ui-png-art/mockups/loadout-edit.png` from `design/refs/ui-png-art/camp-npc-panels_04-loadout.jpg`. Sheet: `_logs/prove-view/ui-png-art-edits/02-crystal.png`.
+
+Not the target:
+- `mockups/title-shell.png` and `mockups/loadout-shell.png` are redraws. The job had been told to `image_gen`.
+- `mockups/title-text.png` (same picture as `mockups/title.png`) is the earlier filled title. `mockups/loadout.png` is the earlier filled crystal.
+- Logo, not placed: `mockups/logo.png`.
+- Pause: `mockups/pause-inventory.png` is discarded. Do not redesign the pause menu.
+
+Resume command, from this worktree: `grok -r 01a17fde-814d-7873-a7b8-3b881ebc4b1a --fork-session`.
+
 ## Items
 
  (element: now -> art; spec; priority)
-- Receptionist portrait in the receptionist UI: currently a placeholder/drawing. Replace with the live receptionist character art (assets/sprites/npcs/receptionist.png or the current bust source) so the UI portrait updates automatically when the character art changes. Uses her new design (young goth/metal guild clerk, `hub-guild.md`). High.
+- Receptionist portrait in the receptionist UI: currently a placeholder/drawing. Replace with the live receptionist character art (`assets/sprites/npcs/receptionist.png`, the bust source in `hub-guild.md`) so the UI portrait updates automatically when the character art changes. High.
 - Talk UIs (receptionist, vendor, ghost shop): may use new generated portrait or bust views drawn from the NPC's sprite art, not only the in-game sprite.
 - Crystal background, floor + loadout crystal, shared by the teleport network (her request): code-baked frame with a flat pale-cyan fill -> a NEW generated crystal frame plus crystal-interior graphic, replacing the baked crystal frame (9-slice 128; interior panel-size opaque or 9-slice 128). The pink studs go away with the old frame. Once the new art is wired in, delete the old `assets/ui/frames/crystal/` PNGs and their drawing code (`crystal_art.gd`, the crystal part of `tools/bake.py frames`) after `rg` shows nothing else uses them. High. Refs [camp-npc-panels_04-loadout](../refs/ui-png-art/camp-npc-panels_04-loadout.jpg), [dungeon-map-crystal_02-crystal-root](../refs/ui-png-art/dungeon-map-crystal_02-crystal-root.jpg).
 - Crystal buttons + floor -/+ stepper: flat teal bars, tiny squares -> crystal-cut button 9-slice 96x32 x2 states, arrows 32x32. Med. Same refs.

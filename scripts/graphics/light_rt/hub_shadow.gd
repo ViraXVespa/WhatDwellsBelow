@@ -96,7 +96,9 @@ static func _is_covering(name: String) -> bool:
 	var n := name.to_lower()
 	return n.contains("pitch") or n.contains("gable") or n.contains("roof") or n.contains("tarp")
 static func _hub_casts(node: GeometryInstance3D) -> bool:
-	if node == null or not node.is_visible_in_tree() or node.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+	if node == null or node.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+		return false
+	if not node.is_visible_in_tree() and node.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
 		return false
 	if node is Sprite3D:
 		if (node as Sprite3D).texture == null:
@@ -104,8 +106,6 @@ static func _hub_casts(node: GeometryInstance3D) -> bool:
 	elif not (node is MeshInstance3D) or (node as MeshInstance3D).mesh == null or (node as MeshInstance3D).mesh is PlaneMesh:
 		return false
 	return (node.global_transform * node.get_aabb()).size.y >= SKIP_H
-
-## World point to ground: a point h up lands HubCast.REACH * h along HubCast.AWAY. Ground and below stays put.
 static func _hub_ground(v: Vector3) -> Vector2:
 	var h: float = maxf(v.y, 0.0) * HubCast.REACH
 	return Vector2(v.x + HubCast.AWAY.x * h, v.z + HubCast.AWAY.y * h)

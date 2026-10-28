@@ -118,7 +118,7 @@ def _slow_lines(rows: list[dict]) -> list[str]:
         if int(row.get("paused", 0) or 0) == 1 or int(row.get("bar", 0) or 0) == 1:
             continue
         slow.append(
-            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s draw=%s"
+            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s phys_ms=%s draw=%s tree_ms=%s submit_ms=%s after_ms=%s%s"
             % (
                 row.get("t", ""),
                 row.get("dt_ms", ""),
@@ -128,7 +128,12 @@ def _slow_lines(rows: list[dict]) -> list[str]:
                 row.get("ui", ""),
                 row.get("cell", ""),
                 row.get("proc_ms", ""),
+                row.get("phys_ms", ""),
                 row.get("draw", ""),
+                row.get("tree_ms", ""),
+                row.get("submit_ms", ""),
+                row.get("after_ms", ""),
+                (" pt_ms=%s" % row.get("pt_ms")) if "pt_ms" in row else "",
             )
         )
         if len(slow) >= 8:
@@ -195,6 +200,13 @@ def _run_line(rows: list[dict]) -> str:
     held = 0
     paused = 0
     prev_proc = None
+    phys_vals: list[float] = []
+    draw_vals: list[float] = []
+    tree_vals: list[float] = []
+    submit_vals: list[float] = []
+    after_vals: list[float] = []
+    pt_vals: list[float] = []
+    saw_pt = False
     for row in rows:
         try:
             dts.append(float(row.get("dt_ms", 0) or 0))
@@ -217,11 +229,30 @@ def _run_line(rows: list[dict]) -> str:
         if int(row.get("proc_held", 0) or 0) == 1 or (prev_proc is not None and proc == prev_proc):
             held += 1
         prev_proc = proc
+        try:
+            phys_vals.append(float(row.get("phys_ms", 0) or 0))
+        except (TypeError, ValueError):
+            phys_vals.append(0.0)
+        try:
+            draw_vals.append(float(row.get("draw", 0) or 0))
+        except (TypeError, ValueError):
+            draw_vals.append(0.0)
+        for key, bucket in (("tree_ms", tree_vals), ("submit_ms", submit_vals), ("after_ms", after_vals)):
+            try:
+                bucket.append(float(row.get(key, 0) or 0))
+            except (TypeError, ValueError):
+                bucket.append(0.0)
+        if "pt_ms" in row:
+            saw_pt = True
+            try:
+                pt_vals.append(float(row.get("pt_ms", 0) or 0))
+            except (TypeError, ValueError):
+                pt_vals.append(0.0)
     cell_txt = ""
     if cells:
         cell_txt = cells[0] if cells[0] == cells[-1] else "%s..%s" % (cells[0], cells[-1])
     return (
-        "n=%d t=%s-%s play=%s-%s dt_med=%s phase=%s anim=%s cell=%s why_empty=%d proc_held=%d paused=%d"
+        "n=%d t=%s-%s play=%s-%s dt_med=%s phase=%s anim=%s cell=%s why_empty=%d proc_held=%d paused=%d phys_med=%s draw_med=%s tree_med=%s submit_med=%s after_med=%s"
         % (
             len(rows),
             rows[0].get("t", ""),
@@ -235,8 +266,13 @@ def _run_line(rows: list[dict]) -> str:
             why_empty,
             held,
             paused,
+            _median(phys_vals),
+            _median(draw_vals),
+            _median(tree_vals),
+            _median(submit_vals),
+            _median(after_vals),
         )
-    )
+    ) + (" pt_med=%s" % _median(pt_vals) if saw_pt else "")
 
 def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
     refresh = _refresh_ms(bench)
@@ -346,7 +382,7 @@ def _present_line(row: dict | None) -> str:
             row.get("dt_p50_ms", ""),
             row.get("dt_p95_ms", ""),
         )
-    )
+    ) + (" pt_p50_ms=%s" % row.get("pt_p50_ms") if "pt_p50_ms" in row else "")
 
 def _present_fail(row: dict | None) -> int:
     if not row:
@@ -382,6 +418,30 @@ def _profile_pids(profile: Path) -> list[int]:
             pids.append(int(line))
     return pids
 
+def _clear_gpu_shader_caches() -> list[str]:
+    """Driver shader caches survive a new Edge profile. A warm GPU reports the cached number."""
+    local = os.environ.get("LOCALAPPDATA", "")
+    if not local:
+        return []
+    cleared: list[str] = []
+    for rel in (
+        "D3DSCache",
+        "NVIDIA Corporation/NV_Cache",
+        "NVIDIA/GLCache",
+        "NVIDIA/DXCache",
+        "NVIDIA Corporation/DXCache",
+    ):
+        path = Path(local) / rel
+        if not path.exists():
+            continue
+        if path.is_dir():
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            path.unlink(missing_ok=True)
+        if not path.exists():
+            cleared.append(rel)
+    return cleared
+
 def _stop_profile(profile: Path) -> None:
     for pid in _profile_pids(profile):
         subprocess.run(
@@ -389,18 +449,30 @@ def _stop_profile(profile: Path) -> None:
             capture_output=True,
         )
 
-def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[str]]:
+def _desktop(
+    root: Path,
+    args,
+    out_log: Path,
+    err_log: Path,
+    flag: str = "--wdb-hub-bench",
+    fresh_name: str = "hub-bench-fresh",
+    label: str = "hub bench",
+    extra: list[str] | None = None,
+) -> tuple[int, list[str]]:
     kind = "headless" if args.headless else godot_lib.pick_display()[0]
     gui = kind != "headless" and kind != "none"
-    fresh = Path(root) / "_logs" / "hub-bench-fresh"
+    fresh = Path(root) / "_logs" / fresh_name
     if fresh.exists():
         shutil.rmtree(fresh)
     fresh.mkdir(parents=True)
-    print("Running hub bench desktop (display=%s, fresh=%s)..." % (kind, fresh))
+    print("Running %s desktop (display=%s, fresh=%s)..." % (label, kind, fresh))
+    user = [flag, "--wdb-hitch-mult=1"]
+    if extra:
+        user.extend(extra)
     gargs = (
-        godot_lib.headless_args(root, "--wdb-hub-bench", "--wdb-hitch-mult=1")
+        godot_lib.headless_args(root, *user)
         if not gui
-        else GUI_HEAD + ["--path", str(root), "--", "--wdb-hub-bench", "--wdb-hitch-mult=1"]
+        else GUI_HEAD + ["--path", str(root), "--", *user]
     )
     # Fresh user:// (the bench refuses a warm save): APPDATA on Windows, XDG_DATA_HOME on Linux.
     old = {k: os.environ.get(k) for k in ("APPDATA", "XDG_DATA_HOME")}
@@ -449,17 +521,36 @@ def _desktop(root: Path, args, out_log: Path, err_log: Path) -> tuple[int, list[
         body.append("headless is not an FPS reading")
     return fail, body
 
-def _web(root: Path, args) -> tuple[int, list[str]]:
+def _fresh_web_site(root: Path, prefix: str = "hub-bench-web") -> Path:
+    """A new folder every run. The same path on port 8060 is the service worker's scope."""
+    logs = root / "_logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    for old in logs.glob(prefix + "*"):
+        if old.is_dir():
+            shutil.rmtree(old, ignore_errors=True)
+    return logs / ("%s-%s" % (prefix, time.strftime("%Y%m%d-%H%M%S")))
+
+def _web(
+    root: Path,
+    args,
+    flag: str = "--wdb-hub-bench",
+    site_prefix: str = "hub-bench-web",
+    profile_name: str = "hub-bench-browser",
+    label: str = "hub bench",
+    extra_query: str = "",
+    layer_query: str = "",
+) -> tuple[int, list[str]]:
     import hitch_sink
     import web_perf_lib
 
+    fill_aba = bool(getattr(args, "fill_aba", False))
+    walk_layers = bool(getattr(args, "walk_layers", False))
+    isolate = bool(getattr(args, "isolate", False))
     browser, kind = web_perf_lib.find_browser(args.browser)
     if not browser:
         return 1, ["web", "no Edge or Chrome: pass --browser or set CHROME_BIN"]
-    site = Path(root) / "_logs" / "hub-bench-web"
-    print("Exporting web build for hub bench -> %s" % site)
-    if site.exists():
-        shutil.rmtree(site)
+    site = _fresh_web_site(root, site_prefix)
+    print("Exporting web build for %s -> %s" % (label, site))
     exp = subprocess.run(
         [*boot.cmd("export_web"), "--debug", "--out", str(site)],
         cwd=str(root),
@@ -474,13 +565,15 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     hitch = Path(root) / "_logs" / "web-perf" / "hitch.jsonl"
     if hitch.exists():
         hitch.unlink()
-    profile = Path(root) / "_logs" / "hub-bench-browser"
+    profile = Path(root) / "_logs" / profile_name
     _stop_profile(profile)
     if profile.exists():
         shutil.rmtree(profile, ignore_errors=True)
     profile.mkdir(parents=True)
+    cleared = _clear_gpu_shader_caches()
+    print("shader_cache_cleared=%s" % (",".join(cleared) if cleared else "none"))
     try:
-        srv = hitch_sink.serve(site, root, 8060)
+        srv = hitch_sink.serve(site, root, 0)
     except OSError as exc:
         return 1, ["web", "hitch sink failed: %s" % exc]
     port = int(srv.server_address[1])
@@ -494,10 +587,17 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
             time.sleep(0.1)
     if not ready:
         return 1, ["web", "hitch sink not listening on %d" % port]
-    url = "http://127.0.0.1:%d/index.html?wdb-hub-bench&wdb-hitch-mult=1" % port
-    if args.isolate:
+    qflag = flag[2:] if flag.startswith("--") else flag
+    url = "http://127.0.0.1:%d/index.html?%s&wdb-hitch-mult=1%s" % (port, qflag, extra_query)
+    if layer_query:
+        url += layer_query
+    elif fill_aba:
+        url += "&wdb-hub-fill-aba"
+    elif walk_layers:
+        url += "&wdb-hub-walk-layers"
+    elif isolate:
         url += "&wdb-hub-isolate"
-    print("Running hub bench web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (Path(browser).name, kind, url))
+    print("Running %s web (browser=%s kind=%s headed=1 cap=1 fullscreen=1 url=%s)..." % (label, Path(browser).name, kind, url))
     # Fullscreen at device pixels. A 1280x720 window makes the adaptive canvas
     # render small. These flags do not disable GPU vsync or the frame cap.
     argv = [
@@ -505,9 +605,9 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         "--user-data-dir=" + str(profile),
         "--no-first-run",
         "--no-default-browser-check",
-    "--disable-sync",
-    "--guest",
-    "--edge-skip-compat-layer-relaunch",
+        "--disable-sync",
+        "--edge-skip-compat-layer-relaunch",
+        "--disable-gpu-shader-disk-cache",
         "--disable-extensions",
         "--autoplay-policy=no-user-gesture-required",
         "--new-window",
@@ -574,7 +674,7 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
         for item in ordered_all
         if "isolate layer=" in str(item.get("msg", ""))
     ]
-    if args.isolate:
+    if isolate or walk_layers or fill_aba:
         fail = 0 if isolate_lines else 1
     else:
         fail = int(not ok) + _fps_fail(pct, frames) + _present_fail(row)
@@ -593,17 +693,59 @@ def _web(root: Path, args) -> tuple[int, list[str]]:
     body += _hb_lines(ordered_all) or ["(no HB: lines)"]
     body += ["", "--- slow shape ---"] + _shape_lines(ordered, row)
     body += ["", "--- slowest hitches ---"] + (slow or ["(none)"])
+    if fill_aba:
+        body.append(_aba_line(isolate_lines))
     notes = _browser_notes(profile)
     if any("ERROR" in line.upper() or "WASM" in line.upper() for line in notes):
         body += ["", "--- browser console ---"] + notes
     return fail, body
+
+def _layer_fields(lines: list[str]) -> list[tuple[str, float, int]]:
+    found: list[tuple[str, float, int]] = []
+    for ln in lines:
+        kind = ""
+        submit = ""
+        count = ""
+        for part in ln.split():
+            if part.startswith("layer="):
+                kind = part.split("=", 1)[1]
+            elif part.startswith("submit="):
+                submit = part.split("=", 1)[1]
+            elif part.startswith("n="):
+                count = part.split("=", 1)[1]
+        if not kind or not submit:
+            continue
+        try:
+            found.append((kind, float(submit), int(count or "0")))
+        except ValueError:
+            continue
+    return found
+
+def _aba_line(lines: list[str]) -> str:
+    """base, bare, base2 submit medians. keep=1 only when the first fill stays near 40 ms."""
+    fields = _layer_fields(lines)
+    picked: dict[str, tuple[float, int]] = {}
+    for kind, submit, count in fields:
+        if kind in ("base", "bare", "base2") and kind not in picked:
+            picked[kind] = (submit, count)
+    base = picked.get("base")
+    bare = picked.get("bare")
+    base2 = picked.get("base2")
+    keep = 0
+    if base is not None and bare is not None and base2 is not None and base[0] >= 30.0 and base[1] >= 20:
+        keep = 1
+    def cell(row: tuple[float, int] | None) -> str:
+        if row is None:
+            return "missing"
+        return "%.1f" % row[0]
+    return "aba base=%s bare=%s base2=%s keep=%d" % (cell(base), cell(bare), cell(base2), keep)
 
 def _echo_lines(lines: list[str]) -> list[str]:
     keep = []
     for ln in lines:
         if ln.startswith(("status=", "fps_pct=", "edge=", "leg=", "desktop root=", "web browser=")):
             keep.append(ln)
-        elif "isolate layer=" in ln or ln.startswith("HB: isolate"):
+        elif "isolate layer=" in ln or ln.startswith("HB: isolate") or ln.startswith("aba ") or ln.startswith("layers "):
             keep.append(ln)
         elif ln.startswith("sustained=") or ln.startswith("sustained:"):
             keep.append(ln)
@@ -663,6 +805,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a walk.")
     ap.add_argument("--layers", dest="isolate", action="store_true", help="Web only: stand at the dummy and time each hidden layer group. Does not score the 99 percent bar.")
     ap.add_argument("--isolate", dest="isolate", action="store_true", help=argparse.SUPPRESS)  # old name of --layers
+    ap.add_argument("--walk-layers", action="store_true", help="Web only: run the full bench, then time each hidden layer during the fill walk. Does not score the 99 percent bar.")
+    ap.add_argument("--fill-aba", action="store_true", help="Web only: full walk, then during the fill time normal, all groups hidden, normal again. Does not score the 99 percent bar. Keep it only when the first fill submit stays near 40 ms.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
@@ -702,11 +846,11 @@ def main(argv: list[str] | None = None) -> int:
     body = ["hub bench root=.", "leg=%s" % args.leg]
     body.append(bench_env.env_line(godot=bench_env.godot_version(str(godot_lib.godot_exe())), renderer="gl_compatibility",
         browser="see web leg" if args.leg in ("both", "web") else "n/a", vsync="see present line", cap="max_fps 120", headless=bool(args.headless)))
-    if args.leg in ("both", "desktop") and not args.isolate:
+    if args.leg in ("both", "desktop") and not args.isolate and not args.walk_layers and not args.fill_aba:
         d_fail, d_body = _desktop(root, args, out_log, err_log)
         fail += d_fail
         body += d_body
-    if args.leg in ("both", "web") or args.isolate:
+    if args.leg in ("both", "web") or args.isolate or args.walk_layers or args.fill_aba:
         w_fail, w_body = _web(root, args)
         fail += w_fail
         body += w_body

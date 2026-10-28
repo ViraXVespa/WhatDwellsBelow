@@ -128,7 +128,7 @@ static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: fl
 	if not glance:
 		crit = Combat.roll_crit(App.bal.crit_chance)
 	player.set("last_glance", glance)
-	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag())
+	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag(), int(host.combat_lv))
 
 static func spawn_shot(host: Node, dir: Vector2) -> void:
 	var p: Node3D = ProjS.new()
@@ -142,3 +142,4 @@ static func spawn_shot(host: Node, dir: Vector2) -> void:
 		tex = "res://assets/fx/lightning.png"
 	p.setup(host.global_position, dir, App.bal.enemy_proj_speed, host.atk_range + 1.5, host.damage * Threat.dealt_mult(host.combat_lv), true, false, true, tex)
 	p.source = host.kill_tag()
+	p.hit_lv = int(host.combat_lv)

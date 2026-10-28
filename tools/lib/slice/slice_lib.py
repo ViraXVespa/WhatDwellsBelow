@@ -25,7 +25,7 @@ def step0_note(door: str, job: str, area: str, flows: str, near: str = "") -> st
     name = job or door or area
     return (f"STEP 0 (not a stop): no shot flow is mapped to {name} in routes.yaml `shot_flows`. Creating or adjusting the flow for the exact screen is the first job step, "
             "and flow files (tools/data/shot-flows/) plus the routes.yaml mapping may be edited before the User answers. In the worktree: `python tools/shots.py flow --list` "
-            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, map it by job, shoot it and look at it. "
+            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, and map it by job. The forked session shoots it and reviews it (`shots.py review`; do not read_file the PNG). "
             "Say whether that PNG is the screen being changed, and send its path with the ask."
             + (f" Mapped to the door only, so possibly another screen: {near}." if near else ""))
 
@@ -90,8 +90,9 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
                  Q0]
     elif screen:
         order = [("ORDER: `python tools/gate.py gd-load` once and `python tools/gate.py import` (a fresh worktree has nothing imported; it takes about a minute: start it with "
-                  "`block_until_ms 0` and poll the output once, no skill needed); shoot the baseline and look at it yourself (band=fail is invalid: fix the cause, re-shoot); "
-                  "write the restate as visible text; then Q0; then your other questions. "
+                  "`block_until_ms 0` and poll the output once, no skill needed). This session gathers only what every later fork needs (the task, the docs, the code, the outcome). "
+                  "Do not shoot, review, or read_file pictures here. A screen's frames are unit-specific; the forked session will shoot the baseline and review it with `python tools/shots.py review PNG --question Q` (text only; never read_file a PNG or JPG; band=fail is invalid: fix the cause, re-shoot). "
+                  "Write the restate from the task and the docs; then Q0; then your other questions. "
                   "A task whose Open questions are none already answered Q0. Do not ask it again."),
                  Q0]
     else:
@@ -104,7 +105,8 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
     cycle = [] if mode == "survey" else [
         "CYCLE (build-job-cycle.md): GATHER finishes before any change: no code changes, no new tools; read the code and docs, state the observable outcome "
         "that shows the task is done, confirm the tooling or in-game signal can show it; for a bug or perf miss, confirm the repro's output names the cause, else that is a missing signal. End of Gather: tell the User to run `/fork` and continue in the new peer "
-        "session; the original session ID is the reset point. PREPARE: a missing signal gets the cheapest gated instrument; blocked or a design answer needed: stop "
+        "session; the original session ID is the reset point. That `/fork` is required. It does not finish gather. This session held only what every later fork needs. The first fork, when nothing earlier on the task has changed, starts unit 1 and does not run `python tools/find.py changed`. A later fork picks up where the previous session left off and continues gather for what later sessions on this task would not all need "
+        "(this unit's pictures: `shots.py review`, never read_file) and for committed and uncommitted changes earlier sessions left (`python tools/find.py changed`). PREPARE: a missing signal gets the cheapest gated instrument; blocked or a design answer needed: stop "
         "and update the task. CHANGE: `python tools/gate.py gd-load` once the edits are complete. PROVE is final verification: at most one small corrective "
         "edit and one rerun; still red: stop and report the log path (the RETRY block names `grok -r <original-session-id> --fork-session`). COMPLETE: docs and "
         "the task (`docs.py task done ID`, or handoff notes plus that retry command), "
@@ -112,7 +114,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
     return "\n".join(start + order + cycle + [
         ("EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
          "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. "
-         + ("Order: shoot, look at the pictures yourself, " if screen else "Order: run the check, look at the pictures yourself, ")
+         + ("Pictures are unit-specific, so they are gathered after `/fork`: shoot and `shots.py review` only that unit's frames (do not read_file them), " if screen else "Order: run the check. A still this unit needs is `shots.py review` after `/fork` (do not read_file it), ")
          + "`python tools/shots.py show PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
          + "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it."),
         "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images, and look details you chose inside her rule: never \"none\" for those); \"Assumptions carried from memory or docs\"; "
@@ -251,6 +253,11 @@ def selftest(script: list[str]) -> int:
         got = session_lib.failed_since_ask(rows)
         if [g["what"] for g in got] != ["python tools/y.py"]:
             bad.append(f"failed steps after the last ask: only the RESULT FAIL one: {got}")
+        bg = [{"type": "assistant", "tool_calls": [{"id": "r", "name": "run_terminal_command", "arguments": '{"command": "python tools/shots.py review a.png"}'}]},
+              {"type": "tool_result", "tool_call_id": "r", "content": "Status: failed\nExit Code: 1\nRESULT FAIL reason=isolated session exited 1"}]
+        got = session_lib.failed_since_ask(bg)
+        if [g["what"] for g in got] != ["python tools/shots.py review a.png"]:
+            bad.append(f"a background Exit Code must count as Did not work: {got}")
         # first run (not dry) writes the state; the second run says where the slice stands; --full reprints the card; a dry run always prints the card
         code, out = run(clone, env="sess-1")
         if code != 0 or "IN A WORKTREE" not in out or not (clone / "_logs" / "slice-state.json").is_file() or retry_lib.original(clone).get("session") != "sess-1":

@@ -3,7 +3,8 @@ extends Object
 ## Dynamic 3D render scale. Starts and stays at 1.0 (no change) until real fps holds under DYNRES_FPS_LOW
 ## for one DYNRES_WINDOW_S window; then drops one DYNRES_STEP, never under DYNRES_MIN. Climbs back one step
 ## after DYNRES_RECOVER_WINDOWS windows at or over DYNRES_FPS_HIGH. A climb that gets undone doubles the wait.
-## Off: DYNRES_ON false in tunables.gd, or the launch flag --wdb-no-dynres (web: ?wdb-no-dynres).
+## Off: DYNRES_ON false in tunables.gd, the launch flag --wdb-no-dynres (web: ?wdb-no-dynres), or a web export.
+## Web Compatibility spends more time blitting a scaled buffer than the smaller draw saves, so Auto stays at 1.0 there.
 ## Player setting App.render_scale: 0 = Auto (all of the above); 1.0 / 0.8 / 0.6 pin the scale and stop Auto.
 const T := preload("res://scripts/data/tunables.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -20,7 +21,8 @@ static var _pinned := false
 
 static func enabled() -> bool:
 	if _off < 0:
-		_off = 0 if T.DYNRES_ON and not CliArgs.has("--wdb-no-dynres") else 1
+		var allow: bool = T.DYNRES_ON and not CliArgs.has("--wdb-no-dynres") and not OS.has_feature("web")
+		_off = 0 if allow else 1
 	return _off == 0
 
 static func scale() -> float:

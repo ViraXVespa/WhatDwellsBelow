@@ -57,6 +57,8 @@ var exit_t := 0.0
 var exit_cond := ""
 var exit_killer := ""
 var last_hit := ""
+var last_hit_lv := -1
+var last_hit_lv_set := false
 var last_glance := false
 var interact_lock := 0.0
 var ui_latch := false
@@ -87,8 +89,8 @@ func is_alive() -> bool:
 func _script_at(path: String) -> GDScript:
 	return Tick._gd(path)
 
-func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
-	_script_at("res://scripts/world/player/player_act.gd").take_hit(self, raw, from_dir, crit, src)
+func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "", hit_lv := -1) -> void:
+	_script_at("res://scripts/world/player/player_act.gd").take_hit(self, raw, from_dir, crit, src, hit_lv)
 
 func heal(amount: float) -> void:
 	_script_at("res://scripts/world/player/player_act.gd").heal(self, amount)

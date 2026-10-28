@@ -160,9 +160,9 @@ func _step_spot_receptionist() -> void:
 		if rec_spr.texture:
 			rec_spr.pixel_size = Spec.RECEPTION_H / float(maxi(1, rec_spr.texture.get_height()))
 			rec_spr.material_override = Spot._bust_mat(rec_spr.texture)
-		rec_spr.position = Vector3(0.0, 0.0, 0.0)
+		rec_spr.position = Vector3(0.0, -0.03, 0.0)  # lower bust in window
 		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		rec_spr.render_priority = Spec.DRAW["receptionist"]
+		rec_spr.render_priority = Spec.DRAW["receptionist"] - 2  # player sorts in front on building face
 	var rec_lab: Label3D = rec.get("label") as Label3D
 	if rec_lab:
 		rec_lab.position.y = Spec.RECEPTION_LABEL_Y

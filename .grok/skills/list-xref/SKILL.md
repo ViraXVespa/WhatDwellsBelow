@@ -30,9 +30,9 @@ Shot-flow text dumps:
 python tools/find.py xref --pattern recap --texts
 
 Rules:
-- The tool requires --pattern; a bare positional string is rejected.
+- Pass the text as --pattern (one positional TEXT is the same).
 - Start with an index-style call. Add --expand FILE only for the files you actually need the body of.
 - --regex only when the pattern is a real regex (anchors, groups, |). Plain text does not need it.
 - Default paths are already scripts scenes tools design. Narrow with --path when you know the area.
-- Read the printed index. The RESULT line is only in the _logs/xref summary file, not on stdout. Do not re-run the same search this slice.
+- Read the printed index; its last line is RESULT with the summary path. Do not re-run the same search this slice.
 - Catalog row and jobs: design/tools-lookup.md; full flags: `--help`. Do not open the tool body to learn flags.

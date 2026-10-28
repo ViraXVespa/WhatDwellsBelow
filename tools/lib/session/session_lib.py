@@ -84,7 +84,10 @@ def failed_since_ask(rows: list[dict]) -> list[dict]:
         elif t == "tool_result" and i > start:
             body = _text(r.get("content"))
             m = re.match(r"exit: (-?\d+)", body)
-            bad = (m is not None and (m.group(1) != "0" or re.search(r"^RESULT FAIL", body, re.M) is not None)) or (m is None and FAIL_TEXT.match(body) is not None)
+            code_m = re.search(r"(?m)^Exit Code:\s*(-?\d+)\s*$", body)
+            code = m.group(1) if m else (code_m.group(1) if code_m else None)
+            has_fail = re.search(r"(?m)^RESULT FAIL\b", body) is not None
+            bad = (code is not None and (code != "0" or has_fail)) or (code is None and (has_fail or FAIL_TEXT.match(body) is not None))
             if not bad:
                 continue
             lines = [ln.strip() for ln in body.splitlines() if ln.strip()]

@@ -21,15 +21,9 @@ static func clip(t: String) -> String:
 		return t.substr(0, CLIP) + "\n…"
 	return t
 
-static func extra_path(id: String, path: String) -> String:
-	return "res://archives/docs/%s/%s" % [id, path.get_file()]
-
 static func read_now(e: Dictionary, path: String) -> String:
 	if path == "":
 		return ""
-	var extra := extra_path(str(e.get("id", "")), path)
-	if FileAccess.file_exists(extra):
-		return clip(FileAccess.get_file_as_string(extra))
 	if OS.has_feature("web"):
 		return ""
 	var sha := str(e.get("commit", ""))

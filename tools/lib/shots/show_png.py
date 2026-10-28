@@ -155,6 +155,13 @@ def selftest() -> int:
     tall_cols = compare.grid_shape(4, 20, 100)[0]
     if wide_cols >= tall_cols:
         bad.append("wide cells need fewer columns than tall cells")
+    fitted = compare.compose_group(
+        [Image.new("RGB", (40, 20), (255, 0, 0)), Image.new("RGB", (20, 10), (0, 255, 0))],
+        ["big", "small"],
+        max_side=400,
+    )
+    if fitted.size != (36, 72):
+        bad.append(f"the larger frame must scale down to the smaller one, got {fitted.size}")
     with tempfile.TemporaryDirectory() as td:
         folder = Path(td)
         a = folder / "before.png"

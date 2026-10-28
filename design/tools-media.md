@@ -39,7 +39,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 | `media.py rekey-preview` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `media.py rekey` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
 | `media.py rekey-check` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
-| `media.py grok` | Stage a scratch directory outside the git tree and run a thin Grok Build media job: `--kind ui\|npc\|tile\|character\|still\|i2v --brief "..." --out DIR` (`--dest-name`, `--copy REF`, `--aspect`); `--selftest` mocks grok | D | `--help` | N |
+| `media.py grok` | Stage a scratch directory outside the git tree and run a thin Grok Build media job: `--kind ui\|npc\|tile\|character\|still\|i2v --brief "..." --out DIR` (`--dest-name`, `--copy REF`, `--aspect`, `--edit` with one `--copy` calls `image_edit` on that file and ignores `--aspect`); `--selftest` mocks grok | D | `--help` | N |
 | `media.py sprites` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
 
 ### Image library `tools/lib/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)

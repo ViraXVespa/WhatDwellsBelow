@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Week start, run by Grok Build in the main checkout on an up-to-date main when the User says it is a new week
 (design/build-week-start.md); Grok Bot never runs it. In this order: seed version.json as epoch.{series+1}.0 + open_commit,
-archive prior changelogs, create and switch to the local branch grok-build-w{series+1} from HEAD, commit the seed
-there ("Grok Build Week N": version.json, changelogs, catalog), `grok worktree gc`, delete Godot locks, clean logs
+create and switch to the local branch grok-build-w{series+1} from HEAD, commit the seed
+there ("Grok Build Week N": version.json and the catalog), `grok worktree gc`, delete Godot locks, clean logs
 (--new-week). The weekly archives are NOT made here: when the squash-merge of that branch adds
 design/changelog/0.N.0.md, CI pins grok_build_wN at the merge and grok_web_w{N-1} at its parent (release.py ci-archive). Catch-up only: when the closing series has no
 `grok_web_w{series}` / `grok_build_w{series}` row (CI did not run), the missing rows are pinned at HEAD with local
@@ -28,7 +28,7 @@ import week_pin
 TOOLS = Path(__file__).resolve().parents[2]
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, changelog archive, catch-up pins, gc, clean.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, catch-up pins, gc, clean. A seed-commit failure returns before gc and clean.", writes=True, json_out=True)
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = args.dry_run
@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_log.fail(f"git switch -c {branch} failed; no seed written", 1)
         br = "created"
         say(f"branch={branch} created at {sha[:12]}")
-    # 2. catch-up pins, seed, and parked changelogs now land on the week branch
+    # 2. catch-up pins and the version seed now land on the week branch
     catch, catch_tags = 0, []
     for kind in ("web", "build"):
         spec = week_pin.pin_spec(kind, series)
@@ -107,17 +107,25 @@ def main(argv: list[str] | None = None) -> int:
         if not dry:
             data = {"epoch": epoch, "series": new_series, "patch": 0, "label": new_label, "open_commit": sha}
             ver_p.write_text(json.dumps(data, indent="\t") + "\n", encoding="utf-8")
-    arch = "whatif" if dry else ("ok" if py("release.py park-changelogs") == 0 else "error")
-    if dry:
-        py("release.py park-changelogs", "--dry-run")
-    say(f"archive_changelogs={arch}")
     if not dry:
-        paths = ["scripts/data/version.json", "scripts/data/archive_catalog.json", "design/changelog", "archives/docs"]
-        if repo_lib.run_git(root, "add", "-A", "--", *paths)[0] != 0 or repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths)[0] != 0:
+        # archives/docs is retired (notes are not copied). A missing pathspec fails this add.
+        # Changelog files stay flat. Week start does not move or delete them.
+        paths = ["scripts/data/version.json", "scripts/data/archive_catalog.json"]
+        added = repo_lib.run_git(root, "add", "-A", "--", *paths)
+        committed = repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths) if added[0] == 0 else (1, "")
+        if added[0] != 0 or committed[0] != 0:
             br = "error"
+            detail = (added[1] if added[0] != 0 else committed[1]).strip()
             say(f"branch={branch} seed commit failed")
-        else:
-            say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
+            if detail:
+                say(detail)
+            say("STOP report the RESULT line; hand-fix nothing")
+            return agent_log.finish(
+                "week-start", root, "\n".join(out), "FAIL", args=args, echo="",
+                catchup_pins=catch, seed=seed, branch=br, gc="skipped",
+                locks_deleted=0, clean="skipped", dry_run=dry, reason="seed-commit",
+            )
+        say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
     say(f"push=run: git push -u origin {branch}" + (f" and git push origin {' '.join(catch_tags)} (catch-up tags)" if catch else "") + " (never main; CI archives on the squash-merge)")
     # 4. housekeeping
     gc = "skipped"
@@ -142,9 +150,9 @@ def main(argv: list[str] | None = None) -> int:
         say("locks=none")
     clean = "whatif" if dry else ("ok" if py("session.py clean", "--new-week") == 0 else "error")
     say(f"clean={clean}")
-    bad = "error" in (arch, gc, clean, br)
+    bad = "error" in (gc, clean, br)
     return agent_log.finish("week-start", root, "\n".join(out), "FAIL" if bad else "PASS", args=args, echo="", catchup_pins=catch,
-                            seed=seed, branch=br, archive=arch, gc=gc, locks_deleted=0 if dry else len(locks), clean=clean, dry_run=dry)
+                            seed=seed, branch=br, gc=gc, locks_deleted=0 if dry else len(locks), clean=clean, dry_run=dry)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

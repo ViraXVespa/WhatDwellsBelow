@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
+"""PreToolUse hook. Deny default tools the pc-offload skill replaces.
+
+Grep of one file stays allowed. gate.py build and reading a file under edit stay allowed.
+"""
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -13,9 +18,47 @@ IMAGINE_TOOLS = {
     "ImageEdit",
     "ImageToVideo",
 }
-GREP_TOOLS = {"grep", "Grep", "list_dir", "ListDir", "glob", "Glob"}
+GREP_TOOLS = {"grep", "Grep"}
+LIST_TOOLS = {"list_dir", "ListDir", "glob", "Glob"}
 READ_TOOLS = {"read_file", "Read", "ReadFile"}
+SHELL_TOOLS = {
+    "run_terminal_command",
+    "bash",
+    "shell",
+    "Shell",
+    "Bash",
+    "powershell",
+    "PowerShell",
+}
 TREE_ROOTS = ("scripts", "design", "tools", "scenes")
+_SEP = r"(?:^|&&|\|\||;|\|)"
+_GIT = _SEP + r"\s*git(?:\.exe)?(?:\s+-C\s+\S+)?(?:\s+--[\w.-]+)*\s+"
+GIT_INVENTORY = re.compile(_GIT + r"(?:status|log|diff|show)\b", re.I | re.M)
+GIT_GREP = re.compile(_GIT + r"grep\b", re.I | re.M)
+SEARCH_CMD = re.compile(
+    _SEP + r"\s*(?:rg|grep|findstr|find|Select-String)(?:\.exe)?\b(?!\.py)",
+    re.I | re.M,
+)
+PY_C = re.compile(_SEP + r"\s*(?:python|python3|py)(?:\.exe)?(?:\s+-\d)?\s+-c\b", re.I | re.M)
+LOG_READ = re.compile(
+    r"(?:^|&&|\|\||;|\|)\s*(?:Get-Content|gc|type|cat|more)\b",
+    re.I | re.M,
+)
+LIST_CMD = re.compile(
+    r"(?:^|&&|\|\||;|\|)\s*(?:Get-ChildItem|gci|ls|dir)(?:\.exe)?\b",
+    re.I | re.M,
+)
+BARE_LIST = re.compile(
+    r"(?:^|&&|\|\||;|\|)\s*(?:Get-ChildItem|gci|ls|dir)(?:\.exe)?(?:\s+-\w+)*\s*$",
+    re.I | re.M,
+)
+LENGTH = re.compile(r"\bLength\b")
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+IMAGE_READ = (
+    "Reading an image into this session is denied. "
+    "Use python tools/shots.py review PNG --question Q (only the text report comes back). "
+    "shots.py show opens pictures for the User."
+)
 
 def out(decision: str, reason: str = "") -> int:
     payload = {"decision": decision}
@@ -83,33 +126,105 @@ def tool_blob(event: dict) -> tuple[str, dict]:
 
 def input_paths(inp: dict) -> list[str]:
     found = []
-    for key in ("path", "file_path", "filePath", "target_directory", "targetDirectory", "directory", "glob", "pattern", "command"):
+    for key in ("path", "file_path", "filePath", "target_file", "targetFile", "target_directory", "targetDirectory", "directory", "glob", "pattern", "command", "cmd"):
         val = inp.get(key)
         if val:
             found.append(str(val))
     return found
 
-def hits_tree(text: str, repo: Path | None) -> bool:
-    low = text.replace("\\", "/").lower()
-    for root in TREE_ROOTS:
-        if f"/{root}/" in f"/{low}/" or low.startswith(f"{root}/") or low == root:
+def norm(text: str) -> str:
+    return text.replace("\\", "/").lower()
+
+def path_tokens(text: str) -> list[str]:
+    return [tok.rstrip("/") for tok in re.split(r"[\s\"']+", norm(text)) if tok]
+
+def mentions_root(text: str, root: str, repo: Path | None) -> bool:
+    low = norm(text)
+    if f"/{root}/" in f"/{low}/":
+        return True
+    for token in path_tokens(text):
+        if token == root or token.startswith(root + "/") or token.endswith("/" + root):
             return True
-        if repo is not None:
-            marker = str(repo).replace("\\", "/").lower() + f"/{root}"
-            if marker in low:
-                return True
+    if repo is not None and norm(str(repo)) + "/" + root in low:
+        return True
     return False
 
-def is_fat_log(text: str) -> bool:
-    low = text.replace("\\", "/").lower()
-    if "summary.txt" in low:
-        return False
-    if "/_logs/" not in low and not low.startswith("_logs/"):
-        return False
-    return low.endswith(".log") or low.endswith(".err") or "-out.log" in low or "-err.log" in low
+def hits_tree(text: str, repo: Path | None) -> bool:
+    return any(mentions_root(text, root, repo) for root in TREE_ROOTS)
 
-def main() -> int:
-    event = load_event()
+def hits_scenes(text: str, repo: Path | None) -> bool:
+    return mentions_root(text, "scenes", repo)
+
+def is_image_path(text: str) -> bool:
+    low = norm(text).split("?", 1)[0].rstrip("/")
+    return low.endswith(IMAGE_EXT)
+
+def is_logs_path(text: str) -> bool:
+    low = norm(text)
+    if "/_logs/" in f"/{low}/" or low.startswith("_logs/"):
+        return True
+    for token in path_tokens(text):
+        if token == "_logs" or token.startswith("_logs/") or token.endswith("/_logs"):
+            return True
+    return False
+
+def is_one_file(path: str) -> bool:
+    low = norm(path).rstrip("/")
+    if not low or low.endswith("/"):
+        return False
+    base = low.split("/")[-1]
+    return "." in base
+
+def shell_command(name: str, inp: dict) -> str:
+    if name not in SHELL_TOOLS and name.lower() not in {n.lower() for n in SHELL_TOOLS}:
+        return ""
+    return str(inp.get("command") or inp.get("cmd") or "")
+
+def target_text(inp: dict) -> str:
+    for key in ("target_directory", "targetDirectory", "directory", "path", "glob", "pattern"):
+        val = inp.get(key)
+        if val:
+            return str(val)
+    return ""
+
+def is_repo_root(text: str, repo: Path | None, cwd: Path | None) -> bool:
+    raw = text.strip().strip('"')
+    if raw in ("", ".", "./"):
+        return cwd is not None and repo is not None and not is_isolated(cwd, repo)
+    if repo is None:
+        return False
+    p = as_path(raw)
+    if p is None:
+        return False
+    try:
+        return p.resolve() == repo.resolve()
+    except OSError:
+        return False
+
+def list_reason(text: str, repo: Path | None, cwd: Path | None) -> str:
+    if hits_scenes(text, repo):
+        return "Listing scenes/ is denied. Use tools/find.py scenes."
+    if is_repo_root(text, repo, cwd):
+        return "Listing the repo root is denied. Use tools/find.py route."
+    return "Tree list/grep over scripts|design|tools|scenes is denied. Use tools/find.py xref."
+
+def shell_reason(cmd: str, repo: Path | None, cwd: Path | None) -> str:
+    if GIT_INVENTORY.search(cmd):
+        return "Git status/log/diff/show is denied. Use tools/find.py changed."
+    if GIT_GREP.search(cmd) or SEARCH_CMD.search(cmd):
+        return "Shell search is denied. Use tools/find.py xref. Add --path site for site/."
+    if PY_C.search(cmd):
+        return "python -c is denied. Use tools/find.py stat, or tools/docs.py patch write for a script body."
+    if is_logs_path(cmd) and (LOG_READ.search(cmd) or LIST_CMD.search(cmd)):
+        return "Reading _logs/ is denied. Use tools/session.py summary --job <name>."
+    if LIST_CMD.search(cmd) and not LENGTH.search(cmd):
+        if BARE_LIST.search(cmd.strip()):
+            return "Listing the repo root is denied. Use tools/find.py route."
+        if hits_tree(cmd, repo):
+            return list_reason(cmd, repo, cwd)
+    return ""
+
+def decide(event: dict) -> tuple[str, str]:
     cwd = as_path(event.get("cwd") or event.get("workspaceRoot"))
     workspace = as_path(event.get("workspaceRoot") or event.get("cwd"))
     repo = find_repo(cwd) or find_repo(workspace)
@@ -118,31 +233,109 @@ def main() -> int:
 
     if name in IMAGINE_TOOLS:
         if isolated:
-            return out("allow")
+            return "allow", ""
         if repo is not None:
-            return out(
-                "deny",
-                "Imagine/I2V in the game-repo cwd is denied. Use tools/media.py grok.",
-            )
-        return out("allow")
+            return "deny", "Imagine/I2V in the game-repo cwd is denied. Use tools/media.py grok."
+        return "allow", ""
+
+    if repo is None or isolated:
+        return "allow", ""
 
     blob = " ".join([name, *input_paths(inp)])
-    if name in GREP_TOOLS or name.lower() in {"grep", "listdir", "glob"}:
-        if repo is not None and not isolated and hits_tree(blob, repo):
-            return out(
-                "deny",
-                "Tree grep/list_dir over scripts|design|tools|scenes is denied. Use tools/find.py xref.",
-            )
+    low_name = name.lower()
 
-    if name in READ_TOOLS or "read" in name.lower():
+    if low_name in {"grep"} or name in GREP_TOOLS:
+        path = str(inp.get("path") or inp.get("file_path") or inp.get("filePath") or "")
+        if not is_one_file(path):
+            return "deny", "Repo grep of a directory is denied. Use tools/find.py xref. Add --path site for site/. Grep of one file stays allowed."
+
+    if low_name in {"listdir", "glob"} or name in LIST_TOOLS:
+        text = target_text(inp) or blob
+        if hits_tree(text, repo) or is_repo_root(text, repo, cwd):
+            return "deny", list_reason(text, repo, cwd)
+
+    if name in READ_TOOLS or low_name in {"read", "read_file", "readfile"}:
         for item in input_paths(inp):
-            if is_fat_log(item):
-                return out(
-                    "deny",
-                    "Raw Godot logs under _logs/ are denied. Read the job summary via tools/session.py summary --job <name>.",
-                )
+            if is_image_path(item):
+                return "deny", IMAGE_READ
+            if is_logs_path(item):
+                return "deny", "Reading _logs/ is denied. Use tools/session.py summary --job <name>."
 
-    return out("allow")
+    cmd = shell_command(name, inp)
+    if cmd:
+        reason = shell_reason(cmd, repo, cwd)
+        if reason:
+            return "deny", reason
+
+    return "allow", ""
+
+def main() -> int:
+    if "--selftest" in sys.argv[1:]:
+        return selftest()
+    decision, reason = decide(load_event())
+    return out(decision, reason)
+
+def selftest() -> int:
+    repo = Path(__file__).resolve().parents[3]
+    if not (repo / "project.godot").is_file():
+        print("selftest: repo root not found", file=sys.stderr)
+        return 1
+    root = str(repo)
+    outside = str(repo.parent / "wdb-iso" / "job")
+
+    def ev(tool: str, inp: dict | None = None, cwd: str = root) -> dict:
+        return {"toolName": tool, "toolInput": inp or {}, "cwd": cwd, "workspaceRoot": cwd}
+
+    cases = [
+        (ev("grep", {"path": "design/pc-offload.md", "pattern": "x"}), "allow"),
+        (ev("grep", {"path": "scripts", "pattern": "x"}), "deny"),
+        (ev("grep", {"pattern": "x"}), "deny"),
+        (ev("list_dir", {"target_directory": "scenes"}), "deny"),
+        (ev("list_dir", {"target_directory": root}), "deny"),
+        (ev("list_dir", {"target_directory": "site/data"}), "allow"),
+        (ev("read_file", {"target_file": "_logs/week-start/x.txt"}), "deny"),
+        (ev("read_file", {"target_file": root + "/_logs/godot.log"}), "deny"),
+        (ev("read_file", {"target_file": "design/build-week-start.md"}), "allow"),
+        (ev("read_file", {"target_file": "tools/lib/release/week_start.py"}), "allow"),
+        (ev("read_file", {"target_file": "design/refs/ui-png-art/x.jpg"}), "deny"),
+        (ev("read_file", {"target_file": root + "/assets/sprites/npcs/receptionist.png"}), "deny"),
+        (ev("read_file", {"target_file": root + "/_logs/shot-flow/title-menu/01-title-card.png"}), "deny"),
+        (ev("read_file", {"target_file": "a.png"}, cwd=outside), "allow"),
+        (ev("run_terminal_command", {"command": "git status --porcelain=v1 -b"}), "deny"),
+        (ev("run_terminal_command", {"command": "git log -8 --oneline"}), "deny"),
+        (ev("run_terminal_command", {"command": "git diff -- design/pc-offload.md"}), "deny"),
+        (ev("run_terminal_command", {"command": "git show --stat"}), "deny"),
+        (ev("run_terminal_command", {"command": "git add -- design/pc-offload.md; git status"}), "deny"),
+        (ev("run_terminal_command", {"command": "git push origin grok-build-w9"}), "allow"),
+        (ev("run_terminal_command", {"command": "git commit -m \"fix: a\""}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py xref --pattern foo"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py changed"}), "allow"),
+        (ev("run_terminal_command", {"command": "rg foo scripts"}), "deny"),
+        (ev("run_terminal_command", {"command": "Select-String -Path scripts -Pattern foo"}), "deny"),
+        (ev("run_terminal_command", {"command": "Get-Content _logs/week-start/x.txt"}), "deny"),
+        (ev("run_terminal_command", {"command": "python tools/session.py summary --job week-start"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/session.py py --script _logs/agent-py/a.py"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/gate.py build --batch"}), "allow"),
+        (ev("run_terminal_command", {"command": "python -c \"print(1)\""}), "deny"),
+        (ev("run_terminal_command", {"command": "Get-ChildItem scripts"}), "deny"),
+        (ev("run_terminal_command", {"command": "Get-ChildItem scripts | Select-Object Length"}), "allow"),
+        (ev("run_terminal_command", {"command": "Get-ChildItem"}), "deny"),
+        (ev("run_terminal_command", {"command": "Get-ChildItem site/data"}), "allow"),
+        (ev("image_gen", {"prompt": "x"}), "deny"),
+        (ev("image_gen", {"prompt": "x"}, cwd=outside), "allow"),
+    ]
+    failed = 0
+    for event, want in cases:
+        got, reason = decide(event)
+        if got != want:
+            failed += 1
+            cmd = event["toolInput"].get("command") or event["toolInput"].get("path") or event["toolInput"].get("target_directory") or event["toolInput"].get("target_file") or ""
+            print(f"FAIL {event['toolName']} {cmd!r} want={want} got={got} reason={reason}", file=sys.stderr)
+    if failed:
+        print(f"selftest: {failed} failed", file=sys.stderr)
+        return 1
+    print(f"selftest: {len(cases)} passed")
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -15,6 +15,7 @@ var crit := false
 var hurt_player := false
 var grant_xp := false
 var source := ""
+var hit_lv: int = -1
 var spr: Sprite3D
 var seen: Dictionary = {}
 var body_hits: Dictionary = {}
@@ -127,7 +128,7 @@ func _strike(delta: float) -> bool:
 			if pnode is Node3D and pnode.has_method("take_hit"):
 				var cov := _cov_at(pnode)
 				if Cover.connected(cov):
-					pnode.take_hit(live_dmg * Cover.dmg_mult(cov), dir, crit and Cover.crit_ok(cov), source)
+					pnode.take_hit(live_dmg * Cover.dmg_mult(cov), dir, crit and Cover.crit_ok(cov), source, hit_lv)
 					queue_free()
 					return true
 		return false

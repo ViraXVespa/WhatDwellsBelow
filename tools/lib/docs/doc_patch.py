@@ -301,8 +301,8 @@ def _label_key(label: str) -> tuple[int, ...]:
     return tuple(int(x) for x in label.split("."))
 
 def highest_label(root: Path) -> str:
-    """Highest x.y.z label among design/changelog/**/*.md (archive included); '' if none."""
-    found = [p.stem for p in (root / "design" / "changelog").rglob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)]
+    """Highest x.y.z label among flat design/changelog/*.md; '' if none."""
+    found = [p.stem for p in (root / "design" / "changelog").glob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)]
     return max(found, key=_label_key) if found else ""
 
 def dirty_changelog_label(root: Path) -> str:
@@ -351,6 +351,7 @@ def write_changelog(root: Path, bullets: str | list[str], label: str | None = No
     root = repo_root(root)
     label = label or next_label(root)
     path = root / "design/changelog" / f"{label}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
     if isinstance(bullets, str):
         bullets = [bullets]
     incoming = [b.rstrip() for b in bullets if b.strip()]

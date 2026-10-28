@@ -9,6 +9,7 @@ const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PtGate := preload("res://scripts/debug/playtest/pt_gate.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const THINK_DT := 0.12
 
 var history: Array = []
@@ -89,6 +90,19 @@ func queue_batch() -> String:
 				"cfg": {},
 			})
 	return "Queued %d live runs." % queue.size()
+
+func queue_campaign() -> String:
+	interrupted = false
+	enqueue({
+		"save": "campaign",
+		"weapon": "",
+		"tool": "pickaxe",
+		"gender": "male",
+		"scale": App.bal.playtest_scale,
+		"limit": App.bal.playtest_limit,
+		"cfg": {},
+	})
+	return "Queued campaign."
 
 func enqueue(j: Dictionary) -> void:
 	queue.append(j)
@@ -212,6 +226,7 @@ func _physics_process(delta: float) -> void:
 	_tick(delta)
 	var us: int = Time.get_ticks_usec() - t0
 	PtGate.note(self, "phys", us)
+	HitchLog.add_harness_us(us)
 
 func _tick(delta: float) -> void:
 	if not PlaytestLog.started:

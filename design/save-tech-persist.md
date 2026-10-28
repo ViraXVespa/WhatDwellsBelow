@@ -59,6 +59,10 @@ The Automated Playtest / AI Player system maintains two completely independent s
 2. Progressed save – contains full skill progression and can be reset to a fixed default progressed state.
 Both are stored under isolated paths and follow the same primary + backup safety rules.
 
+A third slot, `user://playtest/campaign`, uses the same primary and backup rules. The first start creates a fresh delver and saves it. Later starts load that delver and do not wipe it. Campaign rows stay out of the recommendation history.
+
+Debug desktop playtest rows and decision events append under `user://playtest/db/` (`runs.jsonl`, `decisions.jsonl`, `weapon_band.json`). That folder is AppData, never the repo. `perf.py curve --sqlite` writes `curve.sqlite` beside the spool. Another person's data is a copy of that folder.
+
 ## Archives
 
 Title-only browser, catalog, isolation and Play: archives.

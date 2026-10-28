@@ -10,7 +10,7 @@ metadata:
 
 # review-shots-isolated
 
-Use it when a text answer is enough → this; need the image → `shots.py show`.
+Use it when a text answer is enough → this; the User should see the image → `shots.py show`. Never `read_file` a PNG or JPG in the parent session. The shared gather (`slice.py open`) does not run this. The forked session whose unit needs the frames does. Turn budget rises with the image count (at least 8, +2 per image, cap 16).
 
 ## Run
 `python tools/shots.py review PNG... --question "..." [--rubric "- item" | --rubric @FILE]`

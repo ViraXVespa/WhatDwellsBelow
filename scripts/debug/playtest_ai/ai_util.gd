@@ -129,6 +129,8 @@ static func is_foe_lock(n: Node) -> bool:
 static func can_use(pt: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or _banned(pt, n):
 		return false
+	if str(n.get("kind")) == "stairs" and bool(n.get("locked")):
+		return false
 	if n.get("used") == true:
 		return false
 	if is_loot_kind(str(n.get("kind"))) and not tool_ok(n):

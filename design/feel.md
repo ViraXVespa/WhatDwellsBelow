@@ -28,7 +28,7 @@ After one successful extraction and return to Placeholdia the player MUST be abl
 
 ## Weapon balance
 
-The three weapons (Great Axe, Lightning Staff, Longbow) MUST remain balanced with one another so that no single weapon type is clearly stronger. The Automated Playtest system actively monitors and supports this constraint.
+The three weapons (Great Axe, Lightning Staff, Longbow) MUST remain balanced with one another so that no single weapon type is clearly stronger. The Automated Playtest system actively monitors and supports this constraint. Over a series, `perf.py curve` is the check: weapon skill by item level, weapon by floor and item level, combat affix by piece item level, and the level-gap histogram (`kill_delta` on a kill, `death_delta` on the killing hit).
 
 ## Accessibility (mandatory)
 
