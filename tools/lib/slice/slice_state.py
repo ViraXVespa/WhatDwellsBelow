@@ -83,7 +83,8 @@ def next_step(st: dict, s: dict) -> str:
         return (f"Gather{unit}: shared context only (task, docs, code, outcome). Do not shoot or read pictures. "
                 "Restate, Q0 and her answers; then tell her to run `/fork` and continue in the new peer session")
     tail = " (`python tools/slice.py start --unit-done` updates the task's done: line)" if unit else ""
-    return (f"Gather continues{unit}: `python tools/find.py changed` for earlier sessions' committed and uncommitted work, "
+    return (f"Gather continues{unit}: the first fork, when nothing earlier on the task has changed, starts unit 1 and does not run `find.py changed`. "
+            "A later fork runs `python tools/find.py changed` for earlier sessions' committed and uncommitted work, "
             "then only this unit's pictures (`shots.py review`, never read_file). "
             f"Then Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; "
             "then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)")
