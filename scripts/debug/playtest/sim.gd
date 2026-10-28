@@ -7,6 +7,7 @@ const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
+const PlaytestHub := preload("res://scripts/debug/playtest_hub/forge_pass.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 
 static func reset_ai_state(pt: Node) -> void:
@@ -76,11 +77,20 @@ static func start_next(pt: Node) -> void:
 	App.prog.pick_weapon = str(pt.job.get("weapon", "great_axe"))
 	App.prog.tool_type = str(pt.job.get("tool", "pickaxe"))
 	App.weapon = App.prog.pick_weapon
-	if pt.slot == "campaign":
+	var hub_uid: int = int(pt.job.get("hub_equip_uid", 0))
+	if pt.slot == "campaign" and hub_uid <= 0:
 		_wear_campaign_weapon()
-	App.prog.begin_run_loadout()
-	App.tel.reset(pt.slot, true)
-	App.tel.start_weapon = App.weapon
+	if hub_uid > 0:
+		App.tel.reset(pt.slot, true)
+		App.tel.start_weapon = App.weapon
+		PlaytestHub.equip_pending(hub_uid)
+		if pt.slot == "campaign":
+			_wear_campaign_weapon()
+		App.prog.begin_run_loadout()
+	else:
+		App.prog.begin_run_loadout()
+		App.tel.reset(pt.slot, true)
+		App.tel.start_weapon = App.weapon
 	Engine.time_scale = 1.0  # the job scale only applies once the AI is acting (playtest_api _tick), never during loads
 	if App.debug and bool(App.debug.get("open")):
 		App.debug.hide_menu()
@@ -184,9 +194,21 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	if App.tel:
 		PlaytestDb.append_finish(App.tel, "", true)
 	if str(pt.slot) == "campaign":
-		Store.save_slot("campaign")
 		if not pt.interrupted and end_s != "stalled":
-			pt.enqueue(_campaign_follow(pt))
+			Engine.time_scale = 1.0
+			var follow: Dictionary = _campaign_follow(pt)
+			App.prog.pick_weapon = str(follow.get("weapon", App.prog.pick_weapon))
+			var tool_id: String = str(follow.get("tool", "pickaxe"))
+			if tool_id == "":
+				tool_id = "pickaxe"
+			App.prog.tool_type = tool_id
+			var hub_uid: int = PlaytestHub.run_hub()
+			if hub_uid > 0:
+				follow["hub_equip_uid"] = hub_uid
+			Store.save_slot("campaign")
+			pt.enqueue(follow)
+		else:
+			Store.save_slot("campaign")
 	else:
 		pt.history.append(App.tel.to_dict())
 		pt._save_history()

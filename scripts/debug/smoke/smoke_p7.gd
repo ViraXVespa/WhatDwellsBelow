@@ -4,8 +4,10 @@ const Binds7 := preload("res://scripts/debug/smoke/smoke_binds.gd")
 const UiPrep := preload("res://scripts/debug/smoke/smoke_ui_prep.gd")
 const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
+const PlaytestHub := preload("res://scripts/debug/playtest_hub/forge_pass.gd")
 const Store := preload("res://scripts/data/save_store.gd")
 const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
@@ -73,6 +75,7 @@ static func p7(host: Node) -> void:
 	printerr("P7: anim_ok=" + str(App.debug.anim_btn != null))
 	store_check()
 	campaign_check()
+	hub_check()
 	tree(host).create_timer(0.4, true, false, true).timeout.connect(func(): tree(host).quit())
 
 static func store_check() -> void:
@@ -255,6 +258,127 @@ static func _restore_save(path: String, had: bool, text: String) -> void:
 		return
 	handle.store_string(text)
 	handle.close()
+
+static func hub_check() -> void:
+	if OS.has_feature("web"):
+		printerr("P7: hub_skip=web")
+		return
+	var mem: Dictionary = Store.collect()
+	var camp: Dictionary = _campaign_snap()
+	var smoke: Dictionary = _files_snap("smoke")
+	var forged: bool = _hub_forge()
+	Store.apply(mem)
+	var skipped: bool = _hub_skip()
+	Store.apply(mem)
+	_campaign_restore(camp)
+	_files_restore(smoke)
+	if forged and skipped:
+		printerr("P7: hub_ok=true")
+	else:
+		printerr("ERROR: Failed to prove the playtest hub pass")
+
+static func _hub_clear() -> void:
+	App.prog.bag.clear()
+	App.prog.bank_items.clear()
+	App.prog.set("forge_book", {})
+	App.prog.pick_weapon = "great_axe"
+	App.prog.tool_type = "pickaxe"
+	App.prog.slots["head"] = {}
+	App.prog.slots["body"] = {}
+	App.prog.slots["legs"] = {}
+	var tool: Dictionary = App.prog.make_tool("pickaxe", "white", 1)
+	tool["hold"] = true
+	tool["kit_src"] = "hold"
+	App.prog.slots["tool"] = tool
+	App.gold = 0
+	App.ore = 0
+	App.wood = 0
+	App.bank_gold = 50000
+	App.bank_ore = 50000
+	App.bank_wood = 50000
+
+static func _hub_forge() -> bool:
+	_hub_clear()
+	var worn: Dictionary = App.prog.make_weapon("great_axe", "green", 1)
+	worn["hold"] = true
+	worn["kit_src"] = "hold"
+	App.prog.holds["weapon"] = [worn]
+	App.prog.hold_pick["weapon"] = 0
+	App.prog.slots["weapon"] = worn.duplicate(true)
+	var donor: Dictionary = App.prog.make_weapon("great_axe", "blue", 4)
+	donor["hold"] = false
+	donor["kit_src"] = "bank"
+	App.prog.bank_items.append(donor)
+	var uid: int = PlaytestHub.run_hub()
+	if uid <= 0 or int(App.prog.slots["weapon"].get("ilvl", 0)) != 1 or App.bank_gold >= 50000:
+		printerr("P7: hub_forge uid=%s ilvl=%s gold=%s" % [str(uid), str(App.prog.slots["weapon"].get("ilvl", 0)), str(App.bank_gold)])
+		return false
+	Store.save_slot("campaign")
+	Store.load_slot("campaign")
+	App.tel.reset("campaign", true)
+	PlaytestHub.equip_pending(uid)
+	var piece: Dictionary = App.prog.slots.get("weapon", {})
+	var found: bool = false
+	for row: Variant in App.tel.changes:
+		if row is Dictionary and str(row.get("phase", "")) == "hub" and str(row.get("kind", "")) == "equip" and str(row.get("slot", "")) == "weapon" and int(row.get("ilvl", 0)) == 4:
+			found = true
+	var ok: bool = int(piece.get("ilvl", 0)) == 4 and str(piece.get("weapon", "")) == "great_axe" and found
+	if not ok:
+		printerr("P7: hub_equip ilvl=%s type=%s change=%s" % [str(piece.get("ilvl", 0)), str(piece.get("weapon", "")), str(found)])
+	return ok
+
+static func _hub_skip() -> bool:
+	_hub_clear()
+	var book: Dictionary = {}
+	book[Affix.book_key("weapon", "great_axe", "green")] = {
+		"ilvl": 2,
+		"ids": [Affix.ID_DMG],
+		"luck": {Affix.ID_DMG: 0.75},
+	}
+	App.prog.set("forge_book", book)
+	var worn: Dictionary = App.prog.make_weapon("great_axe", "green", 2)
+	worn["hold"] = true
+	worn["kit_src"] = "hold"
+	worn["affixes"] = [{"id": Affix.ID_DMG, "value": 999.0, "luck": 0.75}]
+	worn["dmg"] = 999
+	App.prog.holds["weapon"] = [worn]
+	App.prog.hold_pick["weapon"] = 0
+	App.prog.slots["weapon"] = worn.duplicate(true)
+	var donor: Dictionary = App.prog.make_weapon("great_axe", "green", 2)
+	donor["hold"] = false
+	donor["kit_src"] = "bank"
+	donor["affixes"] = [{"id": Affix.ID_DMG, "value": 1.0, "luck": 0.5}]
+	App.prog.bank_items.append(donor)
+	var uid: int = PlaytestHub.run_hub()
+	var piece: Dictionary = App.prog.slots.get("weapon", {})
+	var ok: bool = uid == 0 and App.bank_gold == 50000 and int(piece.get("ilvl", 0)) == 2
+	if not ok:
+		printerr("P7: hub_skip uid=%s gold=%s ilvl=%s" % [str(uid), str(App.bank_gold), str(piece.get("ilvl", 0))])
+	return ok
+
+static func _files_snap(slot: String) -> Dictionary:
+	var pri: String = Store.primary_path(slot)
+	var bak: String = Store.backup_path(slot)
+	var had_pri: bool = FileAccess.file_exists(pri)
+	var had_bak: bool = FileAccess.file_exists(bak)
+	var pri_text: String = ""
+	var bak_text: String = ""
+	if had_pri:
+		pri_text = FileAccess.get_file_as_string(pri)
+	if had_bak:
+		bak_text = FileAccess.get_file_as_string(bak)
+	return {
+		"had_pri": had_pri,
+		"had_bak": had_bak,
+		"pri": pri_text,
+		"bak": bak_text,
+		"pri_path": pri,
+		"bak_path": bak,
+	}
+
+static func _files_restore(snap: Dictionary) -> void:
+	_restore_save(str(snap.get("pri_path", "")), bool(snap.get("had_pri", false)), str(snap.get("pri", "")))
+	_restore_save(str(snap.get("bak_path", "")), bool(snap.get("had_bak", false)), str(snap.get("bak", "")))
 
 static func _slices(text: String) -> bool:
 	return text.find("slice floor_cycle") >= 0 and text.find("slice weapon_skill") >= 0 and text.find("slice weapon_floor") >= 0 and text.find("slice combat_affix") >= 0
