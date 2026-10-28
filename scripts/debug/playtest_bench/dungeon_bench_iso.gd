@@ -2,6 +2,7 @@ extends Object
 
 ## --wdb-dungeon-walk-layers: during visible play, hide one group at a time.
 ## After bare, noenv / linear / rest / empty time what is still submitted.
+## empty1 and empty05 repeat empty with scaling_3d_scale pinned at 1.0 and 0.5.
 ## The playtest keeps acting. This does not score the 99% bar.
 
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -15,6 +16,9 @@ static var _tone_saved: Array[int] = []
 static var _rest_nodes: Array[Node] = []
 static var _rest_on: Array[bool] = []
 static var _rest_cls: Dictionary[String, int] = {}
+## Negative means Auto owns the scale. 1.0 and 0.5 are the empty-window pins.
+static var _scale_pin: float = -1.0
+static var _scale_seen: Array[float] = []
 
 static func active() -> bool:
 	return CliArgs.has(FLAG)
@@ -22,7 +26,7 @@ static func active() -> bool:
 static func _kinds() -> PackedStringArray:
 	return PackedStringArray([
 		"base", "floor", "walls", "sprites", "props", "lights", "hud", "bare",
-		"noenv", "linear", "rest", "empty", "base2",
+		"noenv", "linear", "rest", "empty", "empty1", "empty05", "base2",
 	])
 
 static func _tag(n: Node) -> String:
@@ -193,7 +197,28 @@ static func _restore_rest() -> void:
 			(n as Node3D).visible = on
 		i += 1
 
+static func _root_vp(host: Node) -> Viewport:
+	var tree: SceneTree = host.get_tree()
+	if tree != null and tree.root != null:
+		return tree.root
+	return host.get_viewport()
+
+## Last write before the draw. DynRes.tick already ran in App._process.
+static func pin_draw(host: Node) -> void:
+	if _scale_pin < 0.0:
+		return
+	var vp: Viewport = _root_vp(host)
+	if vp == null:
+		return
+	if not is_equal_approx(vp.scaling_3d_scale, _scale_pin):
+		vp.scaling_3d_scale = _scale_pin
+
 static func _restore(host: Node) -> void:
+	if _scale_pin >= 0.0:
+		_scale_pin = -1.0
+		var vp: Viewport = _root_vp(host)
+		if vp != null:
+			vp.scaling_3d_scale = 1.0
 	var i: int = 0
 	while i < host._iso_all.size():
 		var n: Node = host._iso_all[i]
@@ -228,8 +253,11 @@ static func _hide_rest() -> void:
 			(n as Node3D).visible = false
 		i += 1
 
+static func _empty_kind(kind: String) -> bool:
+	return kind == "empty" or kind == "empty1" or kind == "empty05"
+
 static func _bare_kind(kind: String) -> bool:
-	return kind == "bare" or kind == "noenv" or kind == "linear" or kind == "rest" or kind == "empty"
+	return kind == "bare" or kind == "noenv" or kind == "linear" or kind == "rest" or _empty_kind(kind)
 
 static func _hide(host: Node, tag: String) -> void:
 	var i: int = 0
@@ -251,12 +279,17 @@ static func _apply(host: Node, kind: String) -> void:
 		_hide(host, "bare")
 	elif hide_kind != "base":
 		_hide(host, hide_kind)
-	if kind == "noenv" or kind == "empty":
+	if kind == "noenv" or _empty_kind(kind):
 		_clear_env()
 	if kind == "linear":
 		_set_linear()
-	if kind == "rest" or kind == "empty":
+	if kind == "rest" or _empty_kind(kind):
 		_hide_rest()
+	if kind == "empty1":
+		_scale_pin = 1.0
+	elif kind == "empty05":
+		_scale_pin = 0.5
+	pin_draw(host)
 
 static func _mid(vals: Array[float]) -> float:
 	if vals.is_empty():
@@ -284,8 +317,8 @@ static func _report(host: Node, kind: String) -> void:
 	if n > 0:
 		pct = 100.0 * float(good) / float(n)
 	var draws: int = int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
-	host._hb("HB: isolate layer=%s n=%d p50=%.1f p95=%.1f fps=%.1f draw=%d proc=%.1f phys=%.1f submit=%.1f walk=1" % [
-		kind, n, _mid(host._iso_dts) * 1000.0, _p95(host) * 1000.0, pct, draws, _mid(host._iso_proc), _mid(host._iso_phys), _mid(host._iso_submit),
+	host._hb("HB: isolate layer=%s n=%d p50=%.1f p95=%.1f fps=%.1f draw=%d proc=%.1f phys=%.1f submit=%.1f scale=%.2f walk=1" % [
+		kind, n, _mid(host._iso_dts) * 1000.0, _p95(host) * 1000.0, pct, draws, _mid(host._iso_proc), _mid(host._iso_phys), _mid(host._iso_submit), _mid(_scale_seen),
 	])
 
 static func _sample(host: Node, delta: float) -> void:
@@ -295,6 +328,9 @@ static func _sample(host: Node, delta: float) -> void:
 	host._iso_proc.append(float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0)
 	host._iso_phys.append(float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0)
 	host._iso_submit.append(HitchLog.frame_submit_ms())
+	var vp: Viewport = _root_vp(host)
+	if vp != null:
+		_scale_seen.append(vp.scaling_3d_scale)
 
 ## Called once the dungeon has already been visible for 2 s. Returns true when the pass is done.
 static func tick(host: Node, delta: float) -> bool:
@@ -317,6 +353,7 @@ static func tick(host: Node, delta: float) -> bool:
 		host._iso_proc.clear()
 		host._iso_phys.clear()
 		host._iso_submit.clear()
+		_scale_seen.clear()
 	_apply(host, kind)
 	_sample(host, delta)
 	host._iso_t += delta

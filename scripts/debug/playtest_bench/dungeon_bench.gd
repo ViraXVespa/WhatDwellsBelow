@@ -110,6 +110,7 @@ func _enqueue() -> void:
 	App.playtest.enqueue(job)
 
 func _on_pre_draw() -> void:
+	Iso.pin_draw(self)
 	var now: int = Time.get_ticks_usec()
 	if _proc_us > 0:
 		_tree_ms = float(now - _proc_us) / 1000.0

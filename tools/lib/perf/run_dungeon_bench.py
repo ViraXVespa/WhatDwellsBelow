@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--leg", choices=("both", "desktop", "web"), default="both", help="Which runs to launch (default both).")
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a run.")
-    ap.add_argument("--walk-layers", action="store_true", help="Web only: during play, time each hidden group, then noenv, linear, rest, and empty. Does not score the 99 percent bar. Keep the reading only when the unhidden submit stays near 35 ms.")
+    ap.add_argument("--walk-layers", action="store_true", help="Web only: during play, time each hidden group, then noenv, linear, rest, and empty. empty1 and empty05 repeat empty with scaling_3d_scale pinned at 1.0 and 0.5. Does not score the 99 percent bar. Keep the reading only when the unhidden submit stays near 35 ms.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         layer_query = ""
         extra_query = QUERY
         if args.walk_layers:
-            # Four windows after bare need the dungeon to stay up past the scored 30 s.
+            # Windows after bare, including the two scale pins, need the dungeon past the scored 30 s.
             layer_query = "&wdb-dungeon-walk-layers"
             extra_query = "&wdb-seed=42&wdb-pt-sec=50"
         w_fail, w_body = run_hub_bench._web(

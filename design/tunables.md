@@ -51,7 +51,7 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
 | Archive catalog | `scripts/data/archive_catalog.json` |
 | `TOUCH_DEAD` | 0.24 |
-| `DYNRES_ON` | true. Off: false here, or launch flag `--wdb-no-dynres` (web `?wdb-no-dynres`) |
+| `DYNRES_ON` | true on desktop. Off: false here, launch flag `--wdb-no-dynres` (web `?wdb-no-dynres`), or any web export. Web Auto stays at `scaling_3d_scale` 1.0. A manual 1.0 / 0.8 / 0.6 pin still applies. |
 | `DYNRES_FPS_LOW` / `DYNRES_FPS_HIGH` | 40 / 55 (3D scale drops under LOW, may climb back at HIGH+) |
 | `DYNRES_STEP` / `DYNRES_MIN` | 0.1 / 0.6 (`scaling_3d_scale` starts 1.0; `dyn_res.gd`) |
 | `DYNRES_WINDOW_S` / `DYNRES_HITCH_S` | 1.5 / 0.5 (fps window; longer frames are ignored) |
