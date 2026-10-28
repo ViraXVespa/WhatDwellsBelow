@@ -45,7 +45,7 @@ Not the target:
 - Logo, not placed: `mockups/logo.png`.
 - Pause: `mockups/pause-inventory.png` is discarded. Do not redesign the pause menu.
 
-`media.py grok --selftest` is red on Windows: the mock `grok` file has no extension, so it is not on `PATH`. The `--edit` text checks in that test did pass. Resume command, from this worktree: `grok -r 01a17fde-814d-7873-a7b8-3b881ebc4b1a --fork-session`.
+Resume command, from this worktree: `grok -r 01a17fde-814d-7873-a7b8-3b881ebc4b1a --fork-session`.
 
 ## Items
 

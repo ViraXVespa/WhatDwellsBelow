@@ -136,7 +136,18 @@ def _die(msg: str, code: int = 2) -> None:
     raise SystemExit(code)
 
 def _which_grok(name: str) -> str | None:
+    # An explicit path must win. Windows shutil.which ignores a file whose
+    # suffix is not in PATHEXT, which is how the extensionless selftest fake failed.
+    direct = Path(name)
+    if direct.is_file():
+        return str(direct)
     return shutil.which(name)
+
+def grok_argv(grok_bin: str, *args: str) -> list[str]:
+    """Run a .py stand-in (the selftest) with this interpreter. A real grok.exe stays argv0."""
+    if Path(grok_bin).suffix.lower() == ".py":
+        return [sys.executable, grok_bin, *args]
+    return [grok_bin, *args]
 
 def _style_lines(*, use_bibles: bool, kind: str, staged: bool = False) -> str:
     if kind == "npc" and not use_bibles:
@@ -435,7 +446,7 @@ def grok_child_argv(
     fork: bool = False,
     output_format: str = "plain",
 ) -> list[str]:
-    argv = [grok_bin]
+    argv = grok_argv(grok_bin)
     if resume:
         argv += ["--resume", resume]
         if fork:
@@ -579,9 +590,8 @@ def selftest() -> int:
             bad.append(need)
     with tempfile.TemporaryDirectory(prefix="wdb-iso-st-") as tmp:
         t = Path(tmp)
-        fake = t / "grok"
+        fake = t / "grok.py"
         fake.write_text(FAKE_GROK, encoding="utf-8")
-        fake.chmod(0o755)
         me = [*boot.cmd("run_isolated_grok"), "--kind", "ui", "--grok", str(fake), "--no-reuse", "--keep"]
         r = subprocess.run(me + ["--dest-name", "mockups/title.png", "--out", str(t / "out")], text=True, capture_output=True)
         keep = next((ln[5:] for ln in r.stdout.splitlines() if ln.startswith("keep=")), "")
@@ -787,7 +797,7 @@ def main() -> None:
             if resolved is None:
                 print("inspect=skipped (grok not on PATH)")
             else:
-                ins = run_cmd([grok_bin, "inspect"], cwd=scratch, dry_run=False)
+                ins = run_cmd(grok_argv(grok_bin, "inspect"), cwd=scratch, dry_run=False)
                 if ins is not None:
                     text = (ins.stdout or "") + "\n" + (ins.stderr or "")
                     if inspect_mentions_repo_agents(text):
