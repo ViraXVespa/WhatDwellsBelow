@@ -3,10 +3,12 @@ extends Node
 ## --wdb-dungeon-bench: one fresh-save playtest at time scale 1, then quit.
 ## Frames count only while the dungeon scene is showing and the loader bar is down.
 ## --wdb-pt-sec (default 30) is acting seconds. --wdb-hitch-mult=N (default 1).
+## --wdb-dungeon-walk-layers times hidden groups during play and does not score fps_pct.
 
 const FLAG := "--wdb-dungeon-bench"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const Iso := preload("res://scripts/debug/playtest_bench/dungeon_bench_iso.gd")
 
 const WAIT_SEC := 120.0
 const HARD_SEC := 210.0
@@ -66,6 +68,17 @@ var _proc_us: int = 0
 var _pre_us: int = 0
 var _post_us: int = 0
 var _tree_ms: float = -1.0
+var _iso_ready: bool = false
+var _iso_i: int = 0
+var _iso_applied: int = -1
+var _iso_t: float = 0.0
+var _iso_dts: Array[float] = []
+var _iso_proc: Array[float] = []
+var _iso_phys: Array[float] = []
+var _iso_submit: Array[float] = []
+var _iso_all: Array[Node] = []
+var _iso_on: Array[bool] = []
+var _iso_tag: PackedStringArray = PackedStringArray()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -82,6 +95,8 @@ func _enqueue() -> void:
 		_finish("no_playtest")
 		return
 	var act_sec: float = CliArgs.float_arg("--wdb-pt-sec", 30.0)
+	if Iso.active():
+		act_sec = maxf(act_sec, 45.0)
 	var job: Dictionary = {
 		"save": "fresh",
 		"weapon": "great_axe",
@@ -130,12 +145,22 @@ func _process(delta: float) -> void:
 		HitchLog.set_phase("play")
 		_clock += delta
 		HitchLog.set_play_s(_clock)
+		if Iso.active() and _clock >= 2.0 and Iso.tick(self, delta):
+			_finish("")
+			return
 	else:
 		HitchLog.set_phase("wait")
 		_wait_hb += delta
 		if _wait_hb >= 2.0:
 			_wait_hb = 0.0
 			_hb("HB: wait")
+	if Iso.active() and _saw:
+		if not showing:
+			_finish("left")
+			return
+		if _wall_s() >= HARD_SEC:
+			_finish("timeout")
+		return
 	if _saw and not App.playtest.live_running:
 		_finish("")
 		return

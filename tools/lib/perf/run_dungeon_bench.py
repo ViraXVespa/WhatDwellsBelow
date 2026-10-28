@@ -58,6 +58,20 @@ def _report(root: Path, args) -> int:
     )
 
 
+def _layers_line(lines: list[str]) -> str:
+    """First unhidden window. keep=1 only when its submit stays near 35 ms."""
+    fields = run_hub_bench._layer_fields(lines)
+    base = None
+    for kind, submit, count in fields:
+        if kind == "base" and base is None:
+            base = (submit, count)
+    keep = 0
+    if base is not None and 30.0 <= base[0] <= 45.0 and base[1] >= 20:
+        keep = 1
+    shown = "missing" if base is None else "%.1f" % base[0]
+    return "layers base=%s keep=%d" % (shown, keep)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser(
         "One ~30s fresh dungeon playtest (desktop window and a visible web export), plus a hitch summary.",
@@ -68,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--leg", choices=("both", "desktop", "web"), default="both", help="Which runs to launch (default both).")
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a run.")
+    ap.add_argument("--walk-layers", action="store_true", help="Web only: during play, time each hidden group. Does not score the 99 percent bar. Keep the reading only when the unhidden submit stays near 35 ms.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
@@ -84,19 +99,22 @@ def main(argv: list[str] | None = None) -> int:
         cap="max_fps 120",
         headless=bool(args.headless),
     ))
-    if args.leg in ("both", "desktop"):
+    if args.leg in ("both", "desktop") and not args.walk_layers:
         d_fail, d_body = run_hub_bench._desktop(
             root, args, out_log, err_log,
             flag=FLAG, fresh_name="dungeon-bench-fresh", label="dungeon bench", extra=EXTRA,
         )
         fail += d_fail
         body += d_body
-    if args.leg in ("both", "web"):
+    if args.leg in ("both", "web") or args.walk_layers:
+        layer_query = "&wdb-dungeon-walk-layers" if args.walk_layers else ""
         w_fail, w_body = run_hub_bench._web(
             root, args,
             flag=FLAG, site_prefix="dungeon-bench-web", profile_name="dungeon-bench-browser",
-            label="dungeon bench", extra_query=QUERY,
+            label="dungeon bench", extra_query=QUERY, layer_query=layer_query,
         )
+        if args.walk_layers:
+            w_body.append(_layers_line(w_body))
         fail += w_fail
         body += w_body
     echo = run_hub_bench._echo_lines(body)

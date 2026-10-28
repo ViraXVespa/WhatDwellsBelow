@@ -529,6 +529,7 @@ def _web(
     profile_name: str = "hub-bench-browser",
     label: str = "hub bench",
     extra_query: str = "",
+    layer_query: str = "",
 ) -> tuple[int, list[str]]:
     import hitch_sink
     import web_perf_lib
@@ -579,7 +580,9 @@ def _web(
         return 1, ["web", "hitch sink not listening on %d" % port]
     qflag = flag[2:] if flag.startswith("--") else flag
     url = "http://127.0.0.1:%d/index.html?%s&wdb-hitch-mult=1%s" % (port, qflag, extra_query)
-    if fill_aba:
+    if layer_query:
+        url += layer_query
+    elif fill_aba:
         url += "&wdb-hub-fill-aba"
     elif walk_layers:
         url += "&wdb-hub-walk-layers"
@@ -733,7 +736,7 @@ def _echo_lines(lines: list[str]) -> list[str]:
     for ln in lines:
         if ln.startswith(("status=", "fps_pct=", "edge=", "leg=", "desktop root=", "web browser=")):
             keep.append(ln)
-        elif "isolate layer=" in ln or ln.startswith("HB: isolate") or ln.startswith("aba "):
+        elif "isolate layer=" in ln or ln.startswith("HB: isolate") or ln.startswith("aba ") or ln.startswith("layers "):
             keep.append(ln)
         elif ln.startswith("sustained=") or ln.startswith("sustained:"):
             keep.append(ln)
