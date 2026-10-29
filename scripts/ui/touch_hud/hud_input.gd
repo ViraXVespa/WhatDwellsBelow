@@ -25,7 +25,7 @@ static func down(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 	for row in host._btns:
 		if pos.distance_to(row["pos"]) <= float(row["r"]) + 8.0:
 			var action := str(row["action"])
-			if action == "map_view" and Touch.in_camp():
+			if Touch.in_camp() and action in ["map_view", "food", "potion"]:
 				return
 			host._btn_i[idx] = action
 			if action == "attack":

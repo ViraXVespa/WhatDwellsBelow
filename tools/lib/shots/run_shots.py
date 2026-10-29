@@ -115,6 +115,7 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         f"--wdb-shot-zoom={args.zoom}",
         f"--wdb-shot-cx={args.cx}",
         f"--wdb-shot-cz={args.cz}",
+        "--wdb-scheme=" + args.scheme if args.scheme else "",
         "--wdb-shot-scene=camp" if args.scene in ("camp", "hub") else (f"--wdb-shot-scene={args.scene}" if args.scene in SCREENS else "--wdb-shot-scene=dungeon"),
     ]
     if args.width > 0:
@@ -259,6 +260,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--timeout-sec", type=int, default=TIMEOUT_SEC, help="Godot timeout in seconds.")
     p.add_argument("--out", default="", help="PNG path override (with --steps: the last frame)")
     p.add_argument("--show", action="store_true", help="leave the Godot window visible")
+    p.add_argument("--scheme", choices=("pc", "gamepad", "touch"), default=None,
+                    help="Force input scheme: pc=keyboard prompts, gamepad=pad prompts, touch=overlay")
     p.add_argument("--hud", type=int, default=-1, help="1=HUD on, 0=HUD off; -1 uses recipe")
     p.add_argument("--width", type=int, default=0, help="window width px (0 keeps the project size)")
     p.add_argument("--height", type=int, default=0, help="window height px (0 keeps the project size)")

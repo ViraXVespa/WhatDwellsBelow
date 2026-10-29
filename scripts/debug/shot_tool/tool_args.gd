@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Postcard shot CLI arg readers. Leaf module.
 
@@ -35,6 +35,10 @@ static func _arg_str(key: String, fallback: String) -> String:
 		if s.begins_with(prefix):
 			return s.substr(prefix.length())
 	return fallback
+
+
+static func scheme() -> String:
+	return _arg_str("--wdb-scheme", "")
 
 static func scene_name() -> String:
 	var s: String = _arg_str("--wdb-shot-scene", "dungeon")

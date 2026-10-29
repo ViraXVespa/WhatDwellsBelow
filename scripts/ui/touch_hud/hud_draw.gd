@@ -9,11 +9,11 @@ const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
-const INK := Color(Tok.INK, 0.94)
-const INK_DIM := Color(Tok.INK_SOFT, 0.55)
-const WELL := Color(Tok.PAPER, 0.90)
-const WELL_DIM := Color(0.90, 0.84, 0.72, 0.55)
-const RING := Color(Tok.RULE, 0.90)
+const INK := Color(0.98, 0.96, 0.90, 0.96)
+const INK_DIM := Color(0.55, 0.48, 0.38, 0.55)
+const WELL := Color(Tok.PAPER, 0.92)
+const WELL_DIM := Color(0.90, 0.84, 0.72, 0.40)
+const RING := Color(Tok.RULE, 0.92)
 const RING_DIM := Tok.RULE_QUIET
 const KNOB := Color(Tok.INK, 0.88)
 const PRESS := Color(Tok.PAPER_DEEP, 0.94)
@@ -86,7 +86,7 @@ static func draw_pad(host: CanvasLayer) -> void:
 		var action := str(row["action"])
 		var pos: Vector2 = row["pos"]
 		var r: float = float(row["r"])
-		var dim := action == "map_view" and Touch.in_camp()
+		var dim := Touch.in_camp() and action in ["map_view", "food", "potion"]
 		var on := Touch.held(action) and not dim
 		if action == "attack" and Touch.attack_latch:
 			on = true

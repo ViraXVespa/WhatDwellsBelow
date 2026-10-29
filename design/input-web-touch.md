@@ -28,7 +28,7 @@ No right aim well. Auto-aim / target-lock stays armed for the whole touch sessio
 | Right-hand cluster | Low-right (about 86% × 78% of the viewport, clamped off the bezel). Small top row: map / food / potion / pause, centered on the 2×2. Large 2×2 under it (25% larger wells, grown top-left): attack / special on top, interact / dash on the bottom |
 | RT glyph | Hold-to-attack while the finger is down. No double-tap latch |
 | LT / B / A glyphs | Special, dash, interact |
-| Menu / View glyphs | Pause, map. Map well stays visible in Placeholdia but is disabled (no tap) |
+| Menu / View glyphs | Pause, map. Map, food, and potion wells stay visible in Placeholdia but are disabled (no tap); all other buttons are fully enabled |
 | D-pad Up / Left glyphs | Potion, food |
 | Pinch | World or map zoom if the walk stick is not claimed. A parked left finger does not count as claimed |
 | Swipe | Pans the large map when zoomed in, if the walk stick is not claimed and the finger did not start on a cluster button |

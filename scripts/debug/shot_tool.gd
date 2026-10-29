@@ -11,6 +11,8 @@ const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
 const Pose := preload("res://scripts/debug/shot_tool/tool_pose.gd")
 const Capture := preload("res://scripts/debug/shot_tool/capture.gd")
 const Guard := preload("res://scripts/debug/shot_tool/save_guard.gd")
+const Touch := preload("res://scripts/input/touch_pad.gd")
+const Pad := preload("res://scripts/input/pad.gd")
 
 const FLAG := Args.FLAG
 
@@ -65,6 +67,15 @@ static func hide_window() -> void:
 static func attach_dungeon(host: Node) -> void:
 	if not active():
 		return
+	var scheme := Args.scheme()
+	if scheme == "touch":
+		Touch.force_show = true
+	elif scheme == "gamepad":
+		Pad.mode = true
+		Touch.force_show = false
+	elif scheme == "pc":
+		Pad.mode = false
+		Touch.force_show = false
 	hide_window()
 	var method := str(ProjectSettings.get_setting("rendering/renderer/rendering_method"))
 	var rd := RenderingServer.get_rendering_device()
