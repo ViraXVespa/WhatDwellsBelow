@@ -1,5 +1,33 @@
 {
 	"series": "0.9",
 	"generated_from": "design/changelog",
-	"entries": []
+	"entries": [
+		{
+			"label": "0.9.1",
+			"points": [
+				{
+					"text": "Touch controls: in the hub only map, food, and potion stay dimmed and non-interactive; all other buttons are fully enabled. In the dungeon every button is fully enabled."
+				},
+				{
+					"text": "Shots: new `--scheme pc|gamepad|touch` flag forces keyboard prompts, gamepad prompts, or the touch overlay for visual proofs."
+				}
+			],
+			"summary": "Touch-pad buttons no longer appear disabled when usable; shot tool can force input scheme."
+		},
+		{
+			"label": "0.9.0",
+			"points": [
+				{
+					"text": "Process and tooling: pre-tool hook tightened; week-start no longer parks changelogs; asset-fit values refreshed."
+				},
+				{
+					"text": "Performance tooling expanded (dungeon/hub benches, layer isolation, playtest curve)."
+				},
+				{
+					"text": "Telemetry and playtest campaign slot added; minor hub collision and shadow polish."
+				}
+			],
+			"summary": "Grok Build Week 9 \u2014 tooling, process, asset-fit, and performance infrastructure."
+		}
+	]
 }
