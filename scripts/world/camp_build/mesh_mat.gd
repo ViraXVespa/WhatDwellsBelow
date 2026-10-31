@@ -109,6 +109,7 @@ static func face_light(mat: Material, face_z: float, x_ends := Vector2.ZERO) -> 
 	if x_ends != Vector2.ZERO:
 		mat.set_shader_parameter("face_x", x_ends)
 		mat.set_shader_parameter("edge", Vector2(FaceLit.EDGE, FaceLit.EDGE_SPAN))
+		mat.set_shader_parameter("eave", Vector2(FaceLit.EAVE, FaceLit.EAVE_SPAN))
 
 ## Cloth (tarp, awning): wrap_mat with a white second tint, flags true, false.
 static func _cloth(png: String, dim: Vector2, world_min: Vector3, tint: Color) -> Material:

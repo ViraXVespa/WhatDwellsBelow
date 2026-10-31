@@ -17,6 +17,9 @@ const SHADE_TO := 0.9
 const EDGE := 0.74
 const EDGE_SPAN := 0.3
 const HEM := 0.72
+## Awning cloth (wrap_shader face_light): darker under the eave at the wall (v 0), opening to full light by EAVE_SPAN.
+const EAVE := 0.7
+const EAVE_SPAN := 1.0
 const HEM_SPAN := 0.18
 const BASE := 0.8
 const BASE_FROM := 0.6
@@ -30,6 +33,8 @@ static func rel(l: float, flat := false) -> float:
 	return clampf(lerpf(to, 1.0, (l - HubCast.SHADE_NEAR) / (1.0 - HubCast.SHADE_NEAR)), 0.0, 1.0 if flat else LIFT)
 static func edge(u: float, flat := false) -> float:
 	return 1.0 if flat else lerpf(EDGE, 1.0, smoothstep(0.0, EDGE_SPAN, minf(u, 1.0 - u)))
+static func eave(v: float, flat := false) -> float:
+	return 1.0 if flat else lerpf(EAVE, 1.0, smoothstep(0.0, EAVE_SPAN, v))
 static func band(v: float) -> float:
 	return lerpf(HEM, 1.0, smoothstep(0.0, HEM_SPAN, v)) * lerpf(1.0, BASE, smoothstep(BASE_FROM, 1.0, v))
 

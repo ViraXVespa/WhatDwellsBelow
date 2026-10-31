@@ -34,6 +34,7 @@ uniform float k = 0.85;
 uniform float slope_k = 0.1;
 uniform vec2 face_x = vec2(0.0); // cloth x extent: falls off toward the ends like the faces (edge, edge_span)
 uniform vec2 edge = vec2(1.0, 0.3);
+uniform vec2 eave = vec2(1.0, 0.7); // FaceLit.eave: darker under the eave at the wall (UV.y 0)
 uniform float floor_l = 0.46; // FaceLit: light relative to the bake's own-shade floor, capped at lift
 uniform float lift = 1.35;
 uniform float shade_to = 0.92;
@@ -69,7 +70,7 @@ void fragment() {
 		float fx = clamp((wpos.x - face_x.x) / max(face_x.y - face_x.x, 0.001), 0.0, 1.0);
 		float lam = clamp(dot(n, sun_dir) / max(sun_dir.y, 0.001), 0.0, 1.0);
 		vec3 l = texture(light_tex, luv).rgb;
-		lit = mix(vec3(1.0), clamp(mix(vec3(shade_to), vec3(1.0), (l - floor_l) / (1.0 - floor_l)), vec3(0.0), vec3(lift)) * mix(edge.x, 1.0, smoothstep(0.0, edge.y, min(fx, 1.0 - fx))), k) * mix(1.0, lam, slope_k);
+		lit = mix(vec3(1.0), clamp(mix(vec3(shade_to), vec3(1.0), (l - floor_l) / (1.0 - floor_l)), vec3(0.0), vec3(lift)) * mix(edge.x, 1.0, smoothstep(0.0, edge.y, min(fx, 1.0 - fx))) * mix(eave.x, 1.0, smoothstep(0.0, eave.y, UV.y)), k) * mix(1.0, lam, slope_k);
 	} else if (ignore_actor_shadow < 0.5) {
 		vec2 span = max(light_span, vec2(0.001));
 		vec2 luv = clamp((wpos.xz + light_shift - light_origin) / span, vec2(0.0), vec2(1.0));

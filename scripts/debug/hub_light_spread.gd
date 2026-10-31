@@ -5,7 +5,8 @@ extends RefCounted
 ## by FaceLit.rel, times the side fall-off FaceLit.edge; the face's fixed hem/base band is left out so only light-map shading counts) across the surface. Per surface: p10/p50/p90 of the light
 ## multiplier. A surface fails when p90 - p10 < MIN_SPREAD (shading flattened) or p90 < LIT_MIN (lit parts far below
 ## main's unlit 1.0). Flow: assert .bad equals "" and .plant equals "caught" (the same surfaces with a flat remap,
-## shade_to 1 and no fall-off, must FAIL flat). .report prints every row.
+## shade_to 1, no side fall-off and no eave band, must FAIL flat). Awnings also need the eave band: the middle
+## column's wall-to-front spread must reach MIN_SPREAD, else FAIL vflat. .report prints every row.
 
 const FaceLit := preload("res://scripts/world/camp_build/face_lit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -23,7 +24,7 @@ var report: String:
 	get:
 		var out: PackedStringArray = PackedStringArray()
 		for r: Dictionary in rows(false):
-			out.append("%s p10=%.2f p50=%.2f p90=%.2f spread=%.2f raw=%.2f..%.2f" % [r.who, r.p10, r.p50, r.p90, r.p90 - r.p10, r.lo, r.hi])
+			out.append("%s p10=%.2f p50=%.2f p90=%.2f spread=%.2f v=%.2f raw=%.2f..%.2f" % [r.who, r.p10, r.p50, r.p90, r.p90 - r.p10, float(r.get("v", -1.0)), r.lo, r.hi])
 		return " | ".join(out)
 
 static func faults(rs: Array) -> String:
@@ -33,6 +34,8 @@ static func faults(rs: Array) -> String:
 	for r: Dictionary in rs:
 		if r.p90 - r.p10 < MIN_SPREAD:
 			out.append("%s:flat=%.2f" % [r.who, r.p90 - r.p10])
+		if r.has("v") and float(r.v) < MIN_SPREAD:
+			out.append("%s:vflat=%.2f" % [r.who, r.v])
 		if r.p90 < LIT_MIN:
 			out.append("%s:dark=%.2f" % [r.who, r.p90])
 	return " ".join(out)
@@ -74,8 +77,13 @@ static func _cloth(c: MeshInstance3D, flat: bool) -> Dictionary:
 			var z: float = maxf(box.position.z + box.size.z * (j + 0.5) / GRID, face_z) + FaceLit.AHEAD
 			var l: float = _l(Vector2(x, z))
 			raw.append(l)
-			vals.append(lerpf(1.0, FaceLit.rel(l, flat) * FaceLit.edge((i + 0.5) / GRID, flat), FaceLit.K))
-	return _stats("awning@%.1f" % box.get_center().x, vals, raw)
+			vals.append(lerpf(1.0, FaceLit.rel(l, flat) * FaceLit.edge((i + 0.5) / GRID, flat) * FaceLit.eave((j + 0.5) / GRID, flat), FaceLit.K))
+	var mid: Array = []
+	for j in GRID:
+		mid.append(vals[(GRID / 2) * GRID + j])
+	var r: Dictionary = _stats("awning@%.1f" % box.get_center().x, vals, raw)
+	r["v"] = float(mid.max()) - float(mid.min())
+	return r
 
 static func _l(xz: Vector2) -> float:
 	var c: Color = LightRt.sample_xz(xz)
