@@ -1,4 +1,4 @@
-"""Hub bake reproduce check (tools/bake.py check --rebake; bot_status --prove row bake_repro).
+"""Hub bake reproduce check (tools/bake.py check --rebake).
 
 Rebakes hub_light.png from the committed sources (tools/bake.py camp), compares the fresh stamp with HUB_BAKE_STAMP,
 then restores every file the bake wrote. FAILs when the committed png is not what its committed sources produce (a
