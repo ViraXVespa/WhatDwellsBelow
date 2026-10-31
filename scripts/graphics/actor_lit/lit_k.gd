@@ -31,6 +31,7 @@ uniform vec4 shade = vec4(0.02, 0.02, 0.02, 0.55);
 // mark inside a building's shadow does not double it. Point-light marks keep sun_cancel 0.
 uniform float sun_cancel = 0.0;
 uniform float soft = 0.0;
+varying float sole_v;
 const float SOFT_GROW = 5.0;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
@@ -43,6 +44,7 @@ void vertex() {
 	clip.z += 0.003 * clip.w;
 	POSITION = clip;
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	sole_v = UV2.y > 0.0 ? UV2.y : 1.0;
 }
 
 void fragment() {
@@ -54,7 +56,9 @@ void fragment() {
 		cov = 0.0;
 		for (int i = -2; i <= 2; i++) {
 			for (int j = -2; j <= 2; j++) {
-				cov += texture(albedo_tex, UV + vec2(float(i), float(j)) * d * 0.5).a;
+				vec2 tap = UV + vec2(float(i), float(j)) * d * 0.5;
+				tap.y = min(tap.y, sole_v);
+				cov += texture(albedo_tex, tap).a;
 			}
 		}
 		cov /= 25.0;

@@ -31,6 +31,8 @@ var _ink_budget: float = 0.0
 var _flip: bool = false
 ## Deep yard prop (camp_build.mark_props): "profile" / "raised" casts Soles._solid of the sticker; "" the sticker.
 var solid: String = ""
+## Profile footprint depth (texels): the mark's contact tucks this far up-screen under the curved base.
+var foot: int = 0
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	if body == null or sticker == null:
@@ -169,6 +171,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
 		mat.set_shader_parameter("albedo_tex", Soles._solid(tex, solid) if solid != "" else tex)
+		foot = Soles._foot(tex) if solid == "profile" else 0
 	if key == _key_at[slot] and node.mesh != null:
 		return
 	_key_at[slot] = key

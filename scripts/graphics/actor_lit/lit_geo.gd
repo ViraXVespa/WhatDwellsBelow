@@ -21,7 +21,7 @@ static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -
 	var world: Vector3 = lit.spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
 	var dropped: Vector2 = _drop_floor(lit, world)
 	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
-	var tuck: float = lit.spr.pixel_size * 2.0
+	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot))
 	var back: Vector2 = Vector2(0.0, -1.0)
 	var cam: Camera3D = lit.get_viewport().get_camera_3d()
 	if cam != null:
@@ -70,7 +70,9 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	uvs.append(Vector2(span.z, span.y))
 	uvs.append(Vector2(span.x, span.y))
 	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
-	return Commit.commit(verts, null, uvs, indices)
+	# UV2.y carries the contact row so the soft taps stop there (no half-coverage daylight line at the sole).
+	var edge: Vector2 = Vector2(0.0, span.w - 0.5 / th)
+	return Commit.commit(verts, null, uvs, indices, PackedVector2Array([edge, edge, edge, edge]))
 
 static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
 	# Sole edge is the camera-dropped foot line. Head shears along the light.
