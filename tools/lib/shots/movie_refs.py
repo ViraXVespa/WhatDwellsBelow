@@ -173,7 +173,7 @@ def short(text: str, n: int = 56) -> str:
     return text if len(text) <= n else text[:n].rsplit(" ", 1)[0].rstrip(",;:(") + "..."
 
 def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
-    """Captioned ba segment per changed row -> reel.mp4, reel-x.mp4, reel.gif, contact.png."""
+    """Captioned ba segment (a wipe gets promo BEFORE/AFTER chips with the ref labels as sublines) per changed row -> reel.mp4, reel-x.mp4, reel.gif, contact.png."""
     from PIL import Image
     from imglib import compare
     Image.MAX_IMAGE_PIXELS = None
@@ -188,9 +188,10 @@ def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
             else:
                 ia, ib = peak_frames(a, b, td)
             seg = td / (r["name"] + "-ba.mp4")
-            r["layout"] = clip_fx.ba(a, b, seg, labels=labels)["layout"]
+            pick = clip_fx.ba(a, b, seg, labels=labels, style="promo")
+            r["layout"] = pick["layout"]
             capt = td / (r["name"] + "-cap.mp4")
-            clip_edit.caption(seg, short("%s: %s" % (r["name"], r["about"])), capt)
+            clip_edit.caption(seg, short("%s: %s" % (r["name"], r["about"])), capt, pos="top" if "promo" in pick else "bottom")
             segs.append(capt)
             for im in (ia, ib):
                 im.thumbnail((960, 960))

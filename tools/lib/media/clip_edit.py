@@ -17,6 +17,7 @@
   python tools/media.py clip mark IN --box X,Y,W,H [--box ...] [--no-arrows] [--start S --end E] --out O.mp4
   python tools/media.py clip caption IN --cue 0,2,"First" --cue 2.5,5,"Second" --out O.mp4      # timed captions
   python tools/media.py clip ba BEFORE AFTER [--layout auto|wipe|sbs|stack] [--box B] --out O.mp4  # auto zoom + wipe
+  python tools/media.py clip wipe|ba A B --style promo [--subs "Week 8,Week 9"] [--end-card "TITLE|SUB"]  # promo chips + grip
   python tools/media.py clip --selftest                                          # synthetic clips through every op (ffmpeg only)
 
 ffmpeg/ffprobe do the work; this file only builds the filter graphs and checks the X limits (framing, transitions and
@@ -188,6 +189,8 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
     size = clip_fx.size_of(args.size) if args.size else (0, 0)
     boxes = [clip_fx.box_px(b, i["w"], i["h"], root, args.movie) for b in args.box]
     labs = tuple((args.labels.split(",") + ["", ""])[:2])
+    subs = tuple((args.subs.split(",") + ["", ""])[:2])
+    end = tuple((args.end_card.split("|") + [""])[:2]) if args.end_card else None
     if args.op in ("crop", "zoom", "mark") and not boxes:
         agent_log.fail("%s needs --box" % args.op)
     if args.op == "crop":
@@ -198,13 +201,17 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
     elif args.op == "fit":
         clip_fx.fit(ins[0], size or clip_fx.SIZES["x"], out, args.fill)
     elif args.op == "wipe":
-        clip_fx.wipe(ins[0], ins[1], out, labs, args.hold, args.sweep, not args.once, font=args.font)
+        if args.style == "promo":
+            import clip_promo
+            print("promo: %s" % json.dumps(clip_promo.wipe(ins[0], ins[1], out, labs, subs, max(args.hold, 1.2), args.sweep, end=end, font=args.font)))
+        else:
+            clip_fx.wipe(ins[0], ins[1], out, labs, args.hold, args.sweep, not args.once, font=args.font)
     elif args.op == "pip":
         clip_fx.pip(ins[0], ins[1], out, args.corner, args.scale, args.start, args.end)
     elif args.op == "mark":
         clip_fx.mark(ins[0], boxes, out, not args.no_arrows, args.start, args.end, args.color)
     elif args.op == "ba":
-        pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font)
+        pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font, style=args.style, subs=subs, end=end)
         print("ba pick: %s" % json.dumps(pick))
     return []
 
@@ -238,6 +245,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-arrows", action="store_true", help="mark: boxes only")
     ap.add_argument("--cue", action="append", default=[], help="caption: START,END,TEXT (repeat; END 0 = to the end)")
     ap.add_argument("--layout", choices=("auto", "wipe", "sbs", "stack"), default="auto", help="ba layout (auto: zoom + wipe for a small change)")
+    ap.add_argument("--style", choices=("plain", "promo"), default="plain", help="wipe/ba: promo = chip labels, eased grip divider, one sweep (clip_promo.py)")
+    ap.add_argument("--subs", default="", help="wipe/ba --style promo: chip sublines, comma separated (e.g. Week 8,Week 9)")
+    ap.add_argument("--end-card", default="", help="wipe/ba --style promo: end card TITLE|SUBLINE after the comparison")
     ap.add_argument("--selftest", action="store_true", help="run every op on synthetic clips")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
