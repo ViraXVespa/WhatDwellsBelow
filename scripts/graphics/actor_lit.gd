@@ -153,6 +153,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
 			shade_mat.set_shader_parameter("sun_cancel", 1.0 if slot == 0 and not App.in_dungeon else 0.0)
 			shade_mat.set_shader_parameter("soft", 0.0 if App.in_dungeon else K.HUB_SOFT)
+			shade_mat.set_shader_parameter("grow", K.SOLID_GROW if solid != "" else K.SOFT_GROW)
 		node.visible = true
 
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:

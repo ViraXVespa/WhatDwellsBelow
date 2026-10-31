@@ -54,10 +54,12 @@ static func _drop_floor(lit: Variant, world: Vector3) -> Vector2:
 static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
-	var x0: float = span.x * tw
-	var x1: float = span.z * tw
-	var y0: float = span.y * th
+	var pad: float = K.SOFT_PAD if not App.in_dungeon else 0.0
+	var x0: float = span.x * tw - pad
+	var x1: float = span.z * tw + pad
+	var y0: float = span.y * th - pad
 	var y1: float = span.w * th
+	span = Vector4(x0 / tw, y0 / th, x1 / tw, span.w)
 	var verts: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()

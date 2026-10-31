@@ -21,18 +21,23 @@ const HUB_POINT_REACH := 2.2
 const SUN_SOFT := 0.1
 ## Hub mark edge softness (texels of the sticker): matches the baked building shadow's soft edge.
 const HUB_SOFT := 1.5
+const SOFT_GROW := 5.0
+const SOLID_GROW := 1.6
+## Quad pad (texels) past the caster's top and sides so the blur fades out instead of hitting the quad edge.
+const SOFT_PAD := 8.0
 
 const SHADE := """
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_opaque;
-uniform sampler2D albedo_tex : source_color, filter_linear;
+uniform sampler2D albedo_tex : source_color, filter_linear, repeat_disable;
 uniform vec4 shade = vec4(0.02, 0.02, 0.02, 0.55);
 // Sun mark in the hub (sun_cancel 1): fades where the baked ground is already in shade (floor_l = full shade), so a
 // mark inside a building's shadow does not double it. Point-light marks keep sun_cancel 0.
 uniform float sun_cancel = 0.0;
 uniform float soft = 0.0;
+// Penumbra growth toward the far end; solid yard props use SOLID_GROW so one silhouette keeps one softness.
+uniform float grow = 5.0;
 varying float sole_v;
-const float SOFT_GROW = 5.0;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
@@ -49,10 +54,10 @@ void vertex() {
 
 void fragment() {
 	// Soft edge (soft > 0, hub): a penumbra that grows away from the contact (UV.y 1 = sole row, 0 = sprite top), like
-	// the baked building shadows': soft texels at the sole up to SOFT_GROW x soft at the far end, 5x5 coverage taps.
+	// the baked building shadows': soft texels at the sole up to grow x soft at the far end, 5x5 coverage taps.
 	float cov = texture(albedo_tex, UV).a;
 	if (soft > 0.0) {
-		vec2 d = soft * mix(SOFT_GROW, 1.0, UV.y) / vec2(textureSize(albedo_tex, 0));
+		vec2 d = soft * mix(grow, 1.0, clamp(UV.y, 0.0, 1.0)) / vec2(textureSize(albedo_tex, 0));
 		cov = 0.0;
 		for (int i = -2; i <= 2; i++) {
 			for (int j = -2; j <= 2; j++) {
