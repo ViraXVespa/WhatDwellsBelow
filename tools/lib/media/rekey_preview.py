@@ -9,6 +9,11 @@ in tools/ so the next session runs it again. session.py py would delete a copy
 under _logs/agent-py/.
 
 Does not nearest-upscale the plate first (that distorted the female face).
+
+    python tools/media.py rekey-preview --pixelate 32 [--palette 24] [--only dumpster,stall]
+--pixelate N (cells per metre; 32 = the hub ground pixel) adds key.pixelate after keying and writes
+before|after pairs as px_<name>.png. With it the hub set (HUB_SET, live keyed art, world width per sheet
+width) is previewed too.
 """
 from __future__ import annotations
 
@@ -38,6 +43,17 @@ OPEN_SET = (
     ("hatchet", "assets/ui/gear/hatchet.png", 64, 2),
     ("longbow", "assets/ui/gear/longbow.png", 64, 2),
     ("slot_legs", "assets/ui/gear/slot_legs.png", 64, 2),
+)
+# Hub props and faces: name, live path, world metres across the sheet (negative = sheet height: interact_fx spr_h
+# 0.85 for the yard props; positive = width: layout_spec box x * face_w for the faces).
+HUB_SET = (
+    ("dumpster", "assets/sprites/props/dumpster.png", -0.85),
+    ("anvil", "assets/sprites/props/anvil.png", -0.85),
+    ("notice_board", "assets/sprites/props/notice_board.png", -0.85),
+    ("sign", "assets/sprites/props/sign.png", -0.85),
+    ("stall", "assets/sprites/buildings/stall.png", 4.6 * 0.96),
+    ("guild", "assets/sprites/buildings/guild.png", 5.6),
+    ("guild_reception", "assets/sprites/buildings/guild_reception.png", 3.8),
 )
 BLUE = (30, 60, 140, 255)
 FIT_FLOOR = 24
@@ -108,13 +124,34 @@ def _one(root: Path, name: str, live: str, canvas: int, pad: int, out_dir: Path,
         line += f" preview=_logs/rekey-look/{name}.png"
     return line
 
+def _pair(a: Image.Image, b: Image.Image, scale: int = 3) -> Image.Image:
+    w, h = a.size
+    out = Image.new("RGBA", (w * 2 + 4, h), BLUE)
+    out.paste(a, (0, 0), a)
+    out.paste(b, (w + 4, 0), b)
+    return out.resize((out.width * scale, out.height * scale), Image.NEAREST)
+
+def _pixel_one(root: Path, name: str, im: Image.Image, metres: float, cells: float, palette: int, out_dir: Path, dry: bool) -> str:
+    side = im.size[1] if metres < 0 else im.size[0]
+    cell = side / max(abs(metres), 1e-6) / cells
+    px = key.pixelate(im, cell, palette)
+    a = np.array(px)
+    line = (f"px {name} cell={cell:.2f}src_px colours={len(np.unique(a[a[..., 3] > 0][:, :3], axis=0))} "
+            f"partial={int(((a[..., 3] > 0) & (a[..., 3] < 255)).sum())}")
+    if not dry:
+        _pair(im, px).save(out_dir / f"px_{name}.png")
+        line += f" preview=_logs/rekey-look/px_{name}.png"
+    return line
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Preview the open-set rekey on blue. Does not write live assets.", writes=True)
     ap.add_argument("--only", default="", help="Comma-separated names from the open set (default: all nine).")
+    ap.add_argument("--pixelate", type=float, default=0.0, help="Cells per metre for key.pixelate after keying (32 = hub ground pixel); adds the hub set.")
+    ap.add_argument("--palette", type=int, default=0, help="With --pixelate: quantize to this many colours (0 = off).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     wanted = {p.strip() for p in args.only.split(",") if p.strip()}
-    names = {row[0] for row in OPEN_SET}
+    names = {row[0] for row in OPEN_SET} | ({row[0] for row in HUB_SET} if args.pixelate > 0 else set())
     bad = wanted - names
     if bad:
         agent_log.fail(f"unknown name(s): {', '.join(sorted(bad))}. Known: {', '.join(n for n, *_ in OPEN_SET)}")
@@ -126,6 +163,8 @@ def main(argv: list[str] | None = None) -> int:
     missing = 0
     shown = 0
     for name, live, canvas, pad in OPEN_SET:
+        if args.pixelate > 0 and not wanted:
+            break
         if wanted and name not in wanted:
             continue
         shown += 1
@@ -133,6 +172,17 @@ def main(argv: list[str] | None = None) -> int:
         if line.endswith("MISSING source for " + live) or " MISSING source " in line:
             missing += 1
         lines.append(line)
+    if args.pixelate > 0:
+        for name, live, metres in HUB_SET:
+            if wanted and name not in wanted:
+                continue
+            path = root / live
+            if not path.is_file():
+                missing += 1
+                lines.append(f"px {name} MISSING {live}")
+                continue
+            shown += 1
+            lines.append(_pixel_one(root, name, imgio.load(path).convert("RGBA"), metres, args.pixelate, args.palette, out_dir, args.dry_run))
     status = "FAIL" if missing else "PASS"
     if missing:
         lines.append(f"{missing} source(s) missing")
