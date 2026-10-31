@@ -24,6 +24,60 @@ SCOPE: dict[str, tuple[str | None, list[str]]] = {
     "textsize": ("textsize", []),
 }
 
+## Visual-review gate: a branch touching these needs _logs/visual-review/<sha>.md for the tip (or for an ancestor with
+## no visual path changed since). Questions 1-6 are a starting point, not an exhaustive list: any ad hoc issue counts.
+VISUAL = ["assets/sprites/*", "assets/baked/*", "scripts/graphics/*", "scripts/world/camp*", "scripts/world/camp/*",
+          "scripts/world/camp_build/*", "tools/data/hub_bake_inputs.json"]
+REVIEW_DIR = "_logs/visual-review"
+QUESTIONS = [
+    "Every object grounded, nothing floating?",
+    "Every shadow matches its object's 3D shape and the light direction?",
+    "Surfaces meet with no gaps or overlaps?",
+    "Sizes in proportion to the player?",
+    "No unnatural repetition or mirroring?",
+    "Lighting/shading present and natural, compared with the last approved round?",
+    "Anything else that looks wrong, odd or unnatural? (not limited to the above; name the areas and objects scanned)",
+]
+SHOTS = ["python3 tools/shots.py capture --scene camp --mode build --hud 0 --zoom 2.0 --px 14 --pz 10 --out <wide.png>",
+         "python3 tools/shots.py flow --flow camp-prop-shadows  (close-ups: _logs/shot-flow/camp-prop-shadows/*.png)"]
+_BARE = {"ok", "okay", "yes", "no", "fine", "none", "n/a", "na", "good", "pass", "same", "nothing", "-", "looks good", "all good"}
+
+def review_text(text: str, root: Path) -> list[str]:
+    """Faults in one review file: wide/close shot lines naming existing files, and answers 1..7 that say what was seen."""
+    bad = []
+    for kind in ("wide", "close"):
+        shots = [ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.lower().startswith(kind + ":")]
+        if not shots:
+            bad.append(f"no '{kind}: <shot path>' line")
+        bad += [f"{kind} shot missing on disk: {p}" for p in shots if not (root / p).is_file() and not Path(p).is_file()]
+    for i in range(1, len(QUESTIONS) + 1):
+        ans = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.strip().startswith(f"{i}:")), "")
+        words = len(ans.split())
+        if not ans or ans.lower().strip(" .!") in _BARE or words < (8 if i == 7 else 5):
+            bad.append(f"answer {i} empty or bare ({ans[:30]!r}): name what you saw" + (" and which areas/objects you scanned" if i == 7 else ""))
+    return bad
+
+def review_faults(root: Path, changed: list[str]) -> list[str]:
+    """[] when the branch touches no VISUAL path, or a valid review exists for HEAD or an ancestor with no visual change since."""
+    if not hits(changed, VISUAL):
+        return []
+    d = root / REVIEW_DIR
+    for f in sorted(d.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True) if d.is_dir() else []:
+        sha = f.stem
+        if subprocess.run(["git", "merge-base", "--is-ancestor", sha, "HEAD"], cwd=root, capture_output=True).returncode:
+            continue
+        since = _git(root, "diff", "--name-only", sha).split()
+        if hits(since, VISUAL):
+            continue
+        return [f"{f.relative_to(root)}: {b}" for b in review_text(f.read_text(encoding="utf-8"), root)]
+    head = _git(root, "rev-parse", "HEAD").strip()
+    return [f"no visual review for {head[:8]}: write {REVIEW_DIR}/{head}.md (commit first; the sha is the tip's)"]
+
+def review_help() -> list[str]:
+    return (["review: lines 'wide: <png>' and 'close: <png>' (one or more each), then '1: ...' to '7: ...' naming what you saw.",
+             "review: 1-6 are a starting point, not an exhaustive list; any ad hoc issue counts under 7. 'ok' / 'none' alone fail."]
+            + [f"review Q{i}: {q}" for i, q in enumerate(QUESTIONS, 1)] + [f"review shot: {c}" for c in SHOTS])
+
 def globs(root: Path, check: str) -> list[str]:
     rule_id, extra = SCOPE[check]
     out = list(extra)
@@ -107,9 +161,38 @@ def selftest() -> int:
         why, _ = decide(r, "stale_refs", ["README.md"], {"stale_refs": "x"}, True)
         if why is not None:
             bad.append(f"--full must run: {why}")
+        (r / "w.png").write_bytes(b"x")
+        good = "wide: w.png\nclose: w.png\n" + "".join(f"{i}: saw the dumpster raised on four wheels, light between them\n" for i in range(1, 7)) \
+            + "7: scanned guild front, reception window, yard props, ground and both awnings: nothing else odd\n"
+        if review_text(good, r):
+            bad.append(f"full review must pass: {review_text(good, r)}")
+        for name, txt in [("bare ok", good.replace("1: saw the dumpster raised on four wheels, light between them", "1: ok")),
+                          ("bare none on 7", good.split("7:")[0] + "7: none\n"),
+                          ("no question 7", good.split("7:")[0]),
+                          ("no wide shot", good.replace("wide: w.png\n", "")),
+                          ("shot not on disk", good.replace("close: w.png", "close: gone.png"))]:
+            if not review_text(txt, r):
+                bad.append(f"review {name} must fail")
+        if review_faults(r, ["README.md"]):
+            bad.append("docs-only branch must not need a review")
+        (r / "assets/sprites").mkdir(parents=True)
+        (r / "assets/sprites/a.png").write_bytes(b"x")
+        _git(r, "add", "-A")
+        _git(r, "commit", "-qm", "1")
+        if not review_faults(r, ["assets/sprites/a.png"]):
+            bad.append("sprite change with no review must fail")
+        sha = _git(r, "rev-parse", "HEAD").strip()
+        (r / REVIEW_DIR).mkdir(parents=True)
+        (r / REVIEW_DIR / f"{sha}.md").write_text(good)
+        if review_faults(r, ["assets/sprites/a.png"]):
+            bad.append(f"sprite change with a tip review must pass: {review_faults(r, ['assets/sprites/a.png'])}")
+        (r / "assets/sprites/a.png").write_bytes(b"y")
+        _git(r, "commit", "-qam", "2")
+        if not review_faults(r, ["assets/sprites/a.png"]):
+            bad.append("a sprite change after the reviewed sha must need a new review")
     for b in bad:
         print("FAIL", b)
-    print(f"RESULT {'FAIL' if bad else 'PASS'} cases=5 bad={len(bad)}")
+    print(f"RESULT {'FAIL' if bad else 'PASS'} cases=14 bad={len(bad)}")
     return 1 if bad else 0
 
 if __name__ == "__main__":

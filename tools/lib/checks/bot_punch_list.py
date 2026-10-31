@@ -243,6 +243,12 @@ def main(argv: list[str] | None = None) -> int:
         repro = scope.run("bake_repro", lambda: run_check(root, "check_hub_bake", "--rebake"))
         lines.append(f"bake_repro={repro} (rows: python tools/bake.py check --rebake)")
         explore_bad = False if args.no_explore else explore(root, lines, scope)
+        review = scope.ps.review_faults(root, scope.changed)
+        lines.append(f"visual_review={'FAIL' if review else 'PASS'} (hub art, lighting or bake paths need {scope.ps.REVIEW_DIR}/<tip sha>.md)")
+        if review:
+            lines.extend(f"review\t{b}" for b in review)
+            lines.extend(scope.ps.review_help())
+            explore_bad = True
         if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)) or shipped:
             rc = 1
 
