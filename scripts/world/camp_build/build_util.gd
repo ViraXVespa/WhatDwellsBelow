@@ -1,6 +1,7 @@
 extends Object
 
 const FaceLit := preload("res://scripts/world/camp_build/face_lit.gd")
+const Chunky := preload("res://scripts/graphics/chunky.gd")
 
 ## Camp build shared leaf helpers: box/face emit, stall parts.
 
@@ -30,6 +31,7 @@ static func face(
 		spr.region_rect = Rect2(0.0, th * cap, tw, rh)
 	var fw: float = maxf(face_w, 0.2)
 	spr.pixel_size = fw / tw
+	spr.texture = Chunky.tex(spr.texture, spr.pixel_size)
 	var sh: float = spr.pixel_size * rh
 	spr.position = Vector3(x_off, -box_size.y * 0.5 - 0.02 + sh * 0.5 - 0.06, box_size.z * Spec.FACE_Z - 0.001)
 	spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

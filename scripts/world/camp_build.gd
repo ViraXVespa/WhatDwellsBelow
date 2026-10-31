@@ -144,6 +144,7 @@ static func mark_props(host: Node3D) -> void:
 		var spr: Sprite3D = n.get("spr") as Sprite3D
 		if spr == null or not MARKED.has(str(n.get("kind"))) or n.has_node("ActorLit"):
 			continue
+		spr.texture = load("res://scripts/graphics/chunky.gd").tex(spr.texture, spr.pixel_size)
 		spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		load("res://scripts/graphics/actor_lit.gd").bind(n, spr)
 		n.get_node("ActorLit").set("solid", {"anvil": "profile", "dumpster": "raised"}.get(str(n.get("kind")), ""))
