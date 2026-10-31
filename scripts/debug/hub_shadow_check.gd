@@ -107,9 +107,11 @@ static func face_rect(spr: Sprite3D, cam: Camera3D) -> Rect2:
 		r = r.expand(cam.unproject_position(xf * c))
 	return r
 
-## wheels: the dumpster's live mark caster (ActorLit "raised") shows light between its wheels: the row just under
-## the body box holds >= 4 opaque runs split by clear columns. plant_wheels scores the filled "profile" caster
-## (no daylight under the box), which must FAIL.
+## wheels: the dumpster's live mark caster (ActorLit "raised") is a box on short wheel posts: the band between the
+## box shadow and the ground holds >= 4 opaque runs split by clear columns, and that band is 1 row to MAX_BAND of
+## the box height (wheels a few cm on a ~1.2 m box). plant_wheels scores the "stilts" caster (drawn wheel band
+## kept under the full sprite), which must FAIL.
+const MAX_BAND := 0.1
 var wheels: String:
 	get:
 		return wheel_faults(false)
@@ -121,20 +123,24 @@ static func wheel_faults(plant: bool) -> String:
 	for n in (Engine.get_main_loop() as SceneTree).get_nodes_in_group("interact"):
 		if str(n.get("kind")) != "dumpster" or not n.has_node("ActorLit"):
 			continue
-		var lit: Node = n.get_node("ActorLit")
 		var tex: Texture2D = (n.get("spr") as Sprite3D).texture
-		var cast: Texture2D = Soles._solid(tex, "profile") if plant else Soles._solid(tex, str(lit.get("solid")))
-		var img: Image = cast.get_image()
-		var src: Image = tex.get_image()
-		src.decompress()
-		var y: int = Soles._body_end(src) - 1
-		var row: int = mini(y + 3, img.get_height() - 1)
+		var img: Image = Soles._solid(tex, "stilts" if plant else str(n.get_node("ActorLit").get("solid"))).get_image()
+		var used: Rect2i = img.get_used_rect()
+		var sole: int = used.end.y - 1
+		var body: int = Soles._body_end(img) - 1
+		var band: int = sole - body
+		var tall: int = body - used.position.y + 1
 		var runs: int = 0
 		var was: bool = false
 		for x in img.get_width():
-			var on: bool = img.get_pixel(x, row).a > 0.5
+			var on: bool = img.get_pixel(x, mini(body + 1 + band / 2, sole)).a > 0.5
 			if on and not was:
 				runs += 1
 			was = on
-		return "" if runs >= 4 else "dumpster:wheel_runs=%d<4 row=%d" % [runs, row]
+		var out: PackedStringArray = PackedStringArray()
+		if runs < 4:
+			out.append("wheel_runs=%d<4" % runs)
+		if band < 1 or band > MAX_BAND * tall:
+			out.append("band=%d rows of box %d (max %.0f)" % [band, tall, MAX_BAND * tall])
+		return "" if out.is_empty() else "dumpster:" + " ".join(out)
 	return "dumpster:missing"
