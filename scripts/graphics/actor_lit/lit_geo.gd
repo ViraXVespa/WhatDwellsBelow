@@ -54,7 +54,7 @@ static func _drop_floor(lit: Variant, world: Vector3) -> Vector2:
 static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
-	var pad: float = K.SOFT_PAD if not App.in_dungeon else 0.0
+	var pad: float = 0.0
 	var x0: float = span.x * tw - pad
 	var x1: float = span.z * tw + pad
 	var y0: float = span.y * th - pad
@@ -72,7 +72,7 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	uvs.append(Vector2(span.z, span.y))
 	uvs.append(Vector2(span.x, span.y))
 	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
-	# UV2.y carries the contact row so the soft taps stop there (no half-coverage daylight line at the sole).
+	# UV2.y carries the contact row so grid-snapped reads stop there (no half-coverage daylight line at the sole).
 	var edge: Vector2 = Vector2(0.0, span.w - 0.5 / th)
 	return Commit.commit(verts, null, uvs, indices, PackedVector2Array([edge, edge, edge, edge]))
 

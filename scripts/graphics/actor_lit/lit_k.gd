@@ -19,24 +19,18 @@ const MARK_N := 3
 const HUB_POINT_REACH := 2.2
 ## The baked full shade reads a little above the floor (soft edge, fill): the sun mark is gone by floor + SUN_SOFT.
 const SUN_SOFT := 0.1
-## Hub mark edge softness (texels of the sticker): matches the baked building shadow's soft edge.
-const HUB_SOFT := 1.5
-const SOFT_GROW := 5.0
-const SOLID_GROW := 1.6
-## Quad pad (texels) past the caster's top and sides so the blur fades out instead of hitting the quad edge.
-const SOFT_PAD := 8.0
+## Hub marks are hard pixel shapes on the ground grid (cells per metre; Chunky.GRID_M): no blur, no quad pad.
+const HUB_GRID := 32.0
 
 const SHADE := """
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_opaque;
-uniform sampler2D albedo_tex : source_color, filter_linear, repeat_disable;
+uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
 uniform vec4 shade = vec4(0.02, 0.02, 0.02, 0.55);
 // Sun mark in the hub (sun_cancel 1): fades where the baked ground is already in shade (floor_l = full shade), so a
 // mark inside a building's shadow does not double it. Point-light marks keep sun_cancel 0.
 uniform float sun_cancel = 0.0;
-uniform float soft = 0.0;
-// Penumbra growth toward the far end; solid yard props use SOLID_GROW so one silhouette keeps one softness.
-uniform float grow = 5.0;
+uniform float grid = 0.0;
 varying float sole_v;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
@@ -53,32 +47,30 @@ void vertex() {
 }
 
 void fragment() {
-	// Soft edge (soft > 0, hub): a penumbra that grows away from the contact (UV.y 1 = sole row, 0 = sprite top), like
-	// the baked building shadows': soft texels at the sole up to grow x soft at the far end, 5x5 coverage taps.
-	float cov = texture(albedo_tex, UV).a;
-	if (soft > 0.0) {
-		vec2 d = soft * mix(grow, 1.0, clamp(UV.y, 0.0, 1.0)) / vec2(textureSize(albedo_tex, 0));
-		cov = 0.0;
-		for (int i = -2; i <= 2; i++) {
-			for (int j = -2; j <= 2; j++) {
-				vec2 tap = UV + vec2(float(i), float(j)) * d * 0.5;
-				tap.y = min(tap.y, sole_v);
-				cov += texture(albedo_tex, tap).a;
-			}
+	// Hub (grid > 0): each fragment reads the mark at its ground cell's centre, so the edge steps on the ground grid.
+	vec2 uv = UV;
+	vec2 xz = wpos.xz;
+	if (grid > 0.0) {
+		vec2 g = (floor(xz * grid) + 0.5) / grid;
+		mat2 jw = mat2(dFdx(xz), dFdy(xz));
+		if (abs(determinant(jw)) > 1e-12) {
+			uv += mat2(dFdx(UV), dFdy(UV)) * inverse(jw) * (g - xz);
 		}
-		cov /= 25.0;
+		uv.y = min(uv.y, sole_v);
+		xz = g;
 	}
-	if (cov < 0.1) {
+	float cov = texture(albedo_tex, uv).a;
+	if (cov < 0.5) {
 		discard;
 	}
 	ALBEDO = shade.rgb;
 	float lit = 1.0;
 	if (sun_cancel > 0.5) {
-		vec2 luv = clamp((wpos.xz - light_origin) / max(light_span, vec2(0.001)), vec2(0.0), vec2(1.0));
+		vec2 luv = clamp((xz - light_origin) / max(light_span, vec2(0.001)), vec2(0.0), vec2(1.0));
 		vec3 l = texture(light_tex, luv).rgb;
 		lit = clamp(((l.r + l.g + l.b) / 3.0 - floor_l - 0.1) / (0.9 - floor_l), 0.0, 1.0); // 0.1 = SUN_SOFT
 	}
-	ALPHA = shade.a * lit * (soft > 0.0 ? cov : 1.0);
+	ALPHA = shade.a * lit;
 }
 """
 

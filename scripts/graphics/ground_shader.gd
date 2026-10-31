@@ -83,6 +83,8 @@ void fragment() {
 		c = mix(texture(under_tex, xz * under_uv).rgb, c, k);
 	}
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
+	// Baked light on the ground's 1/32 m pixel grid (Chunky.GRID_M): shadow edges step with the ground pixels.
+	xz = (floor(xz * 32.0) + 0.5) / 32.0;
 """ + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * worn * lit;
 }
 """
