@@ -2,16 +2,17 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 
 ## Hub art at the character's pixel size: GRID_M is the player sprite texel (PLAYER_H 1.55 m / 128 px = 1/82.6 m).
-## Player frames stay native. A sprite whose texel is finer (pixel_size < GRID_M) is shrunk to that grid (detail-keeping cell colour, box coverage; tools key.pixelate) and nearest-scaled
+## Character art (npcs, player, enemies: CHARS) stays native. A sprite whose texel is finer (pixel_size < GRID_M) is shrunk to that grid (detail-keeping cell colour, box coverage; tools key.pixelate) and nearest-scaled
 ## back to its own size, so texel rects (lamps, window, crop) still hold. Cached per texture and size.
 
 const GRID_M := T.PLAYER_H / 128.0
+const CHARS: Array[String] = ["/sprites/npcs/", "/sprites/player/", "/sprites/enemies/"]
 static var _cache: Dictionary = {}
 
 ## fast: per-frame animation art; native box shrink plus nearest pick per cell (no per-source-pixel detail pass).
 static func tex(t: Texture2D, px_m: float, fast := false) -> Texture2D:
-	if t == null or px_m <= 0.0:
-		return t
+	if t == null or px_m <= 0.0 or CHARS.any(func(d: String) -> bool: return t.resource_path.contains(d)):
+		return t  # characters are drawn at their own sprite pixel: never re-gridded (faces keep eyes and mouth)
 	var f: float = GRID_M / px_m
 	if f < 1.3:
 		return t
