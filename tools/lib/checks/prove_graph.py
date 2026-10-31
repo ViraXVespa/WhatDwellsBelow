@@ -368,10 +368,11 @@ TOKEN = re.compile(r"[A-Za-z][\w{}-]*_[\w{}-]+")
 
 def stale_lines(owner: str, names: list[str], added_prose: list[str], dep: str, text: str, skip: set[str]) -> list[tuple[int, str]]:
     """Lines of an untouched dependent that sit in a paragraph naming `owner` (any of its `names`) and repeat a distinctive token
-    (has an underscore, 6+ chars, not a module stem in `skip`; help= lines count by their strings) of the owner's changed
+    (has an underscore, 6+ chars, not a module stem in `skip`; help= lines count by their help string) of the owner's changed
     docstring: the exact line that may now be stale."""
     stem, own_stem = Path(owner).stem, Path(dep).stem
-    prose = [" ".join(re.findall(r"[\"']([^\"']*)[\"']", ln)) if "help=" in ln else ln for ln in added_prose]
+    # help= lines count by their help string only (action="store_true" etc. are not prose)
+    prose = [" ".join(re.findall(r"help=[\"']([^\"']*)[\"']", ln)) if "help=" in ln else ln for ln in added_prose]
     toks = {t for ln in prose for t in TOKEN.findall(ln) if len(t) >= 6 and t not in skip | {stem, own_stem}}
     if not toks:
         return []

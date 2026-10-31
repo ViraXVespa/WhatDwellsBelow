@@ -106,6 +106,9 @@ def main() -> int:
             bad.append(f"cosmetic {sorted(a['cosmetic'])} != ['scripts/ui/menu.gd']")
         if len(a["drift"]) != len(WANT_DRIFT):
             bad.append(f"drift count {len(a['drift'])} != {len(WANT_DRIFT)}: " + " | ".join(a["drift"]))
+    dep = "use run_a here\nap.add_argument(\"--x\", action=\"store_true\", help=\"keep\")\n"
+    if check_prove.pg.stale_lines("tools/lib/x/run_a.py", [], ['ap.add_argument("--leader", action="store_true", help="chip offset")'], "tools/b.py", dep, set()):
+        bad.append("stale_lines: a help= line's action=\"store_true\" counted as prose")
     for b in bad:
         print(b)
     return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(WANT_DRIFT) + len(WANT_REVIEW) + len(WANT_PLAN) + 3, bad=len(bad))
