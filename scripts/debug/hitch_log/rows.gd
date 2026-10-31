@@ -232,3 +232,13 @@ static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	# now so a hung load still names the last step.
 	if _keep_all and started:
 		_write_mark(reason, gap)
+
+## The bench row (hitch_log.gd bench_done): stats, generation, then the file or the localhost sink.
+static func emit_bench(row: Dictionary) -> void:
+	Present.bench_stats(row)
+	row["bench_gen"] = _bench_gen
+	if started and _fh != null:
+		_write_row(row)
+	else:
+		Web._post(JSON.stringify(row))
+	Web._flush_web()
