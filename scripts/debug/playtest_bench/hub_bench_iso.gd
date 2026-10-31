@@ -7,6 +7,7 @@ const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 const Visit := preload("res://scripts/debug/playtest_bench/hub_bench_visit.gd")
+const IsoUtil := preload("res://scripts/debug/playtest_bench/dungeon_bench_iso/iso_util.gd")
 
 static func _iso_kinds() -> PackedStringArray:
 	return PackedStringArray([
@@ -72,16 +73,6 @@ static func _iso_restore(host: Node) -> void:
 			(n as CanvasLayer).visible = on
 		i += 1
 
-static func _iso_hide(host: Node, tag: String) -> void:
-	var i: int = 0
-	while i < host._iso_all.size():
-		if tag == "bare" or host._iso_tag[i] == tag:
-			var n: Node = host._iso_all[i]
-			if n is Node3D:
-				(n as Node3D).visible = false
-			elif n is CanvasLayer:
-				(n as CanvasLayer).visible = false
-		i += 1
 
 static func _iso_apply(host: Node, kind: String) -> void:
 	_iso_restore(host)
@@ -89,9 +80,9 @@ static func _iso_apply(host: Node, kind: String) -> void:
 	for lit: Node in host._iso_lits:
 		lit.set_process(not pause_lits)
 	if kind == "bare":
-		_iso_hide(host, "bare")
+		IsoUtil._hide(host, "bare")
 	elif kind != "warm" and kind != "base":
-		_iso_hide(host, kind)
+		IsoUtil._hide(host, kind)
 
 static func _iso_stand(host: Node, actor: Node3D) -> void:
 	if host._iso_spot == Vector3.ZERO:
