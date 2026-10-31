@@ -137,4 +137,9 @@ def run() -> list[tuple[str, bool, str]]:
     alpha_bin = set(np.unique(px[..., 3]).tolist()) <= {0, 255}
     ncol = len(np.unique(px[px[..., 3] > 0][:, :3], axis=0))
     out.append(("pixelate grid+alpha+palette", px.shape == (80, 60, 4) and cells_ok and alpha_bin and ncol <= 3, f"cells {cells_ok} binary {alpha_bin} colours {ncol}"))
+    # pixelate detail: a 1-cell dark band (4 px wide on a 4 px cell, off the cell phase) survives as dark cells.
+    band = np.full((32, 32, 4), 220, np.uint8)
+    band[:, 14:18, :3] = 30
+    pd, pb = (np.array(key.pixelate(Image.fromarray(band, "RGBA"), 4.0, crisp=c))[..., 0].min() for c in (True, False))
+    out.append(("pixelate keeps 1-cell dark band", pd < 60 and pb > pd, f"detail min {pd}, box min {pb}"))
     return out

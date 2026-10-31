@@ -294,16 +294,16 @@ def punch(im: Image.Image) -> Image.Image:
     """Same as key_to_alpha (kept for the pack tools)."""
     return key_to_alpha(im)
 
-def pixelate(im: Image.Image, cell: float, palette: int = 0, crisp: bool = True) -> Image.Image:
-    """Keyed art at a coarser pixel grid, from the shared steps: geom.shrink_art (crisp: interior = nearest source px,
-    edge band and alpha box-averaged) or geom.resize_rgba (premultiplied box) down by `cell` source px per pixel, optional color.quantize_palette, geom.alpha_policy "hard" (binary edges), then
+def pixelate(im: Image.Image, cell: float, palette: int = 0, crisp: bool = True, detail: bool = True) -> Image.Image:
+    """Keyed art at a coarser pixel grid, from the shared steps: geom.shrink_detail (default: thin high-contrast
+    detail kept per cell), geom.shrink_art (crisp, detail=False: interior = nearest source px, edge band and alpha box-averaged) or geom.resize_rgba (premultiplied box) down by `cell` source px per pixel, optional color.quantize_palette, geom.alpha_policy "hard" (binary edges), then
     geom.scale_nearest back to the source size. cell <= 1 returns a copy."""
     from . import color, geom
     im = im.convert("RGBA")
     if cell <= 1.0:
         return im.copy()
     size = (max(1, round(im.width / cell)), max(1, round(im.height / cell)))
-    small = geom.shrink_art(im, size) if crisp else geom.resize_rgba(im, size)
+    small = (geom.shrink_detail if detail else geom.shrink_art)(im, size) if crisp else geom.resize_rgba(im, size)
     if palette > 0:
         small = color.quantize_palette(small, palette)
     return geom.scale_nearest(geom.alpha_policy(small, "hard"), size=im.size)
