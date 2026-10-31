@@ -21,15 +21,33 @@ import boot  # noqa: E402,F401
 import agent_log
 from imglib import compare, geom, imgio
 
-def original(src: Path) -> Path | None:
-    """The kept original, if it is newer than SRC's run and the same aspect (else a stale one from an older shot)."""
+def resolve(src: Path) -> tuple[Path | None, str]:
+    """(kept original, note). None with the reason when it is missing, stale (written > 120 s apart from SRC) or a
+    different aspect / smaller than SRC; the caller then zooms SRC itself and must say NO original."""
     from PIL import Image
-    for p in (src.parent / "full" / src.name, src.with_name(src.stem + "_full.png")):
-        if p.is_file() and abs(p.stat().st_mtime - src.stat().st_mtime) < 120:
-            (a, b), (c, d) = Image.open(p).size, Image.open(src).size
-            if abs(a / b - c / d) < 0.01 and a >= c:
-                return p
-    return None
+    cands = [p for p in (src.parent / "full" / src.name, src.with_name(src.stem + "_full.png")) if p.is_file()]
+    if not cands:
+        return None, "NO original: none in full/"
+    p = cands[0]
+    if abs(p.stat().st_mtime - src.stat().st_mtime) > 120:
+        return None, f"NO original: {p.name} is stale (written {abs(p.stat().st_mtime - src.stat().st_mtime):.0f}s apart)"
+    (a, b), (c, d) = Image.open(p).size, Image.open(src).size
+    if abs(a / b - c / d) > 0.01 or a < c:
+        return None, f"NO original: {a}x{b} does not match {c}x{d} (aspect/size)"
+    return p, f"original {a}x{b} for {c}x{d}, scale {a / c:.4g}x{b / d:.4g}"
+
+def original(src: Path) -> Path | None:
+    return resolve(src)[0]
+
+def to_full(box, down_size, full_size) -> tuple[tuple[int, int, int, int], bool]:
+    """(l,t,r,b) in downsized px -> full px with the per-axis ratio of the real sizes, floored left/top and ceiled
+    right/bottom (never cut short), then clamped to the full frame. Returns (box, clamped)."""
+    import math
+    sx, sy = full_size[0] / down_size[0], full_size[1] / down_size[1]
+    l, t, r, b = box
+    raw = (math.floor(l * sx + 1e-9), math.floor(t * sy + 1e-9), math.ceil(r * sx - 1e-9), math.ceil(b * sy - 1e-9))
+    out = (max(0, raw[0]), max(0, raw[1]), min(full_size[0], raw[2]), min(full_size[1], raw[3]))
+    return out, out != raw
 
 def _ints(text: str, n: int, what: str) -> list[float]:
     v = [float(x) for x in text.replace("x", ",").split(",")]
@@ -38,26 +56,26 @@ def _ints(text: str, n: int, what: str) -> list[float]:
     return v
 
 def regions(args, down_size: tuple[int, int], full_size: tuple[int, int]) -> list[tuple[str, tuple[int, int, int, int]]]:
-    """Each region as (label, full-pixel box l,t,r,b)."""
-    fx, fy = full_size[0] / down_size[0], full_size[1] / down_size[1]
-    k = (1.0, 1.0) if args.space == "full" else (fx, fy)
+    """Each region as (label naming the requested box and the resolved full box, full-pixel box l,t,r,b)."""
+    ref = full_size if args.space == "full" else down_size
     out = []
     for b in args.box or []:
         x, y, w, h = _ints(b, 4, "--box")
-        out.append((f"box {b}", (x * k[0], y * k[1], (x + w) * k[0], (y + h) * k[1])))
+        out.append((f"box {b}", (x, y, x + w, y + h)))
     for c in args.center or []:
         x, y = _ints(c, 2, "--center")
         w, h = _ints(args.size, 2, "--size")
-        out.append((f"at {c}", ((x - w / 2) * k[0], (y - h / 2) * k[1], (x + w / 2) * k[0], (y + h / 2) * k[1])))
+        out.append((f"at {c}", (x - w / 2, y - h / 2, x + w / 2, y + h / 2)))
     for r in args.rect_norm or []:
         x0, y0, x1, y1 = _ints(r, 4, "--rect-norm")
-        out.append((f"norm {r}", (x0 * full_size[0], y0 * full_size[1], x1 * full_size[0], y1 * full_size[1])))
+        out.append((f"norm {r}", (x0 * ref[0], y0 * ref[1], x1 * ref[0], y1 * ref[1])))
     res = []
-    for lab, (l, t, r_, b_) in out:
-        box = (max(0, round(l)), max(0, round(t)), min(full_size[0], round(r_)), min(full_size[1], round(b_)))
+    for lab, bx in out:
+        box, clamped = to_full(bx, ref, full_size)
         if box[2] <= box[0] or box[3] <= box[1]:
             raise ValueError(f"{lab} is outside the image")
-        res.append((lab, box))
+        res.append((f"{lab} ({args.space}) -> full {box[0]},{box[1]},{box[2] - box[0]}x{box[3] - box[1]}"
+                    + (" clamped" if clamped else ""), box))
     return res
 
 def zoom(im, box, scale: int, grid: bool):
@@ -98,6 +116,29 @@ def selftest() -> int:
         z = zoom(full, (20, 40, 30, 48), 3, False)
         if z.size != (30, 24) or any(z.getpixel((i * 3 + d, 0)) != full.getpixel((20 + i, 40)) for i in range(10) for d in range(3)):
             bad.append("nearest scale is not exact 3x3 blocks of the original")
+        if to_full((10, 10, 20, 20), (640, 360), (1920, 1080)) != ((30, 30, 60, 60), False):
+            bad.append("1920->640 (3x) ratio wrong")
+        if to_full((1, 1, 2, 2), (333, 187), (1000, 563)) != ((3, 3, 7, 7), False):
+            bad.append("odd sizes must round outward")
+        import random
+        for _ in range(200):  # outward: the full box always covers the exact scaled box
+            l, u = random.uniform(0, 300), random.uniform(0, 170)
+            (L, T, R, B), _c = to_full((l, u, l + 5.3, u + 4.1), (333, 187), (1000, 563))
+            if L > l * 1000 / 333 or T > u * 563 / 187 or (R < min(1000, (l + 5.3) * 1000 / 333) - 1e-6) or (B < min(563, (u + 4.1) * 563 / 187) - 1e-6):
+                bad.append("outward rounding cut a box short"); break
+        if to_full((630, 350, 650, 370), (640, 360), (1920, 1080)) != ((1890, 1050, 1920, 1080), True):
+            bad.append("edge clamp not reported")
+        Image.new("RGBA", (200, 120)).save(t / "m.png")
+        full.save(t / "full" / "m.png")
+        if original(t / "m.png") or "aspect" not in resolve(t / "m.png")[1]:
+            bad.append("mismatched aspect must be NO original")
+        Image.new("RGBA", (50, 25)).save(t / "lone.png")
+        if "none in full/" not in resolve(t / "lone.png")[1]:
+            bad.append("missing original must say NO original")
+        import os
+        os.utime(t / "full" / "s.png", (1, 1))
+        if "stale" not in resolve(t / "s.png")[1]:
+            bad.append("stale original must be NO original")
     for b in bad:
         print("FAIL " + b)
     print(f"RESULT {'FAIL' if bad else 'PASS'} selftest shot-zoom")
@@ -125,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
     src = Path(args.src)
     if not src.is_file():
         agent_log.fail(f"no such PNG: {src}")
-    orig = original(src)
+    orig, note = resolve(src)
     down = imgio.load(src)
     im = imgio.load(orig) if orig else down
     try:
@@ -135,11 +176,11 @@ def main(argv: list[str] | None = None) -> int:
     if not regs:
         agent_log.fail("give --box, --center/--size or --rect-norm")
     tiles = [zoom(im, b, max(1, args.scale), args.grid) for _, b in regs]
-    labels = [f"{lab} -> full {b[0]},{b[1]},{b[2] - b[0]}x{b[3] - b[1]}" for lab, b in regs]
+    labels = [lab for lab, _ in regs]
     out_im = tiles[0] if len(tiles) == 1 else compare.montage(tiles, labels)
     out = Path(args.out) if args.out else root / "_logs" / "shot-zoom" / f"{src.stem}-zoom.png"
     imgio.save(out_im, out)
-    lines = [f"source={orig or src} ({'original' if orig else 'NO original: zoomed the downsized PNG'}) {im.width}x{im.height}, viewed {down.width}x{down.height}, space={args.space}"]
+    lines = [f"source={orig or src} ({note}{'' if orig else '; zoomed the downsized PNG'}) {im.width}x{im.height}, viewed {down.width}x{down.height}, space={args.space}"]
     lines += [f"  {l}" for l in labels] + [f"out={out} {out_im.width}x{out_im.height}"]
     return agent_log.finish("shot-zoom", root, "\n".join(lines), "PASS", args=args, echo="\n".join(lines), regions=len(regs), original=int(bool(orig)))
 

@@ -22,6 +22,7 @@ import boot  # noqa: E402,F401
 
 import agent_log  # noqa: E402
 import run_isolated_grok as iso  # noqa: E402
+import review_rounds as rr  # noqa: E402
 
 REPORT = "report.md"
 MAX_REPORT = 6000
@@ -52,14 +53,14 @@ def build_job(names: list[str], question: str, rubric: str, zooms: list[str] | N
               "One section per file: what is visible, and the answer for that file.",
               "Last line exactly `VERDICT: PASS`, `VERDICT: FAIL`, or `VERDICT: UNSURE`.",
               "Use UNSURE when the question asks for a description rather than a pass or fail.",
-              "Write the file in the same turn you finish looking. Then stop."]
+              "Write the file in the same turn you finish looking. Then stop."] + rr.protocol_lines()
     return "\n".join(lines) + "\n"
 
 def fail(why: str) -> int:
     print(f"REVIEW FAILED: {why}")
     return agent_log.emit_result("FAIL", reason=why)
 
-def stage_zooms(paths: list[Path], specs: list[str], scratch: Path) -> list[str]:
+def stage_zooms(paths: list[Path], specs: list[str], scratch: Path, tag: str = "") -> list[str]:
     """--zoom N:X,Y,W,H (N = 1-based shot, box in that shot's pixels as viewed): crop from the full/ original via
     shots.py zoom (shot_zoom) into the scratch, since the isolated child has no repo or terminal."""
     import shot_zoom
@@ -67,11 +68,16 @@ def stage_zooms(paths: list[Path], specs: list[str], scratch: Path) -> list[str]
     for k, spec in enumerate(specs, 1):
         idx, _, box = spec.partition(":")
         src = paths[int(idx) - 1]
-        name = f"{int(idx):02d}-zoom{k}-{src.name}"
+        name = f"{int(idx):02d}-zoom{tag}{k}-{src.name}"
         r = shot_zoom.main([str(src), "--box", box, "--scale", "4", "--out", str(scratch / name)])
         if r != 0 or not (scratch / name).is_file():
             raise ValueError(f"zoom {spec} failed")
-        out.append(f"`{name}` = file {int(idx):02d} box {box}" + ("" if shot_zoom.original(src) else " (no original: downsized)"))
+        orig, note = shot_zoom.resolve(src)
+        x, y, w, h = (float(v) for v in box.split(","))
+        dn = rr.sizes_of([src])[0]
+        fb, clamped = shot_zoom.to_full((x, y, x + w, y + h), dn, rr.sizes_of([orig])[0] if orig else dn)
+        out.append(f"`{name}` = file {int(idx):02d} downsized box {box} ({dn[0]}x{dn[1]}) -> full box "
+                   f"{fb[0]},{fb[1]},{fb[2] - fb[0]},{fb[3] - fb[1]}{' clamped' if clamped else ''}; {note}")
     return out
 
 def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: int, zoom: list[str] | None = None) -> int:
@@ -102,38 +108,84 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
         if ins.returncode != 0 or iso.inspect_mentions_repo_agents(text) or n != 0:
             return fail(f"isolation not proven (inspect exit {ins.returncode}, project instructions {n})")
         budget = turn_budget(len(paths), max_turns, len(zl))
-        argv = iso.grok_child_argv(grok, job, scratch, budget)
-        child = subprocess.run(argv, cwd=scratch, text=True, capture_output=True, check=False)
-        if child.returncode != 0:
-            err = (child.stderr or "").strip()
-            if err:
-                sys.stderr.write(err[-1500:] + "\n")
-            why = f"isolated session exited {child.returncode}"
-            if "max turns" in err.lower():
-                why += f" (turn budget {budget} spent before {REPORT}; {len(paths)} image(s))"
-            return fail(why)
-        rep = scratch / REPORT
-        if not rep.is_file() or not rep.read_text(encoding="utf-8").strip():
-            return fail(f"isolated session wrote no {REPORT}")
-        body = rep.read_text(encoding="utf-8").strip()[:MAX_REPORT]
+        sizes, rounds, sid, prior = rr.sizes_of(paths), [], "", None
+        cut = len(zl)
+        import shot_zoom
+        rounds.append("shots: " + "; ".join(f"{i + 1:02d} {w}x{h} {shot_zoom.resolve(p)[1]}" for i, (p, (w, h)) in enumerate(zip(paths, sizes))))
+        for rno in range(1, rr.MAX_ROUNDS + 1):
+            if rno > 1:
+                job = scratch / f"round{rno}.md"
+                iso.write_job(job, rr.follow_job(crops, rejected, rno, None if sid else prior))
+            argv = iso.grok_child_argv(grok, job, scratch, budget, resume=sid or None, output_format="json")
+            child = subprocess.run(argv, cwd=scratch, text=True, capture_output=True, check=False)
+            if child.returncode != 0:
+                err = (child.stderr or "").strip()
+                if err:
+                    sys.stderr.write(err[-1500:] + "\n")
+                why = f"isolated session exited {child.returncode} in round {rno}"
+                if "max turns" in err.lower():
+                    why += f" (turn budget {budget} spent before {REPORT}; {len(paths)} image(s))"
+                return fail(why)
+            sid = sid or iso.parse_session_id(child.stdout or "")
+            rep = scratch / REPORT
+            if not rep.is_file() or not rep.read_text(encoding="utf-8").strip():
+                return fail(f"isolated session wrote no {REPORT} in round {rno}")
+            body = rep.read_text(encoding="utf-8").strip()[:MAX_REPORT]
+            rep.unlink()
+            reqs, rejected = rr.parse(body, sizes)
+            has_verdict = any(ln.strip().upper().startswith("VERDICT:") for ln in body.splitlines())
+            rounds.append(f"round {rno}: {'resumed' if rno > 1 and sid else 'fresh'} budget={budget} "
+                          f"zoom_asks={len(reqs)} rejected={len(rejected)}" + "".join(f"\n  ZOOM {n}:{b} {why}" for n, b, why in reqs)
+                          + "".join(f"\n  rejected {r}" for r in rejected))
+            if has_verdict or (not reqs and not rejected) or rno == rr.MAX_ROUNDS:
+                break
+            crops = []
+            for n, box, why in reqs:
+                try:
+                    crops += stage_zooms(paths, [f"{n}:{box}"], scratch, tag=f"r{rno + 1}")
+                except ValueError as e:
+                    rejected.append(str(e))
+            cut += len(crops)
+            prior = body
+            budget = min(rr.FOLLOW_TURNS, 2 + 2 * max(1, len(crops)))
     verdict = next((ln.split(":", 1)[1].strip().upper() for ln in reversed(body.splitlines())
                     if ln.strip().upper().startswith("VERDICT:")), "")
-    print("REVIEW_SHOTS (isolated)\n" + body)
+    print("REVIEW_SHOTS (isolated)\n" + body + "\n\nROUNDS\n" + "\n".join(rounds))
     if verdict not in ("PASS", "FAIL", "UNSURE"):
-        return fail("report has no VERDICT line")
-    return agent_log.emit_result("PASS", verdict=verdict, files=len(paths))
+        return fail(f"report has no VERDICT line after {len(rounds) - 1} round(s)" + (" (round cap)" if len(rounds) - 1 == rr.MAX_ROUNDS else ""))
+    return agent_log.emit_result("PASS", verdict=verdict, files=len(paths), rounds=len(rounds) - 1, crops=cut)
 
 FAKE = """#!/usr/bin/env python3
-import os, sys
+import json, os, sys
 mode = os.environ.get("FAKE_MODE", "ok")
 if sys.argv[1:2] == ["inspect"]:
     print("Project Instructions (%s)" % ("2" if mode == "leak" else "none")); sys.exit(0)
 if mode == "crash":
     sys.exit(4)
-if mode != "silent":
-    job = open(sys.argv[sys.argv.index("--prompt-file") + 1]).read()
-    assert "01-a.png" in job and "Rubric" in job
-    open("report.md", "w").write("01-a.png: panel visible.\\nVERDICT: PASS\\n")
+pf = sys.argv[sys.argv.index("--prompt-file") + 1]
+job, rnd = open(pf).read(), os.path.basename(pf)
+if mode not in ("silent", "nosid"):
+    print(json.dumps({"sessionId": "s1"}))
+def say(t):
+    open("report.md", "w").write(t)
+if mode == "silent":
+    sys.exit(0)
+if mode == "ok":
+    assert "01-a.png" in job and "Rubric" in job and "ZOOM N:X,Y,W,H" in job
+    say("01-a.png: panel visible.\\nVERDICT: PASS\\n")
+elif mode == "greedy":
+    say("need more\\nZOOM 1:0,0,8,8 again\\n")
+elif rnd == "job.md":
+    say("sign too small\\nZOOM 1:2,2,8,8  tiny sign\\n" if mode in ("zoom", "nosid") else
+        "ZOOM 7:1,2,8,8 junk\\nZOOM 1:2,2 short\\nZOOM 1:500,500,10,10 off\\n")
+else:
+    if mode == "zoom":
+        assert "--resume" in sys.argv and os.path.isfile("01-zoomr21-a.png"), "no resume or crop"
+    elif mode == "nosid":
+        assert "--resume" not in sys.argv and "previous report" in job and "sign too small" in job
+    else:
+        assert "Rejected" in job and "no file 7" in job and "not `ZOOM" in job and "outside file 1" in job, job
+    say("01-a.png: sign reads OK in the crop.\\nVERDICT: PASS\\n")
 """
 
 def selftest() -> int:
@@ -155,12 +207,20 @@ def selftest() -> int:
             grok_bin = str(launcher)
         else:
             grok_bin = str(script)
+        from PIL import Image
         png = t / "a.png"
-        png.write_bytes(b"\x89PNG\r\n\x1a\n")
+        (t / "full").mkdir()
+        Image.new("RGBA", (128, 64), (90, 40, 20, 255)).save(t / "full" / "a.png")
+        Image.new("RGBA", (64, 32), (90, 40, 20, 255)).save(png)
+        ok, rej = rr.parse("ZOOM 1:60,30,10,10 edge\nZOOM 1:norm 0.5,0.5,0.75,1 n\nZOOM 1:x\n" + "ZOOM 1:0,0,8,8\n" * 5, [(64, 32)])
+        if [o[1] for o in ok] != ["32,16,16,16", "0,0,8,8", "0,0,8,8", "0,0,8,8"] or len(rej) != 4:
+            bad.append(f"parse/clamp {ok} {rej}")
         me = [*boot.cmd("review_shots")]
         cases = [("ok", grok_bin, 0, "VERDICT: PASS"), ("leak", grok_bin, 1, "isolation not proven"),
                  ("crash", grok_bin, 1, "exited 4"), ("silent", grok_bin, 1, "no report.md"),
-                 ("ok", str(t / "nogrok"), 1, "not on PATH")]
+                 ("ok", str(t / "nogrok"), 1, "not on PATH"), ("zoom", grok_bin, 0, "round 2: resumed"),
+                 ("nosid", grok_bin, 0, "round 2: fresh"), ("bad", grok_bin, 0, "rejected `ZOOM 7"),
+                 ("greedy", grok_bin, 1, "round cap")]
         for mode, grok, want, needle in cases:
             env = dict(os.environ, FAKE_MODE=mode)
             r = subprocess.run(me + [str(png), "--question", "Is the panel visible?", "--rubric", "- panel",

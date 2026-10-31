@@ -59,3 +59,4 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/perf/bench_env.py` | One `env:` line (machine, CPU, GPU, RAM, OS, browser, Godot, renderer, vsync, cap, resolution, headless) for benchmark summaries (`perf.py web`, `perf.py hub`, `gate.py bot-smokes` open timing) |
 | `lib/perf/web_perf_lib.py` | Browser side of `perf.py web` (init script, flow replay, one page load) |
 | `lib/shots/shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `shots.py capture` |
+| `lib/shots/review_rounds.py` | ZOOM round protocol for `shots.py review`: parse/validate/clamp child requests, follow-up job text, round/crop/turn caps |
