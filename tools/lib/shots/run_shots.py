@@ -263,7 +263,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--scheme", choices=("pc", "gamepad", "touch"), default=None,
                     help="Force input scheme: pc=keyboard prompts, gamepad=pad prompts, touch=overlay")
     p.add_argument("--hud", type=int, default=-1, help="1=HUD on, 0=HUD off; -1 uses recipe")
-    p.add_argument("--width", type=int, default=0, help="window width px (0 keeps the project size)")
+    p.add_argument("--width", type=int, default=0, help="window width px (0 keeps the project size); a set --width/--height keeps full scale in --mode build")
     p.add_argument("--height", type=int, default=0, help="window height px (0 keeps the project size)")
     p.add_argument("--zoom", type=float, default=1.0, help="Camera zoom (default 1.0).")
     p.add_argument("--px", default="", help="player world X; empty keeps spawn")
@@ -330,7 +330,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     if args.hud < 0:
         args.hud = 1
     out_dir = _out_dir(root)
-    scale_pct = max(1, min(100, args.scale if args.scale > 0 else (BUILD_SCALE_PCT if args.mode == "build" else 100)))
+    scale_pct = max(1, min(100, args.scale if args.scale > 0 else (BUILD_SCALE_PCT if args.mode == "build" and not (args.width or args.height) else 100)))  # an explicit size is kept
     png = Path(args.out) if args.out else (out_dir / f"shot-s{args.seed}-f{args.floor}.png")
     png.parent.mkdir(parents=True, exist_ok=True)
     if args.steps and not args.frames_dir:
