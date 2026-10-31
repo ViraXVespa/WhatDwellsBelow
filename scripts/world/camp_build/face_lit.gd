@@ -11,7 +11,7 @@ const K := 0.85
 ## edges and pools keep their variation). On the face art the awning shades the top (HEM over HEM_SPAN of the height)
 ## and the base darkens toward the ground (BASE from BASE_FROM down).
 const LIFT := 1.35
-const SHADE_TO := 0.8
+const SHADE_TO := 0.92
 const HEM := 0.72
 const HEM_SPAN := 0.18
 const BASE := 0.8

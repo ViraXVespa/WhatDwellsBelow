@@ -33,7 +33,7 @@ uniform float k = 0.85;
 uniform float slope_k = 0.1;
 uniform float floor_l = 0.46; // FaceLit: light relative to the bake's own-shade floor, capped at lift
 uniform float lift = 1.35;
-uniform float shade_to = 0.8;
+uniform float shade_to = 0.92;
 uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 varying vec3 wpos;
 varying vec3 wnrm;
