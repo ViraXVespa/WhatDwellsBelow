@@ -3,6 +3,9 @@
 # Python fnmatch: * matches across slashes. First match wins, so deny lines go first.
 # design/ and tools/ are fully allowed (User grant); do not add a broad !design/* deny.
 
+# Vira approved the reception face edit + its rebake (refactorer-catchup, 0.9.2): these exact files only.
+assets/sprites/buildings/guild_reception.png
+assets/baked/hub_light.png
 !assets/*
 !archives/*
 !docs/*
