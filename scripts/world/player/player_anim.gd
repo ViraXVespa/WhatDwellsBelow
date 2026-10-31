@@ -3,6 +3,7 @@
 const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const Chunky := preload("res://scripts/graphics/chunky.gd")
 const Load := preload("res://scripts/world/player/anim_load.gd")
 const Loco := preload("res://scripts/world/player/anim_loco.gd")
 const LOC_IDLE := 0
@@ -95,10 +96,11 @@ static func clip(store: Dictionary, key: String) -> Array:
 static func apply_tex(host: Node, tex: Texture2D) -> void:
 	if host.body == null or tex == null:
 		return
-	host.body.texture = tex
-	SpriteFilt.apply_sprite(host.body)
 	var th := float(maxi(1, tex.get_height()))
 	host.body.pixel_size = T.PLAYER_H / th
+	# Hub: characters at the ground pixel size too (Chunky fast path, cached per frame).
+	host.body.texture = tex if App.in_dungeon else Chunky.tex(tex, host.body.pixel_size, true)
+	SpriteFilt.apply_sprite(host.body)
 	host.body.position.y = T.PLAYER_H * 0.5 + T.FEET_LIFT
 
 static func apply_facing(host: Node, delta: float) -> void:

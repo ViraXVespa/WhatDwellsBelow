@@ -6,6 +6,7 @@ const FaceLit := preload("res://scripts/world/camp_build/face_lit.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const Chunky := preload("res://scripts/graphics/chunky.gd")
 ## plaza_roof.png: sheet v of the mortar-band middle at the sheet edge (2 px of 1024 above the wrap).
 const RIDGE_V := -2.0 / 1024.0
 const TILE_W: float = preload("res://scripts/world/camp/layout_spec.gd").TILE_W
@@ -27,10 +28,13 @@ static func wrap_mat(
 		fb.albedo_color = fallback
 		return fb
 	var src: Texture2D = load(path)
+	var use_tile: float = tile if tile > 0.05 else TILE_W
+	# Roofs, tarps, walls at the hub ground pixel size (metres per texel from how the sheet wraps).
+	if not App.in_dungeon and src != null:
+		src = Chunky.tex(src, (dim.x if single_sheet else use_tile) / float(maxi(1, src.get_width())))
 	var mat := ShaderMaterial.new()
 	mat.shader = WrapShader.wrap_shader()
 	mat.set_shader_parameter("albedo_tex", src)
-	var use_tile: float = tile if tile > 0.05 else TILE_W
 	if single_sheet:
 		mat.set_shader_parameter("uv_scale", Vector2.ONE)
 		mat.set_shader_parameter("uv_off", Vector2.ZERO)
