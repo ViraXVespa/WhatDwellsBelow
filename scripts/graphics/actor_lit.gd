@@ -7,6 +7,7 @@ extends Node
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
@@ -134,8 +135,6 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	for slot in K.MARK_N:
 		var node: MeshInstance3D = marks[slot]
 		var live: bool = _alpha_at[slot] >= K.HIDE_A
-		if not App.in_dungeon and slot > 1:
-			live = false
 		if not live:
 			node.visible = false
 			continue
@@ -148,6 +147,8 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			node.sorting_offset = -30.0
 			var shown: float = _alpha_at[slot] * scale
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
+			shade_mat.set_shader_parameter("sun_cancel", 1.0 if slot == 0 and not App.in_dungeon else 0.0)
+			shade_mat.set_shader_parameter("soft", 0.0 if App.in_dungeon else K.HUB_SOFT)
 		node.visible = true
 
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
@@ -190,4 +191,6 @@ static func _mat() -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = _shade
 	mat.render_priority = 8
+	mat.set_shader_parameter("floor_l", HubCast.SHADE_NEAR)
+	LightRt.bind(mat)
 	return mat
