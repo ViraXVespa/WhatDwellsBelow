@@ -14,7 +14,7 @@
   "DRAW": "draw order of live sprites; the bake never reads it",
   "RECEPTION_LABEL_Y": "label text height"
  },
- "stamp": "612af688d33d2ffc",
+ "stamp": "372f13393b6d1a1b",
  "inputs": {
   "scripts/graphics/light_rt.gd": "1f2f57c642a8dcd7",
   "scripts/graphics/light_rt/hub_bake.gd": "29b279881f5ec929",
@@ -22,7 +22,7 @@
   "scripts/graphics/light_rt/hub_cast.gd": "ba84fb543b764bcb",
   "scripts/graphics/light_rt/hub_hulls.gd": "ad1029d5329f0315",
   "scripts/graphics/light_rt/hub_props.gd": "2a87568af68d2d40",
-  "scripts/graphics/light_rt/hub_roof.gd": "967a6daf4f2343bf",
+  "scripts/graphics/light_rt/hub_roof.gd": "e9a52e5ebf5242cc",
   "scripts/graphics/light_rt/hub_shadow.gd": "ff0099ba3e1ac29d",
   "scripts/graphics/light_rt/cast_grid.gd": "64fc0dfbf4c9da67",
   "scripts/graphics/wrap_shader.gd": "33671d431584f98c",

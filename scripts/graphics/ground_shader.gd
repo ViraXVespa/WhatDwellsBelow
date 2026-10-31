@@ -100,8 +100,7 @@ void fragment() {
 """ + TAP_BODY + "		lit += 0.25 * " + TAP_MIX + """	}
 	float ll = max(max(lit.r, lit.g), lit.b);
 	float sun = hub_sun(cell0 + 0.5 / GRID, ll);
-	bool lamp = lit.r - lit.b > 0.12 && ll > shade_l * 1.15; // lamp pools in the shade keep their light
-	if (sun >= 0.0 && ll > 0.001 && !lamp) {
+	if (sun >= 0.0 && ll > 0.001) { // no colour exemption: the warm sun read as a lamp pool and left hull shade lit
 		lit *= (sun < 0.5 ? shade_l : max(ll, 0.98)) / ll; // shade or sun per cell, edge on the cell
 	} else if (harden > 0.0 && ll > 0.001 && ll < 1.0) {
 		float t = clamp((ll - shade_l) / (1.0 - shade_l), 0.0, 1.0);

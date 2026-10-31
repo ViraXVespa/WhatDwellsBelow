@@ -91,6 +91,14 @@ var plant_edges: String:
 		var r: String = load("res://scripts/debug/hub_shadow_check/edge_px.gd").run("shift")
 		return "caught" if r != "" and r != "no_edges" else "missed shift " + r
 
+## One shade level inside every hull, wall-base ring included (hub_shadow_check/flat_px.gd); plant_flat: bake only.
+var flat_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/flat_px.gd").run()
+var plant_flat: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/flat_px.gd").run("bake").begins_with("h") else "missed"
+
 ## Rendered sun mark in full building shade (hub_shadow_check/mark_px.gd): "" when no double shadow; plant_mark: no cancel.
 var mark_px: String:
 	get:

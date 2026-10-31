@@ -38,7 +38,8 @@ static func reach(recv: Array) -> float:
 	return top
 
 ## Each roof's own sun: its footprint texels (the roof samples them) scaled per slope by Lambert against flat ground,
-## so the slope facing away from the sun reads darker than the yard. Returns texels written.
+## so the slope facing away from the sun reads darker than the yard. Only the sun above shade is scaled: a neighbour's
+## shadow on the roof stays at shade, not shade x Lambert (that stacked a second, darker shadow). Returns texels written.
 static func slopes(img: Image, org: Vector2, sub: float, recv: Array) -> int:
 	var sun := Vector3(-HubCast.AWAY.x, 1.0 / HubCast.REACH, -HubCast.AWAY.y).normalized()
 	var wrote: int = 0
@@ -52,6 +53,11 @@ static func slopes(img: Image, org: Vector2, sub: float, recv: Array) -> int:
 			var k: float = clampf(n.dot(sun) / sun.y, 0.0, 1.0)
 			for x in range(maxi(0, int((f.position.x - org.x) * sub)), mini(img.get_width(), int(ceil((f.end.x - org.x) * sub)))):
 				var c: Color = img.get_pixel(x, y)
-				img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
+				img.set_pixel(x, y, Color(_lam(c.r, k), _lam(c.g, k), _lam(c.b, k), 1.0))
 				wrote += 1
 	return wrote
+
+## Lambert on the sun part of one channel: shade (HubCast.SHADE_NEAR) is ambient and does not turn with the slope.
+static func _lam(c: float, k: float) -> float:
+	var s: float = minf(c, HubCast.SHADE_NEAR)
+	return s + (c - s) * k
