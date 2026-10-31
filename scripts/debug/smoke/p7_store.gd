@@ -95,6 +95,9 @@ static func _curve(abs_dir: String, extra: PackedStringArray) -> Dictionary:
 	args.append_array(extra)
 	var out: Array = []
 	var code: int = OS.execute("python", args, out, true, false)
+	if code != 0 and OS.get_name() != "Windows":  # Linux boxes often ship only python3
+		out.clear()
+		code = OS.execute("python3", args, out, true, false)
 	var text := ""
 	for line: Variant in out:
 		if text != "":

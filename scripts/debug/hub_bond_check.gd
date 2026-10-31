@@ -62,7 +62,7 @@ static func _first_courses(g: MeshInstance3D, mirror: bool) -> Array:
 	for i in v.size():
 		if absf(v[i].y - y_top) >= 0.005:
 			continue
-		var tri: int = i / 3 * 3
+		var tri: int = i - i % 3
 		var cz: float = (v[tri].z + v[tri + 1].z + v[tri + 2].z) / 3.0
 		var s: int = 0 if cz > 0.0 else 1
 		var t: float = uv[i].y

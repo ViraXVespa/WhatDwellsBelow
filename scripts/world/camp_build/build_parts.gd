@@ -108,7 +108,7 @@ static func _planks() -> StandardMaterial3D:
 		return _plank_mat
 	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
 	for x in 16:
-		var board: int = x / 4
+		var board: int = floori(x / 4.0)
 		var tone: float = [1.0, 0.9, 1.06, 0.95][board]
 		for y in 16:
 			var c: Color = Spec.TIMBER * (0.76 if x % 4 == 0 else tone * (0.96 if (x * 7 + y * 3) % 11 == 0 else 1.0))

@@ -94,7 +94,7 @@ static func window_faults(grow: float) -> String:
 	var img: Image = spr.texture.get_image()
 	if img.is_compressed():
 		img.decompress()
-	var bust: Rect2i = img.get_region(Rect2i(0, 0, img.get_width(), img.get_height() / 2)).get_used_rect()
+	var bust: Rect2i = img.get_region(Rect2i(0, 0, img.get_width(), floori(img.get_height() / 2.0))).get_used_rect()
 	var ps: float = spr.pixel_size * grow
 	var c: Vector3 = face.global_transform.inverse() * spr.global_position  # face-local metres
 	var w0: float = img.get_width() * 0.5
