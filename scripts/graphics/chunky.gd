@@ -7,10 +7,14 @@ const T := preload("res://scripts/data/tunables.gd")
 
 const GRID_M := T.PLAYER_H / 128.0
 const CHARS: Array[String] = ["/sprites/npcs/", "/sprites/player/", "/sprites/enemies/"]
+## Art pixel pass (re-grid sprites and wall/roof art to GRID_M). Off: Vira saw no gain over native art (A/B 2026-10-31).
+const PIXEL_ART := false
 static var _cache: Dictionary = {}
 
 ## fast: per-frame animation art; native box shrink plus nearest pick per cell (no per-source-pixel detail pass).
 static func tex(t: Texture2D, px_m: float, fast := false) -> Texture2D:
+	if not PIXEL_ART:
+		return t  # Vira's A/B pick (A): all art at native detail; only light, shadow and transitions use GRID_M
 	if t == null or px_m <= 0.0 or CHARS.any(func(d: String) -> bool: return t.resource_path.contains(d)):
 		return t  # characters are drawn at their own sprite pixel: never re-gridded (faces keep eyes and mouth)
 	var f: float = GRID_M / px_m
