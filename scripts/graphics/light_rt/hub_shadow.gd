@@ -76,7 +76,7 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	for body in root.get_tree().get_nodes_in_group("hub_fence"):
 		for mi in (body as Node).find_children("*", "MeshInstance3D", true, false):
 			fence_px += _hub_project_mesh(img, org, sub, mi, fence_ctx)
-	wrote += fence_px
+	wrote += fence_px + Roof.slopes(img, org, sub, recv)
 	printerr("bake_camp: fence_px=%d" % fence_px)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
 	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))

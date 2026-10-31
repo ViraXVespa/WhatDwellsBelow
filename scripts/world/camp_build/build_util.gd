@@ -1,5 +1,7 @@
 extends Object
 
+const FaceLit := preload("res://scripts/world/camp_build/face_lit.gd")
+
 ## Camp build shared leaf helpers: box/face emit, stall parts.
 
 const Roof := preload("res://scripts/world/camp_build/roof.gd")
@@ -31,6 +33,7 @@ static func face(
 	var sh: float = spr.pixel_size * rh
 	spr.position = Vector3(x_off, -box_size.y * 0.5 - 0.02 + sh * 0.5 - 0.06, box_size.z * Spec.FACE_Z - 0.001)
 	spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	spr.material_override = FaceLit.mat(spr.texture)
 	body.add_child(spr)
 static func face_height(tex: String, face_w: float) -> float:
 	if not ResourceLoader.exists(tex):
@@ -40,8 +43,9 @@ static func face_height(tex: String, face_w: float) -> float:
 	var th: float = float(maxi(1, img.get_height()))
 	return maxf(face_w * th / tw, 1.2)
 
-static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
-	var h: float = face_height(tex, box_size.x) * 0.78
+## min_h: the wall is raised to at least this (the strip above the face art is side-wall, under the awning).
+static func seat(body: StaticBody3D, box_size: Vector3, tex: String, min_h := 0.0) -> Vector3:
+	var h: float = maxf(face_height(tex, box_size.x) * 0.78, min_h)
 	body.position.y = h * 0.5
 	return Vector3(box_size.x, h, box_size.z)
 static func _slide(body: StaticBody3D, box_size: Vector3) -> void:

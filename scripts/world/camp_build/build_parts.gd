@@ -2,6 +2,7 @@ extends Object
 
 ## Camp build buildings from the Layout spec (layout_spec.gd): guild hall and wing, the stall's walls, posts, tarp and collision.
 
+const T := preload("res://scripts/data/tunables.gd")
 const Lamps := preload("res://scripts/world/camp/lamps.gd")
 const MeshS := preload("res://scripts/world/camp_build/mesh.gd")
 const Tent := preload("res://scripts/world/camp_build/mesh_tent.gd")
@@ -23,7 +24,11 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	var row: Dictionary = LayoutS.body(which)
 	var tex: String = row["face"]
 	var body: StaticBody3D = Util.box(host, at, box_size, row["wall"])
-	var fit: Vector3 = Util.seat(body, box_size, tex)
+	# Wall tall enough that, seen from the gameplay pitch, the awning hem (awning depth in front) lines up with the
+	# cropped face top: the whole painted face shows and the extra wall above it stays behind the awning.
+	var face_top: float = Util.face_height(tex, box_size.x) * (1.0 - float(row["crop"])) - 0.08
+	var ahead: float = lay.awning_depth(which) * tan(deg_to_rad(absf(T.CAM_PITCH)))
+	var fit: Vector3 = Util.seat(body, box_size, tex, (face_top + ahead) / (1.0 - lay.awning_valance(which)))
 	MeshS.wall_box(body, fit, row["wall"])
 	Util._slide(body, fit)
 	Util.face(body, fit, tex, 0.0, fit.x, row["crop"])
