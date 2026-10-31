@@ -26,7 +26,8 @@ import task_compact
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List, show, create, finish and check the task files in design/tasks/.", writes=True)
-    sub = ap.add_subparsers(dest="cmd", required=True)
+    ap.add_argument("--selftest", action="store_true", help="Run the compact fixture cases (same as task compact --selftest).")
+    sub = ap.add_subparsers(dest="cmd")
     ls = sub.add_parser("list", help="The open tasks (the README index).")
     ls.add_argument("--owner", choices=task_lib.OWNERS, default="", help="Only tasks for this owner.")
     sh = sub.add_parser("show", help="One task: header, resume command and the file.")
@@ -57,6 +58,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("index", help="Regenerate the README index.")
     sub.add_parser("check", help="Lint the task files (check.py load-graph runs the same).")
     args = ap.parse_args(argv)
+    if args.selftest:
+        return task_compact.selftest()
+    if not args.cmd:
+        ap.error("the following arguments are required: cmd")
     root = agent_log.resolve_root(args)
     tasks = task_lib.load(root)
     dry = bool(args.dry_run)
@@ -64,8 +69,6 @@ def main(argv: list[str] | None = None) -> int:
     def end(body: str, status: str, **kv: object) -> int:
         return agent_log.finish("task", root, body, status, args=args, write=not dry, cmd=args.cmd, **kv)
 
-    if args.cmd == "compact" and args.selftest:
-        return task_compact.selftest()
     if args.cmd in ("show", "done", "update", "compact") and args.id not in tasks:
         print(f"error: no task {args.id}; open tasks: {', '.join(tasks) or 'none'}", file=sys.stderr)
         return end("", "FAIL", error="not-found")
