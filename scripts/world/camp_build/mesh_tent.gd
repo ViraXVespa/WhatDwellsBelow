@@ -132,8 +132,9 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	Prim._quad(st, rl, rr, sr, sl, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	# Same u at the same x on both slopes (u runs -x to +x), v = 0 at the ridge: courses and joints meet across it.
-	Prim._quad(st, rr, rl, nl, nr, Vector2(1.0, 0.0), Vector2(0.0, 0.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0))
+	# The sheet unfolds over the ridge: same u at the same x, and v runs on past 0 (negative) down the north slope, so
+	# the far course is the sheet's next course up (running bond, half a brick over), not a mirror of the near one.
+	Prim._quad(st, rr, rl, nl, nr, Vector2(1.0, 0.0), Vector2(0.0, 0.0), Vector2(0.0, -1.0), Vector2(1.0, -1.0))
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()

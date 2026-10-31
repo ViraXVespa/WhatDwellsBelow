@@ -42,7 +42,7 @@ WARN_BYTES = 2048
 RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
 SCREENS = ("title", "splash", "fs_gate")
-FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height", "fixed_fps")
+FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz", "width", "height", "fixed_fps")
 
 def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
     """PID-only off-screen + taskbar strip. No title read, no print."""

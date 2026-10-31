@@ -47,6 +47,17 @@
     }
    ]
   },
+  "guild-roof-wide": {
+   "about": "the whole guild roof (Hall and Wing: both slopes, ridge, eaves, awnings) at play pitch, zoom 1.5, camera 4 m north of the player at the guild front, HUD off",
+   "scene": "camp",
+   "hud": 0,
+   "zoom": 1.5,
+   "px": 9.5,
+   "pz": 8.0,
+   "cz": -4.0,
+   "settle_ms": 800,
+   "steps": []
+  },
   "f1-overhead-flight": {
    "about": "floor 1 seed 42, every chunk built, pitch -75, HUD off, enemies frozen (camera fly-throughs)",
    "scene": "dungeon",
@@ -328,6 +339,10 @@
   "hub-overhead": {
    "about": "still of the whole hub yard from above",
    "scenario": "hub-overhead"
+  },
+  "guild-roof-wide": {
+   "about": "still of the whole guild roof: tile bond across the ridge, eaves, awning joins",
+   "scenario": "guild-roof-wide"
   },
   "hud-default": {
    "about": "dungeon HUD at the floor 1 entrance (dungeon-hud-states@hud-default)",

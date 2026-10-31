@@ -38,7 +38,7 @@ from agent_log import rel
 
 JOB = "movie"
 DATA = "tools/data/movies.json"
-HEADER = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz")
+HEADER = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz")
 MARK = re.compile(r"SHOT: mark name=(\S+) frame=(\d+)")
 
 def load(root: Path) -> dict:

@@ -3,7 +3,7 @@
   "hud": 0,
   "zoom": 3.2,
   "settle_ms": 800,
-  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd); building faces sample the hub light map (hub_face_check.gd, planted white map must FAIL); gable slopes meet at the ridge with nothing over it (planted 5 cm drop must FAIL); ridge tiles line up (planted mirrored u / off-seam v must FAIL); awning hems meet the face tops from the camera pitch and the receptionist bust sits inside the reception window (hub_awning_check.gd, planted 3 cm lift / 20 % grow must FAIL); awnings and the stall tarp take the face light (planted unlit cloth must FAIL).",
+  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd); building faces sample the hub light map (hub_face_check.gd, planted white map must FAIL); gable slopes meet at the ridge with nothing over it (planted 5 cm drop must FAIL); ridge tiles line up (planted mirrored u / off-seam v must FAIL); running bond in the sheet and across the ridge (hub_bond_check.gd, planted mirrored north v must FAIL stack); awning hems meet the face tops from the camera pitch and the receptionist bust sits inside the reception window (hub_awning_check.gd, planted 3 cm lift / 20 % grow must FAIL); awnings and the stall tarp take the face light (planted unlit cloth must FAIL).",
   "steps": [
     {
       "op": "call",
@@ -126,6 +126,16 @@
     {
       "op": "assert",
       "target": "script:debug/hub_face_check.plant_uv",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_bond_check.bond",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_bond_check.plant_bond",
       "equals": "caught"
     },
     {
