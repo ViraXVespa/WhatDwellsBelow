@@ -71,6 +71,13 @@ def git_state(root: Path) -> dict[str, str]:
         "worktree": dirty,
     }
 
+def shipped_changelogs(root: Path) -> list[str]:
+    """design/changelog/*.md on origin/main that this branch (commits or worktree) changed."""
+    _c, base = repo_lib.run_git(root, "merge-base", "origin/main", "HEAD")
+    _c, out = repo_lib.run_git(root, "diff", "--name-only", base.strip() or "HEAD", "--", "design/changelog")
+    return [rel for rel in out.split() if rel.endswith(".md") and repo_lib.run_git(root, "cat-file", "-e", f"origin/main:{rel}")[0] == 0
+            and repo_lib.run_git(root, "diff", "--quiet", "origin/main", "--", rel)[0] != 0]
+
 def run_check(root: Path, stem: str, *args: str) -> str:
     """PASS, or FAIL plus the first non-RESULT line, for one read-only check run under the repo root."""
     proc = subprocess.run(
@@ -205,10 +212,14 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"tool_docs={tool_docs} (rows: python tools/check.py tool-docs)")
         stale = run_check(root, "check_tool_docs", "--stale-refs")
         lines.append(f"stale_refs={stale} (rows: python tools/check.py tool-docs --stale-refs)")
+        shipped = shipped_changelogs(root)
+        lines.append(f"changelog_shipped={'FAIL' if shipped else 'PASS'} (an entry in a changelog already on origin/main: use docs.py patch changelog, next label)")
+        for rel in shipped:
+            lines.append(f"shipped\t{rel}")
         repro = run_check(root, "check_hub_bake", "--rebake")
         lines.append(f"bake_repro={repro} (rows: python tools/bake.py check --rebake)")
         explore_bad = False if args.no_explore else explore(root, lines)
-        if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)):
+        if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)) or shipped:
             rc = 1
 
     status = "FAIL" if rc else "PASS"
