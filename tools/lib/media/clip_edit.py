@@ -17,6 +17,10 @@
   python tools/media.py clip mark IN --box X,Y,W,H [--box ...] [--no-arrows] [--start S --end E] --out O.mp4
   python tools/media.py clip caption IN --cue 0,2,"First" --cue 2.5,5,"Second" --out O.mp4      # timed captions
   python tools/media.py clip ba BEFORE AFTER [--layout auto|wipe|sbs|stack] [--box B] --out O.mp4  # auto zoom + wipe
+  python tools/media.py clip punch IN --box B [--start S --sweep 0.4 --hold 1.2]        # punch-in: ease in, hold, ease out
+  python tools/media.py clip callout IN --box B --text T [--start S --end E]            # box outline + chip label, faded
+  python tools/media.py clip montage A B C [--labels "One,Two,Three"] [--end-card "T|S"]  # titled segments, crossfaded
+  python tools/media.py clip spec EDIT.json --out O.mp4                                   # JSON edit list (clip_compose.py)
   python tools/media.py clip wipe|ba A B --style promo [--subs "Week 8,Week 9"] [--end-card "TITLE|SUB"]  # promo chips + grip
   python tools/media.py clip --selftest                                          # synthetic clips through every op (ffmpeg only)
 
@@ -172,6 +176,8 @@ def selftest(root: Path) -> list[str]:
         ]
         import clip_fx
         bad += clip_fx.selftest(t)
+        import clip_compose
+        bad += clip_compose.selftest(t)
         x, xbad = export(t / "s.mp4", "x", t / "x.mp4")
         checks.append(("export-x", info(x), lambda i: i["w"] <= 1280 and i["h"] <= 720 and i["codec"] == "h264" and not xbad))
         g, gbad = export(a, "gif", t / "g.gif", 320)
@@ -181,10 +187,10 @@ def selftest(root: Path) -> list[str]:
                 bad.append("%s: %s" % (name, got))
     return bad
 
-OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit", "wipe", "pip", "mark", "ba")
+OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit", "wipe", "pip", "mark", "ba", "punch", "callout", "montage", "spec")
 
 def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
-    """crop, zoom, fit, wipe, pip, mark, ba (clip_fx)."""
+    """crop, zoom, fit, wipe, pip, mark, ba (clip_fx); punch, callout, montage, spec (clip_compose)."""
     i = info(ins[0])
     size = clip_fx.size_of(args.size) if args.size else (0, 0)
     boxes = [clip_fx.box_px(b, i["w"], i["h"], root, args.movie) for b in args.box]
@@ -210,6 +216,18 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
         clip_fx.pip(ins[0], ins[1], out, args.corner, args.scale, args.start, args.end)
     elif args.op == "mark":
         clip_fx.mark(ins[0], boxes, out, not args.no_arrows, args.start, args.end, args.color)
+    elif args.op in ("punch", "callout", "montage", "spec"):
+        import clip_compose
+        if args.op in ("punch", "callout") and not boxes:
+            agent_log.fail("%s needs --box" % args.op)
+        if args.op == "punch":
+            clip_compose.punch(ins[0], boxes[0], out, args.start or 0.5, args.sweep if args.sweep != 1.6 else 0.4, args.hold if args.hold != 0.6 else 1.2)
+        elif args.op == "callout":
+            clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font)
+        elif args.op == "montage":
+            clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font)
+        else:
+            print("spec: %s" % json.dumps(clip_compose.spec(ins[0], out, root)))
     elif args.op == "ba":
         pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font, style=args.style, subs=subs, end=end)
         print("ba pick: %s" % json.dumps(pick))
@@ -260,9 +278,10 @@ def main(argv: list[str] | None = None) -> int:
         ap.print_help()
         return 2
     ins = [Path(p) for p in args.inputs]
-    need = {"sbs": 2, "join": 2, "wipe": 2, "pip": 2, "ba": 2}.get(args.op, 1)
-    if len(ins) < need or (args.op != "join" and len(ins) != need):
-        agent_log.fail("%s takes %s input(s)" % (args.op, "2+" if args.op == "join" else need))
+    need = {"sbs": 2, "join": 2, "wipe": 2, "pip": 2, "ba": 2, "montage": 1}.get(args.op, 1)
+    many = args.op in ("join", "montage")
+    if len(ins) < need or (not many and len(ins) != need):
+        agent_log.fail("%s takes %s input(s)" % (args.op, "%d+" % need if many else need))
     problems: list[str] = []
     ext = ".gif" if args.op == "export" and args.kind == "gif" else ".mp4"
     out = None if args.op == "info" else _out(root, args.out, args.op + ext)

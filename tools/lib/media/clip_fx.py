@@ -73,14 +73,17 @@ def _ease(start: float, dur: float) -> str:
     p = "clip((t-%.3f)/%.3f,0,1)" % (start, max(dur, 0.001))
     return "(%s*%s*(3-2*%s))" % (p, p, p)
 
-def zoom(src: Path, box_a, box_b, out: Path, size: tuple[int, int] = (0, 0), start: float = 0.0, dur: float = 0.0) -> Path:
-    """Ken Burns: the view moves from box_a to box_b over [start, start+dur] (dur 0 = the whole clip), eased in and out.
+def zoom(src: Path, box_a, box_b, out: Path, size: tuple[int, int] = (0, 0), start: float = 0.0, dur: float = 0.0, back: float = -1.0) -> Path:
+    """Ken Burns: the view moves from box_a to box_b over [start, start+dur] (dur 0 = the whole clip), eased in and out;
+    back >= 0 (punch-in) holds that many seconds on box_b, then eases back to box_a over dur.
     Works at twice the output size, then scales down, so the pan does not step a pixel at a time."""
     i = ce.info(src)
     ow, oh = size if size[0] else (i["w"], i["h"])
     a = aspect_box(box_a, ow / oh, i["w"], i["h"])
     b = aspect_box(box_b, ow / oh, i["w"], i["h"])
     e = _ease(start, dur or i["sec"])
+    if back >= 0:
+        e = "(%s-%s)" % (e, _ease(start + dur + back, dur))
     lerp = lambda k: "(%.2f+(%.2f)*%s)" % (a[k], b[k] - a[k], e)
     s = "(%d/%s)" % (2 * ow, lerp(2))
     vf = ("scale=w='trunc(%d*%s/2)*2':h='trunc(%d*%s/2)*2':eval=frame:flags=bicubic,crop=%d:%d:'%s*%s':'%s*%s',scale=%d:%d:flags=lanczos,setsar=1"
