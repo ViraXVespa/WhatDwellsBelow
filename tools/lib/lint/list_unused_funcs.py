@@ -552,7 +552,7 @@ def main() -> int:
         "unused = zero references anywhere; shadowed = name defined in 2+ files and no use resolves to this def (alias/class_name/extends aware, unresolved receivers keep every same-named def); maybe = only a bare-name string literal outside a call "
         "(check by hand); dynamic = named in call_deferred/call/connect/Callable/scene (live, listed in the summary). "
         "scripts/data/tunables.gd consts are knobs and never listed.", writes=True)
-    parser.add_argument("--limit", type=int, default=80, help="Max rows listed (default 80).")
+    parser.add_argument("--limit", type=int, default=24, help="Max rows listed (default 24; the summary file has all).")
     parser.add_argument("--apply", action="store_true", help="DELETE the listed funcs (only when an opt item says so).")
     ns = parser.parse_args()
     started = time.perf_counter()

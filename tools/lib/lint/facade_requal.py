@@ -192,8 +192,10 @@ def main() -> int:
     if ns.selftest:
         return _selftest()
     path = Path(ns.file)
-    text = path.read_bytes().decode("utf-8")
     root = agent_log.resolve_root(ns) if ns.root else project_root(path)
+    if not ns.file or not path.is_file():
+        agent_log.fail(f"want a GDScript file, got {ns.file or '(none)'!r}")
+    text = path.read_bytes().decode("utf-8")
     if ns.sym:
         syms = []
         for spec in ns.sym:

@@ -14,6 +14,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
+import agent_log  # noqa: E402
+
 CACHE = "_logs/prove-cache.json"
 ## bot-status check -> (prove_rules rule id or None, extra globs). Checks not listed here always run (each < 1 s).
 SCOPE: dict[str, tuple[str | None, list[str]]] = {
@@ -191,9 +194,17 @@ def selftest() -> int:
         if not review_faults(r, ["assets/sprites/a.png"]):
             bad.append("a sprite change after the reviewed sha must need a new review")
     for b in bad:
-        print("FAIL", b)
-    print(f"RESULT {'FAIL' if bad else 'PASS'} cases=14 bad={len(bad)}")
-    return 1 if bad else 0
+        print("FAIL " + b)
+    return bad
+
+def main() -> int:
+    p = agent_log.std_parser(__doc__)
+    p.add_argument("--selftest", action="store_true", help="Replay the scoping cases in a throwaway repo.")
+    ns = p.parse_args()
+    if not ns.selftest:
+        agent_log.fail("library module: only --selftest runs here (bot_status.py --prove uses it)")
+    bad = selftest()
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
 if __name__ == "__main__":
-    raise SystemExit(selftest() if "--selftest" in sys.argv else 2)
+    raise SystemExit(main())
