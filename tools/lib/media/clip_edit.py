@@ -18,7 +18,7 @@
   python tools/media.py clip caption IN --cue 0,2,"First" --cue 2.5,5,"Second" --out O.mp4      # timed captions
   python tools/media.py clip ba BEFORE AFTER [--layout auto|wipe|sbs|stack] [--box B] --out O.mp4  # auto zoom + wipe
   python tools/media.py clip punch IN --box B [--start S --sweep 0.4 --hold 1.2]        # punch-in: ease in, hold, ease out
-  python tools/media.py clip callout IN --box B --text T [--start S --end E]            # box outline + chip label, faded
+  python tools/media.py clip callout IN --box B --text T [--shape ring --leader --start S --end E] # box outline + chip label, faded
   python tools/media.py clip montage A B C [--labels "One,Two,Three"] [--end-card "T|S"]  # titled segments, crossfaded
   python tools/media.py clip spec EDIT.json --out O.mp4                                   # JSON edit list (clip_compose.py)
   python tools/media.py clip wipe|ba A B --style promo [--subs "Week 8,Week 9"] [--end-card "TITLE|SUB"]  # promo chips + grip
@@ -223,7 +223,7 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
         if args.op == "punch":
             clip_compose.punch(ins[0], boxes[0], out, args.start or 0.5, args.sweep if args.sweep != 1.6 else 0.4, args.hold if args.hold != 0.6 else 1.2)
         elif args.op == "callout":
-            clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font)
+            clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font, args.shape, args.leader)
         elif args.op == "montage":
             clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font)
         else:
@@ -259,6 +259,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--once", action="store_true", help="wipe: sweep once (no sweep back)")
     ap.add_argument("--corner", choices=("tl", "tr", "bl", "br"), default="tr", help="pip corner")
     ap.add_argument("--scale", type=float, default=0.33, help="pip inset width share")
+    ap.add_argument("--shape", choices=("box", "ring"), default="box", help="callout outline")
+    ap.add_argument("--leader", action="store_true", help="callout: chip offset with a leader line")
     ap.add_argument("--color", default="#ffd23f", help="mark colour")
     ap.add_argument("--no-arrows", action="store_true", help="mark: boxes only")
     ap.add_argument("--cue", action="append", default=[], help="caption: START,END,TEXT (repeat; END 0 = to the end)")

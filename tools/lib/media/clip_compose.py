@@ -2,7 +2,7 @@
 """Composed promo edits for `media.py clip` (clip_edit.py owns the CLI):
 
   punch     punch-in: ease into a box, hold, ease back out (clip_fx.zoom with back)
-  callout   a box outline plus a promo chip label beside it, faded in and out over [start, end]
+  callout   a box or ring (style) plus a promo chip label, optional leader line, staggered fade over [start, end]
   montage   clips joined with crossfades, each opening with its own chip title (top-left), optional end card
   spec      a JSON edit list: {"in": CLIP | "montage": [CLIPS], "titles": [...], "steps": [{"op": punch|callout|caption|ba|export, ...}]}
             run in order, each step's output feeding the next (paths relative to the spec file)
@@ -22,8 +22,10 @@ def punch(src: Path, box, out: Path, start: float = 0.5, dur: float = 0.4, hold:
     i = ce.info(src)
     return clip_fx.zoom(src, (0, 0, i["w"], i["h"]), box, out, (0, 0), start, dur, back=hold)
 
-def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float = 0.0, color: str = "#ffd23f", font: str = "") -> Path:
-    """Outline + chip: the chip sits below the box (above it when the box is in the lower half), kept inside the frame."""
+def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float = 0.0, color: str = "#ffd23f", font: str = "",
+            shape: str = "box", leader: bool = False) -> Path:
+    """Box or ring outline + chip: the chip sits below the shape (above it when it is in the lower half), kept inside the frame,
+    offset by a leader line when `leader`; the shape fades in first and the chip 0.2 s later (out in reverse)."""
     from PIL import Image, ImageColor, ImageDraw
     i = ce.info(src)
     w, h = i["w"], i["h"]
@@ -34,18 +36,27 @@ def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float
         T = Path(td)
         clip_promo.chip(text, "", ImageColor.getrgb(color) + (255,), font, int(h * 0.6), T / "c.png")
         c = Image.open(T / "c.png")
-        img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        img, lab = Image.new("RGBA", (w, h), (0, 0, 0, 0)), Image.new("RGBA", (w, h), (0, 0, 0, 0))
         d = ImageDraw.Draw(img)
         x, y, bw, bh = [int(v) for v in box]
-        d.rectangle([x, y, x + bw, y + bh], outline=ImageColor.getrgb(color), width=th)
-        cy = y + bh + th if y + bh / 2 < h / 2 else y - c.height - th
-        cx = min(max(0, x), w - c.width)
-        img.alpha_composite(c, (cx, min(max(0, cy), h - c.height)))
+        rgb = ImageColor.getrgb(color)
+        (d.ellipse if shape == "ring" else d.rectangle)([x, y, x + bw, y + bh], outline=rgb, width=th)
+        gap = h // 12 if leader else th
+        below = y + bh / 2 < h / 2
+        cy = min(max(0, y + bh + gap if below else y - c.height - gap), h - c.height)
+        cx = min(max(0, x + (bw // 2 if leader else 0)), w - c.width)
+        if leader:
+            d.line([(x + bw // 2, y + bh if below else y), (cx + th, cy if below else cy + c.height)], fill=rgb, width=th)
+        lab.alpha_composite(c, (cx, cy))
         img.save(T / "o.png")
-        f = min(0.25, (end - start) / 4)
-        fc = ("[1:v]format=rgba,fade=t=in:st=%.3f:d=%.3f:alpha=1,fade=t=out:st=%.3f:d=%.3f:alpha=1[l];[0:v][l]overlay=0:0:shortest=1,format=yuv420p[o]"
-              % (start, f, end - f, f))
-        ce._run(["-i", str(src), "-loop", "1", "-framerate", str(round(float(i["fps"])) or 30), "-t", "%.3f" % i["sec"], "-i", str(T / "o.png"),
+        lab.save(T / "l.png")
+        f = min(0.25, (end - start) / 5)
+        g = min(0.2, (end - start) / 5)
+        fade = "format=rgba,fade=t=in:st=%.3f:d=%.3f:alpha=1,fade=t=out:st=%.3f:d=%.3f:alpha=1"
+        fc = ("[1:v]%s[s];[2:v]%s[c];[0:v][s]overlay=0:0:shortest=1[a];[a][c]overlay=0:0:shortest=1,format=yuv420p[o]"
+              % (fade % (start, f, end - f, f), fade % (start + g, f, end - f - g, f)))
+        loop = ["-loop", "1", "-framerate", str(round(float(i["fps"])) or 30), "-t", "%.3f" % i["sec"]]
+        ce._run(["-i", str(src), *loop, "-i", str(T / "o.png"), *loop, "-i", str(T / "l.png"),
                  "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(out)])
     return out
 
@@ -104,7 +115,8 @@ def spec(path: Path, out: Path, root: Path | None = None) -> list[dict]:
             if op == "punch":
                 punch(cur, box, nxt, s.get("start", 0.5), s.get("dur", 0.4), s.get("hold", 1.2))
             elif op == "callout":
-                callout(cur, box, s["text"], nxt, s.get("start", 0.0), s.get("end", 0.0), s.get("color", "#ffd23f"), font)
+                callout(cur, box, s["text"], nxt, s.get("start", 0.0), s.get("end", 0.0), s.get("color", "#ffd23f"), font,
+                        s.get("style", "box"), bool(s.get("leader", False)))
             elif op == "caption":
                 ce.caption(cur, s.get("text", ""), nxt, s.get("start", 0.0), s.get("end", 0.0), s.get("pos", "bottom"), font)
             elif op == "ba":

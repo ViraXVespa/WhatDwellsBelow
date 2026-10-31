@@ -71,7 +71,7 @@ Framing and overlays (`lib/media/clip_fx.py`; flags: `media.py clip --help`): `-
 
 Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. `--style promo` (`lib/media/clip_promo.py`, also on `clip wipe`) swaps the plain wipe for one eased sweep with a grip divider and one BEFORE/AFTER chip (`--subs` sublines) that crossfades mid-sweep, plus `--end-card "TITLE|SUB"`. Then `export --for x` and `--for gif`.
 
-Compose (`lib/media/clip_compose.py`): `clip punch IN --box B` eases into a box, holds (`--hold`), eases back; `clip callout IN --box B --text T` draws a timed outline and chip label; `clip montage A B C --labels ".." --end-card "T|S"` crossfades titled segments; `clip spec EDIT.json` runs a JSON edit list (`in` or `montage`, then `steps` of punch/callout/caption/ba/export).
+Compose (`lib/media/clip_compose.py`): `clip punch IN --box B` eases into a box, holds (`--hold`), eases back; `clip callout IN --box B --text T [--shape ring] [--leader]` draws a timed box or ring, then (0.2 s later) a chip label, optionally on a leader line; boxes also take shot region names; `clip montage A B C --labels ".." --end-card "T|S"` crossfades titled segments; `clip spec EDIT.json` runs a JSON edit list (`in` or `montage`, then `steps` of punch/callout/caption/ba/export).
 
 ## Ref compare and scenario catalog
 
