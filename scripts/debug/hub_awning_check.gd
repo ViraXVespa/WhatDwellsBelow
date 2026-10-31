@@ -23,6 +23,9 @@ var gap_report: String:
 var window: String:
 	get:
 		return window_faults(1.0)
+var window_report: String:
+	get:
+		return window_faults(-1.0)
 var plant_window: String:
 	get:
 		return "caught" if window_faults(1.2) != "" else "missed"
@@ -95,7 +98,7 @@ static func window_faults(grow: float) -> String:
 	if img.is_compressed():
 		img.decompress()
 	var bust: Rect2i = img.get_region(Rect2i(0, 0, img.get_width(), floori(img.get_height() / 2.0))).get_used_rect()
-	var ps: float = spr.pixel_size * grow
+	var ps: float = spr.pixel_size * absf(grow)
 	var c: Vector3 = face.global_transform.inverse() * spr.global_position  # face-local metres
 	var w0: float = img.get_width() * 0.5
 	var h0: float = img.get_height() * 0.5
@@ -106,12 +109,46 @@ static func window_faults(grow: float) -> String:
 	var win: Rect2 = Spec.RECEPTION_WINDOW
 	var wlo := Vector2((win.position.x - r.size.x * 0.5) * fps, (r.position.y + r.size.y * 0.5 - win.end.y) * fps)
 	var whi := Vector2((win.end.x - r.size.x * 0.5) * fps, (r.position.y + r.size.y * 0.5 - win.position.y) * fps)
+	if grow < 0.0:
+		return "bust x=[%.3f,%.3f] y=[%.3f,%.3f] win x=[%.3f,%.3f] y=[%.3f,%.3f]" % [lo.x, hi.x, lo.y, hi.y, wlo.x, whi.x, wlo.y, whi.y]
 	var out: PackedStringArray = PackedStringArray()
 	if lo.x < wlo.x - TOL or hi.x > whi.x + TOL:
 		out.append("x=[%.3f,%.3f] win=[%.3f,%.3f]" % [lo.x, hi.x, wlo.x, whi.x])
 	if lo.y < wlo.y - TOL or hi.y > whi.y + TOL:
 		out.append("y=[%.3f,%.3f] win=[%.3f,%.3f]" % [lo.y, hi.y, wlo.y, whi.y])
 	return " ".join(out)
+
+## board: the reception window's top board (Spec.RECEPTION_BOARD_TOP, face-art px row) sits right under the wing
+## awning's lowest screen edge from the play camera: |gap| <= BOARD_TOL px. plant_board moves the board 6 rows down.
+const BOARD_TOL := 1.5
+var board: String:
+	get:
+		return board_fault(0.0)
+var plant_board: String:
+	get:
+		return "caught" if board_fault(6.0) != "" else "missed"
+
+static func board_fault(shift: float) -> String:
+	var cam: Camera3D = _cam()
+	var bs: Array = []
+	_bodies((Engine.get_main_loop() as SceneTree).root, bs)
+	for b: Node3D in bs:
+		var f: Sprite3D = _face(b)
+		if cam == null or f == null or not f.texture.resource_path.contains("guild_reception"):
+			continue
+		var up: Vector3 = cam.global_transform.basis.y
+		var aw: MeshInstance3D = b.get_node("Awning")
+		var ab: AABB = aw.mesh.get_aabb()
+		var low: float = INF
+		for i in 8:
+			low = minf(low, up.dot(aw.global_transform * ab.get_endpoint(i)))
+		var r: Rect2 = f.region_rect if f.region_enabled else Rect2(Vector2.ZERO, f.texture.get_size())
+		var row: float = Spec.RECEPTION_BOARD_TOP + shift
+		var board_up: float = up.dot(f.global_transform * Vector3(0.0, (r.position.y + r.size.y * 0.5 - row) * f.pixel_size, 0.0))
+		var px: float = (board_up - low) * float(cam.get_viewport().get_visible_rect().size.y) / maxf(cam.size, 0.001)
+		var at: float = row + (board_up - low) / (up.dot(f.global_transform.basis.y) * f.pixel_size)
+		return "" if absf(px) <= BOARD_TOL else "board gap=%.1fpx (awning bottom at art row %.1f, board %.1f)" % [px, at, row]
+	return "no reception face"
 
 ## Cloth light: every awning and the stall tarp is lit like the faces (wrap shader face_light 1, bound to the hub
 ## light map). plant_cloth turns one off and must FAIL.

@@ -67,7 +67,9 @@ const VENDOR_GAP := 0.5
 const RECEPTION := Vector3(0.027, 0.763, 0.07)
 const RECEPTION_H := 1.56
 ## Reception window opening in guild_reception.png px (inside the frame: lintel underside to sill top).
-const RECEPTION_WINDOW := Rect2(106, 125, 145, 74)
+const RECEPTION_WINDOW := Rect2(106, 86, 145, 113)
+## Top edge of the window's top board (guild_reception.png px row), right under the wing awning (hub_awning_check.board).
+const RECEPTION_BOARD_TOP := 68.0
 const RECEPTION_LABEL_Y := 1.5
 ## Welcome banner: art height; pole feet at +-pole_x (opaque post columns of welcome_banner.png centre at -2.21 / +2.22 m
 ## at 4.4 m tall); pole collision box.

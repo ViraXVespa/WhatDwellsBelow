@@ -185,6 +185,16 @@
     },
     {
       "op": "assert",
+      "target": "script:debug/hub_awning_check.board",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_awning_check.plant_board",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
       "target": "script:debug/hub_awning_check.cloth",
       "equals": ""
     },
