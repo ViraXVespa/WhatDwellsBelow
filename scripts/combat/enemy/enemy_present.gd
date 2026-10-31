@@ -42,12 +42,8 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 static func present(host: CharacterBody3D, delta: float) -> void:
 	if host.spr == null:
 		return
-	var lift := 0.0
-	if host.move_kind == "fly":
-		lift = App.bal.fly_height + sin(host.bob_t * 5.0) * 0.08
-	elif host.move_kind == "hop" and host.hop_t > 0.18:
-		lift = App.bal.hop_height * (host.hop_t / 0.42)
-	host.spr.position.y = host.size_u * 0.48 + lift
+	# The body carries the lift (physics sets global y); the sprite sits on it, so a flyer draws at fly_height once.
+	host.spr.position.y = host.size_u * 0.48
 	var fk := Facing.from_aim(host.aim)
 	host.spr.flip_h = fk == "left" or fk == "up_left" or fk == "down_left"
 	Depth.apply(host.spr, host.global_position)

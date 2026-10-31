@@ -13,8 +13,9 @@ const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
 const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const BillSpr := preload("res://scripts/world/billboard_spr.gd")
+const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
-const CELL := 1.0 / 32.0
+const CELL := K.GRID_M
 const MIN_GAP := 0.5
 const ALTS := [0.25, 0.5, 0.9]
 const FACES := ["down", "down_left", "left", "up_left", "up", "up_right", "right", "down_right"]
@@ -41,11 +42,13 @@ static func stand_in(at: Vector3, kind: String, face: String) -> Node3D:
 	_face(body, kind, face, 0.5)
 	var lit: Node = body.get_node("ActorLit")
 	lit.set("air_force", true)
+	body.set_meta("kind", kind)
 	return body
 
 static func _face(body: Node3D, kind: String, face: String, alt: float) -> void:
 	var spr: Sprite3D = body.get_child(0) as Sprite3D
 	var tex: Texture2D = load("res://assets/sprites/enemies/%s/idle_%s.png" % [kind, face])
+	body.set_meta("kind", kind)  # Emis.rule_of reads it (wisp: all-glow, no mark)
 	spr.texture = tex
 	spr.pixel_size = SIZE / float(maxi(1, tex.get_height()))
 	spr.position.y = SIZE * 0.48 + alt
@@ -57,6 +60,7 @@ static func probe(body: Node3D, cam: Camera3D, lay: bool = true) -> Dictionary:
 		lit._process(1.0 / 60.0)
 	var m: MeshInstance3D = lit.marks[0]
 	var out := {"why": ""}
+	var rule: String = Emis.rule_of(body)
 	if not m.visible or m.mesh == null:
 		out.why = "hidden"
 		return out
@@ -103,7 +107,9 @@ static func run(plant: String = "") -> String:
 				var r: Dictionary = probe(body, cam)
 				n += 1
 				var why: String = r.why
-				if why == "":
+				if str(K.GLOW.get(kind, "")) == "glow":
+					why = "" if why == "hidden" else "glow_casts"  # an all-glow body (wisp) casts no mark
+				elif why == "":
 					if r.gap < MIN_GAP:
 						why = "attached gap=%.1f" % r.gap
 					if r.lift <= 0.0 or r.lateral > r.half + CELL:
@@ -128,6 +134,8 @@ static func run(plant: String = "") -> String:
 		body.global_position += Vector3(rng.randf_range(-0.2, 0.2), 0.0, rng.randf_range(-0.2, 0.2))
 		var r: Dictionary = probe(body, cam, not (plant == "hang" and i == 30))
 		n += 1
+		if K.GLOW.get(ks[i % ks.size()], "") == "glow":
+			continue
 		if r.why != "" or r.stale > 1.0:
 			rows.append("erratic#%d %s stale=%.1f" % [i, r.why, r.get("stale", -1.0)])
 	body.queue_free()
