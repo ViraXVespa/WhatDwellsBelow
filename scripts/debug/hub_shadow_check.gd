@@ -46,7 +46,7 @@ var plant_matrix: String:
 	get:
 		var M: GDScript = load("res://scripts/debug/hub_shadow_check/mark_matrix.gd")
 		var miss: PackedStringArray = PackedStringArray()
-		for p: String in ["offset", "glue", "chunk"]:
+		for p: String in ["offset", "glue", "chunk", "glow"]:
 			if M.run(p) == "":
 				miss.append(p)
 		return "caught" if miss.is_empty() else "missed " + ",".join(miss)
@@ -72,6 +72,14 @@ var fly_bench: String:
 var fly_stage: String:
 	get:
 		return load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").stage()
+
+## Rendered feet (hub_shadow_check/feet_px.gd): "" when both grounded boots meet the mark on screen; plant_feet: flat pins.
+var feet_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/feet_px.gd").run()
+var plant_feet: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/feet_px.gd").run("flat") != "" else "missed flat"
 
 static var _rows: PackedStringArray = PackedStringArray()
 

@@ -1,0 +1,41 @@
+{
+  "scene": "camp",
+  "hud": 0,
+  "zoom": 8,
+  "settle_ms": 800,
+  "about": "Rendered feet (hub_shadow_check/feet_px.gd): the player idle at zoom 8 drawn with marks off and on; every grounded boot column must meet its mark within 1 screen px. Planted flat pins (the one-foot-off case) must FAIL. FEET_PX lines carry L/R gaps.",
+  "steps": [
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            14.0,
+            0.0,
+            10.0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.plant_feet",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.feet_px",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "feet"
+    }
+  ]
+}

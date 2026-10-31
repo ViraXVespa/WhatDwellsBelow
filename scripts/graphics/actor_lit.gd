@@ -12,9 +12,13 @@ const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
+const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
+const Contact := preload("res://scripts/graphics/actor_lit/lit_contact.gd")
 const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 
 static var _shade: Shader
+## Debug plant (hub_shadow_check/feet_px.gd): the higher standing foot treated as raised (the one-foot-off of 20611abf).
+static var plant_flat := false
 
 var spr: Sprite3D
 var marks: Array[MeshInstance3D] = []
@@ -131,9 +135,12 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	# Both pins on the grounded (lowest) sole row: a raised foot keeps its x but not its lift, so it shows a gap
 	# above the mark in proportion to the lift (hub_shadow_check/mark_matrix.gd).
 	var sole_y: float = maxf(soles.y, soles.w)
-	var up: float = K.RAISED_CELLS * K.GRID_M / maxf(spr.pixel_size, 1e-5)
-	var fl: Vector2 = Geo._sole_xz(self, soles.x, sole_y, tw, th, sole_y - soles.y < up) - feet
-	var fr: Vector2 = Geo._sole_xz(self, soles.z, sole_y, tw, th, sole_y - soles.w < up) - feet
+	var up: float = K.RAISED_M / maxf(spr.pixel_size, 1e-5)
+	var gl: bool = sole_y - soles.y < up and not (plant_flat and soles.y < sole_y)
+	var gr: bool = sole_y - soles.w < up and not (plant_flat and soles.w < sole_y)
+	# A grounded foot pins at its own sole (contact) row; the shader (lit_k feet) casts its rows from there.
+	var fl: Vector2 = Geo._sole_xz(self, soles.x, soles.y if gl else sole_y, tw, th, gl) - feet
+	var fr: Vector2 = Geo._sole_xz(self, soles.z, soles.w if gr else sole_y, tw, th, gr) - feet
 	lift = 0.0
 	var kind: Variant = get_parent().get("move_kind")
 	if air_force or kind == "fly" or kind == "hop":
@@ -157,7 +164,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 		scale = _ink_budget / ink
 	for slot in K.MARK_N:
 		var node: MeshInstance3D = marks[slot]
-		var live: bool = _alpha_at[slot] >= K.HIDE_A
+		var live: bool = _alpha_at[slot] >= K.HIDE_A and Emis.rule_of(get_parent()) != "glow"  # all-glow body: no mark
 		if not live:
 			node.visible = false
 			continue
@@ -193,8 +200,12 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	]
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
-		mat.set_shader_parameter("albedo_tex", Soles._solid(tex, solid) if solid != "" else tex)
+		mat.set_shader_parameter("albedo_tex", Soles._solid(tex, solid) if solid != "" else Emis.mask(tex, Emis.rule_of(get_parent())))
 		foot = Soles._foot(tex) if solid == "profile" else 0
+		var per_col: bool = solid == "" and not App.in_dungeon
+		mat.set_shader_parameter("contact_on", 1.0 if per_col else 0.0)
+		if per_col:
+			mat.set_shader_parameter("contact_tex", Contact.tex(tex, Soles._soles(tex), px, plant_flat))
 	if key == _key_at[slot] and node.mesh != null:
 		return
 	_key_at[slot] = key
