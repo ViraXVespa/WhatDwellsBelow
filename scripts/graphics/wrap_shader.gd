@@ -33,6 +33,7 @@ uniform float k = 0.85;
 uniform float slope_k = 0.1;
 uniform float floor_l = 0.46; // FaceLit: light relative to the bake's own-shade floor, capped at lift
 uniform float lift = 1.35;
+uniform float shade_to = 0.8;
 uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 varying vec3 wpos;
 varying vec3 wnrm;
@@ -62,7 +63,8 @@ void fragment() {
 		vec2 luv = clamp((vec2(wpos.x, max(wpos.z, face_z) + ahead) - light_origin) / span, vec2(0.0), vec2(1.0));
 		vec3 n = wnrm.y < 0.0 ? -wnrm : wnrm;
 		float lam = clamp(dot(n, sun_dir) / max(sun_dir.y, 0.001), 0.0, 1.0);
-		lit = mix(vec3(1.0), clamp(texture(light_tex, luv).rgb / floor_l, vec3(0.0), vec3(lift)), k) * mix(1.0, lam, slope_k);
+		vec3 l = texture(light_tex, luv).rgb;
+		lit = mix(vec3(1.0), clamp(mix(vec3(shade_to), vec3(1.0), (l - floor_l) / (1.0 - floor_l)), vec3(0.0), vec3(lift)), k) * mix(1.0, lam, slope_k);
 	} else if (ignore_actor_shadow < 0.5) {
 		vec2 span = max(light_span, vec2(0.001));
 		vec2 luv = clamp((wpos.xz + light_shift - light_origin) / span, vec2(0.0), vec2(1.0));

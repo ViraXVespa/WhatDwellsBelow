@@ -6,10 +6,16 @@ extends Object
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const AHEAD := 0.3
 const K := 0.85
-## The bake floors every shade at HubCast.SHADE_NEAR, and a south face always stands in its own building's shade, so
-## the light is read relative to that floor: own shade = the art as painted (main's brightness), lantern pools lift
-## it up to LIFT. Anything darker than the floor would still darken it.
+## The bake floors every shade at HubCast.SHADE_NEAR and a south face always stands in its own building's shade, so
+## the light is remapped: the floor reads SHADE_TO, full sun 1, lantern pools up to LIFT (the shade gradient, shadow
+## edges and pools keep their variation). On the face art the awning shades the top (HEM over HEM_SPAN of the height)
+## and the base darkens toward the ground (BASE from BASE_FROM down).
 const LIFT := 1.35
+const SHADE_TO := 0.8
+const HEM := 0.72
+const HEM_SPAN := 0.18
+const BASE := 0.8
+const BASE_FROM := 0.6
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 
 static var _sh: Shader
@@ -37,9 +43,12 @@ void fragment() {
 		discard;
 	}
 	vec2 luv = clamp((vec2(wpos.x, wpos.z + ahead) - light_origin) / max(light_span, vec2(0.001)), vec2(0.0), vec2(1.0));
-	ALBEDO = c.rgb * mix(vec3(1.0), clamp(texture(light_tex, luv).rgb / floor_l, vec3(0.0), vec3(LIFT)), k);
+	vec3 l = texture(light_tex, luv).rgb;
+	vec3 rel = clamp(mix(vec3(SHADE_TO), vec3(1.0), (l - floor_l) / (1.0 - floor_l)), vec3(0.0), vec3(LIFT));
+	float band = mix(HEM, 1.0, smoothstep(0.0, HEM_SPAN, UV.y)) * mix(1.0, BASE, smoothstep(BASE_FROM, 1.0, UV.y));
+	ALBEDO = c.rgb * mix(vec3(1.0), rel * band, k);
 }
-""").replace("LIFT", str(LIFT))
+""").replace("LIFT", str(LIFT)).replace("SHADE_TO", str(SHADE_TO)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
 	var m := ShaderMaterial.new()
 	m.shader = _sh
 	m.set_shader_parameter("albedo_tex", tex)

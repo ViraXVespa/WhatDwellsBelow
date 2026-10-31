@@ -98,6 +98,7 @@ static func face_light(mat: Material, face_z: float) -> void:
 	mat.set_shader_parameter("k", FaceLit.K)
 	mat.set_shader_parameter("floor_l", HubCast.SHADE_NEAR)
 	mat.set_shader_parameter("lift", FaceLit.LIFT)
+	mat.set_shader_parameter("shade_to", FaceLit.SHADE_TO)
 	mat.set_shader_parameter("sun_dir", sun)
 
 ## Cloth (tarp, awning): wrap_mat with a white second tint, flags true, false.
