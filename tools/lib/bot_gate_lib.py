@@ -32,7 +32,7 @@ def enabled(args: object = None) -> bool:
 
 def not_run(what: str, **kv: object) -> int:
     """The answer for a size tool run outside Bot mode: nothing measured, nothing printed but this."""
-    print(f"{what}: Bot-only check, not run here.")
+    print(f"{what}: Bot-only check, not run here (pass --bot, or set WDB_BOT=1, to measure).")
     return agent_log.emit_result("INFO", None, skipped=1, **kv)
 
 def set_budgets(root: Path) -> dict[str, tuple[int, list[str]]]:
