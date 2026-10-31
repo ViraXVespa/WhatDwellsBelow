@@ -10,6 +10,15 @@ static var _strips: Array[Image] = []
 static var _warm_left: int = 0
 static var _atlas_left: int = 0
 static var _token: String = ""
+## The last frame before downsizing (null at 100%); keep_full writes it to Args.full_dir().
+static var last_full: Image = null
+
+static func keep_full(file: String) -> void:
+	var d: String = Args.full_dir()
+	if d == "" or last_full == null:
+		return
+	DirAccess.make_dir_recursive_absolute(d)
+	last_full.save_png(d.path_join(file))
 
 static func _arm_capture(host: Node) -> void:
 	if not is_instance_valid(host):
@@ -42,12 +51,15 @@ static func _capture(host: Node) -> void:
 	if img == null or img.is_empty():
 		_fail(host, "no_image")
 		return
+	last_full = null
 	var pct: int = Args.scale_pct()
 	if pct < 100:
+		last_full = img.duplicate() as Image
 		var w: int = maxi(1, int(float(img.get_width()) * (float(pct) / 100.0)))
 		var h: int = maxi(1, int(float(img.get_height()) * (float(pct) / 100.0)))
 		img.resize(w, h, Image.INTERPOLATE_BILINEAR)
 	var path: String = Args.out_path()
+	keep_full(path.get_file())
 	var err: Error = img.save_png(path)
 	if err != OK:
 		_fail(host, "save_%d" % int(err))
@@ -161,8 +173,10 @@ static func _read_frame(host: Node) -> Image:
 	var img: Image = tex.get_image()
 	if img == null or img.is_empty():
 		return null
+	last_full = null
 	var pct: int = Args.scale_pct()
 	if pct < 100:
+		last_full = img.duplicate() as Image
 		var w: int = maxi(1, int(float(img.get_width()) * (float(pct) / 100.0)))
 		var h: int = maxi(1, int(float(img.get_height()) * (float(pct) / 100.0)))
 		img.resize(w, h, Image.INTERPOLATE_BILINEAR)

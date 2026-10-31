@@ -26,21 +26,26 @@ import run_isolated_grok as iso  # noqa: E402
 REPORT = "report.md"
 MAX_REPORT = 6000
 
-def turn_budget(n_images: int, requested: int) -> int:
-    """Turns for one read of each image plus the report. A low --max-turns still rises with the image count."""
-    auto = min(16, max(8, 2 + 2 * max(n_images, 1)))
+def turn_budget(n_images: int, requested: int, zooms: int = 0) -> int:
+    """Turns for one read of each image (zoom crops count) plus the report. A low --max-turns still rises with the
+    image count. Cap 16; 24 only when --zoom crops are staged (zoom-heavy reviews ran out at 16)."""
+    auto = min(24 if zooms else 16, max(8, 2 + 2 * max(n_images + zooms, 1)))
     if requested <= 0:
         return auto
     return max(requested, auto)
 
-def build_job(names: list[str], question: str, rubric: str) -> str:
+def build_job(names: list[str], question: str, rubric: str, zooms: list[str] | None = None) -> str:
     lines = ["# Shot review (isolated)", "",
              "You review game screenshots. The developer will not see the images, only your report.",
              "The files are in this directory. They are real screenshots.",
              "Call read_file once on each file. That call shows you the picture. Trust it.",
              "Do not run a terminal command, Python, OCR, or a crop. Do not re-read a file.",
              "Do not walk any other directory. Do not generate or edit images.", "",
-             "Files: " + ", ".join(f"`{n}`" for n in names), "", f"Question: {question}"]
+             "Files: " + ", ".join(f"`{n}`" for n in names)]
+    if zooms:
+        lines += ["Zoomed details (cut by the developer from the full-size original, nearest-neighbour enlarged; "
+                  "read each once, only for the small detail it shows): " + "; ".join(zooms)]
+    lines += ["", f"Question: {question}"]
     if rubric:
         lines += ["", "Rubric (check each item):", rubric]
     lines += ["", f"Then write `{REPORT}` in this directory with the write tool, plain text, under 400 words.",
@@ -54,7 +59,22 @@ def fail(why: str) -> int:
     print(f"REVIEW FAILED: {why}")
     return agent_log.emit_result("FAIL", reason=why)
 
-def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: int) -> int:
+def stage_zooms(paths: list[Path], specs: list[str], scratch: Path) -> list[str]:
+    """--zoom N:X,Y,W,H (N = 1-based shot, box in that shot's pixels as viewed): crop from the full/ original via
+    shots.py zoom (shot_zoom) into the scratch, since the isolated child has no repo or terminal."""
+    import shot_zoom
+    out = []
+    for k, spec in enumerate(specs, 1):
+        idx, _, box = spec.partition(":")
+        src = paths[int(idx) - 1]
+        name = f"{int(idx):02d}-zoom{k}-{src.name}"
+        r = shot_zoom.main([str(src), "--box", box, "--scale", "4", "--out", str(scratch / name)])
+        if r != 0 or not (scratch / name).is_file():
+            raise ValueError(f"zoom {spec} failed")
+        out.append(f"`{name}` = file {int(idx):02d} box {box}" + ("" if shot_zoom.original(src) else " (no original: downsized)"))
+    return out
+
+def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: int, zoom: list[str] | None = None) -> int:
     missing = [str(p) for p in paths if not p.is_file()]
     if missing:
         return fail("missing " + ", ".join(missing))
@@ -67,8 +87,12 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
             name = f"{i + 1:02d}-{p.name}"
             shutil.copy2(p, scratch / name)
             names.append(name)
+        try:
+            zl = stage_zooms(paths, zoom or [], scratch)
+        except (ValueError, IndexError) as e:
+            return fail(str(e))
         job = scratch / "job.md"
-        iso.write_job(job, build_job(names, question, rubric))
+        iso.write_job(job, build_job(names, question, rubric, zl))
         try:
             ins = subprocess.run([grok, "inspect"], cwd=scratch, text=True, capture_output=True, check=False)
         except OSError as e:
@@ -77,7 +101,7 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
         n = iso.inspect_instruction_count(text)
         if ins.returncode != 0 or iso.inspect_mentions_repo_agents(text) or n != 0:
             return fail(f"isolation not proven (inspect exit {ins.returncode}, project instructions {n})")
-        budget = turn_budget(len(paths), max_turns)
+        budget = turn_budget(len(paths), max_turns, len(zl))
         argv = iso.grok_child_argv(grok, job, scratch, budget)
         child = subprocess.run(argv, cwd=scratch, text=True, capture_output=True, check=False)
         if child.returncode != 0:
@@ -117,7 +141,8 @@ def selftest() -> int:
     sample = build_job(["01-a.png"], "Is the panel visible?", "- panel")
     if "Do not run a terminal" not in sample or "VERDICT: UNSURE" not in sample or "01-a.png" not in sample:
         bad.append("prompt")
-    if turn_budget(3, 6) != 8 or turn_budget(1, 6) != 8 or turn_budget(3, 20) != 20 or turn_budget(12, 0) != 16:
+    if turn_budget(3, 6) != 8 or turn_budget(1, 6) != 8 or turn_budget(3, 20) != 20 or turn_budget(12, 0) != 16 \
+            or turn_budget(12, 0, 4) != 24 or turn_budget(2, 6, 2) != 10:
         bad.append("budget")
     with tempfile.TemporaryDirectory(prefix="wdb-review-st-") as tmp:
         t = Path(tmp)
@@ -154,7 +179,8 @@ def main() -> int:
     ap.add_argument("--question", default="", help="What to answer about the shots (required)")
     ap.add_argument("--rubric", default="", help="Checklist text, or @FILE to read it from a file")
     ap.add_argument("--grok", default="grok", help="Grok Build executable (default: grok)")
-    ap.add_argument("--max-turns", type=int, default=6, help="Max child turns. The run rises with the image count (at least 8, +2 per image, cap 16) when this is lower.")
+    ap.add_argument("--max-turns", type=int, default=6, help="Max child turns. The run rises with the image count (at least 8, +2 per image, cap 16, 24 with --zoom) when this is lower.")
+    ap.add_argument("--zoom", action="append", default=[], help="N:X,Y,W,H — also stage a 4x crop of shot N (1-based) from its full-size original (shots.py zoom); box in the shot's pixels as viewed. Repeat. Raises the turn cap to 24.")
     ap.add_argument("--selftest", action="store_true", help="Run against a mock grok; no Grok needed")
     args = ap.parse_args()
     root = agent_log.resolve_root(args)
@@ -166,7 +192,7 @@ def main() -> int:
     if rubric.startswith("@"):
         rubric = Path(rubric[1:]).read_text(encoding="utf-8")
     paths = [Path(p) if Path(p).is_absolute() or not (root / p).exists() else root / p for p in args.paths]
-    return review(paths, args.question.strip(), rubric.strip(), args.grok, args.max_turns)
+    return review(paths, args.question.strip(), rubric.strip(), args.grok, args.max_turns, args.zoom)
 
 if __name__ == "__main__":
     sys.exit(main())

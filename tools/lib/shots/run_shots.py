@@ -80,7 +80,7 @@ def _load_recipe(root: Path, name: str) -> dict:
         raise SystemExit("FAIL unknown shot recipe " + name)
     return rec
 
-def _recipe_poses(rec: dict) -> str:
+def _recipe_poses(rec: dict, aim: bool = False) -> str:
     bits: list[str] = []
     for fr in rec.get("frames") or []:
         kind = str(fr.get("kind") or "play")
@@ -98,7 +98,8 @@ def _recipe_poses(rec: dict) -> str:
         pl = fr.get("player") or [0.0, 0.0]
         face = fr.get("face", "down")
         cy = fr.get("cy", 4.2)
-        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy, pl[0], pl[1]))
+        on = bool(fr.get("aim_line", rec.get("aim_line", aim)))  # per-frame, else per-recipe, else --aim-line
+        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy, pl[0], pl[1], on))
     return ";".join(bits)
 
 def _out_dir(root: Path) -> Path:
@@ -108,6 +109,19 @@ def _out_dir(root: Path) -> Path:
         fallback = root / "_logs" / JOB
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
+
+def _full_dir(d: Path | None) -> Path | None:
+    """<dir>/full for the pre-downsize originals, only where git ignores it or outside the repo (never a media commit)."""
+    if d is None:
+        return None
+    full = d.resolve() / "full"
+    top = Path(__file__).resolve().parents[3]
+    try:
+        full.relative_to(top)
+    except ValueError:
+        return full
+    r = subprocess.run(["git", "check-ignore", "-q", str(full / "x.png")], cwd=top, capture_output=True)
+    return full if r.returncode == 0 else None
 
 def _extra_flags(args: argparse.Namespace) -> list[str]:
     extra = [
@@ -136,6 +150,10 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         extra.append("--wdb-shot-texts=1")
     if args.dpr > 0:
         extra.append("--wdb-dpr=%g" % args.dpr)
+    base = Path(args.frames_dir) if args.frames_dir else getattr(args, "png_dir", None)
+    full = None if getattr(args, "full_map", False) else _full_dir(base)
+    if full:
+        extra.append(f"--wdb-shot-full={full}")  # pre-downsize originals (shots.py zoom reads them)
     if not getattr(args, "aim_line", False):
         extra.append("--wdb-shot-aim=0")  # aim line off in every shot unless --aim-line (players keep their setting)
     return extra
@@ -320,7 +338,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
             apply_flow_header(args, data, given)
     if args.recipe:
         rec = _load_recipe(root, args.recipe)
-        poses = _recipe_poses(rec)
+        poses = _recipe_poses(rec, bool(getattr(args, "aim_line", False)))
         if rec.get("scene"):
             args.scene = str(rec.get("scene"))
         if "hud" in rec:
@@ -335,6 +353,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     out_dir = _out_dir(root)
     scale_pct = max(1, min(100, args.scale if args.scale > 0 else (BUILD_SCALE_PCT if args.mode == "build" and not (args.width or args.height) else 100)))  # an explicit size is kept
     png = Path(args.out) if args.out else (out_dir / f"shot-s{args.seed}-f{args.floor}.png")
+    args.png_dir = png.parent  # full-size originals land in <png dir>/full/ (_extra_flags)
     png.parent.mkdir(parents=True, exist_ok=True)
     if args.steps and not args.frames_dir:
         args.frames_dir = str(png.parent)

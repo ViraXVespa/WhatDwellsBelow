@@ -160,6 +160,8 @@ static func op_shot(st: Dictionary, step: Dictionary) -> void:
 		var r := Rect2i(int(gr.position.x * f), int(gr.position.y * f), int(gr.size.x * f), int(gr.size.y * f))
 		img = img.get_region(r.intersection(Rect2i(0, 0, img.get_width(), img.get_height())))
 	var path: String = Args.frames_dir().path_join(stem + ".png")
+	if not step.has("crop"):
+		Capture.keep_full(stem + ".png")
 	var err: Error = img.save_png(path)
 	if err != OK:
 		fail(st, "shot", "save_%d" % int(err))
