@@ -14,6 +14,7 @@ const DIFF := 0.06
 const OK := 0.9
 const STEP := 0.1  # metres between samples along an edge
 const SHIFT := 3.0  # planted shift, cells
+const MAX_POCKET := 0.02  # m2 of lit ground allowed inside one building's whole shadow
 
 static var last := ""
 
@@ -77,6 +78,16 @@ static func run(plant: String = "") -> String:
 			edges += 1
 			if float(good) / tot < OK:
 				bad.append("h%d.e%d=%d/%d" % [hi, i, good, tot])
+	var hole := Vector2.INF
+	if plant == "gap":
+		hole = Vector2.ZERO
+		for v in hs[0]:
+			hole += v / float((hs[0] as PackedVector2Array).size())
+		hole += Vector2(0.0, 0.6)  # off the footprint, inside the cast
+	var pk: PackedStringArray = pockets(hs, foot, hole)
+	print("EDGE_POCKETS ", plant, " n=", pk.size(), " ", " ".join(pk.slice(0, 12)))
+	if pk.size() * POCKET_M * POCKET_M > MAX_POCKET:
+		bad.append("pockets=%d(%s)" % [pk.size(), pk[0]])
 	last = "edges=%d bad=%d" % [edges, bad.size()]
 	print("EDGE_PX ", plant, " ", last, " ", " ".join(bad))
 	if edges == 0:
@@ -100,3 +111,52 @@ static func _in_any(hs: Array, p: Vector2, skip: int) -> bool:
 		if inside:
 			return true
 	return false
+
+## Light pockets: sunlit ground cells (the shader's shade test, Hulls.sun_at on the bake; off every footprint) that cannot
+## reach open ground without crossing shade: a hole inside a shadow, or a slot between a building base and its shadow
+## or between adjacent buildings' shadows. plant "gap" opens a 0.2 m lit hole in the first building's cast. Flood fill on a POCKET_M grid over the hulls' bounds; rows "x,z:cells".
+const POCKET_M := 0.05
+
+static func pockets(hs: Array, foot: Array, hole := Vector2.INF) -> PackedStringArray:
+	var r := Rect2((hs[0] as PackedVector2Array)[0], Vector2.ZERO)
+	for h: PackedVector2Array in hs:
+		for v in h:
+			r = r.expand(v)
+	r = r.grow(0.5)
+	var w: int = int(r.size.x / POCKET_M)
+	var d: int = int(r.size.y / POCKET_M)
+	var lit := PackedByteArray()
+	lit.resize(w * d)
+	for j in d:
+		for i in w:
+			var q: Vector2 = r.position + Vector2(i + 0.5, j + 0.5) * POCKET_M
+			var on := 1
+			var c: Color = LightRt.sample_xz(q)
+			if foot.any(func(f: Rect2) -> bool: return f.has_point(q)) or Hulls.sun_at(q, maxf(c.r, maxf(c.g, c.b))) == 0.0:
+				on = 0
+			if q.distance_to(hole) < 0.2:
+				on = 1  # planted: a lit hole inside a shadow
+			lit[j * w + i] = on
+	var stack: Array[int] = []
+	for i in w:
+		stack.append(i)
+		stack.append((d - 1) * w + i)
+	for j in d:
+		stack.append(j * w)
+		stack.append(j * w + w - 1)
+	while not stack.is_empty():
+		var k: int = stack.pop_back()
+		if lit[k] != 1:
+			continue
+		lit[k] = 2  # reaches open ground
+		var x: int = k % w
+		var z: int = k / w
+		if x > 0: stack.append(k - 1)
+		if x < w - 1: stack.append(k + 1)
+		if z > 0: stack.append(k - w)
+		if z < d - 1: stack.append(k + w)
+	var out: PackedStringArray = PackedStringArray()
+	for k in lit.size():
+		if lit[k] == 1:
+			out.append("%.2f,%.2f" % [r.position.x + (k % w + 0.5) * POCKET_M, r.position.y + (k / w + 0.5) * POCKET_M])
+	return out

@@ -4,6 +4,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
 
 ## Bilinear light-buffer tap shared with wall_shader. Text only (no function): ground inlines it, wall wraps it
 ## in tap_lit(xz). Needs light_tex / light_origin / light_span uniforms and a vec2 `xz` in scope.
@@ -51,27 +52,8 @@ uniform float wear = 0.0;
 // Hub: shade edges snap toward full sun or full shade per cell (0 off; dungeon keeps the smooth bake).
 uniform float harden = 0.0;
 uniform float shade_l = 0.46;
-// Hub building shadow hulls (light_rt/hub_hulls.gd): convex, counter-clockwise; hull i is hull_p[hull_s[i]..hull_s[i+1]).
-uniform int hull_n = 0;
-uniform int hull_s[33];
-uniform vec2 hull_p[256];
-// Signed distance (m, + inside) to the nearest hull: max over hulls of the min edge distance.
-float hull_d(vec2 q) {
-	float best = -1e9;
-	for (int i = 0; i < hull_n; i++) {
-		int a = hull_s[i];
-		int b = hull_s[i + 1];
-		float d = 1e9;
-		for (int j = a; j < b; j++) {
-			vec2 p0 = hull_p[j];
-			vec2 e = hull_p[j + 1 < b ? j + 1 : a] - p0;
-			d = min(d, (e.x * (q.y - p0.y) - e.y * (q.x - p0.x)) / max(length(e), 1e-5));
-		}
-		best = max(best, d);
-	}
-	return best;
-}
-uniform vec2 light_origin = vec2(0.0);
+// Hub shadows (light_rt/hub_hulls.gd GLSL): exact building projections plus the hard-thresholded fine bake.
+"""+ Hulls.GLSL + """uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform vec4 feather_rect = vec4(0.0);
 uniform float feather = 0.0;
@@ -117,12 +99,10 @@ void fragment() {
 		xz = cell0 + (vec2(float(t % 2), float(t / 2)) * 0.5 + 0.25) / GRID;
 """ + TAP_BODY + "		lit += 0.25 * " + TAP_MIX + """	}
 	float ll = max(max(lit.r, lit.g), lit.b);
-	float hd = hull_n > 0 ? hull_d(cell0 + 0.5 / GRID) : -1e9;
+	float sun = hub_sun(cell0 + 0.5 / GRID, ll);
 	bool lamp = lit.r - lit.b > 0.12 && ll > shade_l * 1.15; // lamp pools in the shade keep their light
-	if (hd >= 0.0 && ll > 0.001 && !lamp) {
-		lit *= shade_l / ll; // inside a projected building: the near shade, edge on the cell
-	} else if (hd < 0.0 && hd > -0.8 && ll > 0.001 && ll < 0.95) {
-		lit *= 0.98 / ll; // just outside: the bake's blur and fade, back to sun
+	if (sun >= 0.0 && ll > 0.001 && !lamp) {
+		lit *= (sun < 0.5 ? shade_l : max(ll, 0.98)) / ll; // shade or sun per cell, edge on the cell
 	} else if (harden > 0.0 && ll > 0.001 && ll < 1.0) {
 		float t = clamp((ll - shade_l) / (1.0 - shade_l), 0.0, 1.0);
 		lit *= mix(1.0, mix(shade_l, 1.0, smoothstep(0.5 - 0.5 * (1.0 - harden), 0.5 + 0.5 * (1.0 - harden), t)) / ll, step(shade_l * 0.9, ll));

@@ -91,6 +91,20 @@ var plant_edges: String:
 		var r: String = load("res://scripts/debug/hub_shadow_check/edge_px.gd").run("shift")
 		return "caught" if r != "" and r != "no_edges" else "missed shift " + r
 
+## Rendered sun mark in full building shade (hub_shadow_check/mark_px.gd): "" when no double shadow; plant_mark: no cancel.
+var mark_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/mark_px.gd").run()
+var plant_gap: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/edge_px.gd").run("gap").contains("pockets") else "missed gap"
+var mark_sun: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/mark_px.gd").run("", true)
+var plant_mark: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/mark_px.gd").run("ignore").contains("double") else "missed ignore"
+
 static var _rows: PackedStringArray = PackedStringArray()
 
 static func faults(props: Array) -> String:

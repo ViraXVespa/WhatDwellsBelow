@@ -3,15 +3,71 @@
   "hud": 0,
   "zoom": 1.75,
   "settle_ms": 800,
-  "about": "Rendered shadow contour (hub_shadow_check/edge_px.gd): buildings hidden, ground drawn; along every outer edge of each projected building polygon (hub_hulls.gd) cells 2 inside must be darker than 2 outside at >=90% of points. Planted 3-cell hull shift must FAIL. EDGE_PX lines carry edges/bad.",
+  "about": "Rendered shadow contour (hub_shadow_check/edge_px.gd): buildings hidden, ground drawn; along every outer edge of each projected building polygon (hub_hulls.gd) cells 2 inside must be darker than 2 outside at >=90% of points. Planted 3-cell hull shift must FAIL. EDGE_PX lines carry edges/bad. Sun mark in full building shade (player at 9,9) must darken no pixels (mark_px), in open sun (19,12) it must show; planted no-cancel mark must FAIL double. Light pockets (sunlit cells that cannot reach open ground: holes, slots between a base or neighbour and its shadow) must be none; planted 0.2 m hole must FAIL.",
   "steps": [
     {
       "op": "wait",
       "ms": 300
     },
     {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            9.0,
+            0.0,
+            9.0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.mark_px",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.plant_mark",
+      "equals": "caught"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            19.0,
+            0.0,
+            12.0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.mark_sun",
+      "equals": ""
+    },
+    {
       "op": "assert",
       "target": "script:debug/hub_shadow_check.plant_edges",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.plant_gap",
       "equals": "caught"
     },
     {

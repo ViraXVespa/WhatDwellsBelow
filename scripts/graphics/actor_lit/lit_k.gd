@@ -1,5 +1,6 @@
 extends Object
 const T := preload("res://scripts/data/tunables.gd")
+const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
 
 ## Actor shade-mark tuning and shader source. Pure data; no state.
 
@@ -52,6 +53,7 @@ uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform float floor_l = 0.46;
 varying vec3 wpos;
+""" + Hulls.GLSL + """
 
 void vertex() {
 	vec4 clip = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
@@ -95,7 +97,8 @@ void fragment() {
 	if (sun_cancel > 0.5) {
 		vec2 luv = clamp((xz - light_origin) / max(light_span, vec2(0.001)), vec2(0.0), vec2(1.0));
 		vec3 l = texture(light_tex, luv).rgb;
-		lit = clamp(((l.r + l.g + l.b) / 3.0 - floor_l - 0.1) / (0.9 - floor_l), 0.0, 1.0); // 0.1 = SUN_SOFT
+		float hs = hub_sun(xz, max(max(l.r, l.g), l.b)); // the ground's own shade test (hub_hulls GLSL)
+		lit = hs >= 0.0 ? hs : clamp(((l.r + l.g + l.b) / 3.0 - floor_l - 0.1) / (0.9 - floor_l), 0.0, 1.0); // 0.1 = SUN_SOFT
 	}
 	ALPHA = shade.a * lit * cov;
 }

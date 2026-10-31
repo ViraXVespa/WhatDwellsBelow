@@ -9,6 +9,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 
+const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
@@ -182,6 +183,8 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			var shown: float = _alpha_at[slot] * scale * a_air
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
 			shade_mat.set_shader_parameter("sun_cancel", 1.0 if slot == 0 and not App.in_dungeon else 0.0)
+			if slot == 0 and shade_mat.get_shader_parameter("hull_n") != Hulls._n:
+				Hulls.bind(shade_mat)
 			shade_mat.set_shader_parameter("grid", 0.0 if App.in_dungeon else K.HUB_GRID)
 		node.visible = true
 
