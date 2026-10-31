@@ -30,14 +30,11 @@ Fix both. Make the bake/shadow check catch each one, and prove it with a planted
 
   A planted fault (dumpster mark pushed toward the sun) FAILed with `dumpster:not_sun_side away=-0.33`. That planted-fault proof was manual and is not a committed selftest.
 
-## Dumpster: not reproduced
-The dumpster has no baked shadow. Its runtime mark (ActorLit `marks[0]`) sits on the ground behind it and passes the face test. Next steps:
-- Look at the review frame Vira flagged (the dumpster from the play camera, zoom 3.2) next to `shots.py flow --flow camp-prop-shadows` frame 01.
-- If the dark patch is the sprite's own painted shading, or the hall's baked shadow, it is not the mark. Say which one.
-- Add a planted-fault selftest, e.g. a `plant` var in `hub_shadow_check.gd` that moves the mark onto the face, with a flow step that asserts `bad` contains `on_face`.
+## Dumpster: cause named (refactorer-catchup)
+Not the mark and not the bake: the dumpster has no baked shadow, and its runtime mark sits on the ground south of it (on_face 0.08). Compared at zoom 4.5 against main (`/workspace/hubshots/crops/dumpster.png`), the dark band low on the bin is the sprite's own painted rust front, with the hall's baked shadow edge just behind it. Nothing to change in code; a repaint of the sprite would be a look decision for Vira. Selftest: `hub_shadow_check.plant` grows the dumpster sprite 3x over its mark and the flow asserts `caught` (a wrong expectation FAILs the flow).
 
 ## Light leak: fixed on refactorer-catchup
 `HubBlur.zones` keeps the blur inside each footprint; `bake_leak.py` (in `bake.py check`, selftest plants a rim) FAILed the old png (hall S +17.8, E +18.5; reception S +17.8, E +18.3 grey, tol 4.0) and PASSes the rebake. Rebake approved by Vira for the lantern regression fix.
 
 ## Next
-1. Dumpster (above): name the cause, add the planted-fault selftest.
+1. Dumpster: done (cause named, selftest in the flow); a sprite repaint waits on Vira.

@@ -24,6 +24,19 @@ var report: String:
 		faults((Engine.get_main_loop() as SceneTree).get_nodes_in_group("interact"))
 		return " ".join(_rows)
 
+## Planted fault: the dumpster sprite grown 3x so its face covers its own mark; must report on_face.
+var plant: String:
+	get:
+		for n in (Engine.get_main_loop() as SceneTree).get_nodes_in_group("interact"):
+			if str(n.get("kind")) == "dumpster":
+				var spr: Sprite3D = n.get("spr") as Sprite3D
+				var was: Vector3 = spr.scale
+				spr.scale = was * 3.0
+				var got: String = faults([n])
+				spr.scale = was
+				return "caught" if got.contains("dumpster:on_face") else "missed " + got
+		return "missing"
+
 static var _rows: PackedStringArray = PackedStringArray()
 
 static func faults(props: Array) -> String:
