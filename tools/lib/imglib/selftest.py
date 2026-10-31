@@ -137,6 +137,17 @@ def run() -> list[tuple[str, bool, str]]:
     alpha_bin = set(np.unique(px[..., 3]).tolist()) <= {0, 255}
     ncol = len(np.unique(px[px[..., 3] > 0][:, :3], axis=0))
     out.append(("pixelate grid+alpha+palette", px.shape == (80, 60, 4) and cells_ok and alpha_bin and ncol <= 3, f"cells {cells_ok} binary {alpha_bin} colours {ncol}"))
+    # grid: +-1 px jittered cells at an offset phase are recovered exactly, and grid pixelate keeps every cell's colour.
+    from . import grid
+    gok = 0
+    for sd in range(8):
+        for ph in (0, 2, 3):
+            gim, gx, gy = grid.jittered(seed=sd, phase=ph, base=5)
+            gg = grid.detect(gim)
+            gok += gg["x"][2] == gx and gg["y"][2] == gy
+    gim, gx, gy = grid.jittered(seed=3, phase=3, base=5)
+    same = np.array_equal(np.array(key.pixelate(gim, 1.0, grid=True)), np.array(gim))
+    out.append(("grid jittered cells recovered", gok == 24 and same, f"{gok}/24 exact, grid pixelate identity {same}"))
     # pixelate detail: a 1-cell dark band (4 px wide on a 4 px cell, off the cell phase) survives as dark cells.
     band = np.full((32, 32, 4), 220, np.uint8)
     band[:, 14:18, :3] = 30

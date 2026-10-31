@@ -294,12 +294,21 @@ def punch(im: Image.Image) -> Image.Image:
     """Same as key_to_alpha (kept for the pack tools)."""
     return key_to_alpha(im)
 
-def pixelate(im: Image.Image, cell: float, palette: int = 0, crisp: bool = True, detail: bool = True) -> Image.Image:
+def pixelate(im: Image.Image, cell: float, palette: int = 0, crisp: bool = True, detail: bool = True, grid: bool = False) -> Image.Image:
     """Keyed art at a coarser pixel grid, from the shared steps: geom.shrink_detail (default: thin high-contrast
     detail kept per cell), geom.shrink_art (crisp, detail=False: interior = nearest source px, edge band and alpha box-averaged) or geom.resize_rgba (premultiplied box) down by `cell` source px per pixel, optional color.quantize_palette, geom.alpha_policy "hard" (binary edges), then
-    geom.scale_nearest back to the source size. cell <= 1 returns a copy."""
+    geom.scale_nearest back to the source size. cell <= 1 returns a copy. grid: land on the image's own pixel grid
+    (imglib.grid.detect: per-axis period, phase and jittered edges), one colour per detected cell, painted back on those
+    edges; `cell` is then ignored (the art's own cells are the target)."""
     from . import color, geom
     im = im.convert("RGBA")
+    if grid:
+        from . import grid as gridlib
+        g = gridlib.detect(im)
+        small = gridlib.sample(im, g)
+        if palette > 0:
+            small = color.quantize_palette(small, palette)
+        return gridlib.fill(geom.alpha_policy(small, "hard"), g, im.size)
     if cell <= 1.0:
         return im.copy()
     size = (max(1, round(im.width / cell)), max(1, round(im.height / cell)))
