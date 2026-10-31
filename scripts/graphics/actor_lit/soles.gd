@@ -113,3 +113,39 @@ static func _span(tex: Texture2D) -> Vector4:
 	if _spans.has(id):
 		return _spans[id] as Vector4
 	return Vector4(0.0, 0.0, 1.0, 1.0)
+
+static var _solid_at: Dictionary = {}
+
+## Shadow silhouette for a deep yard prop: each column filled between its top and bottom opaque texel, and columns
+## inside the sole span filled down to the sole row, so the mark is the prop's solid body standing on its base (no
+## daylight between wheels or under a box drawn in 3/4 view) instead of the drawn outline.
+static func _solid(tex: Texture2D) -> Texture2D:
+	var id: int = tex.get_rid().get_id()
+	if _solid_at.has(id):
+		return _solid_at[id] as Texture2D
+	var img: Image = tex.get_image()
+	if img == null or img.is_empty():
+		return tex
+	img = img.duplicate()
+	img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var s: Vector4 = _soles(tex)
+	var sole_y: int = int(maxf(s.y, s.w)) - 1
+	var w: int = img.get_width()
+	for x in w:
+		var top: int = -1
+		var low: int = -1
+		for y in img.get_height():
+			if img.get_pixel(x, y).a >= 0.2:
+				if top < 0:
+					top = y
+				low = y
+		if top < 0:
+			continue
+		if float(x) + 0.5 >= minf(s.x, s.z) and float(x) + 0.5 <= maxf(s.x, s.z):
+			low = maxi(low, sole_y)
+		for y in range(top, low + 1):
+			img.set_pixel(x, y, Color(0, 0, 0, 1))
+	var out: ImageTexture = ImageTexture.create_from_image(img)
+	_solid_at[id] = out
+	return out

@@ -146,6 +146,7 @@ static func mark_props(host: Node3D) -> void:
 			continue
 		spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		load("res://scripts/graphics/actor_lit.gd").bind(n, spr)
+		n.get_node("ActorLit").set("solid", ["anvil", "dumpster"].has(str(n.get("kind"))))
 
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:

@@ -29,6 +29,8 @@ var _held: Array[bool] = []
 var _rank_at: Array[int] = []
 var _ink_budget: float = 0.0
 var _flip: bool = false
+## Deep yard prop (camp_build.mark_props): the mark uses Soles._solid of the sticker.
+var solid: bool = false
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	if body == null or sticker == null:
@@ -166,7 +168,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	]
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
-		mat.set_shader_parameter("albedo_tex", tex)
+		mat.set_shader_parameter("albedo_tex", Soles._solid(tex) if solid else tex)
 	if key == _key_at[slot] and node.mesh != null:
 		return
 	_key_at[slot] = key
