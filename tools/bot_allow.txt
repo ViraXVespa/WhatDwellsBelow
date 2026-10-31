@@ -24,5 +24,6 @@ AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
 .github/workflows/media-bot.yml
+.github/workflows/selftests-nightly.yml
 README.md
 GROK-BOT.md
