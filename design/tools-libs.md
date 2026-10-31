@@ -40,6 +40,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/gates/phase_loads.py` | Which smoke phases load each live file (`tools/data/phase_loads.json`, written by `gate.py bot-smokes --record-loads`); `changed_areas` picks phases from it |
 | `lib/bake/bake_inputs.py` | Hub bake inputs (`tools/data/hub_bake_inputs.json`): `bake.py check` fails when a light code file or `layout_spec.gd` const changed since the bake; `bake.py camp` records it |
 | `lib/bake/bake_leak.py` | Light-leak check (`tools/data/hub_bake_feet.json`, recorded by `bake.py camp`): a lit rim round a footprint fails `bake.py check` |
+| `lib/bake/bake_roof.py` | Roof-slope check: a guild roof footprint whose front half is not darker than its back (no `hub_roof.gd slopes`) fails `bake.py check` |
 | `lib/bake/bake_repro.py` | `bake.py check --rebake`: rebakes from the committed sources, restores the files, fails unless the stamp matches and lamps bake |
 | `lib/docs/code_map_lib.py` | Code-map row parser/writer used by `docs.py code-map` |
 | `lib/docs/tunables_lib.py` | Tunables row parser and writer used by `docs.py tunable` |

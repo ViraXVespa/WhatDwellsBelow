@@ -24,7 +24,7 @@ The hub light is baked only: the game never renders it. Offline bake quality is 
 ## Look
 - Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp` (`light_stamp.gd`).
 - Cream field `Color(0.98, 0.96, 0.93)` is the floor under the sun, not the finished picture.
-- Building interiors are not written. Roofs, awnings, and the stall tarp sample `light_tex`. Dirt owns the yard.
+- Building interiors are not written, except each guild roof footprint is scaled per slope by its own sun (`hub_roof.gd slopes`; `bake.py check` FAILs a flat roof, `bake_roof.py`). Roofs, awnings, the stall tarp and the building faces (`face_lit.gd`; `bake.py check --props` FAILs an unbound face, `hub_face_check.gd`) sample `light_tex`. Dirt owns the yard.
 - Shadows fall the way the player blob does (`HubCast.AWAY`, +X +Z). Do not invent a second sun or a different vector. Building shadows come from the meshes (see Lock); yard props use the live ActorLit mark; actors carry their own blob. The edge is the one 3x3 blur. No skirt smear. No shed AABB.
 - Hall and wing lids are two-slope gables, not a south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Each slope runs from the ridge to its eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses the slope length.
 - Stall tarp is a pitched sheet over the counter, high enough to cover the goods, one sheet of `plaza_tarp.png`. No lid wrap term on the cloth. A small rumple is not the pitch.

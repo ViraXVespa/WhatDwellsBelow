@@ -10,7 +10,8 @@ bake fails here (gate.py build --batch) before it breaks the hub. Fix: tools/bak
 Also FAILs when a bake input (light code, a layout_spec.gd const) changed since the bake (bake_inputs.py,
 tools/data/hub_bake_inputs.json); --record re-records the inputs for the current stamp without a rebake.
 --rebake (bake_repro.py) rebakes from the committed sources and FAILs unless the stamp matches and the lamps bake.
-Also FAILs on a light leak: a lit rim round a building footprint (bake_leak.py, tools/data/hub_bake_feet.json).
+Also FAILs on a light leak: a lit rim round a building footprint (bake_leak.py, tools/data/hub_bake_feet.json), and on a guild roof
+with no slope shade (front half not darker than the back; bake_roof.py).
 --props also runs the camp-prop-shadows shot flow (real renderer, hub_shadow_check.gd): each yard prop's sun mark
 on the ground, sun-away side, off the prop's own face.
 RESULT PASS = png present, size >= 16, stamp equal, inputs as baked; FAIL otherwise. Summary: _logs/hub-bake/.
@@ -27,6 +28,7 @@ import boot  # noqa: E402,F401
 import agent_log
 import bake_inputs
 import bake_leak
+import bake_roof
 import bake_repro
 
 PNG = "assets/baked/hub_light.png"
@@ -50,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.selftest:
         import tempfile
         with tempfile.TemporaryDirectory() as td:
-            return agent_log.selftest_result(bake_inputs.selftest(Path(td)) + bake_leak.selftest(Path(td)))
+            return agent_log.selftest_result(bake_inputs.selftest(Path(td)) + bake_leak.selftest(Path(td)) + bake_roof.selftest(Path(td)))
     root = agent_log.resolve_root(args)
     png, src = root / PNG, root / SRC
     lines: list[str] = []
@@ -73,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     if m and not lines:
         lines += bake_inputs.problems(root, want)
     if png.is_file():
-        lines += bake_leak.problems(root, png)
+        lines += bake_leak.problems(root, png) + bake_roof.problems(root, png)
     if m and args.rebake:
         lines += bake_repro.problems(root, want)
     if args.props:
