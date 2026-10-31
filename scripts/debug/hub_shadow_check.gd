@@ -37,6 +37,20 @@ var plant: String:
 				return "caught" if got.contains("dumpster:on_face") else "missed " + got
 		return "missing"
 
+## Shadow-mark matrix (hub_shadow_check/mark_matrix.gd): "" when every frame's feet and mask pass. plant_matrix
+## runs the three planted faults (offset pin, glued raised foot, stray chunk); each must be reported.
+var matrix: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/mark_matrix.gd").run()
+var plant_matrix: String:
+	get:
+		var M: GDScript = load("res://scripts/debug/hub_shadow_check/mark_matrix.gd")
+		var miss: PackedStringArray = PackedStringArray()
+		for p: String in ["offset", "glue", "chunk"]:
+			if M.run(p) == "":
+				miss.append(p)
+		return "caught" if miss.is_empty() else "missed " + ",".join(miss)
+
 static var _rows: PackedStringArray = PackedStringArray()
 
 static func faults(props: Array) -> String:

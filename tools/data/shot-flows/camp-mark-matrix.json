@@ -1,0 +1,33 @@
+{
+  "scene": "camp",
+  "hud": 0,
+  "zoom": 3.2,
+  "settle_ms": 800,
+  "about": "Shadow-mark matrix (hub_shadow_check/mark_matrix.gd): every player kind and enemy type, every idle/walk/attack frame on disk; per foot, grounded attaches within 1 cell of its mark pin, raised shows a gap matching its lift; mark mask has no detached chunk or enclosed hole at the cell scale. Planted offset pin, glued raised foot and stray chunk must each FAIL. Contact sheet and rows: _logs/mark-matrix/.",
+  "steps": [
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            6.2,
+            0.0,
+            11.6
+          ]
+        }
+      ]
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.plant_matrix",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.matrix",
+      "equals": ""
+    }
+  ]
+}

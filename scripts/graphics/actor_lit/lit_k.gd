@@ -21,6 +21,9 @@ const HUB_POINT_REACH := 2.2
 const SUN_SOFT := 0.1
 ## Hub marks are per-cell coverage on the ground grid (cells per metre; Chunky.GRID_M): no blur, no quad pad.
 const HUB_GRID := 32.0
+const GRID_M := 1.0 / HUB_GRID
+## A foot whose lowest pixel sits this many ground cells above the other is raised: no tuck, it shows its gap.
+const RAISED_CELLS := 1.5
 
 const SHADE := """
 shader_type spatial;

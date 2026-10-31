@@ -6,7 +6,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Commit := preload("res://scripts/graphics/mesh_commit.gd")
 
-static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -> Vector2:
+static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, tucked: bool = true) -> Vector2:
 	var ox: float = lit.spr.offset.x
 	var oy: float = lit.spr.offset.y
 	if lit.spr.centered:
@@ -21,9 +21,9 @@ static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -
 	var world: Vector3 = lit.spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
 	var dropped: Vector2 = _drop_floor(lit, world)
 	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
-	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot))
+	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot)) if tucked else 0.0
 	# Hub marks snap to 1/32 m cells (up to a cell down-screen): tuck one more cell so both boots sit on the mark.
-	if not App.in_dungeon:
+	if tucked and not App.in_dungeon:
 		tuck += 0.03125
 	var back: Vector2 = Vector2(0.0, -1.0)
 	var cam: Camera3D = lit.get_viewport().get_camera_3d()

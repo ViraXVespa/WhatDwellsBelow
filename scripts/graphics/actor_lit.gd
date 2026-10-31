@@ -125,8 +125,12 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
 	var px: float = spr.pixel_size
-	var fl: Vector2 = Geo._sole_xz(self, soles.x, soles.y, tw, th) - feet
-	var fr: Vector2 = Geo._sole_xz(self, soles.z, soles.w, tw, th) - feet
+	# Both pins on the grounded (lowest) sole row: a raised foot keeps its x but not its lift, so it shows a gap
+	# above the mark in proportion to the lift (hub_shadow_check/mark_matrix.gd).
+	var sole_y: float = maxf(soles.y, soles.w)
+	var up: float = K.RAISED_CELLS * K.GRID_M / maxf(spr.pixel_size, 1e-5)
+	var fl: Vector2 = Geo._sole_xz(self, soles.x, sole_y, tw, th, sole_y - soles.y < up) - feet
+	var fr: Vector2 = Geo._sole_xz(self, soles.z, sole_y, tw, th, sole_y - soles.w < up) - feet
 	var origin: Vector3 = Vector3(feet.x, T.FLOOR_Y, feet.y)
 	var ink: float = 0.0
 	if App.in_dungeon:
