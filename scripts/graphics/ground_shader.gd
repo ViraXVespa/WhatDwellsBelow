@@ -38,7 +38,7 @@ static func shader() -> Shader:
 	sh.code = """
 shader_type spatial;
 #define WEAR_DEPTH 0.22
-#define GRID 32.0
+#define GRID 82.5806 // 128 / PLAYER_H: the player texel
 render_mode unshaded;
 uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
@@ -48,6 +48,9 @@ uniform vec3 tint = vec3(1.0);
 uniform sampler2D wear_tex : filter_nearest, repeat_enable;
 uniform float wear_uv = 0.03125;
 uniform float wear = 0.0;
+// Hub: shade edges snap toward full sun or full shade per cell (0 off; dungeon keeps the smooth bake).
+uniform float harden = 0.0;
+uniform float shade_l = 0.46;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform vec4 feather_rect = vec4(0.0);
@@ -73,7 +76,7 @@ void fragment() {
 	vec3 c = texture(albedo_tex, xz * uv_scale + uv_off).rgb;
 	if (feather > 0.0) {
 		// Transition, not a cut: blend toward the surface below (under_tex) across the fade, one continuous alpha per
-		// cell of the 1/32 m ground grid (box average of the smooth fade = its cell-centre value); the blend centre
+		// cell of the 1/82.6 m (player texel) (Chunky.GRID_M) ground grid (box average of the smooth fade = its cell-centre value); the blend centre
 		// wobbles a little (0.25 m at ~2 m plus 0.12 m at ~0.6 m).
 		vec2 q = (floor(xz * GRID) + 0.5) / GRID;
 		float d = min(min(q.x - feather_rect.x, feather_rect.z - q.x), min(q.y - feather_rect.y, feather_rect.w - q.y));
@@ -84,13 +87,18 @@ void fragment() {
 		c = mix(texture(under_tex, xz * under_uv).rgb, c, k);
 	}
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
-	// Baked light per cell of the 1/32 m ground grid (Chunky.GRID_M): the box average over the cell (2x2 bilinear
+	// Baked light per cell of the 1/82.6 m (player texel) (Chunky.GRID_M) ground grid (Chunky.GRID_M): the box average over the cell (2x2 bilinear
 	// taps at the quarter points), continuous values, so shade edges are blocky cells with smooth per-cell darkness.
 	vec2 cell0 = floor(xz * GRID) / GRID;
 	vec3 lit = vec3(0.0);
 	for (int t = 0; t < 4; t++) {
 		xz = cell0 + (vec2(float(t % 2), float(t / 2)) * 0.5 + 0.25) / GRID;
 """ + TAP_BODY + "		lit += 0.25 * " + TAP_MIX + """	}
+	float ll = max(max(lit.r, lit.g), lit.b);
+	if (harden > 0.0 && ll > 0.001 && ll < 1.0) {
+		float t = clamp((ll - shade_l) / (1.0 - shade_l), 0.0, 1.0);
+		lit *= mix(1.0, mix(shade_l, 1.0, smoothstep(0.5 - 0.5 * (1.0 - harden), 0.5 + 0.5 * (1.0 - harden), t)) / ll, step(shade_l * 0.9, ll));
+	}
 	ALBEDO = c * tint * worn * lit;
 }
 """
@@ -98,7 +106,7 @@ void fragment() {
 	return sh
 
 ## feather > 0: inside rect (x0, z0, x1, z1), or the union with rect2, the plane blends to under_path's texture over its
-## last `feather` metres (one continuous alpha per 1/32 m ground cell, small slow wobble), so surfaces meet in a soft transition.
+## last `feather` metres (one continuous alpha per 1/82.6 m (player texel) (Chunky.GRID_M) ground cell, small slow wobble), so surfaces meet in a soft transition.
 static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float, under_path: String, rect2: Vector4 = Vector4.ZERO) -> ShaderMaterial:
 	var mat: ShaderMaterial = material(tex_path, fallback)
 	mat.set_shader_parameter("feather_rect", rect)

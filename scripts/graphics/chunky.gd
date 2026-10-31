@@ -1,10 +1,11 @@
 extends Object
+const T := preload("res://scripts/data/tunables.gd")
 
-## Hub art at the ground's pixel size: the ground's visible pixel is GRID_M (1/32 m, 4 texels of the 128 px/m
-## sheets). A sprite whose texel is finer (pixel_size < GRID_M) is shrunk to that grid (detail-keeping cell colour, box coverage; tools key.pixelate) and nearest-scaled
+## Hub art at the character's pixel size: GRID_M is the player sprite texel (PLAYER_H 1.55 m / 128 px = 1/82.6 m).
+## Player frames stay native. A sprite whose texel is finer (pixel_size < GRID_M) is shrunk to that grid (detail-keeping cell colour, box coverage; tools key.pixelate) and nearest-scaled
 ## back to its own size, so texel rects (lamps, window, crop) still hold. Cached per texture and size.
 
-const GRID_M := 1.0 / 32.0
+const GRID_M := T.PLAYER_H / 128.0
 static var _cache: Dictionary = {}
 
 ## fast: per-frame animation art; native box shrink plus nearest pick per cell (no per-source-pixel detail pass).

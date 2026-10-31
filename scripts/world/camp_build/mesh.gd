@@ -85,6 +85,7 @@ static func grass_pad(
 		inst.material_override = GroundShader.feathered(tex_path, fallback, r, feather, under, rect2)
 	else:
 		inst.material_override = GroundShader.material(tex_path, fallback)
+	(inst.material_override as ShaderMaterial).set_shader_parameter("harden", 0.95)
 
 	inst.add_to_group("hub_ground")
 
