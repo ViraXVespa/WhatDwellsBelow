@@ -343,6 +343,8 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     if args.dry_run:
         res.update(band="dry", status="DRY", lines=[], ok=True)
         return res
+    # A changed asset Godot has not re-imported would be shot as its old texture: import first.
+    res["reimported"] = godot_lib.reimport_stale(root)
     out_log, err_log = run_log_lib.run_path(out_dir, JOB, "out.log"), run_log_lib.run_path(out_dir, JOB, "err.log")
     # Resolve the Godot executable, then launch so we have the PID for the watcher.
     exe = godot_lib.godot_exe()
@@ -413,6 +415,17 @@ def selftest(root: Path) -> int:
     live = res["ok"] and (res["w"], res["h"]) == (640, 360)
     plant = _want_size(args, 100) == (640, 360) and _want_size(args, 50) == (320, 180) and _want_size(
         build_parser().parse_args(["--width", "640"]), 100) is None
+    fake = out.parent / "proj"
+    (fake / "assets").mkdir(parents=True)
+    (fake / ".godot/imported").mkdir(parents=True)
+    (fake / "assets/a.png").write_bytes(b"new art")
+    (fake / "assets/a.png.import").write_text('path.s3tc="res://.godot/imported/a.png-' + "0" * 32 + '.s3tc.ctex"\n')
+    md5 = fake / ".godot/imported" / ("a.png-" + "0" * 32 + ".md5")
+    md5.write_text('source_md5="' + "f" * 32 + '"\n')  # built from older bytes
+    caught = godot_lib.stale_imports(fake) == ["assets/a.png"]
+    import hashlib
+    md5.write_text(f'source_md5="{hashlib.md5(b"new art").hexdigest()}"\n')
+    plant = plant and caught and godot_lib.stale_imports(fake) == []
     print(f"selftest size live={res.get('w')}x{res.get('h')} ok={live} want_size={plant}")
     return agent_log.emit_result("PASS" if live and plant else "FAIL", None, w=res.get("w"), h=res.get("h"))
 
@@ -441,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         f"scale={res['scale']} settle_ms={max(0, args.settle_ms)} method={RENDER_METHOD} driver={RENDER_DRIVER}",
         f"status={res['status']} wall_ms={res.get('wall_ms', 0)} timeout={res.get('timeout', False)}",
         f"png={rel(root, png)} bytes={res.get('bytes', 0)} w={res.get('w', 0)} h={res.get('h', 0)}",
-        f"clipboard={clip} open={opened} band={res['band']}",
+        f"clipboard={clip} open={opened} band={res['band']} reimported={len(res.get('reimported') or [])}",
     ]
     if args.steps:
         lines.append(f"steps={args.steps} frames={len(frames)} no_pixels={args.no_pixels} fail={flow.get('fail', '')}")

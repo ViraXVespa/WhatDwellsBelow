@@ -33,7 +33,7 @@
   "scripts/world/camp_build/mesh.gd": "a2f3901675c19f06",
   "scripts/world/camp_build/mesh_mat.gd": "a97bf482faf2b8bd",
   "scripts/world/camp_build/mesh_prim.gd": "6fa45d68822a1d8b",
-  "scripts/world/camp_build/mesh_tent.gd": "426096a6e2db373d",
+  "scripts/world/camp_build/mesh_tent.gd": "3babfe2108cbdcb6",
   "scripts/world/camp_build/roof.gd": "1696838a9e8d6f9e",
   "scripts/world/camp/layout.gd": "20ac14fa08638f3f",
   "scripts/world/camp/lamps.gd": "8642bba3d8a1ce9d",

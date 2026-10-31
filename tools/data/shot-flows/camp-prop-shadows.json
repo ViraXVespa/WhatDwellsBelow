@@ -3,7 +3,7 @@
   "hud": 0,
   "zoom": 3.2,
   "settle_ms": 800,
-  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd); building faces sample the hub light map (hub_face_check.gd, planted white map must FAIL).",
+  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd); building faces sample the hub light map (hub_face_check.gd, planted white map must FAIL); gable slopes meet at the ridge with nothing over it (planted 5 cm drop must FAIL).",
   "steps": [
     {
       "op": "call",
@@ -111,6 +111,16 @@
     {
       "op": "assert",
       "target": "script:debug/hub_face_check.plant",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_face_check.ridge",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_face_check.plant_ridge",
       "equals": "caught"
     }
   ]

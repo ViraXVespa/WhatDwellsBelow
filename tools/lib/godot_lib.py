@@ -391,3 +391,27 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
+
+def stale_imports(root: Path, under: str = "assets") -> list[str]:
+    """Source files whose `.godot/imported` copy was built from different bytes (its .md5 source_md5 is not the file's
+    md5), or is missing: Godot run without the editor keeps serving the old texture (a reverted or updated sprite looks old)."""
+    import hashlib
+    out = []
+    for imp in sorted((root / under).rglob("*.import")):
+        src = imp.with_suffix("")
+        m = re.search(r'^path(?:\.\w+)?="res://(\.godot/imported/[^"]+)"', imp.read_text(encoding="utf-8", errors="replace"), re.M)
+        if not m or not src.is_file():
+            continue
+        md5 = root / re.sub(r"(-[0-9a-f]{32})\..*$", r"\1.md5", m.group(1))  # one .md5 per source, any VRAM formats
+        got = re.search(r'source_md5="(\w+)"', md5.read_text(encoding="utf-8")) if md5.is_file() else None
+        if not got or got.group(1) != hashlib.md5(src.read_bytes()).hexdigest():
+            out.append(src.relative_to(root).as_posix())
+    return out
+
+def reimport_stale(root: Path, timeout: int = 300) -> list[str]:
+    """Run the editor import when any asset is stale (stale_imports), then undo sidecar churn. Returns what was stale."""
+    stale = stale_imports(root)
+    if stale:
+        run_godot(root, root, ["--headless", "--editor", "--import", "--path", str(root), "--quit"], None, None, timeout)
+        restore_import_churn(root)
+    return stale

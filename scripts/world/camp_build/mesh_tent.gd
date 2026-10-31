@@ -141,7 +141,6 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	inst.material_override = Mat.roof_mat(Vector2(hx * 2.0, span), body.global_position, tile, uv_off)
 	body.add_child(inst)
 	Prim._hit(body, built, "GableHit")
-	_ridge_cap(body, hx, ridge, hz, rise)
 	var ends := SurfaceTool.new()
 	ends.begin(Mesh.PRIMITIVE_TRIANGLES)
 	Prim._tri(ends, Vector3(-wx, y0, wz), Vector3(-wx, y0, -wz), Vector3(-wx, ridge, 0.0), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
@@ -155,24 +154,3 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	body.add_child(cap)
 	Prim._hit(body, end_mesh, "GableEndHit")
 
-## Timber cap over the ridge line: hides where the two slopes' shingle rows meet (their tile edges never line up).
-static func _ridge_cap(body: Node3D, hx: float, ridge: float, hz: float, rise: float) -> void:
-	var d: Vector2 = Vector2(hz, -rise).normalized() * 0.14
-	var up: float = 0.03
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var top_l := Vector3(-hx - 0.02, ridge + up, 0.0)
-	var top_r := Vector3(hx + 0.02, ridge + up, 0.0)
-	for s: float in [1.0, -1.0]:
-		var bl := Vector3(-hx - 0.02, ridge + up + d.y, d.x * s)
-		var br := Vector3(hx + 0.02, ridge + up + d.y, d.x * s)
-		if s > 0.0:
-			Prim._quad(st, top_l, top_r, br, bl, Vector2.ZERO, Vector2.RIGHT, Vector2.ONE, Vector2.DOWN)
-		else:
-			Prim._quad(st, top_r, top_l, bl, br, Vector2.ZERO, Vector2.RIGHT, Vector2.ONE, Vector2.DOWN)
-	st.generate_normals()
-	var cap := MeshInstance3D.new()
-	cap.name = "RidgeCap"
-	cap.mesh = st.commit()
-	cap.material_override = Prim._timber(Spec.TIMBER)
-	body.add_child(cap)
