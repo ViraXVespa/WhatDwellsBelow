@@ -146,3 +146,41 @@ static func cloth_faults(cs: Array, off_i: int) -> String:
 		if not on or t != LightRt.tex or t == null or t.get_width() < 2:
 			out.append("%s:unlit" % who)
 	return " ".join(out)
+
+## door: each guild's FrontFaceCollider spans the player's body height (ground to the capsule top) and its front lies
+## ahead of the face sprite, so the player stops in front of the face art at the door instead of on the wall box
+## behind it (hidden by the face). plant_door lifts the collider by half its height (the old top-centred bug).
+var door: String:
+	get:
+		return door_faults(0.0)
+var plant_door: String:
+	get:
+		return "caught" if door_faults(0.5).contains("door") else "missed"
+
+static func door_faults(lift: float) -> String:
+	var t := Engine.get_main_loop() as SceneTree
+	var pl := t.get_first_node_in_group("player") as Node3D
+	var top: float = 1.5
+	for c in pl.find_children("*", "CollisionShape3D", true, false):
+		var sh: Shape3D = (c as CollisionShape3D).shape
+		if sh is BoxShape3D:
+			top = (c as Node3D).position.y + (sh as BoxShape3D).size.y * 0.5
+	var out: PackedStringArray = PackedStringArray()
+	var n: int = 0
+	for c in t.root.find_children("FrontFaceCollider", "CollisionShape3D", true, false):
+		var col := c as CollisionShape3D
+		var size: Vector3 = (col.shape as BoxShape3D).size
+		var p: Vector3 = col.global_position + Vector3(0.0, size.y * lift, 0.0)
+		var face_z: float = -INF
+		var big: int = 0
+		for s in col.get_parent().get_children():
+			var sp := s as Sprite3D
+			if sp != null and sp.texture != null and sp.texture.get_width() > big:  # the face art, not a lamp
+				big = sp.texture.get_width()
+				face_z = sp.global_position.z
+		n += 1
+		if p.y - size.y * 0.5 > 0.05 or p.y + size.y * 0.5 < top or p.z + size.z * 0.5 < face_z - 0.005:
+			out.append("%s:door y=[%.2f,%.2f] front=%.2f face=%.2f" % [col.get_parent().name, p.y - size.y * 0.5, p.y + size.y * 0.5, p.z + size.z * 0.5, face_z])
+	if n < 2:
+		out.append("door_colliders=%d<2" % n)
+	return " ".join(out)

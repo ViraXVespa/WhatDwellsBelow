@@ -40,7 +40,8 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	var front_box := BoxShape3D.new()
 	front_box.size = Vector3(fit.x, fit.y, 0.08)
 	front_col.shape = front_box
-	front_col.position = Vector3(0.0, fit.y * 0.5, fit.z * 0.5 + 0.04)
+	# Centred on the body (mid-wall): spans ground to wall top, so the player stops in front of the face sprite.
+	front_col.position = Vector3(0.0, 0.0, fit.z * 0.5 + 0.04)
 	body.add_child(front_col)
 	var valance: float = fit.y * lay.awning_valance(which)
 	var hem := Vector3(fit.y * 0.5 - valance, fit.z * 0.5 + lay.awning_depth(which), float(row.get("hang_x", 0.0)))
