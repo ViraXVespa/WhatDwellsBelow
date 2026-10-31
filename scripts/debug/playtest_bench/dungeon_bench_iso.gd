@@ -8,6 +8,7 @@ extends Object
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
+const Util := preload("res://scripts/debug/playtest_bench/dungeon_bench_iso/iso_util.gd")
 const FLAG := "--wdb-dungeon-walk-layers"
 
 static var _env_nodes: Array[WorldEnvironment] = []
@@ -22,30 +23,6 @@ static var _scale_seen: Array[float] = []
 
 static func active() -> bool:
 	return CliArgs.has(FLAG)
-
-static func _kinds() -> PackedStringArray:
-	return PackedStringArray([
-		"base", "floor", "walls", "sprites", "props", "lights", "hud", "bare",
-		"noenv", "linear", "rest", "empty", "empty1", "empty05", "base2",
-	])
-
-static func _tag(n: Node) -> String:
-	var node_name: String = str(n.name)
-	if node_name == "Floors":
-		return "floor"
-	if node_name == "WallRibbons":
-		return "walls"
-	if n is MultiMeshInstance3D:
-		return "floor"
-	if n is Sprite3D:
-		return "sprites"
-	if n is Light3D:
-		return "lights"
-	if n is CanvasLayer:
-		return "hud"
-	if n is MeshInstance3D:
-		return "props"
-	return ""
 
 static func _clear_extra() -> void:
 	_env_nodes.clear()
@@ -85,19 +62,6 @@ static func _note_rest(n: Node) -> void:
 	_rest_nodes.append(n)
 	_rest_on.append(true)
 
-static func _child_covered(n: Node, tag: String, under: bool) -> bool:
-	if tag != "":
-		return true
-	if under:
-		return true
-	if n is Node3D and not (n as Node3D).visible:
-		return true
-	if n is CanvasItem and not (n as CanvasItem).visible:
-		return true
-	if n is CanvasLayer and not (n as CanvasLayer).visible:
-		return true
-	return false
-
 static func _gather(host: Node) -> void:
 	host._iso_all.clear()
 	host._iso_on.clear()
@@ -111,7 +75,7 @@ static func _gather(host: Node) -> void:
 	while stack.size() > 0:
 		var n: Node = stack.pop_back()
 		var under: bool = covered.pop_back()
-		var tag: String = _tag(n)
+		var tag: String = Util._tag(n)
 		if tag != "":
 			if n is Node3D:
 				var body: Node3D = n as Node3D
@@ -127,7 +91,7 @@ static func _gather(host: Node) -> void:
 			_note_rest(n)
 		if tag == "floor" or tag == "walls" or tag == "sprites" or tag == "hud":
 			continue
-		var child_under: bool = _child_covered(n, tag, under)
+		var child_under: bool = Util._child_covered(n, tag, under)
 		for c in n.get_children():
 			stack.append(c)
 			covered.append(child_under)
@@ -197,17 +161,11 @@ static func _restore_rest() -> void:
 			(n as Node3D).visible = on
 		i += 1
 
-static func _root_vp(host: Node) -> Viewport:
-	var tree: SceneTree = host.get_tree()
-	if tree != null and tree.root != null:
-		return tree.root
-	return host.get_viewport()
-
 ## Last write before the draw. DynRes.tick already ran in App._process.
 static func pin_draw(host: Node) -> void:
 	if _scale_pin < 0.0:
 		return
-	var vp: Viewport = _root_vp(host)
+	var vp: Viewport = Util._root_vp(host)
 	if vp == null:
 		return
 	if not is_equal_approx(vp.scaling_3d_scale, _scale_pin):
@@ -216,7 +174,7 @@ static func pin_draw(host: Node) -> void:
 static func _restore(host: Node) -> void:
 	if _scale_pin >= 0.0:
 		_scale_pin = -1.0
-		var vp: Viewport = _root_vp(host)
+		var vp: Viewport = Util._root_vp(host)
 		if vp != null:
 			vp.scaling_3d_scale = 1.0
 	var i: int = 0
@@ -253,59 +211,26 @@ static func _hide_rest() -> void:
 			(n as Node3D).visible = false
 		i += 1
 
-static func _empty_kind(kind: String) -> bool:
-	return kind == "empty" or kind == "empty1" or kind == "empty05"
-
-static func _bare_kind(kind: String) -> bool:
-	return kind == "bare" or kind == "noenv" or kind == "linear" or kind == "rest" or _empty_kind(kind)
-
-static func _hide(host: Node, tag: String) -> void:
-	var i: int = 0
-	while i < host._iso_all.size():
-		if tag == "bare" or host._iso_tag[i] == tag:
-			var n: Node = host._iso_all[i]
-			if n is Node3D:
-				(n as Node3D).visible = false
-			elif n is CanvasLayer:
-				(n as CanvasLayer).visible = false
-		i += 1
-
 static func _apply(host: Node, kind: String) -> void:
 	_restore(host)
 	var hide_kind: String = kind
 	if kind == "base2":
 		hide_kind = "base"
-	if _bare_kind(hide_kind):
-		_hide(host, "bare")
+	if Util._bare_kind(hide_kind):
+		Util._hide(host, "bare")
 	elif hide_kind != "base":
-		_hide(host, hide_kind)
-	if kind == "noenv" or _empty_kind(kind):
+		Util._hide(host, hide_kind)
+	if kind == "noenv" or Util._empty_kind(kind):
 		_clear_env()
 	if kind == "linear":
 		_set_linear()
-	if kind == "rest" or _empty_kind(kind):
+	if kind == "rest" or Util._empty_kind(kind):
 		_hide_rest()
 	if kind == "empty1":
 		_scale_pin = 1.0
 	elif kind == "empty05":
 		_scale_pin = 0.5
 	pin_draw(host)
-
-static func _mid(vals: Array[float]) -> float:
-	if vals.is_empty():
-		return 0.0
-	var ordered: Array[float] = vals.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.5))
-	return ordered[at]
-
-static func _p95(host: Node) -> float:
-	if host._iso_dts.is_empty():
-		return 0.0
-	var ordered: Array[float] = host._iso_dts.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.95))
-	return ordered[at]
 
 static func _report(host: Node, kind: String) -> void:
 	var n: int = host._iso_dts.size()
@@ -318,7 +243,7 @@ static func _report(host: Node, kind: String) -> void:
 		pct = 100.0 * float(good) / float(n)
 	var draws: int = int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	host._hb("HB: isolate layer=%s n=%d p50=%.1f p95=%.1f fps=%.1f draw=%d proc=%.1f phys=%.1f submit=%.1f scale=%.2f walk=1" % [
-		kind, n, _mid(host._iso_dts) * 1000.0, _p95(host) * 1000.0, pct, draws, _mid(host._iso_proc), _mid(host._iso_phys), _mid(host._iso_submit), _mid(_scale_seen),
+		kind, n, Util._mid(host._iso_dts) * 1000.0, Util._p95(host) * 1000.0, pct, draws, Util._mid(host._iso_proc), Util._mid(host._iso_phys), Util._mid(host._iso_submit), Util._mid(_scale_seen),
 	])
 
 static func _sample(host: Node, delta: float) -> void:
@@ -328,7 +253,7 @@ static func _sample(host: Node, delta: float) -> void:
 	host._iso_proc.append(float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0)
 	host._iso_phys.append(float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0)
 	host._iso_submit.append(HitchLog.frame_submit_ms())
-	var vp: Viewport = _root_vp(host)
+	var vp: Viewport = Util._root_vp(host)
 	if vp != null:
 		_scale_seen.append(vp.scaling_3d_scale)
 
@@ -341,7 +266,7 @@ static func tick(host: Node, delta: float) -> bool:
 		host._iso_applied = -1
 		host._iso_t = 0.0
 		host._hb("HB: isolate counts %s" % _counts(host))
-	var kinds: PackedStringArray = _kinds()
+	var kinds: PackedStringArray = Util._kinds()
 	if host._iso_i >= kinds.size():
 		_restore(host)
 		return true
