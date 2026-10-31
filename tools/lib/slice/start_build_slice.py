@@ -35,6 +35,7 @@ import handoff_lib
 import repo_lib
 import session_lib
 import slice_lib
+import task_compact
 import slice_state
 import task_lib
 import unit_lib
@@ -139,8 +140,11 @@ def unit_done(root: Path, args) -> int:
         slice_state.save(root, st)
     tp = task_lib.task_path(root, st["task"]) if st.get("task") else None
     made = ""
-    if tp and tp.is_file() and not args.dry_run:
-        task_lib.set_head(tp, "done", ", ".join(done) or "none")
+    if tp and tp.is_file():
+        if not args.dry_run:
+            task_lib.set_head(tp, "done", ", ".join(done) or "none")
+        made_c = task_compact.apply(tp, tp.relative_to(root).as_posix(), args.dry_run)[0]  # done units -> one line each
+        print(made_c)
     elif nxt and not args.dry_run:
         made = queue_task(root, st, done)
     msg = (f"UNIT DONE: {cur}; done: {', '.join(done)}. " + (f"Next unit: {nxt}. If the request still fits this session, Complete this unit (commit, push) and continue: `python tools/slice.py start {('--job ' + st['job']) if st.get('task_units') and st.get('job') else '--door ' + st.get('door', 'D')} --full` prints its card{(' (with --task ' + st['task'] + ')') if st.get('task_units') else ''}. If it cannot fit, stop after Complete; a new session resumes the queue. " if nxt else "All units are done" + (f": close the task in this commit (`python tools/docs.py task done {st['task']}`). " if st.get("task") else ". "))

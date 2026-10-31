@@ -49,6 +49,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/docs/tunables_code.py` | `docs.py tunable list`, `diff`, `range` and the code side of `set KEY VALUE` / `add KEY --default` |
 | `lib/docs/tunables_selftest.py` | `docs.py tunable --selftest`: set/range/add/diff on a scratch copy |
 | `lib/docs/task_lib.py` | Task files in `design/tasks/`: header fields, the README index, `done` (delete, unblock dependants, changelog line), next opt id, and the `check.py load-graph` lint |
+| `lib/docs/task_compact.py` | `docs.py task compact` and `slice.py start --unit-done`: done units to one line each, their tried/failed/baseline lines dropped; Vira, decisions, open questions kept; `--selftest` |
 | `lib/slice/slice_lib.py` | `slice.py start` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, forked session, retry block, survey vs job, unit queue) and the `slice.py open` area check |
 | `lib/slice/slice_state.py` | `_logs/slice-state.json` and the `SLICE ALREADY STARTED` text of `slice.py start` (steps: import, baseline shots, original session, forked, handoff; resume at Gather or Prepare / Change / Prove / Complete) |
 | `lib/session/session_lib.py` | Finds a Grok session folder and reads `prompt_context.json`, the early skills reminder, `prompt_history.jsonl` and `chat_history.jsonl` for the session facts of `slice.py start` and the `Did not work:` lines (`failed_block`: failed tool results since the last ask) |

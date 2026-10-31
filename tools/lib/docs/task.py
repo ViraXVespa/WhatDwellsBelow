@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -21,6 +22,7 @@ import agent_log
 import md_format_lib as md
 import repo_lib
 import task_lib
+import task_compact
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List, show, create, finish and check the task files in design/tasks/.", writes=True)
@@ -48,6 +50,10 @@ def main(argv: list[str] | None = None) -> int:
     dn = sub.add_parser("done", help="Finish a task: delete it, unblock dependants, one changelog line (skipped on grok-build-w* branches).")
     dn.add_argument("id", help="Task id (file name without .md).")
     dn.add_argument("--changelog", default="", help="Changelog file for the line (default: the newest design/changelog entry main does not have).")
+    cp = sub.add_parser("compact", help="Collapse done units, drop their tried/failed/baseline lines; keeps Vira's words, decisions, open questions (slice.py start --unit-done runs it). --dry-run prints the diff.")
+    cp.add_argument("id", nargs="?", default="", help="Task id (file name without .md).")
+    cp.add_argument("--dry-run", dest="dry_run", action="store_true", default=argparse.SUPPRESS, help="Print the diff and byte counts; write nothing.")
+    cp.add_argument("--selftest", action="store_true", help="Run the fixture cases (a planted decision line must survive).")
     sub.add_parser("index", help="Regenerate the README index.")
     sub.add_parser("check", help="Lint the task files (check.py load-graph runs the same).")
     args = ap.parse_args(argv)
@@ -58,9 +64,15 @@ def main(argv: list[str] | None = None) -> int:
     def end(body: str, status: str, **kv: object) -> int:
         return agent_log.finish("task", root, body, status, args=args, write=not dry, cmd=args.cmd, **kv)
 
-    if args.cmd in ("show", "done", "update") and args.id not in tasks:
+    if args.cmd == "compact" and args.selftest:
+        return task_compact.selftest()
+    if args.cmd in ("show", "done", "update", "compact") and args.id not in tasks:
         print(f"error: no task {args.id}; open tasks: {', '.join(tasks) or 'none'}", file=sys.stderr)
         return end("", "FAIL", error="not-found")
+    if args.cmd == "compact":
+        p = root / tasks[args.id]["path"]
+        msg, changed = task_compact.apply(p, tasks[args.id]["path"], dry)
+        return end(msg, "PASS", id=args.id, changed=changed)
     if args.cmd == "list":
         rows = {k: v for k, v in tasks.items() if not args.owner or v.get("owner") == args.owner}
         return end("\n".join(task_lib.index_lines(rows)), "PASS", count=len(rows))

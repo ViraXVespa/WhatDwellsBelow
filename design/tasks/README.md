@@ -13,7 +13,7 @@ The lines above the first `## ` heading: `id` (the file name), `owner` (build, w
 
 - **Find / resume:** `python tools/docs.py task list [--owner X]`, then `python tools/docs.py task show ID`. Read that one file. The User opens a Build task from the repo root with its `resume` line; a Build session never runs or prints it and starts with the command its first message names (`slice.py start ... --task ID`, or `--from-task ID` for a handoff).
 - **Create:** Build's survey writes its handoff with `python tools/slice.py start --handoff`; anything else uses `python tools/docs.py task new ID ...` (Web: its scratch calls `dp.task([...])`, which runs `docs.py task`). A Web park is a task with owner web (packet: `web-discuss.md`). Web and Bot create a task for another owner only when the User says so.
-- **Update:** keep the header true and the body current as the work moves: `python tools/docs.py task update ID --status S | --needs IDS | --section TITLE --body TEXT`. Build's `slice.py start --unit-done` updates `done` itself.
+- **Update:** keep the header true and the body current as the work moves: `python tools/docs.py task update ID --status S | --needs IDS | --section TITLE --body TEXT`. Build's `slice.py start --unit-done` updates `done` itself, then compacts the file (`docs.py task compact ID`, `--dry-run` for the diff): each done unit becomes one line (label, sha, result) and its tried/failed/baseline lines go; Vira's words, decisions, open questions, open units and resume/handoff stay.
 - **Finish:** in the change that completes it, `python tools/docs.py task done ID`: the file is deleted, dependants lose it from `needs`, and one line goes into the branch's changelog entry. Never mark a task done in place; there is no archive.
 
 ## Index
