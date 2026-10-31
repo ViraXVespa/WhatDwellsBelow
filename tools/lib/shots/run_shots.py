@@ -136,6 +136,8 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         extra.append("--wdb-shot-texts=1")
     if args.dpr > 0:
         extra.append("--wdb-dpr=%g" % args.dpr)
+    if not getattr(args, "aim_line", False):
+        extra.append("--wdb-shot-aim=0")  # aim line off in every shot unless --aim-line (players keep their setting)
     return extra
 
 def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int, poses: str) -> list[str]:
@@ -276,6 +278,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")
     p.add_argument("--fixed-fps", type=int, default=0, help="engine fixed frame delta (e.g. 60) so animation and AI repeat; 0 = real time. Flow key: fixed_fps.")
+    p.add_argument("--aim-line", action="store_true", help="draw the player's aim line (default off in shots; the save's setting is untouched). Flow key: aim_line.")
     p.add_argument("--texts-all", action="store_true", help="with --steps: every shot also writes NN-name.texts.json (text, font size, px on screen); shots.py textsize reads them")
     p.add_argument("--dpr", type=float, default=0.0, help="device pixel ratio the game assumes (--wdb-dpr): emulate a phone with --width/--height = CSS size x dpr")
     p.add_argument("--movie", default="", help="with --steps: Godot movie maker writes every rendered frame here (.png = numbered PNGs, .avi = MJPEG) at the project viewport size (1920x1080); shots.py movie drives this")
@@ -426,6 +429,10 @@ def selftest(root: Path) -> int:
     import hashlib
     md5.write_text(f'source_md5="{hashlib.md5(b"new art").hexdigest()}"\n')
     plant = plant and caught and godot_lib.stale_imports(fake) == []
+    aim_def, aim_on = _extra_flags(build_parser().parse_args([])), _extra_flags(build_parser().parse_args(["--aim-line"]))
+    aim = "--wdb-shot-aim=0" in aim_def and not any(a.startswith("--wdb-shot-aim") for a in aim_on)
+    print(f"selftest aim_line default_off={'--wdb-shot-aim=0' in aim_def} flag_on={aim}")
+    plant = plant and aim
     print(f"selftest size live={res.get('w')}x{res.get('h')} ok={live} want_size={plant}")
     return agent_log.emit_result("PASS" if live and plant else "FAIL", None, w=res.get("w"), h=res.get("h"))
 

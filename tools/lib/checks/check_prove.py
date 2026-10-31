@@ -190,7 +190,7 @@ def plan(root: Path, a: dict, run_all: bool) -> list[tuple[str, str, list[str]]]
             out.append((r["id"], r["cmd"], why))
     return out
 
-SELFTEST_FLAG = re.compile(r"""^\s*(?:\w+\.add_argument\(\s*['"]--selftest|.*['"]--selftest['"]\s+in\s+sys\.argv)""", re.M)
+SELFTEST_FLAG = re.compile(r"""^\s*(?:\w+\.add_argument\(\s*['"]--selftest|.*['"]--selftest['"]\s+in\s+(?:sys\.)?argv\b)""", re.M)
 
 def _selftests(a: dict) -> list[tuple[str, str]]:
     new, ents = a["new"], a["ents"]

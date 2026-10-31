@@ -118,6 +118,10 @@ static func show_window() -> bool:
 static func texts_all() -> bool:
 	return _arg_int("--wdb-shot-texts", 0) != 0
 
+## --wdb-shot-aim=0 (shots.py default; --aim-line keeps it): hide the aim line for this run only.
+static func aim_line() -> bool:
+	return _arg_int("--wdb-shot-aim", 1) != 0
+
 static func no_pixels() -> bool:
 	return _arg_int("--wdb-shot-nopix", 0) != 0
 

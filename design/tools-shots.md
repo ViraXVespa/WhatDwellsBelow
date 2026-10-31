@@ -19,6 +19,7 @@ Entries here: `shots.py`, `bake.py`; their code: `tools/lib/bake/`, `tools/lib/s
 - **Show the User:** `shots.py show PATH=description ...` once per ask. A pair scales the larger frame down to the smaller one's size. A session looks with `shots.py review A.png --question "..."` (text report only; do not `read_file` the PNG). Turn budget is at least 8 and rises by 2 per image, cap 16, or `--max-turns` when that is higher. The shared gather does not run it. The forked session whose unit needs the frames does.
 - **Bake:** `bake.py camp` (hub light and ground wear; `--overlay` draws the debug boxes), `bake.py ground` alone, `bake.py check` (stamps match the code), `bake.py frames` after frame-art code changes (`--check` only compares).
 - **How-to-Play pictures:** `shots.py tutorial --run`.
+- **Aim line:** off in every shot, flow, movie and ref compare (`--wdb-shot-aim=0`, this run only; the save keeps its setting). Opt in with `--aim-line` on `shots.py capture`/`flow`, or `"aim_line": true` in a flow.
 
 ## Catalog
 
