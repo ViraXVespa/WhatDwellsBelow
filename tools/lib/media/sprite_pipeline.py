@@ -9,7 +9,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 import agent_log  # noqa: E402
-from imglib import geom, imgio, key  # noqa: E402
+from imglib import color, geom, imgio, key  # noqa: E402
+quantize_palette = color.quantize_palette  # shared with imglib key.pixelate
 
 MAGENTA = imgio.MAGENTA_RGBA
 KEY_RGB = imgio.MAGENTA
@@ -85,19 +86,6 @@ def lock_baselines(frames: list[Image.Image]) -> list[Image.Image]:
         out.paste(f, (0, dy), f)
         locked.append(out)
     return locked
-
-def quantize_palette(im: Image.Image, colors: int = 24) -> Image.Image:
-    rgba = im.convert("RGBA")
-    alpha = rgba.getchannel("A")
-    rgb = rgba.convert("RGB")
-    pal = rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
-    pal = pal.convert("RGB")
-    out = pal.convert("RGBA")
-    out.putalpha(alpha)
-    arr = np.array(out, dtype=np.uint8, copy=True)
-    a = np.array(alpha)
-    arr[a < 16] = 0
-    return Image.fromarray(arr, "RGBA")
 
 def extract_seeds(src: Path, dest_dir: Path) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)

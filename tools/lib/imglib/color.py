@@ -116,3 +116,17 @@ def contrast_ratio(a, b) -> float:
     la, lb = luminance(a), luminance(b)
     hi, lo = max(la, lb), min(la, lb)
     return (hi + 0.05) / (lo + 0.05)
+
+def quantize_palette(im: Image.Image, colors: int = 24) -> Image.Image:
+    """Median-cut RGB palette of `colors`, alpha kept; near-clear (< 16) pixels cleared."""
+    rgba = im.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    rgb = rgba.convert("RGB")
+    pal = rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
+    pal = pal.convert("RGB")
+    out = pal.convert("RGBA")
+    out.putalpha(alpha)
+    arr = np.array(out, dtype=np.uint8, copy=True)
+    a = np.array(alpha)
+    arr[a < 16] = 0
+    return Image.fromarray(arr, "RGBA")

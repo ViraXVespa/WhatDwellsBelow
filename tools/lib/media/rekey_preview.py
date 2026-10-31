@@ -10,7 +10,7 @@ under _logs/agent-py/.
 
 Does not nearest-upscale the plate first (that distorted the female face).
 
-    python tools/media.py rekey-preview --pixelate 32 [--palette 24] [--only dumpster,stall]
+    python tools/media.py rekey-preview --pixelate 32 [--palette 24] [--box] [--only dumpster,stall]
 --pixelate N (cells per metre; 32 = the hub ground pixel) adds key.pixelate after keying and writes
 before|after pairs as px_<name>.png. With it the hub set (HUB_SET, live keyed art, world width per sheet
 width) is previewed too.
@@ -131,10 +131,10 @@ def _pair(a: Image.Image, b: Image.Image, scale: int = 3) -> Image.Image:
     out.paste(b, (w + 4, 0), b)
     return out.resize((out.width * scale, out.height * scale), Image.NEAREST)
 
-def _pixel_one(root: Path, name: str, im: Image.Image, metres: float, cells: float, palette: int, out_dir: Path, dry: bool) -> str:
+def _pixel_one(root: Path, name: str, im: Image.Image, metres: float, cells: float, palette: int, out_dir: Path, dry: bool, crisp: bool = True) -> str:
     side = im.size[1] if metres < 0 else im.size[0]
     cell = side / max(abs(metres), 1e-6) / cells
-    px = key.pixelate(im, cell, palette)
+    px = key.pixelate(im, cell, palette, crisp)
     a = np.array(px)
     line = (f"px {name} cell={cell:.2f}src_px colours={len(np.unique(a[a[..., 3] > 0][:, :3], axis=0))} "
             f"partial={int(((a[..., 3] > 0) & (a[..., 3] < 255)).sum())}")
@@ -147,6 +147,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Preview the open-set rekey on blue. Does not write live assets.", writes=True)
     ap.add_argument("--only", default="", help="Comma-separated names from the open set (default: all nine).")
     ap.add_argument("--pixelate", type=float, default=0.0, help="Cells per metre for key.pixelate after keying (32 = hub ground pixel); adds the hub set.")
+    ap.add_argument("--box", action="store_true", help="With --pixelate: plain box average (default: geom.shrink_art crisp interior).")
     ap.add_argument("--palette", type=int, default=0, help="With --pixelate: quantize to this many colours (0 = off).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -182,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
                 lines.append(f"px {name} MISSING {live}")
                 continue
             shown += 1
-            lines.append(_pixel_one(root, name, imgio.load(path).convert("RGBA"), metres, args.pixelate, args.palette, out_dir, args.dry_run))
+            lines.append(_pixel_one(root, name, imgio.load(path).convert("RGBA"), metres, args.pixelate, args.palette, out_dir, args.dry_run, not args.box))
     status = "FAIL" if missing else "PASS"
     if missing:
         lines.append(f"{missing} source(s) missing")

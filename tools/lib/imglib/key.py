@@ -294,24 +294,16 @@ def punch(im: Image.Image) -> Image.Image:
     """Same as key_to_alpha (kept for the pack tools)."""
     return key_to_alpha(im)
 
-def pixelate(im: Image.Image, cell: float, palette: int = 0, alpha_cut: int = 128) -> Image.Image:
-    """Keyed art at a coarser pixel grid: box-average down by `cell` source px per output pixel (premultiplied, so
-    clear px do not darken edges), optional palette quantize to `palette` colours, hard alpha at `alpha_cut`
-    (binary edges), then nearest back to the source size. cell <= 1 returns a copy."""
+def pixelate(im: Image.Image, cell: float, palette: int = 0, crisp: bool = True) -> Image.Image:
+    """Keyed art at a coarser pixel grid, from the shared steps: geom.shrink_art (crisp: interior = nearest source px,
+    edge band and alpha box-averaged) or geom.resize_rgba (premultiplied box) down by `cell` source px per pixel, optional color.quantize_palette, geom.alpha_policy "hard" (binary edges), then
+    geom.scale_nearest back to the source size. cell <= 1 returns a copy."""
+    from . import color, geom
     im = im.convert("RGBA")
     if cell <= 1.0:
         return im.copy()
-    w, h = im.size
-    a = np.asarray(im).astype(np.float32) / 255.0
-    pm = np.dstack([a[..., :3] * a[..., 3:4], a[..., 3:4]])
-    sw, sh = max(1, round(w / cell)), max(1, round(h / cell))
-    small = np.asarray(Image.fromarray((pm * 255).round().astype(np.uint8), "RGBA").resize((sw, sh), Image.BOX)).astype(np.float32) / 255.0
-    al = small[..., 3:4]
-    rgb = np.where(al > 0, small[..., :3] / np.maximum(al, 1e-6), 0.0)
-    rgb8 = np.clip(rgb * 255 + 0.5, 0, 255).astype(np.uint8)
-    opaque = (al[..., 0] * 255) >= alpha_cut
-    if palette > 0 and opaque.any():
-        q = Image.fromarray(rgb8, "RGB").quantize(colors=palette, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-        rgb8 = np.asarray(q.convert("RGB"))
-    out = np.dstack([np.where(opaque[..., None], rgb8, 0), np.where(opaque, 255, 0).astype(np.uint8)]).astype(np.uint8)
-    return Image.fromarray(out, "RGBA").resize((w, h), Image.NEAREST)
+    size = (max(1, round(im.width / cell)), max(1, round(im.height / cell)))
+    small = geom.shrink_art(im, size) if crisp else geom.resize_rgba(im, size)
+    if palette > 0:
+        small = color.quantize_palette(small, palette)
+    return geom.scale_nearest(geom.alpha_policy(small, "hard"), size=im.size)
