@@ -5,6 +5,7 @@ extends Object
 ## empty1 and empty05 repeat empty with scaling_3d_scale pinned at 1.0 and 0.5.
 ## The playtest keeps acting. This does not score the 99% bar.
 
+const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
@@ -97,28 +98,7 @@ static func _gather(host: Node) -> void:
 			covered.append(child_under)
 
 static func _counts(host: Node) -> String:
-	var floor_n: int = 0
-	var wall_n: int = 0
-	var sprite_n: int = 0
-	var prop_n: int = 0
-	var light_n: int = 0
-	var hud_n: int = 0
-	var i: int = 0
-	while i < host._iso_tag.size():
-		var tag: String = host._iso_tag[i]
-		if tag == "floor":
-			floor_n += 1
-		elif tag == "walls":
-			wall_n += 1
-		elif tag == "sprites":
-			sprite_n += 1
-		elif tag == "props":
-			prop_n += 1
-		elif tag == "lights":
-			light_n += 1
-		elif tag == "hud":
-			hud_n += 1
-		i += 1
+	var tc: String = BU.tag_counts(host._iso_tag, PackedStringArray(["floor", "walls", "sprites", "props", "lights", "hud"]))
 	var vp_px: String = "0x0"
 	var scale_s: String = "0"
 	var msaa_s: String = "0"
@@ -127,7 +107,7 @@ static func _counts(host: Node) -> String:
 		vp_px = "%dx%d" % [vp.size.x, vp.size.y]
 		scale_s = "%.2f" % vp.scaling_3d_scale
 		msaa_s = str(int(vp.msaa_3d))
-	return "floor=%d walls=%d sprites=%d props=%d lights=%d hud=%d env=%d rest=%d vp=%s scale=%s msaa=%s cls=%s" % [floor_n, wall_n, sprite_n, prop_n, light_n, hud_n, _env_nodes.size(), _rest_nodes.size(), vp_px, scale_s, msaa_s, _cls_text()]
+	return "%s env=%d rest=%d vp=%s scale=%s msaa=%s cls=%s" % [tc, _env_nodes.size(), _rest_nodes.size(), vp_px, scale_s, msaa_s, _cls_text()]
 
 static func _cls_text() -> String:
 	var keys: Array = _rest_cls.keys()
@@ -271,13 +251,7 @@ static func tick(host: Node, delta: float) -> bool:
 		_restore(host)
 		return true
 	var kind: String = kinds[host._iso_i]
-	if host._iso_applied != host._iso_i:
-		host._iso_applied = host._iso_i
-		host._iso_t = 0.0
-		host._iso_dts.clear()
-		host._iso_proc.clear()
-		host._iso_phys.clear()
-		host._iso_submit.clear()
+	if BU.iso_enter(host):
 		_scale_seen.clear()
 	_apply(host, kind)
 	_sample(host, delta)

@@ -104,7 +104,11 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     for f in _doc_files(root, tracked):
         name = f.relative_to(root).as_posix() if f.is_relative_to(root) else f.parent.name + "/SKILL.md"
         in_fence = False
-        for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
+        text = f.read_text(encoding="utf-8-sig", errors="replace")
+        fixture = stale_cmds._fixture_lines(name, text)  # selftest fixtures name missing paths on purpose
+        for no, line in enumerate(text.splitlines(), 1):
+            if no in fixture:
+                continue
             if line.lstrip().startswith("```"):
                 in_fence = not in_fence
                 continue

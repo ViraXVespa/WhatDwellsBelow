@@ -396,6 +396,7 @@ def stale_imports(root: Path, under: str = "assets") -> list[str]:
     """Source files whose `.godot/imported` copy was built from different bytes (its .md5 source_md5 is not the file's
     md5), or is missing: Godot run without the editor keeps serving the old texture (a reverted or updated sprite looks old)."""
     import hashlib
+    root = Path(root)
     out = []
     for imp in sorted((root / under).rglob("*.import")):
         src = imp.with_suffix("")

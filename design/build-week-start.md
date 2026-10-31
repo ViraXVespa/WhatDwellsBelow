@@ -13,7 +13,7 @@ No slice: there is no `slice.py start` line. Do not read the plan pair, door doc
 
 3. **Fix docs.** While reading, note where docs disagree with the code, each other or the routes, and run `python tools/check.py load-graph`, `python tools/check.py tool-docs --stale-refs` and `python tools/docs.py task check`. `python tools/gate.py gd-load` only when a `.gd` file changed. This routine does not run `gate.py build`, a rekey, or a Godot import. Fix what only brings a doc in line with the code or another doc (paths, commands, names, routing). Anything that changes what the game, a flow or a rule does is a suggestion, not an edit.
 
-   A commit that retires a directory searches for that path with `python tools/find.py xref --pattern <path>` and the same pattern with `--path site`. Default xref does not scan `site/`. A hit stays only when it is a historical pin path in `scripts/data/archive_catalog.json` (those open with `git show` at the pinned commit). `site/data/notes.js` carries the same changelog sentences as `site/data/changelog.json`; change those two together. Do not run `publish_notes_site.py` to refresh them (it copies `scripts/data` over the site files).
+   A commit that retires a directory searches for that path with `python tools/find.py xref --pattern <path>`. A hit stays only when it is a historical pin path in `scripts/data/archive_catalog.json` (those open with `git show` at the pinned commit).
 
    Commit on `grok-build-wN` and push (never `main`, never force).
 

@@ -77,31 +77,20 @@ static func _loader_up(host: Node) -> bool:
 	return false
 
 static func _hub_on_screen(host: Node) -> bool:
-	if _loader_up(host):
-		return false
-	var tree: SceneTree = host.get_tree()
-	if tree == null:
-		return false
-	var scene: Node = tree.current_scene
-	if scene == null:
-		return false
-	if str(scene.name) == "Camp":
-		return true
-	return str(scene.scene_file_path).find("camp") >= 0
+	return _scene_on_screen(host, "Camp", "camp")
 
 ## Dungeon bench: the player can see the dungeon scene and the loader bar is down.
 static func _dungeon_on_screen(host: Node) -> bool:
+	return _scene_on_screen(host, "Dungeon", "dungeon.tscn")
+
+static func _scene_on_screen(host: Node, scene_name: String, path_frag: String) -> bool:
 	if _loader_up(host):
 		return false
 	var tree: SceneTree = host.get_tree()
-	if tree == null:
+	if tree == null or tree.current_scene == null:
 		return false
 	var scene: Node = tree.current_scene
-	if scene == null:
-		return false
-	if str(scene.name) == "Dungeon":
-		return true
-	return str(scene.scene_file_path).find("dungeon.tscn") >= 0
+	return str(scene.name) == scene_name or str(scene.scene_file_path).find(path_frag) >= 0
 
 static func _score_on_screen(host: Node) -> bool:
 	if _score_where == "dungeon":

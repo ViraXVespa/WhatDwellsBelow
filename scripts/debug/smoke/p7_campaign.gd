@@ -68,28 +68,10 @@ static func _campaign_body() -> bool:
 	return ok
 
 static func _campaign_snap() -> Dictionary:
-	var pri: String = Store.primary_path("campaign")
-	var bak: String = Store.backup_path("campaign")
-	var had_pri: bool = FileAccess.file_exists(pri)
-	var had_bak: bool = FileAccess.file_exists(bak)
-	var pri_text: String = ""
-	var bak_text: String = ""
-	if had_pri:
-		pri_text = FileAccess.get_file_as_string(pri)
-	if had_bak:
-		bak_text = FileAccess.get_file_as_string(bak)
-	return {
-		"had_pri": had_pri,
-		"had_bak": had_bak,
-		"pri": pri_text,
-		"bak": bak_text,
-		"pri_path": pri,
-		"bak_path": bak,
-	}
+	return _files_snap("campaign")
 
 static func _campaign_restore(snap: Dictionary) -> void:
-	_restore_save(str(snap.get("pri_path", "")), bool(snap.get("had_pri", false)), str(snap.get("pri", "")))
-	_restore_save(str(snap.get("bak_path", "")), bool(snap.get("had_bak", false)), str(snap.get("bak", "")))
+	_files_restore(snap)
 
 static func _restore_save(path: String, had: bool, text: String) -> void:
 	if path == "":
