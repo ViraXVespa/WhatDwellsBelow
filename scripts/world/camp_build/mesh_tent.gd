@@ -34,6 +34,7 @@ static func attach_awning(body: Node3D, box_size: Vector3, depth: float, valance
 	cloth.name = "Awning"
 	cloth.mesh = built
 	cloth.material_override = Mat.awning_mat(Vector2(maxf(x1 - x0, 0.2), depth + valance), Vector3.ZERO)
+	Mat.face_light(cloth.material_override, body.global_position.z + z_eave)
 	body.add_child(cloth)
 	Prim._hit(body, built, "AwningHit")
 	var ends := SurfaceTool.new()
@@ -75,7 +76,7 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, posts: Vector3, y_eave
 	var tarp_mat: Material = Mat.tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
 	inst.material_override = tarp_mat
 	if tarp_mat is ShaderMaterial:
-		(tarp_mat as ShaderMaterial).set_shader_parameter("ignore_actor_shadow", 1.0)
+		Mat.face_light(tarp_mat, body.global_position.z + hz)
 		(tarp_mat as ShaderMaterial).render_priority = Spec.DRAW["tarp"]
 	inst.sorting_offset = Spec.DRAW["tarp_sort"]
 	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -131,7 +132,8 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	Prim._quad(st, rl, rr, sr, sl, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	Prim._quad(st, rr, rl, nl, nr, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
+	# Same u at the same x on both slopes (u runs -x to +x), v = 0 at the ridge: courses and joints meet across it.
+	Prim._quad(st, rr, rl, nl, nr, Vector2(1.0, 0.0), Vector2(0.0, 0.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0))
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()

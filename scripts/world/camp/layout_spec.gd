@@ -44,6 +44,8 @@ const WING := {
 const TIMBER := Color(0.42, 0.28, 0.16)
 ## Building face art plane: this fraction of box depth in front of the body centre (stall front posts share it).
 const FACE_Z := 0.52
+## The awning hem drops this far (m) below the line that meets the face top from the gameplay pitch: no wall shows.
+const AWNING_TUCK := 0.03
 ## Stall: posts at +-posts.x of box.x, front posts.y / rear posts.z of box.z (also the walls, collision, bake lid);
 ## tarp eave at eave * box.y, ridge rise above it, front drop; counter collision (x, h, z fractions/metres, y);
 ## plank_m: metres per plank texture repeat on the timber walls.
@@ -62,8 +64,10 @@ const SPOTS := {
 	"Spawn": Vector3(16.5, 0.0, 16.0), "Banner": Vector3(16.5, 0.0, 22.0),
 }
 const VENDOR_GAP := 0.5
-const RECEPTION := Vector3(0.027, 0.785, 0.07)
-const RECEPTION_H := 1.5
+const RECEPTION := Vector3(0.027, 0.763, 0.07)
+const RECEPTION_H := 1.32
+## Reception window opening in guild_reception.png px (inside the frame: lintel underside to sill top).
+const RECEPTION_WINDOW := Rect2(121, 131, 116, 62)
 const RECEPTION_LABEL_Y := 1.5
 ## Welcome banner: art height; pole feet at +-pole_x (opaque post columns of welcome_banner.png centre at -2.21 / +2.22 m
 ## at 4.4 m tall); pole collision box.

@@ -24,9 +24,19 @@ uniform float shade_use = 0.0;
 uniform float shade_lo = 1.0;
 uniform float shade_hi = 1.0;
 uniform float ignore_actor_shadow = 0.0;
+// Awnings and tarps (face_light 1): lit like the building faces (face_lit.gd), from the yard `ahead` in front of
+// each fragment, mixed by k, then the slope's Lambert against flat ground (sun_dir) mixed by slope_k.
+uniform float face_light = 0.0;
+uniform float face_z = -1000.0; // world z of the building front: cloth behind it reads the yard in front, like the face
+uniform float ahead = 0.3;
+uniform float k = 0.85;
+uniform float slope_k = 0.2;
+uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 varying vec3 wpos;
+varying vec3 wnrm;
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 void fragment() {
 	vec2 uv = UV * uv_scale + uv_off;
@@ -45,7 +55,13 @@ void fragment() {
 		c *= mix(shade_lo, shade_hi, clamp(UV.y, 0.0, 1.0));
 	}
 	vec3 lit = vec3(1.0);
-	if (ignore_actor_shadow < 0.5) {
+	if (face_light > 0.5) {
+		vec2 span = max(light_span, vec2(0.001));
+		vec2 luv = clamp((vec2(wpos.x, max(wpos.z, face_z) + ahead) - light_origin) / span, vec2(0.0), vec2(1.0));
+		vec3 n = wnrm.y < 0.0 ? -wnrm : wnrm;
+		float lam = clamp(dot(n, sun_dir) / max(sun_dir.y, 0.001), 0.0, 1.0);
+		lit = mix(vec3(1.0), texture(light_tex, luv).rgb, k) * mix(1.0, lam, slope_k);
+	} else if (ignore_actor_shadow < 0.5) {
 		vec2 span = max(light_span, vec2(0.001));
 		vec2 luv = clamp((wpos.xz + light_shift - light_origin) / span, vec2(0.0), vec2(1.0));
 		lit = texture(light_tex, luv).rgb;
