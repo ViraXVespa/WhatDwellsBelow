@@ -3,7 +3,7 @@
   "hud": 0,
   "zoom": 3.2,
   "settle_ms": 800,
-  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd, planted 3x dumpster sprite must FAIL on_face); building faces sample the hub light map (hub_face_check.gd, planted white map must FAIL); gable slopes meet at the ridge with nothing over it (planted 5 cm drop must FAIL); ridge tiles line up (planted mirrored u / off-seam v must FAIL); running bond in the sheet and across the ridge (hub_bond_check.gd, planted mirrored north v must FAIL stack); awning hems meet the face tops from the camera pitch and the receptionist bust sits inside the reception window (hub_awning_check.gd, planted 3 cm lift / 20 % grow must FAIL); the guild front colliders keep the player in front of the face art at the door (planted lifted collider must FAIL); awnings and the stall tarp take the face light (planted unlit cloth must FAIL); each face and awning keeps p90-p10 light spread >= 0.12 with p90 >= 0.9 and each awning darkens toward the wall (wall-to-front spread >= 0.12) (hub_light_spread.gd, planted flat remap must FAIL flat). Player marks: a guild face lantern casts a point-light mark pointing away from it (hub_mark_light.gd, planted flipped mark must FAIL); in full building shade the sun mark cancels (planted ignored cancel must FAIL double).",
+  "about": "Yard prop sun marks (dumpster, anvil, notice board, controls billboard): on the ground, sun-away side, off the prop's face (hub_shadow_check.gd, planted 3x dumpster sprite must FAIL on_face); building faces sample the hub light map (hub_face_check.gd, planted white map must FAIL); gable slopes meet at the ridge with nothing over it (planted 5 cm drop must FAIL); ridge tiles line up (planted mirrored u / off-seam v must FAIL); running bond in the sheet and across the ridge (hub_bond_check.gd, planted mirrored north v must FAIL stack); awning hems meet the face tops from the camera pitch and the receptionist stands behind the counter, cut at the sill with her head in the opening's top third (hub_awning_check.gd, planted 3 cm lift / 0.28 m float must FAIL); the dumpster casts a box on four wheel posts with light between them (hub_shadow_check.wheels, planted filled caster must FAIL); the guild front colliders keep the player in front of the face art at the door (planted lifted collider must FAIL); awnings and the stall tarp take the face light (planted unlit cloth must FAIL); each face and awning keeps p90-p10 light spread >= 0.12 with p90 >= 0.9 and each awning darkens toward the wall (wall-to-front spread >= 0.12) (hub_light_spread.gd, planted flat remap must FAIL flat). Player marks: a guild face lantern casts a point-light mark pointing away from it (hub_mark_light.gd, planted flipped mark must FAIL); in full building shade the sun mark cancels (planted ignored cancel must FAIL double).",
   "steps": [
     {
       "op": "call",
@@ -181,6 +181,16 @@
     {
       "op": "assert",
       "target": "script:debug/hub_awning_check.plant_window",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.wheels",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.plant_wheels",
       "equals": "caught"
     },
     {

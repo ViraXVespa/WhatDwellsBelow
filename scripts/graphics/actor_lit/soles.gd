@@ -116,36 +116,92 @@ static func _span(tex: Texture2D) -> Vector4:
 
 static var _solid_at: Dictionary = {}
 
-## Shadow silhouette for a deep yard prop: each column filled between its top and bottom opaque texel, and columns
-## inside the sole span filled down to the sole row, so the mark is the prop's solid body standing on its base (no
-## daylight between wheels or under a box drawn in 3/4 view) instead of the drawn outline.
-static func _solid(tex: Texture2D) -> Texture2D:
-	var id: int = tex.get_rid().get_id()
-	if _solid_at.has(id):
-		return _solid_at[id] as Texture2D
+## Shadow caster for a deep yard prop, built from its geometry instead of the drawn outline (holes, lids, rust):
+## "profile" (anvil): every row filled between its outer texels, so the mark keeps the solid's taper (face, waist,
+##   feet). "raised" (dumpster): the body box (rows with at least RAISED_BODY of the fullest row's texels, filled to its outer
+##   texels) on wheel posts: the wheel band below the body is opaque only on the drawn wheel columns plus the hidden
+##   back-left wheel (front-left shifted by the drawn front-to-back offset), so light shows between four wheels.
+const RAISED_BODY := 0.5
+static func _solid(tex: Texture2D, shape: String = "profile") -> Texture2D:
+	var key: String = "%d:%s" % [tex.get_rid().get_id(), shape]
+	if _solid_at.has(key):
+		return _solid_at[key] as Texture2D
 	var img: Image = tex.get_image()
 	if img == null or img.is_empty():
 		return tex
 	img = img.duplicate()
 	img.decompress()
 	img.convert(Image.FORMAT_RGBA8)
-	var s: Vector4 = _soles(tex)
-	var sole_y: int = int(maxf(s.y, s.w)) - 1
 	var w: int = img.get_width()
-	for x in w:
-		var top: int = -1
-		var low: int = -1
-		for y in img.get_height():
+	var h: int = img.get_height()
+	var lo: PackedInt32Array = PackedInt32Array()
+	var hi: PackedInt32Array = PackedInt32Array()
+	for y in h:
+		var l: int = -1
+		var r: int = -1
+		for x in w:
 			if img.get_pixel(x, y).a >= 0.2:
-				if top < 0:
-					top = y
-				low = y
-		if top < 0:
+				if l < 0:
+					l = x
+				r = x
+		lo.append(l)
+		hi.append(r)
+	var body_end: int = h
+	var posts: Array[Vector2i] = []
+	if shape == "raised":
+		body_end = _body_end(img)
+		posts = _wheels(img, body_end)
+	var out: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in h:
+		if lo[y] < 0:
 			continue
-		if float(x) + 0.5 >= minf(s.x, s.z) and float(x) + 0.5 <= maxf(s.x, s.z):
-			low = maxi(low, sole_y)
-		for y in range(top, low + 1):
-			img.set_pixel(x, y, Color(0, 0, 0, 1))
-	var out: ImageTexture = ImageTexture.create_from_image(img)
-	_solid_at[id] = out
-	return out
+		if y < body_end:
+			for x in range(lo[y], hi[y] + 1):
+				out.set_pixel(x, y, Color(0, 0, 0, 1))
+		else:
+			for p in posts:
+				for x in range(p.x, p.y + 1):
+					out.set_pixel(x, y, Color(0, 0, 0, 1))
+	var t: ImageTexture = ImageTexture.create_from_image(out)
+	_solid_at[key] = t
+	return t
+
+## Row after the body box: the last row with at least RAISED_BODY of the fullest row's opaque texels.
+static func _body_end(img: Image) -> int:
+	var n: PackedInt32Array = PackedInt32Array()
+	for y in img.get_height():
+		var c: int = 0
+		for x in img.get_width():
+			if img.get_pixel(x, y).a >= 0.2:
+				c += 1
+		n.append(c)
+	var most: int = 0
+	for c in n:
+		most = maxi(most, c)
+	var end: int = img.get_height()
+	for y in n.size():
+		if n[y] > 0 and n[y] >= int(most * RAISED_BODY):
+			end = y + 1
+	return end
+
+## Wheel column runs [x0, x1] under the body (columns opaque on 2+ band rows), plus the hidden fourth: the first run
+## shifted by the offset between the last two runs (the drawn front-to-back depth), when only three are drawn.
+static func _wheels(img: Image, body_end: int) -> Array[Vector2i]:
+	var runs: Array[Vector2i] = []
+	var start: int = -1
+	for x in img.get_width() + 1:
+		var hits: int = 0
+		if x < img.get_width():
+			for y in range(body_end, img.get_height()):
+				if img.get_pixel(x, y).a >= 0.2:
+					hits += 1
+		var on: bool = hits >= 2  # a one-row sliver is the body's bottom edge, not a wheel
+		if on and start < 0:
+			start = x
+		elif not on and start >= 0:
+			runs.append(Vector2i(start, x - 1))
+			start = -1
+	if runs.size() == 3:
+		var d: int = runs[2].x - runs[1].x
+		runs.append(Vector2i(runs[0].x + d, runs[0].y + d))
+	return runs
