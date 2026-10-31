@@ -34,12 +34,12 @@ const HALL := {
 	"crop": 0.32, "rise": 0.55, "wall": Color(0.45, 0.32, 0.22), "awning": Vector2(0.42, 0.16),
 	"lamps": [Vector2(99.0, 95.0), Vector2(219.0, 95.0)],
 }
-## The wing sits on the hall's east end (overlap metres into it), back walls flush. Its crop shows the painted lantern
-## above the window (the shingles stay cut off).
+## The wing sits on the hall's east end (overlap metres into it), back walls flush. Its crop cuts off the shingles; the
+## painted lanterns flank the window like the hall's door lanterns.
 const WING := {
 	"overlap": 0.12, "box": Vector3(3.8, 3.8, 3.2), "face": "res://assets/sprites/buildings/guild_reception.png",
 	"crop": 0.245, "rise": 0.48, "wall": Color(0.5, 0.38, 0.28), "awning": Vector2(0.36, 0.16),
-	"lamps": [Vector2(179.5, 101.0)],
+	"lamps": [Vector2(71.5, 128.0), Vector2(287.5, 128.0)],
 }
 const TIMBER := Color(0.42, 0.28, 0.16)
 ## Building face art plane: this fraction of box depth in front of the body centre (stall front posts share it).
@@ -65,9 +65,9 @@ const SPOTS := {
 }
 const VENDOR_GAP := 0.5
 const RECEPTION := Vector3(0.027, 0.763, 0.07)
-const RECEPTION_H := 1.32
+const RECEPTION_H := 1.56
 ## Reception window opening in guild_reception.png px (inside the frame: lintel underside to sill top).
-const RECEPTION_WINDOW := Rect2(121, 131, 116, 62)
+const RECEPTION_WINDOW := Rect2(106, 125, 145, 74)
 const RECEPTION_LABEL_Y := 1.5
 ## Welcome banner: art height; pole feet at +-pole_x (opaque post columns of welcome_banner.png centre at -2.21 / +2.22 m
 ## at 4.4 m tall); pole collision box.
