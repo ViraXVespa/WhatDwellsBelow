@@ -56,13 +56,16 @@ void fragment() {
 		mat2 jw = mat2(dFdx(xz), dFdy(xz));
 		mat2 m = abs(determinant(jw)) > 1e-12 ? mat2(dFdx(UV), dFdy(UV)) * inverse(jw) : mat2(0.0);
 		cov = 0.0;
+		float contact = 0.0;
 		for (int i = 0; i < 16; i++) {
 			vec2 w = c0 + (vec2(float(i % 4), float(i / 4)) + 0.5) / (4.0 * grid);
 			vec2 uv = UV + m * (w - xz);
-			uv.y = min(uv.y, sole_v);
-			cov += texture(albedo_tex, uv).a;
+			float a = texture(albedo_tex, vec2(uv.x, min(uv.y, sole_v))).a;
+			cov += a;
+			contact = max(contact, uv.y >= sole_v ? a : 0.0);
 		}
-		cov /= 16.0;
+		// A cell the sole line crosses under a boot is full contact: the mark meets both feet.
+		cov = max(cov / 16.0, contact);
 		xz = c0 + 0.5 / grid;
 	}
 	if (cov < 0.02) {

@@ -22,6 +22,9 @@ static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -
 	var dropped: Vector2 = _drop_floor(lit, world)
 	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
 	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot))
+	# Hub marks snap to 1/32 m cells (up to a cell down-screen): tuck one more cell so both boots sit on the mark.
+	if not App.in_dungeon:
+		tuck += 0.03125
 	var back: Vector2 = Vector2(0.0, -1.0)
 	var cam: Camera3D = lit.get_viewport().get_camera_3d()
 	if cam != null:
@@ -54,12 +57,15 @@ static func _drop_floor(lit: Variant, world: Vector3) -> Vector2:
 static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
-	var pad: float = 0.0
+	# Hub: one ground cell (1/32 m) of pad all round, past the sole too, so a cell the feet straddle draws whole
+	# (the shader clamps reads at the contact row) and the mark meets both boots at any facing.
+	var sole_v: float = span.w - 0.5 / th
+	var pad: float = clampf(ceilf(0.03125 / maxf(px, 1e-4)), 0.0, 8.0) if not App.in_dungeon else 0.0
 	var x0: float = span.x * tw - pad
 	var x1: float = span.z * tw + pad
 	var y0: float = span.y * th - pad
-	var y1: float = span.w * th
-	span = Vector4(x0 / tw, y0 / th, x1 / tw, span.w)
+	var y1: float = span.w * th + pad
+	span = Vector4(x0 / tw, y0 / th, x1 / tw, y1 / th)
 	var verts: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
@@ -73,7 +79,7 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	uvs.append(Vector2(span.x, span.y))
 	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
 	# UV2.y carries the contact row so grid-snapped reads stop there (no half-coverage daylight line at the sole).
-	var edge: Vector2 = Vector2(0.0, span.w - 0.5 / th)
+	var edge: Vector2 = Vector2(0.0, sole_v)
 	return Commit.commit(verts, null, uvs, indices, PackedVector2Array([edge, edge, edge, edge]))
 
 static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
