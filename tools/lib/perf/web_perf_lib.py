@@ -127,6 +127,12 @@ def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
                 page.wait_for_function("!!window.__wdbPlay", timeout=int(s["waitplay"]))
             except Exception:
                 pass
+        elif "waitfor" in s:  # JS expression: wait until truthy (at most "ms"), print its JSON as `<tag> waitfor: ...`
+            try:
+                page.wait_for_function("!!(%s)" % s["waitfor"], timeout=int(s.get("ms", 20000)))
+            except Exception:
+                pass
+            print("%s waitfor: %s" % (tag, page.evaluate("JSON.stringify(%s)" % s["waitfor"])))
         elif "click" in s:  # [x, y] as viewport fractions
             v = page.viewport_size
             page.mouse.click(v["width"] * s["click"][0], v["height"] * s["click"][1])
