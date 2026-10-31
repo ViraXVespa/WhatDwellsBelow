@@ -143,10 +143,39 @@ def still_diff(a: Path, b: Path) -> dict:
     return {"share": round(share, 4), "mean": round(float(d.mean()), 2), "size_changed": size_changed,
             "changed": share > STILL_SHARE or size_changed}
 
+def zoom_only(a: Path, b: Path, samples: int = 3) -> float:
+    """Scale of b about the centre that explains the a/b difference (camera size only), else 0. The guard that keeps a
+    shot-tool zoom drift between refs (e.g. a size_pin one ref lacks) out of the reel as a fake change."""
+    from PIL import Image, ImageChops, ImageStat
+    dur = min(clip_edit.info(a)["sec"], clip_edit.info(b)["sec"])
+    scales = [round(0.8 + 0.0125 * k, 4) for k in range(37)]
+    votes = []
+    with tempfile.TemporaryDirectory() as td:
+        for k in range(samples):
+            t = dur * (k + 0.5) / samples
+            fr = []
+            for n, src in (("a", a), ("b", b)):
+                clip_edit._run(["-ss", "%.3f" % t, "-i", str(src), "-frames:v", "1", "-vf", "scale=320:-2", str(Path(td) / (n + ".png"))])
+                fr.append(Image.open(Path(td) / (n + ".png")).convert("RGB"))
+            x, y = fr
+            w, h = x.size
+            def err(sc: float, x=x, y=y, w=w, h=h) -> float:
+                # sc > 1: b is the wider view, so a matches b's centre cropped by 1/sc; sc < 1 the other way
+                big, small, f = (y, x, sc) if sc >= 1 else (x, y, 1 / sc)
+                cw, ch = w / f, h / f
+                c = big.crop((int((w - cw) / 2), int((h - ch) / 2), int((w + cw) / 2), int((h + ch) / 2))).resize((w, h))
+                m = int(w * 0.1)
+                return sum(ImageStat.Stat(ImageChops.difference(c, small).crop((m, m, w - m, h - m))).mean) / 3
+            base, best = err(1.0), min(scales, key=err)
+            votes.append(best if abs(best - 1) > 0.02 and err(best) < min(8.0, base * 0.3) else 0.0)
+    return votes[0] if votes and all(v and abs(v - votes[0]) < 0.06 for v in votes) else 0.0
+
 def clip_diff(a: Path, b: Path) -> dict:
     box, share, strength = clip_fx.change_box(a, b)
+    changed = box is not None and share > CLIP_SHARE
+    z = zoom_only(a, b) if changed else 0.0
     return {"share": round(share, 4), "strength": strength, "box": [round(v) for v in box] if box else None,
-            "changed": box is not None and share > CLIP_SHARE}
+            "zoom_only": z, "changed": changed and not z}
 
 def still_clip(png: Path, out: Path, sec: float = 3.0) -> Path:
     clip_edit._run(["-loop", "1", "-t", "%.2f" % sec, "-i", str(png), "-vf",
@@ -238,7 +267,7 @@ def run(root: Path, data: dict, refs: str, names: str, out: Path, keep: bool, lo
         for r in res["items"]:
             if r.get("a") and r.get("b"):
                 r["diff"] = clip_diff(Path(r["a"]), Path(r["b"])) if r["kind"] == "movie" else still_diff(Path(r["a"]), Path(r["b"]))
-                log("%-18s %s %s" % (r["name"], "CHANGED" if r["diff"]["changed"] else "no visible change", json.dumps(r["diff"])))
+                log("%-18s %s %s" % (r["name"], "CHANGED" if r["diff"]["changed"] else ("zoom-only diff (camera size x%s), left out" % r["diff"]["zoom_only"] if r["diff"].get("zoom_only") else "no visible change"), json.dumps(r["diff"])))
             else:
                 log("%-18s not compared (a recording failed)" % r["name"])
         res["reel"] = reel(res["items"], labels, out)
@@ -296,4 +325,10 @@ def selftest(root: Path) -> list[str]:
             bad.append("caption cut")
         if reel(rows[:1], ("A", "B"), td / "none").get("segments") != 0:
             bad.append("no-change reel not empty")
+        clip_edit._run(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=2", *clip_edit.H264, str(td / "za.mp4")])
+        clip_edit._run(["-i", str(td / "za.mp4"), "-vf", "crop=iw/1.15:ih/1.15,scale=640:360", *clip_edit.H264, str(td / "zb.mp4")])
+        clip_edit._run(["-i", str(td / "za.mp4"), "-vf", "drawbox=x=100:y=60:w=200:h=150:color=yellow:t=fill", *clip_edit.H264, str(td / "zc.mp4")])
+        za, zb, zc = (td / n for n in ("za.mp4", "zb.mp4", "zc.mp4"))
+        if abs(zoom_only(zb, za) - 1.15) > 0.04 or zoom_only(za, zc):
+            bad.append("zoom-only guard: %s %s" % (zoom_only(zb, za), zoom_only(za, zc)))
     return bad

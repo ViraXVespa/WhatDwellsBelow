@@ -107,11 +107,18 @@ static func camera(st: Dictionary, step: Dictionary) -> void:
 	var off: Vector2 = _vec(step.get("offset", null), Vector2.ZERO)
 	to_c += Vector3(off.x, 0.0, off.y)
 	var from_s: float = (rig.get("cam") as Camera3D).size
-	var to_s: float = T.base_size().y / float(T.PX) / maxf(0.01, float(step.zoom)) if step.has("zoom") else from_s
+	# follow hands back: without its own zoom it eases to the size the rig returns to (its pin, else the user zoom)
+	var pin: float = float(rig.get("size_pin"))
+	var home: float = pin if pin > 0.0 else T.base_size().y / float(T.PX) / clampf(App.cam_zoom, T.ZOOM_MIN, T.ZOOM_MAX)
+	var to_s: float = from_s
+	if step.has("zoom"):
+		to_s = T.base_size().y / float(T.PX) / maxf(0.01, float(step.zoom))
+	elif bool(step.get("follow", false)):
+		to_s = home
 	_cam_gen += 1
 	rig.set("warm_hold", true)
 	printerr("SHOT: camera at=%.2f,%.2f size=%.2f ms=%d follow=%s" % [to_c.x, to_c.z, to_s, int(step.get("ms", 0)), str(step.get("follow", false))])
-	var job: Array = [rig, player, from_c, to_c, from_s, to_s, float(step.get("ms", 0)) / 1000.0, str(step.get("ease", "inout")), bool(step.get("follow", false)), _cam_gen]
+	var job: Array = [rig, player, from_c, to_c, from_s, to_s, float(step.get("ms", 0)) / 1000.0, str(step.get("ease", "inout")), bool(step.get("follow", false)), _cam_gen, pin if not step.has("zoom") else to_s]
 	_glide(host, job)
 	var left: float = float(job[6]) if bool(step.get("wait", false)) else 0.0
 	await host.get_tree().process_frame
@@ -135,7 +142,8 @@ static func _glide(host: Node, job: Array) -> void:
 		rig.call("apply_size", lerpf(job[4], job[5], e))
 		if k >= 1.0 and job[8]:
 			rig.position = Vector3.ZERO
-			rig.set("size_pin", job[5])
+			# job[10]: the rig's old pin, or the step's own zoom (was job[5] always: a zoomless follow pinned the glide size)
+			rig.set("size_pin", job[10])
 			rig.call("restore_user")
 			return
 		await host.get_tree().process_frame
