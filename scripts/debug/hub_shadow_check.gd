@@ -51,6 +51,28 @@ var plant_matrix: String:
 				miss.append(p)
 		return "caught" if miss.is_empty() else "missed " + ",".join(miss)
 
+## Flyer marks (hub_shadow_check/fly_matrix.gd): fly_matrix "" when detached, under the body, falling off with
+## altitude and never stale; plant_fly: glued (air off) and hang (a skipped frame) must fail; fly_bench / fly_stage.
+var fly_matrix: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").run()
+var plant_fly: String:
+	get:
+		var F: GDScript = load("res://scripts/debug/hub_shadow_check/fly_matrix.gd")
+		var miss: PackedStringArray = PackedStringArray()
+		for p: String in ["glued", "hang"]:
+			if F.run(p) == "":
+				miss.append(p)
+		return "caught" if miss.is_empty() else "missed " + ",".join(miss)
+var fly_bench: String:
+	get:
+		var got: String = load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").bench()
+		print("FLY_BENCH ", got)
+		return ""
+var fly_stage: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").stage()
+
 static var _rows: PackedStringArray = PackedStringArray()
 
 static func faults(props: Array) -> String:

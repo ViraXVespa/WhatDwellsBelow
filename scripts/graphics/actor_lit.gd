@@ -33,6 +33,9 @@ var _flip: bool = false
 var solid: String = ""
 ## Profile footprint depth (texels): the mark's contact tucks this far up-screen under the curved base.
 var foot: int = 0
+## Airborne mark (enemy move_kind fly / hop, or forced by the mark matrix): last altitude (m) above the floor.
+var air_force: bool = false
+var lift: float = 0.0
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	if body == null or sticker == null:
@@ -131,6 +134,18 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	var up: float = K.RAISED_CELLS * K.GRID_M / maxf(spr.pixel_size, 1e-5)
 	var fl: Vector2 = Geo._sole_xz(self, soles.x, sole_y, tw, th, sole_y - soles.y < up) - feet
 	var fr: Vector2 = Geo._sole_xz(self, soles.z, sole_y, tw, th, sole_y - soles.w < up) - feet
+	lift = 0.0
+	var kind: Variant = get_parent().get("move_kind")
+	if air_force or kind == "fly" or kind == "hop":
+		# Straight-down pins (no camera drop, no tuck): the mark stays under the body, detached by the altitude.
+		var wl: Vector3 = Geo._sole_world(self, soles.x, sole_y, tw, th)
+		var wr: Vector3 = Geo._sole_world(self, soles.z, sole_y, tw, th)
+		if minf(wl.y, wr.y) - T.FLOOR_Y > K.AIR_MIN:
+			lift = minf(wl.y, wr.y) - T.FLOOR_Y
+			fl = Vector2(wl.x, wl.z) - feet
+			fr = Vector2(wr.x, wr.z) - feet
+	var s_air: float = clampf(1.0 - lift / K.AIR_S_M, K.AIR_S_MIN, 1.0)
+	var a_air: float = clampf(1.0 - lift / K.AIR_A_M, K.AIR_A_MIN, 1.0)
 	var origin: Vector3 = Vector3(feet.x, T.FLOOR_Y, feet.y)
 	var ink: float = 0.0
 	if App.in_dungeon:
@@ -148,12 +163,16 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			continue
 		var dir: Vector2 = _biased(_away_at[slot])
 		_sync_slot(slot, tex, soles, fl, fr, dir, px, feet)
-		node.global_transform = Transform3D(Basis.IDENTITY, origin)
+		var at: Vector3 = origin
+		if lift > 0.0:
+			var run: Vector2 = dir * Geo._reach(lift, _stretch_at[slot], _src_at[slot])
+			at += Vector3(run.x, 0.0, run.y)
+		node.global_transform = Transform3D(Basis.IDENTITY.scaled(Vector3(s_air, 1.0, s_air)), at)
 		var shade_mat: ShaderMaterial = node.material_override as ShaderMaterial
 		if shade_mat != null:
 			shade_mat.render_priority = -2
 			node.sorting_offset = -30.0
-			var shown: float = _alpha_at[slot] * scale
+			var shown: float = _alpha_at[slot] * scale * a_air
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
 			shade_mat.set_shader_parameter("sun_cancel", 1.0 if slot == 0 and not App.in_dungeon else 0.0)
 			shade_mat.set_shader_parameter("grid", 0.0 if App.in_dungeon else K.HUB_GRID)

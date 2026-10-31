@@ -24,6 +24,13 @@ const HUB_GRID := 32.0
 const GRID_M := 1.0 / HUB_GRID
 ## A foot whose lowest pixel sits this many ground cells above the other is raised: no tuck, it shows its gap.
 const RAISED_CELLS := 1.5
+## Airborne (fly / hop): sole above the floor by more than AIR_MIN m drops straight down and shifts along the light by
+## its altitude; size and darkness fall off with altitude (floors AIR_S_MIN / AIR_A_MIN at AIR_S_M / AIR_A_M m).
+const AIR_MIN := 0.06
+const AIR_S_M := 2.4
+const AIR_S_MIN := 0.5
+const AIR_A_M := 1.6
+const AIR_A_MIN := 0.25
 
 const SHADE := """
 shader_type spatial;

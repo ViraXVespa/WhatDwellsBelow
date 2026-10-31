@@ -7,19 +7,7 @@ const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Commit := preload("res://scripts/graphics/mesh_commit.gd")
 
 static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, tucked: bool = true) -> Vector2:
-	var ox: float = lit.spr.offset.x
-	var oy: float = lit.spr.offset.y
-	if lit.spr.centered:
-		ox -= tw * 0.5
-		oy -= th * 0.5
-	var g: float = tx / tw
-	if lit._flip:
-		g = 1.0 - g
-	var lx: float = (ox + g * tw) * lit.spr.pixel_size
-	var ly: float = (oy + (th - ty)) * lit.spr.pixel_size
-	var axis: Vector3 = _bill_x(lit)
-	var world: Vector3 = lit.spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
-	var dropped: Vector2 = _drop_floor(lit, world)
+	var dropped: Vector2 = _drop_floor(lit, _sole_world(lit, tx, ty, tw, th))
 	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
 	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot)) if tucked else 0.0
 	# Hub marks snap to 1/32 m cells (up to a cell down-screen): tuck one more cell so both boots sit on the mark.
@@ -32,6 +20,26 @@ static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, t
 		if flat.length_squared() > 0.0004:
 			back = flat.normalized()
 	return dropped + back * tuck
+
+## World point of a sticker texel (billboard axis, sprite origin, pixel size).
+static func _sole_world(lit: Variant, tx: float, ty: float, tw: float, th: float) -> Vector3:
+	var ox: float = lit.spr.offset.x
+	var oy: float = lit.spr.offset.y
+	if lit.spr.centered:
+		ox -= tw * 0.5
+		oy -= th * 0.5
+	var g: float = tx / tw
+	if lit._flip:
+		g = 1.0 - g
+	var lx: float = (ox + g * tw) * lit.spr.pixel_size
+	var ly: float = (oy + (th - ty)) * lit.spr.pixel_size
+	var axis: Vector3 = _bill_x(lit)
+	return lit.spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
+
+## Ground run of a height h along the light (head shear; a flyer's altitude offset uses the same run).
+static func _reach(h: float, stretch: float, src: Vector2) -> float:
+	var elev: float = 0.85 if src.length_squared() > 0.0004 else K.SUN_ELEV
+	return minf(h * maxf(stretch, 0.15) / elev, h * clampf(0.55 + stretch * 0.45, 0.45, 1.35))
 static func _bill_x(lit: Variant) -> Vector3:
 	var cam: Camera3D = lit.get_viewport().get_camera_3d()
 	if cam == null:
@@ -108,11 +116,5 @@ static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vect
 	var base: Vector2 = pin + ax * extra
 	var sole_y: float = maxf(soles.y, soles.w)
 	var h: float = maxf(sole_y - ty, 0.0) * px
-	var elev: float = K.SUN_ELEV
-	if src.length_squared() > 0.0004:
-		elev = 0.85
-	var reach: float = h * maxf(stretch, 0.15) / elev
-	var cap: float = h * clampf(0.55 + stretch * 0.45, 0.45, 1.35)
-	if reach > cap:
-		reach = cap
+	var reach: float = _reach(h, stretch, src)
 	return Vector3(base.x + aim.x * reach, 0.0, base.y + aim.y * reach)
