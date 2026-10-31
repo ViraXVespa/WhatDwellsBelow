@@ -1,0 +1,27 @@
+{
+  "scene": "camp",
+  "hud": 0,
+  "zoom": 1.75,
+  "settle_ms": 800,
+  "about": "Rendered shadow contour (hub_shadow_check/edge_px.gd): buildings hidden, ground drawn; along every outer edge of each projected building polygon (hub_hulls.gd) cells 2 inside must be darker than 2 outside at >=90% of points. Planted 3-cell hull shift must FAIL. EDGE_PX lines carry edges/bad.",
+  "steps": [
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.plant_edges",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_shadow_check.edge_px",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "edges"
+    }
+  ]
+}

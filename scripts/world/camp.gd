@@ -186,6 +186,7 @@ func _step_spot_billboard() -> void:
 
 func _step_rest() -> void:
 	Build.stamp_actor_blobs(self)
+	preload("res://scripts/graphics/light_rt/hub_hulls.gd").apply(self, LightRt._mats)
 	Dbg.hitch("hub_blobs")
 	if bool(App.get("_menu_loading")) or App.wake_pending:
 		Dbg.lt_note("camp_dummy", "deferred")

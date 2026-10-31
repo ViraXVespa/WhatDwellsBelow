@@ -86,6 +86,8 @@ static func grass_pad(
 	else:
 		inst.material_override = GroundShader.material(tex_path, fallback)
 	(inst.material_override as ShaderMaterial).set_shader_parameter("harden", 0.95)
+	if tex_path == Spec.SURFACE["path"][0]:
+		(inst.material_override as ShaderMaterial).set_shader_parameter("top_gain", Spec.PATH_GAIN)
 
 	inst.add_to_group("hub_ground")
 

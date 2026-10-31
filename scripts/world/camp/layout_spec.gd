@@ -24,6 +24,9 @@ const SURFACE := {
 	"dirt": ["res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 1.1],
 	"path": ["res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8],
 }
+## Path art brightness: plaza_path.png averages (112, 87, 64), as dark as building shade on the sand, so the N-S
+## arm read as a shadow strip below the crystal.
+const PATH_GAIN := 1.2
 ## Roof tile width (metres per sheet repeat).
 const TILE_W := 3.2
 

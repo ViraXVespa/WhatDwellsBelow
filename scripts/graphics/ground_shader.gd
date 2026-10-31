@@ -51,6 +51,26 @@ uniform float wear = 0.0;
 // Hub: shade edges snap toward full sun or full shade per cell (0 off; dungeon keeps the smooth bake).
 uniform float harden = 0.0;
 uniform float shade_l = 0.46;
+// Hub building shadow hulls (light_rt/hub_hulls.gd): convex, counter-clockwise; hull i is hull_p[hull_s[i]..hull_s[i+1]).
+uniform int hull_n = 0;
+uniform int hull_s[33];
+uniform vec2 hull_p[256];
+// Signed distance (m, + inside) to the nearest hull: max over hulls of the min edge distance.
+float hull_d(vec2 q) {
+	float best = -1e9;
+	for (int i = 0; i < hull_n; i++) {
+		int a = hull_s[i];
+		int b = hull_s[i + 1];
+		float d = 1e9;
+		for (int j = a; j < b; j++) {
+			vec2 p0 = hull_p[j];
+			vec2 e = hull_p[j + 1 < b ? j + 1 : a] - p0;
+			d = min(d, (e.x * (q.y - p0.y) - e.y * (q.x - p0.x)) / max(length(e), 1e-5));
+		}
+		best = max(best, d);
+	}
+	return best;
+}
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform vec4 feather_rect = vec4(0.0);
@@ -66,6 +86,8 @@ float vnoise(vec2 g) {
 	return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0)), f.x), f.y);
 }
 
+uniform float top_gain = 1.0; // top texture only (the under_tex fade keeps its own tone)
+
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
@@ -73,7 +95,7 @@ void vertex() {
 
 void fragment() {
 	vec2 xz = world_pos.xz;
-	vec3 c = texture(albedo_tex, xz * uv_scale + uv_off).rgb;
+	vec3 c = texture(albedo_tex, xz * uv_scale + uv_off).rgb * top_gain;
 	if (feather > 0.0) {
 		// Transition, not a cut: blend toward the surface below (under_tex) across the fade, one continuous alpha per
 		// cell of the 1/82.6 m (player texel) (Chunky.GRID_M) ground grid (box average of the smooth fade = its cell-centre value); the blend centre
@@ -95,7 +117,13 @@ void fragment() {
 		xz = cell0 + (vec2(float(t % 2), float(t / 2)) * 0.5 + 0.25) / GRID;
 """ + TAP_BODY + "		lit += 0.25 * " + TAP_MIX + """	}
 	float ll = max(max(lit.r, lit.g), lit.b);
-	if (harden > 0.0 && ll > 0.001 && ll < 1.0) {
+	float hd = hull_n > 0 ? hull_d(cell0 + 0.5 / GRID) : -1e9;
+	bool lamp = lit.r - lit.b > 0.12 && ll > shade_l * 1.15; // lamp pools in the shade keep their light
+	if (hd >= 0.0 && ll > 0.001 && !lamp) {
+		lit *= shade_l / ll; // inside a projected building: the near shade, edge on the cell
+	} else if (hd < 0.0 && hd > -0.8 && ll > 0.001 && ll < 0.95) {
+		lit *= 0.98 / ll; // just outside: the bake's blur and fade, back to sun
+	} else if (harden > 0.0 && ll > 0.001 && ll < 1.0) {
 		float t = clamp((ll - shade_l) / (1.0 - shade_l), 0.0, 1.0);
 		lit *= mix(1.0, mix(shade_l, 1.0, smoothstep(0.5 - 0.5 * (1.0 - harden), 0.5 + 0.5 * (1.0 - harden), t)) / ll, step(shade_l * 0.9, ll));
 	}

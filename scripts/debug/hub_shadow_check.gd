@@ -81,6 +81,16 @@ var plant_feet: String:
 	get:
 		return "caught" if load("res://scripts/debug/hub_shadow_check/feet_px.gd").run("flat") != "" else "missed flat"
 
+## Rendered shadow contour (hub_shadow_check/edge_px.gd): "" when every building shadow edge is the projected polygon's;
+## plant_edges: shader hulls shifted 3 cells.
+var edge_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/edge_px.gd").run()
+var plant_edges: String:
+	get:
+		var r: String = load("res://scripts/debug/hub_shadow_check/edge_px.gd").run("shift")
+		return "caught" if r != "" and r != "no_edges" else "missed shift " + r
+
 static var _rows: PackedStringArray = PackedStringArray()
 
 static func faults(props: Array) -> String:
