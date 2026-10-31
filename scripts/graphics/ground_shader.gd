@@ -38,6 +38,7 @@ static func shader() -> Shader:
 	sh.code = """
 shader_type spatial;
 #define WEAR_DEPTH 0.22
+#define GRID 32.0
 render_mode unshaded;
 uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
@@ -71,28 +72,33 @@ void fragment() {
 	vec2 xz = world_pos.xz;
 	vec3 c = texture(albedo_tex, xz * uv_scale + uv_off).rgb;
 	if (feather > 0.0) {
-		// Transition, not a cut: blend toward the surface below (under_tex) across the fade, alpha in 4 steps on the
-		// 1/16 m texel grid; the blend centre wobbles a little (0.25 m at ~2 m plus 0.12 m at ~0.6 m).
-		vec2 q = (floor(xz * 16.0) + 0.5) / 16.0;
+		// Transition, not a cut: blend toward the surface below (under_tex) across the fade, one continuous alpha per
+		// cell of the 1/32 m ground grid (box average of the smooth fade = its cell-centre value); the blend centre
+		// wobbles a little (0.25 m at ~2 m plus 0.12 m at ~0.6 m).
+		vec2 q = (floor(xz * GRID) + 0.5) / GRID;
 		float d = min(min(q.x - feather_rect.x, feather_rect.z - q.x), min(q.y - feather_rect.y, feather_rect.w - q.y));
 		if (feather_rect2.z > feather_rect2.x) {
 			d = max(d, min(min(q.x - feather_rect2.x, feather_rect2.z - q.x), min(q.y - feather_rect2.y, feather_rect2.w - q.y)));
 		}
 		float k = smoothstep(0.0, feather, d - 0.25 * vnoise(q * 0.5) - 0.12 * vnoise(q * 1.7 + 9.0));
-		k = floor(k * 4.0 + 0.5) / 4.0;
 		c = mix(texture(under_tex, xz * under_uv).rgb, c, k);
 	}
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
-	// Baked light on the ground's 1/32 m pixel grid (Chunky.GRID_M): shadow edges step with the ground pixels.
-	xz = (floor(xz * 32.0) + 0.5) / 32.0;
-""" + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * worn * lit;
+	// Baked light per cell of the 1/32 m ground grid (Chunky.GRID_M): the box average over the cell (2x2 bilinear
+	// taps at the quarter points), continuous values, so shade edges are blocky cells with smooth per-cell darkness.
+	vec2 cell0 = floor(xz * GRID) / GRID;
+	vec3 lit = vec3(0.0);
+	for (int t = 0; t < 4; t++) {
+		xz = cell0 + (vec2(float(t % 2), float(t / 2)) * 0.5 + 0.25) / GRID;
+""" + TAP_BODY + "		lit += 0.25 * " + TAP_MIX + """	}
+	ALBEDO = c * tint * worn * lit;
 }
 """
 	_sh = sh
 	return sh
 
 ## feather > 0: inside rect (x0, z0, x1, z1), or the union with rect2, the plane blends to under_path's texture over its
-## last `feather` metres (4 alpha steps on the 1/16 m texel grid, small slow wobble), so surfaces meet in a soft transition.
+## last `feather` metres (one continuous alpha per 1/32 m ground cell, small slow wobble), so surfaces meet in a soft transition.
 static func feathered(tex_path: String, fallback: Color, rect: Vector4, width: float, under_path: String, rect2: Vector4 = Vector4.ZERO) -> ShaderMaterial:
 	var mat: ShaderMaterial = material(tex_path, fallback)
 	mat.set_shader_parameter("feather_rect", rect)

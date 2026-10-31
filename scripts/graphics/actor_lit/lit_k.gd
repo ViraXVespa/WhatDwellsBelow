@@ -19,7 +19,7 @@ const MARK_N := 3
 const HUB_POINT_REACH := 2.2
 ## The baked full shade reads a little above the floor (soft edge, fill): the sun mark is gone by floor + SUN_SOFT.
 const SUN_SOFT := 0.1
-## Hub marks are hard pixel shapes on the ground grid (cells per metre; Chunky.GRID_M): no blur, no quad pad.
+## Hub marks are per-cell coverage on the ground grid (cells per metre; Chunky.GRID_M): no blur, no quad pad.
 const HUB_GRID := 32.0
 
 const SHADE := """
@@ -47,20 +47,25 @@ void vertex() {
 }
 
 void fragment() {
-	// Hub (grid > 0): each fragment reads the mark at its ground cell's centre, so the edge steps on the ground grid.
-	vec2 uv = UV;
+	// Hub (grid > 0): one value per ground cell: the mark's coverage box-averaged over the cell (4x4 taps mapped
+	// through the screen Jacobian), continuous, so edges are blocky cells with smooth per-cell darkness.
 	vec2 xz = wpos.xz;
+	float cov = texture(albedo_tex, UV).a;
 	if (grid > 0.0) {
-		vec2 g = (floor(xz * grid) + 0.5) / grid;
+		vec2 c0 = floor(xz * grid) / grid;
 		mat2 jw = mat2(dFdx(xz), dFdy(xz));
-		if (abs(determinant(jw)) > 1e-12) {
-			uv += mat2(dFdx(UV), dFdy(UV)) * inverse(jw) * (g - xz);
+		mat2 m = abs(determinant(jw)) > 1e-12 ? mat2(dFdx(UV), dFdy(UV)) * inverse(jw) : mat2(0.0);
+		cov = 0.0;
+		for (int i = 0; i < 16; i++) {
+			vec2 w = c0 + (vec2(float(i % 4), float(i / 4)) + 0.5) / (4.0 * grid);
+			vec2 uv = UV + m * (w - xz);
+			uv.y = min(uv.y, sole_v);
+			cov += texture(albedo_tex, uv).a;
 		}
-		uv.y = min(uv.y, sole_v);
-		xz = g;
+		cov /= 16.0;
+		xz = c0 + 0.5 / grid;
 	}
-	float cov = texture(albedo_tex, uv).a;
-	if (cov < 0.5) {
+	if (cov < 0.02) {
 		discard;
 	}
 	ALBEDO = shade.rgb;
@@ -70,7 +75,7 @@ void fragment() {
 		vec3 l = texture(light_tex, luv).rgb;
 		lit = clamp(((l.r + l.g + l.b) / 3.0 - floor_l - 0.1) / (0.9 - floor_l), 0.0, 1.0); // 0.1 = SUN_SOFT
 	}
-	ALPHA = shade.a * lit;
+	ALPHA = shade.a * lit * cov;
 }
 """
 
