@@ -4,9 +4,9 @@ extends RefCounted
 ## not the zoom, sets the result):
 ## - gap: per building, the awning hem's screen height above the face sprite's top edge (metres of screen and px).
 ##   Positive is a visible gap between the wall art and the awning; "" when every hem is at or below its face top.
-## - window: the receptionist's visible bust (opaque rows above the bust cut) inside the reception window opening
-##   (Spec.RECEPTION_WINDOW, face-art px), "" when inside.
-## plant_gap lifts one hem 3 cm, plant_window grows the bust 20 %; both must FAIL.
+## - window: the receptionist stands behind the counter: her visible bottom (Spec.RECEPTION_CUT) on the window's
+##   counter line (Spec.RECEPTION_WINDOW bottom) and her head top in the opening's top third, x inside.
+## plant_gap lifts one hem 3 cm, plant_window floats her 0.28 m up; both must FAIL.
 
 const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 const TOL := 0.004
@@ -22,13 +22,13 @@ var gap_report: String:
 		return " ".join(_rows(0.0).map(func(r): return "%s=%+.3fm/%+.1fpx" % r))
 var window: String:
 	get:
-		return window_faults(1.0)
+		return window_faults(0.0)
 var window_report: String:
 	get:
-		return window_faults(-1.0)
+		return window_faults(0.0, true)
 var plant_window: String:
 	get:
-		return "caught" if window_faults(1.2) != "" else "missed"
+		return "caught" if window_faults(0.28) != "" else "missed"
 
 static func _cam() -> Camera3D:
 	return (Engine.get_main_loop() as SceneTree).root.get_viewport().get_camera_3d()
@@ -79,7 +79,7 @@ static func gap_faults(lift: float) -> String:
 			out.append("%s:gap=%.3fm" % [r[0], r[1]])
 	return " ".join(out)
 
-static func window_faults(grow: float) -> String:
+static func window_faults(lift: float, report: bool = false) -> String:
 	var root: Node = (Engine.get_main_loop() as SceneTree).root
 	var spr: Sprite3D = null
 	for n in root.get_tree().get_nodes_in_group("interact"):
@@ -97,25 +97,31 @@ static func window_faults(grow: float) -> String:
 	var img: Image = spr.texture.get_image()
 	if img.is_compressed():
 		img.decompress()
-	var bust: Rect2i = img.get_region(Rect2i(0, 0, img.get_width(), floori(img.get_height() / 2.0))).get_used_rect()
-	var ps: float = spr.pixel_size * absf(grow)
+	var h: float = img.get_height()
+	var used: Rect2i = img.get_used_rect()
+	var ps: float = spr.pixel_size
 	var c: Vector3 = face.global_transform.inverse() * spr.global_position  # face-local metres
-	var w0: float = img.get_width() * 0.5
-	var h0: float = img.get_height() * 0.5
-	var lo := Vector2(c.x + (bust.position.x - w0) * ps, c.y + (h0 - bust.end.y) * ps)
-	var hi := Vector2(c.x + (bust.end.x - w0) * ps, c.y + (h0 - bust.position.y) * ps)
+	var bot: float = c.y + lift + (0.5 - Spec.RECEPTION_CUT) * h * ps
+	var top: float = c.y + lift + (h * 0.5 - used.position.y) * ps
+	var x0: float = c.x + (used.position.x - img.get_width() * 0.5) * ps
+	var x1: float = c.x + (used.end.x - img.get_width() * 0.5) * ps
 	var fps: float = face.pixel_size
 	var r: Rect2 = face.region_rect if face.region_enabled else Rect2(Vector2.ZERO, face.texture.get_size())
 	var win: Rect2 = Spec.RECEPTION_WINDOW
-	var wlo := Vector2((win.position.x - r.size.x * 0.5) * fps, (r.position.y + r.size.y * 0.5 - win.end.y) * fps)
-	var whi := Vector2((win.end.x - r.size.x * 0.5) * fps, (r.position.y + r.size.y * 0.5 - win.position.y) * fps)
-	if grow < 0.0:
-		return "bust x=[%.3f,%.3f] y=[%.3f,%.3f] win x=[%.3f,%.3f] y=[%.3f,%.3f]" % [lo.x, hi.x, lo.y, hi.y, wlo.x, whi.x, wlo.y, whi.y]
+	var sill: float = (r.position.y + r.size.y * 0.5 - win.end.y) * fps
+	var lintel: float = (r.position.y + r.size.y * 0.5 - win.position.y) * fps
+	var wx0: float = (win.position.x - r.size.x * 0.5) * fps
+	var wx1: float = (win.end.x - r.size.x * 0.5) * fps
+	var third: float = lintel - (lintel - sill) / 3.0
+	if report:
+		return "bottom=%.3f sill=%.3f head=%.3f top_third=[%.3f,%.3f] x=[%.3f,%.3f] win_x=[%.3f,%.3f]" % [bot, sill, top, third, lintel, x0, x1, wx0, wx1]
 	var out: PackedStringArray = PackedStringArray()
-	if lo.x < wlo.x - TOL or hi.x > whi.x + TOL:
-		out.append("x=[%.3f,%.3f] win=[%.3f,%.3f]" % [lo.x, hi.x, wlo.x, whi.x])
-	if lo.y < wlo.y - TOL or hi.y > whi.y + TOL:
-		out.append("y=[%.3f,%.3f] win=[%.3f,%.3f]" % [lo.y, hi.y, wlo.y, whi.y])
+	if absf(bot - sill) > 0.02:
+		out.append("bottom=%.3f off counter %.3f" % [bot, sill])
+	if top < third or top > lintel - 0.05:
+		out.append("head=%.3f not in top third [%.3f,%.3f]" % [top, third, lintel - 0.05])
+	if x0 < wx0 - TOL or x1 > wx1 + TOL:
+		out.append("x=[%.3f,%.3f] win=[%.3f,%.3f]" % [x0, x1, wx0, wx1])
 	return " ".join(out)
 
 ## board: the reception window's top board (Spec.RECEPTION_BOARD_TOP, face-art px row) sits right under the wing

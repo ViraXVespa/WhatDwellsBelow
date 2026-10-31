@@ -66,6 +66,8 @@ const SPOTS := {
 const VENDOR_GAP := 0.5
 const RECEPTION := Vector3(0.027, 0.763, 0.07)
 const RECEPTION_H := 1.56
+## Receptionist sprite UV row the counter cuts her at (upper thigh): bust shader discard and the window fit check.
+const RECEPTION_CUT := 0.55
 ## Reception window opening in guild_reception.png px (inside the frame: lintel underside to sill top).
 const RECEPTION_WINDOW := Rect2(106, 86, 145, 113)
 ## Top edge of the window's top board (guild_reception.png px row), right under the wing awning (hub_awning_check.board).

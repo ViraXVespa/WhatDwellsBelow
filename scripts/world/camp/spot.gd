@@ -8,9 +8,10 @@ static func _bust_mat(tex: Texture2D) -> ShaderMaterial:
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_always;
 uniform sampler2D albedo_tex : source_color, filter_nearest;
+uniform float cut = 0.5;
 void fragment() {
 	vec4 c = texture(albedo_tex, UV);
-	if (UV.y > 0.50 || c.a < 0.1) {
+	if (UV.y > cut || c.a < 0.1) {
 		discard;
 	}
 	ALBEDO = c.rgb;
@@ -20,6 +21,7 @@ void fragment() {
 	var mat := ShaderMaterial.new()
 	mat.shader = sh
 	mat.set_shader_parameter("albedo_tex", tex)
+	mat.set_shader_parameter("cut", preload("res://scripts/world/camp/layout_spec.gd").RECEPTION_CUT)
 	return mat
 
 static func _new_spot(host: Node3D, id: String, at: Vector3) -> Node3D:
