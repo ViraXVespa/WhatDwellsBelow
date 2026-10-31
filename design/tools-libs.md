@@ -34,6 +34,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` |
 | `lib/run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean |
 | `lib/slice/retry_lib.py` | Red-prove RETRY block: `grok -r <original-session-id> --fork-session` for the User (the id the first `slice.py start` run recorded) plus the paste-ready prompt (failed prove, red lines, one small corrective edit); empty off Build (`repo_lib.head_kind`). `--selftest` |
+| `lib/checks/prove_scope.py` | Scoping for `bot_status.py --bot --prove`: dupes, stale-refs, bake repro and textsize print `SKIP untouched` when no branch path matches their globs (`prove_rules.json` rule + `SCOPE`), `SKIP cached pass` when their inputs hash the same as at their last pass (`_logs/prove-cache.json`); `--full` runs all. `--selftest` |
 | `lib/bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` |
 | `data/bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode |
 | `lib/gates/bot_warnscan_lib.py` | Log parser for `gate.py warnscan` |

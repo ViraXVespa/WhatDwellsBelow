@@ -94,7 +94,28 @@ def run_check(root: Path, stem: str, *args: str) -> str:
     tail = err[0][:160] if err else f"exit={proc.returncode}"
     return f"FAIL {tail}"
 
-def explore(root: Path, lines: list[str]) -> bool:
+class Scope:
+    """prove_scope wrapper: SKIP a slow check whose paths the branch never touched or whose inputs already passed."""
+    def __init__(self, root: Path, full: bool):
+        import prove_graph
+        import prove_scope
+        self.ps, self.root, self.full = prove_scope, root, full
+        base = prove_graph.git(root, "merge-base", "origin/main", "HEAD").strip()
+        self.changed = sorted(set(prove_graph.git(root, "diff", "--name-only", "--no-renames", base).split())
+                              | set(repo_lib.git_changed(root) or [])) if base else []
+        self.cache = prove_scope.load(root)
+
+    def run(self, check: str, fn) -> str:
+        why, d = self.ps.decide(self.root, check, self.changed, self.cache, self.full or not self.changed)
+        if why:
+            return why
+        res = fn()
+        if res.startswith("PASS"):
+            self.cache[check] = d
+            self.ps.save(self.root, self.cache)
+        return res
+
+def explore(root: Path, lines: list[str], scope: "Scope") -> bool:
     """check.py prove's diff scan: DRIFT rows, and textsize --gate when its rule fires (UI scripts). True on a failure."""
     import check_prove
     import prove_graph
@@ -108,11 +129,12 @@ def explore(root: Path, lines: list[str]) -> bool:
     lines.extend(f"drift\t{row}" for row in drift[:8])
     rules = json.loads(check_prove.RULES.read_text(encoding="utf-8"))["checks"]
     rule = next(r for r in rules if r["id"] == "textsize")
-    hits = [c.path for c in a["changes"] if any(fnmatch.fnmatch(c.path, g) for g in rule["when"])]
-    text = "skip (no UI script changed)"
-    if hits:
+    hits = [c.path for c in a["changes"] if any(fnmatch.fnmatch(c.path, g) for g in rule["when"])] or ["(none)"]
+
+    def textsize() -> str:
         proc = subprocess.run(rule["cmd"].split(), cwd=root, capture_output=True, text=True)
-        text = f"{'PASS' if proc.returncode == 0 else 'FAIL'} <- {hits[0]}" + (f" +{len(hits) - 1}" if len(hits) > 1 else "")
+        return f"{'PASS' if proc.returncode == 0 else 'FAIL'} <- {hits[0]}" + (f" +{len(hits) - 1}" if len(hits) > 1 else "")
+    text = scope.run("textsize", textsize)
     lines.append(f"textsize_gate={text}")
     return bool(drift) or text.startswith("FAIL")
 
@@ -126,6 +148,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Also check the allowlist on uncommitted and unpushed paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), code-map check (every live .gd mapped), the tool-docs catalog and --stale-refs, diff drift and (UI scripts changed) textsize --gate.",
     )
+    parser.add_argument("--full", action="store_true", help="With --prove: run every scoped check (dupes, stale-refs, bake repro, textsize) and ignore the pass cache (prove_scope.py).")
     parser.add_argument("--no-explore", action="store_true", help="With --prove: skip the drift scan and textsize (check.py prove runs those itself).")
     return parser.parse_args(argv)
 
@@ -202,7 +225,8 @@ def main(argv: list[str] | None = None) -> int:
             lines.append(f"allowlist=skip missing {ALLOW_FILE}")
         graph = run_check(root, "check_load_graph", "--bot")
         lines.append(f"load_graph={graph}")
-        dupes = run_check(root, "list_dupes", "--gate")
+        scope = Scope(root, args.full)
+        dupes = scope.run("dupes_gate", lambda: run_check(root, "list_dupes", "--gate"))
         lines.append(f"dupes_gate={dupes} (rows: python tools/lint.py dupes --gate -v)")
         tunables = run_check(root, "tunables", "diff")
         lines.append(f"tunables_diff={tunables} (rows: python tools/docs.py tunable diff)")
@@ -210,15 +234,15 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"code_map={code_map} (rows: python tools/docs.py code-map check)")
         tool_docs = run_check(root, "check_tool_docs")
         lines.append(f"tool_docs={tool_docs} (rows: python tools/check.py tool-docs)")
-        stale = run_check(root, "check_tool_docs", "--stale-refs")
+        stale = scope.run("stale_refs", lambda: run_check(root, "check_tool_docs", "--stale-refs"))
         lines.append(f"stale_refs={stale} (rows: python tools/check.py tool-docs --stale-refs)")
         shipped = shipped_changelogs(root)
         lines.append(f"changelog_shipped={'FAIL' if shipped else 'PASS'} (an entry in a changelog already on origin/main: use docs.py patch changelog, next label)")
         for rel in shipped:
             lines.append(f"shipped\t{rel}")
-        repro = run_check(root, "check_hub_bake", "--rebake")
+        repro = scope.run("bake_repro", lambda: run_check(root, "check_hub_bake", "--rebake"))
         lines.append(f"bake_repro={repro} (rows: python tools/bake.py check --rebake)")
-        explore_bad = False if args.no_explore else explore(root, lines)
+        explore_bad = False if args.no_explore else explore(root, lines, scope)
         if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)) or shipped:
             rc = 1
 
