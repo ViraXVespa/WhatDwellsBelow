@@ -1,8 +1,9 @@
 """Bot-only size checks: who runs them, and the boot-file byte budgets they read.
 
 Size limits are enforced by the Bot and by CI, never by Build or Web. A size check runs when the Bot passes
-`--bot` (flag hidden from --help), when WDB_BOT is set, or when GitHub Actions runs it (GITHUB_ACTIONS). Anyone
-else gets an INFO line and exit 0, with no limit, byte count or list printed. On Actions, a pull_request from a
+`--bot` (flag hidden from --help), when WDB_BOT is set, when GitHub Actions runs it (GITHUB_ACTIONS), or locally when
+the checkout is on main or a Bot branch (repo_lib.head_kind: not a Build/Web week branch or slice worktree), so a
+routine that calls a size tool bare still measures. Anyone else gets an INFO line and exit 0, with no limit, byte count or list printed. On Actions, a pull_request from a
 Build or Web week branch (repo_lib.branch_kind) counts as "anyone else"; main pushes and Bot-branch PRs (bot/*, vendor-fixes, ...) run them.
 `tools/data/bot_budgets.json` holds the per-file byte budgets of the boot files and the summed budgets of the read sets (read only in Bot mode); `no_budget` lists boot files left unbudgeted on purpose.
 """
@@ -27,12 +28,12 @@ def enabled(args: object = None) -> bool:
     if getattr(args, "bot", False) or os.environ.get("WDB_BOT"):
         return True
     if os.environ.get("GITHUB_ACTIONS") != "true":
-        return False
+        return repo_lib.head_kind(Path(__file__).resolve().parents[2]) in ("bot", "main")
     return os.environ.get("GITHUB_EVENT_NAME") != "pull_request" or repo_lib.branch_kind(os.environ.get("GITHUB_HEAD_REF", "")) == "bot"
 
 def not_run(what: str, **kv: object) -> int:
     """The answer for a size tool run outside Bot mode: nothing measured, nothing printed but this."""
-    print(f"{what}: Bot-only check, not run here (pass --bot, or set WDB_BOT=1, to measure).")
+    print(f"{what}: Bot-only check, not run here.")
     return agent_log.emit_result("INFO", None, skipped=1, **kv)
 
 def set_budgets(root: Path) -> dict[str, tuple[int, list[str]]]:

@@ -388,13 +388,39 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     else:
         ok = (not timed) and status == "EXIT=0" and shot_ok and nbytes > 0 and not err_hits
         band = _band(ok, nbytes, width, height) if ok else "fail"
+    want = _want_size(args, scale_pct)
+    if ok and not args.no_pixels and want and (width, height) != want:
+        ok, band = False, "fail"  # an explicit --width/--height is a contract, not a hint
+        err_hits.append(f"size {width}x{height} != asked {want[0]}x{want[1]}")
     res.update(band=band, status=status, wall_ms=run["ms"], timeout=timed, shot_ok=shot_ok, bytes=nbytes,
                w=width, h=height, lines=shot_hits, errors=err_hits, flow=flow, ok=ok)
     return res
 
+def _want_size(args: argparse.Namespace, scale_pct: int) -> tuple[int, int] | None:
+    """The PNG size an explicit --width and --height promise (scaled by --scale), or None when either is unset."""
+    if not (args.width and args.height) or args.full_map:
+        return None
+    return (args.width * scale_pct // 100, args.height * scale_pct // 100)
+
+def selftest(root: Path) -> int:
+    """Live: a build-mode camp shot at 640x360 must come back exactly 640x360 (the build default --scale 50 once
+    halved it), and the size check must fail a PNG of the wrong size."""
+    import tempfile
+    out = Path(tempfile.mkdtemp()) / "size.png"
+    args = build_parser().parse_args(["--scene", "camp", "--mode", "build", "--hud", "0", "--width", "640",
+                                      "--height", "360", "--out", str(out)])
+    res = capture(args, root, {"scene", "mode", "hud", "width", "height", "out"})
+    live = res["ok"] and (res["w"], res["h"]) == (640, 360)
+    plant = _want_size(args, 100) == (640, 360) and _want_size(args, 50) == (320, 180) and _want_size(
+        build_parser().parse_args(["--width", "640"]), 100) is None
+    print(f"selftest size live={res.get('w')}x{res.get('h')} ok={live} want_size={plant}")
+    return agent_log.emit_result("PASS" if live and plant else "FAIL", None, w=res.get("w"), h=res.get("h"))
+
 def main(argv: list[str] | None = None) -> int:
     p = build_parser()
     argv = list(sys.argv[1:] if argv is None else argv)
+    if "--selftest" in argv:
+        return selftest(agent_log.resolve_root(p.parse_args([])))
     args = p.parse_args(argv)
     given = {a.lstrip("-").replace("-", "_").split("=")[0] for a in argv if a.startswith("--")}
     root = agent_log.resolve_root(args)
