@@ -26,6 +26,7 @@ uniform float shade_hi = 1.0;
 uniform float ignore_actor_shadow = 0.0;
 // Awnings and tarps (face_light 1): lit like the building faces (face_lit.gd), from the yard `ahead` in front of
 // each fragment, mixed by k, then the slope's Lambert against flat ground (sun_dir) mixed by slope_k.
+uniform vec2 shade_n = vec2(1.0); // far-slope shade ramp, ridge to eave (shade_use)
 uniform float face_light = 0.0;
 uniform float face_z = -1000.0; // world z of the building front: cloth behind it reads the yard in front, like the face
 uniform float ahead = 0.3;
@@ -57,7 +58,8 @@ void fragment() {
 		c *= tint;
 	}
 	if (shade_use > 0.5) {
-		c *= mix(shade_lo, shade_hi, clamp(abs(UV.y), 0.0, 1.0));
+		// Gable: v < 0 is the far (north) slope; it takes its own shade_n ramp so the two planes read as one lit roof.
+		c *= UV.y < 0.0 ? mix(shade_n.x, shade_n.y, clamp(-UV.y, 0.0, 1.0)) : mix(shade_lo, shade_hi, clamp(UV.y, 0.0, 1.0));
 	}
 	vec3 lit = vec3(1.0);
 	if (face_light > 0.5) {

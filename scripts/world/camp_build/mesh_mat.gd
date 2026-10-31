@@ -65,8 +65,11 @@ static func roof_mat(
 	)
 	if mat is ShaderMaterial:
 		mat.set_shader_parameter("shade_use", 1.0)
-		mat.set_shader_parameter("shade_lo", 1.16)
-		mat.set_shader_parameter("shade_hi", 0.58)
+		# The hub sun comes from the north-west (HubCast.AWAY): the far slope faces it (bright, a little brighter at
+		# the ridge), the near slope turns away and darkens toward its eave. Two planes, not one ramp mirrored at the ridge.
+		mat.set_shader_parameter("shade_n", Vector2(1.12, 1.02))
+		mat.set_shader_parameter("shade_lo", 0.98)
+		mat.set_shader_parameter("shade_hi", 0.66)
 		# Default repeat keeps the ground's texel density (T.GROUND_PX_PER_M) so shingles read as pixel art.
 		var sheet: Texture2D = mat.get_shader_parameter("albedo_tex")
 		var tile_m: float = tile if tile > 0.05 and tile != TILE_W else float(sheet.get_width()) / T.GROUND_PX_PER_M
