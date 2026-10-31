@@ -87,8 +87,10 @@ static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
 	return mat
 
 ## Awning / tarp cloth lit the way the building faces are (face_lit.gd): the yard light in front of it (building and
-## neighbour shadows, lantern pools) and its slope against the hub sun.
-static func face_light(mat: Material, face_z: float) -> void:
+## neighbour shadows, lantern pools), the faces' side fall-off over world x range x_ends (FaceLit.EDGE), and its
+## slope against the hub sun (SLOPE_K).
+const SLOPE_K := 0.2
+static func face_light(mat: Material, face_z: float, x_ends := Vector2.ZERO) -> void:
 	if not mat is ShaderMaterial:
 		return
 	var sun := Vector3(-HubCast.AWAY.x, 1.0 / HubCast.REACH, -HubCast.AWAY.y).normalized()
@@ -100,6 +102,10 @@ static func face_light(mat: Material, face_z: float) -> void:
 	mat.set_shader_parameter("lift", FaceLit.LIFT)
 	mat.set_shader_parameter("shade_to", FaceLit.SHADE_TO)
 	mat.set_shader_parameter("sun_dir", sun)
+	mat.set_shader_parameter("slope_k", SLOPE_K)
+	if x_ends != Vector2.ZERO:
+		mat.set_shader_parameter("face_x", x_ends)
+		mat.set_shader_parameter("edge", Vector2(FaceLit.EDGE, FaceLit.EDGE_SPAN))
 
 ## Cloth (tarp, awning): wrap_mat with a white second tint, flags true, false.
 static func _cloth(png: String, dim: Vector2, world_min: Vector3, tint: Color) -> Material:

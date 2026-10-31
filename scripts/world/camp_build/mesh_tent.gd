@@ -34,7 +34,7 @@ static func attach_awning(body: Node3D, box_size: Vector3, depth: float, valance
 	cloth.name = "Awning"
 	cloth.mesh = built
 	cloth.material_override = Mat.awning_mat(Vector2(maxf(x1 - x0, 0.2), depth + valance), Vector3.ZERO)
-	Mat.face_light(cloth.material_override, body.global_position.z + z_eave)
+	Mat.face_light(cloth.material_override, body.global_position.z + z_eave, Vector2(x0, x1) + Vector2.ONE * body.global_position.x)
 	body.add_child(cloth)
 	Prim._hit(body, built, "AwningHit")
 	var ends := SurfaceTool.new()
