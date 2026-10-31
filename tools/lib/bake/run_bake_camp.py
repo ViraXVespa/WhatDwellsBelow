@@ -79,6 +79,8 @@ def main(argv: list[str] | None = None) -> int:
     hard = any(godot_lib.HARD_RE.search(h) for h in hits)
     px = [int(m.group(1)) for h in hits for m in [re.search(r"shadow_px=(\d+)", h)] if m]
     shadow = px[-1] if px else 0
+    lamps = [int(m.group(1)) for h in hits for m in [re.search(r"lamp_px=(\d+)", h)] if m]
+    lamp = lamps[-1] if lamps else 0
     stamps = [m.group(1) for h in hits for m in [re.search(r"stamp=([0-9a-f]+)", h)] if m]
     stamp = stamps[-1] if stamps else "none"
 
@@ -93,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
         import bake_inputs
         print(f"recorded {bake_inputs.REC} for stamp {stamp}")
         bake_inputs.record(root, stamp)
+        import bake_leak
+        print(f"recorded {bake_leak.record(root, err_log)} (footprints for the leak check)")
     clean = r["status"] == "EXIT=0" and not hard
     overlay = args.overlay or ""
     if overlay:
@@ -101,12 +105,12 @@ def main(argv: list[str] | None = None) -> int:
     if bake_ground_wear.main(["--root", str(root)]) != 0:
         clean = False
     status = "PASS" if clean else "FAIL"
-    if clean and shadow == 0:
-        status = "FAIL"
-    body = ["bake camp root=.", f"status={r['status']} ms={r['ms']} display={kind} shadow_px={shadow} stamp={stamp} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
+    if clean and (shadow == 0 or lamp == 0):
+        status = "FAIL"  # no shadows, or no "hub_lamp" nodes (the lanterns' flames and pools are gone)
+    body = ["bake camp root=.", f"status={r['status']} ms={r['ms']} display={kind} shadow_px={shadow} lamp_px={lamp} stamp={stamp} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("bake-camp", root, "\n".join(body), status, args=args,
-                            clean=str(clean).lower(), shadow_px=shadow, stamp=stamp, display=kind, **({"overlay": overlay} if overlay else {}))
+                            clean=str(clean).lower(), shadow_px=shadow, lamp_px=lamp, stamp=stamp, display=kind, **({"overlay": overlay} if overlay else {}))
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

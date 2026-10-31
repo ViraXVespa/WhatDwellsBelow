@@ -9,6 +9,10 @@ The game loads only a baked hub image whose size matches the Layout and whose RG
 bake fails here (gate.py build --batch) before it breaks the hub. Fix: tools/bake.py camp, review, paste stamp=.
 Also FAILs when a bake input (light code, a layout_spec.gd const) changed since the bake (bake_inputs.py,
 tools/data/hub_bake_inputs.json); --record re-records the inputs for the current stamp without a rebake.
+--rebake (bake_repro.py) rebakes from the committed sources and FAILs unless the stamp matches and the lamps bake.
+Also FAILs on a light leak: a lit rim round a building footprint (bake_leak.py, tools/data/hub_bake_feet.json).
+--props also runs the camp-prop-shadows shot flow (real renderer, hub_shadow_check.gd): each yard prop's sun mark
+on the ground, sun-away side, off the prop's own face.
 RESULT PASS = png present, size >= 16, stamp equal, inputs as baked; FAIL otherwise. Summary: _logs/hub-bake/.
 """
 from __future__ import annotations
@@ -22,6 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot 
 import boot  # noqa: E402,F401
 import agent_log
 import bake_inputs
+import bake_leak
+import bake_repro
 
 PNG = "assets/baked/hub_light.png"
 SRC = "scripts/graphics/light_rt/hub_bake.gd"
@@ -38,11 +44,13 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check that the committed hub_light.png matches HUB_BAKE_STAMP.", json_out=True)
     ap.add_argument("--record", action="store_true", help="Re-record the bake inputs for the current HUB_BAKE_STAMP (no rebake).")
     ap.add_argument("--selftest", action="store_true", help="Check the input record logic on a throwaway tree.")
+    ap.add_argument("--rebake", action="store_true", help="Also rebake from the committed sources and FAIL unless the stamp matches (files restored; needs Godot).")
+    ap.add_argument("--props", action="store_true", help="Also run the camp-prop-shadows shot flow (prop sun marks; needs Godot).")
     args = ap.parse_args(argv)
     if args.selftest:
         import tempfile
         with tempfile.TemporaryDirectory() as td:
-            return agent_log.selftest_result(bake_inputs.selftest(Path(td)))
+            return agent_log.selftest_result(bake_inputs.selftest(Path(td)) + bake_leak.selftest(Path(td)))
     root = agent_log.resolve_root(args)
     png, src = root / PNG, root / SRC
     lines: list[str] = []
@@ -64,6 +72,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"recorded {bake_inputs.record(root, want).relative_to(root)} for stamp {want}")
     if m and not lines:
         lines += bake_inputs.problems(root, want)
+    if png.is_file():
+        lines += bake_leak.problems(root, png)
+    if m and args.rebake:
+        lines += bake_repro.problems(root, want)
+    if args.props:
+        import subprocess
+        r = subprocess.run([sys.executable, str(root / "tools/shots.py"), "flow", "--flow", "camp-prop-shadows", "--root", str(root)],
+                           capture_output=True, text=True)
+        tail = (r.stdout.strip().splitlines() or ["(no output)"])[-1]
+        if r.returncode != 0:
+            lines.append(f"FAIL prop shadows (camp-prop-shadows flow, _logs/shot-flow/camp-prop-shadows/flow.json): {tail}")
     wsrc = (root / WEAR_SRC).read_text(encoding="utf-8")
     wm = re.search(r'const GROUND_WEAR_STAMP := "([0-9a-f]*)"', wsrc)
     wpng = root / WEAR_PNG

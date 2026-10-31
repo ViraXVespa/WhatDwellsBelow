@@ -205,8 +205,10 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"tool_docs={tool_docs} (rows: python tools/check.py tool-docs)")
         stale = run_check(root, "check_tool_docs", "--stale-refs")
         lines.append(f"stale_refs={stale} (rows: python tools/check.py tool-docs --stale-refs)")
+        repro = run_check(root, "check_hub_bake", "--rebake")
+        lines.append(f"bake_repro={repro} (rows: python tools/bake.py check --rebake)")
         explore_bad = False if args.no_explore else explore(root, lines)
-        if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale)):
+        if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)):
             rc = 1
 
     status = "FAIL" if rc else "PASS"

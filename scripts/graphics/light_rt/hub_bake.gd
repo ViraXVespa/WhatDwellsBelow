@@ -6,14 +6,13 @@ const Dbg := preload("res://scripts/app/dbg.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const HubBlur := preload("res://scripts/graphics/light_rt/hub_blur.gd")
-const HubProps := preload("res://scripts/graphics/light_rt/hub_props.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
 ## Bake stamp: first 16 hex of the SHA-256 of hub_light.png's RGBA8 pixels. The hub loads only a baked image with this
 ## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
 ## Layout boxes -> rebake with tools/bake.py camp, review the shots, paste its `stamp=` here
 ## (tools/bake.py check checks the committed png against it).
-const HUB_BAKE_STAMP := "9947a1099b978559"
+const HUB_BAKE_STAMP := "e55d4be9c83c69c3"
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
 static func _baked_image(path: String) -> Image:
@@ -236,11 +235,7 @@ static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) ->
 ## one blur, on a field-filled image. Only the bake (save_hub_bake) calls this.
 static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
 	_hub_paint_day(img, x0, z0, layout)
-	var rt: Variant = load(RT_PATH)
-	var sub: float = float(rt.HUB_SUB)
-	if layout != null:
-		HubProps.lamp_glow(img, Vector2(float(x0), float(z0)), sub, layout)
 	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout)
 	wrote += HubShadow._hub_mesh_shadows(img, Vector2(float(x0), float(z0)), layout)
-	HubBlur._blur_hub(img)
+	HubBlur._blur_hub(img, HubBlur.zones(img, Vector2(float(x0), float(z0)), HubShadow.prot_rects))
 	return wrote

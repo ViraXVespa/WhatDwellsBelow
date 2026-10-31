@@ -27,6 +27,7 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	MeshS.wall_box(body, fit, row["wall"])
 	Util._slide(body, fit)
 	Util.face(body, fit, tex, 0.0, fit.x, row["crop"])
+	var face := body.get_child(body.get_child_count() - 1) as Sprite3D  # before the collider: it would be the last child
 	# Thin collider on the painted front so the player cannot walk through the wall
 	var front_col := CollisionShape3D.new()
 	front_col.name = "FrontFaceCollider"
@@ -37,7 +38,7 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	body.add_child(front_col)
 	var valance: float = fit.y * lay.awning_valance(which)
 	var hem := Vector3(fit.y * 0.5 - valance, fit.z * 0.5 + lay.awning_depth(which), float(row.get("hang_x", 0.0)))
-	Lamps.on_face(body.get_child(body.get_child_count() - 1) as Sprite3D, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
+	Lamps.on_face(face, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
 	Tent.attach_awning(body, fit, lay.awning_depth(which), valance)
 	Tent.gable_on(body, fit, 0.0, row["rise"], lay.tile_for(which), uv_off)
 
