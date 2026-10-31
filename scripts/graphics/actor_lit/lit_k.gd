@@ -15,22 +15,21 @@ const TURN_RATE := 20.0
 const EASE_RATE := 12.0
 const HIDE_A := 0.03
 const MARK_N := 3
-## Hub point lights (crystal, face lanterns) cast a player mark within this reach (m).
-const HUB_POINT_REACH := 2.2
 ## The baked full shade reads a little above the floor (soft edge, fill): the sun mark is gone by floor + SUN_SOFT.
 const SUN_SOFT := 0.1
 ## Hub mark edge softness (texels of the sticker): matches the baked building shadow's soft edge.
-const HUB_SOFT := 3.0
+const HUB_SOFT := 1.5
 
 const SHADE := """
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_opaque;
-uniform sampler2D albedo_tex : source_color, filter_nearest;
+uniform sampler2D albedo_tex : source_color, filter_linear;
 uniform vec4 shade = vec4(0.02, 0.02, 0.02, 0.55);
 // Sun mark in the hub (sun_cancel 1): fades where the baked ground is already in shade (floor_l = full shade), so a
 // mark inside a building's shadow does not double it. Point-light marks keep sun_cancel 0.
 uniform float sun_cancel = 0.0;
 uniform float soft = 0.0;
+const float SOFT_GROW = 5.0;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
@@ -45,17 +44,18 @@ void vertex() {
 }
 
 void fragment() {
-	// Soft edge (soft > 0, hub): coverage over a 3x3 tap of soft texels, like the baked building shadows' penumbra.
+	// Soft edge (soft > 0, hub): a penumbra that grows away from the contact (UV.y 1 = sole row, 0 = sprite top), like
+	// the baked building shadows': soft texels at the sole up to SOFT_GROW x soft at the far end, 5x5 coverage taps.
 	float cov = texture(albedo_tex, UV).a;
 	if (soft > 0.0) {
-		vec2 d = soft / vec2(textureSize(albedo_tex, 0));
+		vec2 d = soft * mix(SOFT_GROW, 1.0, UV.y) / vec2(textureSize(albedo_tex, 0));
 		cov = 0.0;
-		for (int i = -1; i <= 1; i++) {
-			for (int j = -1; j <= 1; j++) {
-				cov += step(0.2, texture(albedo_tex, UV + vec2(float(i), float(j)) * d).a);
+		for (int i = -2; i <= 2; i++) {
+			for (int j = -2; j <= 2; j++) {
+				cov += texture(albedo_tex, UV + vec2(float(i), float(j)) * d * 0.5).a;
 			}
 		}
-		cov /= 9.0;
+		cov /= 25.0;
 	}
 	if (cov < 0.1) {
 		discard;
