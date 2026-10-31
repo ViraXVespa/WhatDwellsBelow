@@ -15,6 +15,8 @@ const TURN_RATE := 20.0
 const EASE_RATE := 12.0
 const HIDE_A := 0.03
 const MARK_N := 3
+## Hub point lights (crystal, face lanterns) cast a player mark within this reach (m).
+const HUB_POINT_REACH := 2.2
 ## The baked full shade reads a little above the floor (soft edge, fill): the sun mark is gone by floor + SUN_SOFT.
 const SUN_SOFT := 0.1
 ## Hub mark edge softness (texels of the sticker): matches the baked building shadow's soft edge.

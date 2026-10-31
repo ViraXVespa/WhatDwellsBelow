@@ -4,7 +4,6 @@ extends Object
 
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 
 static func _is_player(host: Node) -> bool:
 	var scr: Script = host.get_script()
@@ -12,36 +11,30 @@ static func _is_player(host: Node) -> bool:
 		return false
 	return str(scr.resource_path).ends_with("player.gd")
 
-## Hub: slot 0 is the sun mark; the player also takes point-light marks from the two nearest hub point lights (the
-## floor crystal and every face lantern, group hub_lamp), planned by _plan exactly like the dungeon crystal and torches.
+## Hub: slot 0 is the sun mark; the player also takes a point-light mark (away from the light, like the dungeon
+## torches) from the nearest two hub point lights in reach: the floor crystal and every face lantern (group hub_lamp).
 static func _drive_hub(lit: Variant, host: Node3D, feet: Vector2) -> void:
 	_drive_sun(lit)
 	if not _is_player(host):
 		return
-	var hits: Array[Dictionary] = hub_casts(lit as Node, feet, K.MARK_N - 1)
-	var plan: Dictionary = _plan(hits, feet)
-	for i in hits.size():
-		var slot: int = i + 1
-		lit._away_at[slot] = plan["aims"][i]
-		lit._stretch_at[slot] = plan["s"][i]
-		# Each hub light keeps its own full mark (no dungeon split): the hub ground is lit, so split marks vanish.
-		lit._alpha_at[slot] = plan["raw"][i]
-		lit._src_at[slot] = plan["srcs"][i]
+	var srcs: Array[Vector2] = hub_points(lit as Node)
+	srcs.sort_custom(func(a: Vector2, b: Vector2) -> bool: return feet.distance_squared_to(a) < feet.distance_squared_to(b))
+	var slot: int = 1
+	for src: Vector2 in srcs:
+		if slot >= K.MARK_N:
+			break
+		var dist: float = feet.distance_to(src)
+		var step: Vector2 = feet - src
+		if dist > K.HUB_POINT_REACH or step.length_squared() < 0.0004:
+			continue
+		var along: float = clampf(dist / K.HUB_POINT_REACH, 0.0, 1.0)
+		lit._away_at[slot] = step.normalized()
+		lit._stretch_at[slot] = lerpf(1.45, 1.05, along)
+		lit._alpha_at[slot] = lerpf(0.16, 0.05, along)
+		lit._src_at[slot] = src
 		lit._held[slot] = true
 		lit._rank_at[slot] = slot
-
-## Hub point lights in reach of feet, nearest first, as LightRt.nearest_casts rows (crystal / torch reach).
-static func hub_casts(n: Node, feet: Vector2, cap: int) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	var pts: Array[Vector2] = hub_points(n)
-	for i in pts.size():
-		var kind: String = "crystal" if i == 0 and LightRt.hub_crystal != Vector2.ZERO else "torch"
-		var dist: float = feet.distance_to(pts[i])
-		var reach: float = Lights._reach(kind)
-		if dist <= reach and dist > 0.02:
-			out.append({"xz": pts[i], "dist": dist, "reach": reach, "kind": kind})
-	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x["dist"]) < float(y["dist"]))
-	return out.slice(0, cap)
+		slot += 1
 
 ## Ground xz of the hub's point lights: the floor crystal and each face lantern (lamps.gd hub_lamp nodes).
 static func hub_points(n: Node) -> Array[Vector2]:
@@ -71,12 +64,36 @@ static func _drive_sun(lit: Variant) -> void:
 static func _drive_many(lit: Variant, feet: Vector2, delta: float) -> void:
 	var hits: Array[Dictionary] = LightRt.nearest_casts(feet, K.MARK_N)
 	var hit_n: int = hits.size()
-	var plan: Dictionary = _plan(hits, feet)
-	var srcs: Array[Vector2] = plan["srcs"]
-	var aims: Array[Vector2] = plan["aims"]
-	var goal_s: PackedFloat32Array = plan["s"]
-	var goal_a: PackedFloat32Array = plan["a"]
-	lit._ink_budget = plan["budget"]
+	var srcs: Array[Vector2] = []
+	var aims: Array[Vector2] = []
+	var goal_s: PackedFloat32Array = PackedFloat32Array()
+	var raw_a: PackedFloat32Array = PackedFloat32Array()
+	lit._ink_budget = 0.0
+	for i in hit_n:
+		var hit: Dictionary = hits[i]
+		var src: Vector2 = hit["xz"]
+		var aim: Vector2 = Vector2.ZERO
+		var step: Vector2 = feet - src
+		if step.length_squared() > 0.0004:
+			aim = step.normalized()
+		var reach: float = maxf(float(hit["reach"]), 0.001)
+		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
+		var mid: float = sin(along * PI)
+		var kind: String = str(hit.get("kind", ""))
+		var stretch: float = lerpf(K.D_NEAR, K.D_FAR, mid)
+		if kind == "crystal":
+			stretch = lerpf(1.85, 1.15, along)
+		else:
+			# aim.y is floor Z. A side light shortens the mark into a puddle.
+			stretch *= maxf(absf(aim.y), 0.2)
+		var raw: float = lerpf(K.A_NEAR, K.A_FAR, along)
+		srcs.append(src)
+		aims.append(aim)
+		goal_s.append(stretch)
+		raw_a.append(raw)
+	var goal_a: PackedFloat32Array = _split(raw_a)
+	if hit_n > 0:
+		lit._ink_budget = raw_a[0]
 	var claim: Array[int] = []
 	var taken: Array[bool] = []
 	var fresh: Array[bool] = []
@@ -183,35 +200,3 @@ static func _turn_slot(lit: Variant, slot: int, aim: Vector2, delta: float) -> v
 	if ang <= 0.0:
 		spin = -step
 	lit._away_at[slot] = src.rotated(spin)
-
-## Shared point-light mark plan (dungeon and hub): per hit its away aim, stretch and split alpha.
-static func _plan(hits: Array[Dictionary], feet: Vector2) -> Dictionary:
-	var hit_n: int = hits.size()
-	var srcs: Array[Vector2] = []
-	var aims: Array[Vector2] = []
-	var goal_s: PackedFloat32Array = PackedFloat32Array()
-	var raw_a: PackedFloat32Array = PackedFloat32Array()
-	for i in hit_n:
-		var hit: Dictionary = hits[i]
-		var src: Vector2 = hit["xz"]
-		var aim: Vector2 = Vector2.ZERO
-		var step: Vector2 = feet - src
-		if step.length_squared() > 0.0004:
-			aim = step.normalized()
-		var reach: float = maxf(float(hit["reach"]), 0.001)
-		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
-		var mid: float = sin(along * PI)
-		var kind: String = str(hit.get("kind", ""))
-		var stretch: float = lerpf(K.D_NEAR, K.D_FAR, mid)
-		if kind == "crystal":
-			stretch = lerpf(1.85, 1.15, along)
-		else:
-			# aim.y is floor Z. A side light shortens the mark into a puddle.
-			stretch *= maxf(absf(aim.y), 0.2)
-		var raw: float = lerpf(K.A_NEAR, K.A_FAR, along)
-		srcs.append(src)
-		aims.append(aim)
-		goal_s.append(stretch)
-		raw_a.append(raw)
-	var budget: float = raw_a[0] if hit_n > 0 else 0.0
-	return {"srcs": srcs, "aims": aims, "s": goal_s, "a": _split(raw_a), "raw": raw_a, "budget": budget}
