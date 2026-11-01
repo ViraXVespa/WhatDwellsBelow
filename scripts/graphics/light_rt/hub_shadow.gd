@@ -79,7 +79,7 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	wrote += fence_px + Roof.slopes(img, org, sub, recv)
 	printerr("bake_camp: fence_px=%d" % fence_px)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
-	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))
+	printerr("bake_camp: lamp_n=%d" % load(PROPS_PATH).lamp_count(root))
 	load(PROPS_PATH).overlay_dbg(org, sub, root, layout)
 	return wrote
 

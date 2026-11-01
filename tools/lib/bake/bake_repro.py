@@ -27,9 +27,9 @@ def problems(root: Path, want: str) -> list[str]:
         if ln.startswith("{"):
             res = json.loads(ln)
             break
-    got, lamp = str(res.get("stamp", "none")), int(res.get("lamp_px", 0) or 0)
+    got, lamp = str(res.get("stamp", "none")), int(res.get("lamp_n", 0) or 0)
     if lamp == 0:
-        return [f"FAIL bake repro: fresh bake has lamp_px=0 (no hub_lamp nodes: lantern flames and pools lost); status={res.get('status')}"]
+        return [f"FAIL bake repro: fresh bake has lamp_n=0 (no hub_lamp nodes: lantern flames and live pools lost); status={res.get('status')}"]
     if got != want:
         return [f"FAIL bake repro: committed hub_light.png (stamp {want}) is not what the committed sources bake (stamp {got}): "
                 "rebake with tools/bake.py camp and commit the png with its source"]

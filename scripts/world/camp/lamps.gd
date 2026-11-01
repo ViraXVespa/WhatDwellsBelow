@@ -1,7 +1,7 @@
 extends Object
 
 ## Guild lamps: a flickering flame (torch_bill's FLAME shader) and a soft halo on each lantern painted in the face
-## art. Nodes join "hub_lamp" so the hub bake (hub_props.lamp_glow) adds a warm pool under each one.
+## art. Nodes join "hub_lamp"; camp/lamp_pools.gd lights a live pool (light_rt/pools.gd) from each one's flame.
 
 const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
 ## Lantern texels per face art: layout_spec.gd HALL/WING "lamps". Sizes and draw order: Spec.LAMP, Spec.DRAW.
@@ -35,8 +35,11 @@ static func on_face(spr: Sprite3D, crop_top: float, pts: Array, hang := Rect2(),
 		root.add_to_group("hub_lamp")
 		spr.add_child(root)
 		var lit: Node3D = root
+		if hem != Vector3.ZERO:
+			root.set_meta("hem_y", hem.x)  # body-local awning hem height: lamp_pools cuts the pool above it
 		if hang.size != Vector2.ZERO:
 			lit = _hung(spr, hang, p, hem)
+			root.set_meta("flame", lit)
 		lit.add_child(_quad(TorchBill.FLAME, Spec.LAMP["flame"], flame_seed))
 		lit.add_child(_quad(HALO, Vector2.ONE * float(Spec.LAMP["halo"]), flame_seed))
 		flame_seed += 1.7

@@ -192,7 +192,7 @@ def _shot_lines(logs: list[Path]) -> list[str]:
     return _log_lines(logs, lambda ln: ln.startswith("SHOT:"))
 
 def _error_lines(logs: list[Path]) -> list[str]:
-    needles = ("SCRIPT ERROR:", "Parse Error", "Compile Error", "ERROR: Failed to")
+    needles = ("SCRIPT ERROR:", "Parse Error", "Compile Error", "ERROR: Failed to", "SHADER ERROR:", "Shader compilation failed")
     return _log_lines(logs, lambda ln: any(n in ln for n in needles))
 
 def _png_info(png: Path) -> tuple[int, int, int]:

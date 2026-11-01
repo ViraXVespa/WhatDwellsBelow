@@ -4,6 +4,9 @@ extends Object
 ## on the yard just in front of the face (the building's own shade, neighbour shadows, lantern pools), mixed by K.
 
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const Pools := preload("res://scripts/graphics/light_rt/pools.gd")
+## Lantern light on the face itself (live pools, wrap: a lamp hung on the wall grazes it), evaluated per texel cell.
+const POOL_WRAP := 0.0
 const AHEAD := 0.3
 const K := 0.85
 ## The bake floors every shade at HubCast.SHADE_NEAR and a south face always stands in its own building's shade, so
@@ -43,6 +46,7 @@ static func mat(tex: Texture2D) -> ShaderMaterial:
 		_sh = Shader.new()
 		_sh.code = ("""
 shader_type spatial;
+#define GRID 82.5806
 render_mode unshaded, cull_disabled, depth_prepass_alpha;
 uniform sampler2D albedo_tex : source_color, filter_nearest;
 uniform sampler2D light_tex : source_color, filter_linear;
@@ -52,7 +56,10 @@ uniform float ahead = 0.3;
 uniform float k = 0.85;
 uniform float floor_l = 0.46;
 varying vec3 wpos;
+varying vec3 wnrm;
+""" + Pools.GLSL + """
 void vertex() {
+	wnrm = normalize((MODEL_MATRIX * vec4(0.0, 0.0, 1.0, 0.0)).xyz);
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 void fragment() {
@@ -65,9 +72,10 @@ void fragment() {
 	vec3 rel = clamp(mix(vec3(SHADE_TO), vec3(1.0), (l - floor_l) / (1.0 - floor_l)), vec3(0.0), vec3(LIFT));
 	float band = mix(HEM, 1.0, smoothstep(0.0, HEM_SPAN, UV.y)) * mix(1.0, BASE, smoothstep(BASE_FROM, 1.0, UV.y));
 	float edge = mix(EDGE, 1.0, smoothstep(0.0, EDGE_SPAN, min(UV.x, 1.0 - UV.x)));
-	ALBEDO = c.rgb * mix(vec3(1.0), rel * band * edge, k);
+	vec3 cell = (floor(wpos * GRID) + 0.5) / GRID;
+	ALBEDO = c.rgb * (mix(vec3(1.0), rel * band * edge, k) + pool_light(cell + wnrm * 0.02, wnrm, POOL_WRAP));
 }
-""").replace("EDGE_SPAN", str(EDGE_SPAN)).replace("EDGE", str(EDGE)).replace("LIFT", str(LIFT)).replace("SHADE_TO", str(SHADE_TO)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
+""").replace("POOL_WRAP", str(POOL_WRAP)).replace("EDGE_SPAN", str(EDGE_SPAN)).replace("EDGE", str(EDGE)).replace("LIFT", str(LIFT)).replace("SHADE_TO", str(SHADE_TO)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
 	var m := ShaderMaterial.new()
 	m.shader = _sh
 	m.set_shader_parameter("albedo_tex", tex)

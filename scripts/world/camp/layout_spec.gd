@@ -31,7 +31,7 @@ const PATH_GAIN := 1.2
 const TILE_W := 3.2
 
 ## Buildings. pos: body centre (y is reseated from the face art); box: walls; face: front art, crop_top cut off its top;
-## rise: gable ridge; lamps: lantern texels in the face art (flame + halo + baked pool); awning: depth (m), valance (fraction of wall height).
+## rise: gable ridge; lamps: lantern texels in the face art (flame + halo; live pool: light_rt/pools.gd); awning: depth (m), valance (fraction of wall height).
 const HALL := {
 	"pos": Vector3(8.2, 1.7, 6.0), "box": Vector3(5.6, 3.4, 4.2), "face": "res://assets/sprites/buildings/guild.png",
 	"crop": 0.32, "rise": 0.55, "wall": Color(0.45, 0.32, 0.22), "awning": Vector2(0.42, 0.16),
@@ -82,7 +82,7 @@ const BANNER := {"tex": "res://assets/sprites/props/welcome_banner.png", "h": 4.
 
 ## Light: guild lamp flame/halo sizes and the baked warm pool (radius, metres ahead of the lamp, colour); crystal glow
 ## radius in the bake; the camp environment and sun (EnvKit.apply).
-const LAMP := {"flame": Vector2(0.16, 0.28), "halo": 1.2, "pool_r": 1.8, "pool_ahead": 0.6, "pool": Color(1.0, 0.8, 0.5)}
+const LAMP := {"flame": Vector2(0.16, 0.28), "halo": 1.2}
 const CRYSTAL_GLOW_R := 4.2
 const SUN := {"bg": Color(0.45, 0.58, 0.62), "ambient": Color(0.95, 0.86, 0.7), "ambient_energy": 1.15, "rot": Vector3(-18.0, 34.0, -42.0), "energy": 0.9}
 

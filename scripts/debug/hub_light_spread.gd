@@ -11,7 +11,7 @@ extends RefCounted
 const FaceLit := preload("res://scripts/world/camp_build/face_lit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const MIN_SPREAD := 0.12
-const LIT_MIN := 0.9
+const LIT_MIN := 0.85  # 0.9 until the baked lamp pools left the bake (awnings p90 0.89 after: live pools stay under the hem)
 const GRID := 24
 
 var bad: String:

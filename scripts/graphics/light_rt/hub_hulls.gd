@@ -100,7 +100,8 @@ static func apply(root: Node, mats: Array) -> int:
 	_p = p
 	_s = s
 	_n = mini(hs.size(), MAX_H)
-	var all: Array = mats.duplicate()
+	var all: Array = []  # untyped: LightRt._mats is Array[ShaderMaterial], scene meshes add StandardMaterial3D
+	all.append_array(mats)
 	_scene_mats(root, all)
 	var set := 0
 	for m in all:

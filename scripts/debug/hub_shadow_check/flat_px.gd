@@ -43,11 +43,13 @@ static func run(plant: String = "") -> String:
 		for v in hid:
 			v.visible = true
 		return "no_ground"
-	var keep: Array = mats.map(func(m: ShaderMaterial) -> Array: return [m.get_shader_parameter("light_tex"), m.get_shader_parameter("hull_n")])
+	var keep: Array = mats.map(func(m: ShaderMaterial) -> Array: return [m.get_shader_parameter("light_tex"), m.get_shader_parameter("hull_n"), m.get_shader_parameter("pool_n")])
 	var sv: Variant = mats[0].get_shader_parameter("shade_l")
 	if sv == null:
 		sv = RenderingServer.shader_get_parameter_default(mats[0].shader.get_rid(), "shade_l")
 	var shade: float = sv if sv != null else SHADE_L
+	for m in mats:
+		m.set_shader_parameter("pool_n", 0)  # lantern pools are added light, not a shade level
 	if plant == "bake":
 		for m in mats:
 			m.set_shader_parameter("hull_n", 0)
@@ -63,6 +65,7 @@ static func run(plant: String = "") -> String:
 	for i in mats.size():
 		mats[i].set_shader_parameter("light_tex", keep[i][0])
 		mats[i].set_shader_parameter("hull_n", keep[i][1])
+		mats[i].set_shader_parameter("pool_n", keep[i][2] if keep[i][2] != null else 0)
 	for v in hid:
 		v.visible = true
 	var bad := PackedStringArray()

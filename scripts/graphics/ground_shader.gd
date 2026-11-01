@@ -5,6 +5,7 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
+const Pools := preload("res://scripts/graphics/light_rt/pools.gd")
 
 ## Bilinear light-buffer tap shared with wall_shader. Text only (no function): ground inlines it, wall wraps it
 ## in tap_lit(xz). Needs light_tex / light_origin / light_span uniforms and a vec2 `xz` in scope.
@@ -53,7 +54,7 @@ uniform float wear = 0.0;
 uniform float harden = 0.0;
 uniform float shade_l = 0.46;
 // Hub shadows (light_rt/hub_hulls.gd GLSL): exact building projections plus the hard-thresholded fine bake.
-"""+ Hulls.GLSL + """uniform vec2 light_origin = vec2(0.0);
+"""+ Hulls.GLSL + Pools.GLSL + """uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform vec4 feather_rect = vec4(0.0);
 uniform float feather = 0.0;
@@ -106,6 +107,7 @@ void fragment() {
 		float t = clamp((ll - shade_l) / (1.0 - shade_l), 0.0, 1.0);
 		lit *= mix(1.0, mix(shade_l, 1.0, smoothstep(0.5 - 0.5 * (1.0 - harden), 0.5 + 0.5 * (1.0 - harden), t)) / ll, step(shade_l * 0.9, ll));
 	}
+	lit += pool_light(vec3(cell0.x + 0.5 / GRID, 0.0, cell0.y + 0.5 / GRID), vec3(0.0, 1.0, 0.0), 0.0); // live lamp pools, per cell
 	ALBEDO = c * tint * worn * lit;
 }
 """
