@@ -13,6 +13,9 @@ const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const MIN_SPREAD := 0.12
 const LIT_MIN := 0.85  # 0.9 until the baked lamp pools left the bake (awnings p90 0.89 after: live pools stay under the hem)
 const GRID := 24
+## Only surfaces taking at least this share of flat-ground sun must reach LIT_MIN: faces turned from the sun sit at
+## FaceLit.SHADE by design (hub_shade_check.gd caps them); the rest reach LIT_MIN of their own full-sun level.
+const SUNWARD := 0.5
 
 var bad: String:
 	get:
@@ -24,7 +27,7 @@ var report: String:
 	get:
 		var out: PackedStringArray = PackedStringArray()
 		for r: Dictionary in rows(false):
-			out.append("%s p10=%.2f p50=%.2f p90=%.2f spread=%.2f v=%.2f raw=%.2f..%.2f" % [r.who, r.p10, r.p50, r.p90, r.p90 - r.p10, float(r.get("v", -1.0)), r.lo, r.hi])
+			out.append("%s lam=%.2f p10=%.2f p50=%.2f p90=%.2f spread=%.2f v=%.2f raw=%.2f..%.2f" % [r.who, float(r.get("lam", -1.0)), r.p10, r.p50, r.p90, r.p90 - r.p10, float(r.get("v", -1.0)), r.lo, r.hi])
 		return " | ".join(out)
 
 static func faults(rs: Array) -> String:
@@ -32,11 +35,12 @@ static func faults(rs: Array) -> String:
 	if rs.size() < 4:
 		out.append("surfaces=%d<4" % rs.size())
 	for r: Dictionary in rs:
-		if r.p90 - r.p10 < MIN_SPREAD:
-			out.append("%s:flat=%.2f" % [r.who, r.p90 - r.p10])
+		# spread relative to the surface's level: a face in shade (FaceLit.SHADE) keeps its shape at a lower level
+		if (r.p90 - r.p10) / maxf(r.p90, 0.01) < MIN_SPREAD:
+			out.append("%s:flat=%.2f" % [r.who, (r.p90 - r.p10) / maxf(r.p90, 0.01)])
 		if r.has("v") and float(r.v) < MIN_SPREAD:
 			out.append("%s:vflat=%.2f" % [r.who, r.v])
-		if r.p90 < LIT_MIN:
+		if float(r.get("lam", 1.0)) >= SUNWARD and r.p90 < LIT_MIN * FaceLit.rel(1.0, false, float(r.get("lam", 1.0))):
 			out.append("%s:dark=%.2f" % [r.who, r.p90])
 	return " ".join(out)
 
@@ -56,6 +60,7 @@ static func _walk(n: Node, out: Array, flat: bool) -> void:
 		_walk(c, out, flat)
 
 static func _face(s: Sprite3D, flat: bool) -> Dictionary:
+	var lm: float = FaceLit.lam(s.global_basis.z.normalized())
 	var w: float = s.texture.get_width() * s.pixel_size * s.global_basis.get_scale().x
 	var z: float = s.global_position.z + FaceLit.AHEAD
 	var vals: Array = []
@@ -63,12 +68,15 @@ static func _face(s: Sprite3D, flat: bool) -> Dictionary:
 	for i in GRID:
 		var l: float = _l(Vector2(s.global_position.x + w * ((i + 0.5) / GRID - 0.5), z))
 		raw.append(l)
-		vals.append(lerpf(1.0, FaceLit.rel(l, flat) * FaceLit.edge((i + 0.5) / GRID, flat), FaceLit.K))
-	return _stats("face@%.1f" % s.global_position.x, vals, raw)
+		vals.append(lerpf(1.0, FaceLit.rel(l, flat, lm) * FaceLit.edge((i + 0.5) / GRID, flat), FaceLit.K))
+	var r: Dictionary = _stats("face@%.1f" % s.global_position.x, vals, raw)
+	r["lam"] = lm
+	return r
 
 static func _cloth(c: MeshInstance3D, flat: bool) -> Dictionary:
 	var box: AABB = c.global_transform * c.get_aabb()
 	var face_z: float = float(c.material_override.get_shader_parameter("face_z"))
+	var lm: float = FaceLit.lam(_normal(c))
 	var vals: Array = []
 	var raw: Array = []
 	for i in GRID:
@@ -77,13 +85,23 @@ static func _cloth(c: MeshInstance3D, flat: bool) -> Dictionary:
 			var z: float = maxf(box.position.z + box.size.z * (j + 0.5) / GRID, face_z) + FaceLit.AHEAD
 			var l: float = _l(Vector2(x, z))
 			raw.append(l)
-			vals.append(lerpf(1.0, FaceLit.rel(l, flat) * FaceLit.edge((i + 0.5) / GRID, flat) * FaceLit.eave((j + 0.5) / GRID, flat), FaceLit.K))
+			vals.append(lerpf(1.0, FaceLit.rel(1.0, flat, lm) * FaceLit.edge((i + 0.5) / GRID, flat) * FaceLit.eave((j + 0.5) / GRID, flat), FaceLit.K))
 	var mid: Array = []
 	for j in GRID:
 		mid.append(vals[(GRID / 2) * GRID + j])
 	var r: Dictionary = _stats("awning@%.1f" % box.get_center().x, vals, raw)
-	r["v"] = float(mid.max()) - float(mid.min())
+	r["v"] = (float(mid.max()) - float(mid.min())) / maxf(float(mid.max()), 0.01)
+	r["lam"] = lm
 	return r
+
+## Mean geometric world normal of a mesh's triangles, flipped up (the shader lights the cloth by its slope).
+static func _normal(c: MeshInstance3D) -> Vector3:
+	var n := Vector3.ZERO
+	var f: PackedVector3Array = c.mesh.get_faces()
+	for i in range(0, f.size() - 2, 3):
+		var t: Vector3 = (c.global_basis * (f[i + 1] - f[i])).cross(c.global_basis * (f[i + 2] - f[i]))
+		n += -t if t.y < 0.0 else t
+	return n.normalized()
 
 static func _l(xz: Vector2) -> float:
 	var c: Color = LightRt.sample_xz(xz)

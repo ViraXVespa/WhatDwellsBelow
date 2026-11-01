@@ -1,22 +1,20 @@
 extends Object
 
 ## Building face art (guild, reception, stall fronts) lit by the hub light map: each column takes the baked light
-## on the yard just in front of the face (the building's own shade, neighbour shadows, lantern pools), mixed by K.
+## on the yard just in front of the face (the building's own shade, neighbour shadows, lantern pools) and its sun Lambert, mixed by K.
 
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const Pools := preload("res://scripts/graphics/light_rt/pools.gd")
 ## Lantern light on the face itself (live pools, wrap: a lamp hung on the wall grazes it), evaluated per texel cell.
 const POOL_WRAP := 0.0
 const AHEAD := 0.3
-const K := 0.85
-## The bake floors every shade at HubCast.SHADE_NEAR and a south face always stands in its own building's shade, so
-## the light is remapped: the floor reads SHADE_TO, full sun 1, lantern pools up to LIFT (the shade gradient, shadow
-## edges and pools keep their variation). On the face art the awning shades the top (HEM over HEM_SPAN of the height)
-## and the base darkens toward the ground (BASE from BASE_FROM down). The light map is near-uniform own shade across a
-## front, so each surface also falls off toward its side ends (EDGE at the end, full over EDGE_SPAN of the width):
-## the corner shading the yard map cannot carry (hub_light_spread.gd measures the result per surface).
-const LIFT := 1.35
-const SHADE_TO := 0.9
+const K := 1.0
+## Sun model shared with the awnings (wrap_shader face_light): a surface takes sun by its Lambert against flat ground
+## (lam, 0 for a face turned from the sun) times the yard light in front of it (shadows); the rest sits at SHADE, the
+## bake's shaded-ground level, so a face in its building's own shade reads as dark as the shaded ground beside it.
+## Lantern pools add on top, capped at SUN_CAP (sunlit art): a lamp never lights a spot past full sun.
+const SHADE := 0.46  # HubCast.SHADE_NEAR
+const SUN_CAP := 1.0
 const EDGE := 0.74
 const EDGE_SPAN := 0.3
 const HEM := 0.72
@@ -30,10 +28,19 @@ const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 
 static var _sh: Shader
 
-## The shader's remap and band on the CPU (hub_light_spread.gd measures each surface with them). flat: shade_to 1.
-static func rel(l: float, flat := false) -> float:
-	var to: float = 1.0 if flat else SHADE_TO
-	return clampf(lerpf(to, 1.0, (l - HubCast.SHADE_NEAR) / (1.0 - HubCast.SHADE_NEAR)), 0.0, 1.0 if flat else LIFT)
+## The shader's light on the CPU (hub_light_spread.gd, hub_shade_check.gd): yard light l, Lambert lam (0..1 vs flat
+## ground). flat: the old unshaded look (1 everywhere), the checks' planted fault.
+static func rel(l: float, flat := false, lam := 0.0) -> float:
+	if flat:
+		return 1.0
+	return lerpf(SHADE, 1.0, lam * clampf((l - HubCast.SHADE_NEAR) / (1.0 - HubCast.SHADE_NEAR), 0.0, 1.0))
+## Sun Lambert of a world normal against flat ground (the bake sun: shadows fall along HubCast.AWAY, REACH per metre).
+static func lam(n: Vector3) -> float:
+	var sun := Vector3(-HubCast.AWAY.x, 1.0 / HubCast.REACH, -HubCast.AWAY.y).normalized()
+	return clampf(n.dot(sun) / sun.y, 0.0, 1.0)
+## Face light plus lantern pool, capped at SUN_CAP like the shader (cap false: the check's planted fault).
+static func lit(base: float, pool: float, cap := true) -> float:
+	return minf(base + pool, SUN_CAP) if cap else base + pool
 static func edge(u: float, flat := false) -> float:
 	return 1.0 if flat else lerpf(EDGE, 1.0, smoothstep(0.0, EDGE_SPAN, minf(u, 1.0 - u)))
 static func eave(v: float, flat := false) -> float:
@@ -55,6 +62,7 @@ uniform vec2 light_span = vec2(1.0);
 uniform float ahead = 0.3;
 uniform float k = 0.85;
 uniform float floor_l = 0.46;
+uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 varying vec3 wpos;
 varying vec3 wnrm;
 """ + Pools.GLSL + """
@@ -69,18 +77,20 @@ void fragment() {
 	}
 	vec2 luv = clamp((vec2(wpos.x, wpos.z + ahead) - light_origin) / max(light_span, vec2(0.001)), vec2(0.0), vec2(1.0));
 	vec3 l = texture(light_tex, luv).rgb;
-	vec3 rel = clamp(mix(vec3(SHADE_TO), vec3(1.0), (l - floor_l) / (1.0 - floor_l)), vec3(0.0), vec3(LIFT));
+	float lam = clamp(dot(wnrm, sun_dir) / max(sun_dir.y, 0.001), 0.0, 1.0);
+	vec3 rel = mix(vec3(SHADE), vec3(1.0), lam * clamp((l - floor_l) / (1.0 - floor_l), vec3(0.0), vec3(1.0)));
 	float band = mix(HEM, 1.0, smoothstep(0.0, HEM_SPAN, UV.y)) * mix(1.0, BASE, smoothstep(BASE_FROM, 1.0, UV.y));
 	float edge = mix(EDGE, 1.0, smoothstep(0.0, EDGE_SPAN, min(UV.x, 1.0 - UV.x)));
 	vec3 cell = (floor(wpos * GRID) + 0.5) / GRID;
-	ALBEDO = c.rgb * (mix(vec3(1.0), rel * band * edge, k) + pool_light(cell + wnrm * 0.02, wnrm, POOL_WRAP));
+	ALBEDO = c.rgb * min(mix(vec3(1.0), rel * band * edge, k) + pool_light(cell + wnrm * 0.02, wnrm, POOL_WRAP), vec3(SUN_CAP));
 }
-""").replace("POOL_WRAP", str(POOL_WRAP)).replace("EDGE_SPAN", str(EDGE_SPAN)).replace("EDGE", str(EDGE)).replace("LIFT", str(LIFT)).replace("SHADE_TO", str(SHADE_TO)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
+""").replace("POOL_WRAP", str(POOL_WRAP)).replace("EDGE_SPAN", str(EDGE_SPAN)).replace("EDGE", str(EDGE)).replace("SUN_CAP", str(SUN_CAP)).replace("SHADE", str(SHADE)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
 	var m := ShaderMaterial.new()
 	m.shader = _sh
 	m.set_shader_parameter("albedo_tex", tex)
 	m.set_shader_parameter("ahead", AHEAD)
 	m.set_shader_parameter("k", K)
 	m.set_shader_parameter("floor_l", HubCast.SHADE_NEAR)
+	m.set_shader_parameter("sun_dir", Vector3(-HubCast.AWAY.x, 1.0 / HubCast.REACH, -HubCast.AWAY.y).normalized())
 	LightRt.bind(m)
 	return m
