@@ -471,6 +471,9 @@
   }
  },
  "sets": {
+  "dungeon-fight": [
+   "f1-fight"
+  ],
   "hub-ui": [
    "hub-walk",
    "guild-roof",

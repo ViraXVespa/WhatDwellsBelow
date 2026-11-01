@@ -188,12 +188,37 @@ def selftest(root: Path) -> list[str]:
                              capture_output=True, text=True, cwd=str(root))
         checks.append(("spec-cli", info(t / "e.mp4") if cli.returncode == 0 and (t / "e.mp4").is_file() else {"rc": cli.returncode, "err": (cli.stderr or cli.stdout)[-300:]},
                        lambda i: i.get("w", 0) > 0 and i.get("sec", 0) > 1.5))
+        for op in OPS:  # per-op --help through the CLI: names the op, lists only its flags
+            h = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", op, "--help"], capture_output=True, text=True, cwd=str(root)).stdout
+            if ("clip " + op) not in h or (op == "trim" and "--box" in h):
+                bad.append("help %s: %s" % (op, h[:120]))
         for name, got, ok in checks:
             if not ok(got):
                 bad.append("%s: %s" % (name, got))
     return bad
 
 OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit", "wipe", "pip", "mark", "ba", "punch", "callout", "montage", "spec")
+
+# Per-op --help: the flags each op reads (shared --out/--root/--json always shown).
+OP_FLAGS = {
+    "info": [], "trim": ["start", "end"], "join": ["fade", "transition"], "caption": ["text", "pos", "start", "end", "cue", "font"],
+    "sbs": ["labels", "stack", "font"], "export": ["kind", "width", "size", "fill"], "crop": ["box", "size", "movie"],
+    "zoom": ["box", "to", "size", "start", "end", "movie"], "fit": ["size", "fill"],
+    "wipe": ["labels", "hold", "sweep", "once", "style", "subs", "end_card", "font"], "pip": ["corner", "scale", "start", "end"],
+    "mark": ["box", "no_arrows", "start", "end", "color", "movie"], "ba": ["box", "layout", "labels", "style", "subs", "end_card", "font"],
+    "punch": ["box", "start", "sweep", "hold"], "callout": ["box", "text", "start", "end", "color", "font", "shape", "leader", "movie"],
+    "montage": ["labels", "fade", "end_card", "font"], "spec": [],
+}
+USAGE = {"spec": "spec EDIT.json --out O.mp4   (JSON edit list; see clip_compose.py)", "montage": "montage A.mp4 B.mp4 ... --out O.mp4",
+         "join": "join A.mp4 B.mp4 ... --out O.mp4", "sbs": "sbs A.mp4 B.mp4", "wipe": "wipe A.mp4 B.mp4", "pip": "pip A.mp4 B.mp4", "ba": "ba A.mp4 B.mp4"}
+
+def op_help(ap, op: str) -> str:
+    keep = set(OP_FLAGS[op]) | {"out", "root", "json"}
+    rows = ["usage: media.py clip %s" % USAGE.get(op, op + " IN.mp4 [flags]"), ""]
+    for a in ap._actions:
+        if a.dest in keep and a.option_strings:
+            rows.append("  %-16s %s" % (a.option_strings[-1], a.help or ""))
+    return "\n".join(rows)
 
 def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
     """crop, zoom, fit, wipe, pip, mark, ba (clip_fx); punch, callout, montage, spec (clip_compose)."""
@@ -277,7 +302,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--subs", default="", help="wipe/ba --style promo: chip sublines, comma separated (e.g. Week 8,Week 9)")
     ap.add_argument("--end-card", default="", help="wipe/ba --style promo: end card TITLE|SUBLINE after the comparison")
     ap.add_argument("--selftest", action="store_true", help="run every op on synthetic clips")
-    args = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    av = sys.argv[1:] if argv is None else argv
+    if any(a in ("-h", "--help") for a in av) and any(a in OP_FLAGS for a in av):
+        print(op_help(ap, next(a for a in av if a in OP_FLAGS)))
+        return 0
+    args = ap.parse_args(av)
     root = agent_log.resolve_root(args)
     if shutil.which("ffmpeg") is None:
         agent_log.fail("ffmpeg not on PATH")
