@@ -10,7 +10,7 @@ static var _strips: Array[Image] = []
 static var _warm_left: int = 0
 static var _atlas_left: int = 0
 static var _token: String = ""
-## The last frame before downsizing (null at 100%); keep_full writes it to Args.full_dir().
+## The frame before downsizing (any scale; null when no full dir); keep_full writes it to Args.full_dir().
 static var last_full: Image = null
 
 static func keep_full(file: String) -> void:
@@ -51,10 +51,10 @@ static func _capture(host: Node) -> void:
 	if img == null or img.is_empty():
 		_fail(host, "no_image")
 		return
-	last_full = null
+	# full/ copy at every scale (100% too), so `shots.py zoom --space full` always finds an original.
+	last_full = img.duplicate() as Image if Args.full_dir() != "" else null
 	var pct: int = Args.scale_pct()
 	if pct < 100:
-		last_full = img.duplicate() as Image
 		var w: int = maxi(1, int(float(img.get_width()) * (float(pct) / 100.0)))
 		var h: int = maxi(1, int(float(img.get_height()) * (float(pct) / 100.0)))
 		img.resize(w, h, Image.INTERPOLATE_BILINEAR)
@@ -173,10 +173,10 @@ static func _read_frame(host: Node) -> Image:
 	var img: Image = tex.get_image()
 	if img == null or img.is_empty():
 		return null
-	last_full = null
+	# full/ copy at every scale (100% too), so `shots.py zoom --space full` always finds an original.
+	last_full = img.duplicate() as Image if Args.full_dir() != "" else null
 	var pct: int = Args.scale_pct()
 	if pct < 100:
-		last_full = img.duplicate() as Image
 		var w: int = maxi(1, int(float(img.get_width()) * (float(pct) / 100.0)))
 		var h: int = maxi(1, int(float(img.get_height()) * (float(pct) / 100.0)))
 		img.resize(w, h, Image.INTERPOLATE_BILINEAR)

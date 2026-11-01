@@ -415,6 +415,10 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     else:
         ok = (not timed) and status == "EXIT=0" and shot_ok and nbytes > 0 and not err_hits
         band = _band(ok, nbytes, width, height) if ok else "fail"
+    full = None if (args.full_map or args.no_pixels or args.frames_dir) else _full_dir(png.parent)
+    if ok and full and not (full / png.name).is_file():
+        ok, band = False, "fail"  # shots.py zoom --space full needs this original at every scale
+        err_hits.append(f"no full/ original: {full / png.name}")
     want = _want_size(args, scale_pct)
     if ok and not args.no_pixels and want and (width, height) != want:
         ok, band = False, "fail"  # an explicit --width/--height is a contract, not a hint

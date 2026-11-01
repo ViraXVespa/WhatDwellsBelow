@@ -4,8 +4,8 @@
     python tools/shots.py zoom SRC --box X,Y,W,H [--box ...] [--scale N] [--grid] [--space down|full] [--out PATH]
     python tools/shots.py zoom SRC --center X,Y --size W,H [--scale N]
     python tools/shots.py zoom SRC --rect-norm X0,Y0,X1,Y1          # fractions of the frame, 0..1 (same in both spaces)
-SRC may be the downsized PNG: its original is SRC's dir /full/<same name> (shots.py capture/flow keep it for scales
-below 100, only in ignored or out-of-repo dirs). Coordinates are in --space: `down` (default; pixels of SRC as you
+SRC may be the downsized PNG: its original is SRC's dir /full/<same name> (shots.py capture/flow keep it at every scale,
+only in ignored or out-of-repo dirs). Coordinates are in --space: `down` (default; pixels of SRC as you
 viewed it, mapped by the width ratio) or `full` (pixels of the original). --scale enlarges nearest-neighbour (exact
 N x N blocks); --grid draws a 1-px line every original pixel at --scale >= 4. Several regions make one labeled montage.
 Default --out: _logs/shot-zoom/<name>-zoom.png. No original found: crops SRC itself and says so.
