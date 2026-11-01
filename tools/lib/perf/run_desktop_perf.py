@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
 import agent_log
+import godot_slots
 import bench_env
 
 FPS_RE = re.compile(r"Project FPS: (\d+) \(([\d.]+) mspf\)")
@@ -41,8 +42,9 @@ PHASES = ["title-idle", "camp-idle", "camp-walk", "dungeon-idle", "dungeon-walk"
 def export(root: Path, godot: str, name: str) -> None:
     preset, out, flag = BUILDS[name]
     (root / out).parent.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run([godot, "--headless", "--path", str(root), flag, preset, str(root / out)],
-                       capture_output=True, text=True, timeout=900)
+    with godot_slots.held("export " + name, str(root)):
+        r = subprocess.run([godot, "--headless", "--path", str(root), flag, preset, str(root / out)],
+                           capture_output=True, text=True, timeout=900)
     if r.returncode != 0 or not (root / out).is_file():
         raise SystemExit("export failed for %s: %s" % (preset, r.stderr[-800:]))
 
@@ -57,6 +59,7 @@ class Run:
         time.sleep(2)
         self.samples: list[tuple[float, float]] = []
         pre = ["stdbuf", "-oL"] if shutil.which("stdbuf") else []  # release stdout is block-buffered on a pipe
+        self.slot = godot_slots.acquire("desktop_perf " + tag, str(root))  # box-wide cap; close() frees it
         self.game = subprocess.Popen([*pre, str(binary), "--print-fps", "--resolution", "1920x1080"], env=self.env,
                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         threading.Thread(target=self._read, daemon=True).start()
@@ -117,6 +120,7 @@ class Run:
             except subprocess.TimeoutExpired:
                 p.kill()
         shutil.rmtree(self.home, ignore_errors=True)
+        godot_slots.release(self.slot)
 
 
 def walk(r: Run, legs: list[tuple[str, float]]) -> None:

@@ -51,6 +51,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot 
 import boot  # noqa: E402,F401
 
 import agent_log  # noqa: E402
+import godot_slots  # noqa: E402
+import godot_slots
 from godot_lib import resolve_bin  # noqa: E402
 from bot_warnscan_lib import changed_areas, flake_label, merge, mode_label, parse_stream, run_failure  # noqa: E402
 from godot_lib import XVFB_SCREEN, pick_display  # noqa: E402
@@ -388,11 +390,12 @@ def main(argv: list[str] | None = None) -> int:
         pool = [j for j in jobs if j["name"] not in SERIAL]
         serial = [j for j in jobs if j["name"] in SERIAL]
         done: dict[str, dict] = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
-            for r in ex.map(lambda j: run_job(j, ns), pool):
-                done[r["tag"]] = r
-        for j in serial:
-            done[j["tag"]] = run_job(j, ns)
+        with godot_slots.held("bot_warnscan", str(root)):  # one box slot for the scan; its --jobs pool runs inside
+            with concurrent.futures.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
+                for r in ex.map(lambda j: run_job(j, ns), pool):
+                    done[r["tag"]] = r
+            for j in serial:
+                done[j["tag"]] = run_job(j, ns)
         for j in jobs:  # merge in submission order so reports are stable
             r = done[j["tag"]]
             merge(merged, r["found"], r["run"])

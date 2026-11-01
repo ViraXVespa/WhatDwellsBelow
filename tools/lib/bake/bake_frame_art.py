@@ -19,6 +19,7 @@ _TOOLS = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
 import agent_log
+import godot_slots
 import godot_lib
 
 ROOT = _TOOLS.parent
@@ -27,7 +28,8 @@ JOB = "frame-art"
 
 def godot(*args: str, timeout: int = 600) -> str:
     exe = str(godot_lib.godot_exe())
-    r = subprocess.run([exe, "--headless", "--path", str(ROOT), *args], capture_output=True, text=True, errors="replace", timeout=timeout)
+    with godot_slots.held("frame-art " + " ".join(args)[:120], str(ROOT)):
+        r = subprocess.run([exe, "--headless", "--path", str(ROOT), *args], capture_output=True, text=True, errors="replace", timeout=timeout)
     return r.stdout + r.stderr
 
 def fix_imports() -> int:
