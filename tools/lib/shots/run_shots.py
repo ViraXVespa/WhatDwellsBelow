@@ -29,6 +29,7 @@ import boot  # noqa: E402,F401
 
 import agent_log
 import godot_lib
+import godot_slots
 import map_overlay
 import run_log_lib
 import shot_clip_lib
@@ -371,6 +372,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     # Resolve the Godot executable, then launch so we have the PID for the watcher.
     exe = godot_lib.godot_exe()
     cmd = [str(exe)] + godot_args
+    slot = godot_slots.acquire(" ".join(godot_args)[:160], str(root))  # box-wide Godot cap
     proc = subprocess.Popen(
         cmd,
         cwd=root,
@@ -391,6 +393,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     finally:
         stop_event.set()
         hide_thread.join(timeout=1.0)
+        godot_slots.release(slot)
     shot_hits = _shot_lines([err_log, out_log])
     err_hits = _error_lines([err_log, out_log])
     shot_ok = any("ok=true" in line for line in shot_hits)

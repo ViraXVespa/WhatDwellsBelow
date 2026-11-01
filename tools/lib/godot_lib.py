@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Godot launch + per-path lock for the run_* tools.
+"""Godot launch + per-path lock for the run_* tools (box-wide slot cap: godot_slots).
 
 Rules: the lock key is the normalized --path dir; wait until that path is free;
 a timeout or compile error kills ONLY the pid this call started, never godot*.
@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # tools/lib; boot adds
 import boot  # noqa: E402,F401
 
 import agent_log
+import godot_slots
 
 COMPILE_RE = re.compile(r"Parse Error|Compile Error|Failed to compile|Failed to load script")
 HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|Lambda capture at index")
@@ -236,7 +237,12 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
     if "--path" not in args:
         args = ["--path", path] + args
     agent_log.gdignore_underscore(root)  # root _* folders never enter an import or export
-    lf = lock(root, path, lock_timeout, hold if hold > 0 else max(60, timeout + 30))
+    slot = godot_slots.acquire(" ".join(args)[:160], str(root))  # box-wide cap (Bot box only), before the path lock
+    try:
+        lf = lock(root, path, lock_timeout, hold if hold > 0 else max(60, timeout + 30))
+    except BaseException:
+        godot_slots.release(slot)
+        raise
     t0 = time.monotonic()
     pid, status, code, timed_out, dkind = 0, "ERROR", -1, False, "none"
     handles = []
@@ -287,6 +293,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
         for fh in handles:
             fh.close()
         unlock(lf)
+        godot_slots.release(slot)
     size = lambda p: p.stat().st_size if p and p.is_file() else 0  # noqa: E731
     return {"status": status, "exit_code": code, "timed_out": timed_out, "pid": pid,
             "ms": int((time.monotonic() - t0) * 1000), "err_bytes": size(err_log),

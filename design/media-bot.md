@@ -19,7 +19,7 @@ Payload keys: `repo`, `job`, `branch`, `sha`, `merge_sha`, `pr`, `refs`. An empt
 
 ## Run
 
-Use `python3` (no `python` on the box). Godot is found by `tools/lib/godot_lib.py` (`/workspace/godot/` or `GODOT_BIN`). One `--refs` run at a time: the box is shared, and every run makes temp worktrees and drives Godot. Start after the push the webhook reports (week start has already cleaned logs and Godot locks by then).
+Use `python3` (no `python` on the box). Godot is found by `tools/lib/godot_lib.py` (`/workspace/godot/` or `GODOT_BIN`). Godot launches box-wide queue on one slot (`godot_slots`; a wait prints its holder), so parallel `--refs` runs only serialize, not collide. Start after the push the webhook reports (week start has already cleaned logs and Godot locks by then).
 
 ```
 git fetch origin
