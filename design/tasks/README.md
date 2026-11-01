@@ -28,7 +28,7 @@ ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 bug-report-relay | web | active | In-game bug reports via pause menu and a GitHub issue relay | -
 hub-bake-checks | bot | open | Hub light leak + dumpster shadow, bake/shadow checks with planted faults | -
-local-ai-tuner | bot | open | Local AI playtester + balance tuner (recommend-only, runs on Vira's PC) | -
+local-ai-tuner | bot | open | Local AI: two models, a playtester and a balance tuner (recommend-only, runs on Vira's PC) | -
 shot-catalog-gaps | bot | open | Bottie Boop shot-catalog gaps: views, set/name fixes, new movies | -
 <!-- tasks:end -->
 

@@ -7,7 +7,7 @@ The only Bot constitution. Second topic door: ask the User first.
 
 ## Workspace
 
-Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow and work that tree. Fresh `bot/<flow>` branch per flow (from `origin/main`; e.g. `bot/size-xyz`). One open Bot PR. Commit per cluster. User squash-merges. Never push main. Never merge the PR.
+Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow and work that tree. One checkout, work queued in order: no side worktrees for parallel asks unless urgent (each adds a cherry-pick and a push wait); read-only detached worktrees for ref compares or a commit's selftests are fine. Fresh `bot/<flow>` branch per flow (from `origin/main`; e.g. `bot/size-xyz`). One open Bot PR. Commit per cluster. User squash-merges. Never push main. Never merge the PR.
 
 Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Never force-push. Open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`). Edit a PR body with `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown). The box git identity is Grok Bot, so plain `git commit` works.
 
