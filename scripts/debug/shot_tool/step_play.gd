@@ -108,7 +108,9 @@ static func camera(st: Dictionary, step: Dictionary) -> void:
 	to_c += Vector3(off.x, 0.0, off.y)
 	var from_s: float = (rig.get("cam") as Camera3D).size
 	# follow hands back: without its own zoom it eases to the size the rig returns to (its pin, else the user zoom)
-	var pin: float = float(rig.get("size_pin"))
+	# older commits' rigs have no size_pin (get -> null): treat as unpinned instead of crashing
+	var pin_v: Variant = rig.get("size_pin") if "size_pin" in rig else null
+	var pin: float = float(pin_v) if (pin_v is float or pin_v is int) else 0.0
 	var home: float = pin if pin > 0.0 else T.base_size().y / float(T.PX) / clampf(App.cam_zoom, T.ZOOM_MIN, T.ZOOM_MAX)
 	var to_s: float = from_s
 	if step.has("zoom"):

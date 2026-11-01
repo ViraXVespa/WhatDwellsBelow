@@ -182,6 +182,12 @@ def selftest(root: Path) -> list[str]:
         checks.append(("export-x", info(x), lambda i: i["w"] <= 1280 and i["h"] <= 720 and i["codec"] == "h264" and not xbad))
         g, gbad = export(a, "gif", t / "g.gif", 320)
         checks.append(("export-gif", info(g), lambda i: i["w"] == 320 and not gbad))
+        # spec through the real CLI (argv parse and dispatch): FILE.json must not be probed as a clip
+        (t / "e.json").write_text(json.dumps({"in": "a.mp4", "steps": [{"op": "callout", "box": [100, 100, 300, 200], "text": "x", "start": 0.2, "end": 1.2}]}), encoding="utf-8")
+        cli = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", "spec", str(t / "e.json"), "--out", str(t / "e.mp4")],
+                             capture_output=True, text=True, cwd=str(root))
+        checks.append(("spec-cli", info(t / "e.mp4") if cli.returncode == 0 and (t / "e.mp4").is_file() else {"rc": cli.returncode, "err": (cli.stderr or cli.stdout)[-300:]},
+                       lambda i: i.get("w", 0) > 0 and i.get("sec", 0) > 1.5))
         for name, got, ok in checks:
             if not ok(got):
                 bad.append("%s: %s" % (name, got))
@@ -191,6 +197,10 @@ OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit"
 
 def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
     """crop, zoom, fit, wipe, pip, mark, ba (clip_fx); punch, callout, montage, spec (clip_compose)."""
+    if args.op == "spec":  # the input is the JSON edit list, not a clip: never probe it
+        import clip_compose
+        print("spec: %s" % json.dumps(clip_compose.spec(ins[0], out, root)))
+        return []
     i = info(ins[0])
     size = clip_fx.size_of(args.size) if args.size else (0, 0)
     boxes = [clip_fx.box_px(b, i["w"], i["h"], root, args.movie) for b in args.box]
@@ -226,8 +236,6 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
             clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font, args.shape, args.leader)
         elif args.op == "montage":
             clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font)
-        else:
-            print("spec: %s" % json.dumps(clip_compose.spec(ins[0], out, root)))
     elif args.op == "ba":
         pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font, style=args.style, subs=subs, end=end)
         print("ba pick: %s" % json.dumps(pick))
