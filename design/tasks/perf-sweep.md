@@ -12,6 +12,8 @@ One continuous run, no exits between states: cold game load, enter the hub, hub 
 ## Next
 Extend `tools/perf.py` with a sweep mode that chains the existing hub bench sequence and dungeon playtest walkthrough (seed 42, Great Axe, time scale 1) in one session, with per-segment and total fps_pct, and the same hitch rows (tree_ms, submit_ms, after_ms, pt_ms). Then run desktop and cold web legs on Vira's machine. Desktop numbers below were single-state; re-score desktop in the sweep. Carried web misses: hub fill tail and isolated facing-start frames; dungeon 248 of 1558 frames slow, p95 27 ms.
 
+Reading runs: use `perf.py hub --report HITCH.jsonl` (about 2.3 KB) or the run's summary txt; do not open the raw hitch.jsonl (about 190 KB, 578 rows per 30 s desktop run).
+
 ## Hub: where it stood (from hub-perf-fix)
 Desktop `20261016`, fullscreen 1920x1080: fps_pct 99.7 to 99.8, p50 and p95 8.3 ms. Not re-run since.
 
