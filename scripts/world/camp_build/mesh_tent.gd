@@ -55,9 +55,12 @@ static func attach_awning(body: Node3D, box_size: Vector3, depth: float, valance
 static func pitched_tarp(body: Node3D, box_size: Vector3, posts: Vector3, y_eave: float) -> void:
 	var hx: float = box_size.x * 0.5
 	var hz: float = box_size.z * 0.5
+	# The front eave covers the front posts (and the face art on their plane): with the eave behind them the hem hung
+	# behind the front, the face top sat in front of the hem and the art's black edge showed above the post tops.
+	var fz: float = maxf(hz, posts.y + float(Spec.STALL["post_half"]))
 	var ridge: float = y_eave + float(Spec.STALL["rise"])
-	var sl := Vector3(-hx, y_eave, hz)
-	var sr := Vector3(hx, y_eave, hz)
+	var sl := Vector3(-hx, y_eave, fz)
+	var sr := Vector3(hx, y_eave, fz)
 	var nl := Vector3(-hx, y_eave, -hz)
 	var nr := Vector3(hx, y_eave, -hz)
 	var rl := Vector3(-hx, ridge, 0.0)
@@ -76,7 +79,7 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, posts: Vector3, y_eave
 	var tarp_mat: Material = Mat.tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
 	inst.material_override = tarp_mat
 	if tarp_mat is ShaderMaterial:
-		Mat.face_light(tarp_mat, body.global_position.z + hz)
+		Mat.face_light(tarp_mat, body.global_position.z + fz)
 		(tarp_mat as ShaderMaterial).render_priority = Spec.DRAW["tarp"]
 	inst.sorting_offset = Spec.DRAW["tarp_sort"]
 	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
