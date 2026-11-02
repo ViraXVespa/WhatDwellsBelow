@@ -3,7 +3,8 @@
 
     python tools/check.py prove [--plan] [--all] [--base REV] [--head REV] [--verbose]
 
-Changed set: `git diff` from merge-base(origin/main, HEAD) to the working tree (commits plus uncommitted and untracked).
+Changed set: `git diff` from the pushed branch tip (origin/<branch>; merge-base(origin/main, HEAD) when the branch
+was never pushed) to the working tree (commits plus uncommitted and untracked).
 Graph (prove_graph.py): every file that names a changed file (path, res:// path, `entry.py sub`, module import,
 class_name, json file name): doc links and routes.yaml, BOT.md / tools*.md job tables, task resume/first lines,
 workflow skills, CI workflows and hooks, tools importing a changed lib, scripts and scenes preloading a changed
@@ -15,9 +16,10 @@ the diff removed that a file still names), CLAIM (a new comment naming a tool mo
 STALE (an untouched dependent's line, in a paragraph naming a tool whose docstring changed, repeating a token of the
 new docstring). REVIEW (advisory): a changed signature with callers outside the diff, a tool whose docstring changed
 while a dependent that describes it did not.
-Per-cluster quick check: --base @{u} (only what this cluster adds over the pushed branch); the pre-push full prove
-keeps the merge-base with origin/main.
---plan prints the plan and drift and runs nothing (a --head replay is always --plan). --all runs every rule.
+--base main = the whole branch. --plan prints the plan and drift and runs nothing (a --head replay is always --plan).
+--all runs every rule only when the diff touches a shared lighting/bake input (SHARED) or a path no rule or graph edge
+covers (unknown); otherwise it is left to the nightly run (--force-all runs every rule anyway). Each check is capped at
+STEP_CAP seconds (rc=124, FAIL).
 RESULT PASS = every chosen check exit 0 and no DRIFT. Summary: _logs/prove/.
 """
 from __future__ import annotations
@@ -38,6 +40,9 @@ import agent_log
 import prove_graph as pg
 
 RULES = boot.DATA / "prove_rules.json"
+STEP_CAP = 900
+SHARED = ("scripts/graphics/*", "scripts/world/camp_build.gd", "scripts/world/camp_build/*", "scripts/world/camp/layout.gd",
+          "scripts/world/camp/lamps.gd", "scripts/app/app_bake.gd", "assets/baked/*", "*.gdshader", "tools/data/hub_bake_inputs.json")
 DOC_KINDS = ("doc", "job-table", "task", "skill", "routes", "tool", "ci", "hook")
 
 def analyse(root: Path, base: str, head: str | None) -> dict:
@@ -217,11 +222,33 @@ def _phases(root: Path, files: list[str]) -> str:
     m = re.search(r"phases=([\d,]+)", r.stdout)
     return m.group(1) if m else ""
 
+def default_base(root: Path) -> tuple[str, str]:
+    """(sha, label): the pushed tip of this branch, else merge-base with origin/main."""
+    br = pg.git(root, "rev-parse", "--abbrev-ref", "HEAD").strip()
+    tip = pg.git(root, "rev-parse", "--verify", "-q", f"refs/remotes/origin/{br}^{{commit}}").strip() if br != "HEAD" else ""
+    if tip and not subprocess.run(["git", "merge-base", "--is-ancestor", tip, "HEAD"], cwd=root, capture_output=True).returncode:
+        return tip, f"origin/{br}"
+    return pg.git(root, "merge-base", "origin/main", "HEAD").strip(), "merge-base origin/main"
+
+def need_all(root: Path, a: dict) -> str:
+    """Why --all must run ('' = defer to nightly): a SHARED input changed, or a path nothing covers."""
+    paths = [c.path for c in a["changes"]]
+    shared = [p for p in paths if any(fnmatch.fnmatch(p, g) for g in SHARED)]
+    if shared:
+        return f"shared lighting/bake input {shared[0]}"
+    rules = json.loads(RULES.read_text(encoding="utf-8"))["checks"]
+    wh = [g for r in rules if r["when"] != ["*"] for g in r["when"]]
+    unknown = [p for p in paths if not p.endswith(".md") and not a["deps"].get(p) and not any(fnmatch.fnmatch(p, g) for g in wh)]
+    return f"unknown dependency {unknown[0]}" if unknown else ""
+
 def run(root: Path, steps) -> list[tuple[int, str, str, float]]:
     out = []
     for _, cmd, _ in steps:
         t = time.time()
-        r = subprocess.run(cmd.split(), cwd=root, capture_output=True, text=True)
+        try:
+            r = subprocess.run(cmd.split(), cwd=root, capture_output=True, text=True, timeout=STEP_CAP)
+        except subprocess.TimeoutExpired as e:
+            r = subprocess.CompletedProcess(cmd, 124, f"capped at {STEP_CAP}s", str(e.stderr or "")[-200:])
         res = [l for l in (r.stdout + r.stderr).splitlines() if l.startswith("RESULT")]
         tail = "" if r.returncode == 0 else " | ".join((r.stdout + r.stderr).strip().splitlines()[-4:])[:300]
         out.append((r.returncode, cmd, (res[-1] if res else "(no RESULT)") + (f"\n      {tail}" if tail else ""), time.time() - t))
@@ -229,26 +256,45 @@ def run(root: Path, steps) -> list[tuple[int, str, str, float]]:
 
 def main() -> int:
     ap = agent_log.std_parser(__doc__.split("\n")[0], verbose=True)
-    ap.add_argument("--base", default=None, help="Diff base (default: merge-base of origin/main and HEAD; @{u} = the per-cluster quick check).")
+    ap.add_argument("--base", default=None, help="Diff base (default: origin/<branch>, else merge-base with origin/main; main = whole branch).")
     ap.add_argument("--head", default=None, help="Diff head commit (default: the working tree); implies --plan.")
     ap.add_argument("--plan", action="store_true", help="Print the plan, graph and drift; run nothing.")
-    ap.add_argument("--all", dest="run_all", action="store_true", help="Run every rule, not only the triggered ones.")
+    ap.add_argument("--all", dest="run_all", action="store_true", help="Run every rule when a shared input changed or a dependency is unknown (else nightly).")
+    ap.add_argument("--force-all", action="store_true", help="Run every rule regardless (nightly).")
     ap.add_argument("--selftest", action="store_true", help="Replay built-in breakages in a throwaway repo.")
     args = ap.parse_args()
     if args.selftest:
         import prove_selftest
+        C = type("C", (), {})
+        def fake(*ps):
+            out = []
+            for q in ps:
+                c = C(); c.path = q; out.append(c)
+            return {"changes": out, "deps": {}}
+        here = Path(__file__).resolve().parents[3]
+        bad = [m for m, ok in (("shader must force --all", need_all(here, fake("scripts/graphics/x.gdshader"))),
+                               ("docs must defer --all", not need_all(here, fake("design/a.md"))),
+                               ("unknown path must force --all", need_all(here, fake("zz/new_thing.bin")))) if not ok]
+        if bad:
+            print("\n".join("FAIL " + m for m in bad))
+            return 1
         return prove_selftest.main()
     root = agent_log.resolve_root(args)
-    base = pg.git(root, "rev-parse", "--verify", "-q", args.base + "^{commit}").strip() if args.base else pg.git(root, "merge-base", "origin/main", "HEAD").strip()
+    if args.base == "main":
+        args.base = pg.git(root, "merge-base", "origin/main", "HEAD").strip()
+    base, blabel = (pg.git(root, "rev-parse", "--verify", "-q", args.base + "^{commit}").strip(), args.base) if args.base else default_base(root)
     if not base:
-        agent_log.fail(f"no such base: {args.base or 'merge-base origin/main HEAD'}")
+        agent_log.fail(f"no such base: {blabel}")
     t0 = time.time()
     a = analyse(root, base, args.head)
-    steps = plan(root, a, args.run_all)
+    why_all = "forced" if args.force_all else (need_all(root, a) if args.run_all else "")
+    steps = plan(root, a, bool(why_all))
     st = Counter(c.status for c in a["changes"])
     kinds = Counter(f[2] for f in {(e[1], e[0], e[2]) for e in a["edges"]})
-    lines = [f"changed={len(a['changes'])} ({' '.join(f'{k}{v}' for k, v in sorted(st.items()))}) base={base[:8]} head={(args.head or 'worktree')[:8]}",
+    lines = [f"changed={len(a['changes'])} ({' '.join(f'{k}{v}' for k, v in sorted(st.items()))}) base={base[:8]} ({blabel}) head={(args.head or 'worktree')[:8]}",
              f"graph: {sum(len(v) for v in a['deps'].values())} dependents ({', '.join(f'{k} {v}' for k, v in kinds.most_common())})"]
+    if args.run_all or args.force_all:
+        lines.append(f"all: {'every rule (' + why_all + ')' if why_all else 'deferred to nightly (no shared input, every path covered)'}")
     body = list(lines)
     body += [f"  {own} <- {f}:{no} [{kind}] {name}{tag}" for own, f, kind, name, no, tag in sorted(set(a["edges"]))]
     chosen = [f"RUN  {cmd}   # {why}" for _, cmd, why in steps]
