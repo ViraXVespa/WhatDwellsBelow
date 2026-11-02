@@ -1,6 +1,6 @@
 {
   "name": "dungeon-marks",
-  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot.",
+  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). The nearest torch/crystal mark points away from its light (.light; flipped toward it, .plant_light, must FAIL). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot.",
   "scene": "dungeon",
   "seed": 42,
   "floor": 1,
@@ -45,6 +45,16 @@
       "op": "assert",
       "target": "script:debug/dungeon_mark_check.grid",
       "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.light",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.plant_light",
+      "equals": "caught"
     },
     {
       "op": "shot",
