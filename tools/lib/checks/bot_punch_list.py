@@ -247,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"visual_review={'FAIL' if review else 'PASS'} (hub art, lighting or bake paths need {scope.ps.REVIEW_DIR}/<tip sha>.md)")
         if review:
             lines.extend(f"review\t{b}" for b in review)
-            lines.extend(scope.ps.review_help())
+            lines.extend(scope.ps.review_help(scope.changed))
             explore_bad = True
         if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)) or shipped:
             rc = 1

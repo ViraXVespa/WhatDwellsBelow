@@ -31,6 +31,23 @@ SCOPE: dict[str, tuple[str | None, list[str]]] = {
 ## no visual path changed since). Questions 1-6 are a starting point, not an exhaustive list: any ad hoc issue counts.
 VISUAL = ["assets/sprites/*", "assets/baked/*", "scripts/graphics/*", "scripts/world/camp*", "scripts/world/camp/*",
           "scripts/world/camp_build/*", "tools/data/hub_bake_inputs.json"]
+## Change-based shot selection: each touched area names the shots its review needs (review_help(changed) prints only
+## those; area_faults asks the review to name an "area:" line, or a wide/close path, for every touched area).
+AREAS = [
+    ("hub", ["scripts/world/camp*", "scripts/world/camp/*", "scripts/world/camp_build/*", "scripts/graphics/light_rt/hub_*",
+             "scripts/graphics/wrap_shader.gd", "scripts/graphics/ground_shader.gd", "assets/baked/*", "assets/sprites/buildings/*",
+             "tools/data/hub_bake_inputs.json"], SHOTS_HUB := [
+        "python3 tools/shots.py capture --scene camp --mode build --hud 0 --zoom 2.0 --px 14 --pz 10 --out <wide.png>",
+        "python3 tools/shots.py flow --flow camp-prop-shadows  (close-ups: _logs/shot-flow/camp-prop-shadows/*.png)"]),
+    ("dungeon", ["scripts/world/dungeon*", "scripts/world/dungeon*/*", "scripts/graphics/wall_*", "scripts/graphics/wall_mesh/*",
+                 "scripts/graphics/torch_*", "scripts/graphics/torch_plan/*", "scripts/graphics/light_stamp*", "scripts/graphics/light_stamp/*",
+                 "scripts/graphics/env_kit.gd", "assets/sprites/dungeon*"], [
+        "python3 tools/shots.py capture --scene dungeon --mode build --hud 0 --out <wide.png>",
+        "python3 tools/shots.py movie f1-fight  (close: a frame from _logs/movie/f1-fight/)"]),
+    ("actors", ["scripts/graphics/actor_lit*", "scripts/graphics/actor_lit/*", "scripts/graphics/chunky.gd", "assets/sprites/player*",
+                "assets/sprites/enemies*", "assets/sprites/npc*"], [
+        "python3 tools/shots.py flow --flow camp-feet-px  (close: _logs/shot-flow/camp-feet-px/*.png)"]),
+]
 REVIEW_DIR = "_logs/visual-review"
 QUESTIONS = [
     "Every object grounded, nothing floating?",
@@ -41,9 +58,21 @@ QUESTIONS = [
     "Lighting/shading present and natural, compared with the last approved round?",
     "Anything else that looks wrong, odd or unnatural? (not limited to the above; name the areas and objects scanned)",
 ]
-SHOTS = ["python3 tools/shots.py capture --scene camp --mode build --hud 0 --zoom 2.0 --px 14 --pz 10 --out <wide.png>",
-         "python3 tools/shots.py flow --flow camp-prop-shadows  (close-ups: _logs/shot-flow/camp-prop-shadows/*.png)"]
+SHOTS = SHOTS_HUB
+VISUAL += [g for _, gs, _ in AREAS for g in gs if g not in VISUAL]  # a dungeon or actor look change needs a review too
+
+def areas(changed: list[str]) -> list[str]:
+    """Touched visual areas, in AREAS order (a VISUAL path in no area needs only the plain review)."""
+    return [n for n, gs, _ in AREAS if hits(changed, gs)]
 _BARE = {"ok", "okay", "yes", "no", "fine", "none", "n/a", "na", "good", "pass", "same", "nothing", "-", "looks good", "all good"}
+
+def area_faults(text: str, need: list[str]) -> list[str]:
+    """A review must cover every touched area: an 'area: hub, dungeon' line, or the area's name in a wide/close path."""
+    low = text.lower()
+    named = {a.strip() for ln in low.splitlines() if ln.startswith("area:") for a in ln.split(":", 1)[1].split(",")}
+    paths = " ".join(ln for ln in low.splitlines() if ln.startswith(("wide:", "close:")))
+    return [f"area {a} touched but not reviewed: add 'area: {a}' with its shots ({'; '.join(next(sh for n, _, sh in AREAS if n == a))})"
+            for a in need if a not in named and a not in paths and not (a == "hub" and ("hub" in paths or "camp" in paths))]
 
 def review_text(text: str, root: Path) -> list[str]:
     """Faults in one review file: wide/close shot lines naming existing files, and answers 1..7 that say what was seen."""
@@ -72,14 +101,23 @@ def review_faults(root: Path, changed: list[str]) -> list[str]:
         since = _git(root, "diff", "--name-only", sha).split()
         if hits(since, VISUAL):
             continue
-        return [f"{f.relative_to(root)}: {b}" for b in review_text(f.read_text(encoding="utf-8"), root)]
+        text = f.read_text(encoding="utf-8")
+        return [f"{f.relative_to(root)}: {b}" for b in review_text(text, root) + area_faults(text, areas(_reviewed(root, sha)))]
     head = _git(root, "rev-parse", "HEAD").strip()
     return [f"no visual review for {head[:8]}: write {REVIEW_DIR}/{head}.md (commit first; the sha is the tip's)"]
 
-def review_help() -> list[str]:
+def _reviewed(root: Path, sha: str) -> list[str]:
+    """Paths the review at sha covers: since the pushed tip when that is behind sha, else that commit alone."""
+    br = _git(root, "rev-parse", "--abbrev-ref", "HEAD").strip()
+    tip = _git(root, "rev-parse", "--verify", "-q", f"refs/remotes/origin/{br}").strip()
+    behind = tip and tip != sha and not subprocess.run(["git", "merge-base", "--is-ancestor", tip, sha], cwd=root, capture_output=True).returncode
+    return _git(root, "diff", "--name-only", tip if behind else f"{sha}^", sha).split()
+
+def review_help(changed: list[str] | None = None) -> list[str]:
     return (["review: lines 'wide: <png>' and 'close: <png>' (one or more each), then '1: ...' to '7: ...' naming what you saw.",
              "review: 1-6 are a starting point, not an exhaustive list; any ad hoc issue counts under 7. 'ok' / 'none' alone fail."]
-            + [f"review Q{i}: {q}" for i, q in enumerate(QUESTIONS, 1)] + [f"review shot: {c}" for c in SHOTS])
+            + [f"review Q{i}: {q}" for i, q in enumerate(QUESTIONS, 1)]
+            + [f"review shot ({n}): {c}" for n, _, sh in AREAS if n in (areas(changed or []) or ["hub"]) for c in sh])
 
 def globs(root: Path, check: str) -> list[str]:
     rule_id, extra = SCOPE[check]
@@ -178,6 +216,12 @@ def selftest() -> int:
                 bad.append(f"review {name} must fail")
         if review_faults(r, ["README.md"]):
             bad.append("docs-only branch must not need a review")
+        if areas(["scripts/world/dungeon_geo.gd", "scripts/world/camp.gd"]) != ["hub", "dungeon"]:
+            bad.append(f"areas must pick hub and dungeon: {areas(['scripts/world/dungeon_geo.gd', 'scripts/world/camp.gd'])}")
+        if not area_faults(good, ["dungeon"]) or area_faults(good + "area: dungeon\n", ["dungeon"]):
+            bad.append("a dungeon change needs an 'area: dungeon' review line, and passes with one")
+        if not any("dungeon" in ln for ln in review_help(["scripts/world/dungeon.gd"])) or any("dungeon" in ln for ln in review_help(["scripts/world/camp.gd"])):
+            bad.append("review_help must list only the touched areas' shots")
         (r / "assets/sprites").mkdir(parents=True)
         (r / "assets/sprites/a.png").write_bytes(b"x")
         _git(r, "add", "-A")
