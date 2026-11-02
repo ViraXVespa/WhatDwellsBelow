@@ -209,6 +209,18 @@ def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
     segs, sheet, names = [], [], []
     with tempfile.TemporaryDirectory() as tdn:
         td = Path(tdn)
+        for r in [r for r in rows if r.get("new") and r.get("b")]:  # missing at A: the B shot alone, captioned NEW
+            b = Path(r["b"])
+            ib = Image.open(b).convert("RGB") if r["kind"] == "view" else None
+            if ib is not None:
+                b = still_clip(b, td / (r["name"] + "-b.mp4"))
+            capt = td / (r["name"] + "-new.mp4")
+            clip_edit.caption(b, short("NEW in %s: %s: %s" % (labels[1], r["name"], r["about"])), capt, pos="top")
+            segs.append(capt)
+            if ib is not None:
+                ib.thumbnail((960, 960))
+                sheet.append(ib)
+                names.append("%s %s (new)" % (r["name"], labels[1]))
         for r in [r for r in rows if r.get("diff", {}).get("changed")]:
             a, b = Path(r["a"]), Path(r["b"])
             if r["kind"] == "view":
@@ -228,6 +240,7 @@ def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
             names += ["%s %s" % (r["name"], labels[0]), "%s %s" % (r["name"], labels[1]), "%s change" % r["name"]]
         if not segs:
             return {"segments": 0}
+        out.mkdir(parents=True, exist_ok=True)
         full = out / "reel.mp4"
         clip_edit.join(segs, 0.4, full) if len(segs) > 1 else shutil.copy2(segs[0], full)
     xs, px = clip_edit.export(full, "x", out / "reel-x.mp4")
@@ -268,6 +281,9 @@ def run(root: Path, data: dict, refs: str, names: str, out: Path, keep: bool, lo
             if r.get("a") and r.get("b"):
                 r["diff"] = clip_diff(Path(r["a"]), Path(r["b"])) if r["kind"] == "movie" else still_diff(Path(r["a"]), Path(r["b"]))
                 log("%-18s %s %s" % (r["name"], "CHANGED" if r["diff"]["changed"] else ("zoom-only diff (camera size x%s), left out" % r["diff"]["zoom_only"] if r["diff"].get("zoom_only") else "no visible change"), json.dumps(r["diff"])))
+            elif r.get("b"):
+                r["new"] = True  # the A ref predates this shot (e.g. report-bug): include B, do not fail
+                log("%-18s NEW (missing at %s; %s shot included)" % (r["name"], labels[0], labels[1]))
             else:
                 log("%-18s not compared (a recording failed)" % r["name"])
         res["reel"] = reel(res["items"], labels, out)
@@ -325,6 +341,9 @@ def selftest(root: Path) -> list[str]:
             bad.append("caption cut")
         if reel(rows[:1], ("A", "B"), td / "none").get("segments") != 0:
             bad.append("no-change reel not empty")
+        nw = [{"name": "report-bug", "kind": "view", "about": "pause report page", "a": None, "b": str(imgs[2]), "new": True}]
+        if reel(rows[:1] + nw, ("A", "B"), td / "new").get("segments") != 1:
+            bad.append("a shot missing at A must enter the reel as NEW with its B shot")
         clip_edit._run(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=2", *clip_edit.H264, str(td / "za.mp4")])
         clip_edit._run(["-i", str(td / "za.mp4"), "-vf", "crop=iw/1.15:ih/1.15,scale=640:360", *clip_edit.H264, str(td / "zb.mp4")])
         clip_edit._run(["-i", str(td / "za.mp4"), "-vf", "drawbox=x=100:y=60:w=200:h=150:color=yellow:t=fill", *clip_edit.H264, str(td / "zc.mp4")])
