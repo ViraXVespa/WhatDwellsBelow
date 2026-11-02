@@ -237,6 +237,8 @@ def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", lab
     if layout == "auto":
         small = zb is not None and zb[2] * zb[3] <= SMALL * a["w"] * a["h"]
         pick["layout"] = "wipe" if small or not found or strength <= SUBTLE else "sbs"
+        if pick["layout"] == "sbs" and style == "promo" and 2 * a["w"] > 1920:
+            pick["layout"], pick["why"] = "wipe", "promo: side by side would be %d wide" % (2 * a["w"])
     if pick["layout"] != "wipe":
         zb = None
     with tempfile.TemporaryDirectory() as td:
@@ -268,6 +270,11 @@ def selftest(t: Path) -> list[str]:
     ce._run(["-f", "lavfi", "-i", "smptebars=size=640x360:rate=30:duration=2", *ce.H264, str(t / "c.mp4")])
     a, b, c = t / "a.mp4", t / "b.mp4", t / "c.mp4"
     near = lambda p, q, d=60: all(abs(x - y) < d for x, y in zip(p, q))
+    ce._run(["-f", "lavfi", "-i", "testsrc2=size=1000x200:rate=30:duration=1", *ce.H264, str(t / "wa.mp4")])
+    ce._run(["-f", "lavfi", "-i", "smptebars=size=1000x200:rate=30:duration=1", *ce.H264, str(t / "wb.mp4")])
+    pk = ba(t / "wa.mp4", t / "wb.mp4", t / "wba.mp4", style="promo")
+    if pk["layout"] != "wipe" or ce.info(t / "wba.mp4")["w"] != 1000:
+        bad.append("promo auto must wipe instead of a 2000-wide side by side: %s" % pk)
     i = ce.info(crop(b, (400, 40, 100, 90), t / "crop.mp4", (320, 180)))
     if (i["w"], i["h"]) != (320, 180) or not near(_px(t / "crop.mp4", 1.0, (160, 90)), (255, 255, 255)):
         bad.append("crop: %s" % i)

@@ -71,9 +71,10 @@ def at(rows: list[list[float]], t: float) -> list[float]:
     return rows[-1][1:]
 
 def tracked(src: Path, rows: list[list[float]], text: str, out: Path, start: float = 0.0, end: float = 0.0,
-            color: str = "#ffd23f", font: str = "", avoid=()) -> Path:
+            color: str = "#ffd23f", font: str = "", avoid=(), placed: list | None = None) -> Path:
     """Box outline and chip that follow the track (one overlay frame per video frame, drawn with PIL); the chip takes
-    place_chip's spot each frame, so it keeps out of the corners and of `avoid`."""
+    place_chip's spot each frame, so it keeps out of the corners, of `avoid` and of `placed` chips live at that time
+    [(rect, t0, t1)]; each frame's chip is appended to `placed` so later callouts keep off it."""
     from PIL import Image, ImageColor, ImageDraw
     i = ce.info(src)
     w, h, fps = i["w"], i["h"], float(i["fps"]) or 30.0
@@ -92,7 +93,11 @@ def tracked(src: Path, rows: list[list[float]], text: str, out: Path, start: flo
             if start <= t <= end:
                 x, y, bw, bh = at(rows, t)
                 ImageDraw.Draw(img).rectangle([x, y, x + bw, y + bh], outline=rgb, width=th)
-                img.alpha_composite(c, place_chip(c.width, c.height, (x, y, bw, bh), w, h, av, th))
+                live = [r for r, a, b in (placed or []) if a <= t <= b]
+                p = place_chip(c.width, c.height, (x, y, bw, bh), w, h, av + live, th)
+                img.alpha_composite(c, p)
+                if placed is not None:
+                    placed.append(((p[0], p[1], c.width, c.height), t, t + 1.0 / fps))
             img.save(T / ("o%05d.png" % n))
         ce._run(["-i", str(src), "-framerate", "%g" % fps, "-i", str(T / "o%05d.png"),
                  "-filter_complex", "[0:v][1:v]overlay=0:0:shortest=1,format=yuv420p[o]", "-map", "[o]", "-an", *ce.H264, str(out)])
@@ -117,28 +122,42 @@ def hold_end(src: Path, dur: float, out: Path) -> Path:
     ce._run(["-i", str(src), "-vf", "tpad=stop_mode=clone:stop_duration=%.3f,format=yuv420p" % dur, "-an", *ce.H264, str(out)])
     return out
 
-def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accent=(255, 206, 92, 255)) -> tuple[int, int]:
-    """Lower-third strip: full-width dark band, accent bar at its left, title and optional subline. Returns its (y, height)."""
+PLATE_W = 0.44  # lower-third plate width cap, share of the frame width
+SUB_K = 0.045  # lower-third subline height as a share of the frame height
+
+def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accent=(255, 206, 92, 255), sub_k: float = SUB_K) -> tuple[int, int]:
+    """Lower-third strip, bottom-centre (clear of the top BEFORE/AFTER chips): a dark plate sized to the text, accent bar
+    on its left, title and optional subline (sub_k x h). Returns its (y, height)."""
     from PIL import Image, ImageDraw
     k = h / 720
-    f1, f2 = clip_promo._f(font, int(46 * k)), clip_promo._f(font, int(26 * k), "Medium")
-    bh = int((112 if sub else 76) * k)
-    y = int(h * 0.74)
+    f1, f2 = clip_promo._f(font, int(46 * k)), clip_promo._f(font, max(10, int(sub_k * h)), "Medium")
+    d = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    t1 = d.textbbox((0, 0), title, font=f1)
+    t2 = d.textbbox((0, 0), sub, font=f2) if sub else (0, 0, 0, 0)
+    room = int(w * PLATE_W) - int(62 * k)  # the promo BEFORE/AFTER chips sit bottom-left/right: keep the plate between them
+    while max(t1[2], t2[2]) > room and f1.size > 12:
+        f1, f2 = clip_promo._f(font, f1.size - 2), clip_promo._f(font, max(10, f2.size - 1), "Medium")
+        t1, t2 = d.textbbox((0, 0), title, font=f1), (d.textbbox((0, 0), sub, font=f2) if sub else (0, 0, 0, 0))
+    pad = int(18 * k)
+    bh = pad * 2 + (t1[3] - t1[1]) + ((t2[3] - t2[1]) + int(10 * k) if sub else 0)
+    bw = min(w, max(t1[2], t2[2]) + int(64 * k) + pad)
+    x, y = (w - bw) // 2, int(h * 0.95) - bh
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    d.rectangle([0, y, w, y + bh], fill=(12, 12, 16, 190))
-    d.rectangle([int(40 * k), y + int(14 * k), int(48 * k), y + bh - int(14 * k)], fill=accent)
-    d.text((int(64 * k), y + int(12 * k)), title, font=f1, fill=(245, 245, 245, 255))
+    d.rectangle([x, y, x + bw, y + bh], fill=(12, 12, 16, 200))
+    d.rectangle([x + int(16 * k), y + pad, x + int(24 * k), y + bh - pad], fill=accent)
+    d.text((x + int(44 * k), y + pad - t1[1]), title, font=f1, fill=(245, 245, 245, 255))
     if sub:
-        d.text((int(64 * k), y + int(66 * k)), sub, font=f2, fill=(200, 200, 205, 255))
+        d.text((x + int(44 * k), y + pad + (t1[3] - t1[1]) + int(10 * k) - t2[1]), sub, font=f2, fill=(200, 200, 205, 255))
     img.save(path)
     return y, bh
 
-def lower_third(src: Path, title: str, out: Path, sub: str = "", start: float = 0.1, dur: float = 2.2, font: str = "") -> Path:
+def lower_third(src: Path, title: str, out: Path, sub: str = "", start: float = 0.1, dur: float = 2.2, font: str = "",
+                sub_k: float = SUB_K) -> Path:
     i = ce.info(src)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
-        strip_png(title, sub, i["w"], i["h"], ce._font(font), T / "s.png")
+        strip_png(title, sub, i["w"], i["h"], ce._font(font), T / "s.png", sub_k=sub_k)
         fc = ("[1:v]format=rgba,fade=t=in:st=%.3f:d=0.3:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[l];"
               "[0:v][l]overlay=0:0:shortest=1,format=yuv420p[o]") % (start, start + max(0.4, dur - 0.3))
         ce._run(["-i", str(src), "-loop", "1", "-framerate", "30", "-t", "%.3f" % i["sec"], "-i", str(T / "s.png"),
@@ -160,6 +179,53 @@ def join(segs: list[Path], how: str, fade: float, out: Path) -> Path:
         return out
     return ce.join(segs, d if d is not None else fade, out, tr)
 
+def join_each(segs: list[Path], hows: list[str], fade: float, out: Path) -> Path:
+    """Join with one way per seam (hows[k] joins segs[k] to segs[k + 1]); one way for all -> join()."""
+    if len(set(hows)) <= 1:
+        return join(segs, hows[0] if hows else "fade", fade, out)
+    with tempfile.TemporaryDirectory() as td:
+        acc = segs[0]
+        for k, s in enumerate(segs[1:]):
+            nxt = Path(td) / ("j%d.mp4" % k)
+            join([acc, s], hows[k], fade, nxt)
+            acc = nxt
+        import shutil
+        shutil.copy2(acc, out)
+    return out
+
+def portrait(src: Path, region, out: Path, title: str = "", sub: str = "", font: str = "", size=(720, 1280)) -> Path:
+    """Portrait focus: an 8:9 crop around region (x, y, w, h px; grown to fit it) scaled into the middle of size, dark
+    bands above and below with a big title (top) and subline (bottom)."""
+    from PIL import Image, ImageDraw
+    i = ce.info(src)
+    W, H = size
+    ph = W * 9 // 8
+    x, y, bw, bh = region
+    ch = min(i["h"], max(bh * 1.25, i["h"] * 0.6, bw * 1.25 * 9 / 8))
+    cw = min(i["w"], ch * 8 / 9)
+    ch = cw * 9 / 8
+    cx = min(max(0, x + bw / 2 - cw / 2), i["w"] - cw)
+    cy = min(max(0, y + bh / 2 - ch / 2), i["h"] - ch)
+    top = (H - ph) // 2
+    with tempfile.TemporaryDirectory() as td:
+        T = Path(td)
+        img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        f1, f2 = clip_promo._f(ce._font(font), int(0.06 * H)), clip_promo._f(ce._font(font), int(0.032 * H), "Medium")
+        for txt, f, band_y in ((title, f1, top // 2), (sub, f2, top + ph + (H - top - ph) // 2)):
+            if txt:
+                b = d.textbbox((0, 0), txt, font=f)
+                while b[2] - b[0] > W * 0.92 and f.size > 12:
+                    f = clip_promo._f(ce._font(font), f.size - 4)
+                    b = d.textbbox((0, 0), txt, font=f)
+                d.text(((W - (b[2] - b[0])) // 2 - b[0], band_y - (b[3] - b[1]) // 2 - b[1]), txt, font=f, fill=(245, 245, 245, 255))
+        img.save(T / "bands.png")
+        fc = ("[0:v]crop=%d:%d:%d:%d,scale=%d:%d:flags=lanczos,setsar=1,pad=%d:%d:0:%d:color=0x0c0c10[v];"
+              "[v][1:v]overlay=0:0:shortest=1,format=yuv420p[o]") % (int(cw) // 2 * 2, int(ch) // 2 * 2, int(cx), int(cy), W, ph, W, H, top)
+        ce._run(["-i", str(src), "-loop", "1", "-framerate", "30", "-t", "%.3f" % i["sec"], "-i", str(T / "bands.png"),
+                 "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(out)])
+    return out
+
 def selftest(t: Path) -> list[str]:
     import clip_fx
     bad: list[str] = []
@@ -180,9 +246,25 @@ def selftest(t: Path) -> list[str]:
     if abs(ce.info(t / "he.mp4")["sec"] - 4.0) > 0.15:
         bad.append("hold_end: %s" % ce.info(t / "he.mp4"))
     lower_third(g, "Title", t / "lt.mp4", "sub", 0.1, 2.0)
-    band, top = clip_fx._px(t / "lt.mp4", 1.0, (320, int(360 * 0.74) + 4)), clip_fx._px(t / "lt.mp4", 1.0, (320, 40))
-    if not (sum(band) < sum(top) - 120):
-        bad.append("lower_third: band %s top %s" % (band, top))
+    y, bh = strip_png("Title", "sub", 640, 360, ce._font(""), t / "s.png")
+    band, top, side = (clip_fx._px(t / "lt.mp4", 1.0, p) for p in ((320, y + 3), (320, 40), (8, y + 3)))
+    if not (sum(band) < sum(top) - 120) or sum(side) < sum(top) - 60 or y < 360 * 0.6 or sum(clip_fx._px(t / "lt.mp4", 1.0, (int(640 * 0.27), y + 3))) < sum(top) - 60:
+        bad.append("lower_third must be a bottom-centre plate clear of the chips: band %s top %s side %s y %d" % (band, top, side, y))
+    if strip_png("T", "sub", 640, 720, "", t / "s2.png", sub_k=0.09)[1] <= strip_png("T", "sub", 640, 720, "", t / "s3.png")[1]:
+        bad.append("lower_third sub_k must grow the subline")
+    pl: list = []
+    tracked(g, rows, "A", t / "tp.mp4", 0.0, 3.0, placed=pl)
+    if len(pl) < 80:
+        bad.append("tracked chips must land in placed per frame: %d" % len(pl))
+    if abs(ce.info(join_each([g, g, g], ["cut", "dip"], 0.4, t / "je.mp4"))["sec"] - 8.5) > 0.2:
+        bad.append("per-seam join: %s" % ce.info(t / "je.mp4"))
+    portrait(g, (400, 100, 120, 80), t / "pf.mp4", "Big title", "sub")
+    pi = ce.info(t / "pf.mp4")
+    if (pi["w"], pi["h"]) != (720, 1280) or sum(clip_fx._px(t / "pf.mp4", 1.0, (360, 20))) > 60:
+        bad.append("portrait focus: %s" % pi)
+    import subprocess
+    if ce._font("") not in subprocess.run(["fc-list", ":charset=2192", "file"], capture_output=True, text=True).stdout:
+        bad.append("default font lacks the arrow glyph: %s" % ce._font(""))
     for how, want in (("cut", 6.0), ("dip", 5.5), ("whip", 5.75), ("fade", 5.6)):
         if abs(ce.info(join([g, g], how, 0.4, t / ("j_%s.mp4" % how)))["sec"] - want) > 0.15:
             bad.append("join %s: %s" % (how, ce.info(t / ("j_%s.mp4" % how))))

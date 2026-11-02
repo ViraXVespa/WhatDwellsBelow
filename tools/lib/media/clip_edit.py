@@ -97,7 +97,7 @@ def join(srcs: list[Path], fade: float, out: Path, transition: str = "fade") -> 
 def _font(font: str) -> str:
     if font:
         return font
-    p = subprocess.run(["fc-match", "-f", "%{file}", "sans"], capture_output=True, text=True)
+    p = subprocess.run(["fc-match", "-f", "%{file}", "sans:charset=2192"], capture_output=True, text=True)  # a sans that has the arrow (DejaVu/Noto)
     return p.stdout.strip() if p.returncode == 0 else ""
 
 def _text(text: str, h: int, pos: str, font: str, x: str = "(w-text_w)/2", enable: str = "", tmp: Path | None = None) -> str:

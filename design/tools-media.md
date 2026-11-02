@@ -71,7 +71,7 @@ Framing and overlays (`lib/media/clip_fx.py`; flags: `media.py clip --help`): `-
 
 Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. `--style promo` (`clip_promo.py`, also `clip wipe`): eased grip wipe, BEFORE/AFTER chip (`--subs`), `--end-card "T|S"`. Then `export --for x` and `--for gif`.
 
-Compose (`clip_compose.py`; options in its docstring): `clip punch`, `clip callout` (box or ring, leader, staggered chip), `clip montage` (titled segments, end card), `clip spec EDIT.json`. Tracking, hold, joins, lower third and chip placement: `lib/media/clip_track.py`.
+Compose (`clip_compose.py`; options in its docstring): `clip punch`, `clip callout` (box or ring, leader, staggered chip), `clip montage` (titled segments, end card), `clip spec EDIT.json`. Tracking, hold, joins, lower third, per-seam joins, portrait focus and chip placement: `lib/media/clip_track.py`; spec paths are relative to the spec file.
 
 ## Ref compare and scenario catalog
 
