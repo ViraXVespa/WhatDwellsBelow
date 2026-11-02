@@ -17,13 +17,16 @@ from pathlib import Path
 import clip_edit as ce
 import clip_fx
 import clip_promo
+import clip_track
+
+LAST_CHIP: list[float] = []  # the last static callout's chip rect (x, y, w, h): spec nudges later chips off it
 
 def punch(src: Path, box, out: Path, start: float = 0.5, dur: float = 0.4, hold: float = 1.2) -> Path:
     i = ce.info(src)
     return clip_fx.zoom(src, (0, 0, i["w"], i["h"]), box, out, (0, 0), start, dur, back=hold)
 
 def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float = 0.0, color: str = "#ffd23f", font: str = "",
-            shape: str = "box", leader: bool = False) -> Path:
+            shape: str = "box", leader: bool = False, avoid=()) -> Path:
     """Box or ring outline + chip: the chip sits below the shape (above it when it is in the lower half), kept inside the frame,
     offset by a leader line when `leader`; the shape fades in first and the chip 0.2 s later (out in reverse)."""
     from PIL import Image, ImageColor, ImageDraw
@@ -43,8 +46,11 @@ def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float
         (d.ellipse if shape == "ring" else d.rectangle)([x, y, x + bw, y + bh], outline=rgb, width=th)
         gap = h // 12 if leader else th
         below = y + bh / 2 < h / 2
-        cy = min(max(0, y + bh + gap if below else y - c.height - gap), h - c.height)
-        cx = min(max(0, x + (bw // 2 if leader else 0)), w - c.width)
+        # keep out of the label/title corners and of chips already placed (clip_track.place_chip)
+        cx, cy = clip_track.place_chip(c.width, c.height, (x + (bw // 2 if leader else 0), y, bw, bh), w, h,
+                                       clip_track.corners(w, h) + list(avoid), gap)
+        below = cy > y
+        LAST_CHIP[:] = [cx, cy, c.width, c.height]
         if leader:
             d.line([(x + bw // 2, y + bh if below else y), (cx + th, cy if below else cy + c.height)], fill=rgb, width=th)
         lab.alpha_composite(c, (cx, cy))
@@ -60,8 +66,14 @@ def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float
                  "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(out)])
     return out
 
-def montage(srcs: list[Path], out: Path, titles: list[str] | None = None, fade: float = 0.4, end: tuple[str, str] | None = None, font: str = "") -> Path:
-    """Each clip at the first clip's size, its chip title over its first 1.6 s, crossfaded; then the optional end card."""
+def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float = 0.4, end: tuple[str, str] | None = None, font: str = "",
+            join: str = "fade", title_style: str = "chip", hold_end: float = 0.0, root: Path | None = None) -> Path:
+    """Each clip at the first clip's size, its title over its first 1.6 s (chip top-left, or a lower-third strip), joined by
+    `join` (clip_track.JOINS: fade, cut, dip, whip); then the optional end card. A src may be a dict
+    {"clip": PATH, "title": ..., "sub": ..., "callouts": [callout steps]} whose callouts run on that segment only.
+    hold_end: freeze the last frame this long (before the end card)."""
+    segs_in = [s if isinstance(s, dict) else {"clip": s} for s in srcs]
+    srcs = [Path(s["clip"]) for s in segs_in]
     a = ce.info(srcs[0])
     w, h = a["w"] - a["w"] % 2, a["h"] - a["h"] % 2
     font = ce._font(font)
@@ -71,7 +83,14 @@ def montage(srcs: list[Path], out: Path, titles: list[str] | None = None, fade: 
         segs = []
         for k, s in enumerate(srcs):
             fit = clip_fx.fit(s, (w, h), T / ("f%d.mp4" % k)) if (ce.info(s)["w"], ce.info(s)["h"]) != (w, h) else s
-            if titles[k]:
+            for j, st in enumerate(segs_in[k].get("callouts", [])):
+                fit = _step(st, fit, T / ("c%d_%d.mp4" % (k, j)), T, root, font, Path("."), [])
+            title = segs_in[k].get("title", titles[k])
+            if title and title_style == "lower":
+                fit = clip_track.lower_third(fit, title, T / ("l%d.mp4" % k), segs_in[k].get("sub", ""), 0.1, 2.2, font)
+                titles[k] = ""
+            elif title:
+                titles[k] = title
                 clip_promo.chip(titles[k], "", clip_promo.COL[1], font, h, T / ("t%d.png" % k))
                 lx = int(30 * h / 720)
                 fc = ("[1:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1,fade=t=out:st=1.6:d=0.3:alpha=1[l];[0:v][l]overlay=%d:%d:shortest=1,format=yuv420p[o]" % (lx, lx))
@@ -81,7 +100,10 @@ def montage(srcs: list[Path], out: Path, titles: list[str] | None = None, fade: 
                 fit = seg
             segs.append(fit)
         body = T / "body.mp4"
-        ce.join(segs, fade, body) if len(segs) > 1 else shutil.copy2(segs[0], body)
+        clip_track.join(segs, join, fade, body) if len(segs) > 1 else shutil.copy2(segs[0], body)
+        if hold_end > 0:
+            clip_track.hold_end(body, hold_end, T / "held.mp4")
+            body = T / "held.mp4"
         if end:
             clip_promo.card(end[0], end[1], font, w, h, T / "e.png")
             ce._run(["-sseof", "-0.2", "-i", str(body), "-frames:v", "1", str(T / "last.png")])
@@ -89,46 +111,68 @@ def montage(srcs: list[Path], out: Path, titles: list[str] | None = None, fade: 
                   "[1:v]format=rgba,fade=t=in:st=0.15:d=0.45:alpha=1[ec];[eb][ec]overlay=0:0,format=yuv420p[o]") % (14 * h / 720)
             ce._run(["-loop", "1", "-framerate", "30", "-t", "1.8", "-i", str(T / "last.png"), "-loop", "1", "-framerate", "30", "-t", "1.8", "-i", str(T / "e.png"),
                      "-filter_complex", fc, "-map", "[o]", "-an", "-t", "1.8", *ce.H264, str(T / "end.mp4")])
-            ce.join([body, T / "end.mp4"], fade, out)
+            clip_track.join([body, T / "end.mp4"], join if join != "cut" else "fade", fade, out)
         else:
             shutil.copy2(body, out)
     return out
 
+def _step(s: dict, cur: Path, nxt: Path, T: Path, root, font: str, base: Path, placed: list) -> Path:
+    """One spec step from cur into nxt. placed: [(chip rect, start, end)] of earlier callouts, nudged around."""
+    op = s["op"]
+    i = ce.info(cur)
+    rel = lambda p: p if Path(p).is_absolute() else base / p
+    box = clip_fx.box_px(s["box"], i["w"], i["h"], root, s.get("movie", "")) if "box" in s else None
+    st, en = float(s.get("start", 0.0)), float(s.get("end", 0.0)) or i["sec"]
+    avoid = [r for r, a, b in placed if a < en and st < b]
+    if op == "punch":
+        punch(cur, box, nxt, s.get("start", 0.5), s.get("dur", 0.4), s.get("hold", 1.2))
+    elif op == "callout" and "track" in s:
+        rows = clip_track.keys(s["track"], i["w"], i["h"], root, s.get("movie", ""), base)
+        clip_track.tracked(cur, rows, s["text"], nxt, st, en, s.get("color", "#ffd23f"), font, avoid)
+    elif op == "callout":
+        callout(cur, box, s["text"], nxt, st, en, s.get("color", "#ffd23f"), font, s.get("style", "box"), bool(s.get("leader", False)), avoid)
+        placed.append((tuple(LAST_CHIP), st, en))
+    elif op == "hold":
+        clip_track.hold(cur, float(s["at"]), float(s.get("dur", 1.0)), nxt)
+    elif op == "lower_third":
+        clip_track.lower_third(cur, s["title"], nxt, s.get("sub", ""), s.get("start", 0.1), s.get("dur", 2.2), font)
+    elif op == "caption":
+        ce.caption(cur, s.get("text", ""), nxt, s.get("start", 0.0), s.get("end", 0.0), s.get("pos", "bottom"), font)
+    elif op == "ba":
+        clip_fx.ba(cur, rel(s["after"]), nxt, box, s.get("layout", "auto"), tuple(s.get("labels", ("Before", "After"))), font=font,
+                   style=s.get("style", "promo"), subs=tuple(s.get("subs", ("", ""))), end=tuple(s["end_card"]) if s.get("end_card") else None)
+    elif op == "export":
+        nxt = nxt.with_suffix(".gif" if s.get("for") == "gif" else ".mp4")
+        src = cur
+        if s.get("for") == "portrait":
+            src = clip_fx.fit(cur, clip_fx.SIZES["x-portrait"], T / "portrait_fit.mp4", s.get("fill", "blur"))
+        ce.export(src, s.get("for", "x"), nxt, s.get("width", 0))
+    else:
+        raise ValueError("spec step: unknown op %r" % op)
+    return nxt
+
 def spec(path: Path, out: Path, root: Path | None = None) -> list[dict]:
-    """Run a JSON edit list; returns one row per step (op, out, sec)."""
+    """Run a JSON edit list; returns one row per step (op, sec). Montage keys: join (fade|cut|dip|whip), title_style
+    (chip|lower), hold_end (s), and dict entries with per-segment callouts."""
     d = json.loads(path.read_text(encoding="utf-8"))
     rel = lambda p: p if Path(p).is_absolute() else path.parent / p
     font = d.get("font", "")
-    rows = []
+    rows, placed = [], []
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
         if "montage" in d:
-            cur = montage([rel(p) for p in d["montage"]], T / "m.mp4", d.get("titles"), d.get("fade", 0.4),
-                          tuple(d["end_card"]) if d.get("end_card") else None, font)
+            segs = [dict(m, clip=str(rel(m["clip"]))) if isinstance(m, dict) else rel(m) for m in d["montage"]]
+            cur = montage(segs, T / "m.mp4", d.get("titles"), d.get("fade", 0.4), tuple(d["end_card"]) if d.get("end_card") else None, font,
+                          d.get("join", "fade"), d.get("title_style", "chip"), float(d.get("hold_end", 0.0)), root)
             rows.append({"op": "montage", "sec": ce.info(cur)["sec"]})
         else:
             cur = rel(d["in"])
         for k, s in enumerate(d.get("steps", [])):
-            op, nxt = s["op"], T / ("s%d.mp4" % k)
-            i = ce.info(cur)
-            box = clip_fx.box_px(s["box"], i["w"], i["h"], root, s.get("movie", "")) if "box" in s else None
-            if op == "punch":
-                punch(cur, box, nxt, s.get("start", 0.5), s.get("dur", 0.4), s.get("hold", 1.2))
-            elif op == "callout":
-                callout(cur, box, s["text"], nxt, s.get("start", 0.0), s.get("end", 0.0), s.get("color", "#ffd23f"), font,
-                        s.get("style", "box"), bool(s.get("leader", False)))
-            elif op == "caption":
-                ce.caption(cur, s.get("text", ""), nxt, s.get("start", 0.0), s.get("end", 0.0), s.get("pos", "bottom"), font)
-            elif op == "ba":
-                clip_fx.ba(cur, rel(s["after"]), nxt, box, s.get("layout", "auto"), tuple(s.get("labels", ("Before", "After"))), font=font,
-                           style=s.get("style", "promo"), subs=tuple(s.get("subs", ("", ""))), end=tuple(s["end_card"]) if s.get("end_card") else None)
-            elif op == "export":
-                nxt = T / ("s%d%s" % (k, ".gif" if s.get("for") == "gif" else ".mp4"))
-                ce.export(cur, s.get("for", "x"), nxt, s.get("width", 0))
-            else:
-                raise ValueError("spec step %d: unknown op %r" % (k, op))
-            cur = nxt
-            rows.append({"op": op, "sec": ce.info(cur)["sec"] if cur.suffix == ".mp4" else None})
+            try:
+                cur = _step(s, cur, T / ("s%d.mp4" % k), T, root, font, path.parent, placed)
+            except ValueError as e:
+                raise ValueError("spec step %d: %s" % (k, e))
+            rows.append({"op": s["op"], "sec": ce.info(cur)["sec"] if cur.suffix == ".mp4" else None})
         shutil.copy2(cur, out)
     return rows
 
@@ -152,4 +196,27 @@ def selftest(t: Path) -> list[str]:
     rows = spec(t / "spec.json", t / "spec.mp4")
     if [r["op"] for r in rows] != ["punch", "callout"] or abs(ce.info(t / "spec.mp4")["sec"] - 3.0) > 0.15:
         bad.append("spec: %s" % rows)
+    # montage options: per-segment callouts, lower-third titles, dip join, hold_end
+    (t / "m.json").write_text(json.dumps({"montage": [{"clip": "ca.mp4", "title": "One", "callouts": [{"op": "callout", "box": [200, 100, 120, 80], "text": "A"}]}, "cb.mp4"],
+                                          "join": "dip", "title_style": "lower", "hold_end": 1.0}))
+    spec(t / "m.json", t / "m2.mp4")
+    if abs(ce.info(t / "m2.mp4")["sec"] - (3 + 2 - 0.5 + 1.0)) > 0.2:
+        bad.append("montage options: %s" % ce.info(t / "m2.mp4"))
+    if not near(clip_fx._px(t / "m2.mp4", 1.5, (200, 140)), (255, 210, 63), 90):
+        bad.append("montage per-segment callout missing")
+    # two callouts on the same spot: the second chip is nudged off the first; neither lands in a title corner
+    two = [{"op": "callout", "box": [260, 150, 100, 50], "text": "One"}, {"op": "callout", "box": [260, 150, 100, 50], "text": "Two"}]
+    placed: list = []
+    c1 = _step(two[0], a, t / "n1.mp4", t, None, "", t, placed)
+    _step(two[1], c1, t / "n2.mp4", t, None, "", t, placed)
+    r1, r2 = placed[0][0], placed[1][0]
+    if clip_track._hit(r1, r2) or any(clip_track._hit(r, c) for r in (r1, r2) for c in clip_track.corners(640, 360)):
+        bad.append("callout nudge/corners: %s %s" % (r1, r2))
+    # tracked callout and hold through a spec
+    (t / "trk.json").write_text(json.dumps({"in": "ca.mp4", "steps": [{"op": "callout", "track": [[0, 40, 40, 80, 60], [2, 440, 200, 80, 60]], "text": "T"},
+                                                                       {"op": "hold", "at": 1.0, "dur": 0.5}]}))
+    spec(t / "trk.json", t / "trk.mp4")
+    if abs(ce.info(t / "trk.mp4")["sec"] - 3.5) > 0.15:
+        bad.append("spec track+hold: %s" % ce.info(t / "trk.mp4"))
+    bad += clip_track.selftest(t)
     return bad

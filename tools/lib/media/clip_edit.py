@@ -144,9 +144,11 @@ def export(src: Path, kind: str, out: Path, width: int = 0) -> tuple[Path, list[
         _run(["-i", str(src), "-vf", "fps=15,scale=%d:-2:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];"
               "[b][p]paletteuse=dither=bayer:bayer_scale=5" % w, str(out)])
     else:
-        w = width or X_MAX["w"]
+        # portrait (or a taller-than-wide source): the X box turned on its side, 720x1280
+        tall = kind == "portrait" or i["h"] > i["w"]
+        w = width or (X_MAX["h"] if tall else X_MAX["w"])
         _run(["-i", str(src), "-vf", "scale='min(%d,iw)':'min(%d,ih)':force_original_aspect_ratio=decrease,"
-              "pad=ceil(iw/2)*2:ceil(ih/2)*2,fps='min(60,source_fps)'" % (w, X_MAX["h"]), "-an", *H264, str(out)])
+              "pad=ceil(iw/2)*2:ceil(ih/2)*2,fps='min(60,source_fps)'" % (w, X_MAX["w"] if tall else X_MAX["h"]), "-an", *H264, str(out)])
     o = info(out) if kind != "gif" else {**info(out), "mb": round(out.stat().st_size / 1048576, 2)}
     bad = []
     if o["sec"] > X_MAX["sec"]:
@@ -182,6 +184,10 @@ def selftest(root: Path) -> list[str]:
         checks.append(("export-x", info(x), lambda i: i["w"] <= 1280 and i["h"] <= 720 and i["codec"] == "h264" and not xbad))
         g, gbad = export(a, "gif", t / "g.gif", 320)
         checks.append(("export-gif", info(g), lambda i: i["w"] == 320 and not gbad))
+        pcli = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", "export", str(a), "--for", "portrait", "--out", str(t / "p.mp4")],
+                              capture_output=True, text=True, cwd=str(root))
+        checks.append(("export-portrait", info(t / "p.mp4") if (t / "p.mp4").is_file() else {"rc": pcli.returncode},
+                       lambda i: (i.get("w"), i.get("h")) == (720, 1280)))
         # spec through the real CLI (argv parse and dispatch): FILE.json must not be probed as a clip
         (t / "e.json").write_text(json.dumps({"in": "a.mp4", "steps": [{"op": "callout", "box": [100, 100, 300, 200], "text": "x", "start": 0.2, "end": 1.2}]}), encoding="utf-8")
         cli = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", "spec", str(t / "e.json"), "--out", str(t / "e.mp4")],
@@ -278,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pos", choices=("top", "bottom"), default="bottom", help="caption position")
     ap.add_argument("--labels", default="Before,After", help="sbs: the two labels, comma separated")
     ap.add_argument("--font", default="", help="caption font file (default fontconfig sans)")
-    ap.add_argument("--for", dest="kind", choices=("x", "gif"), default="x", help="export target")
+    ap.add_argument("--for", dest="kind", choices=("x", "gif", "portrait"), default="x", help="export target (portrait: 720x1280, --fill blur unless set)")
     ap.add_argument("--width", type=int, default=0, help="export width (x: max 1280; gif: default 640)")
     ap.add_argument("--box", action="append", default=[], help="crop/zoom/mark/ba: X,Y,W,H in px or fractions, or a region name (mark: repeat)")
     ap.add_argument("--to", default="", help="zoom: end box (the view eases from --box to --to)")
@@ -336,8 +342,10 @@ def main(argv: list[str] | None = None) -> int:
         sbs(ins[0], ins[1], out, (labs[0], labs[1]), args.font, args.stack)
     elif args.op == "export":
         src = ins[0]
-        if args.size:
-            src = clip_fx.fit(src, clip_fx.size_of(args.size), out.with_suffix(".fit.mp4"), args.fill)
+        size = args.size or ("x-portrait" if args.kind == "portrait" else "")
+        if size:
+            fill = "blur" if args.kind == "portrait" and "--fill" not in (argv if argv is not None else sys.argv) else args.fill
+            src = clip_fx.fit(src, clip_fx.size_of(size), out.with_suffix(".fit.mp4"), fill)
         _, problems = export(src, args.kind, out, args.width)
         if src != ins[0]:
             src.unlink()
