@@ -24,6 +24,10 @@ const SUN_SOFT := 0.1
 ## Hub marks are per-cell coverage on the ground grid (cells per metre; Chunky.GRID_M): no blur, no quad pad.
 const HUB_GRID := 128.0 / T.PLAYER_H  # the player texel (Chunky.GRID_M)
 const GRID_M := 1.0 / HUB_GRID
+## Marks sit on the ground grid everywhere (hub and dungeon share it). Debug plant (dungeon_mark_check.gd): off-grid.
+static var plant_ungrid := false
+static func on_grid() -> bool:
+	return not plant_ungrid
 const RAISED_M := 0.05  # a foot this far above the other sole is raised (a step); less is a standing stance
 ## Airborne (fly / hop): sole above the floor by more than AIR_MIN m drops straight down and shifts along the light by
 ## its altitude; size and darkness fall off with altitude (floors AIR_S_MIN / AIR_A_MIN at AIR_S_M / AIR_A_M m).

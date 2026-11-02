@@ -1,0 +1,66 @@
+extends RefCounted
+
+## Dungeon character marks on the hub's shared mark path (dungeon-marks flow): every live mark of the player and the
+## enemies is per-cell on the ground grid (lit_k HUB_GRID) and, for a sticker mark, reads per-column contact.
+## .grid: "" when fine, else the first bad body. .plant_on sets lit_k.plant_ungrid (the old dungeon path: no grid,
+## no contact); after a wait .plant_caught must read "caught" (it clears the plant).
+
+const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const NEAR := 12.0
+
+## .to_torch moves the player onto open floor 1-1.5 m from the light cast (torch/crystal, LightRt._casts) nearest it (so a torch mark is live).
+var to_torch: String:
+	get:
+		var tree: SceneTree = Engine.get_main_loop() as SceneTree
+		var p: Node3D = tree.get_first_node_in_group("player") as Node3D
+		var feet := Vector2(p.global_position.x, p.global_position.z)
+		var best := Vector2.INF
+		for c: Dictionary in LightRt._casts:
+			if feet.distance_to(c["xz"]) < feet.distance_to(best):
+				best = c["xz"]
+		if best == Vector2.INF:
+			return "no light casts"
+		for r in [1.0, 1.25, 1.5]:
+			for k in 8:
+				var at: Vector2 = best + Vector2.from_angle(k * TAU / 8.0) * r
+				if LightRt.floor_open(at):
+					p.global_position = Vector3(at.x, p.global_position.y, at.y)
+					return "ok"
+		return "no open floor by torch"
+
+var grid: String:
+	get:
+		return fault()
+var plant_on: String:
+	get:
+		K.plant_ungrid = true
+		return "set"
+var plant_caught: String:
+	get:
+		var r: String = fault()
+		K.plant_ungrid = false
+		return "caught" if r != "" else "missed"
+
+static func fault() -> String:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var live: int = 0
+	var bodies: int = 0
+	var marks: int = 0
+	for g in ["player", "enemies"]:
+		for b: Node in tree.get_nodes_in_group(g):
+			var lit: Node = b.get_node_or_null("ActorLit")
+			if lit == null or (b as Node3D).global_position.distance_to(tree.get_first_node_in_group("player").global_position) > NEAR:
+				continue
+			bodies += 1
+			for m: MeshInstance3D in lit.get("marks"):
+				marks += 1
+				var mat: ShaderMaterial = m.material_override as ShaderMaterial
+				if not m.visible or mat == null:
+					continue
+				live += 1
+				if absf(float(mat.get_shader_parameter("grid")) - K.HUB_GRID) > 0.001:
+					return "%s off grid (grid=%s)" % [b.name, mat.get_shader_parameter("grid")]
+				if String(lit.get("solid")) == "" and float(mat.get_shader_parameter("contact_on")) < 0.5:
+					return "%s no per-column contact" % b.name
+	return "" if live > 0 else "no live marks (bodies=%d marks=%d)" % [bodies, marks]

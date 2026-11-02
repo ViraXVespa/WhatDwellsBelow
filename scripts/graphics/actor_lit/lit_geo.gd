@@ -11,7 +11,7 @@ static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, t
 	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
 	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot)) if tucked else 0.0
 	# Hub marks snap to hub grid cells (K.GRID_M) (up to a cell down-screen): tuck two more cells so both boots (heels above their toes too) sit on the mark.
-	if tucked and not App.in_dungeon:
+	if tucked and K.on_grid():
 		tuck += 2.0 * K.GRID_M
 	var back: Vector2 = Vector2(0.0, -1.0)
 	var cam: Camera3D = lit.get_viewport().get_camera_3d()
@@ -68,7 +68,7 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	# Hub: one ground cell (K.GRID_M) of pad all round, past the sole too, so a cell the feet straddle draws whole
 	# (the shader clamps reads at the contact row) and the mark meets both boots at any facing.
 	var sole_v: float = span.w - 0.5 / th
-	var pad: float = clampf(ceilf(K.GRID_M / maxf(px, 1e-4)), 0.0, 8.0) if not App.in_dungeon else 0.0
+	var pad: float = clampf(ceilf(K.GRID_M / maxf(px, 1e-4)), 0.0, 8.0) if K.on_grid() else 0.0
 	var x0: float = span.x * tw - pad
 	var x1: float = span.z * tw + pad
 	var y0: float = span.y * th - pad

@@ -185,7 +185,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			shade_mat.set_shader_parameter("sun_cancel", 1.0 if slot == 0 and not App.in_dungeon else 0.0)
 			if slot == 0 and shade_mat.get_shader_parameter("hull_n") != Hulls._n:
 				Hulls.bind(shade_mat)
-			shade_mat.set_shader_parameter("grid", 0.0 if App.in_dungeon else K.HUB_GRID)
+			shade_mat.set_shader_parameter("grid", K.HUB_GRID if K.on_grid() else 0.0)
 		node.visible = true
 
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
@@ -205,7 +205,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	if mat != null:
 		mat.set_shader_parameter("albedo_tex", Soles._solid(tex, solid) if solid != "" else Emis.mask(tex, Emis.rule_of(get_parent())))
 		foot = Soles._foot(tex) if solid == "profile" else 0
-		var per_col: bool = solid == "" and not App.in_dungeon
+		var per_col: bool = solid == "" and K.on_grid()
 		mat.set_shader_parameter("contact_on", 1.0 if per_col else 0.0)
 		if per_col:
 			mat.set_shader_parameter("contact_tex", Contact.tex(tex, Soles._soles(tex), px, plant_flat))

@@ -1,0 +1,72 @@
+{
+  "name": "dungeon-marks",
+  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 2.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": false,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            192.5,
+            0,
+            275.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.to_torch",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "ms": 1200
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.grid",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "marks"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.plant_on",
+      "equals": "set"
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "shot",
+      "name": "marks-planted-old"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.plant_caught",
+      "equals": "caught"
+    }
+  ]
+}
