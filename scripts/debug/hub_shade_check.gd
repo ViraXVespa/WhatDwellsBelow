@@ -3,20 +3,26 @@ extends RefCounted
 ## Building faces turned from the sun read as shaded: per face (FaceLit.lam < SUNWARD) the CPU twin of face_lit.gd
 ## over a GRID of texels, mean light (no pools) <= SHADE_MAX (FaceLit.SHADE, the shaded-ground level, plus slack);
 ## lantern pools on top peak <= FaceLit.SUN_CAP (sunlit art). bad: "" or the failing faces; report: every face;
-## plant: unshaded faces (flat) with 8x pools + 0.3 and no cap, must be "caught" on both counts.
+## plant: unshaded faces (flat) with 8x pools + 0.3 and no cap, must be "caught" on both counts. Mean also >= SHADE_MIN
+## (FaceLit.SHADE, the shaded ground): a front heavier than the ground beside it reads wrong; plant_heavy (faces at
+## SHADE instead of FaceLit.FILL) must be "caught".
 
 const FaceLit := preload("res://scripts/world/camp_build/face_lit.gd")
 const Pools := preload("res://scripts/graphics/light_rt/pools.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const GRID := 16
 const SUNWARD := 0.5
-const SHADE_MAX := 0.55
+const SHADE_MAX := 0.6
+const SHADE_MIN := FaceLit.SHADE
 const PLANT_POOL := 8.0
 const PLANT_ADD := 0.3  # a lamp over-bright even where its graze on the face is ~0
 
 var bad: String:
 	get:
 		return _run(false)[0]
+var plant_heavy: String:
+	get:
+		return "caught" if _run(false, true)[0].contains("heavy=") else "missed"
 var report: String:
 	get:
 		return _run(false)[1]
@@ -25,7 +31,7 @@ var plant: String:
 		var b: String = _run(true)[0]
 		return "caught" if b.contains("shade=") and b.contains("peak=") else "missed: " + b
 
-static func _run(planted: bool) -> Array:
+static func _run(planted: bool, heavy := false) -> Array:
 	var faces: Array = []
 	_walk((Engine.get_main_loop() as SceneTree).root, faces)
 	var bad := PackedStringArray()
@@ -49,7 +55,7 @@ static func _run(planted: bool) -> Array:
 			var l: float = (c.r + c.g + c.b) / 3.0
 			for j in GRID:
 				var v: float = (j + 0.5) / GRID
-				var base: float = lerpf(1.0, FaceLit.rel(l, planted, lm) * FaceLit.band(v) * FaceLit.edge(u, planted), FaceLit.K)
+				var base: float = lerpf(1.0, FaceLit.rel(l, planted, lm) * (FaceLit.SHADE / FaceLit.FILL if heavy else 1.0) * FaceLit.band(v) * FaceLit.edge(u, planted), FaceLit.K)
 				var q := Vector3(x, s.global_position.y + h * (0.5 - v), s.global_position.z) + nrm * 0.02
 				var pool: float = Pools.light_at(q, nrm, FaceLit.POOL_WRAP).get_luminance() * (PLANT_POOL if planted else 1.0) + (PLANT_ADD if planted else 0.0)
 				sum += base
@@ -58,6 +64,8 @@ static func _run(planted: bool) -> Array:
 		rows.append("%s lam=%.2f mean=%.3f peak=%.3f" % [s.name, lm, mean, peak])
 		if mean > SHADE_MAX:
 			bad.append("%s shade=%.3f" % [s.name, mean])
+		if mean < SHADE_MIN:
+			bad.append("%s heavy=%.3f" % [s.name, mean])
 		if peak > FaceLit.SUN_CAP + 0.001:
 			bad.append("%s peak=%.3f" % [s.name, peak])
 	return [", ".join(bad), " | ".join(rows)]

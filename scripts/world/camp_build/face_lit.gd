@@ -13,7 +13,11 @@ const K := 1.0
 ## (lam, 0 for a face turned from the sun) times the yard light in front of it (shadows); the rest sits at SHADE, the
 ## bake's shaded-ground level, so a face in its building's own shade reads as dark as the shaded ground beside it.
 ## Lantern pools add on top, capped at SUN_CAP (sunlit art): a lamp never lights a spot past full sun.
-const SHADE := 0.46  # HubCast.SHADE_NEAR
+const SHADE := 0.46  # HubCast.SHADE_NEAR (awnings, tarps)
+## A wall face in its own shade still sees the open sky and the sunlit yard (bounce), so it sits above the shaded
+## ground: FILL. With the hem/base band and the side falloff a south front measures ~0.75 of its art, against the
+## ground's 0.51 (sun 1). At SHADE the fronts read heavier than the ground beside them.
+const FILL := 0.64
 const SUN_CAP := 1.0
 const EDGE := 0.74
 const EDGE_SPAN := 0.3
@@ -33,7 +37,7 @@ static var _sh: Shader
 static func rel(l: float, flat := false, lam := 0.0) -> float:
 	if flat:
 		return 1.0
-	return lerpf(SHADE, 1.0, lam * clampf((l - HubCast.SHADE_NEAR) / (1.0 - HubCast.SHADE_NEAR), 0.0, 1.0))
+	return lerpf(FILL, 1.0, lam * clampf((l - HubCast.SHADE_NEAR) / (1.0 - HubCast.SHADE_NEAR), 0.0, 1.0))
 ## Sun Lambert of a world normal against flat ground (the bake sun: shadows fall along HubCast.AWAY, REACH per metre).
 static func lam(n: Vector3) -> float:
 	var sun := Vector3(-HubCast.AWAY.x, 1.0 / HubCast.REACH, -HubCast.AWAY.y).normalized()
@@ -78,13 +82,13 @@ void fragment() {
 	vec2 luv = clamp((vec2(wpos.x, wpos.z + ahead) - light_origin) / max(light_span, vec2(0.001)), vec2(0.0), vec2(1.0));
 	vec3 l = texture(light_tex, luv).rgb;
 	float lam = clamp(dot(wnrm, sun_dir) / max(sun_dir.y, 0.001), 0.0, 1.0);
-	vec3 rel = mix(vec3(SHADE), vec3(1.0), lam * clamp((l - floor_l) / (1.0 - floor_l), vec3(0.0), vec3(1.0)));
+	vec3 rel = mix(vec3(FILL), vec3(1.0), lam * clamp((l - floor_l) / (1.0 - floor_l), vec3(0.0), vec3(1.0)));
 	float band = mix(HEM, 1.0, smoothstep(0.0, HEM_SPAN, UV.y)) * mix(1.0, BASE, smoothstep(BASE_FROM, 1.0, UV.y));
 	float edge = mix(EDGE, 1.0, smoothstep(0.0, EDGE_SPAN, min(UV.x, 1.0 - UV.x)));
 	vec3 cell = (floor(wpos * GRID) + 0.5) / GRID;
 	ALBEDO = c.rgb * min(mix(vec3(1.0), rel * band * edge, k) + pool_light(cell + wnrm * 0.02, wnrm, POOL_WRAP), vec3(SUN_CAP));
 }
-""").replace("POOL_WRAP", str(POOL_WRAP)).replace("EDGE_SPAN", str(EDGE_SPAN)).replace("EDGE", str(EDGE)).replace("SUN_CAP", str(SUN_CAP)).replace("SHADE", str(SHADE)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
+""").replace("POOL_WRAP", str(POOL_WRAP)).replace("EDGE_SPAN", str(EDGE_SPAN)).replace("EDGE", str(EDGE)).replace("SUN_CAP", str(SUN_CAP)).replace("SHADE", str(SHADE)).replace("FILL", str(FILL)).replace("HEM_SPAN", str(HEM_SPAN)).replace("HEM", str(HEM)).replace("BASE_FROM", str(BASE_FROM)).replace("BASE", str(BASE))
 	var m := ShaderMaterial.new()
 	m.shader = _sh
 	m.set_shader_parameter("albedo_tex", tex)
