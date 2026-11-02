@@ -30,7 +30,7 @@
   "scripts/world/camp_build.gd": "d9378d1250be8505",
   "scripts/world/camp_build/build_parts.gd": "d529879219255370",
   "scripts/world/camp_build/build_util.gd": "555b99096d755c15",
-  "scripts/world/camp_build/face_lit.gd": "0a8170be05081f90",
+  "scripts/world/camp_build/face_lit.gd": "2ecfffda1da0d212",
   "scripts/world/camp_build/mesh.gd": "2efcdf6113807509",
   "scripts/world/camp_build/mesh_mat.gd": "5a817f76ba5d21fc",
   "scripts/world/camp_build/mesh_prim.gd": "6fa45d68822a1d8b",
