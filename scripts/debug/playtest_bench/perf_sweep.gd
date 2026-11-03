@@ -9,6 +9,8 @@ extends Node
 ## HB: seg=<place><n> is that stretch. Each of the four stretches is its own 99% bar.
 ## The last fps_pct line is the whole run. Hitch rows carry seg for the cold/warm pair.
 ## tree_ms splits into script_ms, queue_ms, and tail_ms. The sweep node stays at priority 0.
+## submit_ms is the pre-draw to post-draw window. The same post-draw stamps
+## obj/prim/draw for the visible, shadow, and canvas passes.
 ## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
 ## and sample_ms (LightRt.sample_xz, also counted inside tint_ms).
 ## lit_ms further splits into tint_ms, drive_ms, geo_ms, sync_ms, and shade_ms.
@@ -147,7 +149,29 @@ func _on_post_draw() -> void:
 	var parts: PackedFloat32Array = ActorLit.parts_ms()
 	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6])
 	HitchLog.set_submit_ms(float(now - _pre_us) / 1000.0)
+	_stamp_draw()
 	_post_us = now
+
+func _stamp_draw() -> void:
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		HitchLog.set_draw_split(-1, -1, -1, -1, -1, -1, -1, -1, -1)
+		return
+	var rid: RID = vp.get_viewport_rid()
+	HitchLog.set_draw_split(
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE, RenderingServer.VIEWPORT_RENDER_INFO_OBJECTS_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_OBJECTS_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_CANVAS, RenderingServer.VIEWPORT_RENDER_INFO_OBJECTS_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_CANVAS, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME),
+		_draw_info(rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_CANVAS, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME)
+	)
+
+func _draw_info(rid: RID, kind: RenderingServer.ViewportRenderInfoType, info: RenderingServer.ViewportRenderInfo) -> int:
+	return int(RenderingServer.viewport_get_render_info(rid, kind, info))
 
 func _process(delta: float) -> void:
 	if _done:

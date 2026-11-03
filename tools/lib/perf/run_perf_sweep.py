@@ -36,6 +36,12 @@ _PLACES = (
     ("warm_dungeon", "dungeon2"),
 )
 _PAIR_KEYS = ("dt_ms", "submit_ms", "tree_ms", "lit_ms", "geo_ms")
+# Present only when the sweep stamped the pass. Older hitch files omit them.
+_DRAW_KEYS = (
+    "draw_3d", "prim_3d", "obj_3d",
+    "draw_shadow", "prim_shadow", "obj_shadow",
+    "draw_canvas", "prim_canvas", "obj_canvas",
+)
 
 
 def _seg_fps(lines: list[str]) -> dict:
@@ -106,6 +112,14 @@ def _pair_line(label: str, cold: str, warm: str, stats: dict, grouped: dict) -> 
     for key in _PAIR_KEYS:
         short = key[:-3] if key.endswith("_ms") else key
         bits.append("%s_med=%s->%s" % (short, _med_key(cold_rows, key), _med_key(warm_rows, key)))
+    have_draw = False
+    for key in _DRAW_KEYS:
+        if any(key in row for row in cold_rows) or any(key in row for row in warm_rows):
+            have_draw = True
+            break
+    if have_draw:
+        for key in _DRAW_KEYS:
+            bits.append("%s_med=%s->%s" % (key, _med_key(cold_rows, key), _med_key(warm_rows, key)))
     return " ".join(bits)
 
 

@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import boot  # noqa: E402
 
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
-    ("summary",         "session/read_summary",           "A job's last run: index plus the newest summary (JOB)"),
+    ("summary",         "session/read_summary",           "A job's last run, or a capped slice (--match, --section, --jsonl --where key=eq:V)"),
     ("dump",            "session/session_dump",           "Dump a recent Grok session into one file"),
     ("share",           "session/grok_share",             "Pull a Grok share URL's conversation and images"),
     ("clean",           "session/clean_agent_logs",       "Delete raw logs under _logs/ (--new-week for the weekly clean)"),

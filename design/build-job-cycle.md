@@ -127,7 +127,7 @@ Lean: the task in her words; where the last result and its handoff notes live (c
 
 **Merge-back** (green prove, or red with `--red-gate`). A Grok worktree is a full clone on the week branch itself: commit there, then `git push origin grok-build-w{N}` (plain push, no force, never main); there is no separate commit to merge by hand, and the main checkout pulls it. Put a short note in the commit message (a file under the worktree's `_logs/`, `git commit -F`); resolve conflicts yourself. Do not wait for approval before the commit or the push. After the push: the done notice (`grok-build.md` Finish a unit).
 
-Read each job summary once via `session.py summary --job <name>` (index first, newest run). Do not open summary files directly.
+Read each job summary once via `session.py summary --job <name>` (index first, newest run). A slice of that file or a JSONL log uses `--section`, `--match`, or `--jsonl --where key=eq:VALUE` (PowerShell compares: `key=ge:N`, never an unquoted `>`). A `.jsonl` path with no filter is refused. Do not open summary files directly.
 
 A same-command rerun is valid only for `truncated`, timeout, crash, `busy` lock, or wrong scene, and then the same command once. A follow-up job with a new field named from a summary key does not need a User wait; questions still follow the rules above.
 

@@ -34,7 +34,7 @@ Intercept (raw tool is a failed lookup, not a fallback). `.grok/hooks/bin/wdb-pr
 - list_dir of the repo root -> tools/find.py route
 - git status / git log / git diff / git show -> tools/find.py changed
 - python -c -> tools/find.py stat, or tools/docs.py patch write for a script body
-- any read of `_logs/` -> tools/session.py summary --job <name>
+- any read of `_logs/` -> `python tools/session.py summary`. One job summary: `--job NAME`. A slice: `--section`, `--match`, `--head`, `--tail`, `--list 'GLOB'`. JSON lines: `--path FILE --jsonl --where key=eq:VALUE --group KEY --stat FIELD`. PowerShell: single-quote globs and `---` headings. Compares are `key=ge:N`, `le`, `gt`, `lt`, `ne`, `has`, `eq`. An unquoted `>` redirects and can drop the filter. A `.jsonl` path with no filter is refused.
 - a PNG or JPG, including under `_logs/` or `design/refs/` -> `shots.py review` in the forked session whose unit needs it. Do not read_file it. The shared gather does not open pictures. The summary is for logs, not pictures.
 - open whole design/code-map.md -> tools/docs.py code-map (row / patch / check)
 - open a whole script of the system being edited -> tools/find.py func
@@ -45,7 +45,7 @@ Intercept (raw tool is a failed lookup, not a fallback). `.grok/hooks/bin/wdb-pr
   it is under _logs/agent-py/
 - open tools/*.py to learn flags -> catalog row only
 - read the same job summary again this slice -> stop;
-  one read via tools/session.py summary --job <name> (index first, newest run;
+  one read via tools/session.py summary (filters above; unfiltered `--job` prints the newest summary;
   the hook denies opening any `_logs/` file directly)
 - a design doc, the agents file, or BOT.md edit -> python tools/check.py load-graph
   before the change is reported done. RESULT PASS is required. Do not defer it to ship

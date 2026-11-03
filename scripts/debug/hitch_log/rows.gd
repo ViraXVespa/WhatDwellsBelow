@@ -31,6 +31,17 @@ static var _sync_ms: float = -1.0
 static var _foot_ms: float = -1.0
 static var _quad_ms: float = -1.0
 static var _shade_ms: float = -1.0
+## Sweep only. Visible, shadow, and canvas counts for the frame whose submit_ms just closed.
+## -1 leaves the keys off the row. Draw-call total is already "draw"; these name the pass.
+static var _obj_3d: int = -1
+static var _prim_3d: int = -1
+static var _draw_3d: int = -1
+static var _obj_shadow: int = -1
+static var _prim_shadow: int = -1
+static var _draw_shadow: int = -1
+static var _obj_canvas: int = -1
+static var _prim_canvas: int = -1
+static var _draw_canvas: int = -1
 static var _proc_held: int = 0
 static var _t0_ms: int = 0
 static var _whys: PackedStringArray = PackedStringArray()
@@ -121,6 +132,16 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["quad_ms"] = snappedf(_quad_ms, 0.1)
 	if _shade_ms >= 0.0:
 		row["shade_ms"] = snappedf(_shade_ms, 0.1)
+	if _obj_3d >= 0:
+		row["obj_3d"] = _obj_3d
+		row["prim_3d"] = _prim_3d
+		row["draw_3d"] = _draw_3d
+		row["obj_shadow"] = _obj_shadow
+		row["prim_shadow"] = _prim_shadow
+		row["draw_shadow"] = _draw_shadow
+		row["obj_canvas"] = _obj_canvas
+		row["prim_canvas"] = _prim_canvas
+		row["draw_canvas"] = _draw_canvas
 	if _harness_on:
 		row["pt_ms"] = _pt_ms
 	return row
@@ -198,6 +219,17 @@ static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) ->
 
 static func set_bench_ms(ms: float) -> void:
 	_bench_ms = ms
+
+static func set_draw_split(obj_3d: int, prim_3d: int, draw_3d: int, obj_shadow: int, prim_shadow: int, draw_shadow: int, obj_canvas: int, prim_canvas: int, draw_canvas: int) -> void:
+	_obj_3d = obj_3d
+	_prim_3d = prim_3d
+	_draw_3d = draw_3d
+	_obj_shadow = obj_shadow
+	_prim_shadow = prim_shadow
+	_draw_shadow = draw_shadow
+	_obj_canvas = obj_canvas
+	_prim_canvas = prim_canvas
+	_draw_canvas = draw_canvas
 
 static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0) -> void:
 	_lit_ms = lit_ms

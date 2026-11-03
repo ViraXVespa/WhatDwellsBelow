@@ -216,7 +216,7 @@ def shell_reason(cmd: str, repo: Path | None, cwd: Path | None) -> str:
     if PY_C.search(cmd):
         return "python -c is denied. Use tools/find.py stat, or tools/docs.py patch write for a script body."
     if is_logs_path(cmd) and (LOG_READ.search(cmd) or LIST_CMD.search(cmd)):
-        return "Reading _logs/ is denied. Use tools/session.py summary --job <name>."
+        return "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
     if LIST_CMD.search(cmd) and not LENGTH.search(cmd):
         if BARE_LIST.search(cmd.strip()):
             return "Listing the repo root is denied. Use tools/find.py route."
@@ -259,7 +259,7 @@ def decide(event: dict) -> tuple[str, str]:
             if is_image_path(item):
                 return "deny", IMAGE_READ
             if is_logs_path(item):
-                return "deny", "Reading _logs/ is denied. Use tools/session.py summary --job <name>."
+                return "deny", "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
 
     cmd = shell_command(name, inp)
     if cmd:
@@ -314,6 +314,7 @@ def selftest() -> int:
         (ev("run_terminal_command", {"command": "Select-String -Path scripts -Pattern foo"}), "deny"),
         (ev("run_terminal_command", {"command": "Get-Content _logs/week-start/x.txt"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/session.py summary --job week-start"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/session.py summary --path _logs/web-perf/hitch.jsonl --jsonl --where ev=eq:hitch"}), "allow"),
         (ev("run_terminal_command", {"command": "python tools/session.py py --script _logs/agent-py/a.py"}), "allow"),
         (ev("run_terminal_command", {"command": "python tools/gate.py build --batch"}), "allow"),
         (ev("run_terminal_command", {"command": "python -c \"print(1)\""}), "deny"),

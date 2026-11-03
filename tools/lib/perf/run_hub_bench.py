@@ -194,7 +194,7 @@ def _median(vals: list[float]) -> float:
 
 def _split_suffix(row: dict) -> str:
     parts: list[str] = []
-    for key in ("script_ms", "queue_ms", "tail_ms", "bench_ms", "lit_ms", "sample_ms", "sample_n", "tint_ms", "drive_ms", "geo_ms", "sync_ms", "foot_ms", "quad_ms", "shade_ms"):
+    for key in ("script_ms", "queue_ms", "tail_ms", "bench_ms", "lit_ms", "sample_ms", "sample_n", "tint_ms", "drive_ms", "geo_ms", "sync_ms", "foot_ms", "quad_ms", "shade_ms", "obj_3d", "prim_3d", "draw_3d", "obj_shadow", "prim_shadow", "draw_shadow", "obj_canvas", "prim_canvas", "draw_canvas"):
         if key in row:
             parts.append("%s=%s" % (key, row.get(key, "")))
     if not parts:
@@ -232,6 +232,15 @@ def _run_line(rows: list[dict]) -> str:
         "foot_ms": [],
         "quad_ms": [],
         "shade_ms": [],
+        "obj_3d": [],
+        "prim_3d": [],
+        "draw_3d": [],
+        "obj_shadow": [],
+        "prim_shadow": [],
+        "draw_shadow": [],
+        "obj_canvas": [],
+        "prim_canvas": [],
+        "draw_canvas": [],
     }
     for row in rows:
         try:
@@ -788,7 +797,7 @@ def _echo_lines(lines: list[str]) -> list[str]:
             keep.append(ln)
         elif "isolate layer=" in ln or ln.startswith("HB: isolate") or ln.startswith("aba ") or ln.startswith("layers "):
             keep.append(ln)
-        elif ln.startswith("sustained=") or ln.startswith("sustained:"):
+        elif ln.startswith(("sustained=", "sustained:", "n=")):
             keep.append(ln)
     return keep or lines[:4]
 
