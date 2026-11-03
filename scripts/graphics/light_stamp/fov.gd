@@ -5,6 +5,8 @@ extends Object
 const K := preload("res://scripts/graphics/light_stamp/stamp_k.gd")
 
 static var _vis_buf: PackedByteArray = PackedByteArray()
+## Debug plant only (dungeon_wall_check): stamp without wall line-of-sight, the leaking path.
+static var plant_leak := false
 
 static func _disc(
 	rr: PackedFloat32Array,
@@ -36,7 +38,7 @@ static func _disc(
 	var py1: int = mini(ih - 1, sy + rpx)
 	var px0: int = maxi(0, sx - rpx)
 	var px1: int = mini(iw - 1, sx + rpx)
-	var block: bool = bool(src.get("occlude", true))
+	var block: bool = bool(src.get("occlude", true)) and not plant_leak
 	if _n >= 1 and block:
 		_fov_mark(walk, iw, ih, sx, sy, px0, py0, px1, py1)
 	var py: int = py0

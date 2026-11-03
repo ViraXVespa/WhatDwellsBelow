@@ -1,6 +1,6 @@
 {
   "name": "dungeon-marks",
-  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). The nearest torch/crystal mark points away from its light (.light; flipped toward it, .plant_light, must FAIL). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot. Prop marks (no bake, no sun): an ore node spawned by the torch takes the hub prop mark (prop_mark.gd), live from the torch/crystal casts; planted engine shadow + no mark must FAIL (shots props / props-planted-old).",
+  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). The nearest torch/crystal mark points away from its light (.light; flipped toward it, .plant_light, must FAIL). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot. Prop marks (no bake, no sun): an ore node spawned by the torch takes the hub prop mark (prop_mark.gd), live from the torch/crystal casts; planted engine shadow + no mark must FAIL (shots props / props-planted-old). Walls block live torch/crystal light (light_stamp/fov.gd line of sight; debug/dungeon_wall_check.gd): floor past a wall from every nearby cast stays near ambient while open floor at the same range is lit; restamped without line of sight (Fov.plant_leak, the leaking path, stamped and measured in one call) must FAIL (both stamped on the same ring in one call; light maps saved via WDB_WALL_MAPS).",
   "scene": "dungeon",
   "seed": 42,
   "floor": 1,
@@ -112,6 +112,25 @@
     {
       "op": "shot",
       "name": "props-planted-old"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_wall_check.to_wall",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "ms": 2500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_wall_check.leak",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_wall_check.walls_planted",
+      "equals": "caught"
     }
   ]
 }
