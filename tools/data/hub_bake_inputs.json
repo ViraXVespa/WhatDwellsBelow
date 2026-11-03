@@ -27,7 +27,7 @@
   "scripts/graphics/light_rt/cast_grid.gd": "64fc0dfbf4c9da67",
   "scripts/graphics/wrap_shader.gd": "6745d6d9850ad013",
   "scripts/app/app_bake.gd": "693d95d8873d0f9f",
-  "scripts/world/camp_build.gd": "d9378d1250be8505",
+  "scripts/world/camp_build.gd": "a4978cbad4dd69ad",
   "scripts/world/camp_build/build_parts.gd": "d529879219255370",
   "scripts/world/camp_build/build_util.gd": "555b99096d755c15",
   "scripts/world/camp_build/face_lit.gd": "2ecfffda1da0d212",

@@ -8,6 +8,75 @@ extends RefCounted
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const NEAR := 12.0
+const PROPS := ["gather", "breakables"]
+
+## Prop marks on the hub path, live from the torches/crystals (drive.gd _drive_many; no bake, no sun slot).
+## .props: every gather/breakable prop within NEAR has the hub prop mark (prop_mark.gd: ActorLit, no engine shadow),
+## at least one mark is live, and every live mark is on the grid and sourced at a light cast;
+## .plant_props_old puts the old path back on them (engine shadow, no mark) and must FAIL.
+## .to_prop spawns an ore node (gather_node.gd, the real spawn path) 1 m east of the player by the torch, since
+## seed 42's own props stand in unlit rooms far from any cast.
+var to_prop: String:
+	get:
+		var tree: SceneTree = Engine.get_main_loop() as SceneTree
+		var p: Node3D = tree.get_first_node_in_group("player") as Node3D
+		var n: Node3D = load("res://scripts/world/gather/gather_node.gd").new()
+		tree.current_scene.add_child(n)
+		n.setup("mine", p.global_position + Vector3(1.0, 0.0, 0.0))
+		return "ok"
+var props: String:
+	get:
+		return props_fault()
+var plant_props_old: String:
+	get:
+		for b in _near_props():
+			var lit: Node = b.get_node_or_null("ActorLit")
+			if lit != null:
+				b.remove_child(lit)
+				lit.free()
+			(b.get("spr") as Sprite3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		return "caught" if props_fault() != "" else "missed"
+
+static func _near_props() -> Array[Node3D]:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var at: Vector3 = (tree.get_first_node_in_group("player") as Node3D).global_position
+	var out: Array[Node3D] = []
+	for g in PROPS:
+		for b: Node in tree.get_nodes_in_group(g):
+			if b is Node3D and b.get("spr") != null and (b as Node3D).global_position.distance_to(at) <= NEAR:
+				out.append(b as Node3D)
+	return out
+
+static func props_fault() -> String:
+	var ps: Array[Node3D] = _near_props()
+	if ps.is_empty():
+		var tree: SceneTree = Engine.get_main_loop() as SceneTree
+		var n: int = 0
+		var d: float = INF
+		var at: Vector3 = (tree.get_first_node_in_group("player") as Node3D).global_position
+		for g in PROPS:
+			for b: Node in tree.get_nodes_in_group(g):
+				n += 1
+				if b is Node3D:
+					d = minf(d, (b as Node3D).global_position.distance_to(at))
+		return "no props within %.0f m (props=%d nearest=%.1f at %s)" % [NEAR, n, d, at]
+	var live: int = 0
+	for b in ps:
+		var lit: Node = b.get_node_or_null("ActorLit")
+		if lit == null or (b.get("spr") as Sprite3D).cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			return "%s off the hub prop mark (lit=%s)" % [b.name, lit != null]
+		for slot in K.MARK_N:
+			var m: MeshInstance3D = lit.get("marks")[slot]
+			var mat: ShaderMaterial = m.material_override as ShaderMaterial
+			if not m.visible or mat == null:
+				continue
+			live += 1
+			if absf(float(mat.get_shader_parameter("grid")) - K.HUB_GRID) > 0.001:
+				return "%s off grid" % b.name
+			var src: Vector2 = lit.get("_src_at")[slot]
+			if not LightRt._casts.any(func(c: Dictionary) -> bool: return src.distance_to(c["xz"]) < 0.05):
+				return "%s slot%d not sourced at a torch/crystal (src %s)" % [b.name, slot, src]
+	return "" if live > 0 else "no live prop marks"
 const MIN_DOT := 0.9
 
 ## .light (player by a torch/crystal after .to_torch): a live mark whose source is that cast (drive.gd _drive_many) and

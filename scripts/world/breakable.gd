@@ -85,6 +85,7 @@ func _spr() -> void:
 	spr = BillSpr.make(path, 0.85, 0.4)
 	add_child(spr)
 	Depth.apply(spr, position)
+	load("res://scripts/graphics/actor_lit/prop_mark.gd").apply(self, spr)  # hub prop mark path
 
 func _wall() -> void:
 	body = StaticBody3D.new()

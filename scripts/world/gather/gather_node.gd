@@ -136,6 +136,7 @@ func _visual() -> void:
 	spr = BillSpr.make(path, wh, yy)
 	add_child(spr)
 	Depth.apply(spr, position)
+	load("res://scripts/graphics/actor_lit/prop_mark.gd").apply(self, spr)  # hub prop mark path
 
 func _label() -> void:
 	label = Label3D.new()

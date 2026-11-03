@@ -1,6 +1,6 @@
 {
   "name": "dungeon-marks",
-  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). The nearest torch/crystal mark points away from its light (.light; flipped toward it, .plant_light, must FAIL). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot.",
+  "about": "Dungeon floor 1, seed 42, by the wall torch nearest the goblin-bat ambush (enemies frozen; dungeon_mark_check.to_torch): every live player and enemy mark is per-cell on the hub ground grid with per-column contact (debug/dungeon_mark_check.gd). The nearest torch/crystal mark points away from its light (.light; flipped toward it, .plant_light, must FAIL). Planted off-grid marks (lit_k.plant_ungrid, the old dungeon path) must FAIL. Shot marks = shared grid path; marks-planted-old = the old dungeon path at the same spot. Prop marks (no bake, no sun): an ore node spawned by the torch takes the hub prop mark (prop_mark.gd), live from the torch/crystal casts; planted engine shadow + no mark must FAIL (shots props / props-planted-old).",
   "scene": "dungeon",
   "seed": 42,
   "floor": 1,
@@ -77,6 +77,41 @@
       "op": "assert",
       "target": "script:debug/dungeon_mark_check.plant_caught",
       "equals": "caught"
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.to_prop",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "ms": 1200
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.props",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "props"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/dungeon_mark_check.plant_props_old",
+      "equals": "caught"
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "shot",
+      "name": "props-planted-old"
     }
   ]
 }
