@@ -1,12 +1,11 @@
 """Red-prove retry prompt: what a Build prove tool prints when its check fails (prove is final verification, `design/tools.md` rule 10).
 
-The reset point is the original session: the one that ran `slice.py start` first in this worktree and did its Gather (id in
-`_logs/slice-state.json`; later runs, the forked peer included, never overwrite it). Gather ends with the User running `/fork`; work goes on
-in the peer session. A handoff opens a new worktree whose first session runs its own Gather, so it is the original for that unit. A red prove prints `grok -r <original-session-id> --fork-session`
-for the USER to run from the worktree directory (no --cwd): a fork keeps the directory of the session it forks. Build never starts grok. The block
-points at the work in the worktree (`git diff BASE` against the working tree plus the untracked files; BASE = the first run's --ref, else the
-week branch grok-build-w{N}) and asks for one small corrective edit and one rerun. No recorded id: the block names the placeholder and where to
-find the id. No base: it says so and starts nothing. `--selftest` runs the block cases.
+The original session is the one that ran `slice.py start` first in this worktree (id in `_logs/slice-state.json`; later runs never overwrite it).
+A red prove retries in that same session. It does not `/fork` and it does not run `grok -r <id> --fork-session`. A handoff opens a new worktree
+whose first session runs its own Gather, so it is the original for that unit. Build never starts grok. The block points at the work in the
+worktree (`git diff BASE` against the working tree plus the untracked files; BASE = the first run's --ref, else the week branch grok-build-w{N})
+and asks for one small corrective edit and one rerun. No recorded id: the block says the retry still stays here. No base: it says so and starts
+nothing. `--selftest` runs the block cases.
 """
 from __future__ import annotations
 
@@ -75,7 +74,7 @@ def _q(p: Path) -> str:
 
 def block(root: Path, what: str, red: list[str]) -> str:
     """The RETRY text for a red prove `what` (a command or check name); `red` = its red output lines. '' off Build
-    (repo_lib.head_kind): the fork/paste retry is a Build slice flow; a Bot or Web red prove just reads its log."""
+    (repo_lib.head_kind): the paste retry is a Build slice flow; a Bot or Web red prove just reads its log."""
     if repo_lib.head_kind(root) != "build":
         return ""
     entry = original(root)
@@ -87,12 +86,11 @@ def block(root: Path, what: str, red: list[str]) -> str:
         return "\n".join([head, "NO BASE: no grok-build-w* week branch and no saved --ref, so there is no diff to point a retry at. "
                            "Tell the User; a new week starts when she opens Build in the repo root and says so (design/build-week-start.md). Nothing is started for you.", END])
     if session:
-        head += f" Retry: the User runs, from the worktree directory (`cd {_q(root)}`): `grok -r {session} --fork-session`: a fork of the original session, from the end of its Gather."
+        head += f" Retry stays in this session ({session}). Do not run `grok -r {session} --fork-session` and do not `/fork`."
     else:
-        head += (f" NO SESSION ID recorded for this worktree ({root.name}). Retry: the User runs, from the worktree directory (`cd {_q(root)}`): "
-                 "`grok -r <original-session-id> --fork-session`; the original session is the one she ran `/fork` from at the end of Gather "
-                 "(`/session-info` there, or `grok sessions list` in this directory). Nothing is forked or started for you.")
-    head += " The fork keeps the worktree and that Gather's context; no re-gather. Paste:"
+        head += (f" NO SESSION ID recorded for this worktree ({root.name}). Retry stays in this session. Do not `/fork` and do not start a fresh session. "
+                 "Nothing is started for you.")
+    head += f" Read only the changed files in this worktree (`cd {_q(root)}`), then one small corrective edit and one rerun. Paste:"
     files = changed_files(root, base)
     ask = (f'The prove "{what}" is red: {" | ".join(seen)}. The work so far, committed or not, is in this worktree: `git diff {base}` (working tree) and the untracked files. '
            f"Read only the changed files (start with {', '.join(files) or 'the files in that diff'}), "

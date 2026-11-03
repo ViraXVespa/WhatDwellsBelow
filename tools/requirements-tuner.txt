@@ -1,0 +1,8 @@
+# Optional installs for tools/local-ai-tuner.py. The runner does not install these.
+# Behavior cloning, the journal checker, and --selftest run without them.
+numpy>=1.24
+opencv-python-headless>=4.8
+optuna>=3.6
+torch>=2.2
+stable-baselines3>=2.3
+godot-rl>=0.7

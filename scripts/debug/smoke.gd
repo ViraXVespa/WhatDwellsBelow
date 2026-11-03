@@ -5,11 +5,14 @@ extends RefCounted
 ## Load timing: --wdb-load-timing-smoke (Title → Placeholdia; not a numbered phase)
 ## Hub bench: --wdb-hub-bench (one camp walk; not a numbered phase)
 ## Dungeon bench: --wdb-dungeon-bench (one fresh playtest; not a numbered phase)
+## Perf sweep: --wdb-perf-sweep (hub, dungeon, dispel, hub, dungeon; not a numbered phase)
 ## Dungeon load timing: --wdb-dungeon-load-timing-smoke (Placeholdia → Dungeon; not a numbered phase)
 ## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
+## Sole bake: --wdb-bake-soles (writes scripts/data/actor_soles.json; not a numbered phase)
 
 const ArtBake := preload("res://scripts/ui/progress_ui/art_bake.gd")
+const SoleBake := preload("res://scripts/graphics/actor_lit/sole_bake.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
@@ -18,6 +21,7 @@ const LoadedDump := preload("res://scripts/debug/smoke/loaded_dump.gd")
 const PlaytestLive := preload("res://scripts/debug/playtest/live_smoke.gd")
 const HubBench := preload("res://scripts/debug/playtest_bench/hub_bench.gd")
 const DungeonBench := preload("res://scripts/debug/playtest_bench/dungeon_bench.gd")
+const PerfSweep := preload("res://scripts/debug/playtest_bench/perf_sweep.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
@@ -29,7 +33,7 @@ static func args() -> PackedStringArray:
 	return CliArgs.args()
 
 static func active() -> bool:
-	if PlaytestLive.active() or HubBench.active() or DungeonBench.active():
+	if PlaytestLive.active() or HubBench.active() or DungeonBench.active() or PerfSweep.active():
 		return true
 	for a: String in args():
 		var s: String = str(a)
@@ -53,6 +57,9 @@ static func hold_player() -> bool:
 
 static func route_boot() -> bool:
 	LoadedDump.maybe_start(App.get_tree(), args())
+	if "--wdb-bake-soles" in args():
+		SoleBake.run.call_deferred(App.get_tree())
+		return true
 	if ArtBake.active():
 		ArtBake.run_and_quit.call_deferred(App.get_tree())
 		return true
@@ -61,6 +68,9 @@ static func route_boot() -> bool:
 		return true
 	if PlaytestLive.active():
 		PlaytestLive.start()
+		return true
+	if PerfSweep.active():
+		PerfSweep.start()
 		return true
 	if DungeonBench.active():
 		DungeonBench.start()

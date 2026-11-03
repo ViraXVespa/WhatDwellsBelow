@@ -6,11 +6,12 @@ const WebHook := preload("res://scripts/debug/web_hook.gd")
 const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
-const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
 const PlaytestHub := preload("res://scripts/debug/playtest_hub/forge_pass.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 
 const Finish := preload("res://scripts/debug/playtest/sim_finish.gd")
+const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 static func reset_ai_state(pt: Node) -> void:
 	Finish.reset_ai_state(pt)
 
@@ -30,7 +31,11 @@ static func start_next(pt: Node) -> void:
 	pt.slot = str(pt.job.get("save", "fresh"))
 	pt._prep_slot()
 	if pt.slot == "campaign" and str(pt.job.get("weapon", "")) == "":
-		var picked: String = PlaytestDb.pick_weapon(PlaytestDb.owned_levels(), "")
+		var picked: String = Campaign.next_weapon()
+		if picked == "":
+			pt._stop_live()
+			LiveSmoke.campaign_stop("cleared")
+			return
 		pt.job["weapon"] = picked
 		if picked == "staff":
 			pt.job["tool"] = "hatchet"
@@ -62,11 +67,24 @@ static func start_next(pt: Node) -> void:
 		App.pause_menu.close_ui()
 	App.ui_open = false
 	PlaytestLog.begin(pt)
+	# Campaign leaves the hub through the crystal board, after camp has finished building.
+	if pt.slot == "campaign":
+		pt.campaign_enter = true
+		pt.gate_t = 0.0
+		App.go_camp()
+		return
+	# Perf sweep: the player's enter (cover, paint wait, then the dungeon scene).
+	# begin_run swaps the scene with none of that. Deferred, same as play_from_menu,
+	# so this call is not a bare coroutine.
+	if CliArgs.has("--wdb-perf-sweep") and not App.in_dungeon:
+		App.call_deferred("enter_dungeon")
+		return
 	App.begin_run()
 
 static func prep_slot(pt: Node) -> void:
 	if pt.slot == "campaign":
 		if Store.load_slot("campaign") == "fresh":
+			Campaign.reset()
 			Store.save_slot("campaign")
 		return
 	if pt.slot == "progressed":

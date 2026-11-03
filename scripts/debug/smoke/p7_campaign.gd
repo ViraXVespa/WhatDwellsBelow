@@ -5,6 +5,7 @@ extends Object
 const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
+const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 const Store := preload("res://scripts/data/save_store.gd")
 
 static func campaign_check() -> void:
@@ -12,6 +13,7 @@ static func campaign_check() -> void:
 		printerr("P7: campaign_skip=web")
 		return
 	var snap: Dictionary = _campaign_snap()
+	var clear_snap: Dictionary = _one_file_snap("user://playtest/campaign/floor5.json")
 	var prev_slot: String = ""
 	if App.debug != null and App.debug.play != null:
 		prev_slot = str(App.debug.play.slot)
@@ -19,6 +21,7 @@ static func campaign_check() -> void:
 	if App.debug != null and App.debug.play != null:
 		App.debug.play.slot = prev_slot
 	_campaign_restore(snap)
+	_one_file_restore(clear_snap)
 	if ok:
 		printerr("P7: campaign_ok=true")
 	else:
@@ -30,6 +33,10 @@ static func _campaign_body() -> bool:
 	if not App.debug.play.has_method("queue_campaign"):
 		return false
 	if LiveSmoke.CAMPAIGN_FLAG != "--wdb-pt-campaign":
+		return false
+	if LiveSmoke.GATHER_FLAG != "--wdb-pt-gather" or LiveSmoke.gather_limit() != 0 or LiveSmoke.gather_full():
+		return false
+	if LiveSmoke.UNTIL_DEATH_FLAG != "--wdb-pt-until-death" or LiveSmoke.until_death():
 		return false
 	if Store.dir_for("campaign") != "user://playtest/campaign":
 		return false
@@ -62,10 +69,40 @@ static func _campaign_body() -> bool:
 	var empty_dir: String = "user://playtest/smoke-band-empty"
 	PlaytestDb.clear_dir(empty_dir)
 	var seeded: String = PlaytestDb.pick_weapon({"great_axe": 3, "staff": 3, "longbow": 3}, empty_dir)
-	var ok: bool = skill_ok and gold_ok and gear_n == 3 and picked == "longbow" and seeded == "great_axe"
+	var clear_dir: String = "user://playtest/smoke-floor5"
+	Campaign.reset(clear_dir)
+	var floor_ok: bool = (not Campaign.floor_cleared(4, true)) and Campaign.floor_cleared(5, true) and Campaign.floor_cleared(6, false)
+	var limit_ok: bool = Campaign.ignores_limit("campaign") and not Campaign.ignores_limit("fresh")
+	Campaign.mark("great_axe", clear_dir)
+	var skip_wpn: String = Campaign.next_weapon(clear_dir)
+	var skip_ok: bool = skip_wpn != "great_axe" and skip_wpn != ""
+	Campaign.mark("staff", clear_dir)
+	Campaign.mark("longbow", clear_dir)
+	var done_ok: bool = Campaign.next_weapon(clear_dir) == ""
+	Campaign.reset(clear_dir)
+	var was_deep: int = int(App.prog.deepest)
+	App.prog.deepest = 1
+	var start_low: bool = Campaign.dive_floor() == 1
+	App.prog.deepest = 5
+	var start_high: bool = Campaign.dive_floor() == 4
+	App.prog.deepest = was_deep
+	var start_ok: bool = start_low and start_high
+	var gather_ok: bool = LiveSmoke.GATHER_FLAG == "--wdb-pt-gather" and LiveSmoke.gather_limit() == 0 and not LiveSmoke.gather_full()
+	var until_ok: bool = LiveSmoke.UNTIL_DEATH_FLAG == "--wdb-pt-until-death" and not LiveSmoke.until_death()
+	var ok: bool = skill_ok and gold_ok and gear_n == 3 and picked == "longbow" and seeded == "great_axe" and floor_ok and limit_ok and skip_ok and done_ok and start_ok and gather_ok and until_ok
 	if not ok:
-		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded])
+		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s floor=%s limit=%s skip=%s done=%s start=%s gather=%s until=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded, str(floor_ok), str(limit_ok), str(skip_ok), str(done_ok), str(start_ok), str(gather_ok), str(until_ok)])
 	return ok
+
+static func _one_file_snap(path: String) -> Dictionary:
+	var had: bool = FileAccess.file_exists(path)
+	var text: String = ""
+	if had:
+		text = FileAccess.get_file_as_string(path)
+	return {"path": path, "had": had, "text": text}
+
+static func _one_file_restore(snap: Dictionary) -> void:
+	_restore_save(str(snap.get("path", "")), bool(snap.get("had", false)), str(snap.get("text", "")))
 
 static func _campaign_snap() -> Dictionary:
 	return _files_snap("campaign")

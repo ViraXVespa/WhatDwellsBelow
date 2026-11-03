@@ -12,6 +12,7 @@ tools/data/hub_bake_inputs.json); --record re-records the inputs for the current
 --rebake (bake_repro.py) rebakes from the committed sources and FAILs unless the stamp matches and the lamps bake.
 Also FAILs on a light leak: a lit rim round a building footprint (bake_leak.py, tools/data/hub_bake_feet.json), and on a guild roof
 with no slope shade (front half not darker than the back; bake_roof.py).
+Also FAILs when scripts/data/actor_soles.json is missing or stale (bake_soles.py; tools/bake.py soles).
 --props also runs the camp-prop-shadows shot flow (real renderer, hub_shadow_check.gd): each yard prop's sun mark
 on the ground, sun-away side, off the prop's own face.
 RESULT PASS = png present, size >= 16, stamp equal, inputs as baked; FAIL otherwise. Summary: _logs/hub-bake/.
@@ -30,6 +31,7 @@ import bake_inputs
 import bake_leak
 import bake_roof
 import bake_repro
+import bake_soles
 
 PNG = "assets/baked/hub_light.png"
 SRC = "scripts/graphics/light_rt/hub_bake.gd"
@@ -76,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         lines += bake_inputs.problems(root, want)
     if png.is_file():
         lines += bake_leak.problems(root, png) + bake_roof.problems(root, png)
+    lines += bake_soles.problems(root)
     if m and args.rebake:
         lines += bake_repro.problems(root, want)
     if args.props:

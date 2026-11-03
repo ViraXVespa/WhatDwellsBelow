@@ -3,6 +3,7 @@ extends Object
 ## Split from hub_bench.gd: _finish, _faces_done, _hub_up....
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const Sweep := preload("res://scripts/debug/playtest_bench/perf_sweep.gd")
 
 static func _finish(host: Node, extra: String) -> void:
 	if host._done:
@@ -29,6 +30,8 @@ static func _finish(host: Node, extra: String) -> void:
 			missing.append(need)
 	var ok: bool = missing.is_empty()
 	var miss: String = "-" if ok else ",".join(missing)
+	if Sweep.active() and Sweep.claim_hub(host, miss):
+		return
 	host._hb("HB: sec=%.1f hitches=%d frames=%d slow=%d pause_slow=%d fps_pct=%.1f worst=%.1f %s path=%s" % [host._clock, HitchLog.hitch_n, HitchLog.frame_n, HitchLog.slow_n, HitchLog.pause_slow_n, HitchLog.fps_pct(), HitchLog.worst_ms, HitchLog.present_text(), HitchLog.file_path])
 	host._hb("HB: missing=%s" % miss)
 	host._hb("HB: ok=%d" % (1 if ok else 0))

@@ -41,7 +41,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Planted bow hits (high coverage) stop the arrow and deal full scaled damage. A glancing hit MAY continue, MAY strike one more enemy, and MUST reduce remaining damage from the first contact’s coverage. After that second body the arrow despawns.
 - Breakables do not stop the arrow and do not reduce its damage.
 - Special: fires several arrows in a spread (`bow_special_count`, cone, range tunable). Telegraph is one yellow line per shot, not a filled cone. Each arrow is its own occupancy test and may glance independently.
-- Live occupancy tests only hosts near the arrow tip (tip radius plus sprite span). Far enemies and breakables are skipped. Sprite sample points are reused for the current process frame; the texel mask is packed once per sprite.
+- Live occupancy tests only hosts near the arrow tip (tip radius plus sprite span). Far enemies and breakables are skipped. Sprite sample points are reused for the current process frame. The texel mask is packed once per texture under the loader and reused by every sprite that shows that texture. A non-RGBA8 texture still reads `get_pixel`. Packing the mask did not remove the first great-axe slam stall.
 
 ## Critical hits
 

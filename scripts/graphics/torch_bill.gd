@@ -137,7 +137,31 @@ func _ready() -> void:
 	_flame = _make_flame()
 	add_child(_flame)
 
+## Sweep only. Off leaves the flame yaw untimed.
+static var torch_on: bool = false
+static var torch_us: int = 0
+
+static func arm_torch() -> void:
+	torch_on = true
+	torch_us = 0
+
+static func disarm_torch() -> void:
+	torch_on = false
+
+static func torch_ms() -> float:
+	if not torch_on:
+		return -1.0
+	return float(torch_us) / 1000.0
+
 func _process(_delta: float) -> void:
+	if not torch_on:
+		_aim_flame()
+		return
+	var t0: int = Time.get_ticks_usec()
+	_aim_flame()
+	torch_us += Time.get_ticks_usec() - t0
+
+func _aim_flame() -> void:
 	if _flame == null:
 		return
 	var vp: Viewport = get_viewport()

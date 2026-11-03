@@ -9,6 +9,7 @@ const NEAR := 22.0
 const GATHER := 9.0
 
 const Misc := preload("res://scripts/debug/playtest_ai/ai_misc.gd")
+const Policy := preload("res://scripts/debug/playtest_ai/ai_policy.gd")
 
 static func think(pt: Node, p: Node, delta: float) -> void:
 	U.tick_motion(pt, p, delta)
@@ -59,6 +60,8 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 			Misc.use_prop(pt, p, hold)
 			Misc._mail_if_close(pt, p, hold)
 			return
+	if Policy.steer(pt, p, delta):
+		return
 	var hunt: Node = pt._nearest_hunt(p)
 	if hunt and is_instance_valid(hunt) and pt._dist(p, hunt) <= NEAR:
 		U.note_threat(pt, p, hunt)

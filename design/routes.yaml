@@ -65,6 +65,9 @@ skills:
   review_shots_isolated: .grok/skills/review-shots-isolated/SKILL.md
 
 gates:
+  local_ai_tuner:
+    file: design/local-ai-tuner.md
+    when: local_ai_playtester_or_balance_tuner
   tunables:
     file: design/tunables.md
     when: numbers_change

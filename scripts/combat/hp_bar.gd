@@ -13,6 +13,21 @@ var _t := 0.0
 var _combat_lv := 0
 var _sticky := false
 var _dead := false
+## Sweep only. Off leaves the bar untimed.
+static var bar_on: bool = false
+static var bar_us: int = 0
+
+static func arm_bar() -> void:
+	bar_on = true
+	bar_us = 0
+
+static func disarm_bar() -> void:
+	bar_on = false
+
+static func bar_ms() -> float:
+	if not bar_on:
+		return -1.0
+	return float(bar_us) / 1000.0
 
 static func pulse(host: Node3D, hp: float, max_hp: float, combat_lv: int = -1) -> void:
 	var bar := _bar(host)
@@ -93,6 +108,14 @@ func show_hp(hp: float, max_hp: float, combat_lv: int = 0, sticky: bool = false)
 	_place_lv(1.0)
 	_sort()
 func _process(delta: float) -> void:
+	if not bar_on:
+		_bar_frame(delta)
+		return
+	var t0: int = Time.get_ticks_usec()
+	_bar_frame(delta)
+	bar_us += Time.get_ticks_usec() - t0
+
+func _bar_frame(delta: float) -> void:
 	_sort()
 	if _spr == null:
 		return

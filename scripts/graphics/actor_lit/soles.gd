@@ -1,20 +1,72 @@
 extends Object
 
-## Actor sole and opaque-span scan from the sticker texture. Caches stay here.
+## Baked actor soles. Play looks up scripts/data/actor_soles.json. The pixel scan runs only in the bake.
+
+const SOLE_BAKE_STAMP := "934132e15a2707c5"
+const BAKE_PATH := "res://scripts/data/actor_soles.json"
 
 static var _spans: Dictionary = {}
 static var _sole_at: Dictionary = {}
+static var _foot_at: Dictionary = {}
+static var _table: Dictionary = {}
+static var _table_ok: bool = false
+
+static func warm() -> void:
+	if _table_ok:
+		return
+	var txt: String = FileAccess.get_file_as_string(BAKE_PATH)
+	if txt == "":
+		_fatal("%s is missing or unreadable." % BAKE_PATH)
+		return
+	var data: Variant = JSON.parse_string(txt)
+	if not (data is Dictionary):
+		_fatal("%s is not a sole bake." % BAKE_PATH)
+		return
+	var parsed: Dictionary = data as Dictionary
+	var stamp: String = str(parsed.get("stamp", ""))
+	if stamp != SOLE_BAKE_STAMP:
+		_fatal("%s stamp %s does not match SOLE_BAKE_STAMP %s (stale bake)." % [BAKE_PATH, stamp, SOLE_BAKE_STAMP])
+		return
+	var rows_v: Variant = parsed.get("rows", null)
+	if not (rows_v is Dictionary):
+		_fatal("%s has no rows." % BAKE_PATH)
+		return
+	_table = rows_v as Dictionary
+	_table_ok = true
 
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
 	if _sole_at.has(id):
 		return _sole_at[id] as Vector4
+	warm()
+	var path: String = tex.resource_path.replace("\\", "/")
+	if path == "" or not _table.has(path):
+		_fatal("no row for %s." % [path if path != "" else "<empty resource_path>"])
+		return Vector4.ZERO
+	var row_v: Variant = _table[path]
+	if not (row_v is Array) or (row_v as Array).size() < 11:
+		_fatal("short row for %s." % path)
+		return Vector4.ZERO
+	var row: Array = row_v as Array
+	var sole := Vector4(_fdec(str(row[1])), _fdec(str(row[2])), _fdec(str(row[3])), _fdec(str(row[4])))
+	var min_x: int = int(row[5])
+	if min_x >= 0:
+		var sw: float = float(row[9])
+		var sh: float = float(row[10])
+		if sw > 0.0 and sh > 0.0:
+			_spans[id] = Vector4(
+				float(min_x) / sw, float(int(row[6])) / sh,
+				float(int(row[7])) / sw, float(int(row[8])) / sh
+			)
+	return _keep(id, sole)
+
+## Pixel scan used by tools/bake.py soles. Not called from play.
+static func _scan(tex: Texture2D) -> Dictionary:
 	var tw: int = maxi(1, tex.get_width())
 	var th: int = maxi(1, tex.get_height())
-	var fb: Vector4 = Vector4(0.0, float(th), float(tw), float(th))
 	var img: Image = tex.get_image()
 	if img == null or img.is_empty():
-		return _keep(id, fb)
+		return _none(tw, th)
 	if img.get_format() != Image.FORMAT_RGBA8:
 		var copy: Image = img.duplicate()
 		copy.convert(Image.FORMAT_RGBA8)
@@ -23,7 +75,7 @@ static func _soles(tex: Texture2D) -> Vector4:
 	var h: int = img.get_height()
 	var bytes: PackedByteArray = img.get_data()
 	if w < 1 or h < 1 or bytes.size() < w * h * 4:
-		return _keep(id, fb)
+		return _none(tw, th)
 	var min_x: int = w
 	var min_y: int = h
 	var max_x: int = -1
@@ -42,11 +94,7 @@ static func _soles(tex: Texture2D) -> Vector4:
 			if y > max_y:
 				max_y = y
 	if max_x < 0:
-		return _keep(id, fb)
-	_spans[id] = Vector4(
-		float(min_x) / float(w), float(min_y) / float(h),
-		float(max_x + 1) / float(w), float(max_y + 1) / float(h)
-	)
+		return _none(w, h)
 	var mid: int = int(float(min_x + max_x) * 0.5)
 	var ly: int = -1
 	var ry: int = -1
@@ -77,15 +125,44 @@ static func _soles(tex: Texture2D) -> Vector4:
 			ry = y2
 			rs = rsum
 			rn = rnum
-	if ly < 0 or ry < 0:
-		return _keep(id, _bottom_span(bytes, w, max_y, min_x, max_x))
-	var lx: float = ls / float(ln)
-	var rx: float = rs / float(rn)
-	if absf(rx - lx) < 0.5:
-		var mid_foot: float = (lx + rx) * 0.5
-		lx = mid_foot
-		rx = mid_foot
-	return _keep(id, Vector4(lx, float(ly + 1), rx, float(ry + 1)))
+	var sole: Vector4 = _bottom_span(bytes, w, max_y, min_x, max_x)
+	if ly >= 0 and ry >= 0:
+		var lx: float = ls / float(ln)
+		var rx: float = rs / float(rn)
+		if absf(rx - lx) < 0.5:
+			var mid_foot: float = (lx + rx) * 0.5
+			lx = mid_foot
+			rx = mid_foot
+		sole = Vector4(lx, float(ly + 1), rx, float(ry + 1))
+	return {
+		"sole": sole,
+		"min_x": min_x, "min_y": min_y, "max_x1": max_x + 1, "max_y1": max_y + 1,
+		"w": w, "h": h,
+	}
+
+static func _none(w: int, h: int) -> Dictionary:
+	return {
+		"sole": Vector4(0.0, float(h), float(w), float(h)),
+		"min_x": -1, "min_y": -1, "max_x1": -1, "max_y1": -1,
+		"w": w, "h": h,
+	}
+
+static func _fhex(v: float) -> String:
+	var buf: PackedByteArray = PackedByteArray()
+	buf.resize(8)
+	buf.encode_double(0, v)
+	return buf.hex_encode()
+
+static func _fdec(hex: String) -> float:
+	var buf: PackedByteArray = hex.hex_decode()
+	if buf.size() < 8:
+		return 0.0
+	return buf.decode_double(0)
+
+static func _fatal(msg: String) -> void:
+	var full: String = "FATAL actor soles: %s Rebake with python tools/bake.py soles (design/graphics-actor.md)." % msg
+	push_error(full)
+	OS.crash(full)
 
 static func _keep(id: int, sole: Vector4) -> Vector4:
 	_sole_at[id] = sole
@@ -128,13 +205,18 @@ const WHEEL_K := 0.08
 const PROFILE_BASE := 0.9
 ## Footprint depth in texels: rows from a profile base's widest row down to its sole (the curved ground contact).
 static func _foot(tex: Texture2D) -> int:
+	var id: int = tex.get_rid().get_id()
+	if _foot_at.has(id):
+		return int(_foot_at[id])
 	var img: Image = tex.get_image()
 	if img == null:
 		return 0
 	if img.is_compressed():
 		img.decompress()
 	var u: Rect2i = img.get_used_rect()
-	return maxi(0, u.end.y - _body_end(img, PROFILE_BASE))
+	var n: int = maxi(0, u.end.y - _body_end(img, PROFILE_BASE))
+	_foot_at[id] = n
+	return n
 
 static func _solid(tex: Texture2D, shape: String = "profile") -> Texture2D:
 	var key: String = "%d:%s" % [tex.get_rid().get_id(), shape]

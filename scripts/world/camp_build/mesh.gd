@@ -34,8 +34,8 @@ static func ground(host: Node3D) -> void:
 	_band(host, ox, yz1 + 1, ox + gw - 1, oz + gd - 1, y, g[0], g[1])
 	_band(host, ox, yd.position.y, yd.position.x - 1, yz1, y, g[0], g[1])
 	_band(host, yx1 + 1, yd.position.y, ox + gw - 1, yz1, y, g[0], g[1])
-	# yard dirt + path plus; each fades into the surface below it (grass under dirt, dirt under the paths)
-	_band(host, yd.position.x, yd.position.y, yx1, yz1, y - 0.01, g[0], g[1])
+	# Yard dirt and the path arms. Dirt is opaque and already blends to the grass sheet at its edge, so a second
+	# grass plane under the yard would only redraw the same cells.
 	_band(host, yd.position.x, yd.position.y, yx1, yz1, y, d[0], d[1], d[2], g[0])
 	# The path arms share one union fade so the crossing stays path.
 	var arms: Array[Rect2i] = Spec.PATHS

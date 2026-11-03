@@ -246,6 +246,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
     t0 = time.monotonic()
     pid, status, code, timed_out, dkind = 0, "ERROR", -1, False, "none"
     handles = []
+    proc = None
     try:
         kw: dict = {}
         for key, p in (("stdout", out_log), ("stderr", err_log)):
@@ -289,6 +290,17 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
         else:
             code = proc.returncode or 0
             status = f"EXIT={code}"
+    except BaseException:
+        if proc is not None and proc.poll() is None:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+            try:
+                proc.wait(timeout=10)
+            except Exception:
+                pass
+        raise
     finally:
         for fh in handles:
             fh.close()

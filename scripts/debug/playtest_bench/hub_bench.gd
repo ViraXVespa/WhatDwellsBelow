@@ -13,6 +13,8 @@ const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Iso := preload("res://scripts/debug/playtest_bench/hub_bench_iso.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 const Step := preload("res://scripts/debug/playtest_bench/hub_bench_step.gd")
+const Sweep := preload("res://scripts/debug/playtest_bench/perf_sweep.gd")
+const Layers := preload("res://scripts/debug/playtest_bench/sweep_layers.gd")
 const ST_WAIT := 0
 const ST_FACE := 1
 const ST_GOTO := 2
@@ -22,6 +24,7 @@ const ST_GAP := 5
 const ST_STRIKE := 6
 const ST_FILL := 7
 const ST_ISO := 8
+const ST_LAYER := 9
 const ISO_FLAG := "--wdb-hub-isolate"
 const WALK_FLAG := "--wdb-hub-walk-layers"
 const ABA_FLAG := "--wdb-hub-fill-aba"
@@ -62,6 +65,8 @@ func _phase_name() -> String:
 		return "fill"
 	if _state == ST_ISO:
 		return "iso"
+	if _state == ST_LAYER:
+		return "layer"
 	return "wait"
 
 static func start() -> void:
@@ -84,10 +89,17 @@ static func start() -> void:
 static func attach(_host: Node) -> void:
 	if not active() or App.get_node_or_null("HubBench") != null:
 		return
+	spawn()
+
+static func spawn() -> Node:
+	var existing: Node = App.get_node_or_null("HubBench")
+	if existing != null:
+		return existing
 	var scr: GDScript = load("res://scripts/debug/playtest_bench/hub_bench.gd") as GDScript
 	var node: Node = scr.new() as Node
 	node.name = "HubBench"
 	App.add_child(node)
+	return node
 
 var _state: int = ST_WAIT
 var _clock: float = 0.0
@@ -128,6 +140,8 @@ var _iso_all: Array[Node] = []
 var _iso_on: Array[bool] = []
 var _iso_tag: PackedStringArray = PackedStringArray()
 var _iso_lits: Array[Node] = []
+## First hub walk only. The unscored hide window sets this before the dungeon.
+var _layers_done: bool = false
 
 var _pre_us: int = 0
 var _proc_us: int = 0
@@ -136,10 +150,11 @@ var _tree_ms: float = -1.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	if not RenderingServer.frame_pre_draw.is_connected(_on_pre_draw):
-		RenderingServer.frame_pre_draw.connect(_on_pre_draw)
-	if not RenderingServer.frame_post_draw.is_connected(_on_post_draw):
-		RenderingServer.frame_post_draw.connect(_on_post_draw)
+	if not Sweep.active():
+		if not RenderingServer.frame_pre_draw.is_connected(_on_pre_draw):
+			RenderingServer.frame_pre_draw.connect(_on_pre_draw)
+		if not RenderingServer.frame_post_draw.is_connected(_on_post_draw):
+			RenderingServer.frame_post_draw.connect(_on_post_draw)
 	if CliArgs.has(ISO_FLAG):
 		process_priority = 100
 	_vsync_off()
@@ -174,16 +189,27 @@ func _on_post_draw() -> void:
 	_post_us = now
 
 func _process(delta: float) -> void:
-	var now: int = Time.get_ticks_usec()
-	if _post_us > 0:
-		HitchLog.set_after_ms(float(now - _post_us) / 1000.0)
-	_proc_us = now
+	if not Sweep.active():
+		_step(delta)
+		return
+	var t0: int = Time.get_ticks_usec()
+	_step(delta)
+	HitchLog.set_bench_ms(float(Time.get_ticks_usec() - t0) / 1000.0)
+
+func _step(delta: float) -> void:
+	if Sweep.active() and _done:
+		return
+	if not Sweep.active():
+		var now: int = Time.get_ticks_usec()
+		if _post_us > 0:
+			HitchLog.set_after_ms(float(now - _post_us) / 1000.0)
+		_proc_us = now
+		_post_t += delta
+		if _post_t >= 0.5:
+			_post_t = 0.0
+			HitchLog.flush_web()
 	HitchLog.set_phase(_phase_name())
 	HitchLog.set_play_s(_clock)
-	_post_t += delta
-	if _post_t >= 0.5:
-		_post_t = 0.0
-		HitchLog.flush_web()
 	if _done or App.playtest == null:
 		return
 	if _state == ST_WAIT:
@@ -197,9 +223,13 @@ func _process(delta: float) -> void:
 	End._sample(self, actor)
 	_blank()
 	var cap: float = 90.0 if CliArgs.has(WALK_FLAG) else HARD_SEC
-	if _clock >= cap and _state != ST_HOLD:
+	if _clock >= cap and _state != ST_HOLD and _state != ST_LAYER:
 		End._finish(self, "")
 		return
+	# Fill ends the walk itself at PLAY_SEC, so the layer window has to start first.
+	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and _state != ST_LAYER and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC and Sweep.active() and Layers.pending(self):
+		_state = ST_LAYER
+		HitchLog.set_unscored(true)
 	if _state == ST_FACE:
 		Step._face(self, delta)
 	elif _state == ST_GOTO:
@@ -221,8 +251,14 @@ func _process(delta: float) -> void:
 			Step._fill(self, delta)
 	elif _state == ST_ISO:
 		Iso._isolate(self, actor, delta)
-	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC:
-		End._finish(self, "")
+	elif _state == ST_LAYER:
+		Layers.tick(self, delta)
+	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and _state != ST_LAYER and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC:
+		if Sweep.active() and Layers.pending(self):
+			_state = ST_LAYER
+			HitchLog.set_unscored(true)
+		else:
+			End._finish(self, "")
 
 func _actor() -> Node3D:
 	var n: Node = get_tree().get_first_node_in_group("player") if get_tree() != null else null
@@ -238,3 +274,26 @@ func _blank() -> void:
 
 func _visits_done() -> bool:
 	return _state == ST_FILL or (_visits.size() > 0 and _vi >= _visits.size())
+
+func restart_walk() -> void:
+	_done = false
+	_state = ST_WAIT
+	_clock = 0.0
+	_wait_t = 0.0
+	_wait_hb = 2.0
+	_sub_t = 0.0
+	_face_i = 0
+	_face_idle = false
+	_vi = 0
+	_fill_i = 0
+	_open_tries = 0
+	_pulsed = false
+	_to_walk = false
+	_to_idle = false
+	_was_moving = false
+	_stuck_t = 0.0
+	_bias_t = 0.0
+	_stuck_from = Vector3.ZERO
+	_faces.clear()
+	_got.clear()
+	_visits.clear()

@@ -90,8 +90,8 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
                  Q0]
     elif screen:
         order = [("ORDER: `python tools/gate.py gd-load` once and `python tools/gate.py import` (a fresh worktree has nothing imported; it takes about a minute: start it with "
-                  "`block_until_ms 0` and poll the output once, no skill needed). This session gathers only what every later fork needs (the task, the docs, the code, the outcome). "
-                  "Do not shoot, review, or read_file pictures here. A screen's frames are unit-specific; the forked session will shoot the baseline and review it with `python tools/shots.py review PNG --question Q` (text only; never read_file a PNG or JPG; band=fail is invalid: fix the cause, re-shoot). "
+                  "`block_until_ms 0` and poll the output once, no skill needed). This session gathers the shared context (the task, the docs, the code, the outcome). "
+                  "Do not shoot, review, or read_file pictures during Gather. A screen's frames are unit-specific; this session will shoot the baseline when the unit needs it and review it with `python tools/shots.py review PNG --question Q` (text only; never read_file a PNG or JPG; band=fail is invalid: fix the cause, re-shoot). "
                   "Write the restate from the task and the docs; then Q0; then your other questions. "
                   "A task whose Open questions are none already answered Q0. Do not ask it again."),
                  Q0]
@@ -104,17 +104,19 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
             else "`python tools/gate.py build --batch` (no `--visual`: this job has no shot flow)")
     cycle = [] if mode == "survey" else [
         "CYCLE (build-job-cycle.md): GATHER finishes before any change: no code changes, no new tools; read the code and docs, state the observable outcome "
-        "that shows the task is done, confirm the tooling or in-game signal can show it; for a bug or perf miss, confirm the repro's output names the cause, else that is a missing signal. End of Gather: tell the User to run `/fork` and continue in the new peer "
-        "session; the original session ID is the reset point. That `/fork` is required. It does not finish gather. This session held only what every later fork needs. The first fork, when nothing earlier on the task has changed, starts unit 1 and does not run `python tools/find.py changed`. A later fork picks up where the previous session left off and continues gather for what later sessions on this task would not all need "
+        "that shows the task is done, confirm the tooling or in-game signal can show it; for a bug or perf miss, confirm the repro's output names the cause, else that is a missing signal. "
+        "Continue Prepare in this session. Before the first prove, stop for one compact and resume in this same session: run the guided compact, or print the keep-list and stop so the User can compact. "
+        "Do not `/fork`, and do not start a fresh session for that compact. The first session on a task, when nothing earlier has changed, starts unit 1 and does not run `python tools/find.py changed`. "
+        "A later session picks up where the previous session left off and continues gather for what later sessions on this task would not all need "
         "(this unit's pictures: `shots.py review`, never read_file) and for committed and uncommitted changes earlier sessions left (`python tools/find.py changed`). PREPARE: a missing signal gets the cheapest gated instrument; blocked or a design answer needed: stop "
         "and update the task. CHANGE: `python tools/gate.py gd-load` once the edits are complete. PROVE is final verification: at most one small corrective "
-        "edit and one rerun; still red: stop and report the log path (the RETRY block names `grok -r <original-session-id> --fork-session`). COMPLETE: docs and "
-        "the task (`docs.py task done ID`, or handoff notes plus that retry command), "
-        "`python tools/slice.py start --unit-done` for a unit queue, commit, push, the done notice. Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot."]
+        "edit and one rerun; still red: stop and report the log path (the RETRY block stays in this session). COMPLETE: docs and "
+        "the task (`docs.py task done ID`, or notes on what was tried and where to resume), "
+        "`python tools/slice.py start --unit-done` for a unit queue, commit, push, the done notice, then stop. Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot."]
     return "\n".join(start + order + cycle + [
         ("EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
          "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. "
-         + ("Pictures are unit-specific, so they are gathered after `/fork`: shoot and `shots.py review` only that unit's frames (do not read_file them), " if screen else "Order: run the check. A still this unit needs is `shots.py review` after `/fork` (do not read_file it), ")
+         + ("Pictures are unit-specific, so this session shoots and `shots.py review`s only that unit's frames (do not read_file them), " if screen else "Order: run the check. A still this unit needs is `shots.py review` in this session (do not read_file it), ")
          + "`python tools/shots.py show PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
          + "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it."),
         "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images, and look details you chose inside her rule: never \"none\" for those); \"Assumptions carried from memory or docs\"; "
@@ -229,7 +231,7 @@ def selftest(script: list[str]) -> int:
         for need in ("This tool is the first command", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
                      "Also changed", "Grok memory files", "DID NOT WORK", "shots.py show", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0",
                      "slice.py start --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "slice.py commit", "before your next tool call",
-                     "`/fork`", "original session ID", "final verification", "gate.py gd-load` once the edits are complete", "whole request in this session"):
+                     "Do not `/fork`", "resume in this same session", "final verification", "gate.py gd-load` once the edits are complete", "whole request in this session"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
@@ -269,8 +271,8 @@ def selftest(script: list[str]) -> int:
         code, out = run(clone, env="sess-1")
         if code != 0 or "SLICE ALREADY STARTED" not in out or "Resuming at" not in out or "IN A WORKTREE" in out or "open_slice prompt not verified" not in out:
             bad.append("a second run must print SLICE ALREADY STARTED, the steps and the next one, not the card")
-        if "original session sess-1" not in out or "forked no" not in out or "`/fork`" not in out:
-            bad.append("a second run in the original session must name its id and resume at Gather (ending in /fork)")
+        if "original session sess-1" not in out or "forked no" not in out or "resume in this same session" not in out:
+            bad.append("a second run in the original session must name its id and resume in this same session")
         code, out = run(clone, env="sess-2")
         if "forked yes" not in out or "Prepare / Change / Prove / Complete" not in out or "(first run by session sess-1; this is sess-2)" not in out:
             bad.append("a run in the forked peer session must say so and resume at Prepare / Change / Prove / Complete")
@@ -284,8 +286,8 @@ def selftest(script: list[str]) -> int:
         if "IN A WORKTREE" not in out:
             bad.append("a dry run must preview the card even when the slice started")
         rb = retry_lib.block(clone, "gate", ["SCRIPT ERROR: x"])
-        if "grok -r sess-1 --fork-session" not in rb or "end of its Gather" not in rb or "--cwd" in rb or "--checkpoint" in rb:
-            bad.append("the RETRY block must fork the original session (the first run's id) without --cwd")
+        if "Retry stays in this session (sess-1)" not in rb or "Do not run `grok -r sess-1 --fork-session`" not in rb or "--cwd" in rb or "--checkpoint" in rb:
+            bad.append("the RETRY block must stay in this session (the first run's id) and must not tell the User to fork")
         # routes fixture: a door with two jobs is a survey (text ORDER, no baseline shot); a job is an implementation slice; the flow is created first, then no STEP 0
         (clone / "design").mkdir(exist_ok=True)
         routes = clone / "design" / "routes.yaml"
@@ -373,12 +375,12 @@ def retry_selftest() -> int:
         git(wt, "commit", "-qm", "b")
         red = ["SCRIPT ERROR: Parse Error: x"]
         no_ses = retry_lib.block(wt, "gate", red)
-        for need in ("NO SESSION ID", "grok -r <original-session-id> --fork-session", "`/fork`", "git diff grok-build-w9", "Nothing is forked or started", "final verification"):
+        for need in ("NO SESSION ID", "Retry stays in this session", "Do not `/fork`", "git diff grok-build-w9", "Nothing is started for you", "final verification"):
             if need not in no_ses:
                 bad.append(f"no-session block lacks {need!r}")
         state(wt, session="abc-123", ref="")
         with_ses = retry_lib.block(wt, "gate", red)
-        for need in ("grok -r abc-123 --fork-session", f"cd {wt}", "git diff grok-build-w9", "b.txt", "one small corrective edit", "report the log path"):
+        for need in ("Retry stays in this session (abc-123)", "Do not run `grok -r abc-123 --fork-session`", f"cd {wt}", "git diff grok-build-w9", "b.txt", "one small corrective edit", "report the log path"):
             if need not in with_ses:
                 bad.append(f"session block lacks {need!r}")
         if "--cwd" in with_ses or "checkpoint" in with_ses.lower() or "diagnosis" in with_ses:

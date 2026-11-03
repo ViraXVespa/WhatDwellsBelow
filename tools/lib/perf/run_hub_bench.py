@@ -118,7 +118,7 @@ def _slow_lines(rows: list[dict]) -> list[str]:
         if int(row.get("paused", 0) or 0) == 1 or int(row.get("bar", 0) or 0) == 1:
             continue
         slow.append(
-            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s phys_ms=%s draw=%s tree_ms=%s submit_ms=%s after_ms=%s%s"
+            "t=%s dt_ms=%s why=%s where=%s anim=%s ui=%s cell=%s proc_ms=%s phys_ms=%s draw=%s tree_ms=%s submit_ms=%s after_ms=%s%s%s"
             % (
                 row.get("t", ""),
                 row.get("dt_ms", ""),
@@ -134,6 +134,7 @@ def _slow_lines(rows: list[dict]) -> list[str]:
                 row.get("submit_ms", ""),
                 row.get("after_ms", ""),
                 (" pt_ms=%s" % row.get("pt_ms")) if "pt_ms" in row else "",
+                _split_suffix(row),
             )
         )
         if len(slow) >= 8:
@@ -191,6 +192,15 @@ def _median(vals: list[float]) -> float:
     ordered = sorted(vals)
     return ordered[len(ordered) // 2]
 
+def _split_suffix(row: dict) -> str:
+    parts: list[str] = []
+    for key in ("script_ms", "queue_ms", "tail_ms", "bench_ms", "lit_ms", "sample_ms", "sample_n", "tint_ms", "drive_ms", "geo_ms", "sync_ms", "foot_ms", "quad_ms", "shade_ms", "albedo_ms", "contact_ms", "sole_ms", "pin_ms", "sync_rest_ms", "geo_rest_ms", "lit_rest_ms", "lit_max_ms", "lit_who", "cpu_ms", "gpu_ms", "obj_3d", "prim_3d", "draw_3d", "obj_shadow", "prim_shadow", "draw_shadow", "obj_canvas", "prim_canvas", "draw_canvas"):
+        if key in row:
+            parts.append("%s=%s" % (key, row.get(key, "")))
+    if not parts:
+        return ""
+    return " " + " ".join(parts)
+
 def _run_line(rows: list[dict]) -> str:
     dts: list[float] = []
     anims: list[str] = []
@@ -207,6 +217,51 @@ def _run_line(rows: list[dict]) -> str:
     after_vals: list[float] = []
     pt_vals: list[float] = []
     saw_pt = False
+    split_vals: dict[str, list[float]] = {
+        "script_ms": [],
+        "queue_ms": [],
+        "tail_ms": [],
+        "wake_ms": [],
+        "phys_span_ms": [],
+        "post_phys_ms": [],
+        "head_ms": [],
+        "floor_ms": [],
+        "torch_ms": [],
+        "bar_ms": [],
+        "phys_obj": [],
+        "phys_pairs": [],
+        "phys_islands": [],
+        "bench_ms": [],
+        "lit_ms": [],
+        "sample_ms": [],
+        "sample_n": [],
+        "tint_ms": [],
+        "drive_ms": [],
+        "geo_ms": [],
+        "sync_ms": [],
+        "foot_ms": [],
+        "quad_ms": [],
+        "shade_ms": [],
+        "albedo_ms": [],
+        "contact_ms": [],
+        "sole_ms": [],
+        "pin_ms": [],
+        "sync_rest_ms": [],
+        "geo_rest_ms": [],
+        "lit_rest_ms": [],
+        "lit_max_ms": [],
+        "cpu_ms": [],
+        "gpu_ms": [],
+        "obj_3d": [],
+        "prim_3d": [],
+        "draw_3d": [],
+        "obj_shadow": [],
+        "prim_shadow": [],
+        "draw_shadow": [],
+        "obj_canvas": [],
+        "prim_canvas": [],
+        "draw_canvas": [],
+    }
     for row in rows:
         try:
             dts.append(float(row.get("dt_ms", 0) or 0))
@@ -248,6 +303,13 @@ def _run_line(rows: list[dict]) -> str:
                 pt_vals.append(float(row.get("pt_ms", 0) or 0))
             except (TypeError, ValueError):
                 pt_vals.append(0.0)
+        for key, bucket in split_vals.items():
+            if key not in row:
+                continue
+            try:
+                bucket.append(float(row.get(key) or 0))
+            except (TypeError, ValueError):
+                bucket.append(0.0)
     cell_txt = ""
     if cells:
         cell_txt = cells[0] if cells[0] == cells[-1] else "%s..%s" % (cells[0], cells[-1])
@@ -272,7 +334,11 @@ def _run_line(rows: list[dict]) -> str:
             _median(submit_vals),
             _median(after_vals),
         )
-    ) + (" pt_med=%s" % _median(pt_vals) if saw_pt else "")
+    ) + (" pt_med=%s" % _median(pt_vals) if saw_pt else "") + "".join(
+        " %s_med=%s" % (key[:-3] if key.endswith("_ms") else key, _median(bucket))
+        for key, bucket in split_vals.items()
+        if bucket
+    )
 
 def _shape_lines(hitch_rows: list[dict], bench: dict | None) -> list[str]:
     refresh = _refresh_ms(bench)
@@ -745,9 +811,13 @@ def _echo_lines(lines: list[str]) -> list[str]:
     for ln in lines:
         if ln.startswith(("status=", "fps_pct=", "edge=", "leg=", "desktop root=", "web browser=")):
             keep.append(ln)
+        elif ln.startswith("HB: seg="):
+            keep.append(ln)
+        elif ln.startswith(("place ", "pair ", "pair_rows")):
+            keep.append(ln)
         elif "isolate layer=" in ln or ln.startswith("HB: isolate") or ln.startswith("aba ") or ln.startswith("layers "):
             keep.append(ln)
-        elif ln.startswith("sustained=") or ln.startswith("sustained:"):
+        elif ln.startswith(("sustained=", "sustained:", "n=")):
             keep.append(ln)
     return keep or lines[:4]
 

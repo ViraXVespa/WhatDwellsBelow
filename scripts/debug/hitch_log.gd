@@ -51,6 +51,10 @@ static func set_phase(phase_name: String) -> void:
 static func set_score_where(where_name: String) -> void:
 	Ctx.set_score_where(where_name)
 
+## Sweep stretch name (hub1, dungeon1, hub2, dungeon2). Empty leaves it off the hitch row.
+static func set_seg(seg_name: String) -> void:
+	Rows.set_seg(seg_name)
+
 static func scoring(host: Node) -> bool:
 	return Ctx._score_on_screen(host)
 
@@ -66,8 +70,52 @@ static func set_submit_ms(ms: float) -> void:
 static func set_after_ms(ms: float) -> void:
 	Rows.set_after_ms(ms)
 
+## Sweep only. Parts of tree_ms. A negative part stays off the hitch row.
+static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) -> void:
+	Rows.set_tree_split(script_ms, queue_ms, tail_ms)
+
+static func set_edge_post(us: int) -> void:
+	Rows.set_edge_post(us)
+
+static func note_phys_head() -> void:
+	Rows.note_phys_head()
+
+static func note_phys_tail() -> void:
+	Rows.note_phys_tail()
+
+static func set_idle_ms(floor_ms: float, torch_ms: float, bar_ms: float) -> void:
+	Rows.set_idle_ms(floor_ms, torch_ms, bar_ms)
+
+static func set_head_ms(ms: float) -> void:
+	Rows.set_head_ms(ms)
+
+static func tick_us() -> int:
+	return Rows.tick_us()
+
+static func set_bench_ms(ms: float) -> void:
+	Rows.set_bench_ms(ms)
+
+static func set_draw_split(obj_3d: int, prim_3d: int, draw_3d: int, obj_shadow: int, prim_shadow: int, draw_shadow: int, obj_canvas: int, prim_canvas: int, draw_canvas: int) -> void:
+	Rows.set_draw_split(obj_3d, prim_3d, draw_3d, obj_shadow, prim_shadow, draw_shadow, obj_canvas, prim_canvas, draw_canvas)
+
+static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0, albedo_ms: float = -1.0, contact_ms: float = -1.0, sole_ms: float = -1.0, pin_ms: float = -1.0) -> void:
+	Rows.set_lit_mark(lit_ms, sample_ms, sample_n, tint_ms, drive_ms, geo_ms, sync_ms, foot_ms, quad_ms, shade_ms, albedo_ms, contact_ms, sole_ms, pin_ms)
+
+static func set_render_ms(cpu_ms: float, gpu_ms: float) -> void:
+	Rows.set_render_ms(cpu_ms, gpu_ms)
+
+static func set_lit_peak(ms: float, who: String) -> void:
+	Rows.set_lit_peak(ms, who)
+
+## Sweep layer window. Counted frames stay the scored walk. Hidden frames do not.
+static func set_unscored(on: bool) -> void:
+	Rows.set_unscored(on)
+
 static func frame_submit_ms() -> float:
 	return Rows.frame_submit_ms()
+
+static func frame_split() -> Dictionary:
+	return Rows.frame_split()
 
 ## Dungeon bench. Later ticks subtract the playtest physics tick from the scored delta.
 static func arm_harness() -> void:
@@ -134,6 +182,13 @@ static func bench_reset(mult_value: float) -> void:
 	Present._dts = PackedFloat32Array()
 	Present._pts = PackedFloat32Array()
 	Rows.clear_harness()
+	Rows.set_tree_split(-1.0, -1.0, -1.0)
+	Rows.clear_edge()
+	Rows.set_bench_ms(-1.0)
+	Rows.set_lit_mark(-1.0, -1.0, -1)
+	Rows.set_render_ms(-1.0, -1.0)
+	Rows.set_lit_peak(-1.0, "")
+	Rows.set_unscored(false)
 	Rows._phase = ""
 	Rows._play_s = 0.0
 	Rows._last_proc = -1.0
@@ -181,6 +236,7 @@ static func begin(_host: Node = null) -> void:
 static func tick(host: Node, delta: float) -> void:
 	if not enabled():
 		return
+	Rows.stamp_edge(Time.get_ticks_usec())
 	if not Rows.started:
 		begin(host)
 	if not Rows.started:
@@ -214,6 +270,10 @@ static func tick(host: Node, delta: float) -> void:
 		if Present._over_budget(scored):
 			bar_slow_n += 1
 			Rows._note_bar(host, scored)
+		return
+	# The sweep's hidden-group window is on screen and must stay out of fps_pct.
+	if Rows.unscored():
+		Run._break_run()
 		return
 	frame_n += 1
 	var dt_ms: float = snappedf(scored * 1000.0, 0.1)

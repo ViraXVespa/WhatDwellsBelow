@@ -9,7 +9,10 @@ const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PtGate := preload("res://scripts/debug/playtest/pt_gate.gd")
+const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
+const HumanLog := preload("res://scripts/debug/playtest/human_log.gd")
 const THINK_DT := 0.12
 
 var history: Array = []
@@ -23,6 +26,7 @@ var ai_on: bool = false
 var queue: Array = []
 var job: Dictionary = {}
 var slot: String = "fresh"
+var campaign_enter: bool = false
 var live_backup: Dictionary = {}
 var bal_backup: Dictionary = {}
 var scale_backup: float = 1.0
@@ -66,6 +70,12 @@ func _ready() -> void:
 	PlaytestSim.load_coefs(self)
 	if not recs["fresh"].is_empty() or not history.is_empty():
 		PlaytestSim.build_recs(self)
+	if CliArgs.has("--wdb-pt-rl"):
+		var sync_script: GDScript = load("res://scripts/debug/playtest/rl_sync.gd") as GDScript
+		if sync_script != null:
+			var sync: Node = sync_script.new() as Node
+			if sync != null:
+				add_child(sync)
 
 func interrupt() -> void:
 	interrupted = true
@@ -221,6 +231,7 @@ func perf_report() -> Dictionary:
 
 func _physics_process(delta: float) -> void:
 	if not live_running:
+		HumanLog.tick(self, delta)
 		return
 	var t0: int = Time.get_ticks_usec()
 	_tick(delta)
@@ -229,6 +240,14 @@ func _physics_process(delta: float) -> void:
 	HitchLog.add_harness_us(us)
 
 func _tick(delta: float) -> void:
+	if campaign_enter:
+		if Campaign.hub_ready(self):
+			Campaign.hub_enter(self)
+			return
+		gate_t += delta
+		if gate_t >= PtGate.HARD_MAX:
+			stall_abort("no_camp")
+		return
 	if not PlaytestLog.started:
 		PlaytestLog.begin(self)
 		last_beat_t = -1.0
@@ -269,9 +288,16 @@ func _tick(delta: float) -> void:
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 		return
 	var limit: float = float(job.get("limit", App.bal.playtest_limit))
-	if not smoke_mode and act_t >= limit:
+	if not Campaign.ignores_limit(slot) and not smoke_mode and act_t >= limit:
 		_end_log("interrupted playtest", "time_limit")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
+		return
+	if Campaign.ignores_limit(slot) and Campaign.floor_cleared(int(App.floor_n), bool(App.boss_dead)):
+		if not has_meta("campaign_left"):
+			set_meta("campaign_left", true)
+			Campaign.mark(str(App.weapon))
+			App.prog.extract_all("gate")
+			App.end_run("extraction")
 		return
 	var due: bool = last_think_t < 0.0 or sim_t - last_think_t >= THINK_DT
 	if due:
