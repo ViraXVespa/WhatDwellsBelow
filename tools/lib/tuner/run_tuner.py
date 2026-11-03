@@ -1115,10 +1115,22 @@ def append_log(path: Path, text: str, write: bool) -> None:
         handle.write(text.rstrip() + "\n")
 
 
+def loop_flags(rows: int) -> list[str]:
+    flags = [
+        "--wdb-pt-campaign",
+        "--wdb-pt-fast",
+        "--wdb-pt-scale=6",
+        "--wdb-pt-until-death",
+    ]
+    if rows > 0:
+        flags.append(f"--wdb-pt-gather={int(rows)}")
+    return flags
+
+
 def do_loop(args, root: Path) -> int:
     import tempfile
-    if args.rows < 1:
-        agent_log.fail("--rows must be at least 1")
+    if args.rows < 0:
+        agent_log.fail("--rows must be 0 or more")
     if args.wait < 30:
         agent_log.fail("--wait must be at least 30 seconds")
     missing = godot_missing()
@@ -1136,9 +1148,10 @@ def do_loop(args, root: Path) -> int:
         lines.append(msg)
         append_log(log_path, msg, write)
 
-    note("loop campaign gather then train. Ctrl+C stops.")
+    note("loop campaign until death, then train. Ctrl+C stops.")
     note(f"policy {policy}")
-    note(f"rows {args.rows} wait_s {args.wait}")
+    cap = "none" if args.rows == 0 else str(int(args.rows))
+    note(f"until_death row_cap {cap} wait_s {args.wait}")
     note("The campaign slot stays as it is. Acting scale is 6 while the fast flag is set.")
     empty = 0
     cycle = 0
@@ -1148,12 +1161,9 @@ def do_loop(args, root: Path) -> int:
             before = len(load_rows(db))
             work = Path(tempfile.mkdtemp(prefix="wdb-tuner-loop-"))
             try:
-                _text, res = launch_smoke(root, [
-                    "--wdb-pt-campaign",
-                    "--wdb-pt-fast",
-                    "--wdb-pt-scale=6",
-                    f"--wdb-pt-gather={int(args.rows)}",
-                ], float(args.wait), work, timeout=int(args.wait))
+                _text, res = launch_smoke(
+                    root, loop_flags(int(args.rows)), float(args.wait), work, timeout=int(args.wait)
+                )
             except Exception as exc:
                 if type(exc).__name__ in ("GodotBusy", "FileNotFoundError"):
                     note(str(exc).split("\n", 1)[0])
@@ -1258,6 +1268,11 @@ def transfer_selftest() -> list[str]:
         consider(rows, dest, False)
         if dest.read_text(encoding="utf-8") != frozen:
             bad.append("dry-run wrote")
+    plain = loop_flags(0)
+    if "--wdb-pt-until-death" not in plain or any(item.startswith("--wdb-pt-gather=") for item in plain):
+        bad.append("loop flags row cap")
+    if "--wdb-pt-gather=200" not in loop_flags(200):
+        bad.append("loop flags keep cap")
     return bad
 
 
@@ -1383,7 +1398,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sec", type=float, default=8.0, help="Acting seconds for one headless run.")
     ap.add_argument("--port", type=int, default=11008, help="TCP port for the rl bridge.")
     ap.add_argument("--frames", default="", help="Folder of frames for the pixel check. Empty skips it. Needs opencv.")
-    ap.add_argument("--rows", type=int, default=200, help="Decide rows to save before each train. loop only.")
+    ap.add_argument("--rows", type=int, default=0, help="Optional decide-row cap before each train. 0 waits until the delve ends in death. loop only.")
     ap.add_argument("--wait", type=int, default=14400, help="Seconds to wait for one campaign gather. loop only.")
     ap.add_argument("--file", default="", help="Policy bundle path for export and import.")
     args = ap.parse_args(argv)

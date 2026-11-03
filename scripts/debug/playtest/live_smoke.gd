@@ -1,7 +1,7 @@
 extends Object
 
 ## --wdb-playtest-live-smoke: boots straight into one live AI run on floor 1, prints `PT:` lines, quits.
-## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it. --wdb-pt-gather=N stops it after this process has saved at least N decide rows.
+## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it. --wdb-pt-gather=N stops it after this process has saved at least N decide rows. --wdb-pt-until-death stops it when a dive ends in death, after the slot is saved. Extraction still continues.
 ## Args (after --): --wdb-seed=N (run seed), --wdb-pt-weapon=great_axe|staff|longbow, --wdb-pt-sec=S (sim seconds), --wdb-pt-scale=X (time scale while acting; only with --wdb-pt-fast, else 1.0).
 ## Debug only: run `godot --headless --path . -- --wdb-playtest-live-smoke --wdb-seed=42`.
 
@@ -10,6 +10,7 @@ const Trial := preload("res://scripts/debug/playtest/trial_bal.gd")
 const FLAG := "--wdb-playtest-live-smoke"
 const CAMPAIGN_FLAG := "--wdb-pt-campaign"
 const GATHER_FLAG := "--wdb-pt-gather"
+const UNTIL_DEATH_FLAG := "--wdb-pt-until-death"
 static var gather_n: int = 0
 
 static func active() -> bool:
@@ -74,6 +75,10 @@ static func gather_full() -> bool:
 	return lim > 0 and gather_n >= lim
 
 
+static func until_death() -> bool:
+	return CliArgs.has(UNTIL_DEATH_FLAG)
+
+
 static func campaign_stop(why: String) -> void:
 	if not campaign_active():
 		return
@@ -83,6 +88,9 @@ static func campaign_stop(why: String) -> void:
 	elif why == "gather":
 		printerr("PT: campaign_stop=gather")
 		printerr("PT: gather_rows=%d" % gather_n)
+		printerr("PT: done=1")
+	elif why == "death":
+		printerr("PT: campaign_stop=death")
 		printerr("PT: done=1")
 	else:
 		printerr("PT: campaign_stop=%s" % why)

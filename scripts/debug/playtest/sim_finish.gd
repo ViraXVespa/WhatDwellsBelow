@@ -94,7 +94,10 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 			Campaign.mark(str(App.weapon))
 		if not pt.interrupted and end_s != "stalled":
 			Engine.time_scale = 1.0
-			if LiveSmoke.gather_full():
+			if LiveSmoke.until_death() and end_s == "death":
+				Store.save_slot("campaign")
+				LiveSmoke.campaign_stop("death")
+			elif LiveSmoke.gather_full():
 				Store.save_slot("campaign")
 				LiveSmoke.campaign_stop("gather")
 			else:

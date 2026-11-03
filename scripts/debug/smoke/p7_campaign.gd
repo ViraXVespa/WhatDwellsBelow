@@ -36,6 +36,8 @@ static func _campaign_body() -> bool:
 		return false
 	if LiveSmoke.GATHER_FLAG != "--wdb-pt-gather" or LiveSmoke.gather_limit() != 0 or LiveSmoke.gather_full():
 		return false
+	if LiveSmoke.UNTIL_DEATH_FLAG != "--wdb-pt-until-death" or LiveSmoke.until_death():
+		return false
 	if Store.dir_for("campaign") != "user://playtest/campaign":
 		return false
 	var pt: Node = App.debug.play
@@ -86,9 +88,10 @@ static func _campaign_body() -> bool:
 	App.prog.deepest = was_deep
 	var start_ok: bool = start_low and start_high
 	var gather_ok: bool = LiveSmoke.GATHER_FLAG == "--wdb-pt-gather" and LiveSmoke.gather_limit() == 0 and not LiveSmoke.gather_full()
-	var ok: bool = skill_ok and gold_ok and gear_n == 3 and picked == "longbow" and seeded == "great_axe" and floor_ok and limit_ok and skip_ok and done_ok and start_ok and gather_ok
+	var until_ok: bool = LiveSmoke.UNTIL_DEATH_FLAG == "--wdb-pt-until-death" and not LiveSmoke.until_death()
+	var ok: bool = skill_ok and gold_ok and gear_n == 3 and picked == "longbow" and seeded == "great_axe" and floor_ok and limit_ok and skip_ok and done_ok and start_ok and gather_ok and until_ok
 	if not ok:
-		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s floor=%s limit=%s skip=%s done=%s start=%s gather=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded, str(floor_ok), str(limit_ok), str(skip_ok), str(done_ok), str(start_ok), str(gather_ok)])
+		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s floor=%s limit=%s skip=%s done=%s start=%s gather=%s until=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded, str(floor_ok), str(limit_ok), str(skip_ok), str(done_ok), str(start_ok), str(gather_ok), str(until_ok)])
 	return ok
 
 static func _one_file_snap(path: String) -> Dictionary:

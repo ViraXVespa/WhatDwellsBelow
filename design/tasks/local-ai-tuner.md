@@ -40,4 +40,4 @@ Long runs happen on Vira's own dedicated PC. She launches them herself with one 
 - One-command runner (e.g. `python tools/local-ai-tuner.py`) that starts headless playtests, optionally the CV checker, and writes the report + recommended tunables file.
 
 ## Hold
-Vira said go on 2026-11-03. The set-and-forget command is `python tools/local-ai-tuner.py loop`. Export and import move the policy file between PCs. Status stays open until a live run on her PC reports the held-out rates and a recommended config that beats the current one across repeat seeds.
+Vira said go on 2026-11-03. The set-and-forget command is `python tools/local-ai-tuner.py loop`. Each campaign process runs until the delve ends in death, then the loop trains. Export and import move the policy file between PCs. Status stays open until a live run on her PC reports the held-out rates and a recommended config that beats the current one across repeat seeds.

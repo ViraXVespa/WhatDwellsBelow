@@ -25,9 +25,9 @@ Behavior cloning is a small linear model in pure Python. Optuna, OpenCV, PyTorch
 
 `python tools/local-ai-tuner.py tune --live --trials 3 --seeds 1,2 --sec 8` is the short search.
 
-`python tools/local-ai-tuner.py loop` is the command to leave running on a second PC. It starts headless Godot on the campaign slot, trains when that process has saved enough decide rows, and repeats until Ctrl+C. The campaign slot stays as it is.
+`python tools/local-ai-tuner.py loop` is the command to leave running on a second PC. It starts headless Godot on the campaign slot, trains when that delve ends in death, and repeats until Ctrl+C. The campaign slot stays as it is.
 
-The row count is `--rows` (default 200). The wait for one gather is `--wait` seconds (default 14400). Each gather uses the fast acting scale, capped at 6. The series saves the slot and quits after the dive that crosses the row count. A gather that adds no decide rows is retried. Five of those in a row stop the loop. A Godot compile error stops the loop. Ctrl+C stops the loop and stops that Godot process. A dive still open when the wait ends is stopped, and its journal is not in the spool yet.
+The process keeps diving through extractions until the player dies in the dungeon. A full weapon clear, a stall, or an interrupt also ends that process, and the loop trains on the rows saved so far. `--rows` is an optional cap (default 0, no cap). A positive value still quits on the dive that crosses that decide-row count. The wait for one gather is `--wait` seconds (default 14400). Each gather uses the fast acting scale, capped at 6. The series saves the slot and quits on that death, after the dive's decide rows are in the spool. A gather that adds no decide rows is retried. Five of those in a row stop the loop. A Godot compile error stops the loop. Ctrl+C stops the loop and stops that Godot process. A dive still open when the wait ends is stopped, and that dive's journal stays out of the spool.
 
 The new weights replace the policy file when their held-out rate is at least the current file's rate on the same split. The next gather loads that file. A missing file leaves the scripted ladder for that gather. Bot rows stay an imitation. The report does not invent a human match rate. `--dry-run` on this command still launches Godot and does not write the policy file.
 
