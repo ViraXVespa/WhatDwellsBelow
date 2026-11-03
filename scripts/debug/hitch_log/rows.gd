@@ -31,6 +31,21 @@ static var _sync_ms: float = -1.0
 static var _foot_ms: float = -1.0
 static var _quad_ms: float = -1.0
 static var _shade_ms: float = -1.0
+## Sweep only. albedo_ms and contact_ms sit inside sync_ms. sole_ms and pin_ms sit inside geo_ms.
+## The rest fields are what those parts do not cover. cpu_ms and gpu_ms are the previous frame.
+static var _albedo_ms: float = -1.0
+static var _contact_ms: float = -1.0
+static var _sole_ms: float = -1.0
+static var _pin_ms: float = -1.0
+static var _sync_rest_ms: float = -1.0
+static var _geo_rest_ms: float = -1.0
+static var _lit_rest_ms: float = -1.0
+static var _lit_max_ms: float = -1.0
+static var _lit_who: String = ""
+static var _cpu_ms: float = -1.0
+static var _gpu_ms: float = -1.0
+## Sweep layer window. Those frames are not in fps_pct.
+static var _unscored: bool = false
 ## Sweep only. Visible, shadow, and canvas counts for the frame whose submit_ms just closed.
 ## -1 leaves the keys off the row. Draw-call total is already "draw"; these name the pass.
 static var _obj_3d: int = -1
@@ -132,6 +147,28 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["quad_ms"] = snappedf(_quad_ms, 0.1)
 	if _shade_ms >= 0.0:
 		row["shade_ms"] = snappedf(_shade_ms, 0.1)
+	if _albedo_ms >= 0.0:
+		row["albedo_ms"] = snappedf(_albedo_ms, 0.1)
+	if _contact_ms >= 0.0:
+		row["contact_ms"] = snappedf(_contact_ms, 0.1)
+	if _sole_ms >= 0.0:
+		row["sole_ms"] = snappedf(_sole_ms, 0.1)
+	if _pin_ms >= 0.0:
+		row["pin_ms"] = snappedf(_pin_ms, 0.1)
+	if _sync_rest_ms >= 0.0:
+		row["sync_rest_ms"] = snappedf(_sync_rest_ms, 0.1)
+	if _geo_rest_ms >= 0.0:
+		row["geo_rest_ms"] = snappedf(_geo_rest_ms, 0.1)
+	if _lit_rest_ms >= 0.0:
+		row["lit_rest_ms"] = snappedf(_lit_rest_ms, 0.1)
+	if _lit_max_ms >= 0.0:
+		row["lit_max_ms"] = snappedf(_lit_max_ms, 0.1)
+	if _lit_who != "":
+		row["lit_who"] = _lit_who
+	if _cpu_ms >= 0.0:
+		row["cpu_ms"] = snappedf(_cpu_ms, 0.1)
+	if _gpu_ms >= 0.0:
+		row["gpu_ms"] = snappedf(_gpu_ms, 0.1)
 	if _obj_3d >= 0:
 		row["obj_3d"] = _obj_3d
 		row["prim_3d"] = _prim_3d
@@ -231,7 +268,7 @@ static func set_draw_split(obj_3d: int, prim_3d: int, draw_3d: int, obj_shadow: 
 	_prim_canvas = prim_canvas
 	_draw_canvas = draw_canvas
 
-static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0) -> void:
+static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0, albedo_ms: float = -1.0, contact_ms: float = -1.0, sole_ms: float = -1.0, pin_ms: float = -1.0) -> void:
 	_lit_ms = lit_ms
 	_sample_ms = sample_ms
 	_sample_n = sample_n
@@ -242,9 +279,69 @@ static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms
 	_foot_ms = foot_ms
 	_quad_ms = quad_ms
 	_shade_ms = shade_ms
+	_albedo_ms = albedo_ms
+	_contact_ms = contact_ms
+	_sole_ms = sole_ms
+	_pin_ms = pin_ms
+	_sync_rest_ms = _rest4(sync_ms, albedo_ms, contact_ms, foot_ms, quad_ms)
+	_geo_rest_ms = _rest2(geo_ms, sole_ms, pin_ms)
+	_lit_rest_ms = _rest_lit(lit_ms, tint_ms, drive_ms, geo_ms, sync_ms, shade_ms)
+
+static func _rest2(total: float, a: float, b: float) -> float:
+	if total < 0.0 or a < 0.0 or b < 0.0:
+		return -1.0
+	var rest: float = total - a - b
+	if rest < 0.0:
+		return 0.0
+	return rest
+
+static func _rest4(total: float, a: float, b: float, c: float, d: float) -> float:
+	if total < 0.0 or a < 0.0 or b < 0.0 or c < 0.0 or d < 0.0:
+		return -1.0
+	var rest: float = total - a - b - c - d
+	if rest < 0.0:
+		return 0.0
+	return rest
+
+static func _rest_lit(total: float, tint_ms: float, drive_ms: float, geo_ms: float, sync_ms: float, shade_ms: float) -> float:
+	if total < 0.0 or tint_ms < 0.0 or drive_ms < 0.0 or geo_ms < 0.0 or sync_ms < 0.0 or shade_ms < 0.0:
+		return -1.0
+	var rest: float = total - tint_ms - drive_ms - geo_ms - sync_ms - shade_ms
+	if rest < 0.0:
+		return 0.0
+	return rest
+
+static func set_render_ms(cpu_ms: float, gpu_ms: float) -> void:
+	_cpu_ms = cpu_ms
+	_gpu_ms = gpu_ms
+
+static func set_lit_peak(ms: float, who: String) -> void:
+	_lit_max_ms = ms
+	_lit_who = who
+
+static func set_unscored(on: bool) -> void:
+	_unscored = on
+
+static func unscored() -> bool:
+	return _unscored
 
 static func frame_submit_ms() -> float:
 	return _submit_ms
+
+static func frame_split() -> Dictionary:
+	var row: Dictionary = {
+		"submit_ms": _submit_ms,
+		"tree_ms": _tree_ms,
+		"cpu_ms": _cpu_ms,
+		"gpu_ms": _gpu_ms,
+		"lit_ms": _lit_ms,
+		"geo_ms": _geo_ms,
+		"sync_ms": _sync_ms,
+		"albedo_ms": _albedo_ms,
+		"contact_ms": _contact_ms,
+		"draw_3d": float(_draw_3d),
+	}
+	return row
 
 static func harness_on() -> bool:
 	return _harness_on

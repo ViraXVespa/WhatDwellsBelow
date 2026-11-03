@@ -205,6 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--leg", choices=("both", "desktop", "web"), default="both", help="Which runs to launch (default both).")
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
     ap.add_argument("--report", default="", help="Reprint seg lines and the hitch summary from a hitch JSONL. Does not launch a run.")
+    # dest is not walk_layers. run_hub_bench._web reads that attribute as the hub fill isolator.
+    ap.add_argument("--walk-layers", dest="sweep_layers", action="store_true", help="After the first scored hub walk, time each hidden group. Those frames are not in fps_pct. Does not change the 99%% bar.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.report:
@@ -221,10 +223,15 @@ def main(argv: list[str] | None = None) -> int:
         cap="max_fps 120",
         headless=bool(args.headless),
     ))
+    extra = list(EXTRA)
+    query = QUERY
+    if args.sweep_layers:
+        extra.append("--wdb-sweep-layers")
+        query += "&wdb-sweep-layers"
     if args.leg in ("both", "desktop"):
         d_fail, d_body = run_hub_bench._desktop(
             root, args, out_log, err_log,
-            flag=FLAG, fresh_name="perf-sweep-fresh", label="perf sweep", extra=EXTRA,
+            flag=FLAG, fresh_name="perf-sweep-fresh", label="perf sweep", extra=extra,
         )
         d_extra, d_lines = _place_block(d_body, _hitch_file(d_body))
         d_fail += d_extra
@@ -235,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
         w_fail, w_body = run_hub_bench._web(
             root, args,
             flag=FLAG, site_prefix="perf-sweep-web", profile_name="perf-sweep-browser",
-            label="perf sweep", extra_query=QUERY,
+            label="perf sweep", extra_query=query,
         )
         sink = root / "_logs" / "web-perf" / "hitch.jsonl"
         w_extra, w_lines = _place_block(w_body, sink if sink.is_file() else _hitch_file(w_body))

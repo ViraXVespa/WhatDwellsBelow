@@ -14,7 +14,11 @@ extends Node
 ## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
 ## and sample_ms (LightRt.sample_xz, also counted inside tint_ms).
 ## lit_ms further splits into tint_ms, drive_ms, geo_ms, sync_ms, and shade_ms.
-## foot_ms and quad_ms sit inside sync_ms.
+## foot_ms, quad_ms, albedo_ms, and contact_ms sit inside sync_ms.
+## sole_ms and pin_ms sit inside geo_ms. sync_rest_ms, geo_rest_ms, and lit_rest_ms
+## are the part of that total the named pieces do not cover. lit_max_ms is the
+## slowest ActorLit, and lit_who is that node's parent. cpu_ms and gpu_ms are the
+## viewport's previous-frame render times (0 means the renderer returned nothing).
 
 const FLAG := "--wdb-perf-sweep"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -105,6 +109,7 @@ var _script_ms: float = -1.0
 var _queue_ms: float = -1.0
 var _tail_ms: float = -1.0
 var _tail: _TreeTail = null
+var _measure_rid: RID = RID()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -122,6 +127,7 @@ func _ready() -> void:
 	_tail = tail
 	add_child(tail)
 	_vsync_off()
+	_arm_render()
 
 func _on_pre_draw() -> void:
 	var now: int = Time.get_ticks_usec()
@@ -147,10 +153,33 @@ func _on_post_draw() -> void:
 	HitchLog.set_tree_ms(_tree_ms)
 	HitchLog.set_tree_split(_script_ms, _queue_ms, _tail_ms)
 	var parts: PackedFloat32Array = ActorLit.parts_ms()
-	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6])
+	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8], parts[9], parts[10])
+	HitchLog.set_lit_peak(ActorLit.max_ms(), ActorLit.max_who())
 	HitchLog.set_submit_ms(float(now - _pre_us) / 1000.0)
 	_stamp_draw()
+	_stamp_render()
 	_post_us = now
+
+func _arm_render() -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.root == null:
+		return
+	var rid: RID = tree.root.get_viewport_rid()
+	if rid == _measure_rid:
+		return
+	if _measure_rid.is_valid():
+		RenderingServer.viewport_set_measure_render_time(_measure_rid, false)
+	_measure_rid = rid
+	if rid.is_valid():
+		RenderingServer.viewport_set_measure_render_time(rid, true)
+
+func _stamp_render() -> void:
+	if not _measure_rid.is_valid():
+		HitchLog.set_render_ms(-1.0, -1.0)
+		return
+	var cpu_ms: float = RenderingServer.viewport_get_measured_render_time_cpu(_measure_rid) * 1000.0
+	var gpu_ms: float = RenderingServer.viewport_get_measured_render_time_gpu(_measure_rid) * 1000.0
+	HitchLog.set_render_ms(cpu_ms, gpu_ms)
 
 func _stamp_draw() -> void:
 	var vp: Viewport = get_viewport()
@@ -179,6 +208,7 @@ func _process(delta: float) -> void:
 		LightRt.mark_off()
 		return
 	var now: int = Time.get_ticks_usec()
+	_arm_render()
 	if _post_us > 0:
 		var after_ms: float = float(now - _post_us) / 1000.0 - HitchLog.harness_in_after_ms()
 		if after_ms < 0.0:
@@ -371,6 +401,9 @@ func _finish(extra: String) -> void:
 	if _done:
 		return
 	_done = true
+	if _measure_rid.is_valid():
+		RenderingServer.viewport_set_measure_render_time(_measure_rid, false)
+		_measure_rid = RID()
 	if App.playtest != null:
 		App.playtest.ai_on = false
 		App.playtest.move = Vector2.ZERO

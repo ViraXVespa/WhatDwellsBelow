@@ -14,6 +14,7 @@ const Iso := preload("res://scripts/debug/playtest_bench/hub_bench_iso.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 const Step := preload("res://scripts/debug/playtest_bench/hub_bench_step.gd")
 const Sweep := preload("res://scripts/debug/playtest_bench/perf_sweep.gd")
+const Layers := preload("res://scripts/debug/playtest_bench/sweep_layers.gd")
 const ST_WAIT := 0
 const ST_FACE := 1
 const ST_GOTO := 2
@@ -23,6 +24,7 @@ const ST_GAP := 5
 const ST_STRIKE := 6
 const ST_FILL := 7
 const ST_ISO := 8
+const ST_LAYER := 9
 const ISO_FLAG := "--wdb-hub-isolate"
 const WALK_FLAG := "--wdb-hub-walk-layers"
 const ABA_FLAG := "--wdb-hub-fill-aba"
@@ -63,6 +65,8 @@ func _phase_name() -> String:
 		return "fill"
 	if _state == ST_ISO:
 		return "iso"
+	if _state == ST_LAYER:
+		return "layer"
 	return "wait"
 
 static func start() -> void:
@@ -136,6 +140,8 @@ var _iso_all: Array[Node] = []
 var _iso_on: Array[bool] = []
 var _iso_tag: PackedStringArray = PackedStringArray()
 var _iso_lits: Array[Node] = []
+## First hub walk only. The unscored hide window sets this before the dungeon.
+var _layers_done: bool = false
 
 var _pre_us: int = 0
 var _proc_us: int = 0
@@ -217,9 +223,13 @@ func _step(delta: float) -> void:
 	End._sample(self, actor)
 	_blank()
 	var cap: float = 90.0 if CliArgs.has(WALK_FLAG) else HARD_SEC
-	if _clock >= cap and _state != ST_HOLD:
+	if _clock >= cap and _state != ST_HOLD and _state != ST_LAYER:
 		End._finish(self, "")
 		return
+	# Fill ends the walk itself at PLAY_SEC, so the layer window has to start first.
+	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and _state != ST_LAYER and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC and Sweep.active() and Layers.pending(self):
+		_state = ST_LAYER
+		HitchLog.set_unscored(true)
 	if _state == ST_FACE:
 		Step._face(self, delta)
 	elif _state == ST_GOTO:
@@ -241,8 +251,14 @@ func _step(delta: float) -> void:
 			Step._fill(self, delta)
 	elif _state == ST_ISO:
 		Iso._isolate(self, actor, delta)
-	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC:
-		End._finish(self, "")
+	elif _state == ST_LAYER:
+		Layers.tick(self, delta)
+	if not _done and _state != ST_WAIT and _state != ST_HOLD and _state != ST_ISO and _state != ST_LAYER and not CliArgs.has(WALK_FLAG) and _visits_done() and End._faces_done(self) and _clock >= PLAY_SEC:
+		if Sweep.active() and Layers.pending(self):
+			_state = ST_LAYER
+			HitchLog.set_unscored(true)
+		else:
+			End._finish(self, "")
 
 func _actor() -> Node3D:
 	var n: Node = get_tree().get_first_node_in_group("player") if get_tree() != null else null

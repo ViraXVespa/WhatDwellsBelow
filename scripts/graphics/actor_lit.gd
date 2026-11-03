@@ -21,7 +21,9 @@ static var _shade: Shader
 ## Debug plant (hub_shadow_check/feet_px.gd): the higher standing foot treated as raised (the one-foot-off of 20611abf).
 static var plant_flat := false
 ## Sweep only. Off leaves live frames untimed. mark_us is the sum of this frame's _process.
-## The part counters split that sum. foot_us and quad_us sit inside sync_us. sample_xz sits inside tint_us.
+## The part counters split that sum. foot_us, quad_us, albedo_us, and contact_us sit inside sync_us.
+## sole_us and pin_us sit inside geo_us. sample_xz sits inside tint_us.
+## _max_us is the slowest single actor this frame.
 static var mark_on: bool = false
 static var mark_us: int = 0
 static var tint_us: int = 0
@@ -31,6 +33,12 @@ static var sync_us: int = 0
 static var foot_us: int = 0
 static var quad_us: int = 0
 static var shade_us: int = 0
+static var albedo_us: int = 0
+static var contact_us: int = 0
+static var sole_us: int = 0
+static var pin_us: int = 0
+static var _max_us: int = 0
+static var _max_who: String = ""
 
 var spr: Sprite3D
 var marks: Array[MeshInstance3D] = []
@@ -113,6 +121,18 @@ static func arm_mark() -> void:
 	foot_us = 0
 	quad_us = 0
 	shade_us = 0
+	albedo_us = 0
+	contact_us = 0
+	sole_us = 0
+	pin_us = 0
+	_max_us = 0
+	_max_who = ""
+
+static func max_ms() -> float:
+	return float(_max_us) / 1000.0
+
+static func max_who() -> String:
+	return _max_who
 
 static func mark_off() -> void:
 	mark_on = false
@@ -120,7 +140,8 @@ static func mark_off() -> void:
 static func mark_ms() -> float:
 	return float(mark_us) / 1000.0
 
-## Order: tint, drive, geo, sync, foot, quad, shade. foot and quad are inside sync. sample_xz is inside tint.
+## Order: tint, drive, geo, sync, foot, quad, shade, albedo, contact, sole, pin.
+## foot, quad, albedo, and contact are inside sync. sole and pin are inside geo.
 static func parts_ms() -> PackedFloat32Array:
 	return PackedFloat32Array([
 		float(tint_us) / 1000.0,
@@ -130,6 +151,10 @@ static func parts_ms() -> PackedFloat32Array:
 		float(foot_us) / 1000.0,
 		float(quad_us) / 1000.0,
 		float(shade_us) / 1000.0,
+		float(albedo_us) / 1000.0,
+		float(contact_us) / 1000.0,
+		float(sole_us) / 1000.0,
+		float(pin_us) / 1000.0,
 	])
 
 func _mark_t() -> int:
@@ -153,8 +178,16 @@ func _mark_us(bucket: int, t0: int) -> void:
 		foot_us += dt
 	elif bucket == 5:
 		quad_us += dt
-	else:
+	elif bucket == 6:
 		shade_us += dt
+	elif bucket == 7:
+		albedo_us += dt
+	elif bucket == 8:
+		contact_us += dt
+	elif bucket == 9:
+		sole_us += dt
+	elif bucket == 10:
+		pin_us += dt
 
 func _process(delta: float) -> void:
 	if not mark_on:
@@ -162,7 +195,18 @@ func _process(delta: float) -> void:
 		return
 	var t0: int = Time.get_ticks_usec()
 	_tick(delta)
-	mark_us += Time.get_ticks_usec() - t0
+	var dt: int = Time.get_ticks_usec() - t0
+	mark_us += dt
+	if dt > _max_us:
+		_max_us = dt
+		var body: Node = get_parent()
+		var who: String = ""
+		while body != null and who == "":
+			var nm: String = str(body.name)
+			if not nm.begins_with("@"):
+				who = nm
+			body = body.get_parent()
+		_max_who = who
 
 func _tick(delta: float) -> void:
 	if spr == null or not is_instance_valid(spr):
@@ -222,7 +266,9 @@ func _usable(tex: Texture2D) -> bool:
 
 func _place(tex: Texture2D, feet: Vector2) -> void:
 	var t0: int = _mark_t()
+	var t_sole: int = _mark_t()
 	var soles: Vector4 = Soles._soles(tex)
+	_mark_us(9, t_sole)
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
 	var px: float = spr.pixel_size
@@ -233,6 +279,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	var gl: bool = sole_y - soles.y < up and not (plant_flat and soles.y < sole_y)
 	var gr: bool = sole_y - soles.w < up and not (plant_flat and soles.w < sole_y)
 	# A grounded foot pins at its own sole (contact) row; the shader (lit_k feet) casts its rows from there.
+	var t_pin: int = _mark_t()
 	var fl: Vector2 = Geo._sole_xz(self, soles.x, soles.y if gl else sole_y, tw, th, gl) - feet
 	var fr: Vector2 = Geo._sole_xz(self, soles.z, soles.w if gr else sole_y, tw, th, gr) - feet
 	lift = 0.0
@@ -245,6 +292,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			lift = minf(wl.y, wr.y) - T.FLOOR_Y
 			fl = Vector2(wl.x, wl.z) - feet
 			fr = Vector2(wr.x, wr.z) - feet
+	_mark_us(10, t_pin)
 	var s_air: float = clampf(1.0 - lift / K.AIR_S_M, K.AIR_S_MIN, 1.0)
 	var a_air: float = clampf(1.0 - lift / K.AIR_A_M, K.AIR_A_MIN, 1.0)
 	var origin: Vector3 = Vector3(feet.x, T.FLOOR_Y, feet.y)
@@ -310,7 +358,9 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	]
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
+		var t_albedo: int = _mark_t()
 		var albedo: Texture2D = Soles._solid(tex, solid) if solid != "" else Emis.mask(tex, Emis.rule_of(get_parent()))
+		_mark_us(7, t_albedo)
 		var aid: int = albedo.get_instance_id() if albedo != null else 0
 		if aid != _albedo_id[slot]:
 			mat.set_shader_parameter("albedo_tex", albedo)
@@ -321,6 +371,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 			_mark_us(4, tf)
 		else:
 			foot = 0
+		var t_contact: int = _mark_t()
 		var per_col: bool = solid == "" and K.on_grid()
 		var contact_flag: float = 1.0 if per_col else 0.0
 		if contact_flag != _contact_on[slot]:
@@ -332,6 +383,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 			if cid != _contact_id[slot]:
 				mat.set_shader_parameter("contact_tex", ctex)
 				_contact_id[slot] = cid
+		_mark_us(8, t_contact)
 	if key == _key_at[slot] and node.mesh != null:
 		_mark_us(3, t0)
 		return
