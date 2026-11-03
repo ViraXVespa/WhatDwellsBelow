@@ -22,6 +22,8 @@ extends Node
 ## wake_ms, phys_span_ms, and post_phys_ms split the gap from post-draw to the
 ## hitch tick (App._process, where dt is measured). head_ms is that tick until
 ## this node's _process. phys_ms stays the engine monitor.
+## floor_ms, torch_ms, and bar_ms are armed here and copied at post-draw.
+## phys_obj, phys_pairs, and phys_islands are read on the hitch row when wake_ms is set.
 
 const FLAG := "--wdb-perf-sweep"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -29,6 +31,9 @@ const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const DungeonBoot := preload("res://scripts/world/dungeon/dungeon_boot.gd")
+const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
+const HpBar := preload("res://scripts/combat/hp_bar.gd")
 
 const ST_HUB := 0
 const ST_DUNG := 1
@@ -164,6 +169,7 @@ func _on_post_draw() -> void:
 	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8], parts[9], parts[10])
 	HitchLog.set_lit_peak(ActorLit.max_ms(), ActorLit.max_who())
 	HitchLog.set_submit_ms(float(now - _pre_us) / 1000.0)
+	HitchLog.set_idle_ms(DungeonBoot.floor_ms(), TorchBill.torch_ms(), HpBar.bar_ms())
 	_stamp_draw()
 	_stamp_render()
 	_post_us = now
@@ -215,6 +221,9 @@ func _process(delta: float) -> void:
 	if _done:
 		ActorLit.mark_off()
 		LightRt.mark_off()
+		DungeonBoot.disarm_floor()
+		TorchBill.disarm_torch()
+		HpBar.disarm_bar()
 		return
 	var now: int = Time.get_ticks_usec()
 	var tick_us: int = HitchLog.tick_us()
@@ -230,6 +239,9 @@ func _process(delta: float) -> void:
 	HitchLog.set_bench_ms(-1.0)
 	ActorLit.arm_mark()
 	LightRt.arm_mark()
+	DungeonBoot.arm_floor()
+	TorchBill.arm_torch()
+	HpBar.arm_bar()
 	_post_t += delta
 	if _post_t >= 0.5:
 		_post_t = 0.0

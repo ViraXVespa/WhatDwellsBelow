@@ -78,8 +78,37 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 		e.apply_stagger(App.bal.slam_stagger)
 
 static func fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) -> void:
-	if not ResourceLoader.exists(path):
+	var s: Sprite3D = _spawn_fx(host, path, pos, h, ybill)
+	if s == null:
 		return
+	var tw: Tween = s.create_tween()
+	tw.tween_property(s, "modulate:a", 0.0, 0.45)
+	tw.finished.connect(s.queue_free)
+
+static func warm_shown(host: Node) -> void:
+	if host == null or not is_instance_valid(host) or not host.is_inside_tree():
+		return
+	var crack: Sprite3D = _spawn_fx(host, "res://assets/fx/crack.png", host.global_position, 2.4, false)
+	var bolt: Sprite3D = _spawn_fx(host, "res://assets/fx/lightning.png", host.global_position, 2.6, true)
+	var rad: float = 2.2
+	if App.bal:
+		rad = float(App.bal.slam_radius)
+	if host.telegraph != null and host.telegraph.has_method("show_circle"):
+		host.telegraph.show_circle(host.global_position, rad, Color(1.0, 0.92, 0.35, 0.42))
+	RenderingServer.force_draw()
+	if host.telegraph != null and host.telegraph.has_method("hide_now"):
+		host.telegraph.hide_now()
+	if crack != null:
+		crack.visible = false
+		crack.queue_free()
+	if bolt != null:
+		bolt.visible = false
+		bolt.queue_free()
+	RenderingServer.force_draw()
+
+static func _spawn_fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) -> Sprite3D:
+	if not ResourceLoader.exists(path):
+		return null
 	var s := Sprite3D.new()
 	s.texture = load(path)
 	s.centered = true
@@ -91,9 +120,7 @@ static func fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) ->
 	s.position = pos + Vector3(0.0, 0.02 if not ybill else h * 0.45, 0.0)
 	if not ybill:
 		s.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
-	var world := host.get_parent()
+	var world: Node = host.get_parent()
 	if world:
 		world.add_child(s)
-	var tw := s.create_tween()
-	tw.tween_property(s, "modulate:a", 0.0, 0.45)
-	tw.finished.connect(s.queue_free)
+	return s

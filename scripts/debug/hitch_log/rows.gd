@@ -58,6 +58,11 @@ static var _wake_ms: float = -1.0
 static var _phys_span_ms: float = -1.0
 static var _post_phys_ms: float = -1.0
 static var _head_ms: float = -1.0
+## Sweep only. Dungeon process_floor, torch flame yaw, and hp-bar _process.
+## -1 leaves the keys off the row.
+static var _floor_ms: float = -1.0
+static var _torch_ms: float = -1.0
+static var _bar_ms: float = -1.0
 ## Sweep layer window. Those frames are not in fps_pct.
 static var _unscored: bool = false
 ## Sweep only. Visible, shadow, and canvas counts for the frame whose submit_ms just closed.
@@ -191,6 +196,16 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["post_phys_ms"] = snappedf(_post_phys_ms, 0.1)
 	if _head_ms >= 0.0:
 		row["head_ms"] = snappedf(_head_ms, 0.1)
+	if _floor_ms >= 0.0:
+		row["floor_ms"] = snappedf(_floor_ms, 0.1)
+	if _torch_ms >= 0.0:
+		row["torch_ms"] = snappedf(_torch_ms, 0.1)
+	if _bar_ms >= 0.0:
+		row["bar_ms"] = snappedf(_bar_ms, 0.1)
+	if _wake_ms >= 0.0:
+		row["phys_obj"] = int(Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS))
+		row["phys_pairs"] = int(Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS))
+		row["phys_islands"] = int(Performance.get_monitor(Performance.PHYSICS_3D_ISLAND_COUNT))
 	if _obj_3d >= 0:
 		row["obj_3d"] = _obj_3d
 		row["prim_3d"] = _prim_3d
@@ -290,6 +305,11 @@ static func note_phys_head() -> void:
 static func note_phys_tail() -> void:
 	_phys_tail_us = Time.get_ticks_usec()
 
+static func set_idle_ms(floor_ms: float, torch_ms: float, bar_ms: float) -> void:
+	_floor_ms = floor_ms
+	_torch_ms = torch_ms
+	_bar_ms = bar_ms
+
 static func set_head_ms(ms: float) -> void:
 	if ms < 0.0:
 		_head_ms = 0.0
@@ -339,6 +359,9 @@ static func clear_edge() -> void:
 	_phys_span_ms = -1.0
 	_post_phys_ms = -1.0
 	_head_ms = -1.0
+	_floor_ms = -1.0
+	_torch_ms = -1.0
+	_bar_ms = -1.0
 
 static func set_bench_ms(ms: float) -> void:
 	_bench_ms = ms

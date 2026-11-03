@@ -8,8 +8,24 @@ const SpotS := preload("res://scripts/world/interact.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
+const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 
 static var _first_tick: bool = true
+## Sweep only. Off leaves the floor tick untimed.
+static var floor_on: bool = false
+static var floor_us: int = 0
+
+static func arm_floor() -> void:
+	floor_on = true
+	floor_us = 0
+
+static func disarm_floor() -> void:
+	floor_on = false
+
+static func floor_ms() -> float:
+	if not floor_on:
+		return -1.0
+	return float(floor_us) / 1000.0
 
 static func ready_floor(host: Node) -> void:
 	_first_tick = true
@@ -61,6 +77,8 @@ static func ready_floor(host: Node) -> void:
 	LightRtS.maintain(host)
 	LightRtS.maintain(host)
 	(load("res://scripts/graphics/torch_bill.gd") as GDScript).warm(host)
+	if host.player and is_instance_valid(host.player) and host.player.is_inside_tree():
+		HitAtk.warm_shown(host.player)
 	Dbg.hitch("dungeon_light")
 	Dbg.lt_dmark("light")
 	if App:
@@ -69,6 +87,9 @@ static func ready_floor(host: Node) -> void:
 	Dbg.smoke_attach("dungeon", host)
 
 static func process_floor(host: Node, delta: float) -> void:
+	var t0: int = 0
+	if floor_on:
+		t0 = Time.get_ticks_usec()
 	if _first_tick:
 		Dbg.hitch("dungeon_tick")
 		var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
@@ -119,6 +140,8 @@ static func process_floor(host: Node, delta: float) -> void:
 	if host.stairs:
 		host.stairs.refresh()
 	host._refresh_hint()
+	if t0 > 0:
+		floor_us += Time.get_ticks_usec() - t0
 
 static func spawns(host: Node) -> void:
 	host.floor_rng.seed = App.run_seed * 10007 + App.floor_n * 9176

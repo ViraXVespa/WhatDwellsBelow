@@ -2,6 +2,12 @@ extends Node3D
 
 var mesh_i: MeshInstance3D
 var mat: StandardMaterial3D
+var _fan_ok: bool = false
+var _fan_dir: Vector2 = Vector2.ZERO
+var _fan_dist: float = -1.0
+var _fan_arc: float = -1.0
+var _fan_col: Color = Color.BLACK
+var _fan_mesh: ArrayMesh
 
 func _ready() -> void:
 	mesh_i = MeshInstance3D.new()
@@ -22,7 +28,17 @@ func set_color(c: Color) -> void:
 func show_arc(origin: Vector3, dir: Vector2, dist: float, arc_deg: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
 	set_color(col)
-	mesh_i.mesh = _fan(dir, dist, arc_deg, 14)
+	if _fan_ok and _fan_mesh != null and is_equal_approx(_fan_dist, dist) and is_equal_approx(_fan_arc, arc_deg) and _fan_dir.distance_squared_to(dir) <= 0.0000001 and _fan_col.is_equal_approx(col):
+		mesh_i.mesh = _fan_mesh
+		visible = true
+		return
+	_fan_mesh = _fan(dir, dist, arc_deg, 14)
+	_fan_ok = true
+	_fan_dir = dir
+	_fan_dist = dist
+	_fan_arc = arc_deg
+	_fan_col = col
+	mesh_i.mesh = _fan_mesh
 	visible = true
 func show_circle(origin: Vector3, radius: float, col: Color) -> void:
 	show_arc(origin, Vector2.DOWN, radius, 360.0, col)
