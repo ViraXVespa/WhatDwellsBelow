@@ -14,6 +14,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("camp",    "bake/run_bake_camp",          "Bake hub_light.png (and ground wear) on a real renderer"),
     ("ground",  "bake/bake_ground_wear",       "Bake the tileable ground_wear.png sheet"),
     ("frames",  "bake/bake_frame_art",         "Bake object-frame art PNGs under assets/ui/frames and verify them"),
+    ("soles",   "bake/bake_soles",             "Bake actor sole positions into scripts/data/actor_soles.json"),
     ("check",   "bake/check_hub_bake",         "Committed bake hashes vs HUB_BAKE_STAMP (the game crashes on a mismatch)"),
 ]
 

@@ -51,6 +51,10 @@ static func set_phase(phase_name: String) -> void:
 static func set_score_where(where_name: String) -> void:
 	Ctx.set_score_where(where_name)
 
+## Sweep stretch name (hub1, dungeon1, hub2, dungeon2). Empty leaves it off the hitch row.
+static func set_seg(seg_name: String) -> void:
+	Rows.set_seg(seg_name)
+
 static func scoring(host: Node) -> bool:
 	return Ctx._score_on_screen(host)
 

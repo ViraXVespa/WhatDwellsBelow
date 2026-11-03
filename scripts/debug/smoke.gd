@@ -9,8 +9,10 @@ extends RefCounted
 ## Dungeon load timing: --wdb-dungeon-load-timing-smoke (Placeholdia → Dungeon; not a numbered phase)
 ## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
+## Sole bake: --wdb-bake-soles (writes scripts/data/actor_soles.json; not a numbered phase)
 
 const ArtBake := preload("res://scripts/ui/progress_ui/art_bake.gd")
+const SoleBake := preload("res://scripts/graphics/actor_lit/sole_bake.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
@@ -55,6 +57,9 @@ static func hold_player() -> bool:
 
 static func route_boot() -> bool:
 	LoadedDump.maybe_start(App.get_tree(), args())
+	if "--wdb-bake-soles" in args():
+		SoleBake.run.call_deferred(App.get_tree())
+		return true
 	if ArtBake.active():
 		ArtBake.run_and_quit.call_deferred(App.get_tree())
 		return true

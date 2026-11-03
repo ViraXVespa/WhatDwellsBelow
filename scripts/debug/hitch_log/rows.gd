@@ -7,6 +7,8 @@ const Present := preload("res://scripts/debug/hitch_log/log_present.gd")
 const Web := preload("res://scripts/debug/hitch_log/log_web.gd")
 
 static var _phase: String = ""
+## Sweep stretch: hub1, dungeon1, hub2, dungeon2. Empty leaves the key off the row.
+static var _seg: String = ""
 static var _play_s: float = 0.0
 static var _submit_ms: float = -1.0
 static var _tree_ms: float = -1.0
@@ -77,6 +79,8 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 	}
 	if _phase != "":
 		row["phase"] = _phase
+	if _seg != "":
+		row["seg"] = _seg
 	if not _whys.is_empty():
 		row["why"] = ",".join(_whys)
 	elif why != "":
@@ -170,6 +174,9 @@ static func _write_gap(delta: float, reason: String) -> void:
 
 static func set_phase(phase_name: String) -> void:
 	_phase = phase_name
+
+static func set_seg(seg_name: String) -> void:
+	_seg = seg_name
 
 static func set_play_s(sec: float) -> void:
 	_play_s = sec

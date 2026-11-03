@@ -6,6 +6,7 @@ const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
 const Hub := preload("res://scripts/app/flow_hub.gd")
+const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 const Leg := preload("res://scripts/app/flow_leg.gd")
 static func enter_dungeon(host: Node) -> void:
 	if host.present and str(host.present.get("_mode")) == "enter":
@@ -30,17 +31,21 @@ static func enter_dungeon(host: Node) -> void:
 		host.ui_open = true
 		if host.present.has_method("wait_painted"):
 			await host.present.wait_painted()
+		# Same table as the hub loader. A dungeon-first entry parses it under the enter cover.
+		Soles.warm()
 		host.sfx("enter")
 		_close_hub_ui(host)
 		host.save_now()
 		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 	elif host.present and host.present.has_method("play_enter"):
+		Soles.warm()
 		host.save_now()
 		host.ui_open = true
 		host.get_tree().paused = true
 		host.present.play_enter(Callable(host, "_after_enter"))
 	else:
+		Soles.warm()
 		host.save_now()
 		host.ui_open = true
 		AppRunS.ensure_dungeon_packed(host)
@@ -104,6 +109,8 @@ static func play_from_menu_async(host: Node) -> void:
 	await host.get_tree().process_frame
 	Dbg.hitch("load_paint")
 	Dbg.lt_mark("loader_paint")
+	# Baked sole table. Parsed while the loader is up so the first mark does not scan sticker pixels.
+	Soles.warm()
 	UiWarm.start()
 	Dbg.hitch("load_preload")
 	preload_hub(host)

@@ -6,7 +6,8 @@ extends Node
 ## Dungeon entry is App.enter_dungeon (cover, paint wait, scene change).
 ## Dispel is the player's exit, then the recap camp handoff (wake cover, go_camp).
 ## Frames count while camp or the dungeon is showing and the loader bar is down.
-## HB: seg=<place><n> is that stretch. The last fps_pct line is the whole run.
+## HB: seg=<place><n> is that stretch. Each of the four stretches is its own 99% bar.
+## The last fps_pct line is the whole run. Hitch rows carry seg for the cold/warm pair.
 ## tree_ms splits into script_ms, queue_ms, and tail_ms. The sweep node stays at priority 0.
 ## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
 ## and sample_ms (LightRt.sample_xz, also counted inside tint_ms).
@@ -305,6 +306,8 @@ func _set_state(next_state: int) -> void:
 func _note_place(delta: float) -> void:
 	var place: String = _scoring_place()
 	if place == "":
+		# The sample for this frame already ran. Later loader frames stay untagged.
+		HitchLog.set_seg("")
 		return
 	if place == _seg_place:
 		_play += delta
@@ -320,6 +323,7 @@ func _note_place(delta: float) -> void:
 	_play = 0.0
 	HitchLog.set_score_where(place)
 	HitchLog.set_play_s(0.0)
+	HitchLog.set_seg(_seg_name)
 
 func _open_seg(place: String) -> String:
 	if place == "dungeon":

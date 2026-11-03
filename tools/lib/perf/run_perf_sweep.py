@@ -6,6 +6,8 @@ Desktop: a gl_compatibility window, vsync off, max_fps 120, empty AppData.
 Web: a new export in a visible fullscreen Edge window (Chrome if Edge is not installed).
 Frames count while the hub or the dungeon is showing and the loader bar is down.
 HB: seg= lines are each stretch. The last fps_pct is the whole run.
+Each of hub1, dungeon1, hub2, and dungeon2 must be at least 99 (cold hub,
+cold dungeon, warm hub, warm dungeon). pair lines compare warm minus cold.
 --headless on the desktop leg is not an FPS reading.
 Summary: _logs/perf-sweep/<stamp>-perf-sweep.txt.
 Two cold web passes are two separate --leg web runs.
@@ -25,6 +27,123 @@ FLAG = "--wdb-perf-sweep"
 EXTRA = ["--wdb-seed=42", "--wdb-pt-sec=30"]
 QUERY = "&wdb-seed=42&wdb-pt-sec=30"
 JOB = "perf-sweep"
+
+# Cold is the first visit. Warm is the visit after dispel.
+_PLACES = (
+    ("cold_hub", "hub1"),
+    ("cold_dungeon", "dungeon1"),
+    ("warm_hub", "hub2"),
+    ("warm_dungeon", "dungeon2"),
+)
+_PAIR_KEYS = ("dt_ms", "submit_ms", "tree_ms", "lit_ms", "geo_ms")
+
+
+def _seg_fps(lines: list[str]) -> dict:
+    found: dict = {}
+    for ln in lines:
+        name = run_hub_bench._field(ln, "seg")
+        if name not in ("hub1", "dungeon1", "hub2", "dungeon2"):
+            continue
+        try:
+            found[name] = {
+                "frames": int(float(run_hub_bench._field(ln, "frames") or 0)),
+                "slow": int(float(run_hub_bench._field(ln, "slow") or 0)),
+                "fps_pct": float(run_hub_bench._field(ln, "fps_pct") or 0),
+            }
+        except ValueError:
+            continue
+    return found
+
+
+def _slow_by_seg(rows: list) -> dict:
+    grouped: dict = {}
+    for row in rows:
+        if row.get("ev") != "hitch":
+            continue
+        if int(row.get("paused", 0) or 0) == 1 or int(row.get("bar", 0) or 0) == 1:
+            continue
+        seg = str(row.get("seg", "") or "")
+        if not seg:
+            continue
+        grouped.setdefault(seg, []).append(row)
+    return grouped
+
+
+def _med_key(rows: list, key: str) -> str:
+    vals = []
+    for row in rows:
+        if key not in row:
+            continue
+        try:
+            vals.append(float(row.get(key) or 0))
+        except (TypeError, ValueError):
+            continue
+    if not vals:
+        return "-"
+    return "%.1f" % run_hub_bench._median(vals)
+
+
+def _pair_line(label: str, cold: str, warm: str, stats: dict, grouped: dict) -> str:
+    left = stats.get(cold)
+    right = stats.get(warm)
+
+    def fps(row: dict | None) -> str:
+        if not row:
+            return "missing"
+        return "%.1f" % row["fps_pct"]
+
+    dfps = "na"
+    if left and right:
+        dfps = "%+.1f" % (right["fps_pct"] - left["fps_pct"])
+    cold_rows = grouped.get(cold, [])
+    warm_rows = grouped.get(warm, [])
+    bits = [
+        "pair %s" % label,
+        "fps=%s->%s" % (fps(left), fps(right)),
+        "dfps=%s" % dfps,
+        "hitch_rows=%d->%d" % (len(cold_rows), len(warm_rows)),
+    ]
+    for key in _PAIR_KEYS:
+        short = key[:-3] if key.endswith("_ms") else key
+        bits.append("%s_med=%s->%s" % (short, _med_key(cold_rows, key), _med_key(warm_rows, key)))
+    return " ".join(bits)
+
+
+def _place_block(lines: list[str], hitch_path: Path | None) -> tuple[int, list[str]]:
+    """Four place bars plus a cold-to-warm pair. A missing place fails."""
+    stats = _seg_fps(lines)
+    grouped: dict = {}
+    if hitch_path is not None and hitch_path.is_file():
+        grouped = _slow_by_seg(run_hub_bench._read_rows(str(hitch_path)))
+    fail = 0
+    out = ["", "--- places ---"]
+    for label, seg in _PLACES:
+        row = stats.get(seg)
+        if row is None:
+            fail += 1
+            out.append("place %s=%s frames=0 slow=0 fps_pct=missing bar=99 fail=1" % (label, seg))
+            continue
+        bad = run_hub_bench._fps_fail(row["fps_pct"], row["frames"])
+        fail += bad
+        out.append(
+            "place %s=%s frames=%d slow=%d fps_pct=%.1f bar=99 fail=%d"
+            % (label, seg, row["frames"], row["slow"], row["fps_pct"], bad)
+        )
+    out.append(_pair_line("hub", "hub1", "hub2", stats, grouped))
+    out.append(_pair_line("dungeon", "dungeon1", "dungeon2", stats, grouped))
+    if hitch_path is None or not hitch_path.is_file():
+        out.append("pair_rows=(no hitch file)")
+    elif not any(grouped.get(seg) for _label, seg in _PLACES):
+        out.append("pair_rows=seg missing on hitch rows")
+    return fail, out
+
+
+def _hitch_file(lines: list[str]) -> Path | None:
+    for ln in lines:
+        raw = run_hub_bench._field(ln, "path")
+        if raw and Path(raw).is_file():
+            return Path(raw)
+    return None
 
 
 def _report(root: Path, args) -> int:
@@ -48,15 +167,17 @@ def _report(root: Path, args) -> int:
     report += run_hub_bench._hb_lines(ordered) or ["(no HB: lines)"]
     report += ["", "--- slow shape ---"] + run_hub_bench._shape_lines(hitch_rows, bench)
     report += ["", "--- slowest hitches ---"] + (run_hub_bench._slow_lines(ranked) or ["(none)"])
+    place_fail, place_lines = _place_block(report, Path(args.report))
+    report += place_lines
     return agent_log.finish(
         JOB + "-report",
         root,
         "\n".join(report),
-        "PASS",
+        "FAIL" if place_fail else "PASS",
         args=args,
         legacy=False,
         echo="\n".join(report),
-        fail_signals=0,
+        fail_signals=place_fail,
     )
 
 
@@ -91,6 +212,9 @@ def main(argv: list[str] | None = None) -> int:
             root, args, out_log, err_log,
             flag=FLAG, fresh_name="perf-sweep-fresh", label="perf sweep", extra=EXTRA,
         )
+        d_extra, d_lines = _place_block(d_body, _hitch_file(d_body))
+        d_fail += d_extra
+        d_body += d_lines
         fail += d_fail
         body += d_body
     if args.leg in ("both", "web"):
@@ -99,6 +223,10 @@ def main(argv: list[str] | None = None) -> int:
             flag=FLAG, site_prefix="perf-sweep-web", profile_name="perf-sweep-browser",
             label="perf sweep", extra_query=QUERY,
         )
+        sink = root / "_logs" / "web-perf" / "hitch.jsonl"
+        w_extra, w_lines = _place_block(w_body, sink if sink.is_file() else _hitch_file(w_body))
+        w_fail += w_extra
+        w_body += w_lines
         fail += w_fail
         body += w_body
     echo = run_hub_bench._echo_lines(body)
