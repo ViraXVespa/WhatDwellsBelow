@@ -86,28 +86,34 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	PlaytestLog.finish(pt, end_s, fail_s)
 	PlaytestLogBatch.note_run()
 	if App.tel:
+		if not PlaytestLog.off():
+			LiveSmoke.note_gather(PlaytestLog.events)
 		PlaytestDb.append_finish(App.tel, "", true)
 	if str(pt.slot) == "campaign":
 		if Campaign.floor_cleared(int(App.floor_n), bool(App.boss_dead)):
 			Campaign.mark(str(App.weapon))
 		if not pt.interrupted and end_s != "stalled":
 			Engine.time_scale = 1.0
-			var follow: Dictionary = _campaign_follow(pt)
-			if str(follow.get("weapon", "")) == "":
+			if LiveSmoke.gather_full():
 				Store.save_slot("campaign")
-				LiveSmoke.campaign_stop("cleared")
+				LiveSmoke.campaign_stop("gather")
 			else:
-				App.prog.pick_weapon = str(follow.get("weapon", App.prog.pick_weapon))
-				var tool_id: String = str(follow.get("tool", "pickaxe"))
-				if tool_id == "":
-					tool_id = "pickaxe"
-				App.prog.tool_type = tool_id
-				var hub_uid: int = PlaytestHub.run_hub()
-				if hub_uid > 0:
-					follow["hub_equip_uid"] = hub_uid
-				follow["hub_forged"] = true
-				Store.save_slot("campaign")
-				pt.enqueue(follow)
+				var follow: Dictionary = _campaign_follow(pt)
+				if str(follow.get("weapon", "")) == "":
+					Store.save_slot("campaign")
+					LiveSmoke.campaign_stop("cleared")
+				else:
+					App.prog.pick_weapon = str(follow.get("weapon", App.prog.pick_weapon))
+					var tool_id: String = str(follow.get("tool", "pickaxe"))
+					if tool_id == "":
+						tool_id = "pickaxe"
+					App.prog.tool_type = tool_id
+					var hub_uid: int = PlaytestHub.run_hub()
+					if hub_uid > 0:
+						follow["hub_equip_uid"] = hub_uid
+					follow["hub_forged"] = true
+					Store.save_slot("campaign")
+					pt.enqueue(follow)
 		else:
 			Store.save_slot("campaign")
 			LiveSmoke.campaign_stop("stalled" if end_s == "stalled" else "interrupt")

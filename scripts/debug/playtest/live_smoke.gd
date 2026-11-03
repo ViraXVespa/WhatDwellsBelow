@@ -1,7 +1,7 @@
 extends Object
 
 ## --wdb-playtest-live-smoke: boots straight into one live AI run on floor 1, prints `PT:` lines, quits.
-## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it.
+## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it. --wdb-pt-gather=N stops it after this process has saved at least N decide rows.
 ## Args (after --): --wdb-seed=N (run seed), --wdb-pt-weapon=great_axe|staff|longbow, --wdb-pt-sec=S (sim seconds), --wdb-pt-scale=X (time scale while acting; only with --wdb-pt-fast, else 1.0).
 ## Debug only: run `godot --headless --path . -- --wdb-playtest-live-smoke --wdb-seed=42`.
 
@@ -9,6 +9,8 @@ const CliArgs := preload("res://scripts/app/cli_args.gd")
 const Trial := preload("res://scripts/debug/playtest/trial_bal.gd")
 const FLAG := "--wdb-playtest-live-smoke"
 const CAMPAIGN_FLAG := "--wdb-pt-campaign"
+const GATHER_FLAG := "--wdb-pt-gather"
+static var gather_n: int = 0
 
 static func active() -> bool:
 	return CliArgs.has(FLAG) or CliArgs.has(CAMPAIGN_FLAG)
@@ -52,11 +54,35 @@ static func report(d: Dictionary) -> void:
 	printerr("PT: done=1")
 	App.get_tree().quit()
 
+static func gather_limit() -> int:
+	var raw: String = _str(GATHER_FLAG, "")
+	if raw == "" or not raw.is_valid_int():
+		return 0
+	return maxi(0, int(raw))
+
+
+static func note_gather(events: Array) -> void:
+	if gather_limit() <= 0:
+		return
+	for ev: Variant in events:
+		if ev is Dictionary and str((ev as Dictionary).get("ev", "")) == "decide":
+			gather_n += 1
+
+
+static func gather_full() -> bool:
+	var lim: int = gather_limit()
+	return lim > 0 and gather_n >= lim
+
+
 static func campaign_stop(why: String) -> void:
 	if not campaign_active():
 		return
 	if why == "cleared":
 		printerr("PT: campaign_done=1")
+		printerr("PT: done=1")
+	elif why == "gather":
+		printerr("PT: campaign_stop=gather")
+		printerr("PT: gather_rows=%d" % gather_n)
 		printerr("PT: done=1")
 	else:
 		printerr("PT: campaign_stop=%s" % why)

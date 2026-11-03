@@ -56,7 +56,8 @@ OPTIONAL = (
     ("stable_baselines3", "stable_baselines3"),
     ("godot_rl", "godot_rl"),
 )
-CMDS = ("run", "doctor", "train", "eval", "cv", "speed", "tune")
+CMDS = ("run", "doctor", "train", "eval", "cv", "speed", "tune", "loop", "export", "import")
+EMPTY_GATHERS = 5
 
 
 def userdata() -> Path:
@@ -781,11 +782,12 @@ def godot_missing() -> str:
     return ""
 
 
-def launch_smoke(root: Path, extra: list[str], sec: float, log_dir: Path) -> tuple[str, dict]:
+def launch_smoke(root: Path, extra: list[str], sec: float, log_dir: Path, timeout: int | None = None) -> tuple[str, dict]:
     godot_lib = load_module("godot_lib")
     log_dir.mkdir(parents=True, exist_ok=True)
     err_log = log_dir / "godot-err.txt"
     out_log = log_dir / "godot-out.txt"
+    limit = max(90, int(sec) * 4 + 150) if timeout is None else max(30, int(timeout))
     t0 = time.perf_counter()
     res = godot_lib.run_godot(
         root,
@@ -793,7 +795,7 @@ def launch_smoke(root: Path, extra: list[str], sec: float, log_dir: Path) -> tup
         ["--headless", "--", *extra],
         out_log=out_log,
         err_log=err_log,
-        timeout=max(90, int(sec) * 4 + 150),
+        timeout=limit,
     )
     wall = time.perf_counter() - t0
     text = ""
@@ -1021,6 +1023,244 @@ def live_rl(root: Path, port: int, sec: float, seed: int, work: Path, write: boo
     return lines, "PASS"
 
 
+def _num_row(row, n: int) -> bool:
+    if not isinstance(row, list) or len(row) != n:
+        return False
+    return all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in row)
+
+
+def policy_ok(model) -> bool:
+    if not isinstance(model, dict) or int(model.get("ver", 0)) != 1:
+        return False
+    if list(model.get("actions") or []) != list(ACTIONS):
+        return False
+    weights = model.get("weights")
+    if not isinstance(weights, list) or len(weights) != len(ACTIONS):
+        return False
+    if not _num_row(model.get("bias"), len(ACTIONS)):
+        return False
+    return all(_num_row(row, N_FEAT) for row in weights)
+
+
+def policy_from_text(text: str):
+    try:
+        obj = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(obj, dict):
+        return None
+    inner = obj.get("policy") if obj.get("kind") == "wdb-playtest-policy" else obj
+    if not policy_ok(inner):
+        return None
+    return inner
+
+
+def bundle_text(policy: dict) -> str:
+    return json.dumps({"kind": "wdb-playtest-policy", "ver": 1, "policy": policy}, indent=2) + "\n"
+
+
+def held(model, rows: list[dict]) -> tuple[int, int]:
+    if not policy_ok(model):
+        return 0, 0
+    use, _kind, _note = choose_set(rows)
+    if not use:
+        return 0, 0
+    _train, test, _split_note = split_rows(use, 1)
+    if not test:
+        return 0, 0
+    return rate(test, lambda row: predict_action(model, row))
+
+
+def accept_model(new_hit: int, new_n: int, old_hit: int, old_n: int) -> bool:
+    if new_n <= 0:
+        return False
+    if old_n <= 0:
+        return True
+    return new_hit / float(new_n) >= old_hit / float(old_n)
+
+
+def read_policy(path: Path):
+    if not path.is_file():
+        return None
+    try:
+        model = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not policy_ok(model):
+        return None
+    return model
+
+
+def consider(rows: list[dict], dest: Path, write: bool) -> list[str]:
+    lines, model, _status = train_report(rows, False, dest)
+    if model is None:
+        return lines
+    new_hit, new_n = held(model, rows)
+    current = read_policy(dest)
+    old_hit, old_n = held(current, rows) if current else (0, 0)
+    lines.append(f"candidate {new_hit}/{new_n} current {old_hit}/{old_n}")
+    if accept_model(new_hit, new_n, old_hit, old_n):
+        write_policy(dest, model, write)
+        lines.append("policy written" if write else "dry-run: policy not written")
+    else:
+        lines.append("kept the current policy")
+    return lines
+
+
+def append_log(path: Path, text: str, write: bool) -> None:
+    if not write:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(text.rstrip() + "\n")
+
+
+def do_loop(args, root: Path) -> int:
+    import tempfile
+    if args.rows < 1:
+        agent_log.fail("--rows must be at least 1")
+    if args.wait < 30:
+        agent_log.fail("--wait must be at least 30 seconds")
+    missing = godot_missing()
+    if missing:
+        return finish(args, root, [missing], "FAIL", cmd="loop")
+    db = db_dir(args.dir)
+    dest_dir = tuner_dir(args.out)
+    policy = dest_dir / "policy.json"
+    log_path = dest_dir / "loop-log.txt"
+    write = not args.dry_run
+    lines: list[str] = []
+
+    def note(msg: str) -> None:
+        print(msg, flush=True)
+        lines.append(msg)
+        append_log(log_path, msg, write)
+
+    note("loop campaign gather then train. Ctrl+C stops.")
+    note(f"policy {policy}")
+    note(f"rows {args.rows} wait_s {args.wait}")
+    note("The campaign slot stays as it is. Acting scale is 6 while the fast flag is set.")
+    empty = 0
+    cycle = 0
+    try:
+        while True:
+            cycle += 1
+            before = len(load_rows(db))
+            work = Path(tempfile.mkdtemp(prefix="wdb-tuner-loop-"))
+            try:
+                _text, res = launch_smoke(root, [
+                    "--wdb-pt-campaign",
+                    "--wdb-pt-fast",
+                    "--wdb-pt-scale=6",
+                    f"--wdb-pt-gather={int(args.rows)}",
+                ], float(args.wait), work, timeout=int(args.wait))
+            except Exception as exc:
+                if type(exc).__name__ in ("GodotBusy", "FileNotFoundError"):
+                    note(str(exc).split("\n", 1)[0])
+                    return finish(args, root, lines, "FAIL", cmd="loop")
+                raise
+            status = str(res.get("status", ""))
+            fresh = load_rows(db)
+            added = len(fresh) - before
+            note(f"cycle={cycle} godot={status} added={added} labeled={len(labeled(fresh))}")
+            if status.startswith("COMPILE"):
+                note("Godot reported a compile error. The loop stopped.")
+                return finish(args, root, lines, "FAIL", cmd="loop")
+            if added <= 0:
+                empty += 1
+                note("No new decide rows.")
+                if empty >= EMPTY_GATHERS:
+                    note(f"Stopped after {EMPTY_GATHERS} gathers with no new decide rows.")
+                    return finish(args, root, lines, "FAIL", cmd="loop")
+                continue
+            empty = 0
+            for part in consider(fresh, policy, write):
+                note(part)
+    except KeyboardInterrupt:
+        note("Stopped.")
+        note(f"policy {policy}")
+        return finish(args, root, lines, "INFO", cmd="loop")
+
+
+def do_export(args, root: Path) -> int:
+    if not args.file:
+        agent_log.fail("--file is required")
+    src = tuner_dir(args.out) / "policy.json"
+    model = read_policy(src)
+    if model is None:
+        return finish(args, root, ["No policy file to export."], "INFO", cmd="export")
+    path = Path(args.file)
+    if not args.dry_run:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(bundle_text(model), encoding="utf-8")
+    return finish(args, root, [f"exported {path}"], "PASS", cmd="export")
+
+
+def do_import(args, root: Path) -> int:
+    if not args.file:
+        agent_log.fail("--file is required")
+    path = Path(args.file)
+    if not path.is_file():
+        return finish(args, root, [f"No bundle at {path}"], "FAIL", cmd="import")
+    model = policy_from_text(path.read_text(encoding="utf-8", errors="replace"))
+    if model is None:
+        return finish(args, root, ["Bundle is not a ver 1 goal policy."], "FAIL", cmd="import")
+    dest = tuner_dir(args.out) / "policy.json"
+    write_policy(dest, model, not args.dry_run)
+    lines = [f"imported {dest}"]
+    if args.dry_run:
+        lines.append("dry-run: policy not written")
+    else:
+        lines.append("The next playtest that thinks reads this file.")
+    return finish(args, root, lines, "PASS", cmd="import")
+
+
+def transfer_selftest() -> list[str]:
+    import tempfile
+    bad = []
+    if accept_model(3, 8, 4, 8):
+        bad.append("accepted a worse rate")
+    if not accept_model(4, 8, 4, 8):
+        bad.append("rejected a tie")
+    if not accept_model(1, 2, 0, 0):
+        bad.append("rejected a first policy")
+    if accept_model(0, 0, 1, 2):
+        bad.append("accepted an empty score")
+    rows = synth_rows()
+    blank = as_model([[0.0] * N_FEAT for _ in ACTIONS], [5.0, 0.0, 0.0, 0.0, 0.0, 0.0], "bot", 1)
+    if not policy_ok(blank):
+        bad.append("blank policy shape")
+    if policy_from_text("{") is not None:
+        bad.append("parsed broken json")
+    if policy_from_text(json.dumps({"ver": 1})) is not None:
+        bad.append("parsed a short policy")
+    if policy_from_text(bundle_text(blank)) != blank:
+        bad.append("bundle roundtrip")
+    if policy_from_text(json.dumps(blank)) != blank:
+        bad.append("raw policy roundtrip")
+    with tempfile.TemporaryDirectory(prefix="wdb-tuner-xfer-") as tmp:
+        dest = Path(tmp) / "policy.json"
+        write_policy(dest, blank, True)
+        snap = dest.read_text(encoding="utf-8")
+        consider([], dest, True)
+        if dest.read_text(encoding="utf-8") != snap:
+            bad.append("empty spool wrote a policy")
+        consider(rows, dest, True)
+        got = read_policy(dest)
+        if not policy_ok(got):
+            bad.append("replaced policy shape")
+        new_hit, new_n = held(got, rows)
+        old_hit, old_n = held(blank, rows)
+        if new_n == 0 or new_hit < old_hit:
+            bad.append(f"replace rate {new_hit}/{new_n} vs {old_hit}/{old_n}")
+        write_policy(dest, got, True)
+        frozen = dest.read_text(encoding="utf-8")
+        consider(rows, dest, False)
+        if dest.read_text(encoding="utf-8") != frozen:
+            bad.append("dry-run wrote")
+    return bad
+
+
 def finish(args, root: Path, lines: list[str], status: str, **kv) -> int:
     body = "\n".join(lines)
     echo_rows = lines[:12]
@@ -1096,6 +1336,7 @@ def run_selftest(args, root: Path) -> int:
         bad.append("black frame")
     if "jump" not in frame_flags([0.0], [255.0]):
         bad.append("frame jump")
+    bad.extend(transfer_selftest())
     mmap_err = mmap_roundtrip()
     if mmap_err:
         bad.append("mmap " + mmap_err)
@@ -1132,7 +1373,7 @@ def main(argv: list[str] | None = None) -> int:
         writes=True,
     )
     ap.add_argument("--selftest", action="store_true", help="Offline checks. No Godot and no torch. Ignores cmd.")
-    ap.add_argument("cmd", nargs="?", default="run", help="run (default), doctor, train, eval, cv, speed, or tune.")
+    ap.add_argument("cmd", nargs="?", default="run", help="run (default), doctor, train, eval, cv, speed, tune, loop, export, or import.")
     ap.add_argument("--mode", default="bc", choices=["bc", "rl"], help="bc clones decisions. rl uses the live bridge when --live is set.")
     ap.add_argument("--live", action="store_true", help="Launch headless Godot for speed, tune, or the rl bridge.")
     ap.add_argument("--dir", default="", help="Decision spool directory. Default: the game user://playtest/db folder.")
@@ -1142,6 +1383,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sec", type=float, default=8.0, help="Acting seconds for one headless run.")
     ap.add_argument("--port", type=int, default=11008, help="TCP port for the rl bridge.")
     ap.add_argument("--frames", default="", help="Folder of frames for the pixel check. Empty skips it. Needs opencv.")
+    ap.add_argument("--rows", type=int, default=200, help="Decide rows to save before each train. loop only.")
+    ap.add_argument("--wait", type=int, default=14400, help="Seconds to wait for one campaign gather. loop only.")
+    ap.add_argument("--file", default="", help="Policy bundle path for export and import.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.selftest:
@@ -1151,6 +1395,12 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail(f"unknown subcommand {cmd!r} (choose from: {', '.join(CMDS)})")
     if cmd == "doctor":
         return do_doctor(args, root)
+    if cmd == "loop":
+        return do_loop(args, root)
+    if cmd == "export":
+        return do_export(args, root)
+    if cmd == "import":
+        return do_import(args, root)
     write = not args.dry_run
     seeds = parse_seeds(args.seeds)
     lines: list[str] = []

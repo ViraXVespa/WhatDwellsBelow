@@ -25,13 +25,21 @@ Behavior cloning is a small linear model in pure Python. Optuna, OpenCV, PyTorch
 
 `python tools/local-ai-tuner.py tune --live --trials 3 --seeds 1,2 --sec 8` is the short search.
 
-`--dry-run` skips policy and report files. `--dir` selects the decision spool. `--out` selects the tuner folder. `--port` is the bridge port (default 11008). `--frames DIR` scores a folder of dumped frames when opencv imports. An empty `--frames` skips that pass.
+`python tools/local-ai-tuner.py loop` is the command to leave running on a second PC. It starts headless Godot on the campaign slot, trains when that process has saved enough decide rows, and repeats until Ctrl+C. The campaign slot stays as it is.
+
+The row count is `--rows` (default 200). The wait for one gather is `--wait` seconds (default 14400). Each gather uses the fast acting scale, capped at 6. The series saves the slot and quits after the dive that crosses the row count. A gather that adds no decide rows is retried. Five of those in a row stop the loop. A Godot compile error stops the loop. Ctrl+C stops the loop and stops that Godot process. A dive still open when the wait ends is stopped, and its journal is not in the spool yet.
+
+The new weights replace the policy file when their held-out rate is at least the current file's rate on the same split. The next gather loads that file. A missing file leaves the scripted ladder for that gather. Bot rows stay an imitation. The report does not invent a human match rate. `--dry-run` on this command still launches Godot and does not write the policy file.
+
+`python tools/local-ai-tuner.py export --file PATH` writes a bundle from the tuner folder. `python tools/local-ai-tuner.py import --file PATH` writes that bundle into this PC's tuner folder. The next playtest that thinks reads it. A raw policy file with ver 1, six actions, a 6 by 7 weight matrix, and six biases imports the same way. The decision spool is a separate copy: the `playtest\db` folder beside the tuner folder.
+
+`--dry-run` skips policy and report files. `--dir` selects the decision spool. `--out` selects the tuner folder. `--port` is the bridge port (default 11008). `--frames DIR` scores a folder of dumped frames when opencv imports. An empty `--frames` skips that pass. `--file` is the bundle path for export and import.
 
 ## Where files land
 
 Decide rows are read from `user://playtest/db/decisions.jsonl` and from `user://playtest/runs/*.json`. On Windows that spool is `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\db`.
 
-The tuner folder is `user://playtest/tuner/` (the same AppData tree, `playtest\tuner`). It holds `policy.json`, `report.txt`, `recommended.json`, and `recommended-tunables.txt`.
+The tuner folder is `user://playtest/tuner/` (the same AppData tree, `playtest\tuner`). It holds `policy.json`, `report.txt`, `loop-log.txt`, `recommended.json`, and `recommended-tunables.txt`. `loop-log.txt` grows by one block per gather.
 
 ## Playtester
 
