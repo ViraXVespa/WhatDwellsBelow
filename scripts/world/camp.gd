@@ -159,8 +159,8 @@ func _step_spot_receptionist() -> void:
 	if rec_spr:
 		if rec_spr.texture:
 			rec_spr.pixel_size = Spec.RECEPTION_H / float(maxi(1, rec_spr.texture.get_height()))
-			rec_spr.material_override = Spot._bust_mat(rec_spr.texture)
-		rec_spr.position = Vector3(0.0, -0.03, 0.0)  # lower bust in window
+			rec_spr.material_override = Spot._bust_mat(rec_spr.texture, rec_spr.pixel_size)
+		rec_spr.position = Vector3(0.0, -0.015, 0.0)  # behind the counter: cut row on the sill, head in the top third
 		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 		rec_spr.render_priority = Spec.DRAW["receptionist"] - 2  # player sorts in front on building face
 	var rec_lab: Label3D = rec.get("label") as Label3D
@@ -186,6 +186,8 @@ func _step_spot_billboard() -> void:
 
 func _step_rest() -> void:
 	Build.stamp_actor_blobs(self)
+	preload("res://scripts/graphics/light_rt/hub_hulls.gd").apply(self, LightRt._mats)
+	preload("res://scripts/world/camp/lamp_pools.gd").apply(self, LightRt._mats)
 	Dbg.hitch("hub_blobs")
 	if bool(App.get("_menu_loading")) or App.wake_pending:
 		Dbg.lt_note("camp_dummy", "deferred")

@@ -38,7 +38,7 @@ from agent_log import rel
 
 JOB = "movie"
 DATA = "tools/data/movies.json"
-HEADER = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz")
+HEADER = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz")
 MARK = re.compile(r"SHOT: mark name=(\S+) frame=(\d+)")
 
 def load(root: Path) -> dict:
@@ -128,12 +128,13 @@ def refs_main(root: Path, data: dict, args) -> int:
         lines.append(x)
     res = movie_refs.run(root, data, args.refs, args.movie, out, args.keep_worktrees, log)
     changed = [r["name"] for r in res["items"] if r.get("diff", {}).get("changed")]
-    failed = [r["name"] for r in res["items"] if not (r.get("a") and r.get("b"))]
-    lines.append("changed: %s | no visible change: %s | failed: %s" % (", ".join(changed) or "-", ", ".join(
+    new = [r["name"] for r in res["items"] if r.get("new")]
+    failed = [r["name"] for r in res["items"] if not (r.get("a") and r.get("b")) and not r.get("new")]
+    lines.append("changed: %s | new: %s | no visible change: %s | failed: %s" % (", ".join(changed) or "-", ", ".join(new) or "-", ", ".join(
         r["name"] for r in res["items"] if r.get("diff") and not r["diff"]["changed"]) or "-", ", ".join(failed) or "-"))
     lines.append("reel: %s" % json.dumps(res["reel"]))
     return agent_log.finish(JOB, root, "\n".join(lines), "FAIL" if failed else "PASS", args=args, refs=args.refs, changed=len(changed),
-                            same=len(res["items"]) - len(changed) - len(failed), failed=len(failed), out=rel(root, out))
+                            new=len(new), same=len(res["items"]) - len(changed) - len(new) - len(failed), failed=len(failed), out=rel(root, out))
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Scenario + input timeline -> Godot movie maker clip (MP4 between the marks).", writes=True)

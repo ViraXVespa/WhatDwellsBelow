@@ -96,8 +96,8 @@ static func _ink(c: Control) -> Rect2:
 		return Rect2(Vector2.ZERO, c.size)
 	var l := c as Label
 	var f: Font = l.get_theme_font("font")
-	var wrap: float = l.size.x if l.autowrap_mode != TextServer.AUTOWRAP_OFF else -1.0
-	var s: Vector2 = f.get_multiline_string_size(l.text, l.horizontal_alignment, wrap, l.get_theme_font_size("font_size"))
+	var wrap_w: float = l.size.x if l.autowrap_mode != TextServer.AUTOWRAP_OFF else -1.0
+	var s: Vector2 = f.get_multiline_string_size(l.text, l.horizontal_alignment, wrap_w, l.get_theme_font_size("font_size"))
 	s = Vector2(minf(l.size.x, s.x), minf(l.size.y, s.y)) if l.size.x > 1.0 else s
 	return Rect2(Vector2((l.size.x - s.x) * ALIGN_K[int(l.horizontal_alignment)], 0.0), s)
 

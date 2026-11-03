@@ -33,7 +33,7 @@ Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira
 - Live dry run (stores nothing; counts toward the 10/h IP limit): a `--script` SceneTree that waits two frames, `load()`s `bug_send.gd` and calls `post(payload(form, "", true), cb)`; desktop 2026-10-25 returned 200 with labels `bug-report, door:ui, build:dev, platform:linux` and no email in the response.
 
 ## Left
-- **Web proof:** send one dry run from a web export (HTTPRequest is fetch there; the relay sends CORS `*`).
+- **Web proof:** done 2026-10-31: `release.py export-web --debug --out DIR`, then `perf.py web --site DIR --flow bug-dry` (`window.wdbBugDry`, `scripts/debug/web_hook.gd`) returned 200 with labels `bug-report, door:triage, build:debug, platform:web`, email `none`; no GitHub token string in the export.
 - **Email sending:** Cloudflare Email Sending needs a domain Vira owns (GoDaddy domain, "decide later"; mail stays stored, unsent); then wire `sendEmail` in `tools/relay/src/hooks.js` and flip `EMAIL_SEND`. Player replies to `/ask` need the same domain.
 - **Webhook:** live (id 703111592, issues + issue_comment, ping 200).
 

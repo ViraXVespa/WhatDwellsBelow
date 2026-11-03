@@ -2,6 +2,7 @@ extends Object
 
 ## Split from hub_bench.gd: _wait, _face, _goto....
 
+const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
@@ -147,17 +148,8 @@ static func _fill(host: Node, delta: float) -> void:
 		return
 	# Walk out and back on each facing. A one-way shove from the last station
 	# slides on the fence and the web present stays at two refreshes.
-	var leg: int = int(host._fill_i / 2.0) % host._dirs.size()
-	var dir: Vector2 = host._dirs[leg]
-	if host._fill_i % 2 == 1:
-		dir = -dir
-	App.playtest.move = dir
-	App.playtest.aim = dir
-	host._sub_t += delta
-	if host._sub_t < 0.8:
+	if not BU.walk_leg(host, delta):
 		return
-	host._sub_t = 0.0
-	host._fill_i += 1
 
 static func _next_visit(host: Node) -> void:
 	host._vi += 1

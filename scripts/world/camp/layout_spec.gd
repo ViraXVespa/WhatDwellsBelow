@@ -24,27 +24,31 @@ const SURFACE := {
 	"dirt": ["res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30), 1.1],
 	"path": ["res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28), 0.8],
 }
+## Path art brightness: plaza_path.png averages (112, 87, 64), as dark as building shade on the sand, so the N-S
+## arm read as a shadow strip below the crystal.
+const PATH_GAIN := 1.2
 ## Roof tile width (metres per sheet repeat).
 const TILE_W := 3.2
 
 ## Buildings. pos: body centre (y is reseated from the face art); box: walls; face: front art, crop_top cut off its top;
-## rise: gable ridge; lamps: lantern texels in the face art (flame + halo + baked pool); awning: depth (m), valance (fraction of wall height).
+## rise: gable ridge; lamps: lantern texels in the face art (flame + halo; live pool: light_rt/pools.gd); awning: depth (m), valance (fraction of wall height).
 const HALL := {
 	"pos": Vector3(8.2, 1.7, 6.0), "box": Vector3(5.6, 3.4, 4.2), "face": "res://assets/sprites/buildings/guild.png",
 	"crop": 0.32, "rise": 0.55, "wall": Color(0.45, 0.32, 0.22), "awning": Vector2(0.42, 0.16),
 	"lamps": [Vector2(99.0, 95.0), Vector2(219.0, 95.0)],
 }
-## The wing sits on the hall's east end (overlap metres into it), back walls flush. Its lantern sits under the awning,
-## so hang: that lantern's texels, cut out and hung from the awning hem at art x hang_x (beside the window, clear of the
-## receptionist) with its flame and halo; the baked pool stays at the painted lantern.
+## The wing sits on the hall's east end (overlap metres into it), back walls flush. Its crop cuts off the shingles; the
+## painted lanterns flank the window like the hall's door lanterns.
 const WING := {
 	"overlap": 0.12, "box": Vector3(3.8, 3.8, 3.2), "face": "res://assets/sprites/buildings/guild_reception.png",
-	"crop": 0.32, "rise": 0.48, "wall": Color(0.5, 0.38, 0.28), "awning": Vector2(0.36, 0.16),
-	"lamps": [Vector2(179.5, 101.0)], "hang": Rect2(172.0, 86.0, 16.0, 29.0), "hang_x": 262.0,
+	"crop": 0.245, "rise": 0.48, "wall": Color(0.5, 0.38, 0.28), "awning": Vector2(0.36, 0.16),
+	"lamps": [Vector2(71.5, 128.0), Vector2(287.5, 128.0)],
 }
 const TIMBER := Color(0.42, 0.28, 0.16)
 ## Building face art plane: this fraction of box depth in front of the body centre (stall front posts share it).
 const FACE_Z := 0.52
+## The awning hem drops this far (m) below the line that meets the face top from the gameplay pitch: no wall shows.
+const AWNING_TUCK := 0.03
 ## Stall: posts at +-posts.x of box.x, front posts.y / rear posts.z of box.z (also the walls, collision, bake lid);
 ## tarp eave at eave * box.y, ridge rise above it, front drop; counter collision (x, h, z fractions/metres, y);
 ## plank_m: metres per plank texture repeat on the timber walls.
@@ -63,16 +67,22 @@ const SPOTS := {
 	"Spawn": Vector3(16.5, 0.0, 16.0), "Banner": Vector3(16.5, 0.0, 22.0),
 }
 const VENDOR_GAP := 0.5
-const RECEPTION := Vector3(0.027, 0.785, 0.07)
-const RECEPTION_H := 1.22
-const RECEPTION_LABEL_Y := 0.85
+const RECEPTION := Vector3(0.027, 0.763, 0.07)
+const RECEPTION_H := 1.56
+## Receptionist sprite UV row the counter cuts her at (upper thigh): bust shader discard and the window fit check.
+const RECEPTION_CUT := 0.55
+## Reception window opening in guild_reception.png px (inside the frame: lintel underside to sill top).
+const RECEPTION_WINDOW := Rect2(106, 86, 145, 113)
+## Top edge of the window's top board (guild_reception.png px row), right under the wing awning (hub_awning_check.board).
+const RECEPTION_BOARD_TOP := 68.0
+const RECEPTION_LABEL_Y := 1.5
 ## Welcome banner: art height; pole feet at +-pole_x (opaque post columns of welcome_banner.png centre at -2.21 / +2.22 m
 ## at 4.4 m tall); pole collision box.
 const BANNER := {"tex": "res://assets/sprites/props/welcome_banner.png", "h": 4.4, "pole_x": 2.2, "pole": Vector3(0.28, 2.2, 0.28)}
 
 ## Light: guild lamp flame/halo sizes and the baked warm pool (radius, metres ahead of the lamp, colour); crystal glow
 ## radius in the bake; the camp environment and sun (EnvKit.apply).
-const LAMP := {"flame": Vector2(0.16, 0.28), "halo": 1.2, "pool_r": 1.8, "pool_ahead": 0.6, "pool": Color(1.0, 0.8, 0.5)}
+const LAMP := {"flame": Vector2(0.16, 0.28), "halo": 1.2}
 const CRYSTAL_GLOW_R := 4.2
 const SUN := {"bg": Color(0.45, 0.58, 0.62), "ambient": Color(0.95, 0.86, 0.7), "ambient_energy": 1.15, "rot": Vector3(-18.0, 34.0, -42.0), "energy": 0.9}
 

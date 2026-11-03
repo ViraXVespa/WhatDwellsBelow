@@ -2,10 +2,12 @@ extends Object
 
 ## Split from hub_bench.gd: _iso_kinds, _iso_gather, _iso_counts....
 
+const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const End := preload("res://scripts/debug/playtest_bench/hub_bench_end.gd")
 const Visit := preload("res://scripts/debug/playtest_bench/hub_bench_visit.gd")
+const IsoUtil := preload("res://scripts/debug/playtest_bench/dungeon_bench_iso/iso_util.gd")
 
 static func _iso_kinds() -> PackedStringArray:
 	return PackedStringArray([
@@ -58,29 +60,7 @@ static func _iso_gather(host: Node) -> void:
 			stack.append(c)
 
 static func _iso_counts(host: Node) -> String:
-	var fence_n: int = 0
-	var ground_n: int = 0
-	var build_n: int = 0
-	var sprite_n: int = 0
-	var mark_n: int = 0
-	var hud_n: int = 0
-	var i: int = 0
-	while i < host._iso_tag.size():
-		var tag: String = host._iso_tag[i]
-		if tag == "fence":
-			fence_n += 1
-		elif tag == "ground":
-			ground_n += 1
-		elif tag == "build":
-			build_n += 1
-		elif tag == "sprites":
-			sprite_n += 1
-		elif tag == "marks":
-			mark_n += 1
-		elif tag == "hud":
-			hud_n += 1
-		i += 1
-	return "fence=%d ground=%d build=%d sprites=%d marks=%d hud=%d" % [fence_n, ground_n, build_n, sprite_n, mark_n, hud_n]
+	return BU.tag_counts(host._iso_tag, PackedStringArray(["fence", "ground", "build", "sprites", "marks", "hud"]))
 
 static func _iso_restore(host: Node) -> void:
 	var i: int = 0
@@ -93,16 +73,6 @@ static func _iso_restore(host: Node) -> void:
 			(n as CanvasLayer).visible = on
 		i += 1
 
-static func _iso_hide(host: Node, tag: String) -> void:
-	var i: int = 0
-	while i < host._iso_all.size():
-		if tag == "bare" or host._iso_tag[i] == tag:
-			var n: Node = host._iso_all[i]
-			if n is Node3D:
-				(n as Node3D).visible = false
-			elif n is CanvasLayer:
-				(n as CanvasLayer).visible = false
-		i += 1
 
 static func _iso_apply(host: Node, kind: String) -> void:
 	_iso_restore(host)
@@ -110,9 +80,9 @@ static func _iso_apply(host: Node, kind: String) -> void:
 	for lit: Node in host._iso_lits:
 		lit.set_process(not pause_lits)
 	if kind == "bare":
-		_iso_hide(host, "bare")
+		IsoUtil._hide(host, "bare")
 	elif kind != "warm" and kind != "base":
-		_iso_hide(host, kind)
+		IsoUtil._hide(host, kind)
 
 static func _iso_stand(host: Node, actor: Node3D) -> void:
 	if host._iso_spot == Vector3.ZERO:
@@ -182,24 +152,9 @@ static func _fill_layers(host: Node, delta: float) -> void:
 		End._finish(host, "isolate")
 		return
 	var kind: String = kinds[host._iso_i]
-	if host._iso_applied != host._iso_i:
-		host._iso_applied = host._iso_i
-		host._iso_t = 0.0
-		host._iso_dts.clear()
-		host._iso_proc.clear()
-		host._iso_phys.clear()
-		host._iso_submit.clear()
+	BU.iso_enter(host)
 	_iso_apply(host, kind)
-	var leg: int = int(host._fill_i / 2.0) % host._dirs.size()
-	var dir: Vector2 = host._dirs[leg]
-	if host._fill_i % 2 == 1:
-		dir = -dir
-	App.playtest.move = dir
-	App.playtest.aim = dir
-	host._sub_t += delta
-	if host._sub_t >= 0.8:
-		host._sub_t = 0.0
-		host._fill_i += 1
+	BU.walk_leg(host, delta)
 	_iso_sample(host, delta)
 	host._iso_t += delta
 	var hold: float = 1.5 if kind == "warm" else 2.5
@@ -227,25 +182,10 @@ static func _fill_aba(host: Node, delta: float) -> void:
 		kind = "bare"
 	elif host._iso_i == 2:
 		kind = "base2"
-	if host._iso_applied != host._iso_i:
-		host._iso_applied = host._iso_i
-		host._iso_t = 0.0
-		host._iso_dts.clear()
-		host._iso_proc.clear()
-		host._iso_phys.clear()
-		host._iso_submit.clear()
+	BU.iso_enter(host)
 	var apply_kind: String = "base" if kind == "base2" else kind
 	_iso_apply(host, apply_kind)
-	var leg: int = int(host._fill_i / 2.0) % host._dirs.size()
-	var dir: Vector2 = host._dirs[leg]
-	if host._fill_i % 2 == 1:
-		dir = -dir
-	App.playtest.move = dir
-	App.playtest.aim = dir
-	host._sub_t += delta
-	if host._sub_t >= 0.8:
-		host._sub_t = 0.0
-		host._fill_i += 1
+	BU.walk_leg(host, delta)
 	_iso_sample(host, delta)
 	host._iso_t += delta
 	var closed: bool = host._clock >= host.PLAY_SEC
@@ -271,13 +211,7 @@ static func _isolate(host: Node, actor: Node3D, delta: float) -> void:
 		End._finish(host, "isolate")
 		return
 	var kind: String = kinds[host._iso_i]
-	if host._iso_applied != host._iso_i:
-		host._iso_applied = host._iso_i
-		host._iso_t = 0.0
-		host._iso_dts.clear()
-		host._iso_proc.clear()
-		host._iso_phys.clear()
-		host._iso_submit.clear()
+	BU.iso_enter(host)
 	_iso_apply(host, kind)
 	_iso_sample(host, delta)
 	host._iso_t += delta

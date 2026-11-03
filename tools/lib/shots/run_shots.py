@@ -29,6 +29,7 @@ import boot  # noqa: E402,F401
 
 import agent_log
 import godot_lib
+import godot_slots
 import map_overlay
 import run_log_lib
 import shot_clip_lib
@@ -42,7 +43,7 @@ WARN_BYTES = 2048
 RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
 SCREENS = ("title", "splash", "fs_gate")
-FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height", "fixed_fps")
+FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz", "width", "height", "fixed_fps")
 
 def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
     """PID-only off-screen + taskbar strip. No title read, no print."""
@@ -80,7 +81,7 @@ def _load_recipe(root: Path, name: str) -> dict:
         raise SystemExit("FAIL unknown shot recipe " + name)
     return rec
 
-def _recipe_poses(rec: dict) -> str:
+def _recipe_poses(rec: dict, aim: bool = False) -> str:
     bits: list[str] = []
     for fr in rec.get("frames") or []:
         kind = str(fr.get("kind") or "play")
@@ -98,7 +99,8 @@ def _recipe_poses(rec: dict) -> str:
         pl = fr.get("player") or [0.0, 0.0]
         face = fr.get("face", "down")
         cy = fr.get("cy", 4.2)
-        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy, pl[0], pl[1]))
+        on = bool(fr.get("aim_line", rec.get("aim_line", aim)))  # per-frame, else per-recipe, else --aim-line
+        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face, cy, pl[0], pl[1], on))
     return ";".join(bits)
 
 def _out_dir(root: Path) -> Path:
@@ -108,6 +110,19 @@ def _out_dir(root: Path) -> Path:
         fallback = root / "_logs" / JOB
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
+
+def _full_dir(d: Path | None) -> Path | None:
+    """<dir>/full for the pre-downsize originals, only where git ignores it or outside the repo (never a media commit)."""
+    if d is None:
+        return None
+    full = d.resolve() / "full"
+    top = Path(__file__).resolve().parents[3]
+    try:
+        full.relative_to(top)
+    except ValueError:
+        return full
+    r = subprocess.run(["git", "check-ignore", "-q", str(full / "x.png")], cwd=top, capture_output=True)
+    return full if r.returncode == 0 else None
 
 def _extra_flags(args: argparse.Namespace) -> list[str]:
     extra = [
@@ -136,6 +151,12 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         extra.append("--wdb-shot-texts=1")
     if args.dpr > 0:
         extra.append("--wdb-dpr=%g" % args.dpr)
+    base = Path(args.frames_dir) if args.frames_dir else getattr(args, "png_dir", None)
+    full = None if getattr(args, "full_map", False) else _full_dir(base)
+    if full:
+        extra.append(f"--wdb-shot-full={full}")  # pre-downsize originals (shots.py zoom reads them)
+    if not getattr(args, "aim_line", False):
+        extra.append("--wdb-shot-aim=0")  # aim line off in every shot unless --aim-line (players keep their setting)
     return extra
 
 def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int, poses: str) -> list[str]:
@@ -171,7 +192,7 @@ def _shot_lines(logs: list[Path]) -> list[str]:
     return _log_lines(logs, lambda ln: ln.startswith("SHOT:"))
 
 def _error_lines(logs: list[Path]) -> list[str]:
-    needles = ("SCRIPT ERROR:", "Parse Error", "Compile Error", "ERROR: Failed to")
+    needles = ("SCRIPT ERROR:", "Parse Error", "Compile Error", "ERROR: Failed to", "SHADER ERROR:", "Shader compilation failed")
     return _log_lines(logs, lambda ln: any(n in ln for n in needles))
 
 def _png_info(png: Path) -> tuple[int, int, int]:
@@ -263,7 +284,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--scheme", choices=("pc", "gamepad", "touch"), default=None,
                     help="Force input scheme: pc=keyboard prompts, gamepad=pad prompts, touch=overlay")
     p.add_argument("--hud", type=int, default=-1, help="1=HUD on, 0=HUD off; -1 uses recipe")
-    p.add_argument("--width", type=int, default=0, help="window width px (0 keeps the project size)")
+    p.add_argument("--width", type=int, default=0, help="window width px (0 keeps the project size); a set --width/--height keeps full scale in --mode build")
     p.add_argument("--height", type=int, default=0, help="window height px (0 keeps the project size)")
     p.add_argument("--zoom", type=float, default=1.0, help="Camera zoom (default 1.0).")
     p.add_argument("--px", default="", help="player world X; empty keeps spawn")
@@ -276,6 +297,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")
     p.add_argument("--fixed-fps", type=int, default=0, help="engine fixed frame delta (e.g. 60) so animation and AI repeat; 0 = real time. Flow key: fixed_fps.")
+    p.add_argument("--aim-line", action="store_true", help="draw the player's aim line (default off in shots; the save's setting is untouched). Flow key: aim_line.")
     p.add_argument("--texts-all", action="store_true", help="with --steps: every shot also writes NN-name.texts.json (text, font size, px on screen); shots.py textsize reads them")
     p.add_argument("--dpr", type=float, default=0.0, help="device pixel ratio the game assumes (--wdb-dpr): emulate a phone with --width/--height = CSS size x dpr")
     p.add_argument("--movie", default="", help="with --steps: Godot movie maker writes every rendered frame here (.png = numbered PNGs, .avi = MJPEG) at the project viewport size (1920x1080); shots.py movie drives this")
@@ -317,7 +339,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
             apply_flow_header(args, data, given)
     if args.recipe:
         rec = _load_recipe(root, args.recipe)
-        poses = _recipe_poses(rec)
+        poses = _recipe_poses(rec, bool(getattr(args, "aim_line", False)))
         if rec.get("scene"):
             args.scene = str(rec.get("scene"))
         if "hud" in rec:
@@ -330,8 +352,9 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     if args.hud < 0:
         args.hud = 1
     out_dir = _out_dir(root)
-    scale_pct = max(1, min(100, args.scale if args.scale > 0 else (BUILD_SCALE_PCT if args.mode == "build" else 100)))
+    scale_pct = max(1, min(100, args.scale if args.scale > 0 else (BUILD_SCALE_PCT if args.mode == "build" and not (args.width or args.height) else 100)))  # an explicit size is kept
     png = Path(args.out) if args.out else (out_dir / f"shot-s{args.seed}-f{args.floor}.png")
+    args.png_dir = png.parent  # full-size originals land in <png dir>/full/ (_extra_flags)
     png.parent.mkdir(parents=True, exist_ok=True)
     if args.steps and not args.frames_dir:
         args.frames_dir = str(png.parent)
@@ -343,10 +366,13 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     if args.dry_run:
         res.update(band="dry", status="DRY", lines=[], ok=True)
         return res
+    # A changed asset Godot has not re-imported would be shot as its old texture: import first.
+    res["reimported"] = godot_lib.reimport_stale(root)
     out_log, err_log = run_log_lib.run_path(out_dir, JOB, "out.log"), run_log_lib.run_path(out_dir, JOB, "err.log")
     # Resolve the Godot executable, then launch so we have the PID for the watcher.
     exe = godot_lib.godot_exe()
     cmd = [str(exe)] + godot_args
+    slot = godot_slots.acquire(" ".join(godot_args)[:160], str(root))  # box-wide Godot cap
     proc = subprocess.Popen(
         cmd,
         cwd=root,
@@ -367,6 +393,7 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     finally:
         stop_event.set()
         hide_thread.join(timeout=1.0)
+        godot_slots.release(slot)
     shot_hits = _shot_lines([err_log, out_log])
     err_hits = _error_lines([err_log, out_log])
     shot_ok = any("ok=true" in line for line in shot_hits)
@@ -388,13 +415,58 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     else:
         ok = (not timed) and status == "EXIT=0" and shot_ok and nbytes > 0 and not err_hits
         band = _band(ok, nbytes, width, height) if ok else "fail"
+    full = None if (args.full_map or args.no_pixels or args.frames_dir) else _full_dir(png.parent)
+    if ok and full and not (full / png.name).is_file():
+        ok, band = False, "fail"  # shots.py zoom --space full needs this original at every scale
+        err_hits.append(f"no full/ original: {full / png.name}")
+    want = _want_size(args, scale_pct)
+    if ok and not args.no_pixels and want and (width, height) != want:
+        ok, band = False, "fail"  # an explicit --width/--height is a contract, not a hint
+        err_hits.append(f"size {width}x{height} != asked {want[0]}x{want[1]}")
     res.update(band=band, status=status, wall_ms=run["ms"], timeout=timed, shot_ok=shot_ok, bytes=nbytes,
                w=width, h=height, lines=shot_hits, errors=err_hits, flow=flow, ok=ok)
     return res
 
+def _want_size(args: argparse.Namespace, scale_pct: int) -> tuple[int, int] | None:
+    """The PNG size an explicit --width and --height promise (scaled by --scale), or None when either is unset."""
+    if not (args.width and args.height) or args.full_map:
+        return None
+    return (args.width * scale_pct // 100, args.height * scale_pct // 100)
+
+def selftest(root: Path) -> int:
+    """Live: a build-mode camp shot at 640x360 must come back exactly 640x360 (the build default --scale 50 once
+    halved it), and the size check must fail a PNG of the wrong size."""
+    import tempfile
+    out = Path(tempfile.mkdtemp()) / "size.png"
+    args = build_parser().parse_args(["--scene", "camp", "--mode", "build", "--hud", "0", "--width", "640",
+                                      "--height", "360", "--out", str(out)])
+    res = capture(args, root, {"scene", "mode", "hud", "width", "height", "out"})
+    live = res["ok"] and (res["w"], res["h"]) == (640, 360)
+    plant = _want_size(args, 100) == (640, 360) and _want_size(args, 50) == (320, 180) and _want_size(
+        build_parser().parse_args(["--width", "640"]), 100) is None
+    fake = out.parent / "proj"
+    (fake / "assets").mkdir(parents=True)
+    (fake / ".godot/imported").mkdir(parents=True)
+    (fake / "assets/a.png").write_bytes(b"new art")
+    (fake / "assets/a.png.import").write_text('path.s3tc="res://.godot/imported/a.png-' + "0" * 32 + '.s3tc.ctex"\n')
+    md5 = fake / ".godot/imported" / ("a.png-" + "0" * 32 + ".md5")
+    md5.write_text('source_md5="' + "f" * 32 + '"\n')  # built from older bytes
+    caught = godot_lib.stale_imports(fake) == ["assets/a.png"]
+    import hashlib
+    md5.write_text(f'source_md5="{hashlib.md5(b"new art").hexdigest()}"\n')
+    plant = plant and caught and godot_lib.stale_imports(fake) == []
+    aim_def, aim_on = _extra_flags(build_parser().parse_args([])), _extra_flags(build_parser().parse_args(["--aim-line"]))
+    aim = "--wdb-shot-aim=0" in aim_def and not any(a.startswith("--wdb-shot-aim") for a in aim_on)
+    print(f"selftest aim_line default_off={'--wdb-shot-aim=0' in aim_def} flag_on={aim}")
+    plant = plant and aim
+    print(f"selftest size live={res.get('w')}x{res.get('h')} ok={live} want_size={plant}")
+    return agent_log.emit_result("PASS" if live and plant else "FAIL", None, w=res.get("w"), h=res.get("h"))
+
 def main(argv: list[str] | None = None) -> int:
     p = build_parser()
     argv = list(sys.argv[1:] if argv is None else argv)
+    if "--selftest" in argv:
+        return selftest(agent_log.resolve_root(p.parse_args([])))
     args = p.parse_args(argv)
     given = {a.lstrip("-").replace("-", "_").split("=")[0] for a in argv if a.startswith("--")}
     root = agent_log.resolve_root(args)
@@ -415,7 +487,7 @@ def main(argv: list[str] | None = None) -> int:
         f"scale={res['scale']} settle_ms={max(0, args.settle_ms)} method={RENDER_METHOD} driver={RENDER_DRIVER}",
         f"status={res['status']} wall_ms={res.get('wall_ms', 0)} timeout={res.get('timeout', False)}",
         f"png={rel(root, png)} bytes={res.get('bytes', 0)} w={res.get('w', 0)} h={res.get('h', 0)}",
-        f"clipboard={clip} open={opened} band={res['band']}",
+        f"clipboard={clip} open={opened} band={res['band']} reimported={len(res.get('reimported') or [])}",
     ]
     if args.steps:
         lines.append(f"steps={args.steps} frames={len(frames)} no_pixels={args.no_pixels} fail={flow.get('fail', '')}")

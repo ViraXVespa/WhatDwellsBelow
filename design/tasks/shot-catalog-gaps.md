@@ -30,6 +30,7 @@ Each new view and movie must render once and be checked by eye. Do not commit me
 - vendor-stall@overhead, low-front, side-post
 - a welcome-banner close-up
 - dungeon-hud-states@hud-low-mana
+- report-bug (camp-pause-pages@settings-report-open): added, rendered and checked
 
 ## Catalog fixes
 - Put `f1-fight` in a set.
@@ -41,6 +42,7 @@ Each new view and movie must render once and be checked by eye. Do not commit me
 - The quest poster lifting into the pause Quest tab.
 - Title/menu: hover and navigation.
 - Phone-viewport versions of the views (portrait or small-screen size).
+- vendor-stall-close (stall close-up, 2.6x to 3.4x while the player walks up): added, rendered and checked
 
 ## Where it stands
-Not started. All the time went to the hub fixes.
+report-bug view and vendor-stall-close movie added (hub-ui set). Everything else above is still open.

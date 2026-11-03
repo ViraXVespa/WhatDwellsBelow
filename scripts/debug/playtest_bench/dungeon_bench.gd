@@ -7,31 +7,23 @@ extends Node
 
 const FLAG := "--wdb-dungeon-bench"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
+const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Iso := preload("res://scripts/debug/playtest_bench/dungeon_bench_iso.gd")
 
 const WAIT_SEC := 120.0
 const HARD_SEC := 210.0
-## Above the 60 FPS bar, and finite. VSYNC_DISABLED with max_fps 0 can peg the GPU.
-const FPS_CAP := 120
-
 static func active() -> bool:
 	return CliArgs.has(FLAG)
 
 static func _vsync_off() -> void:
-	# Compatibility honors VSYNC_DISABLED (swap interval 0). Web ignores it.
-	# The cap only pads frames faster than 120; a frame over 16.7 ms stays slow.
-	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
-	Engine.max_fps = FPS_CAP
-	if not OS.has_feature("web"):
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	BU.vsync_off()
 
 static func _warm_user() -> bool:
-	return FileAccess.file_exists("user://live/save.json")
+	return BU.warm_user()
 
 static func _hb(msg: String) -> void:
-	printerr(msg)
-	HitchLog.hb(msg)
+	BU.hb(msg)
 
 static func start() -> void:
 	_vsync_off()

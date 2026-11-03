@@ -84,7 +84,8 @@
           0.0,
           -1.8
         ],
-        "id": "stall-tarp"
+        "id": "stall-tarp",
+        "aim_line": true
       }
     ]
   },

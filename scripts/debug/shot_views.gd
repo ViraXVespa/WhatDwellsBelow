@@ -89,7 +89,7 @@ func drop_grid(seed_n: int, n: int) -> void:
 		for k: String in d:
 			var p: Node3D = (load("res://scripts/world/pickup.gd") as GDScript).new()
 			_tree().current_scene.add_child(p)
-			p.call("setup", k, pl.global_position + Vector3(float(i % 6) * 0.7 - 1.75, 0.0, 1.2 + float(i / 6) * 1.4 + row * 0.45), 3 if k == "gold" else 0)
+			p.call("setup", k, pl.global_position + Vector3(float(i % 6) * 0.7 - 1.75, 0.0, 1.2 + float(floori(i / 6.0)) * 1.4 + row * 0.45), 3 if k == "gold" else 0)
 			p.set("life", 0.0)
 			p.set("_block_t", 9999.0)
 			row += 1

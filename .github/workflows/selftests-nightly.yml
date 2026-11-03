@@ -1,0 +1,133 @@
+name: selftests-nightly
+
+# Every tool selftest on every branch head (python3 tools/check.py selftests), nightly and on demand.
+# Read-only on the repo: no commits, no pushes. One open issue labeled tooling-selftests tracks failures; all green closes it.
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: selftests-nightly
+  cancel-in-progress: false
+
+jobs:
+  branches:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      heads: ${{ steps.ls.outputs.heads }}
+    steps:
+      - name: List branch heads
+        id: ls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          heads=$(git ls-remote --heads "$url" | awk '{sub("refs/heads/","",$2); printf "{\"branch\":\"%s\",\"sha\":\"%s\"}\n",$2,$1}' | jq -sc .)
+          echo "heads=$heads" >> "$GITHUB_OUTPUT"
+          echo "$heads" | jq -r '.[] | .branch + " " + .sha'
+
+  selftests:
+    needs: branches
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        head: ${{ fromJSON(needs.branches.outputs.heads) }}
+    env:
+      WDB_AGENT_SESSION: github-actions
+    steps:
+      - name: Checkout ${{ matrix.head.branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.head.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Deps
+        run: |
+          if [ -f tools/requirements.txt ]; then pip install -r tools/requirements.txt; fi
+
+      - name: Selftests
+        id: run
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/out
+          if [ ! -f tools/lib/checks/check_selftests.py ]; then
+            echo "SKIP no check.py selftests on this branch" | tee /tmp/out/result.txt
+            exit 0
+          fi
+          python3 tools/check.py selftests --timeout 600 2>&1 | tee /tmp/out/result.txt
+
+      - name: Record result
+        if: always()
+        shell: bash
+        env:
+          BRANCH: ${{ matrix.head.branch }}
+          SHA: ${{ matrix.head.sha }}
+          OUTCOME: ${{ steps.run.outcome }}
+        run: |
+          mkdir -p /tmp/out
+          touch /tmp/out/result.txt
+          { echo "branch=$BRANCH"; echo "sha=$SHA"; echo "outcome=$OUTCOME"; grep -E '^(FAIL|RESULT)' /tmp/out/result.txt | head -40; } > /tmp/out/summary.txt
+          echo "key=$(echo "$BRANCH" | tr '/' '_')" >> "$GITHUB_ENV"
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selftests-${{ env.key }}
+          path: /tmp/out/summary.txt
+
+  report:
+    needs: selftests
+    if: always() && needs.selftests.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download results
+        uses: actions/download-artifact@v4
+        with:
+          path: results
+
+      - name: Open, update or close the tooling-selftests issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          R="$GITHUB_REPOSITORY"
+          body=/tmp/body.md
+          fails=0
+          echo "Nightly \`python3 tools/check.py selftests\` ([run]($RUN_URL))." > "$body"
+          for f in results/*/summary.txt; do
+            if ! grep -q '^outcome=success' "$f"; then
+              fails=$((fails+1))
+              b=$(sed -n 's/^branch=//p' "$f"); s=$(sed -n 's/^sha=//p' "$f")
+              { echo; echo "### \`$b\` @ \`${s:0:8}\`"; echo '```'; grep -E '^(FAIL|RESULT)' "$f" || echo "(no result lines; see the run)"; echo '```'; } >> "$body"
+            fi
+          done
+          gh label create tooling-selftests -R "$R" --color B60205 --description "Nightly tool selftests" 2>/dev/null || true
+          num=$(gh issue list -R "$R" --label tooling-selftests --state open --json number -q '.[0].number // empty')
+          if [ "$fails" -gt 0 ]; then
+            if [ -n "$num" ]; then gh issue edit "$num" -R "$R" --body-file "$body"; gh issue comment "$num" -R "$R" --body "Still failing on $fails branch(es): $RUN_URL"
+            else gh issue create -R "$R" --title "Nightly selftests failing" --label tooling-selftests --body-file "$body"; fi
+          elif [ -n "$num" ]; then
+            gh issue close "$num" -R "$R" --comment "All branch heads pass the selftests: $RUN_URL"
+          fi

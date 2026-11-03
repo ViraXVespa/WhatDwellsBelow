@@ -7,13 +7,19 @@ extends Node
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 
+const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
+const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
+const Contact := preload("res://scripts/graphics/actor_lit/lit_contact.gd")
 const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 
 static var _shade: Shader
+## Debug plant (hub_shadow_check/feet_px.gd): the higher standing foot treated as raised (the one-foot-off of 20611abf).
+static var plant_flat := false
 
 var spr: Sprite3D
 var marks: Array[MeshInstance3D] = []
@@ -28,6 +34,13 @@ var _held: Array[bool] = []
 var _rank_at: Array[int] = []
 var _ink_budget: float = 0.0
 var _flip: bool = false
+## Deep yard prop (camp_build.mark_props): "profile" / "raised" casts Soles._solid of the sticker; "" the sticker.
+var solid: String = ""
+## Profile footprint depth (texels): the mark's contact tucks this far up-screen under the curved base.
+var foot: int = 0
+## Airborne mark (enemy move_kind fly / hop, or forced by the mark matrix): last altitude (m) above the floor.
+var air_force: bool = false
+var lift: float = 0.0
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	if body == null or sticker == null:
@@ -120,8 +133,27 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
 	var px: float = spr.pixel_size
-	var fl: Vector2 = Geo._sole_xz(self, soles.x, soles.y, tw, th) - feet
-	var fr: Vector2 = Geo._sole_xz(self, soles.z, soles.w, tw, th) - feet
+	# Both pins on the grounded (lowest) sole row: a raised foot keeps its x but not its lift, so it shows a gap
+	# above the mark in proportion to the lift (hub_shadow_check/mark_matrix.gd).
+	var sole_y: float = maxf(soles.y, soles.w)
+	var up: float = K.RAISED_M / maxf(spr.pixel_size, 1e-5)
+	var gl: bool = sole_y - soles.y < up and not (plant_flat and soles.y < sole_y)
+	var gr: bool = sole_y - soles.w < up and not (plant_flat and soles.w < sole_y)
+	# A grounded foot pins at its own sole (contact) row; the shader (lit_k feet) casts its rows from there.
+	var fl: Vector2 = Geo._sole_xz(self, soles.x, soles.y if gl else sole_y, tw, th, gl) - feet
+	var fr: Vector2 = Geo._sole_xz(self, soles.z, soles.w if gr else sole_y, tw, th, gr) - feet
+	lift = 0.0
+	var kind: Variant = get_parent().get("move_kind")
+	if air_force or kind == "fly" or kind == "hop":
+		# Straight-down pins (no camera drop, no tuck): the mark stays under the body, detached by the altitude.
+		var wl: Vector3 = Geo._sole_world(self, soles.x, sole_y, tw, th)
+		var wr: Vector3 = Geo._sole_world(self, soles.z, sole_y, tw, th)
+		if minf(wl.y, wr.y) - T.FLOOR_Y > K.AIR_MIN:
+			lift = minf(wl.y, wr.y) - T.FLOOR_Y
+			fl = Vector2(wl.x, wl.z) - feet
+			fr = Vector2(wr.x, wr.z) - feet
+	var s_air: float = clampf(1.0 - lift / K.AIR_S_M, K.AIR_S_MIN, 1.0)
+	var a_air: float = clampf(1.0 - lift / K.AIR_A_M, K.AIR_A_MIN, 1.0)
 	var origin: Vector3 = Vector3(feet.x, T.FLOOR_Y, feet.y)
 	var ink: float = 0.0
 	if App.in_dungeon:
@@ -133,21 +165,27 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 		scale = _ink_budget / ink
 	for slot in K.MARK_N:
 		var node: MeshInstance3D = marks[slot]
-		var live: bool = _alpha_at[slot] >= K.HIDE_A
-		if not App.in_dungeon and slot > 1:
-			live = false
+		var live: bool = _alpha_at[slot] >= K.HIDE_A and Emis.rule_of(get_parent()) != "glow"  # all-glow body: no mark
 		if not live:
 			node.visible = false
 			continue
 		var dir: Vector2 = _biased(_away_at[slot])
 		_sync_slot(slot, tex, soles, fl, fr, dir, px, feet)
-		node.global_transform = Transform3D(Basis.IDENTITY, origin)
+		var at: Vector3 = origin
+		if lift > 0.0:
+			var run: Vector2 = dir * Geo._reach(lift, _stretch_at[slot], _src_at[slot])
+			at += Vector3(run.x, 0.0, run.y)
+		node.global_transform = Transform3D(Basis.IDENTITY.scaled(Vector3(s_air, 1.0, s_air)), at)
 		var shade_mat: ShaderMaterial = node.material_override as ShaderMaterial
 		if shade_mat != null:
 			shade_mat.render_priority = -2
 			node.sorting_offset = -30.0
-			var shown: float = _alpha_at[slot] * scale
+			var shown: float = _alpha_at[slot] * scale * a_air
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
+			shade_mat.set_shader_parameter("sun_cancel", 1.0 if slot == 0 and not App.in_dungeon else 0.0)
+			if slot == 0 and shade_mat.get_shader_parameter("hull_n") != Hulls._n:
+				Hulls.bind(shade_mat)
+			shade_mat.set_shader_parameter("grid", K.HUB_GRID if K.on_grid() else 0.0)
 		node.visible = true
 
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
@@ -165,7 +203,12 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	]
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
-		mat.set_shader_parameter("albedo_tex", tex)
+		mat.set_shader_parameter("albedo_tex", Soles._solid(tex, solid) if solid != "" else Emis.mask(tex, Emis.rule_of(get_parent())))
+		foot = Soles._foot(tex) if solid == "profile" else 0
+		var per_col: bool = solid == "" and K.on_grid()
+		mat.set_shader_parameter("contact_on", 1.0 if per_col else 0.0)
+		if per_col:
+			mat.set_shader_parameter("contact_tex", Contact.tex(tex, Soles._soles(tex), px, plant_flat))
 	if key == _key_at[slot] and node.mesh != null:
 		return
 	_key_at[slot] = key
@@ -190,4 +233,6 @@ static func _mat() -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = _shade
 	mat.render_priority = 8
+	mat.set_shader_parameter("floor_l", HubCast.SHADE_NEAR)
+	LightRt.bind(mat)
 	return mat

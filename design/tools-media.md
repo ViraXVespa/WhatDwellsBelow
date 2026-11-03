@@ -21,7 +21,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 |---|---|---|---|---|
 | `media.py anim-review` | Animation Browser review briefs: `pack` (Repack notes + Good locomotion clips), `regen` (Regenerate notes + current I2V prompt), `tree --out DIR` (wiped I2V test tree). Summary: `anim-review` | D | `--help` | N |
 | `media.py attack-keys` | Beat-by-beat unarmed attack stills from a locked Bible cell | D | `--help` | N |
-| `media.py clip` | Thin ffmpeg wrapper: `info`, `trim --start --end`, `join A B ... --fade S [--transition T]` (xfade), `caption --text [--start --end --pos]` or `--cue S,E,TEXT` (repeat), `sbs BEFORE AFTER [--labels --stack v]`, `crop`/`zoom`/`fit`, `wipe`, `pip`, `mark`, `ba` (Edit below), `export --for x\|gif [--size --fill]` (checks the X limits); default out `_logs/clip/`. `--selftest` on synthetic clips. Summary: `clip`. | D | `--help` | N |
+| `media.py clip` | Thin ffmpeg wrapper: `info`, `trim`, `join` (xfade), `caption` (or `--cue` list), `sbs`, framing and compose ops (below), `export --for x\|gif` (checks the X limits); usage lines in `clip_edit.py`; default out `_logs/clip/`. `--selftest` on synthetic clips. Summary: `clip`. | D | `--help` | N |
 | `media.py bible-normalize` | Squared 3×3 Bible to live lock sheet: plate remap, SCUNet denoise at 2x (`--no-denoise` skips), full bodies to shared height with `--margin` plate, bust keeps crop, 4x4 trimmed-mean rebuild to `--cell`; prints a per-cell scale/bbox table and edge/width flags (`art-bible-character.md`) | D | `--help` | N |
 | `media.py bible-prompt` | Bible Imagine text: `--gender` player, `--enemy ID` enemy (prop, hand and idle-pose table lives in the tool). Print and copy | D | `--help` | N |
 | `media.py glyphs` | Chunky pixel prompt glyphs. Run from repo root | D | `--help` | N |
@@ -36,7 +36,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 | `media.py shop-icons` | Slice the ghost-shop Imagine sheet into gear source plates and keyed 64px icons. Sheet: `_src/sources/assets/ui/shop-icons/shop_icons.png`. | D | `--help` | N |
 | `media.py world` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
 | `media.py keytest` | Golden-set keying regression: truth mattes in `_src/truth` keyed again from a drifting JPEG plate (alpha error, area, edge, halo, interior detail, repeat); sheets in `_logs/keytest/`. Summary: `keytest`. | BD | `--help` | N |
-| `media.py rekey-preview` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
+| `media.py rekey-preview` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. `--pixelate 32 [--palette N]` adds `imglib.key.pixelate` (box down to the hub ground pixel, hard alpha, nearest up) and previews the hub props/faces as `px_<name>.png` pairs. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `media.py rekey` | Rekey every manifest still from `_src`, placed like live (`--out DIR` for a review copy; without it overwrites live; `--check`: two runs byte-identical). Summary: `rekey-all-stills`. | D | `--help` | N |
 | `media.py rekey-check` | Full-set rekey check of a `--new DIR` against live and the plates: per-class counts, rows in `_logs/rekey-check/last.json`. Summary: `rekey-check`. | D | `--help` | N |
 | `media.py grok` | Stage a scratch directory outside the git tree and run a thin Grok Build media job: `--kind ui\|npc\|tile\|character\|still\|i2v --brief "..." --out DIR` (`--dest-name`, `--copy REF`, `--aspect`, `--edit` with one `--copy` calls `image_edit` on that file and ignores `--aspect`); `--selftest` mocks grok | D | `--help` | N |
@@ -69,11 +69,13 @@ Edit: `media.py clip sbs` then `caption`, then `export --for x` (FAIL over 140 s
 
 Framing and overlays (`lib/media/clip_fx.py`; flags: `media.py clip --help`): `--box` is pixels, fractions, or a movie region; `crop`, `zoom` (Ken Burns), `fit`, `join --transition` (any xfade name), `wipe` (reveal line), `pip`, `mark` (box plus arrow).
 
-Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. Then `export --for x` and `--for gif`.
+Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. `--style promo` (`clip_promo.py`, also `clip wipe`): eased grip wipe, BEFORE/AFTER chip (`--subs`), `--end-card "T|S"`. Then `export --for x` and `--for gif`.
+
+Compose (`clip_compose.py`; options in its docstring): `clip punch`, `clip callout` (box or ring, leader, staggered chip), `clip montage` (titled segments, end card), `clip spec EDIT.json`. Tracking, hold, joins, lower third, per-seam joins, portrait focus and chip placement: `lib/media/clip_track.py`; spec paths are relative to the spec file.
 
 ## Ref compare and scenario catalog
 
-`shots.py movie --refs A,B NAMES` (`lib/shots/movie_refs.py`): any two git refs. Per ref a temp worktree gets this checkout's recording tooling (shot tool, `shot_views.gd`, and missing deps with a fresh `.uid`; listed in `compare.json`), `gate.py import`, then every name is recorded and the pair diffed. Unchanged pairs print `no visible change` and stay out of the reel; each change gets a captioned `clip ba` segment. The out dir (default `_logs/movie/refs-A-B-NAMES/`, one per name list, so a subset rerun keeps the full run) holds `reel.mp4`, `reel-x.mp4`, `reel.gif`, `contact.png` (A | B | heat per change) and `compare.json`. About 1 to 3 min per name per ref plus the import. Every view still first calls `shot_views.gd` `still_hud` (pins wall-clock pulses such as the HUD danger gem).
+`shots.py movie --refs A,B NAMES` (`lib/shots/movie_refs.py`): any two git refs. Per ref a temp worktree gets this checkout's recording tooling (shot tool, `shot_views.gd`, and missing deps with a fresh `.uid`; listed in `compare.json`), `gate.py import`, then every name is recorded and the pair diffed. Unchanged pairs print `no visible change` and stay out of the reel; so do camera-size-only clip diffs (`zoom-only diff`); each change gets a captioned `clip ba` segment (promo wipe, ref names as sublines). The out dir (default `_logs/movie/refs-A-B-NAMES/`, one per name list, so a subset rerun keeps the full run) holds `reel.mp4`, `reel-x.mp4`, `reel.gif`, `contact.png` (A | B | heat per change) and `compare.json`. About 1 to 3 min per name per ref plus the import. Every view still first calls `shot_views.gd` `still_hud` (pins wall-clock pulses such as the HUD danger gem).
 
 The catalog lives in `data/movies.json`:
 - `movies`: clips.
@@ -91,7 +93,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | File (under `tools/`) | Owns |
 |---|---|
 | `lib/media/audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical |
-| `lib/media/clip_fx.py` | `media.py clip` framing, transitions and overlays (`crop`, `zoom`, `fit`, `wipe`, `pip`, `mark`, `change_box`, `ba`) on top of `clip_edit.py` |
+| `lib/media/clip_fx.py` | `media.py clip` framing, transitions and overlays (`crop`, `zoom`, `fit`, `wipe`, `pip`, `mark`, `change_box`, `ba`) on top of `clip_edit.py`; `lib/media/clip_promo.py` (promo wipe, chips, end card) and `lib/media/clip_compose.py` (punch, callout, montage, spec) beside it |
 | `lib/media/anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. |
 | `data/attack_keyframes_log.json` | Sidecar data for the tool of the same stem |
 | `data/movies.json` | `shots.py movie` scenarios, movies, views and sets (the scenario catalog) |

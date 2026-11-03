@@ -305,21 +305,25 @@ def highest_label(root: Path) -> str:
     found = [p.stem for p in (root / "design" / "changelog").glob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)]
     return max(found, key=_label_key) if found else ""
 
+def on_main(root: Path, rel: str) -> bool:
+    """True when rel exists on origin/main (a shipped changelog: never add to it)."""
+    return subprocess.run(["git", "cat-file", "-e", f"origin/main:{rel}"], cwd=root,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+def branch_changelog_labels(root: Path) -> list[str]:
+    """x.y.z labels of design/changelog/*.md this branch added (committed since origin/main, staged, or untracked)."""
+    def git(*a: str) -> str:
+        try:
+            return subprocess.check_output(["git", *a], cwd=root, text=True, stderr=subprocess.DEVNULL)
+        except Exception:
+            return ""
+    paths = set(git("diff", "--name-only", "--diff-filter=A", repo_lib.diff_base(root), "--", "design/changelog").split())
+    paths |= {ln[3:].strip() for ln in git("status", "--porcelain", "design/changelog").splitlines()}
+    return [Path(p).stem for p in paths if re.fullmatch(r"\d+\.\d+\.\d+", Path(p).stem) and not on_main(root, p)]
+
 def dirty_changelog_label(root: Path) -> str:
-    """Highest x.y.z label among design/changelog/*.md that are dirty in the working tree; '' if none."""
-    try:
-        out = subprocess.check_output(
-            ["git", "status", "--porcelain", "design/changelog"],
-            cwd=root, text=True, stderr=subprocess.DEVNULL,
-        )
-    except Exception:
-        return ""
-    labels = []
-    for line in out.splitlines():
-        path = line[3:].strip()
-        stem = Path(path).stem
-        if re.fullmatch(r"\d+\.\d+\.\d+", stem):
-            labels.append(stem)
+    """Highest label among this branch's own new changelog files ('' if none); files already on origin/main never count."""
+    labels = branch_changelog_labels(root)
     return max(labels, key=_label_key) if labels else ""
 
 def next_label(root: Path | None = None) -> str:

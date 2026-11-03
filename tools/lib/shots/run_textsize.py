@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
 import boot  # noqa: E402,F401
 
 import agent_log
+import godot_slots
 import run_shot_flow
 import run_shots
 from agent_log import rel
@@ -168,7 +169,8 @@ def world_selftest() -> list[str]:
         (t / "project.godot").write_text('config_version=5\n[application]\nconfig/name="t"\n', encoding="utf-8")
         shutil.copy(agent_log.repo_root() / "scripts/debug/shot_tool/step_texts.gd", t / "step_texts.gd")
         (t / "probe.gd").write_text(WORLD_PROBE, encoding="utf-8")
-        p = subprocess.run([str(godot_lib.godot_exe()), "--headless", "--path", td, "-s", "res://probe.gd"], capture_output=True, text=True, timeout=120)
+        with godot_slots.held("textsize probe", td):
+            p = subprocess.run([str(godot_lib.godot_exe()), "--headless", "--path", td, "-s", "res://probe.gd"], capture_output=True, text=True, timeout=120)
         hit = [ln[5:] for ln in p.stdout.splitlines() if ln.startswith("ROWS:")]
         rows = json.loads(hit[0]) if hit else []
         vph = float(next((ln[4:] for ln in p.stdout.splitlines() if ln.startswith("VPH:")), "0"))

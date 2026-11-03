@@ -131,4 +131,26 @@ def run() -> list[tuple[str, bool, str]]:
     blur = Image.fromarray(cv2.GaussianBlur(cells, (0, 0), 3))
     gb = geom.detect_grid(blur, alpha=art[..., 3])
     out.append(("detect_grid", abs(g[0] - 6) < 0.1 and g[3] >= 0.5 and gb[3] < 0.5, f"pitch {g[0]:.2f} conf {g[3]:.2f}, blurred {gb[3]:.2f}"))
+    # pixelate: 4 px cells, binary alpha, cells uniform, palette caps the colour count.
+    px = np.array(key.pixelate(sp, 4.0, palette=3))
+    cells_ok = all(len(np.unique(px[y:y + 4, x:x + 4].reshape(-1, 4), axis=0)) == 1 for y in range(0, 80, 4) for x in range(0, 60, 4))
+    alpha_bin = set(np.unique(px[..., 3]).tolist()) <= {0, 255}
+    ncol = len(np.unique(px[px[..., 3] > 0][:, :3], axis=0))
+    out.append(("pixelate grid+alpha+palette", px.shape == (80, 60, 4) and cells_ok and alpha_bin and ncol <= 3, f"cells {cells_ok} binary {alpha_bin} colours {ncol}"))
+    # grid: +-1 px jittered cells at an offset phase are recovered exactly, and grid pixelate keeps every cell's colour.
+    from . import grid
+    gok = 0
+    for sd in range(8):
+        for ph in (0, 2, 3):
+            gim, gx, gy = grid.jittered(seed=sd, phase=ph, base=5)
+            gg = grid.detect(gim)
+            gok += gg["x"][2] == gx and gg["y"][2] == gy
+    gim, gx, gy = grid.jittered(seed=3, phase=3, base=5)
+    same = np.array_equal(np.array(key.pixelate(gim, 1.0, grid=True)), np.array(gim))
+    out.append(("grid jittered cells recovered", gok == 24 and same, f"{gok}/24 exact, grid pixelate identity {same}"))
+    # pixelate detail: a 1-cell dark band (4 px wide on a 4 px cell, off the cell phase) survives as dark cells.
+    band = np.full((32, 32, 4), 220, np.uint8)
+    band[:, 14:18, :3] = 30
+    pd, pb = (np.array(key.pixelate(Image.fromarray(band, "RGBA"), 4.0, crisp=c))[..., 0].min() for c in (True, False))
+    out.append(("pixelate keeps 1-cell dark band", pd < 60 and pb > pd, f"detail min {pd}, box min {pb}"))
     return out

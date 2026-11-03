@@ -285,26 +285,7 @@ static func bench_done(sec: float, ok: bool, missing: String) -> void:
 		"pause_slow": pause_slow_n,
 		"bar_slow": bar_slow_n,
 	}
-	var shape: Dictionary = Present._slow_shape()
-	row["n_edge"] = int(shape["n_edge"])
-	row["n_stutter"] = int(shape["n_stutter"])
-	row["n_spike"] = int(shape["n_spike"])
-	row["slow_run_n"] = int(shape["slow_run_n"])
-	row["slow_run_med_ms"] = float(shape["slow_run_med_ms"])
-	if Present._dts.size() > 0:
-		Present._dts.sort()
-	row["dt_p50_ms"] = Present._percentile(0.50)
-	row["dt_p95_ms"] = Present._percentile(0.95)
-	if Present._pts.size() > 0:
-		Present._pts.sort()
-		row["pt_p50_ms"] = Present._pt_percentile(0.50)
-	Present._stamp_present(row)
-	row["bench_gen"] = Rows._bench_gen
-	if Rows.started and Rows._fh != null:
-		Rows._write_row(row)
-	else:
-		Web._post(JSON.stringify(row))
-	Web._flush_web()
+	Rows.emit_bench(row)
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	Rows.mark(reason, origin)

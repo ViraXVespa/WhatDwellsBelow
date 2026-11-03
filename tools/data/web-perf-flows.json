@@ -27,5 +27,8 @@
     "steps": [{"shot": "camp"}, {"phase": "_enter"}, {"eval": "window.wdbEnter()"}, {"settle": 30000, "min": 2500, "as": "dungeon_load_ms"}, {"phase": "arrive"}, {"wait": 4000}, {"shot": "arrive"}]},
   "dungeon-fight": {"about": "Camp, then the debug playtester (window.wdbPlaytest, ?wdb-playtest) runs one fresh Great Axe AI run on floor 1 with seed 42 (?wdb-seed=42) for 30 s of sim time, then 6 s without it (phase _after, a rough no-playtester reference). fps includes playtester overhead: compare only with itself. play_runs lists each run's kills/damage so repeatability is visible.",
     "boot": true, "playtest": true, "query": "wdb-seed=42&wdb-playtest", "expect_change": [["camp", "fight"]],
-    "steps": [{"shot": "camp"}, {"phase": "_enter"}, {"eval": "window.wdbPlaytest(30)"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"phase": "fight"}, {"waitplay": 60000}, {"shot": "fight"}, {"phase": "_after"}, {"wait": 6000}, {"phase": "_end"}]}
+    "steps": [{"shot": "camp"}, {"phase": "_enter"}, {"eval": "window.wdbPlaytest(30)"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"phase": "fight"}, {"waitplay": 60000}, {"shot": "fight"}, {"phase": "_after"}, {"wait": 6000}, {"phase": "_end"}]},
+  "bug-dry": {"about": "Camp, then one Report Bug dry run through the live relay (window.wdbBugDry; dry_run stores nothing, counts toward the 10/h IP limit); prints the relay answer as a waitfor line.",
+    "boot": true, "query": "wdb-playtest",
+    "steps": [{"shot": "camp"}, {"eval": "window.wdbBugDry()"}, {"waitfor": "window.__wdbBug", "ms": 25000}]}
 }

@@ -24,6 +24,95 @@ var report: String:
 		faults((Engine.get_main_loop() as SceneTree).get_nodes_in_group("interact"))
 		return " ".join(_rows)
 
+## Planted fault: the dumpster sprite grown 3x so its face covers its own mark; must report on_face.
+var plant: String:
+	get:
+		for n in (Engine.get_main_loop() as SceneTree).get_nodes_in_group("interact"):
+			if str(n.get("kind")) == "dumpster":
+				var spr: Sprite3D = n.get("spr") as Sprite3D
+				var was: Vector3 = spr.scale
+				spr.scale = was * 3.0
+				var got: String = faults([n])
+				spr.scale = was
+				return "caught" if got.contains("dumpster:on_face") else "missed " + got
+		return "missing"
+
+## Shadow-mark matrix (hub_shadow_check/mark_matrix.gd): "" when every frame's feet and mask pass. plant_matrix
+## runs the three planted faults (offset pin, glued raised foot, stray chunk); each must be reported.
+var matrix: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/mark_matrix.gd").run()
+var plant_matrix: String:
+	get:
+		var M: GDScript = load("res://scripts/debug/hub_shadow_check/mark_matrix.gd")
+		var miss: PackedStringArray = PackedStringArray()
+		for p: String in ["offset", "glue", "chunk", "glow"]:
+			if M.run(p) == "":
+				miss.append(p)
+		return "caught" if miss.is_empty() else "missed " + ",".join(miss)
+
+## Flyer marks (hub_shadow_check/fly_matrix.gd): fly_matrix "" when detached, under the body, falling off with
+## altitude and never stale; plant_fly: glued (air off) and hang (a skipped frame) must fail; fly_bench / fly_stage.
+var fly_matrix: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").run()
+var plant_fly: String:
+	get:
+		var F: GDScript = load("res://scripts/debug/hub_shadow_check/fly_matrix.gd")
+		var miss: PackedStringArray = PackedStringArray()
+		for p: String in ["glued", "hang"]:
+			if F.run(p) == "":
+				miss.append(p)
+		return "caught" if miss.is_empty() else "missed " + ",".join(miss)
+var fly_bench: String:
+	get:
+		var got: String = load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").bench()
+		print("FLY_BENCH ", got)
+		return ""
+var fly_stage: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/fly_matrix.gd").stage()
+
+## Rendered feet (hub_shadow_check/feet_px.gd): "" when both grounded boots meet the mark on screen; plant_feet: flat pins.
+var feet_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/feet_px.gd").run()
+var plant_feet: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/feet_px.gd").run("flat") != "" else "missed flat"
+
+## Rendered shadow contour (hub_shadow_check/edge_px.gd): "" when every building shadow edge is the projected polygon's;
+## plant_edges: shader hulls shifted 3 cells.
+var edge_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/edge_px.gd").run()
+var plant_edges: String:
+	get:
+		var r: String = load("res://scripts/debug/hub_shadow_check/edge_px.gd").run("shift")
+		return "caught" if r != "" and r != "no_edges" else "missed shift " + r
+
+## One shade level inside every hull, wall-base ring included (hub_shadow_check/flat_px.gd); plant_flat: bake only.
+var flat_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/flat_px.gd").run()
+var plant_flat: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/flat_px.gd").run("bake").begins_with("h") else "missed"
+
+## Rendered sun mark in full building shade (hub_shadow_check/mark_px.gd): "" when no double shadow; plant_mark: no cancel.
+var mark_px: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/mark_px.gd").run()
+var plant_gap: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/edge_px.gd").run("gap").contains("pockets") else "missed gap"
+var mark_sun: String:
+	get:
+		return load("res://scripts/debug/hub_shadow_check/mark_px.gd").run("", true)
+var plant_mark: String:
+	get:
+		return "caught" if load("res://scripts/debug/hub_shadow_check/mark_px.gd").run("ignore").contains("double") else "missed ignore"
+
 static var _rows: PackedStringArray = PackedStringArray()
 
 static func faults(props: Array) -> String:
@@ -93,3 +182,41 @@ static func face_rect(spr: Sprite3D, cam: Camera3D) -> Rect2:
 	for c in [Vector3(x1, y0, 0.0), Vector3(x1, y1, 0.0), Vector3(x0, y1, 0.0)]:
 		r = r.expand(cam.unproject_position(xf * c))
 	return r
+
+## wheels: the dumpster's live mark caster (ActorLit "raised") is a box on short wheel posts: the band between the
+## box shadow and the ground holds >= 4 opaque runs split by clear columns, and that band is 1 row to MAX_BAND of
+## the box height (wheels a few cm on a ~1.2 m box). plant_wheels scores the "stilts" caster (drawn wheel band
+## kept under the full sprite), which must FAIL.
+const MAX_BAND := 0.1
+var wheels: String:
+	get:
+		return wheel_faults(false)
+var plant_wheels: String:
+	get:
+		return "caught" if wheel_faults(true) != "" else "missed"
+
+static func wheel_faults(plant: bool) -> String:
+	for n in (Engine.get_main_loop() as SceneTree).get_nodes_in_group("interact"):
+		if str(n.get("kind")) != "dumpster" or not n.has_node("ActorLit"):
+			continue
+		var tex: Texture2D = (n.get("spr") as Sprite3D).texture
+		var img: Image = Soles._solid(tex, "stilts" if plant else str(n.get_node("ActorLit").get("solid"))).get_image()
+		var used: Rect2i = img.get_used_rect()
+		var sole: int = used.end.y - 1
+		var body: int = Soles._body_end(img) - 1
+		var band: int = sole - body
+		var tall: int = body - used.position.y + 1
+		var runs: int = 0
+		var was: bool = false
+		for x in img.get_width():
+			var on: bool = img.get_pixel(x, mini(body + 1 + band / 2, sole)).a > 0.5
+			if on and not was:
+				runs += 1
+			was = on
+		var out: PackedStringArray = PackedStringArray()
+		if runs < 4:
+			out.append("wheel_runs=%d<4" % runs)
+		if band < 1 or band > MAX_BAND * tall:
+			out.append("band=%d rows of box %d (max %.0f)" % [band, tall, MAX_BAND * tall])
+		return "" if out.is_empty() else "dumpster:" + " ".join(out)
+	return "dumpster:missing"

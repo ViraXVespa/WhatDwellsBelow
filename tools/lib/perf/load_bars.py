@@ -27,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
 import agent_log
+import godot_slots
 
 SAMPLE = r"""
 (() => {
@@ -148,8 +149,9 @@ def desktop(root: Path, timeout_s: int) -> dict:
         if name.endswith("cold"):
             for c in caches:
                 shutil.rmtree(c, ignore_errors=True) if c.is_dir() else c.unlink(missing_ok=True)
-        r = subprocess.run([exe, "--path", str(root), "--rendering-driver", "opengl3", "--resolution", "1280x720", "--",
-                            "--wdb-load-timing-smoke", "--wdb-loader-trace"], capture_output=True, text=True, timeout=timeout_s)
+        with godot_slots.held("load_bars " + name, str(root)):
+            r = subprocess.run([exe, "--path", str(root), "--rendering-driver", "opengl3", "--resolution", "1280x720", "--",
+                                "--wdb-load-timing-smoke", "--wdb-loader-trace"], capture_output=True, text=True, timeout=timeout_s)
         game = []
         for ln in (r.stdout + r.stderr).splitlines():
             if ln.startswith("LOADSTEPS "):

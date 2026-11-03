@@ -18,6 +18,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("prove",       "checks/check_prove",            "Exploratory prove: changed set, dependents, the checks they need, drift"),
     ("load-audit",  "checks/bot_load_audit",         "Audit one Grok Build session's reads before its first ask"),
     ("docs-size",   "checks/list_oversize_docs",     "Bot-only doc size sweep (--boot, --dupes)"),
+    ("selftests",   "checks/check_selftests",        "Every tool selftest, whatever changed (timeouts; missing exe/module is SKIP)"),
 ]
 
 if __name__ == "__main__":

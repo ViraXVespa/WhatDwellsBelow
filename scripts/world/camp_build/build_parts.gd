@@ -2,6 +2,7 @@ extends Object
 
 ## Camp build buildings from the Layout spec (layout_spec.gd): guild hall and wing, the stall's walls, posts, tarp and collision.
 
+const T := preload("res://scripts/data/tunables.gd")
 const Lamps := preload("res://scripts/world/camp/lamps.gd")
 const MeshS := preload("res://scripts/world/camp_build/mesh.gd")
 const Tent := preload("res://scripts/world/camp_build/mesh_tent.gd")
@@ -23,21 +24,28 @@ static func _guild(host: Node3D, lay: Node3D, which: String, at: Vector3, box_si
 	var row: Dictionary = LayoutS.body(which)
 	var tex: String = row["face"]
 	var body: StaticBody3D = Util.box(host, at, box_size, row["wall"])
-	var fit: Vector3 = Util.seat(body, box_size, tex)
+	# Wall tall enough that, seen from the gameplay pitch, the awning hem (awning depth in front) lines up with the
+	# cropped face top: the whole painted face shows and the extra wall above it stays behind the awning.
+	var face_top: float = Util.face_height(tex, box_size.x) * (1.0 - float(row["crop"])) - 0.08
+	# The face sprite stands FACE_Z of the depth forward of the wall plane the awning hangs from: only the rest is ahead.
+	var ahead: float = (lay.awning_depth(which) - box_size.z * (Spec.FACE_Z - 0.5)) * tan(deg_to_rad(absf(T.CAM_PITCH)))
+	var fit: Vector3 = Util.seat(body, box_size, tex, (face_top + ahead - Spec.AWNING_TUCK) / (1.0 - lay.awning_valance(which)))
 	MeshS.wall_box(body, fit, row["wall"])
 	Util._slide(body, fit)
 	Util.face(body, fit, tex, 0.0, fit.x, row["crop"])
+	var face := body.get_child(body.get_child_count() - 1) as Sprite3D  # before the collider: it would be the last child
 	# Thin collider on the painted front so the player cannot walk through the wall
 	var front_col := CollisionShape3D.new()
 	front_col.name = "FrontFaceCollider"
 	var front_box := BoxShape3D.new()
 	front_box.size = Vector3(fit.x, fit.y, 0.08)
 	front_col.shape = front_box
-	front_col.position = Vector3(0.0, fit.y * 0.5, fit.z * 0.5 + 0.04)
+	# Centred on the body (mid-wall): spans ground to wall top, so the player stops in front of the face sprite.
+	front_col.position = Vector3(0.0, 0.0, fit.z * 0.5 + 0.04)
 	body.add_child(front_col)
 	var valance: float = fit.y * lay.awning_valance(which)
 	var hem := Vector3(fit.y * 0.5 - valance, fit.z * 0.5 + lay.awning_depth(which), float(row.get("hang_x", 0.0)))
-	Lamps.on_face(body.get_child(body.get_child_count() - 1) as Sprite3D, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
+	Lamps.on_face(face, row["crop"], row["lamps"], row.get("hang", Rect2()), hem)
 	Tent.attach_awning(body, fit, lay.awning_depth(which), valance)
 	Tent.gable_on(body, fit, 0.0, row["rise"], lay.tile_for(which), uv_off)
 
@@ -100,7 +108,7 @@ static func _planks() -> StandardMaterial3D:
 		return _plank_mat
 	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
 	for x in 16:
-		var board: int = x / 4
+		var board: int = floori(x / 4.0)
 		var tone: float = [1.0, 0.9, 1.06, 0.95][board]
 		for y in 16:
 			var c: Color = Spec.TIMBER * (0.76 if x % 4 == 0 else tone * (0.96 if (x * 7 + y * 3) % 11 == 0 else 1.0))

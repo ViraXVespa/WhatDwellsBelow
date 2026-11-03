@@ -1,7 +1,7 @@
 extends Object
 
 ## Guild lamps: a flickering flame (torch_bill's FLAME shader) and a soft halo on each lantern painted in the face
-## art. Nodes join "hub_lamp" so the hub bake (hub_props.lamp_glow) adds a warm pool under each one.
+## art. Nodes join "hub_lamp"; camp/lamp_pools.gd lights a live pool (light_rt/pools.gd) from each one's flame.
 
 const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
 ## Lantern texels per face art: layout_spec.gd HALL/WING "lamps". Sizes and draw order: Spec.LAMP, Spec.DRAW.
@@ -27,7 +27,7 @@ static func on_face(spr: Sprite3D, crop_top: float, pts: Array, hang := Rect2(),
 	var cut: float = th * crop_top
 	var rh: float = th - cut
 	var ps: float = spr.pixel_size
-	var seed: float = 0.0
+	var flame_seed: float = 0.0
 	for p: Vector2 in pts:
 		var at := Vector3((p.x - tw * 0.5) * ps, (rh * 0.5 - (p.y - cut)) * ps, 0.02)
 		var root := Node3D.new()
@@ -35,11 +35,14 @@ static func on_face(spr: Sprite3D, crop_top: float, pts: Array, hang := Rect2(),
 		root.add_to_group("hub_lamp")
 		spr.add_child(root)
 		var lit: Node3D = root
+		if hem != Vector3.ZERO:
+			root.set_meta("hem_y", hem.x)  # body-local awning hem height: lamp_pools cuts the pool above it
 		if hang.size != Vector2.ZERO:
 			lit = _hung(spr, hang, p, hem)
-		lit.add_child(_quad(TorchBill.FLAME, Spec.LAMP["flame"], seed))
-		lit.add_child(_quad(HALO, Vector2.ONE * float(Spec.LAMP["halo"]), seed))
-		seed += 1.7
+			root.set_meta("flame", lit)
+		lit.add_child(_quad(TorchBill.FLAME, Spec.LAMP["flame"], flame_seed))
+		lit.add_child(_quad(HALO, Vector2.ONE * float(Spec.LAMP["halo"]), flame_seed))
+		flame_seed += 1.7
 
 ## The lantern cutout (dark iron and the glass box of the art rect; wall pixels cleared) hung top-first from the hem,
 ## a little in front of it. Returns the node at its glass (p) for the flame and halo.
@@ -68,7 +71,7 @@ static func _hung(spr: Sprite3D, r: Rect2, p: Vector2, hem: Vector3) -> Node3D:
 	lamp.add_child(cut)
 	return lamp
 
-static func _quad(code: String, size: Vector2, seed: float) -> MeshInstance3D:
+static func _quad(code: String, size: Vector2, flame_seed: float) -> MeshInstance3D:
 	var q := QuadMesh.new()
 	q.size = size
 	var sh := Shader.new()
@@ -77,7 +80,7 @@ static func _quad(code: String, size: Vector2, seed: float) -> MeshInstance3D:
 	mat.shader = sh
 	mat.render_priority = Spec.DRAW["lamp"]
 	if code == TorchBill.FLAME:
-		mat.set_shader_parameter("flame_seed", seed)
+		mat.set_shader_parameter("flame_seed", flame_seed)
 	var mi := MeshInstance3D.new()
 	mi.mesh = q
 	mi.material_override = mat

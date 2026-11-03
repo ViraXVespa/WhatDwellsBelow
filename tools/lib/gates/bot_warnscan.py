@@ -15,7 +15,7 @@ stderr, de-duplicates by normalized message, prints a report.
   python tools/gate.py warnscan --renderer both --repeat 3     # headless + real renderer, stable vs flaky tags
 
 Cheap by default: 1 run per area, areas in parallel (--jobs, each run gets its own
-user:// via XDG_DATA_HOME), then areas that logged a leak or run failure are re-run
+user:// via XDG_DATA_HOME, in a temp dir outside the repo), then areas that logged a leak or run failure are re-run
 --recheck times (default 2) so each finding is tagged stable or flaky. Timing smokes
 (load-timing, dungeon-load-timing) run alone, after the pool.
   python tools/gate.py warnscan --changed               # quick: static + areas for paths changed vs repo_lib.diff_base
@@ -42,6 +42,7 @@ import os
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -50,6 +51,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot 
 import boot  # noqa: E402,F401
 
 import agent_log  # noqa: E402
+import godot_slots  # noqa: E402
+import godot_slots
 from godot_lib import resolve_bin  # noqa: E402
 from bot_warnscan_lib import changed_areas, flake_label, merge, mode_label, parse_stream, run_failure  # noqa: E402
 from godot_lib import XVFB_SCREEN, pick_display  # noqa: E402
@@ -364,6 +367,8 @@ def main(argv: list[str] | None = None) -> int:
     modes = {"headless": [False], "real": [True], "both": [False, True]}[ns.renderer]
     labels = [(n, g) for n in names for g in modes if not (g and n == "static")]  # static has no renderer
     ns.jobs = max(1, ns.jobs)
+    # per-job user:// dirs live outside the repo: tools such as perf.py curve refuse to write inside it
+    xdg = Path(tempfile.mkdtemp(prefix="wdb-warnscan-xdg-"))
 
     def job(name: str, gui: bool, run: int) -> dict:
         label = f"{name}@gui" if gui else name
@@ -371,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
         cmd = godot_cmd(exe, root, name, table[name][0], ns, log_dir, gui)
         env = gui_env if gui else None
         if ns.jobs > 1:  # parallel runs must not share saves
-            env = dict(env or os.environ, XDG_DATA_HOME=str(log_dir / "xdg" / tag))
+            env = dict(env or os.environ, XDG_DATA_HOME=str(xdg / tag))
         return {"name": name, "label": label, "tag": tag, "run": run, "cmd": (gui_prefix if gui else []) + cmd,
                 "env": env, "out": log_dir / f"{tag}.out.txt", "err": log_dir / f"{tag}.err.txt"}
 
@@ -385,11 +390,12 @@ def main(argv: list[str] | None = None) -> int:
         pool = [j for j in jobs if j["name"] not in SERIAL]
         serial = [j for j in jobs if j["name"] in SERIAL]
         done: dict[str, dict] = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
-            for r in ex.map(lambda j: run_job(j, ns), pool):
-                done[r["tag"]] = r
-        for j in serial:
-            done[j["tag"]] = run_job(j, ns)
+        with godot_slots.held("bot_warnscan", str(root)):  # one box slot for the scan; its --jobs pool runs inside
+            with concurrent.futures.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
+                for r in ex.map(lambda j: run_job(j, ns), pool):
+                    done[r["tag"]] = r
+            for j in serial:
+                done[j["tag"]] = run_job(j, ns)
         for j in jobs:  # merge in submission order so reports are stable
             r = done[j["tag"]]
             merge(merged, r["found"], r["run"])

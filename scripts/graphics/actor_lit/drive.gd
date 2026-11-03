@@ -11,27 +11,41 @@ static func _is_player(host: Node) -> bool:
 		return false
 	return str(scr.resource_path).ends_with("player.gd")
 
+## Hub: slot 0 is the sun mark; the player also takes a point-light mark (away from the light, like the dungeon
+## torches) from the nearest two hub point lights in reach: the floor crystal and every face lantern (group hub_lamp).
 static func _drive_hub(lit: Variant, host: Node3D, feet: Vector2) -> void:
 	_drive_sun(lit)
 	if not _is_player(host):
 		return
-	var src: Vector2 = LightRt.hub_crystal
-	if src == Vector2.ZERO:
-		return
-	var reach: float = 2.2
-	var dist: float = feet.distance_to(src)
-	if dist > reach:
-		return
-	var step: Vector2 = feet - src
-	if step.length_squared() < 0.0004:
-		return
-	var along: float = clampf(dist / reach, 0.0, 1.0)
-	lit._away_at[1] = step.normalized()
-	lit._stretch_at[1] = lerpf(1.45, 1.05, along)
-	lit._alpha_at[1] = lerpf(0.16, 0.05, along)
-	lit._src_at[1] = src
-	lit._held[1] = true
-	lit._rank_at[1] = 1
+	var srcs: Array[Vector2] = hub_points(lit as Node)
+	srcs.sort_custom(func(a: Vector2, b: Vector2) -> bool: return feet.distance_squared_to(a) < feet.distance_squared_to(b))
+	var slot: int = 1
+	for src: Vector2 in srcs:
+		if slot >= K.MARK_N:
+			break
+		var dist: float = feet.distance_to(src)
+		var step: Vector2 = feet - src
+		if dist > K.HUB_POINT_REACH or step.length_squared() < 0.0004:
+			continue
+		var along: float = clampf(dist / K.HUB_POINT_REACH, 0.0, 1.0)
+		lit._away_at[slot] = step.normalized()
+		lit._stretch_at[slot] = lerpf(1.45, 1.05, along)
+		lit._alpha_at[slot] = lerpf(0.16, 0.05, along)
+		lit._src_at[slot] = src
+		lit._held[slot] = true
+		lit._rank_at[slot] = slot
+		slot += 1
+
+## Ground xz of the hub's point lights: the floor crystal and each face lantern (lamps.gd hub_lamp nodes).
+static func hub_points(n: Node) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	if LightRt.hub_crystal != Vector2.ZERO:
+		out.append(LightRt.hub_crystal)
+	if n != null and n.is_inside_tree():
+		for lamp: Node in n.get_tree().get_nodes_in_group("hub_lamp"):
+			if lamp is Node3D:
+				out.append(Vector2((lamp as Node3D).global_position.x, (lamp as Node3D).global_position.z))
+	return out
 
 static func _drive_sun(lit: Variant) -> void:
 	lit._away_at[0] = K.SUN_AWAY

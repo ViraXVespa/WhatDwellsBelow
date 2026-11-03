@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""List every doc an agent may load by byte size, largest first: root *.md, design/**/*.md (tasks/, benchmarks/; not
-changelog/ or refs/) and .grok/skills/**/*.md. Read-only.
+"""List every doc an agent may load by byte size, largest first: root *.md, design/**/*.md (benchmarks/; not
+changelog/, refs/ or tasks/: in-progress task files legitimately grow) and .grok/skills/**/*.md. Read-only.
 
 Doc signal-to-noise sweep options (one tool, no scratches):
   --boot    bytes and ~tokens of each boot chain (routes.yaml boot_max) + the skills dirs.
@@ -29,7 +29,7 @@ def _doc_files(root: Path) -> list[Path]:
     out += sorted((root / ".grok" / "skills").glob("*/SKILL.md"))
     return [f for f in out if f.is_file()]
 
-SIZE_SKIP = ("design/changelog/", "design/refs/")
+SIZE_SKIP = ("design/changelog/", "design/refs/", "design/tasks/")  # tasks: in-progress subdata grows; task_lib checks them
 
 def size_files(root: Path) -> list[Path]:
     """Docs the size listing covers (see the module doc)."""
@@ -47,7 +47,7 @@ def listing(root: Path, limit: int, show_all: bool) -> tuple[list[str], int, int
     return rows, over, len(files)
 
 def selftest() -> int:
-    """An oversize task, skill and root doc are listed; changelog/ and refs/ are not."""
+    """An oversize skill and root doc are listed; changelog/, refs/ and tasks/ are not."""
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         t = Path(td)
@@ -58,9 +58,9 @@ def selftest() -> int:
             (t / rel).write_text("x" if rel == "design/small.md" else big, encoding="utf-8")
         rows, over, n = listing(t, 8000, False)
     got = sorted(r.split()[1] for r in rows)
-    want = [".grok/skills/s/SKILL.md", ".grok/skills/s/notes.md", "NEW.md", "design/benchmarks/b.md", "design/tasks/opt-9.md"]
-    ok = got == want and over == 5 and n == 6
-    print(f"{'PASS' if ok else 'FAIL'} oversize rows got={got} over={over} files={n}" + ("" if ok else f" want={want} over=5 files=6"))
+    want = [".grok/skills/s/SKILL.md", ".grok/skills/s/notes.md", "NEW.md", "design/benchmarks/b.md"]
+    ok = got == want and over == 4 and n == 5
+    print(f"{'PASS' if ok else 'FAIL'} oversize rows got={got} over={over} files={n}" + ("" if ok else f" want={want} over=4 files=5"))
     print(f"RESULT {'PASS' if ok else 'FAIL'} selftest")
     return 0 if ok else 1
 
@@ -90,7 +90,7 @@ def dupe_report(root: Path, min_chars: int) -> tuple[list[str], int]:
     return lines, len(hits)
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("List root, design/** (tasks, benchmarks) and skill .md by size; OVER marks files at or over --over-kb. --boot / --dupes: doc SNR sweep.", json_out=True)
+    ap = agent_log.std_parser("List root, design/** (benchmarks; not tasks) and skill .md by size; OVER marks files at or over --over-kb. --boot / --dupes: doc SNR sweep.", json_out=True)
     bot_gate_lib.add_flag(ap)
     ap.add_argument("--over-kb", type=float, default=8.0, help="limit = round(kb * 1000) bytes")
     ap.add_argument("--boot", action="store_true", help="print bytes per boot chain (routes.yaml boot_max)")

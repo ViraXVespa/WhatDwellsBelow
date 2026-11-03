@@ -143,10 +143,39 @@ def still_diff(a: Path, b: Path) -> dict:
     return {"share": round(share, 4), "mean": round(float(d.mean()), 2), "size_changed": size_changed,
             "changed": share > STILL_SHARE or size_changed}
 
+def zoom_only(a: Path, b: Path, samples: int = 3) -> float:
+    """Scale of b about the centre that explains the a/b difference (camera size only), else 0. The guard that keeps a
+    shot-tool zoom drift between refs (e.g. a size_pin one ref lacks) out of the reel as a fake change."""
+    from PIL import Image, ImageChops, ImageStat
+    dur = min(clip_edit.info(a)["sec"], clip_edit.info(b)["sec"])
+    scales = [round(0.8 + 0.0125 * k, 4) for k in range(37)]
+    votes = []
+    with tempfile.TemporaryDirectory() as td:
+        for k in range(samples):
+            t = dur * (k + 0.5) / samples
+            fr = []
+            for n, src in (("a", a), ("b", b)):
+                clip_edit._run(["-ss", "%.3f" % t, "-i", str(src), "-frames:v", "1", "-vf", "scale=320:-2", str(Path(td) / (n + ".png"))])
+                fr.append(Image.open(Path(td) / (n + ".png")).convert("RGB"))
+            x, y = fr
+            w, h = x.size
+            def err(sc: float, x=x, y=y, w=w, h=h) -> float:
+                # sc > 1: b is the wider view, so a matches b's centre cropped by 1/sc; sc < 1 the other way
+                big, small, f = (y, x, sc) if sc >= 1 else (x, y, 1 / sc)
+                cw, ch = w / f, h / f
+                c = big.crop((int((w - cw) / 2), int((h - ch) / 2), int((w + cw) / 2), int((h + ch) / 2))).resize((w, h))
+                m = int(w * 0.1)
+                return sum(ImageStat.Stat(ImageChops.difference(c, small).crop((m, m, w - m, h - m))).mean) / 3
+            base, best = err(1.0), min(scales, key=err)
+            votes.append(best if abs(best - 1) > 0.02 and err(best) < min(8.0, base * 0.3) else 0.0)
+    return votes[0] if votes and all(v and abs(v - votes[0]) < 0.06 for v in votes) else 0.0
+
 def clip_diff(a: Path, b: Path) -> dict:
     box, share, strength = clip_fx.change_box(a, b)
+    changed = box is not None and share > CLIP_SHARE
+    z = zoom_only(a, b) if changed else 0.0
     return {"share": round(share, 4), "strength": strength, "box": [round(v) for v in box] if box else None,
-            "changed": box is not None and share > CLIP_SHARE}
+            "zoom_only": z, "changed": changed and not z}
 
 def still_clip(png: Path, out: Path, sec: float = 3.0) -> Path:
     clip_edit._run(["-loop", "1", "-t", "%.2f" % sec, "-i", str(png), "-vf",
@@ -173,13 +202,25 @@ def short(text: str, n: int = 56) -> str:
     return text if len(text) <= n else text[:n].rsplit(" ", 1)[0].rstrip(",;:(") + "..."
 
 def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
-    """Captioned ba segment per changed row -> reel.mp4, reel-x.mp4, reel.gif, contact.png."""
+    """Captioned ba segment (a wipe gets promo BEFORE/AFTER chips with the ref labels as sublines) per changed row -> reel.mp4, reel-x.mp4, reel.gif, contact.png."""
     from PIL import Image
     from imglib import compare
     Image.MAX_IMAGE_PIXELS = None
     segs, sheet, names = [], [], []
     with tempfile.TemporaryDirectory() as tdn:
         td = Path(tdn)
+        for r in [r for r in rows if r.get("new") and r.get("b")]:  # missing at A: the B shot alone, captioned NEW
+            b = Path(r["b"])
+            ib = Image.open(b).convert("RGB") if r["kind"] == "view" else None
+            if ib is not None:
+                b = still_clip(b, td / (r["name"] + "-b.mp4"))
+            capt = td / (r["name"] + "-new.mp4")
+            clip_edit.caption(b, short("NEW in %s: %s: %s" % (labels[1], r["name"], r["about"])), capt, pos="top")
+            segs.append(capt)
+            if ib is not None:
+                ib.thumbnail((960, 960))
+                sheet.append(ib)
+                names.append("%s %s (new)" % (r["name"], labels[1]))
         for r in [r for r in rows if r.get("diff", {}).get("changed")]:
             a, b = Path(r["a"]), Path(r["b"])
             if r["kind"] == "view":
@@ -188,9 +229,10 @@ def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
             else:
                 ia, ib = peak_frames(a, b, td)
             seg = td / (r["name"] + "-ba.mp4")
-            r["layout"] = clip_fx.ba(a, b, seg, labels=labels)["layout"]
+            pick = clip_fx.ba(a, b, seg, labels=labels, style="promo")
+            r["layout"] = pick["layout"]
             capt = td / (r["name"] + "-cap.mp4")
-            clip_edit.caption(seg, short("%s: %s" % (r["name"], r["about"])), capt)
+            clip_edit.caption(seg, short("%s: %s" % (r["name"], r["about"])), capt, pos="top" if "promo" in pick else "bottom")
             segs.append(capt)
             for im in (ia, ib):
                 im.thumbnail((960, 960))
@@ -198,6 +240,7 @@ def reel(rows: list[dict], labels: tuple[str, str], out: Path) -> dict:
             names += ["%s %s" % (r["name"], labels[0]), "%s %s" % (r["name"], labels[1]), "%s change" % r["name"]]
         if not segs:
             return {"segments": 0}
+        out.mkdir(parents=True, exist_ok=True)
         full = out / "reel.mp4"
         clip_edit.join(segs, 0.4, full) if len(segs) > 1 else shutil.copy2(segs[0], full)
     xs, px = clip_edit.export(full, "x", out / "reel-x.mp4")
@@ -237,7 +280,10 @@ def run(root: Path, data: dict, refs: str, names: str, out: Path, keep: bool, lo
         for r in res["items"]:
             if r.get("a") and r.get("b"):
                 r["diff"] = clip_diff(Path(r["a"]), Path(r["b"])) if r["kind"] == "movie" else still_diff(Path(r["a"]), Path(r["b"]))
-                log("%-18s %s %s" % (r["name"], "CHANGED" if r["diff"]["changed"] else "no visible change", json.dumps(r["diff"])))
+                log("%-18s %s %s" % (r["name"], "CHANGED" if r["diff"]["changed"] else ("zoom-only diff (camera size x%s), left out" % r["diff"]["zoom_only"] if r["diff"].get("zoom_only") else "no visible change"), json.dumps(r["diff"])))
+            elif r.get("b"):
+                r["new"] = True  # the A ref predates this shot (e.g. report-bug): include B, do not fail
+                log("%-18s NEW (missing at %s; %s shot included)" % (r["name"], labels[0], labels[1]))
             else:
                 log("%-18s not compared (a recording failed)" % r["name"])
         res["reel"] = reel(res["items"], labels, out)
@@ -295,4 +341,13 @@ def selftest(root: Path) -> list[str]:
             bad.append("caption cut")
         if reel(rows[:1], ("A", "B"), td / "none").get("segments") != 0:
             bad.append("no-change reel not empty")
+        nw = [{"name": "report-bug", "kind": "view", "about": "pause report page", "a": None, "b": str(imgs[2]), "new": True}]
+        if reel(rows[:1] + nw, ("A", "B"), td / "new").get("segments") != 1:
+            bad.append("a shot missing at A must enter the reel as NEW with its B shot")
+        clip_edit._run(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=2", *clip_edit.H264, str(td / "za.mp4")])
+        clip_edit._run(["-i", str(td / "za.mp4"), "-vf", "crop=iw/1.15:ih/1.15,scale=640:360", *clip_edit.H264, str(td / "zb.mp4")])
+        clip_edit._run(["-i", str(td / "za.mp4"), "-vf", "drawbox=x=100:y=60:w=200:h=150:color=yellow:t=fill", *clip_edit.H264, str(td / "zc.mp4")])
+        za, zb, zc = (td / n for n in ("za.mp4", "zb.mp4", "zc.mp4"))
+        if abs(zoom_only(zb, za) - 1.15) > 0.04 or zoom_only(za, zc):
+            bad.append("zoom-only guard: %s %s" % (zoom_only(zb, za), zoom_only(za, zc)))
     return bad

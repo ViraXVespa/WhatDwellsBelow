@@ -62,8 +62,8 @@ static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 static func rebind_tree(n: Node) -> void:
 	if n == null:
 		return
-	if n is MeshInstance3D:
-		var mi: MeshInstance3D = n
+	if n is GeometryInstance3D:  # meshes and the building face sprites (face_lit.gd)
+		var mi: GeometryInstance3D = n
 		if mi.material_override is ShaderMaterial:
 			bind(mi.material_override)
 	var i: int = 0

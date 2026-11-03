@@ -17,6 +17,11 @@
   python tools/media.py clip mark IN --box X,Y,W,H [--box ...] [--no-arrows] [--start S --end E] --out O.mp4
   python tools/media.py clip caption IN --cue 0,2,"First" --cue 2.5,5,"Second" --out O.mp4      # timed captions
   python tools/media.py clip ba BEFORE AFTER [--layout auto|wipe|sbs|stack] [--box B] --out O.mp4  # auto zoom + wipe
+  python tools/media.py clip punch IN --box B [--start S --sweep 0.4 --hold 1.2]        # punch-in: ease in, hold, ease out
+  python tools/media.py clip callout IN --box B --text T [--shape ring --leader --start S --end E] # box outline + chip label, faded
+  python tools/media.py clip montage A B C [--labels "One,Two,Three"] [--end-card "T|S"]  # titled segments, crossfaded
+  python tools/media.py clip spec EDIT.json --out O.mp4                                   # JSON edit list (clip_compose.py)
+  python tools/media.py clip wipe|ba A B --style promo [--subs "Week 8,Week 9"] [--end-card "TITLE|SUB"]  # promo chips + grip
   python tools/media.py clip --selftest                                          # synthetic clips through every op (ffmpeg only)
 
 ffmpeg/ffprobe do the work; this file only builds the filter graphs and checks the X limits (framing, transitions and
@@ -92,7 +97,7 @@ def join(srcs: list[Path], fade: float, out: Path, transition: str = "fade") -> 
 def _font(font: str) -> str:
     if font:
         return font
-    p = subprocess.run(["fc-match", "-f", "%{file}", "sans"], capture_output=True, text=True)
+    p = subprocess.run(["fc-match", "-f", "%{file}", "sans:charset=2192"], capture_output=True, text=True)  # a sans that has the arrow (DejaVu/Noto)
     return p.stdout.strip() if p.returncode == 0 else ""
 
 def _text(text: str, h: int, pos: str, font: str, x: str = "(w-text_w)/2", enable: str = "", tmp: Path | None = None) -> str:
@@ -139,9 +144,11 @@ def export(src: Path, kind: str, out: Path, width: int = 0) -> tuple[Path, list[
         _run(["-i", str(src), "-vf", "fps=15,scale=%d:-2:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];"
               "[b][p]paletteuse=dither=bayer:bayer_scale=5" % w, str(out)])
     else:
-        w = width or X_MAX["w"]
+        # portrait (or a taller-than-wide source): the X box turned on its side, 720x1280
+        tall = kind == "portrait" or i["h"] > i["w"]
+        w = width or (X_MAX["h"] if tall else X_MAX["w"])
         _run(["-i", str(src), "-vf", "scale='min(%d,iw)':'min(%d,ih)':force_original_aspect_ratio=decrease,"
-              "pad=ceil(iw/2)*2:ceil(ih/2)*2,fps='min(60,source_fps)'" % (w, X_MAX["h"]), "-an", *H264, str(out)])
+              "pad=ceil(iw/2)*2:ceil(ih/2)*2,fps='min(60,source_fps)'" % (w, X_MAX["w"] if tall else X_MAX["h"]), "-an", *H264, str(out)])
     o = info(out) if kind != "gif" else {**info(out), "mb": round(out.stat().st_size / 1048576, 2)}
     bad = []
     if o["sec"] > X_MAX["sec"]:
@@ -171,23 +178,66 @@ def selftest(root: Path) -> list[str]:
         ]
         import clip_fx
         bad += clip_fx.selftest(t)
+        import clip_compose
+        bad += clip_compose.selftest(t)
         x, xbad = export(t / "s.mp4", "x", t / "x.mp4")
         checks.append(("export-x", info(x), lambda i: i["w"] <= 1280 and i["h"] <= 720 and i["codec"] == "h264" and not xbad))
         g, gbad = export(a, "gif", t / "g.gif", 320)
         checks.append(("export-gif", info(g), lambda i: i["w"] == 320 and not gbad))
+        pcli = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", "export", str(a), "--for", "portrait", "--out", str(t / "p.mp4")],
+                              capture_output=True, text=True, cwd=str(root))
+        checks.append(("export-portrait", info(t / "p.mp4") if (t / "p.mp4").is_file() else {"rc": pcli.returncode},
+                       lambda i: (i.get("w"), i.get("h")) == (720, 1280)))
+        # spec through the real CLI (argv parse and dispatch): FILE.json must not be probed as a clip
+        (t / "e.json").write_text(json.dumps({"in": "a.mp4", "steps": [{"op": "callout", "box": [100, 100, 300, 200], "text": "x", "start": 0.2, "end": 1.2}]}), encoding="utf-8")
+        cli = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", "spec", str(t / "e.json"), "--out", str(t / "e.mp4")],
+                             capture_output=True, text=True, cwd=str(root))
+        checks.append(("spec-cli", info(t / "e.mp4") if cli.returncode == 0 and (t / "e.mp4").is_file() else {"rc": cli.returncode, "err": (cli.stderr or cli.stdout)[-300:]},
+                       lambda i: i.get("w", 0) > 0 and i.get("sec", 0) > 1.5))
+        for op in OPS:  # per-op --help through the CLI: names the op, lists only its flags
+            h = subprocess.run([sys.executable, str(root / "tools" / "media.py"), "clip", op, "--help"], capture_output=True, text=True, cwd=str(root)).stdout
+            if ("clip " + op) not in h or (op == "trim" and "--box" in h):
+                bad.append("help %s: %s" % (op, h[:120]))
         for name, got, ok in checks:
             if not ok(got):
                 bad.append("%s: %s" % (name, got))
     return bad
 
-OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit", "wipe", "pip", "mark", "ba")
+OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit", "wipe", "pip", "mark", "ba", "punch", "callout", "montage", "spec")
+
+# Per-op --help: the flags each op reads (shared --out/--root/--json always shown).
+OP_FLAGS = {
+    "info": [], "trim": ["start", "end"], "join": ["fade", "transition"], "caption": ["text", "pos", "start", "end", "cue", "font"],
+    "sbs": ["labels", "stack", "font"], "export": ["kind", "width", "size", "fill"], "crop": ["box", "size", "movie"],
+    "zoom": ["box", "to", "size", "start", "end", "movie"], "fit": ["size", "fill"],
+    "wipe": ["labels", "hold", "sweep", "once", "style", "subs", "end_card", "font"], "pip": ["corner", "scale", "start", "end"],
+    "mark": ["box", "no_arrows", "start", "end", "color", "movie"], "ba": ["box", "layout", "labels", "style", "subs", "end_card", "font"],
+    "punch": ["box", "start", "sweep", "hold"], "callout": ["box", "text", "start", "end", "color", "font", "shape", "leader", "movie"],
+    "montage": ["labels", "fade", "end_card", "font"], "spec": [],
+}
+USAGE = {"spec": "spec EDIT.json --out O.mp4   (JSON edit list; see clip_compose.py)", "montage": "montage A.mp4 B.mp4 ... --out O.mp4",
+         "join": "join A.mp4 B.mp4 ... --out O.mp4", "sbs": "sbs A.mp4 B.mp4", "wipe": "wipe A.mp4 B.mp4", "pip": "pip A.mp4 B.mp4", "ba": "ba A.mp4 B.mp4"}
+
+def op_help(ap, op: str) -> str:
+    keep = set(OP_FLAGS[op]) | {"out", "root", "json"}
+    rows = ["usage: media.py clip %s" % USAGE.get(op, op + " IN.mp4 [flags]"), ""]
+    for a in ap._actions:
+        if a.dest in keep and a.option_strings:
+            rows.append("  %-16s %s" % (a.option_strings[-1], a.help or ""))
+    return "\n".join(rows)
 
 def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
-    """crop, zoom, fit, wipe, pip, mark, ba (clip_fx)."""
+    """crop, zoom, fit, wipe, pip, mark, ba (clip_fx); punch, callout, montage, spec (clip_compose)."""
+    if args.op == "spec":  # the input is the JSON edit list, not a clip: never probe it
+        import clip_compose
+        print("spec: %s" % json.dumps(clip_compose.spec(ins[0], out, root)))
+        return []
     i = info(ins[0])
     size = clip_fx.size_of(args.size) if args.size else (0, 0)
     boxes = [clip_fx.box_px(b, i["w"], i["h"], root, args.movie) for b in args.box]
     labs = tuple((args.labels.split(",") + ["", ""])[:2])
+    subs = tuple((args.subs.split(",") + ["", ""])[:2])
+    end = tuple((args.end_card.split("|") + [""])[:2]) if args.end_card else None
     if args.op in ("crop", "zoom", "mark") and not boxes:
         agent_log.fail("%s needs --box" % args.op)
     if args.op == "crop":
@@ -198,13 +248,27 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
     elif args.op == "fit":
         clip_fx.fit(ins[0], size or clip_fx.SIZES["x"], out, args.fill)
     elif args.op == "wipe":
-        clip_fx.wipe(ins[0], ins[1], out, labs, args.hold, args.sweep, not args.once, font=args.font)
+        if args.style == "promo":
+            import clip_promo
+            print("promo: %s" % json.dumps(clip_promo.wipe(ins[0], ins[1], out, labs, subs, max(args.hold, 1.2), args.sweep, end=end, font=args.font)))
+        else:
+            clip_fx.wipe(ins[0], ins[1], out, labs, args.hold, args.sweep, not args.once, font=args.font)
     elif args.op == "pip":
         clip_fx.pip(ins[0], ins[1], out, args.corner, args.scale, args.start, args.end)
     elif args.op == "mark":
         clip_fx.mark(ins[0], boxes, out, not args.no_arrows, args.start, args.end, args.color)
+    elif args.op in ("punch", "callout", "montage", "spec"):
+        import clip_compose
+        if args.op in ("punch", "callout") and not boxes:
+            agent_log.fail("%s needs --box" % args.op)
+        if args.op == "punch":
+            clip_compose.punch(ins[0], boxes[0], out, args.start or 0.5, args.sweep if args.sweep != 1.6 else 0.4, args.hold if args.hold != 0.6 else 1.2)
+        elif args.op == "callout":
+            clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font, args.shape, args.leader)
+        elif args.op == "montage":
+            clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font)
     elif args.op == "ba":
-        pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font)
+        pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font, style=args.style, subs=subs, end=end)
         print("ba pick: %s" % json.dumps(pick))
     return []
 
@@ -220,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pos", choices=("top", "bottom"), default="bottom", help="caption position")
     ap.add_argument("--labels", default="Before,After", help="sbs: the two labels, comma separated")
     ap.add_argument("--font", default="", help="caption font file (default fontconfig sans)")
-    ap.add_argument("--for", dest="kind", choices=("x", "gif"), default="x", help="export target")
+    ap.add_argument("--for", dest="kind", choices=("x", "gif", "portrait"), default="x", help="export target (portrait: 720x1280, --fill blur unless set)")
     ap.add_argument("--width", type=int, default=0, help="export width (x: max 1280; gif: default 640)")
     ap.add_argument("--box", action="append", default=[], help="crop/zoom/mark/ba: X,Y,W,H in px or fractions, or a region name (mark: repeat)")
     ap.add_argument("--to", default="", help="zoom: end box (the view eases from --box to --to)")
@@ -234,12 +298,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--once", action="store_true", help="wipe: sweep once (no sweep back)")
     ap.add_argument("--corner", choices=("tl", "tr", "bl", "br"), default="tr", help="pip corner")
     ap.add_argument("--scale", type=float, default=0.33, help="pip inset width share")
+    ap.add_argument("--shape", choices=("box", "ring"), default="box", help="callout outline")
+    ap.add_argument("--leader", action="store_true", help="callout: chip offset with a leader line")
     ap.add_argument("--color", default="#ffd23f", help="mark colour")
     ap.add_argument("--no-arrows", action="store_true", help="mark: boxes only")
     ap.add_argument("--cue", action="append", default=[], help="caption: START,END,TEXT (repeat; END 0 = to the end)")
     ap.add_argument("--layout", choices=("auto", "wipe", "sbs", "stack"), default="auto", help="ba layout (auto: zoom + wipe for a small change)")
+    ap.add_argument("--style", choices=("plain", "promo"), default="plain", help="wipe/ba: promo = chip labels, eased grip divider, one sweep (clip_promo.py)")
+    ap.add_argument("--subs", default="", help="wipe/ba --style promo: chip sublines, comma separated (e.g. Week 8,Week 9)")
+    ap.add_argument("--end-card", default="", help="wipe/ba --style promo: end card TITLE|SUBLINE after the comparison")
     ap.add_argument("--selftest", action="store_true", help="run every op on synthetic clips")
-    args = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    av = sys.argv[1:] if argv is None else argv
+    if any(a in ("-h", "--help") for a in av) and any(a in OP_FLAGS for a in av):
+        print(op_help(ap, next(a for a in av if a in OP_FLAGS)))
+        return 0
+    args = ap.parse_args(av)
     root = agent_log.resolve_root(args)
     if shutil.which("ffmpeg") is None:
         agent_log.fail("ffmpeg not on PATH")
@@ -250,9 +323,10 @@ def main(argv: list[str] | None = None) -> int:
         ap.print_help()
         return 2
     ins = [Path(p) for p in args.inputs]
-    need = {"sbs": 2, "join": 2, "wipe": 2, "pip": 2, "ba": 2}.get(args.op, 1)
-    if len(ins) < need or (args.op != "join" and len(ins) != need):
-        agent_log.fail("%s takes %s input(s)" % (args.op, "2+" if args.op == "join" else need))
+    need = {"sbs": 2, "join": 2, "wipe": 2, "pip": 2, "ba": 2, "montage": 1}.get(args.op, 1)
+    many = args.op in ("join", "montage")
+    if len(ins) < need or (not many and len(ins) != need):
+        agent_log.fail("%s takes %s input(s)" % (args.op, "%d+" % need if many else need))
     problems: list[str] = []
     ext = ".gif" if args.op == "export" and args.kind == "gif" else ".mp4"
     out = None if args.op == "info" else _out(root, args.out, args.op + ext)
@@ -268,8 +342,10 @@ def main(argv: list[str] | None = None) -> int:
         sbs(ins[0], ins[1], out, (labs[0], labs[1]), args.font, args.stack)
     elif args.op == "export":
         src = ins[0]
-        if args.size:
-            src = clip_fx.fit(src, clip_fx.size_of(args.size), out.with_suffix(".fit.mp4"), args.fill)
+        size = args.size or ("x-portrait" if args.kind == "portrait" else "")
+        if size:
+            fill = "blur" if args.kind == "portrait" and "--fill" not in (argv if argv is not None else sys.argv) else args.fill
+            src = clip_fx.fit(src, clip_fx.size_of(size), out.with_suffix(".fit.mp4"), fill)
         _, problems = export(src, args.kind, out, args.width)
         if src != ins[0]:
             src.unlink()

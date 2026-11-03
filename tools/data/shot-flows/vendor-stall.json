@@ -3,7 +3,7 @@
   "hud": 0,
   "zoom": 3.2,
   "settle_ms": 800,
-  "about": "Vendor stall geometry, posts, front face, shadow sorting, and foot light leak from multiple angles.",
+  "about": "Vendor stall geometry, posts, front face, shadow sorting, and foot light leak from multiple angles. Tarp front eave covers the front posts (hub_stall_check.cover); planted old eave at box depth/2 must FAIL.",
   "steps": [
     {
       "op": "call",
@@ -18,6 +18,16 @@
           ]
         }
       ]
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_stall_check.cover",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/hub_stall_check.plant_cover",
+      "equals": "caught"
     },
     {
       "op": "wait",

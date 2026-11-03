@@ -44,6 +44,31 @@ def shrink_art(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     from .band import shrink_keep_interior
     return shrink_keep_interior(im, size, _box_down)
 
+DETAIL_L = 0.15  # shrink_detail: a cell keeps its luminance extreme when it sits this far (0..1) from the cell mean
+
+def shrink_detail(im: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Shrink that keeps thin high-contrast detail (a 1-cell dark band survives): each cell's alpha is its mean
+    coverage; its colour is the opaque pixel furthest in luminance from the cell's mean when that gap is over
+    DETAIL_L, else the opaque pixel nearest the mean colour (the cell's dominant tone, no averaging blur)."""
+    im = im.convert("RGBA")
+    w, h = max(1, int(size[0])), max(1, int(size[1]))
+    k = max(1, int(np.ceil(max(im.width / w, im.height / h))))
+    a = np.asarray(im.resize((w * k, h * k), Image.NEAREST), np.float32) / 255.0
+    b = a.reshape(h, k, w, k, 4).transpose(0, 2, 1, 3, 4).reshape(h, w, k * k, 4)
+    op = b[..., 3] >= 0.5
+    cov = b[..., 3].mean(-1)
+    n = np.maximum(op.sum(-1, keepdims=True), 1)
+    mean = (b[..., :3] * op[..., None]).sum(-2) / n
+    lum = b[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)
+    mlum = mean @ np.array([0.299, 0.587, 0.114], np.float32)
+    gap = np.where(op, np.abs(lum - mlum[..., None]), -1.0)
+    near = np.where(op, ((b[..., :3] - mean[:, :, None]) ** 2).sum(-1), np.inf)
+    idx = np.where(gap.max(-1) > DETAIL_L, gap.argmax(-1), near.argmin(-1))
+    rgb = np.take_along_axis(b[..., :3], idx[..., None, None], 2)[:, :, 0]
+    o = np.dstack([rgb, cov])
+    o[cov <= 0] = 0
+    return Image.fromarray(np.rint(o * 255).astype(np.uint8), "RGBA")
+
 POLICIES = ("soft", "crisp", "hard")
 CRISP_LO, CRISP_HI = 0.12, 0.88  # crisp: coverage under/over these goes clear/opaque; the anti-aliased middle stays
 

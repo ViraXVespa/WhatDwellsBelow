@@ -72,6 +72,8 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	var pz: float = float(bits[7]) if bits.size() > 7 and bits[7] != "" else cz + (float(bits[11]) if bits.size() > 11 else 0.0)
 	var face: String = bits[8] if bits.size() > 8 else "down"
 	var cy: float = float(bits[9]) if bits.size() > 9 else 4.2
+	if bits.size() > 12 and bits[12] != "":
+		App.bal.aim_line_on = bits[12] == "1"  # recipe/frame aim_line (shot run only; saves are isolated)
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam == null:

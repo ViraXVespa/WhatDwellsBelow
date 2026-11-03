@@ -77,6 +77,8 @@ static func attach_dungeon(host: Node) -> void:
 		Pad.mode = false
 		Touch.force_show = false
 	hide_window()
+	if not Args.aim_line():
+		App.bal.aim_line_on = false  # this run only: shot saves are isolated (save_guard)
 	var method := str(ProjectSettings.get_setting("rendering/renderer/rendering_method"))
 	var rd := RenderingServer.get_rendering_device()
 	printerr("SHOT: mark=renderer method=%s rd=%s" % [method, "0" if rd == null else "1"])

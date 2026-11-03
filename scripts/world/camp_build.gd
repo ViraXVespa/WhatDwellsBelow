@@ -144,8 +144,11 @@ static func mark_props(host: Node3D) -> void:
 		var spr: Sprite3D = n.get("spr") as Sprite3D
 		if spr == null or not MARKED.has(str(n.get("kind"))) or n.has_node("ActorLit"):
 			continue
-		spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		load("res://scripts/graphics/actor_lit.gd").bind(n, spr)
+		load("res://scripts/graphics/actor_lit/prop_mark.gd").apply(n, spr, {"anvil": "profile", "dumpster": "raised"}.get(str(n.get("kind")), ""))
+	# Everything else in the hub (characters, NPCs, signs, fences, goods) at the ground pixel size too.
+	for spr in host.find_children("*", "Sprite3D", true, false):
+		if spr.texture != null:
+			spr.texture = load("res://scripts/graphics/chunky.gd").tex(spr.texture, spr.pixel_size)
 
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:

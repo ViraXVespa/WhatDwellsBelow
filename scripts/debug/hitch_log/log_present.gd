@@ -132,3 +132,20 @@ static func _pct_of(vals: PackedFloat32Array, p: float) -> float:
 
 static func mult() -> float:
 	return _mult if _mult > 0.0 else MULT
+
+## Bench row: slow-frame shape and frame / present-time percentiles (hitch_log.gd bench_done).
+static func bench_stats(row: Dictionary) -> void:
+	var shape: Dictionary = _slow_shape()
+	row["n_edge"] = int(shape["n_edge"])
+	row["n_stutter"] = int(shape["n_stutter"])
+	row["n_spike"] = int(shape["n_spike"])
+	row["slow_run_n"] = int(shape["slow_run_n"])
+	row["slow_run_med_ms"] = float(shape["slow_run_med_ms"])
+	if _dts.size() > 0:
+		_dts.sort()
+	row["dt_p50_ms"] = _percentile(0.50)
+	row["dt_p95_ms"] = _percentile(0.95)
+	if _pts.size() > 0:
+		_pts.sort()
+		row["pt_p50_ms"] = _pt_percentile(0.50)
+	_stamp_present(row)

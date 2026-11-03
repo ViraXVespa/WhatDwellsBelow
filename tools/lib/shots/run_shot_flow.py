@@ -208,6 +208,8 @@ def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
             "--timeout-sec", str(args.timeout_sec), "--scale", str(args.scale or flow.get("scale", 100))]
     if args.no_pixels:
         argv.append("--no-pixels")
+    if args.aim_line or flow.get("aim_line"):
+        argv.append("--aim-line")
     if args.dry_run:
         argv.append("--dry-run")
     ns = run_shots.build_parser().parse_args(argv)
@@ -293,6 +295,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-dedupe", action="store_true", help="run a flow even when a picked flow covers it (covered_by)")
     p.add_argument("--all", action="store_true", help="every flow")
     p.add_argument("--smoke", action="store_true", help="every flow marked smoke:true")
+    p.add_argument("--aim-line", action="store_true", help="draw the aim line (default off; a flow can set \"aim_line\": true)")
     p.add_argument("--no-pixels", action="store_true", help="headless: steps and asserts only, no PNGs, no display needed")
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent (default: the flow's scale, else 100)")
     p.add_argument("--timeout-sec", type=int, default=run_shots.TIMEOUT_SEC, help="Godot timeout per flow in seconds.")

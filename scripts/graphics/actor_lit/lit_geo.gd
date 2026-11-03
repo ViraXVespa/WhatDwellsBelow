@@ -6,7 +6,23 @@ const T := preload("res://scripts/data/tunables.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Commit := preload("res://scripts/graphics/mesh_commit.gd")
 
-static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -> Vector2:
+static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, tucked: bool = true) -> Vector2:
+	var dropped: Vector2 = _drop_floor(lit, _sole_world(lit, tx, ty, tw, th))
+	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
+	var tuck: float = lit.spr.pixel_size * (2.0 + float(lit.foot)) if tucked else 0.0
+	# Hub marks snap to hub grid cells (K.GRID_M) (up to a cell down-screen): tuck two more cells so both boots (heels above their toes too) sit on the mark.
+	if tucked and K.on_grid():
+		tuck += 2.0 * K.GRID_M
+	var back: Vector2 = Vector2(0.0, -1.0)
+	var cam: Camera3D = lit.get_viewport().get_camera_3d()
+	if cam != null:
+		var flat: Vector2 = Vector2(-cam.global_transform.basis.z.x, -cam.global_transform.basis.z.z)
+		if flat.length_squared() > 0.0004:
+			back = flat.normalized()
+	return dropped + back * tuck
+
+## World point of a sticker texel (billboard axis, sprite origin, pixel size).
+static func _sole_world(lit: Variant, tx: float, ty: float, tw: float, th: float) -> Vector3:
 	var ox: float = lit.spr.offset.x
 	var oy: float = lit.spr.offset.y
 	if lit.spr.centered:
@@ -18,17 +34,12 @@ static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -
 	var lx: float = (ox + g * tw) * lit.spr.pixel_size
 	var ly: float = (oy + (th - ty)) * lit.spr.pixel_size
 	var axis: Vector3 = _bill_x(lit)
-	var world: Vector3 = lit.spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
-	var dropped: Vector2 = _drop_floor(lit, world)
-	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
-	var tuck: float = lit.spr.pixel_size * 2.0
-	var back: Vector2 = Vector2(0.0, -1.0)
-	var cam: Camera3D = lit.get_viewport().get_camera_3d()
-	if cam != null:
-		var flat: Vector2 = Vector2(-cam.global_transform.basis.z.x, -cam.global_transform.basis.z.z)
-		if flat.length_squared() > 0.0004:
-			back = flat.normalized()
-	return dropped + back * tuck
+	return lit.spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
+
+## Ground run of a height h along the light (head shear; a flyer's altitude offset uses the same run).
+static func _reach(h: float, stretch: float, src: Vector2) -> float:
+	var elev: float = 0.85 if src.length_squared() > 0.0004 else K.SUN_ELEV
+	return minf(h * maxf(stretch, 0.15) / elev, h * clampf(0.55 + stretch * 0.45, 0.45, 1.35))
 static func _bill_x(lit: Variant) -> Vector3:
 	var cam: Camera3D = lit.get_viewport().get_camera_3d()
 	if cam == null:
@@ -54,10 +65,15 @@ static func _drop_floor(lit: Variant, world: Vector3) -> Vector2:
 static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
-	var x0: float = span.x * tw
-	var x1: float = span.z * tw
-	var y0: float = span.y * th
-	var y1: float = span.w * th
+	# Hub: one ground cell (K.GRID_M) of pad all round, past the sole too, so a cell the feet straddle draws whole
+	# (the shader clamps reads at the contact row) and the mark meets both boots at any facing.
+	var sole_v: float = span.w - 0.5 / th
+	var pad: float = clampf(ceilf(K.GRID_M / maxf(px, 1e-4)), 0.0, 8.0) if K.on_grid() else 0.0
+	var x0: float = span.x * tw - pad
+	var x1: float = span.z * tw + pad
+	var y0: float = span.y * th - pad
+	var y1: float = span.w * th + pad
+	span = Vector4(x0 / tw, y0 / th, x1 / tw, y1 / th)
 	var verts: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
@@ -70,7 +86,9 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	uvs.append(Vector2(span.z, span.y))
 	uvs.append(Vector2(span.x, span.y))
 	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
-	return Commit.commit(verts, null, uvs, indices)
+	# UV2.y carries the contact row so grid-snapped reads stop there (no half-coverage daylight line at the sole).
+	var edge: Vector2 = Vector2(0.0, sole_v)
+	return Commit.commit(verts, null, uvs, indices, PackedVector2Array([edge, edge, edge, edge]))
 
 static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
 	# Sole edge is the camera-dropped foot line. Head shears along the light.
@@ -98,11 +116,5 @@ static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vect
 	var base: Vector2 = pin + ax * extra
 	var sole_y: float = maxf(soles.y, soles.w)
 	var h: float = maxf(sole_y - ty, 0.0) * px
-	var elev: float = K.SUN_ELEV
-	if src.length_squared() > 0.0004:
-		elev = 0.85
-	var reach: float = h * maxf(stretch, 0.15) / elev
-	var cap: float = h * clampf(0.55 + stretch * 0.45, 0.45, 1.35)
-	if reach > cap:
-		reach = cap
+	var reach: float = _reach(h, stretch, src)
 	return Vector3(base.x + aim.x * reach, 0.0, base.y + aim.y * reach)

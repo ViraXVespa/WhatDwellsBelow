@@ -9,6 +9,7 @@
   pip       picture-in-picture inset in a corner, with a border, optionally timed
   mark      highlight boxes with arrows, optionally timed (drawn once with PIL, overlaid by ffmpeg)
   ba        before/after recipe: finds what changed; a small change gets zoom + wipe, a big one side by side
+  (wipe and ba --style promo: clip_promo.py chip labels, eased grip divider, optional end card)
 """
 from __future__ import annotations
 
@@ -72,14 +73,17 @@ def _ease(start: float, dur: float) -> str:
     p = "clip((t-%.3f)/%.3f,0,1)" % (start, max(dur, 0.001))
     return "(%s*%s*(3-2*%s))" % (p, p, p)
 
-def zoom(src: Path, box_a, box_b, out: Path, size: tuple[int, int] = (0, 0), start: float = 0.0, dur: float = 0.0) -> Path:
-    """Ken Burns: the view moves from box_a to box_b over [start, start+dur] (dur 0 = the whole clip), eased in and out.
+def zoom(src: Path, box_a, box_b, out: Path, size: tuple[int, int] = (0, 0), start: float = 0.0, dur: float = 0.0, back: float = -1.0) -> Path:
+    """Ken Burns: the view moves from box_a to box_b over [start, start+dur] (dur 0 = the whole clip), eased in and out;
+    back >= 0 (punch-in) holds that many seconds on box_b, then eases back to box_a over dur.
     Works at twice the output size, then scales down, so the pan does not step a pixel at a time."""
     i = ce.info(src)
     ow, oh = size if size[0] else (i["w"], i["h"])
     a = aspect_box(box_a, ow / oh, i["w"], i["h"])
     b = aspect_box(box_b, ow / oh, i["w"], i["h"])
     e = _ease(start, dur or i["sec"])
+    if back >= 0:
+        e = "(%s-%s)" % (e, _ease(start + dur + back, dur))
     lerp = lambda k: "(%.2f+(%.2f)*%s)" % (a[k], b[k] - a[k], e)
     s = "(%d/%s)" % (2 * ow, lerp(2))
     vf = ("scale=w='trunc(%d*%s/2)*2':h='trunc(%d*%s/2)*2':eval=frame:flags=bicubic,crop=%d:%d:'%s*%s':'%s*%s',scale=%d:%d:flags=lanczos,setsar=1"
@@ -219,7 +223,7 @@ def change_box(before: Path, after: Path, samples: int = 6, floor: float = 3.0) 
     return (x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch), share, strength
 
 def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", labels=("Before", "After"), zoom_in: float = 0.8,
-       max_zoom: float = 2.5, font: str = "") -> dict:
+       max_zoom: float = 2.5, font: str = "", style: str = "plain", subs=("", ""), end=None) -> dict:
     """Before/after recipe. auto: find the change; a small one (padded box under SMALL of the frame) is zoomed in on
     (Ken Burns from the full frame over zoom_in s, at most max_zoom) and slider-wiped; a subtle one (strength at most
     SUBTLE, e.g. a shade change) is wiped however wide, since side by side hides it; a strong wide one is side by side."""
@@ -233,6 +237,8 @@ def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", lab
     if layout == "auto":
         small = zb is not None and zb[2] * zb[3] <= SMALL * a["w"] * a["h"]
         pick["layout"] = "wipe" if small or not found or strength <= SUBTLE else "sbs"
+        if pick["layout"] == "sbs" and style == "promo" and 2 * a["w"] > 1920:
+            pick["layout"], pick["why"] = "wipe", "promo: side by side would be %d wide" % (2 * a["w"])
     if pick["layout"] != "wipe":
         zb = None
     with tempfile.TemporaryDirectory() as td:
@@ -241,7 +247,10 @@ def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", lab
             full = (0, 0, a["w"], a["h"])
             legs = [zoom(p, full, zb, Path(td) / ("z%d.mp4" % k), (a["w"], a["h"]), 0.0, zoom_in) for k, p in enumerate(legs)]
             pick["zoom"] = round(a["w"] / zb[2], 2)
-        if pick["layout"] == "wipe":
+        if pick["layout"] == "wipe" and style == "promo":
+            import clip_promo
+            pick["promo"] = clip_promo.wipe(legs[0], legs[1], out, ("BEFORE", "AFTER"), subs if any(subs) else labels, hold=max(1.2, zoom_in + 0.3), end=end, font=font)
+        elif pick["layout"] == "wipe":
             wipe(legs[0], legs[1], out, labels, hold=max(0.6, zoom_in + 0.3), font=font)
         else:
             ce.sbs(legs[0], legs[1], out, labels, font, stack="v" if pick["layout"] == "stack" else "h")
@@ -261,6 +270,11 @@ def selftest(t: Path) -> list[str]:
     ce._run(["-f", "lavfi", "-i", "smptebars=size=640x360:rate=30:duration=2", *ce.H264, str(t / "c.mp4")])
     a, b, c = t / "a.mp4", t / "b.mp4", t / "c.mp4"
     near = lambda p, q, d=60: all(abs(x - y) < d for x, y in zip(p, q))
+    ce._run(["-f", "lavfi", "-i", "testsrc2=size=1000x200:rate=30:duration=1", *ce.H264, str(t / "wa.mp4")])
+    ce._run(["-f", "lavfi", "-i", "smptebars=size=1000x200:rate=30:duration=1", *ce.H264, str(t / "wb.mp4")])
+    pk = ba(t / "wa.mp4", t / "wb.mp4", t / "wba.mp4", style="promo")
+    if pk["layout"] != "wipe" or ce.info(t / "wba.mp4")["w"] != 1000:
+        bad.append("promo auto must wipe instead of a 2000-wide side by side: %s" % pk)
     i = ce.info(crop(b, (400, 40, 100, 90), t / "crop.mp4", (320, 180)))
     if (i["w"], i["h"]) != (320, 180) or not near(_px(t / "crop.mp4", 1.0, (160, 90)), (255, 255, 255)):
         bad.append("crop: %s" % i)
@@ -281,6 +295,12 @@ def selftest(t: Path) -> list[str]:
     wipe(a, b, t / "wipe.mp4", hold=0.3, sweep=1.0, back=False)
     if not near(_px(t / "wipe.mp4", 2.0, (450, 85)), (255, 255, 255)) or near(_px(t / "wipe.mp4", 0.1, (450, 85)), (255, 255, 255)):
         bad.append("wipe: after not revealed at the end or shown before the sweep")
+    import clip_promo
+    pr = clip_promo.wipe(a, b, t / "promo.mp4", ("BEFORE", "AFTER"), ("x", "y"), hold=0.4, sweep=1.0, hold_b=1.0, end=("T", "S"), end_sec=1.0)
+    lab, raw = _px(t / "promo.mp4", 0.55, (150, 325)), _px(a, 0.55, (150, 325))
+    if abs(ce.info(t / "promo.mp4")["sec"] - pr["sec"]) > 0.2 or not near(_px(t / "promo.mp4", 2.0, (450, 85)), (255, 255, 255)) \
+            or sum(lab) > 0.6 * sum(raw):
+        bad.append("promo wipe: %s chip %s over %s" % (pr, lab, raw))
     pip(a, c, t / "pip.mp4", "tr", 0.3, 0.5, 2.5)
     if near(_px(t / "pip.mp4", 0.2, (560, 40)), _px(t / "pip.mp4", 1.5, (560, 40)), 8):
         bad.append("pip: inset not shown in its window")

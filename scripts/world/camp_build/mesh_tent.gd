@@ -34,6 +34,7 @@ static func attach_awning(body: Node3D, box_size: Vector3, depth: float, valance
 	cloth.name = "Awning"
 	cloth.mesh = built
 	cloth.material_override = Mat.awning_mat(Vector2(maxf(x1 - x0, 0.2), depth + valance), Vector3.ZERO)
+	Mat.face_light(cloth.material_override, body.global_position.z + z_eave, Vector2(x0, x1) + Vector2.ONE * body.global_position.x)
 	body.add_child(cloth)
 	Prim._hit(body, built, "AwningHit")
 	var ends := SurfaceTool.new()
@@ -54,9 +55,12 @@ static func attach_awning(body: Node3D, box_size: Vector3, depth: float, valance
 static func pitched_tarp(body: Node3D, box_size: Vector3, posts: Vector3, y_eave: float) -> void:
 	var hx: float = box_size.x * 0.5
 	var hz: float = box_size.z * 0.5
+	# The front eave covers the front posts (and the face art on their plane): with the eave behind them the hem hung
+	# behind the front, the face top sat in front of the hem and the art's black edge showed above the post tops.
+	var fz: float = maxf(hz, posts.y + float(Spec.STALL["post_half"]))
 	var ridge: float = y_eave + float(Spec.STALL["rise"])
-	var sl := Vector3(-hx, y_eave, hz)
-	var sr := Vector3(hx, y_eave, hz)
+	var sl := Vector3(-hx, y_eave, fz)
+	var sr := Vector3(hx, y_eave, fz)
 	var nl := Vector3(-hx, y_eave, -hz)
 	var nr := Vector3(hx, y_eave, -hz)
 	var rl := Vector3(-hx, ridge, 0.0)
@@ -75,7 +79,7 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, posts: Vector3, y_eave
 	var tarp_mat: Material = Mat.tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
 	inst.material_override = tarp_mat
 	if tarp_mat is ShaderMaterial:
-		(tarp_mat as ShaderMaterial).set_shader_parameter("ignore_actor_shadow", 1.0)
+		Mat.face_light(tarp_mat, body.global_position.z + fz)
 		(tarp_mat as ShaderMaterial).render_priority = Spec.DRAW["tarp"]
 	inst.sorting_offset = Spec.DRAW["tarp_sort"]
 	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -131,7 +135,9 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	Prim._quad(st, rl, rr, sr, sl, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	Prim._quad(st, rr, rl, nl, nr, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
+	# The sheet unfolds over the ridge: same u at the same x, and v runs on past 0 (negative) down the north slope, so
+	# the far course is the sheet's next course up (running bond, half a brick over), not a mirror of the near one.
+	Prim._quad(st, rr, rl, nl, nr, Vector2(1.0, 0.0), Vector2(0.0, 0.0), Vector2(0.0, -1.0), Vector2(1.0, -1.0))
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()
@@ -153,3 +159,4 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	cap.material_override = Prim._timber(Spec.TIMBER)
 	body.add_child(cap)
 	Prim._hit(body, end_mesh, "GableEndHit")
+

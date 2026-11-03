@@ -7,7 +7,7 @@ The only Bot constitution. Second topic door: ask the User first.
 
 ## Workspace
 
-Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow and work that tree. Fresh `bot/<flow>` branch per flow (from `origin/main`; e.g. `bot/size-xyz`). One open Bot PR. Commit per cluster. User squash-merges. Never push main. Never merge the PR.
+Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow and work that tree. One checkout, asks queued; side worktrees only if urgent. Fresh `bot/<flow>` branch per flow (from `origin/main`; e.g. `bot/size-xyz`). One open Bot PR. Commit per cluster. User squash-merges. Never push main. Never merge the PR.
 
 Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Never force-push. Open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`). Edit a PR body with `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown). The box git identity is Grok Bot, so plain `git commit` works.
 
@@ -34,7 +34,7 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 
 ## Prove
 
-- python tools/check.py prove: from the diff vs merge-base(origin/main) plus uncommitted, it prints the checks it runs and why (`tools/data/prove_rules.json`: `bot_status --prove` with the dupes gate and `tunable diff`, script-cap, load-graph, code-map, tool-docs, selftests, textsize, smokes, build gate) and FAILs on DRIFT/CLAIM/STALE; per cluster `--base @{u}`. Dupes: NEW rows get a helper/data loop or a why in `tools/data/dupes_allow.json`. Code map: no new UNMAPPED for files you touched.
+- python tools/check.py prove: from the diff vs the pushed tip (else main) plus uncommitted, it prints the checks it runs and why (`tools/data/prove_rules.json`: bot_status, dupes, tunables, caps, docs, selftests, textsize, smokes, build gate; 900s cap each) and FAILs on DRIFT/CLAIM/STALE. `--all` runs only for shared light/bake or uncovered paths, else nightly. Dupes: NEW rows get a helper/data loop or a why in `tools/data/dupes_allow.json`. Code map: no new UNMAPPED for files you touched.
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 Proof rules: the agents file. Say plainly when a message or handoff to a worker did not arrive.

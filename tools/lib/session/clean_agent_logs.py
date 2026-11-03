@@ -3,6 +3,7 @@
 
     python tools/session.py clean [--keep-raw] [--max-age-hours 24] [--dry-run]
     python tools/session.py clean --new-week     # week start only (release.py week-start runs it): wipes every run summary, index and raw log + scratch dirs
+    (full-size shot originals in any _logs/**/full/ go at --new-week; between weeks --max-age-hours ages them out like any file)
 Default: delete raw *.log / *.err (run summaries and index.txt stay; each run keeps its own stamped files and the
 newest 20 stay per folder, run_log_lib.py). Summary: _logs/clean/ (its own stamped run files).
 
@@ -48,6 +49,9 @@ def main(argv: list[str] | None = None) -> int:
         for d in ("sess", "patch-scratch"):
             remove(logs / d, "DELDIR")
         remove(logs / "patch-lock" / "apply.lock", "DEL")
+        for d in sorted(p for p in logs.rglob("full") if p.is_dir()):  # shot originals kept for shots.py zoom
+            remove(d, "DELDIR")
+        remove(logs / "shot-zoom", "DELDIR")
         skip = ("sess", "patch-scratch", "patch-lock", "clean")
         for d in sorted(p for p in logs.rglob("*") if p.is_dir() and p.relative_to(logs).parts[0] not in skip):
             for f in sorted(f for f in d.iterdir() if f.is_file() and (run_log_lib.stamp_of(f.name) or f.name in (run_log_lib.INDEX, run_log_lib.LEGACY))):

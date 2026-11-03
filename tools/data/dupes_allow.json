@@ -6,5 +6,9 @@
   {"key": "b09cf67600e3", "kind": "clone", "where": "goals_best.gd / goals_near.gd foe picks",
    "why": "the shared part is the Cache.foes scan prologue; each pick has its own radius, filter and score, and a Callable-per-foe helper would cost more in the per-tick playtest driver than it saves"},
   {"key": "936cae54a52f", "kind": "clone", "where": "torch_plan/hall.gd vs dungeon_stream/queue.gd flood fill",
-   "why": "queue.gd's walk predicate reads two grids and runs on the web floor-gen path; sharing a mask helper with torch_hall would add a full-map pass in web floor gen"}
+   "why": "queue.gd's walk predicate reads two grids and runs on the web floor-gen path; sharing a mask helper with torch_hall would add a full-map pass in web floor gen"},
+  {"key": "6da38e1b7cdd", "kind": "clone", "where": "check_hub_bake.py, export_web.py, start_build_slice.py main()",
+   "why": "argparse add_argument lines: same shape, different flags and help per tool (agent_log.std_parser is already the shared part)"},
+  {"key": "eb46b4d382c5", "kind": "clone", "where": "run_hub_bench.py _slow_lines / _present_line",
+   "why": "two log-line formatters over different row fields; only the row.get(...) shape repeats"}
 ]

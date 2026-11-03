@@ -31,20 +31,26 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks |
 | `lib/repo_lib.py` | Git, allowlist, version and changelog-label helpers (`under`, `write_text_nl`); branch kind (`branch_kind`/`head_kind`: grok-build-wN Build, grok-web-wN Web, main, every other named branch Bot; `diff_base`); selftest fixtures `git_test`, `selftest_repo`. |
 | `lib/godot_lib.py` | Godot launch + per-path lock (kills only its own pid, never godot*); `gui=True` picks a display (`--display`). Owns the engine pin: `VERSION`, `resolve_bin` (`GODOT_BIN`, pin file, Steam, box path), `pin_path`; `timing_job` for the load-timing smokes. |
+| `lib/godot_slots.py` | Box-wide Godot slot cap (default 1) for every `run_godot` and direct launcher (`held()`: shots, textsize, load_bars, frame-art, desktop perf; warnscan holds one slot per scan), on only on the Bot box (`/home/box` + user `box`; off on CI/PCs); `WDB_GODOT_SLOTS=N`/`0` overrides. flock slots in `/workspace/.wdb-godot-slots/` shared by all checkouts; dead holders free at once; waits print `waiting on <pid cmd (checkout)> since <time>`. `--selftest`. |
 | `lib/gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` |
 | `lib/run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean |
 | `lib/slice/retry_lib.py` | Red-prove RETRY block: `grok -r <original-session-id> --fork-session` for the User (the id the first `slice.py start` run recorded) plus the paste-ready prompt (failed prove, red lines, one small corrective edit); empty off Build (`repo_lib.head_kind`). `--selftest` |
+| `lib/checks/prove_scope.py` | Scoping for `bot_status.py --bot --prove`: dupes, stale-refs, bake repro and textsize print `SKIP untouched` when no branch path matches their globs (`prove_rules.json` rule + `SCOPE`), `SKIP cached pass` when their inputs hash the same as at their last pass (`_logs/prove-cache.json`); `--full` runs all. Visual-review gate: a branch touching hub art, lighting or bake paths (`VISUAL`) fails until `_logs/visual-review/<tip sha>.md` lists `wide:` / `close:` shots and answers questions 1-7 (1-6 a starting point; 7 any other issue, naming what was scanned); the failure prints the questions and shot commands. `--selftest` |
 | `lib/bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` |
 | `data/bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode |
 | `lib/gates/bot_warnscan_lib.py` | Log parser for `gate.py warnscan` |
 | `lib/gates/phase_loads.py` | Which smoke phases load each live file (`tools/data/phase_loads.json`, written by `gate.py bot-smokes --record-loads`); `changed_areas` picks phases from it |
 | `lib/bake/bake_inputs.py` | Hub bake inputs (`tools/data/hub_bake_inputs.json`): `bake.py check` fails when a light code file or `layout_spec.gd` const changed since the bake; `bake.py camp` records it |
+| `lib/bake/bake_leak.py` | Light-leak check (`tools/data/hub_bake_feet.json`, recorded by `bake.py camp`): a lit rim round a footprint fails `bake.py check` |
+| `lib/bake/bake_roof.py` | Roof-slope check: a guild roof footprint whose front half is not darker than its back (no `hub_roof.gd slopes`) fails `bake.py check` |
+| `lib/bake/bake_repro.py` | `bake.py check --rebake`: rebakes from the committed sources, restores the files, fails unless the stamp matches and lamps bake |
 | `lib/docs/code_map_lib.py` | Code-map row parser/writer used by `docs.py code-map` |
 | `lib/docs/tunables_lib.py` | Tunables row parser and writer used by `docs.py tunable` |
 | `lib/docs/balance_src.py` | Balance source model for `docs.py tunable`: `vars_*.gd` defaults, slider rows, enemy stats, `val_cat_map.gd` categories; in-memory edits, 10 KB cap check before any write |
 | `lib/docs/tunables_code.py` | `docs.py tunable list`, `diff`, `range` and the code side of `set KEY VALUE` / `add KEY --default` |
 | `lib/docs/tunables_selftest.py` | `docs.py tunable --selftest`: set/range/add/diff on a scratch copy |
 | `lib/docs/task_lib.py` | Task files in `design/tasks/`: header fields, the README index, `done` (delete, unblock dependants, changelog line), next opt id, and the `check.py load-graph` lint |
+| `lib/docs/task_compact.py` | `docs.py task compact` and `slice.py start --unit-done`: done units to one line each, their tried/failed/baseline lines dropped; Vira, decisions, open questions kept; `--selftest` |
 | `lib/slice/slice_lib.py` | `slice.py start` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, forked session, retry block, survey vs job, unit queue) and the `slice.py open` area check |
 | `lib/slice/slice_state.py` | `_logs/slice-state.json` and the `SLICE ALREADY STARTED` text of `slice.py start` (steps: import, baseline shots, original session, forked, handoff; resume at Gather or Prepare / Change / Prove / Complete) |
 | `lib/session/session_lib.py` | Finds a Grok session folder and reads `prompt_context.json`, the early skills reminder, `prompt_history.jsonl` and `chat_history.jsonl` for the session facts of `slice.py start` and the `Did not work:` lines (`failed_block`: failed tool results since the last ask) |
@@ -54,3 +60,4 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/perf/bench_env.py` | One `env:` line (machine, CPU, GPU, RAM, OS, browser, Godot, renderer, vsync, cap, resolution, headless) for benchmark summaries (`perf.py web`, `perf.py hub`, `gate.py bot-smokes` open timing) |
 | `lib/perf/web_perf_lib.py` | Browser side of `perf.py web` (init script, flow replay, one page load) |
 | `lib/shots/shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `shots.py capture` |
+| `lib/shots/review_rounds.py` | ZOOM round protocol for `shots.py review`: parse/validate/clamp child requests, follow-up job text, round/crop/turn caps |

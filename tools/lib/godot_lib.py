@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Godot launch + per-path lock for the run_* tools.
+"""Godot launch + per-path lock for the run_* tools (box-wide slot cap: godot_slots).
 
 Rules: the lock key is the normalized --path dir; wait until that path is free;
 a timeout or compile error kills ONLY the pid this call started, never godot*.
@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # tools/lib; boot adds
 import boot  # noqa: E402,F401
 
 import agent_log
+import godot_slots
 
 COMPILE_RE = re.compile(r"Parse Error|Compile Error|Failed to compile|Failed to load script")
 HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|Lambda capture at index")
@@ -236,7 +237,12 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
     if "--path" not in args:
         args = ["--path", path] + args
     agent_log.gdignore_underscore(root)  # root _* folders never enter an import or export
-    lf = lock(root, path, lock_timeout, hold if hold > 0 else max(60, timeout + 30))
+    slot = godot_slots.acquire(" ".join(args)[:160], str(root))  # box-wide cap (Bot box only), before the path lock
+    try:
+        lf = lock(root, path, lock_timeout, hold if hold > 0 else max(60, timeout + 30))
+    except BaseException:
+        godot_slots.release(slot)
+        raise
     t0 = time.monotonic()
     pid, status, code, timed_out, dkind = 0, "ERROR", -1, False, "none"
     handles = []
@@ -287,6 +293,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
         for fh in handles:
             fh.close()
         unlock(lf)
+        godot_slots.release(slot)
     size = lambda p: p.stat().st_size if p and p.is_file() else 0  # noqa: E731
     return {"status": status, "exit_code": code, "timed_out": timed_out, "pid": pid,
             "ms": int((time.monotonic() - t0) * 1000), "err_bytes": size(err_log),
@@ -391,3 +398,28 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
+
+def stale_imports(root: Path, under: str = "assets") -> list[str]:
+    """Source files whose `.godot/imported` copy was built from different bytes (its .md5 source_md5 is not the file's
+    md5), or is missing: Godot run without the editor keeps serving the old texture (a reverted or updated sprite looks old)."""
+    import hashlib
+    root = Path(root)
+    out = []
+    for imp in sorted((root / under).rglob("*.import")):
+        src = imp.with_suffix("")
+        m = re.search(r'^path(?:\.\w+)?="res://(\.godot/imported/[^"]+)"', imp.read_text(encoding="utf-8", errors="replace"), re.M)
+        if not m or not src.is_file():
+            continue
+        md5 = root / re.sub(r"(-[0-9a-f]{32})\..*$", r"\1.md5", m.group(1))  # one .md5 per source, any VRAM formats
+        got = re.search(r'source_md5="(\w+)"', md5.read_text(encoding="utf-8")) if md5.is_file() else None
+        if not got or got.group(1) != hashlib.md5(src.read_bytes()).hexdigest():
+            out.append(src.relative_to(root).as_posix())
+    return out
+
+def reimport_stale(root: Path, timeout: int = 300) -> list[str]:
+    """Run the editor import when any asset is stale (stale_imports), then undo sidecar churn. Returns what was stale."""
+    stale = stale_imports(root)
+    if stale:
+        run_godot(root, root, ["--headless", "--editor", "--import", "--path", str(root), "--quit"], None, None, timeout)
+        restore_import_churn(root)
+    return stale

@@ -8,6 +8,8 @@ const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const SKIP_H := 0.2
 const PROPS_PATH := "res://scripts/graphics/light_rt/hub_props.gd"
 const Roof := preload("res://scripts/graphics/light_rt/hub_roof.gd")
+## Last bake's footprints (hub_blur.gd zones).
+static var prot_rects: Array = []
 
 ## Darkens img under every shadow-casting mesh and building sprite below the Layout's parent (the camp in the tree).
 ## A building's parts (siblings under one body) share one top, so a wall and its roof fade as one shadow; a roof
@@ -44,6 +46,7 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 			var fp := Rect2(bb.position.x, bb.position.z, bb.size.x, bb.size.z)
 			feet[key] = (feet[key] as Rect2).merge(fp) if feet.has(key) else fp
 	var prot: Array = feet.values()
+	prot_rects = prot
 	var recv: Array = []
 	for k in feet:
 		var r: Rect2 = feet[k]
@@ -73,10 +76,10 @@ static func _hub_mesh_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	for body in root.get_tree().get_nodes_in_group("hub_fence"):
 		for mi in (body as Node).find_children("*", "MeshInstance3D", true, false):
 			fence_px += _hub_project_mesh(img, org, sub, mi, fence_ctx)
-	wrote += fence_px
+	wrote += fence_px + Roof.slopes(img, org, sub, recv)
 	printerr("bake_camp: fence_px=%d" % fence_px)
 	printerr("bake_camp: shadow_casters=%d" % casters.size())
-	printerr("bake_camp: lamp_px=%d" % load(PROPS_PATH).lamp_glow(img, org, sub, root))
+	printerr("bake_camp: lamp_n=%d" % load(PROPS_PATH).lamp_count(root))
 	load(PROPS_PATH).overlay_dbg(org, sub, root, layout)
 	return wrote
 

@@ -117,11 +117,11 @@ static func ink_text(button: Button) -> void:
 	ThemeS.text_tones(button, ThemeS.INK, ThemeS.INK, ThemeS.INK, ThemeS.INK, ThemeS.INK_FAINT)
 
 ## The five button states from five boxes.
-static func states(button: Button, normal: StyleBox, hover: StyleBox, pressed: StyleBox, focus: StyleBox, disabled: StyleBox) -> void:
+static func states(button: Button, normal: StyleBox, hover: StyleBox, pressed: StyleBox, focused: StyleBox, disabled: StyleBox) -> void:
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("focus", focus)
+	button.add_theme_stylebox_override("focus", focused)
 	button.add_theme_stylebox_override("disabled", disabled)
 
 ## Scroll bars off (the rows still scroll with the pad), or back to the engine default.
