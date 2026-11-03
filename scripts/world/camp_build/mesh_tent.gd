@@ -159,4 +159,3 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	cap.material_override = Prim._timber(Spec.TIMBER)
 	body.add_child(cap)
 	Prim._hit(body, end_mesh, "GableEndHit")
-
