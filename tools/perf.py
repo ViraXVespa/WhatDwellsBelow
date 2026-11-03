@@ -13,6 +13,7 @@ import boot  # noqa: E402
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("hub",      "perf/run_hub_bench",          "Hub frame-time bench, two ~30 s walks (--leg desktop|web)"),
     ("dungeon",  "perf/run_dungeon_bench",      "Dungeon frame-time bench, one ~30 s fresh playtest (--leg desktop|web)"),
+    ("sweep",    "perf/run_perf_sweep",         "One continuous hub, dungeon, dispel, hub, dungeon run (--leg desktop|web)"),
     ("web",      "perf/web_perf",               "Advisory perf of the exported web build in a headless browser (--flow, --baseline)"),
     ("hitch",    "perf/hitch_sink",             "Serve a web export and log the game's hitch rows"),
     ("bars",     "perf/load_bars",              "Web landing bar and in-game loader progress vs time, cold then cached"),

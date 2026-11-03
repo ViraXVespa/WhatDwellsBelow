@@ -745,6 +745,8 @@ def _echo_lines(lines: list[str]) -> list[str]:
     for ln in lines:
         if ln.startswith(("status=", "fps_pct=", "edge=", "leg=", "desktop root=", "web browser=")):
             keep.append(ln)
+        elif ln.startswith("HB: seg="):
+            keep.append(ln)
         elif "isolate layer=" in ln or ln.startswith("HB: isolate") or ln.startswith("aba ") or ln.startswith("layers "):
             keep.append(ln)
         elif ln.startswith("sustained=") or ln.startswith("sustained:"):
