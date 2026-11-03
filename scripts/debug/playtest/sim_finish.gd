@@ -9,6 +9,7 @@ const PlaytestHub := preload("res://scripts/debug/playtest_hub/forge_pass.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 const WebHook := preload("res://scripts/debug/web_hook.gd")
+const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 
 static func one_run(pt: Node, kind: String, progressed: bool, wpn: String, tw: Dictionary) -> void:
 	var snap: Dictionary = pt._snap_bal()
@@ -87,21 +88,29 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	if App.tel:
 		PlaytestDb.append_finish(App.tel, "", true)
 	if str(pt.slot) == "campaign":
+		if Campaign.floor_cleared(int(App.floor_n), bool(App.boss_dead)):
+			Campaign.mark(str(App.weapon))
 		if not pt.interrupted and end_s != "stalled":
 			Engine.time_scale = 1.0
 			var follow: Dictionary = _campaign_follow(pt)
-			App.prog.pick_weapon = str(follow.get("weapon", App.prog.pick_weapon))
-			var tool_id: String = str(follow.get("tool", "pickaxe"))
-			if tool_id == "":
-				tool_id = "pickaxe"
-			App.prog.tool_type = tool_id
-			var hub_uid: int = PlaytestHub.run_hub()
-			if hub_uid > 0:
-				follow["hub_equip_uid"] = hub_uid
-			Store.save_slot("campaign")
-			pt.enqueue(follow)
+			if str(follow.get("weapon", "")) == "":
+				Store.save_slot("campaign")
+				LiveSmoke.campaign_stop("cleared")
+			else:
+				App.prog.pick_weapon = str(follow.get("weapon", App.prog.pick_weapon))
+				var tool_id: String = str(follow.get("tool", "pickaxe"))
+				if tool_id == "":
+					tool_id = "pickaxe"
+				App.prog.tool_type = tool_id
+				var hub_uid: int = PlaytestHub.run_hub()
+				if hub_uid > 0:
+					follow["hub_equip_uid"] = hub_uid
+				follow["hub_forged"] = true
+				Store.save_slot("campaign")
+				pt.enqueue(follow)
 		else:
 			Store.save_slot("campaign")
+			LiveSmoke.campaign_stop("stalled" if end_s == "stalled" else "interrupt")
 	else:
 		pt.history.append(App.tel.to_dict())
 		pt._save_history()
@@ -134,7 +143,9 @@ static func stop_live(pt: Node) -> void:
 		pt.last_summary += "\nBatch: " + pth
 
 static func _campaign_follow(pt: Node) -> Dictionary:
-	var wpn: String = PlaytestDb.pick_weapon(PlaytestDb.owned_levels(), "")
+	var wpn: String = Campaign.next_weapon()
+	if wpn == "":
+		return {}
 	var tool: String = str(pt.job.get("tool", "pickaxe"))
 	if tool == "":
 		tool = "hatchet" if wpn == "staff" else "pickaxe"
@@ -154,6 +165,7 @@ static func _campaign_follow(pt: Node) -> Dictionary:
 
 static func reset_ai_state(pt: Node) -> void:
 	pt.ai_on = false
+	pt.campaign_enter = false
 	pt.sim_t = 0.0
 	pt.act_t = 0.0
 	pt.reset_perf()
@@ -187,7 +199,7 @@ static func reset_ai_state(pt: Node) -> void:
 	for key: String in [
 		"lock_n", "lock_t", "cell_t", "skip_list", "seen_map", "decide_why",
 		"log_gather_d", "log_clerk_d", "log_threat_d", "log_gather_k",
-		"trail", "stuck_cell", "wander_hold", "dash_cd", "flee_c",
+		"trail", "stuck_cell", "wander_hold", "dash_cd", "flee_c", "campaign_left",
 	]:
 		if pt.has_meta(key):
 			pt.remove_meta(key)

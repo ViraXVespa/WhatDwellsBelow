@@ -1,7 +1,7 @@
 extends Object
 
 ## --wdb-playtest-live-smoke: boots straight into one live AI run on floor 1, prints `PT:` lines, quits.
-## --wdb-pt-campaign: boots one campaign series on the kept slot. A time-limit end chains the next job. Interrupt, a stall, or the watchdog stops it.
+## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it.
 ## Args (after --): --wdb-seed=N (run seed), --wdb-pt-weapon=great_axe|staff|longbow, --wdb-pt-sec=S (sim seconds), --wdb-pt-scale=X (time scale while acting; only with --wdb-pt-fast, else 1.0).
 ## Debug only: run `godot --headless --path . -- --wdb-playtest-live-smoke --wdb-seed=42`.
 
@@ -29,8 +29,8 @@ static func start() -> void:
 	var scale: float = float(_str("--wdb-pt-scale", "1"))
 	if campaign_active():
 		App.playtest.enqueue({"save": "campaign", "weapon": "", "tool": "pickaxe", "gender": "male", "scale": scale, "limit": sec, "cfg": {}})
-	else:
-		App.playtest.enqueue({"save": "fresh", "weapon": wpn, "tool": "hatchet" if wpn == "staff" else "pickaxe", "gender": "male", "scale": scale, "limit": sec, "cfg": {}})
+		return
+	App.playtest.enqueue({"save": "fresh", "weapon": wpn, "tool": "hatchet" if wpn == "staff" else "pickaxe", "gender": "male", "scale": scale, "limit": sec, "cfg": {}})
 	App.get_tree().create_timer(sec * 2.0 / maxf(1.0, scale) + 90.0, true, false, true).timeout.connect(func() -> void:
 		printerr("PT: timeout=1 sim_t=%.1f act_t=%.1f live=%s" % [App.playtest.sim_t, App.playtest.act_t, str(App.playtest.live_running)])
 		App.get_tree().quit()
@@ -49,3 +49,15 @@ static func report(d: Dictionary) -> void:
 		return
 	printerr("PT: done=1")
 	App.get_tree().quit()
+
+static func campaign_stop(why: String) -> void:
+	if not campaign_active():
+		return
+	if why == "cleared":
+		printerr("PT: campaign_done=1")
+		printerr("PT: done=1")
+	else:
+		printerr("PT: campaign_stop=%s" % why)
+	var tree: SceneTree = App.get_tree()
+	if tree:
+		tree.quit()

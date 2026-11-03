@@ -18,8 +18,13 @@ static func enter_dungeon(host: Node) -> void:
 	# A live playtest that is already in the dungeon must not replay the cover.
 	# The perf sweep is still on the hub here, and it has to take the same cover,
 	# paint wait, and scene change a player gets from the floor board.
-	var sweep_from_hub: bool = CliArgs.has("--wdb-perf-sweep") and not host.in_dungeon
-	if host.playtest and bool(host.playtest.get("live_running")) and not sweep_from_hub:
+	# Perf sweep and the campaign series are on the hub here. Both take the crystal
+	# board's cover, paint wait, and scene change. A playtest already in the dungeon does not.
+	var from_hub: bool = not host.in_dungeon and (
+		CliArgs.has("--wdb-perf-sweep")
+		or (host.playtest != null and str(host.playtest.get("slot")) == "campaign")
+	)
+	if host.playtest and bool(host.playtest.get("live_running")) and not from_hub:
 		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 		return
