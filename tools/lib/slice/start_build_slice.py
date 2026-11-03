@@ -13,8 +13,7 @@ The first run writes _logs/slice-state.json (never committed) and a postcard _lo
 --job is a survey slice (text survey, ends in --handoff); a job is an implementation slice. Run in a main checkout it only says so: the User starts a
 slice with `python tools/slice.py open [AREA]`. A ui / theme / visual slice with no shot_flows for its job prints a STEP 0 note (creating the flow is the
 first job step; exit 0). A job maps only to its own shot_flows key, never to the door's.
-The first run also records this session's id ($GROK_SESSION_ID): the original session, the reset point after the User's `/fork` at the end of
-Gather. A red prove prints `grok -r <original-session-id> --fork-session` from it (retry_lib). This tool never starts grok.
+The first run also records this session's id ($GROK_SESSION_ID). A red prove's RETRY block stays in this session (retry_lib). It does not `/fork`. This tool never starts grok.
 --handoff is for survey -> implement: it writes (first run) or validates (later runs) the task file design/tasks/ID.md (ID: --task, else the door),
 saves it and the survey's shot-flow / routes.yaml edits to _logs/handoff/survey-edits, and prints the one command she runs from the main checkout (`python tools/slice.py open AREA --prompt-file PATH`). The fresh session's
 first command, --from-handoff, prints the compact start summary, puts the saved edits back and points the task's first command at --from-task
@@ -288,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/gate.py smokes --door/--job; add or update asserts for new systems)",
             f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/shots.py flow --job J, one boot; UI states: tools/shots.py gaps --changed)",
-            "cycle=Gather (no code, no new tools; outcome + signal; then she runs /fork) > Prepare > Change (gate.py gd-load once the edits are complete) > Prove (final verification: compile check, the job's shot flows + UI load check if visual, run_build_gate --batch; one small corrective edit, one rerun) > Complete (docs, task, commit, push, done notice); build-job-cycle.md",
+            "cycle=Gather (no code, no new tools; outcome + signal; continue in this session) > Prepare > Change (gate.py gd-load once the edits are complete) > compact once before Prove and resume here > Prove (final verification: compile check, the job's shot flows + UI load check if visual, run_build_gate --batch; one small corrective edit, one rerun) > Complete (docs, task, commit, push, done notice); build-job-cycle.md",
             slice_lib.merge_back_text(week or ref)]
     if tunits:
         unit_line = (f"unit={tcur} ({tunits.index(tcur) + 1} of {len(tunits)}, task {args.task.strip()}); done: {', '.join(tdone) or 'none'}. "

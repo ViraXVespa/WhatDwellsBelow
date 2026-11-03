@@ -6,8 +6,8 @@ defaults to the door), and stops.
 main checkout: `python tools/slice.py open AREA --prompt-file PATH`. The file becomes the first message of a NEW session, whose first command
 `slice.py start --door D --from-handoff PATH` prints a compact start summary and points the file's first command at `--from-task ID`. Its
 `resume:` line is the User's launch line (`slice.py open AREA --task ID`, run from the repo root); a session she opens with it starts with
-`--from-task ID`, so the committed task resumes from any checkout. It is not the retry point (that is the implementation session's original session ID,
-forked after `/fork` at the end of Gather); the handoff moves a survey into a fresh implementation session.
+`--from-task ID`, so the committed task resumes from any checkout. It is not the compact before Prove, and it is not the retry. A retry stays in
+the session that ran the prove. The handoff moves a survey into a fresh implementation session.
 The fresh worktree is cut from the week branch, so survey-session edits to shot-flow files and the routes.yaml mapping are saved to
 `_logs/handoff/survey-edits/` (the task file with them) and put back by `--from-handoff` (a file that differs is only listed when the week branch moved).
 """

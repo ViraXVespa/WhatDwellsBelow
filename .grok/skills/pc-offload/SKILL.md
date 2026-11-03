@@ -69,7 +69,6 @@ Intercept (raw tool is a failed lookup, not a fallback). `.grok/hooks/bin/wdb-pr
    fits one session, a task file keeps the rest, no new survey. The User reopens a committed task
    with its resume: line; that session starts with the command its first message names. Only the User launches grok.
 
-Two compacts on the same slice: write the notes into the task file, commit, and push the branch, including live stills, so the next session can continue. She opens the next session. Then write the handoff (slice.py start --handoff)
-and start a fresh session.
+Before the first prove, stop for one compact and resume in this same session. Either run the guided compact, or print the keep-list and stop so the User can compact. Keep-list: the restate, the intended observable outcome, the systems and doors read, the files changed this unit, any open questions, and the last RESULT. Do not `/fork`, do not start a fresh session, and do not use `slice.py start --handoff` or `grok -r <original-session-id> --fork-session` as the compact handoff. After Prove, update the task, commit, and push, then stop. Whether Gather also compacts, or the User rewinds to Gather instead of compacting every cycle, is not decided.
 
 Imagine-isolated and i2v-isolated must stay skipped.

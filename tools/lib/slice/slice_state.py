@@ -4,7 +4,7 @@ The first run in a worktree writes `_logs/slice-state.json` (under _logs/, so it
 slice.py open started the session with (the prompt's length and time, read from the session's prompt_history.jsonl). Every later run prints
 `SLICE ALREADY STARTED` with the steps found on disk and the next one; `--full` prints the whole start card again. Steps are read from the
 tree and the git common dir at the time of the run, never kept as a claim: import (.godot/imported), baseline shots (_logs/shot-flow),
-the original session id (the reset point a red prove's retry forks), handoff (the task file design/tasks/ID.md).
+the original session id (recorded on the first run; a retry stays in that session), handoff (the task file design/tasks/ID.md).
 """
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ def steps(root: Path, st: dict | None = None) -> dict:
             "original session": (st or {}).get("session") or "not recorded", "forked": _forked(st or {}), "handoff": ho}
 
 def _forked(st: dict) -> bool:
-    """True when this session is not the one that ran the first card (the User ran `/fork` at the end of Gather)."""
+    """True when this session is not the one that ran the first card."""
     sid = os.environ.get("GROK_SESSION_ID", "")
     return bool(st.get("session") and sid and sid != st["session"])
 
@@ -81,10 +81,10 @@ def next_step(st: dict, s: dict) -> str:
     unit = f" ({st['unit']})" if st.get("units") and st.get("unit") else ""
     if not s["forked"]:
         return (f"Gather{unit}: shared context only (task, docs, code, outcome). Do not shoot or read pictures. "
-                "Restate, Q0 and her answers; then tell her to run `/fork` and continue in the new peer session")
+                "Restate, Q0 and her answers, then continue Prepare in this session. Before the first prove, stop for one compact and resume in this same session")
     tail = " (`python tools/slice.py start --unit-done` updates the task's done: line)" if unit else ""
-    return (f"Gather continues{unit}: the first fork, when nothing earlier on the task has changed, starts unit 1 and does not run `find.py changed`. "
-            "A later fork runs `python tools/find.py changed` for earlier sessions' committed and uncommitted work, "
+    return (f"This session is not the one that started the slice{unit}. Continue the unit in hand: "
+            "`python tools/find.py changed` for earlier sessions' committed and uncommitted work, "
             "then only this unit's pictures (`shots.py review`, never read_file). "
             f"Then Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; "
             "then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)")
