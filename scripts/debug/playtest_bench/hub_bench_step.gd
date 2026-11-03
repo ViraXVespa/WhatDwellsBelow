@@ -130,13 +130,24 @@ static func _strike(host: Node, actor: Node3D, delta: float) -> void:
 	var row: Dictionary = host._visits[host._vi]
 	var look: Vector3 = row["look"] as Vector3
 	Visit._aim_at(actor, look)
-	App.playtest.attack = true
-	host._sub_t += delta
-	if int(actor.get("atk_state")) != 0:
+	var swinging: bool = int(actor.get("atk_state")) != 0
+	var started: bool = bool(host._got.get("dummy", false))
+	if swinging and not started:
 		host._got["dummy"] = true
-	if host._sub_t < 0.8:
+		started = true
+	# One press. Holding past the end of the swing starts another basic.
+	# Axe rate is about 1.7/s, so the old 0.8 s hold swung twice.
+	App.playtest.attack = not started
+	host._sub_t += delta
+	if started and not swinging:
+		App.playtest.attack = false
+		host._hb("HB: strike=dummy")
+		_next_visit(host)
 		return
-	if bool(host._got.get("dummy", false)):
+	if host._sub_t < 2.5:
+		return
+	App.playtest.attack = false
+	if started:
 		host._hb("HB: strike=dummy")
 	else:
 		host._hb("HB: miss=dummy")

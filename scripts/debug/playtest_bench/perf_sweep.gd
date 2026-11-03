@@ -3,6 +3,8 @@ extends Node
 ## --wdb-perf-sweep: one process, no quit between states.
 ## Cold boot, hub walk, dungeon (seed from --wdb-seed, Great Axe, time scale 1),
 ## dispel when that acting timer ends, hub walk, dungeon walk, then quit.
+## Dungeon entry is App.enter_dungeon (cover, paint wait, scene change).
+## Dispel is the player's exit, then the recap camp handoff (wake cover, go_camp).
 ## Frames count while camp or the dungeon is showing and the loader bar is down.
 ## HB: seg=<place><n> is that stretch. The last fps_pct line is the whole run.
 
@@ -162,8 +164,9 @@ func _enqueue() -> void:
 		_finish("no_playtest")
 		return
 	# Physics reaches the job limit before the next idle frame, so the job
-	# limit sits above the scored acting window. This node dispels (or exits)
-	# when act_t hits _act_limit.
+	# limit sits above the scored acting window. This node plays the dispel
+	# exit when act_t hits _act_limit. start_next takes App.enter_dungeon
+	# while this flag is set, so the cover runs before the scene change.
 	HitchLog.arm_harness()
 	var job_limit: float = _act_limit + 60.0
 	var job: Dictionary = {
@@ -178,7 +181,7 @@ func _enqueue() -> void:
 	App.playtest.enqueue(job)
 	_visit_saw = false
 	_set_state(ST_DUNG)
-	_hb("HB: dungeon enqueue act=%.0f" % _act_limit)
+	_hb("HB: dungeon enter act=%.0f" % _act_limit)
 
 func _tick_dungeon() -> void:
 	if _scoring_place() == "dungeon":
@@ -196,10 +199,7 @@ func _tick_dungeon() -> void:
 		if _hub_done >= 2:
 			_finish("")
 		elif not _dispel_sent:
-			_dispel_sent = true
-			_hb("HB: dispel")
-			App.end_run("dispel")
-			_set_state(ST_DISPEL)
+			_begin_dispel()
 		return
 	if not bool(App.playtest.get("live_running")):
 		_finish("ended")
@@ -213,7 +213,7 @@ func _tick_dispel() -> void:
 	if not _camp_sent:
 		_camp_sent = true
 		_hb("HB: camp")
-		App.go_camp()
+		_wake_camp()
 	_set_state(ST_BACK)
 
 func _tick_back() -> void:
@@ -228,6 +228,33 @@ func _tick_back() -> void:
 		return
 	if _state_t >= LOAD_SEC:
 		_finish("stall")
+
+func _begin_dispel() -> void:
+	_dispel_sent = true
+	_hb("HB: dispel")
+	# end_run skips the exit clip while a playtest is live and jumps to the recap.
+	# The player path plays that clip, then finish_end opens the recap.
+	var p: Node = _player()
+	if p != null and p.has_method("play_exit") and not bool(p.get("exiting")):
+		p.play_exit("dispel")
+	else:
+		App.finish_end("dispel")
+	_set_state(ST_DISPEL)
+
+func _wake_camp() -> void:
+	# Same handoff recap finish uses after a human dispel. consume_recap returns
+	# before those lines, so the sweep runs them once the recap has closed.
+	App.wake_pending = true
+	var present_v: Variant = App.get("present")
+	if present_v is Node and (present_v as Node).has_method("cover_wake"):
+		(present_v as Node).call("cover_wake")
+	App.go_camp()
+
+func _player() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	return tree.get_first_node_in_group("player")
 
 func _set_state(next_state: int) -> void:
 	_state = next_state

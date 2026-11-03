@@ -1,6 +1,7 @@
 extends Object
 
 const Dbg := preload("res://scripts/app/dbg.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
@@ -13,7 +14,11 @@ static func enter_dungeon(host: Node) -> void:
 		return
 	if host.present and str(host.present.get("_mode")) == "enter_hold" and bool(host.in_dungeon):
 		return
-	if host.playtest and bool(host.playtest.get("live_running")):
+	# A live playtest that is already in the dungeon must not replay the cover.
+	# The perf sweep is still on the hub here, and it has to take the same cover,
+	# paint wait, and scene change a player gets from the floor board.
+	var sweep_from_hub: bool = CliArgs.has("--wdb-perf-sweep") and not host.in_dungeon
+	if host.playtest and bool(host.playtest.get("live_running")) and not sweep_from_hub:
 		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 		return

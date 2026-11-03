@@ -11,6 +11,7 @@ const PlaytestHub := preload("res://scripts/debug/playtest_hub/forge_pass.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 
 const Finish := preload("res://scripts/debug/playtest/sim_finish.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 static func reset_ai_state(pt: Node) -> void:
 	Finish.reset_ai_state(pt)
 
@@ -62,6 +63,12 @@ static func start_next(pt: Node) -> void:
 		App.pause_menu.close_ui()
 	App.ui_open = false
 	PlaytestLog.begin(pt)
+	# Perf sweep: the player's enter (cover, paint wait, then the dungeon scene).
+	# begin_run swaps the scene with none of that. Deferred, same as play_from_menu,
+	# so this call is not a bare coroutine.
+	if CliArgs.has("--wdb-perf-sweep") and not App.in_dungeon:
+		App.call_deferred("enter_dungeon")
+		return
 	App.begin_run()
 
 static func prep_slot(pt: Node) -> void:
