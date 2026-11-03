@@ -47,6 +47,22 @@ Inspect the live tree from **one system row** in `design/code-map.md` when editi
 - A raw URL or open_page result for a path is not proof the file still exists on the branch. Before treating a fetched body as current (especially any path that might have been moved into `notes/` or deleted), confirm the path appears in the branch tree or the contents API. If the tree does not list it, discard the body.
 - Branch-tip raw URLs (`raw.githubusercontent.com/.../<branch>/...`) are CDN-cached for roughly five minutes. After a push, a fetch can still return the previous blob. When the session must see the latest commit (protocol edits, post-push verification, or any body-read that must not be stale), first obtain the current SHA for the branch (GitHub API or the commits page), then fetch with that SHA in the URL instead of the branch name. SHA URLs are immutable and bypass the branch-tip cache.
 
+## Startup reads
+
+Web session startup reads (all of them, before any other work):
+- design/protocol.md
+- design/constraints.md
+- design/web-session.md
+- design/web-discuss.md
+- design/web-plan.md
+- design/web-emit.md
+- design/web-test.md
+- design/tasks/README.md
+- design/code-map.md
+
+Do not emit a scratch, answer a design question, or start a plan until these have been read in this session.
+Do not generate a scratch from memory or from an older search hit.
+
 ## Phases
 
 Move only when the User names the next phase (except the multi-slice loop below). No emit in Phase 1-3.
@@ -55,26 +71,26 @@ Move only when the User names the next phase (except the multi-slice loop below)
 
 The User tells the agent to review the repo.
 
-If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
+If the agents file already routed here, do not re-read it.
 If the first message names a park (a task id or its words), load only that task file after the law pair, and continue; with a mandate, Phase 2 is optional. A web task's `resume:` is one plain line, not a command to run. A finished park is closed with `docs.py task done` (`design/tasks/README.md`).
 If the User names build-coop or build-week, there is no gather tool: use `read_summary` only if the User also named a PC job (no game writes). `_logs/sess/` is PC job output.
 If no park or gather is named, confirm ready (brainstorm; no implementation).
 
 ### Phase 2 — Discuss
 
-Discuss only; no emit. Rules, end of brainstorm, park packet: `web-discuss.md`, opened at Phase 2 and not before.
+Discuss only; no emit. Rules, end of brainstorm, park packet: `web-discuss.md`.
 
 ### Phase 3 — Goal, questions, plan, emit list
 
-Goal, questions, Source/Docs emit list; the User accepts it before Phase 4. Rules: `web-plan.md`, opened at Phase 3 and not before.
+Goal, questions, Source/Docs emit list; the User accepts it before Phase 4. Rules: `web-plan.md`.
 
 ### Phase 4 — Emit
 
-One action, one `tools/_scratch.py`. Always create, update, or close tasks via `doc_patch.task([...])` (`tools/docs.py task`); never hand-edit a task skeleton. The scratch must call the matching prove runner and base RESULT solely on the integer it returns—do not print RESULT until the runner has returned, and never hard-code PASS. The rest of the emit rules (scratch shape, revise-from-fetch, docs in the pass, prove table, py_compile rule), Build co-op prompts, scratch helpers and the fetch recipe live in the emit sibling. Open it at Phase 4 and not before: `web-emit.md`.
+One action, one `tools/_scratch.py`. Always create, update, or close tasks via `doc_patch.task([...])` (`tools/docs.py task`); never hand-edit a task skeleton. The scratch must call the matching prove runner and base RESULT solely on the integer it returns—do not print RESULT until the runner has returned, and never hard-code PASS. The rest of the emit rules (scratch shape, revise-from-fetch, docs in the pass, prove table, py_compile rule), Build co-op prompts, scratch helpers and the fetch recipe live in `web-emit.md`.
 
 ### Phase 5 — Test
 
-Review the pasted Phase 4 RESULT. Rules (corrected scratch, next slice): `web-test.md`, opened at Phase 5 and not before.
+Review the pasted Phase 4 RESULT. Rules (corrected scratch, next slice): `web-test.md`.
 
 Session end (any phase): the task offer in `web-discuss.md` (End of session).
 

@@ -17,9 +17,13 @@ Gather finishes before any change.
 4. For a bug or perf miss: does the repro's output name the cause (a row, phase, or field that points at one cause)? A repro that shows the failure but not its cause is a missing signal; Prepare adds detail to that repro before any fix.
 
 No code changes. No new tools.  
-End of Gather: tell the User to run `/fork`. Continue in the new peer session. The original session ID is the reset point. Later retries use `grok -r <original-session-id> --fork-session` from the worktree directory.
+End of Gather: run a guided compact, then tell the User to run `/fork`.
 
-The session `slice.py open` started is that shared gather: the context every later fork needs; unit-only material, pictures included, stays out. `/fork` is required and does not finish gather. Each later fork continues gather for what later sessions on this task would not all need and for earlier sessions' committed and uncommitted changes (`find.py changed`), then adds its own unit-only material (a picture via `shots.py review`, text report only).
+/compact keep the restate, the observable outcome, every system and door read, the planned gather list, and any open questions. Drop raw tool logs and exploratory search results.
+
+Continue in the new peer session. The original session ID is the reset point. Later retries use `grok -r <original-session-id> --fork-session` from the worktree directory.
+
+The session `slice.py open` started is the shared gather (context every later fork needs; unit-only material stays out). `/fork` is required and does not finish gather. Each later fork continues gather for earlier sessions' changes (`find.py changed`) and material only that unit needs, then adds its own unit-only material (`shots.py review`, text report only).
 
 ### Prepare
 
@@ -31,6 +35,12 @@ If Prepare discovers the task is blocked or needs a design answer, stop and upda
 
 Implement the task using the information and tooling from Gather and Prepare. A fix targets a cause the signal named, not a guess.  
 No formal prove yet.
+
+Before the first prove run (or when context is approaching 120–150K): run a guided compact.
+
+/compact keep the restate, the intended observable outcome, the systems and doors read, the files changed this unit, any open questions, and the last RESULT if one exists. Drop raw tool logs and exploratory search results.
+
+Then proceed to Prove.
 
 ### Prove
 
@@ -50,7 +60,7 @@ Present the user with any verification they still need to do and, when the task 
 
 A session finishes the whole request when it fits; a unit queue records the rest (`--unit-done`) only when it cannot.
 
-A **slice** is one Grok worktree cut from the week branch `grok-build-w{N}`. The User starts it with `python tools/slice.py open [AREA]`, which runs `grok worktree create NAME --ref grok-build-w{N}` and then `grok --cwd PATH --trust` (a NEW session whose directory is the worktree: a full clone under `.grok/worktrees/<repo>/<name>`, `.git` a directory, HEAD the week branch itself). Gather runs in that session; after `/fork`, Prepare through Complete run in the forked peer. Its first commands follow `grok-build.md` Work. `slice.py start` prints the rules of the first message and every ask, and on a later run says where the slice stands (`SLICE ALREADY STARTED`). Do not edit the main checkout. A worktree the User already named is the slice. **Only `slice.py open`, run by the User, launches grok; Build never does** (no fork, no headless run, no `--prompt-file`, no `--max-turns`; the isolated-media runner is the one exception).
+A **slice** is one Grok worktree cut from the week branch `grok-build-w{N}`. The User starts it with `python tools/slice.py open [AREA]`, which creates the worktree and launches a NEW session in it (full clone under `.grok/worktrees/<repo>/<name>`, HEAD the week branch). Gather runs there; after `/fork`, Prepare through Complete run in the peer. First commands follow `grok-build.md` Work. `slice.py start` prints the rules and slice status. Do not edit the main checkout. A worktree the User already named is the slice. **Only `slice.py open` (User-run) launches grok; Build never does** (no fork, headless, `--prompt-file`, or `--max-turns`; isolated-media is the exception).
 
 **Restate first.** The start card has the order. The open session: import, the shared restate as visible text, Q0, then the other questions. A later peer gathers this unit's baseline (`shots.py review` on those frames only) and earlier sessions' changes (`find.py changed`). A baseline with `band=fail` or script errors is invalid: find the cause, re-shoot, and never use it as the "before" shot or call its errors pre-existing without proof. A word the User used (a name, a metaphor) is not yet an answer to what it means here. Until answered change nothing, except shot-flow files (`tools/data/shot-flows/`) and the `routes.yaml` mapping. A task file whose Open questions are none already answered Q0, and a job the card marks NO PLAY CAMERA is not waiting on a play-camera baseline.
 
@@ -58,7 +68,7 @@ A **slice** is one Grok worktree cut from the week branch `grok-build-w{N}`. The
 
 **Step 0, a missing shot flow.** `slice.py start` prints a STEP 0 note for a visual job with no flow mapped to it (exit 0; not a stop). Creating or adjusting the flow for the exact screen is the first job step (`shot-flows.md`, New UI state checklist); a job never borrows its door's flows as if they were its own. The end gates stay: the after-shot must exist and be opened, no missing or stale frame, and a new uncovered UI state needs a flow before the prove passes.
 
-**Visual unit.** A job the start card marks NO PLAY CAMERA is not one of these: no play-camera baseline, no new shot flow, no `--visual` on the gate. Its proof is the check the job doc names (a keyed still: `media.py rekey-preview`). A screen's baseline is gathered in the forked session that is changing that screen (`shots.py flow --flow N --state S`, or `--job J` when the job's flow is that screen; `--save-baseline DIR` keeps it), then `shots.py review` on those frames only. Do not `read_file` them. Change one unit or screen. Re-shooting one state: `shots.py flow --flow N --state NAME` (the steps up to that shot; says changed or same). A detail or a pixel question: `shots.py crop PNG --box X,Y,W,H --zoom N` / `--probe X,Y` / `--near HEX`, not a script of your own. Shoot after, look at before and after, `shots.py show PATH=description ...` opens them for her, say what is on each. Iterating one unit with the User is exempt from the rerun counts (`tools.md` rule 10). Green prove is not a visual pass: describe the wide play-camera shot cold first, compare with the last approved round and main, report what you saw apart from what checks measured.
+**Visual unit.** A job the start card marks NO PLAY CAMERA is not one of these: no play-camera baseline, no new shot flow, no `--visual` on the gate. Its proof is the check the job doc names (a keyed still: `media.py rekey-preview`). A screen's baseline is gathered in the forked session changing that screen (`shots.py flow --flow N --state S` or `--job J`; `--save-baseline DIR` keeps it), then `shots.py review` on those frames only. Do not `read_file` them. Change one unit or screen. Re-shoot one state with `shots.py flow --flow N --state NAME`. Pixel questions use `shots.py crop` / `--probe` / `--near`, not a custom script. Shoot after, compare before and after, `shots.py show` opens them, say what is on each. Iterating one unit with the User is exempt from rerun counts (`tools.md` rule 10). Green prove is not a visual pass: describe the wide play-camera shot cold first, compare with the last approved round and main, report what you saw.
 
 **Compile check.** Run `python tools/gate.py gd-load` once the edits for the unit are complete (before Prove). It loads every changed and untracked `.gd` inside the project with its autoloads, so a stray `)` or a bad reference fails. The import check, a smoke and a standalone `--script` parse do not load every script, so none of them is evidence that the scripts compile.
 
