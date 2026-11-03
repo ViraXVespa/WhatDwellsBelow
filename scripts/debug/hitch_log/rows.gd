@@ -44,6 +44,20 @@ static var _lit_max_ms: float = -1.0
 static var _lit_who: String = ""
 static var _cpu_ms: float = -1.0
 static var _gpu_ms: float = -1.0
+## Sweep only. The hitch tick is App._process, which is where dt is measured.
+## wake_ms is post-draw until the first _physics_process (present and the engine
+## step before scripts). phys_span_ms is first to last _physics_process.
+## post_phys_ms is that last script until the hitch tick. head_ms is the hitch
+## tick until the sweep _process. -1 leaves the keys off the row.
+static var _edge_post_us: int = 0
+static var _tick_us: int = 0
+static var _phys_head_us: int = 0
+static var _phys_tail_us: int = 0
+static var _phys_open: bool = false
+static var _wake_ms: float = -1.0
+static var _phys_span_ms: float = -1.0
+static var _post_phys_ms: float = -1.0
+static var _head_ms: float = -1.0
 ## Sweep layer window. Those frames are not in fps_pct.
 static var _unscored: bool = false
 ## Sweep only. Visible, shadow, and canvas counts for the frame whose submit_ms just closed.
@@ -169,6 +183,14 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["cpu_ms"] = snappedf(_cpu_ms, 0.1)
 	if _gpu_ms >= 0.0:
 		row["gpu_ms"] = snappedf(_gpu_ms, 0.1)
+	if _wake_ms >= 0.0:
+		row["wake_ms"] = snappedf(_wake_ms, 0.1)
+	if _phys_span_ms >= 0.0:
+		row["phys_span_ms"] = snappedf(_phys_span_ms, 0.1)
+	if _post_phys_ms >= 0.0:
+		row["post_phys_ms"] = snappedf(_post_phys_ms, 0.1)
+	if _head_ms >= 0.0:
+		row["head_ms"] = snappedf(_head_ms, 0.1)
 	if _obj_3d >= 0:
 		row["obj_3d"] = _obj_3d
 		row["prim_3d"] = _prim_3d
@@ -253,6 +275,70 @@ static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) ->
 	_script_ms = script_ms
 	_queue_ms = queue_ms
 	_tail_ms = tail_ms
+
+## Post-draw of the frame the next hitch tick will close.
+static func set_edge_post(us: int) -> void:
+	_edge_post_us = us
+	_phys_open = false
+
+static func note_phys_head() -> void:
+	if _phys_open:
+		return
+	_phys_open = true
+	_phys_head_us = Time.get_ticks_usec()
+
+static func note_phys_tail() -> void:
+	_phys_tail_us = Time.get_ticks_usec()
+
+static func set_head_ms(ms: float) -> void:
+	if ms < 0.0:
+		_head_ms = 0.0
+		return
+	_head_ms = ms
+
+static func tick_us() -> int:
+	return _tick_us
+
+## Call at the hitch tick, before the row is built. The physics probes have
+## already run. head_ms is whatever the sweep stored on the previous frame.
+static func stamp_edge(now_us: int) -> void:
+	_tick_us = now_us
+	if _edge_post_us <= 0:
+		_wake_ms = -1.0
+		_phys_span_ms = -1.0
+		_post_phys_ms = -1.0
+		return
+	if not _phys_open:
+		var bare: float = float(now_us - _edge_post_us) / 1000.0
+		if bare < 0.0:
+			bare = 0.0
+		_wake_ms = bare
+		_phys_span_ms = 0.0
+		_post_phys_ms = 0.0
+		return
+	var wake: float = float(_phys_head_us - _edge_post_us) / 1000.0
+	var span: float = float(_phys_tail_us - _phys_head_us) / 1000.0
+	var after_phys: float = float(now_us - _phys_tail_us) / 1000.0
+	if wake < 0.0:
+		wake = 0.0
+	if span < 0.0:
+		span = 0.0
+	if after_phys < 0.0:
+		after_phys = 0.0
+	_wake_ms = wake
+	_phys_span_ms = span
+	_post_phys_ms = after_phys
+
+static func clear_edge() -> void:
+	_edge_post_us = 0
+	_tick_us = 0
+	_phys_head_us = 0
+	_phys_tail_us = 0
+	_phys_open = false
+	_wake_ms = -1.0
+	_phys_span_ms = -1.0
+	_post_phys_ms = -1.0
+	_head_ms = -1.0
 
 static func set_bench_ms(ms: float) -> void:
 	_bench_ms = ms

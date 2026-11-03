@@ -19,6 +19,9 @@ extends Node
 ## are the part of that total the named pieces do not cover. lit_max_ms is the
 ## slowest ActorLit, and lit_who is that node's parent. cpu_ms and gpu_ms are the
 ## viewport's previous-frame render times (0 means the renderer returned nothing).
+## wake_ms, phys_span_ms, and post_phys_ms split the gap from post-draw to the
+## hitch tick (App._process, where dt is measured). head_ms is that tick until
+## this node's _process. phys_ms stays the engine monitor.
 
 const FLAG := "--wdb-perf-sweep"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -37,6 +40,9 @@ const LOAD_SEC := 240.0
 ## Last idle _process. The sweep node stays at the default priority. Moving that
 ## node later made tree_ms collapse into after_ms. This probe only brackets tree_ms.
 const TAIL_PRIORITY := 1000000
+## Wrap every other _physics_process. Lower priority runs first.
+const PHYS_HEAD_PRIORITY := -1000000
+const PHYS_TAIL_PRIORITY := 1000000
 
 static var _inst: Node = null
 
@@ -126,6 +132,8 @@ func _ready() -> void:
 	tail.process_priority = TAIL_PRIORITY
 	_tail = tail
 	add_child(tail)
+	_add_phys_edge(false, PHYS_HEAD_PRIORITY, "PhysHead")
+	_add_phys_edge(true, PHYS_TAIL_PRIORITY, "PhysTail")
 	_vsync_off()
 	_arm_render()
 
@@ -159,6 +167,7 @@ func _on_post_draw() -> void:
 	_stamp_draw()
 	_stamp_render()
 	_post_us = now
+	HitchLog.set_edge_post(now)
 
 func _arm_render() -> void:
 	var tree: SceneTree = get_tree()
@@ -208,6 +217,9 @@ func _process(delta: float) -> void:
 		LightRt.mark_off()
 		return
 	var now: int = Time.get_ticks_usec()
+	var tick_us: int = HitchLog.tick_us()
+	if tick_us > 0 and now >= tick_us:
+		HitchLog.set_head_ms(float(now - tick_us) / 1000.0)
 	_arm_render()
 	if _post_us > 0:
 		var after_ms: float = float(now - _post_us) / 1000.0 - HitchLog.harness_in_after_ms()
@@ -489,6 +501,14 @@ func _pct(frames: int, slow: int) -> float:
 		return 100.0
 	return snappedf(100.0 * float(frames - slow) / float(frames), 0.1)
 
+func _add_phys_edge(is_tail: bool, pri: int, node_name: String) -> void:
+	var edge: _PhysEdge = _PhysEdge.new()
+	edge.name = node_name
+	edge.process_mode = Node.PROCESS_MODE_ALWAYS
+	edge.process_priority = pri
+	edge._is_tail = is_tail
+	add_child(edge)
+
 ## End of idle _process, then the deferred flush. pre_draw reads these against the sweep stamp.
 class _TreeTail extends Node:
 	var script_us: int = 0
@@ -503,3 +523,17 @@ class _TreeTail extends Node:
 
 	func _stamp_queue() -> void:
 		queue_us = Time.get_ticks_usec()
+
+## First and last _physics_process. Stamps the sweep edge on the hitch row.
+class _PhysEdge extends Node:
+	const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+	var _is_tail: bool = false
+
+	func _physics_process(_delta: float) -> void:
+		var sweep: Node = get_parent()
+		if sweep == null or bool(sweep.get("_done")):
+			return
+		if _is_tail:
+			HitchLog.note_phys_tail()
+		else:
+			HitchLog.note_phys_head()

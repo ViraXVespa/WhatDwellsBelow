@@ -74,6 +74,21 @@ static func set_after_ms(ms: float) -> void:
 static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) -> void:
 	Rows.set_tree_split(script_ms, queue_ms, tail_ms)
 
+static func set_edge_post(us: int) -> void:
+	Rows.set_edge_post(us)
+
+static func note_phys_head() -> void:
+	Rows.note_phys_head()
+
+static func note_phys_tail() -> void:
+	Rows.note_phys_tail()
+
+static func set_head_ms(ms: float) -> void:
+	Rows.set_head_ms(ms)
+
+static func tick_us() -> int:
+	return Rows.tick_us()
+
 static func set_bench_ms(ms: float) -> void:
 	Rows.set_bench_ms(ms)
 
@@ -165,6 +180,7 @@ static func bench_reset(mult_value: float) -> void:
 	Present._pts = PackedFloat32Array()
 	Rows.clear_harness()
 	Rows.set_tree_split(-1.0, -1.0, -1.0)
+	Rows.clear_edge()
 	Rows.set_bench_ms(-1.0)
 	Rows.set_lit_mark(-1.0, -1.0, -1)
 	Rows.set_render_ms(-1.0, -1.0)
@@ -217,6 +233,7 @@ static func begin(_host: Node = null) -> void:
 static func tick(host: Node, delta: float) -> void:
 	if not enabled():
 		return
+	Rows.stamp_edge(Time.get_ticks_usec())
 	if not Rows.started:
 		begin(host)
 	if not Rows.started:

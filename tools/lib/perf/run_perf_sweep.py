@@ -35,7 +35,10 @@ _PLACES = (
     ("warm_hub", "hub2"),
     ("warm_dungeon", "dungeon2"),
 )
-_PAIR_KEYS = ("dt_ms", "submit_ms", "tree_ms", "lit_ms", "geo_ms")
+_PAIR_KEYS = (
+    "dt_ms", "submit_ms", "tree_ms", "lit_ms", "geo_ms",
+    "wake_ms", "phys_span_ms", "post_phys_ms", "head_ms",
+)
 # Present only when the sweep stamped the pass. Older hitch files omit them.
 _DRAW_KEYS = (
     "draw_3d", "prim_3d", "obj_3d",
