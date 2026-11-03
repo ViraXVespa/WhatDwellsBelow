@@ -3,8 +3,8 @@ extends Object
 ## Hub building shadows as exact projections for the ground shader: per building array mesh (walls, gables,
 ## awnings, roofs, tarps; fences, sprites and the crystal stay on the bake) the convex hull of its vertices dropped along the bake sun
 ## (hub_shadow._hub_ground: AWAY x REACH per metre of height). Each wall box, roof prism and awning is convex, so the
-## hull is that part's true shadow. The ground shader classifies each 1/82.6 m cell centre against the hulls (inside:
-## shade, near outside: sun), so edges are straight lines stepped only at the cell, not the faded, blurred bake contour.
+## hull is that part's true shadow. apply() stamps each 1/82.6 m cell once (inside: shade, within FINE_GAP: sun, else
+## the bake). The ground and the mark sample that mask. They do not walk hull edges per pixel.
 
 const Shadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const MAX_H := 32
@@ -14,9 +14,12 @@ static var plant_shift := Vector2.ZERO
 static var hulls: Array = []
 ## Per hull: the building it belongs to (the mesh's StaticBody3D), for gap checks.
 static var owners: Array = []
-static var _p := PackedVector2Array()
-static var _s := PackedInt32Array()
 static var _n := 0
+## Same literal as ground_shader GRID (128 / PLAYER_H printed to 4 decimals). Cell centres land on these texels.
+const MASK_GRID := 82.5806
+static var _mask: Texture2D
+static var _ox: int = 0
+static var _oz: int = 0
 ## Bake shade under FINE_T, clear of the hulls by FINE_GAP m, is fine detail (fences, posts, signs, props, brackets):
 ## thresholded hard, so it keeps its shape without the faded contour.
 const FINE_T := 0.66
@@ -25,26 +28,17 @@ const FINE_GAP := 0.1
 ## the ground is in full shade. hub_sun: 1 sun, 0 shade; -1 when no hulls are bound (dungeon, editor).
 const GLSL := """
 uniform int hull_n = 0;
-uniform int hull_s[33];
-uniform vec2 hull_p[256];
-float hull_d(vec2 q) {
-	float best = -1e9;
-	for (int i = 0; i < hull_n; i++) {
-		int a = hull_s[i];
-		int b = hull_s[i + 1];
-		float d = 1e9;
-		for (int j = a; j < b; j++) {
-			vec2 p0 = hull_p[j];
-			vec2 e = hull_p[j + 1 < b ? j + 1 : a] - p0;
-			d = min(d, (e.x * (q.y - p0.y) - e.y * (q.x - p0.x)) / max(length(e), 1e-5));
-		}
-		best = max(best, d);
-	}
-	return best;
-}
+uniform sampler2D hull_mask : filter_nearest, repeat_disable;
+uniform ivec2 hull_o = ivec2(0);
 float hub_sun(vec2 q, float ll) {
 	if (hull_n <= 0) { return -1.0; }
-	float hd = hull_d(q);
+	ivec2 c = ivec2(floor(q * 82.5806)) - hull_o;
+	ivec2 ts = textureSize(hull_mask, 0);
+	float hd = -1.0;
+	if (c.x >= 0 && c.y >= 0 && c.x < ts.x && c.y < ts.y) {
+		float mark = texelFetch(hull_mask, c, 0).r;
+		hd = mark > 0.75 ? 1.0 : (mark > 0.25 ? -0.05 : -1.0);
+	}
 	return (hd >= 0.0 || (hd < -0.1 && ll < 0.66)) ? 0.0 : 1.0;
 }
 """
@@ -87,40 +81,146 @@ static func build(root: Node) -> Array:
 ## Pushes hulls (plus plant_shift) to the ground materials; returns the hull count.
 static func apply(root: Node, mats: Array) -> int:
 	var hs: Array = build(root)
-	var p: PackedVector2Array = PackedVector2Array()
-	var s: PackedInt32Array = PackedInt32Array([0])
+	var kept: Array[PackedVector2Array] = []
+	var pts: int = 0
 	for h: PackedVector2Array in hs:
-		if s.size() > MAX_H or p.size() + h.size() > MAX_P:
+		if kept.size() >= MAX_H or pts + h.size() > MAX_P:
 			break
+		var shifted: PackedVector2Array = PackedVector2Array()
 		for v in h:
-			p.append(v + plant_shift)
-		s.append(p.size())
-	p.resize(MAX_P)
-	s.resize(MAX_H + 1)
-	_p = p
-	_s = s
-	_n = mini(hs.size(), MAX_H)
+			shifted.append(v + plant_shift)
+		kept.append(shifted)
+		pts += h.size()
+	_n = kept.size()
+	_mask = _mask_of(kept)
+	if _mask == null:
+		_n = 0
 	var all: Array = []  # untyped: LightRt._mats is Array[ShaderMaterial], scene meshes add StandardMaterial3D
 	all.append_array(mats)
 	_scene_mats(root, all)
-	var set := 0
+	var set: int = 0
 	for m in all:
 		if not (m is ShaderMaterial):
 			continue
 		if bind(m):
 			set += 1
-	last = "hulls=%d mats=%d/%d" % [mini(hs.size(), MAX_H), set, all.size()]
-	return mini(hs.size(), MAX_H)
+	var mw: int = 0 if _mask == null else _mask.get_width()
+	var mh: int = 0 if _mask == null else _mask.get_height()
+	last = "hulls=%d mats=%d/%d mask=%dx%d" % [_n, set, all.size(), mw, mh]
+	return _n
 
 
-## Pushes the current hulls to one material (marks made after apply call this); false if it has no hull uniforms.
+## Pushes the current mask to one material (marks made after apply call this); false if it has no hull uniforms.
 static func bind(m: ShaderMaterial) -> bool:
-	if m == null or m.shader == null or not m.shader.code.contains("hull_p"):
+	if m == null or m.shader == null or not m.shader.code.contains("hull_mask"):
 		return false
-	m.set_shader_parameter("hull_p", _p)
-	m.set_shader_parameter("hull_s", _s)
 	m.set_shader_parameter("hull_n", _n)
+	m.set_shader_parameter("hull_o", Vector2i(_ox, _oz))
+	if _mask != null:
+		m.set_shader_parameter("hull_mask", _mask)
 	return true
+
+
+## One texel per MASK_GRID cell over the shifted hulls. Red 255 inside, 200 within FINE_GAP, 0 farther (the bake decides).
+static func _mask_of(polys: Array[PackedVector2Array]) -> Texture2D:
+	if polys.is_empty():
+		return null
+	var min_x: float = 1.0e9
+	var min_z: float = 1.0e9
+	var max_x: float = -1.0e9
+	var max_z: float = -1.0e9
+	for poly in polys:
+		for v in poly:
+			min_x = minf(min_x, v.x)
+			min_z = minf(min_z, v.y)
+			max_x = maxf(max_x, v.x)
+			max_z = maxf(max_z, v.y)
+	var pad: float = FINE_GAP + (1.0 / MASK_GRID)
+	_ox = int(floor((min_x - pad) * MASK_GRID))
+	_oz = int(floor((min_z - pad) * MASK_GRID))
+	var ix1: int = int(floor((max_x + pad) * MASK_GRID))
+	var iz1: int = int(floor((max_z + pad) * MASK_GRID))
+	var w: int = mini(4096, ix1 - _ox + 1)
+	var h: int = mini(4096, iz1 - _oz + 1)
+	if w < 1 or h < 1:
+		return null
+	var buf: PackedByteArray = PackedByteArray()
+	buf.resize(w * h * 4)
+	for poly in polys:
+		_stamp(buf, w, h, poly)
+	var img: Image = Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, buf)
+	return ImageTexture.create_from_image(img)
+
+
+static func _stamp(buf: PackedByteArray, w: int, rows: int, poly: PackedVector2Array) -> void:
+	var n: int = poly.size()
+	if n < 3:
+		return
+	_fill_inside(buf, w, rows, poly)
+	for i in n:
+		_band(buf, w, rows, poly[i], poly[(i + 1) % n])
+
+
+## Cell centres on or inside the convex hull. A horizontal line through the centre crosses two edges.
+static func _fill_inside(buf: PackedByteArray, w: int, rows: int, poly: PackedVector2Array) -> void:
+	var n: int = poly.size()
+	var min_z: float = 1.0e9
+	var max_z: float = -1.0e9
+	for v in poly:
+		min_z = minf(min_z, v.y)
+		max_z = maxf(max_z, v.y)
+	var iz0: int = maxi(0, int(floor(min_z * MASK_GRID)) - _oz)
+	var iz1: int = mini(rows - 1, int(floor(max_z * MASK_GRID)) - _oz)
+	for iz in range(iz0, iz1 + 1):
+		var cz: float = (float(iz + _oz) + 0.5) / MASK_GRID
+		var x_lo: float = 1.0e9
+		var x_hi: float = -1.0e9
+		var hits: int = 0
+		for i in n:
+			var a: Vector2 = poly[i]
+			var b: Vector2 = poly[(i + 1) % n]
+			if not ((a.y <= cz and b.y > cz) or (b.y <= cz and a.y > cz)):
+				continue
+			var x: float = a.x + (cz - a.y) / (b.y - a.y) * (b.x - a.x)
+			x_lo = minf(x_lo, x)
+			x_hi = maxf(x_hi, x)
+			hits += 1
+		if hits < 2 or x_hi < x_lo:
+			continue
+		var ix_a: int = maxi(0, int(ceil(x_lo * MASK_GRID - 0.5)) - _ox)
+		var ix_b: int = mini(w - 1, int(floor(x_hi * MASK_GRID - 0.5)) - _ox)
+		for ix in range(ix_a, ix_b + 1):
+			var at: int = (iz * w + ix) * 4
+			buf[at] = 255
+			buf[at + 1] = 255
+			buf[at + 2] = 255
+			buf[at + 3] = 255
+
+
+## Cells within FINE_GAP of one edge, still outside every hull, stay in the sun band.
+static func _band(buf: PackedByteArray, w: int, rows: int, a: Vector2, b: Vector2) -> void:
+	var ix0: int = maxi(0, int(floor((minf(a.x, b.x) - FINE_GAP) * MASK_GRID)) - _ox)
+	var iz0: int = maxi(0, int(floor((minf(a.y, b.y) - FINE_GAP) * MASK_GRID)) - _oz)
+	var ix1: int = mini(w - 1, int(floor((maxf(a.x, b.x) + FINE_GAP) * MASK_GRID)) - _ox)
+	var iz1: int = mini(rows - 1, int(floor((maxf(a.y, b.y) + FINE_GAP) * MASK_GRID)) - _oz)
+	var ab: Vector2 = b - a
+	var den: float = ab.length_squared()
+	for iz in range(iz0, iz1 + 1):
+		var cz: float = (float(iz + _oz) + 0.5) / MASK_GRID
+		for ix in range(ix0, ix1 + 1):
+			var at: int = (iz * w + ix) * 4
+			if buf[at] != 0:
+				continue
+			var q: Vector2 = Vector2((float(ix + _ox) + 0.5) / MASK_GRID, cz)
+			var along: float = 0.0
+			if den > 1.0e-10:
+				along = clampf((q - a).dot(ab) / den, 0.0, 1.0)
+			if q.distance_to(a + ab * along) <= FINE_GAP:
+				# 200 stays between the 0.25 and 0.75 cuts if the sampler is linear or sRGB.
+				buf[at] = 200
+				buf[at + 1] = 200
+				buf[at + 2] = 200
+				buf[at + 3] = 255
 
 ## CPU twin of GLSL hub_sun on the unshifted hulls: 1 sun, 0 shade, at ground point q with bake light ll.
 static func sun_at(q: Vector2, ll: float) -> float:
