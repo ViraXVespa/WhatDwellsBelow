@@ -76,9 +76,16 @@ static func _campaign_body() -> bool:
 	Campaign.mark("longbow", clear_dir)
 	var done_ok: bool = Campaign.next_weapon(clear_dir) == ""
 	Campaign.reset(clear_dir)
-	var ok: bool = skill_ok and gold_ok and gear_n == 3 and picked == "longbow" and seeded == "great_axe" and floor_ok and limit_ok and skip_ok and done_ok
+	var was_deep: int = int(App.prog.deepest)
+	App.prog.deepest = 1
+	var start_low: bool = Campaign.dive_floor() == 1
+	App.prog.deepest = 5
+	var start_high: bool = Campaign.dive_floor() == 4
+	App.prog.deepest = was_deep
+	var start_ok: bool = start_low and start_high
+	var ok: bool = skill_ok and gold_ok and gear_n == 3 and picked == "longbow" and seeded == "great_axe" and floor_ok and limit_ok and skip_ok and done_ok and start_ok
 	if not ok:
-		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s floor=%s limit=%s skip=%s done=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded, str(floor_ok), str(limit_ok), str(skip_ok), str(done_ok)])
+		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s floor=%s limit=%s skip=%s done=%s start=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded, str(floor_ok), str(limit_ok), str(skip_ok), str(done_ok), str(start_ok)])
 	return ok
 
 static func _one_file_snap(path: String) -> Dictionary:

@@ -4,7 +4,7 @@ id: local-ai-tuner
 owner: bot
 status: open
 done-when: Phase 1 of both parts landed (each slice meets its measure) plus the one-command runner Vira launches herself.
-resume: python tools/docs.py task show local-ai-tuner, then start only after Vira says go.
+resume: python tools/local-ai-tuner.py
 
 ## Intent
 Tooling only, approved by Vira. There are TWO separate local models.
@@ -40,4 +40,4 @@ Long runs happen on Vira's own dedicated PC. She launches them herself with one 
 - One-command runner (e.g. `python tools/local-ai-tuner.py`) that starts headless playtests, optionally the CV checker, and writes the report + recommended tunables file.
 
 ## Hold
-Blocked: wait until Vira finishes this week's recording and playtesting tweaks with Grok Build and says go. (Status stays open with this hold: `blocked` needs a task id and the wait is on Vira.)
+Vira said go on 2026-11-03. The runner is `python tools/local-ai-tuner.py`. Status stays open until a live run on her PC reports the held-out rates and a recommended config that beats the current one across repeat seeds.

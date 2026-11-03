@@ -11,6 +11,8 @@ const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PtGate := preload("res://scripts/debug/playtest/pt_gate.gd")
 const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
+const HumanLog := preload("res://scripts/debug/playtest/human_log.gd")
 const THINK_DT := 0.12
 
 var history: Array = []
@@ -68,6 +70,12 @@ func _ready() -> void:
 	PlaytestSim.load_coefs(self)
 	if not recs["fresh"].is_empty() or not history.is_empty():
 		PlaytestSim.build_recs(self)
+	if CliArgs.has("--wdb-pt-rl"):
+		var sync_script: GDScript = load("res://scripts/debug/playtest/rl_sync.gd") as GDScript
+		if sync_script != null:
+			var sync: Node = sync_script.new() as Node
+			if sync != null:
+				add_child(sync)
 
 func interrupt() -> void:
 	interrupted = true
@@ -223,6 +231,7 @@ func perf_report() -> Dictionary:
 
 func _physics_process(delta: float) -> void:
 	if not live_running:
+		HumanLog.tick(self, delta)
 		return
 	var t0: int = Time.get_ticks_usec()
 	_tick(delta)

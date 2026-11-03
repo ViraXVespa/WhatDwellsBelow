@@ -6,6 +6,7 @@ extends Object
 ## Debug only: run `godot --headless --path . -- --wdb-playtest-live-smoke --wdb-seed=42`.
 
 const CliArgs := preload("res://scripts/app/cli_args.gd")
+const Trial := preload("res://scripts/debug/playtest/trial_bal.gd")
 const FLAG := "--wdb-playtest-live-smoke"
 const CAMPAIGN_FLAG := "--wdb-pt-campaign"
 
@@ -22,6 +23,7 @@ static func _str(key: String, fallback: String) -> String:
 	return fallback
 
 static func start() -> void:
+	Trial.apply()
 	App.character_type = "male"
 	App.character_chosen = true
 	var sec: float = float(_str("--wdb-pt-sec", "30"))

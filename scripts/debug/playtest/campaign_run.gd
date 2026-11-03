@@ -1,6 +1,6 @@
 extends Object
 
-## Campaign series: no acting-time end, floor-5 clears, vendor buy, crystal enter.
+## Campaign series: no acting-time end, floor-5 clears, vendor buy, crystal enter one floor below deepest.
 
 const Store := preload("res://scripts/data/save_store.gd")
 const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
@@ -15,6 +15,9 @@ const DEFAULT_DIR := "user://playtest/campaign"
 
 static func ignores_limit(slot_name: String) -> bool:
 	return slot_name == "campaign"
+
+static func dive_floor() -> int:
+	return maxi(1, int(App.prog.deepest) - 1)
 
 static func floor_cleared(floor_n: int, boss_dead: bool) -> bool:
 	if floor_n > 5:
@@ -116,7 +119,6 @@ static func hub_enter(pt: Node) -> void:
 		job["hub_forged"] = true
 		pt.job = job
 	buy_supplies()
-	Store.save_slot("campaign")
 	enter_from_crystal(str(job.get("weapon", "great_axe")), str(job.get("tool", "pickaxe")))
 
 static func enter_from_crystal(wpn: String, tool: String) -> void:
@@ -125,13 +127,15 @@ static func enter_from_crystal(wpn: String, tool: String) -> void:
 		tool_id = "pickaxe"
 	App.prog.tool_type = tool_id
 	App.prog.pick_weapon = wpn
-	App.prog.start_floor = 1
+	App.prog.start_floor = dive_floor()
 	App.weapon = wpn
 	Board.pending_kit.clear()
 	for s: String in App.prog.SLOTS:
 		var it: Dictionary = App.prog.slots.get(s, {})
 		if it is Dictionary and not it.is_empty():
 			Board.pending_kit[s] = it.duplicate(true)
+	# After the floor write, before the deferred enter, so the slot matches the dive.
+	Store.save_slot("campaign")
 	# Deferred, same as the perf sweep: a bare call from the playtest tick
 	# stops at the first await inside the enter cover.
 	App.call_deferred("enter_dungeon")

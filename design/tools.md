@@ -5,7 +5,7 @@ Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)
 
 The door for every tool under `tools/`: which command for which job, the rules, and the CLI contract. Open the one sibling the job names; it holds exact commands (Jobs) and the catalog rows. `check.py tool-docs` keeps the rows in step with the entry tools.
 
-**Layout.** 13 entry tools at `tools/` top level, each a list of subcommands: `shots` `bake` `perf` `gate` `check` `find` `lint` `docs` `media` `release` `session` `slice`, plus `bot_status`. The work lives in `tools/lib/<area>/` (one module per subcommand); data in `tools/data/`. You never need to open a module to run it (`tools-libs.md`).
+**Layout.** 14 entry tools at `tools/` top level. Twelve are a list of subcommands: `shots` `bake` `perf` `gate` `check` `find` `lint` `docs` `media` `release` `session` `slice`. `bot_status` and `local-ai-tuner` are single-module entries. The work lives in `tools/lib/<area>/` (one module per subcommand); data in `tools/data/`. You never need to open a module to run it (`tools-libs.md`).
 
 Commands: `python tools/E.py SUB ...` (the Bot's box: `python3`). `python tools/E.py` lists the subcommands; `python tools/E.py SUB --help` gives the flags. Surf: **B** Bot (Linux box), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run it.
 
@@ -20,6 +20,7 @@ Commands: `python tools/E.py SUB ...` (the Bot's box: `python3`). `python tools/
 | Light, ground wear, frame art, actor sole bakes | `bake.py camp`, `bake.py soles`, `bake.py check`, `bake.py frames --check` | `tools-shots.md` |
 | Frame time, hitches, load time, web perf | `perf.py hub --leg desktop`; `perf.py dungeon --leg desktop`; `perf.py sweep --leg desktop`; `perf.py web --site DIR --flow F`; `perf.py load --leg hub` | `tools-perf.md` |
 | Playtest curve | `perf.py curve` | `tools-perf.md` |
+| Local playtester and recommend-only balance tuner | `local-ai-tuner.py` | `tools-gates.md` |
 | Find code, a function, a route, a tunable, a last run | `find.py xref TEXT`; `find.py func PATH NAME`; `find.py route --job door.job`; `docs.py tunable get KEY`; `session.py summary JOB` | `tools-lookup.md` |
 | Size, duplicates, dead code, splits, doc edits | `check.py script-cap --bot --sweep`; `lint.py dupes`; `lint.py unused`; `lint.py split FILE --list`; `docs.py patch` | `tools-lint.md` |
 | Tasks, code map, routing docs | `docs.py task list`; `docs.py code-map row --path P`; `check.py load-graph` | `tools-gates.md` |
