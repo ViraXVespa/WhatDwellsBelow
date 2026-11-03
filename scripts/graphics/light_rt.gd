@@ -38,6 +38,10 @@ static var _sn := 0
 static var _casts: Array[Dictionary] = []
 static var _casts_ver := 0
 static var hub_crystal := Vector2.ZERO
+## Sweep only. Off leaves live samples untimed. mark_us and mark_n are this frame's total.
+static var mark_on: bool = false
+static var mark_us: int = 0
+static var mark_n: int = 0
 static var _hub_layout: Node
 
 static func texture() -> Texture2D:
@@ -113,7 +117,28 @@ static func _push() -> void:
 		mat.set_shader_parameter("light_span", span)
 		keep.append(mat)
 	_mats = keep
+
+static func arm_mark() -> void:
+	mark_on = true
+	mark_us = 0
+	mark_n = 0
+
+static func mark_off() -> void:
+	mark_on = false
+
+static func mark_ms() -> float:
+	return float(mark_us) / 1000.0
+
 static func sample_xz(world: Vector2) -> Color:
+	if not mark_on:
+		return _sample_body(world)
+	var t0: int = Time.get_ticks_usec()
+	var sampled: Color = _sample_body(world)
+	mark_us += Time.get_ticks_usec() - t0
+	mark_n += 1
+	return sampled
+
+static func _sample_body(world: Vector2) -> Color:
 	# Same luv as the floor and wall shaders. Bilinear across texels.
 	if _img == null:
 		return Color.WHITE

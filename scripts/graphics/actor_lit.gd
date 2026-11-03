@@ -20,6 +20,9 @@ const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 static var _shade: Shader
 ## Debug plant (hub_shadow_check/feet_px.gd): the higher standing foot treated as raised (the one-foot-off of 20611abf).
 static var plant_flat := false
+## Sweep only. Off leaves live frames untimed. mark_us is the sum of this frame's _process.
+static var mark_on: bool = false
+static var mark_us: int = 0
 
 var spr: Sprite3D
 var marks: Array[MeshInstance3D] = []
@@ -76,7 +79,25 @@ func _ready() -> void:
 		_held.append(false)
 		_rank_at.append(slot)
 
+static func arm_mark() -> void:
+	mark_on = true
+	mark_us = 0
+
+static func mark_off() -> void:
+	mark_on = false
+
+static func mark_ms() -> float:
+	return float(mark_us) / 1000.0
+
 func _process(delta: float) -> void:
+	if not mark_on:
+		_tick(delta)
+		return
+	var t0: int = Time.get_ticks_usec()
+	_tick(delta)
+	mark_us += Time.get_ticks_usec() - t0
+
+func _tick(delta: float) -> void:
 	if spr == null or not is_instance_valid(spr):
 		queue_free()
 		return

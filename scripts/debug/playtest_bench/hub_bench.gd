@@ -183,6 +183,14 @@ func _on_post_draw() -> void:
 	_post_us = now
 
 func _process(delta: float) -> void:
+	if not Sweep.active():
+		_step(delta)
+		return
+	var t0: int = Time.get_ticks_usec()
+	_step(delta)
+	HitchLog.set_bench_ms(float(Time.get_ticks_usec() - t0) / 1000.0)
+
+func _step(delta: float) -> void:
 	if Sweep.active() and _done:
 		return
 	if not Sweep.active():

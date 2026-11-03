@@ -7,11 +7,16 @@ extends Node
 ## Dispel is the player's exit, then the recap camp handoff (wake cover, go_camp).
 ## Frames count while camp or the dungeon is showing and the loader bar is down.
 ## HB: seg=<place><n> is that stretch. The last fps_pct line is the whole run.
+## tree_ms splits into script_ms, queue_ms, and tail_ms. The sweep node stays at priority 0.
+## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
+## and sample_ms (LightRt.sample_xz, also counted inside lit_ms).
 
 const FLAG := "--wdb-perf-sweep"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 const ST_HUB := 0
 const ST_DUNG := 1
@@ -20,6 +25,9 @@ const ST_BACK := 3
 
 const HARD_SEC := 900.0
 const LOAD_SEC := 240.0
+## Last idle _process. The sweep node stays at the default priority. Moving that
+## node later made tree_ms collapse into after_ms. This probe only brackets tree_ms.
+const TAIL_PRIORITY := 1000000
 
 static var _inst: Node = null
 
@@ -88,6 +96,10 @@ var _proc_us: int = 0
 var _pre_us: int = 0
 var _post_us: int = 0
 var _tree_ms: float = -1.0
+var _script_ms: float = -1.0
+var _queue_ms: float = -1.0
+var _tail_ms: float = -1.0
+var _tail: _TreeTail = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -98,22 +110,45 @@ func _ready() -> void:
 		RenderingServer.frame_pre_draw.connect(_on_pre_draw)
 	if not RenderingServer.frame_post_draw.is_connected(_on_post_draw):
 		RenderingServer.frame_post_draw.connect(_on_post_draw)
+	var tail: _TreeTail = _TreeTail.new()
+	tail.name = "TreeTail"
+	tail.process_mode = Node.PROCESS_MODE_ALWAYS
+	tail.process_priority = TAIL_PRIORITY
+	_tail = tail
+	add_child(tail)
 	_vsync_off()
 
 func _on_pre_draw() -> void:
 	var now: int = Time.get_ticks_usec()
 	if _proc_us > 0:
 		_tree_ms = float(now - _proc_us) / 1000.0
+	_script_ms = -1.0
+	_queue_ms = -1.0
+	_tail_ms = -1.0
+	if not _done and _tail != null and _proc_us > 0:
+		var script_us: int = _tail.script_us
+		if script_us >= _proc_us:
+			_script_ms = float(script_us - _proc_us) / 1000.0
+			var queue_us: int = _tail.queue_us
+			if queue_us >= script_us:
+				_queue_ms = float(queue_us - script_us) / 1000.0
+				_tail_ms = float(now - queue_us) / 1000.0
+			else:
+				_tail_ms = float(now - script_us) / 1000.0
 	_pre_us = now
 
 func _on_post_draw() -> void:
 	var now: int = Time.get_ticks_usec()
 	HitchLog.set_tree_ms(_tree_ms)
+	HitchLog.set_tree_split(_script_ms, _queue_ms, _tail_ms)
+	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n)
 	HitchLog.set_submit_ms(float(now - _pre_us) / 1000.0)
 	_post_us = now
 
 func _process(delta: float) -> void:
 	if _done:
+		ActorLit.mark_off()
+		LightRt.mark_off()
 		return
 	var now: int = Time.get_ticks_usec()
 	if _post_us > 0:
@@ -122,6 +157,9 @@ func _process(delta: float) -> void:
 			after_ms = 0.0
 		HitchLog.set_after_ms(after_ms)
 	_proc_us = now
+	HitchLog.set_bench_ms(-1.0)
+	ActorLit.arm_mark()
+	LightRt.arm_mark()
 	_post_t += delta
 	if _post_t >= 0.5:
 		_post_t = 0.0
@@ -386,3 +424,18 @@ func _pct(frames: int, slow: int) -> float:
 	if frames <= 0:
 		return 100.0
 	return snappedf(100.0 * float(frames - slow) / float(frames), 0.1)
+
+## End of idle _process, then the deferred flush. pre_draw reads these against the sweep stamp.
+class _TreeTail extends Node:
+	var script_us: int = 0
+	var queue_us: int = 0
+
+	func _process(_delta: float) -> void:
+		var sweep: Node = get_parent()
+		if sweep == null or bool(sweep.get("_done")):
+			return
+		script_us = Time.get_ticks_usec()
+		call_deferred("_stamp_queue")
+
+	func _stamp_queue() -> void:
+		queue_us = Time.get_ticks_usec()

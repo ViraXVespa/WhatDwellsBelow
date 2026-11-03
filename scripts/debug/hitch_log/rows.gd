@@ -11,6 +11,16 @@ static var _play_s: float = 0.0
 static var _submit_ms: float = -1.0
 static var _tree_ms: float = -1.0
 static var _after_ms: float = -1.0
+## Sweep only. -1 leaves the keys off the row (hub and dungeon benches).
+static var _script_ms: float = -1.0
+static var _queue_ms: float = -1.0
+static var _tail_ms: float = -1.0
+## Sweep only. bench_ms is the hub bench _process. lit_ms is every ActorLit _process.
+## sample_ms is LightRt.sample_xz. -1 leaves the keys off the row.
+static var _bench_ms: float = -1.0
+static var _lit_ms: float = -1.0
+static var _sample_ms: float = -1.0
+static var _sample_n: int = -1
 static var _proc_held: int = 0
 static var _t0_ms: int = 0
 static var _whys: PackedStringArray = PackedStringArray()
@@ -71,6 +81,20 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 	row["tree_ms"] = snappedf(_tree_ms, 0.1)
 	row["submit_ms"] = snappedf(_submit_ms, 0.1)
 	row["after_ms"] = snappedf(_after_ms, 0.1)
+	if _script_ms >= 0.0:
+		row["script_ms"] = snappedf(_script_ms, 0.1)
+	if _queue_ms >= 0.0:
+		row["queue_ms"] = snappedf(_queue_ms, 0.1)
+	if _tail_ms >= 0.0:
+		row["tail_ms"] = snappedf(_tail_ms, 0.1)
+	if _bench_ms >= 0.0:
+		row["bench_ms"] = snappedf(_bench_ms, 0.1)
+	if _lit_ms >= 0.0:
+		row["lit_ms"] = snappedf(_lit_ms, 0.1)
+	if _sample_ms >= 0.0:
+		row["sample_ms"] = snappedf(_sample_ms, 0.1)
+	if _sample_n >= 0:
+		row["sample_n"] = _sample_n
 	if _harness_on:
 		row["pt_ms"] = _pt_ms
 	return row
@@ -136,6 +160,20 @@ static func set_submit_ms(ms: float) -> void:
 
 static func set_after_ms(ms: float) -> void:
 	_after_ms = ms
+
+## script_ms + queue_ms + tail_ms partition tree_ms. A negative part stays off the row.
+static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) -> void:
+	_script_ms = script_ms
+	_queue_ms = queue_ms
+	_tail_ms = tail_ms
+
+static func set_bench_ms(ms: float) -> void:
+	_bench_ms = ms
+
+static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int) -> void:
+	_lit_ms = lit_ms
+	_sample_ms = sample_ms
+	_sample_n = sample_n
 
 static func frame_submit_ms() -> float:
 	return _submit_ms
