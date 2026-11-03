@@ -194,7 +194,7 @@ def _median(vals: list[float]) -> float:
 
 def _split_suffix(row: dict) -> str:
     parts: list[str] = []
-    for key in ("script_ms", "queue_ms", "tail_ms", "bench_ms", "lit_ms", "sample_ms", "sample_n"):
+    for key in ("script_ms", "queue_ms", "tail_ms", "bench_ms", "lit_ms", "sample_ms", "sample_n", "tint_ms", "drive_ms", "geo_ms", "sync_ms", "foot_ms", "quad_ms", "shade_ms"):
         if key in row:
             parts.append("%s=%s" % (key, row.get(key, "")))
     if not parts:
@@ -225,6 +225,13 @@ def _run_line(rows: list[dict]) -> str:
         "lit_ms": [],
         "sample_ms": [],
         "sample_n": [],
+        "tint_ms": [],
+        "drive_ms": [],
+        "geo_ms": [],
+        "sync_ms": [],
+        "foot_ms": [],
+        "quad_ms": [],
+        "shade_ms": [],
     }
     for row in rows:
         try:

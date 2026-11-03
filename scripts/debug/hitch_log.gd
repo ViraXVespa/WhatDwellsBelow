@@ -73,8 +73,8 @@ static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) ->
 static func set_bench_ms(ms: float) -> void:
 	Rows.set_bench_ms(ms)
 
-static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int) -> void:
-	Rows.set_lit_mark(lit_ms, sample_ms, sample_n)
+static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0) -> void:
+	Rows.set_lit_mark(lit_ms, sample_ms, sample_n, tint_ms, drive_ms, geo_ms, sync_ms, foot_ms, quad_ms, shade_ms)
 
 static func frame_submit_ms() -> float:
 	return Rows.frame_submit_ms()

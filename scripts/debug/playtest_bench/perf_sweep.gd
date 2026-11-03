@@ -9,7 +9,9 @@ extends Node
 ## HB: seg=<place><n> is that stretch. The last fps_pct line is the whole run.
 ## tree_ms splits into script_ms, queue_ms, and tail_ms. The sweep node stays at priority 0.
 ## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
-## and sample_ms (LightRt.sample_xz, also counted inside lit_ms).
+## and sample_ms (LightRt.sample_xz, also counted inside tint_ms).
+## lit_ms further splits into tint_ms, drive_ms, geo_ms, sync_ms, and shade_ms.
+## foot_ms and quad_ms sit inside sync_ms.
 
 const FLAG := "--wdb-perf-sweep"
 const CliArgs := preload("res://scripts/app/cli_args.gd")
@@ -141,7 +143,8 @@ func _on_post_draw() -> void:
 	var now: int = Time.get_ticks_usec()
 	HitchLog.set_tree_ms(_tree_ms)
 	HitchLog.set_tree_split(_script_ms, _queue_ms, _tail_ms)
-	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n)
+	var parts: PackedFloat32Array = ActorLit.parts_ms()
+	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6])
 	HitchLog.set_submit_ms(float(now - _pre_us) / 1000.0)
 	_post_us = now
 

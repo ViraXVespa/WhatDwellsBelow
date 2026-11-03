@@ -4,6 +4,7 @@ extends Object
 
 static var _spans: Dictionary = {}
 static var _sole_at: Dictionary = {}
+static var _foot_at: Dictionary = {}
 
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
@@ -128,13 +129,18 @@ const WHEEL_K := 0.08
 const PROFILE_BASE := 0.9
 ## Footprint depth in texels: rows from a profile base's widest row down to its sole (the curved ground contact).
 static func _foot(tex: Texture2D) -> int:
+	var id: int = tex.get_rid().get_id()
+	if _foot_at.has(id):
+		return int(_foot_at[id])
 	var img: Image = tex.get_image()
 	if img == null:
 		return 0
 	if img.is_compressed():
 		img.decompress()
 	var u: Rect2i = img.get_used_rect()
-	return maxi(0, u.end.y - _body_end(img, PROFILE_BASE))
+	var n: int = maxi(0, u.end.y - _body_end(img, PROFILE_BASE))
+	_foot_at[id] = n
+	return n
 
 static func _solid(tex: Texture2D, shape: String = "profile") -> Texture2D:
 	var key: String = "%d:%s" % [tex.get_rid().get_id(), shape]

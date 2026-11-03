@@ -16,11 +16,19 @@ static var _script_ms: float = -1.0
 static var _queue_ms: float = -1.0
 static var _tail_ms: float = -1.0
 ## Sweep only. bench_ms is the hub bench _process. lit_ms is every ActorLit _process.
-## sample_ms is LightRt.sample_xz. -1 leaves the keys off the row.
+## sample_ms is LightRt.sample_xz (inside tint_ms). foot_ms and quad_ms sit inside sync_ms.
+## -1 leaves the keys off the row.
 static var _bench_ms: float = -1.0
 static var _lit_ms: float = -1.0
 static var _sample_ms: float = -1.0
 static var _sample_n: int = -1
+static var _tint_ms: float = -1.0
+static var _drive_ms: float = -1.0
+static var _geo_ms: float = -1.0
+static var _sync_ms: float = -1.0
+static var _foot_ms: float = -1.0
+static var _quad_ms: float = -1.0
+static var _shade_ms: float = -1.0
 static var _proc_held: int = 0
 static var _t0_ms: int = 0
 static var _whys: PackedStringArray = PackedStringArray()
@@ -95,6 +103,20 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["sample_ms"] = snappedf(_sample_ms, 0.1)
 	if _sample_n >= 0:
 		row["sample_n"] = _sample_n
+	if _tint_ms >= 0.0:
+		row["tint_ms"] = snappedf(_tint_ms, 0.1)
+	if _drive_ms >= 0.0:
+		row["drive_ms"] = snappedf(_drive_ms, 0.1)
+	if _geo_ms >= 0.0:
+		row["geo_ms"] = snappedf(_geo_ms, 0.1)
+	if _sync_ms >= 0.0:
+		row["sync_ms"] = snappedf(_sync_ms, 0.1)
+	if _foot_ms >= 0.0:
+		row["foot_ms"] = snappedf(_foot_ms, 0.1)
+	if _quad_ms >= 0.0:
+		row["quad_ms"] = snappedf(_quad_ms, 0.1)
+	if _shade_ms >= 0.0:
+		row["shade_ms"] = snappedf(_shade_ms, 0.1)
 	if _harness_on:
 		row["pt_ms"] = _pt_ms
 	return row
@@ -170,10 +192,17 @@ static func set_tree_split(script_ms: float, queue_ms: float, tail_ms: float) ->
 static func set_bench_ms(ms: float) -> void:
 	_bench_ms = ms
 
-static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int) -> void:
+static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0) -> void:
 	_lit_ms = lit_ms
 	_sample_ms = sample_ms
 	_sample_n = sample_n
+	_tint_ms = tint_ms
+	_drive_ms = drive_ms
+	_geo_ms = geo_ms
+	_sync_ms = sync_ms
+	_foot_ms = foot_ms
+	_quad_ms = quad_ms
+	_shade_ms = shade_ms
 
 static func frame_submit_ms() -> float:
 	return _submit_ms
