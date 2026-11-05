@@ -145,9 +145,8 @@ static func process_floor(host: Node, delta: float) -> void:
 	if host.stairs and host.get("stairs_dirty"):
 		host.stairs.refresh()
 		host.stairs_dirty = false
-	if host.get("hint_dirty"):
-		host._refresh_hint()
-		host.hint_dirty = false
+	# HUD refresh: paints early-out; call every frame so bars/prompt/gem stay live
+	host._refresh_hint()
 	if t0 > 0:
 		floor_us += Time.get_ticks_usec() - t0
 
