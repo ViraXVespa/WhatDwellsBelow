@@ -12,16 +12,7 @@ const Pools := preload("res://scripts/graphics/light_rt/pools.gd")
 const TAP_BODY := """
 	vec2 span = max(light_span, vec2(0.001));
 	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
-	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
-	vec2 max_p = max(vec2(ts) - vec2(1.0001), vec2(0.0));
-	vec2 p = clamp(luv * vec2(ts) - vec2(0.5), vec2(0.0), max_p);
-	vec2 fr = fract(p);
-	ivec2 i0 = ivec2(floor(p));
-	ivec2 i1 = min(i0 + ivec2(1), ts - ivec2(1));
-	vec3 s00 = texelFetch(light_tex, i0, 0).rgb;
-	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
-	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
-	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
+	vec3 s = textureLod(light_tex, luv, 0.0).rgb;
 """
 ## Baked wear sheet (tools/bake.py ground): tileable, posterized, WEAR_PX_PER_M texels per metre. At wear 1 the
 ## darkest texel is WEAR_DEPTH darker (ground_wear 0.22 -> about 5%).
@@ -29,7 +20,7 @@ const WEAR_PATH := "res://assets/baked/ground_wear.png"
 const WEAR_PX_PER_M := 32.0
 const GROUND_WEAR_STAMP := "53a0e8143e252c4f"
 
-const TAP_MIX := "mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);\n"
+const TAP_MIX := "s;\n"
 
 static var _sh: Shader
 
@@ -95,10 +86,8 @@ void fragment() {
 	// Baked light per cell of the 1/82.6 m (player texel) (Chunky.GRID_M) ground grid (Chunky.GRID_M): the box average over the cell (2x2 bilinear
 	// taps at the quarter points), continuous values, so shade edges are blocky cells with smooth per-cell darkness.
 	vec2 cell0 = floor(xz * GRID) / GRID;
-	vec3 lit = vec3(0.0);
-	for (int t = 0; t < 4; t++) {
-		xz = cell0 + (vec2(float(t % 2), float(t / 2)) * 0.5 + 0.25) / GRID;
-""" + TAP_BODY + "		lit += 0.25 * " + TAP_MIX + """	}
+	xz = cell0 + 0.5 / GRID;
+""" + TAP_BODY + "		vec3 lit = " + TAP_MIX + """
 	float ll = max(max(lit.r, lit.g), lit.b);
 	float sun = hub_sun(cell0 + 0.5 / GRID, ll);
 	if (sun >= 0.0 && ll > 0.001) { // no colour exemption: the warm sun read as a lamp pool and left hull shade lit
