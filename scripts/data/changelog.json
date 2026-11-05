@@ -3,6 +3,84 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.5",
+			"points": [
+				{
+					"text": "Crystal safe zones now use Area3D volumes (no per-frame enemy walk)."
+				},
+				{
+					"text": "Telemetry fighting detection is event-driven; hitch and floor timing are debug-only; GUI focus release is one-shot."
+				},
+				{
+					"text": "Input and camp labels are event-driven (dirty-flag / custom setters)."
+				},
+				{
+					"text": "Remaining per-frame work converted to events, dirty flags, and one-shots."
+				},
+				{
+					"text": "Gem pulse restored via looping Tween (events set color/visibility only). Aim line updates only on direction change. Torch facing assigned once at placement from wall normal."
+				},
+				{
+					"text": "Added smoke_process.gd covering crystal volumes, telemetry, camp signals, gem Tween, aim line, plates, and torch facing."
+				},
+				{
+					"text": "Wired smoke_process.run into p7 and expanded asserts for process-cleanup rules."
+				},
+				{
+					"text": "Moved process smoke call to end of p7 so it actually runs during phase 7."
+				},
+				{
+					"text": "Expanded process smoke with p1/p3 hooks for aim, crystals, plates, and torches."
+				},
+				{
+					"text": "Full behavioral process-cleanup smoke coverage across phases 1, 3, and 7."
+				},
+				{
+					"text": "Completed full behavioral process-cleanup smoke coverage (crystal reverse/aggro, aim, plates, torch, depth, input, etc.)."
+				},
+				{
+					"text": "Fixed aim-line smoke (no fake Node3D) and made remaining checks real."
+				},
+				{
+					"text": "Completed remaining real behavioral checks for aim, plates, torch, and crystal aggro/lock."
+				},
+				{
+					"text": "Full remaining behavioral asserts (aim safe, crystal aggro/relocate, plate_held)."
+				},
+				{
+					"text": "Restored custom setters for interact_prompt and bank_* lost in the branch conflict resolution."
+				},
+				{
+					"text": "Restored missing attach_volume and two-arg relocate_inside so crystal volumes compile."
+				},
+				{
+					"text": "Crystal volumes ignore aggroed enemies; plates enter drives plate_held; smoke aim-line uses a real update_line stub."
+				},
+				{
+					"text": "Crystal volume handler now correctly ignores enemies with lock_target; smoke re-attaches before testing."
+				},
+				{
+					"text": "Crystal volume now ignores enemies marked aggro (meta or lock_target). Smoke uses meta for the test."
+				},
+				{
+					"text": "Finished task process-cleanup: Remove unnecessary per-frame work; convert to events and triggers."
+				},
+				{
+					"text": "process-cleanup: converted all remaining per-frame walks (crystal guard, plates, telemetry fighting, input, camp labels, gem pulse, aim line, torch facing) to event-driven volumes, custom setters, and dirty flags. Crystal volumes now reverse non-pursuing enemies and ignore aggroed ones. Smoke coverage added across phases 1/3/7 verifying the new paths."
+				},
+				{
+					"text": "Synced dungeon-crystals.md with event-driven Area3D SafeVolume implementation (no per-frame walk)."
+				},
+				{
+					"text": "Unified crystal SafeVolume to one SphereShape3D path with shared velocity-reverse handlers (no dual lambda)."
+				},
+				{
+					"text": "Process smoke now emits body_exited so crystal_volume_clear reports true."
+				}
+			],
+			"summary": "Finished task process-cleanup: Remove unnecessary per-frame work; convert to events and triggers."
+		},
+		{
 			"label": "0.10.4",
 			"points": [
 				{
