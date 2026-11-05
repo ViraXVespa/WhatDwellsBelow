@@ -27,3 +27,17 @@ A performance investigation found many `_process` and `process_floor` callbacks 
 - Crystal safe-zone rules work as described.
 - Release builds do not walk enemies for telemetry or run hitch/floor timing.
 - User confirms nothing feels broken.
+
+## Lessons
+## Lessons (from abandoned process-cleanup branch)
+
+- Use custom setters on the vars themselves so any assignment emits the signal. Do not require manual note_* calls at every site.
+- Event-driven means the work still happens on the change. Never delete the update; move it.
+- No stubs, TODOs, or pass placeholders. Every emit contains the working implementation or it does not claim the item.
+- Gem pulse/glow is an AnimationPlayer or looping Tween. Events only set color and visibility.
+- Dungeon HUD elements update individually (per-bar / per-label signals or direct calls). No single full-refresh poll in process_floor.
+- doc_patch.write_text must pass bom=False (never preserve U+FEFF).
+- Intermediate proves use gate.py import --no-static. Final slice may run the full static check.
+- Exit-code rule: ok if rc == 0 or body contains neither status=EXIT=1 nor status=EXIT=2.
+- Confirm plates/pressure, camp labels, dungeon HUD, and combat notes are fully wired before marking a slice done.
+- User confirmations (post-all-slices) remain required for gameplay feel.

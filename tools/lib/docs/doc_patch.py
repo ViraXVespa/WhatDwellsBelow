@@ -129,7 +129,7 @@ def write_text(path: Path, text: str) -> None:
     if DRY:
         print("  would write %s (%d bytes)" % (_shown(path), len(text.encode("utf-8"))))
         return
-    md.write_text(path, text, eol=EOL, mkdir=True)
+    md.write_text(path, text, eol=EOL, mkdir=True, bom=False)
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
 def _miss(where: str, old: str) -> str:
@@ -441,8 +441,12 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
     name = script or JOB_SCRIPTS.get(job)
     if not name:
         raise SystemExit(f"FAIL  unknown prove job {job!r}")
-    script_name, *extra_args = name.split()
-    cmd = [*boot.cmd(Path(script_name).stem, tools=root / "tools"), *extra_args]
+    parts = name.split()
+    if parts[0].endswith(".py"):
+        cmd = [sys.executable, str(root / "tools" / parts[0]), *parts[1:]]
+    else:
+        script_name, *extra_args = parts
+        cmd = [*boot.cmd(Path(script_name).stem, tools=root / "tools"), *extra_args]
     proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
     exact = run_log_lib.latest(root / "_logs" / job) or root / "_logs" / job / "summary.txt"
     hits = [exact] if exact.is_file() else sorted(
