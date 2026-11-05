@@ -171,6 +171,12 @@ def func_span(text: str, name: str) -> tuple[int, int]:
     except ValueError:
         raise SystemExit(f"FAIL  func {name} missing")
 
+
+def _verify_func_landed(path: Path, name: str) -> None:
+    text = read_text(path)
+    if func_count(text, name) < 1:
+        raise SystemExit("FAIL  func %s did not land in %s" % (name, path.as_posix()))
+
 def replace_func(path: Path, name: str, new_src: str) -> None:
     text = read_text(path)
     if func_count(text, name) > 1:
@@ -179,6 +185,7 @@ def replace_func(path: Path, name: str, new_src: str) -> None:
     start, end = func_span(text, name)
     body = new_src if new_src.endswith("\n") else new_src + "\n"
     write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
+    _verify_func_landed(path, name)
 
 def upsert_func(path: Path, name: str, new_src: str) -> None:
     text = read_text(path)
@@ -196,6 +203,7 @@ def upsert_func(path: Path, name: str, new_src: str) -> None:
         if ln.startswith("func ") or ln.startswith("static func "):
             at = i
     write_text(path, "".join(lines[:at]) + body + "".join(lines[at:]))
+    _verify_func_landed(path, name)
 
 def replace_block(path: Path, start_pred, end_pred, new_src: str) -> None:
     """Replace a line span. start_pred/end_pred are callables(line, index, lines)->bool."""
@@ -211,6 +219,7 @@ def replace_block(path: Path, start_pred, end_pred, new_src: str) -> None:
         end += 1
     body = new_src if new_src.endswith("\n") else new_src + "\n"
     write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
+    _verify_func_landed(path, name)
 
 def run_cmd(argv: list, cwd: Path | None = None):
     root = repo_root(cwd)
@@ -441,8 +450,14 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
     name = script or JOB_SCRIPTS.get(job)
     if not name:
         raise SystemExit(f"FAIL  unknown prove job {job!r}")
-    script_name, *extra_args = name.split()
-    cmd = [*boot.cmd(Path(script_name).stem, tools=root / "tools"), *extra_args]
+    parts = name.split()
+    if parts[0].endswith(".py"):
+        # entry.py [sub] style: tools/gate.py import
+        entry = parts[0][:-3]
+        cmd = [sys.executable, str(root / "tools" / parts[0]), *parts[1:]]
+    else:
+        script_name, *extra_args = parts
+        cmd = [*boot.cmd(Path(script_name).stem, tools=root / "tools"), *extra_args]
     proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
     exact = run_log_lib.latest(root / "_logs" / job) or root / "_logs" / job / "summary.txt"
     hits = [exact] if exact.is_file() else sorted(

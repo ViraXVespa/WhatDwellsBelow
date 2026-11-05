@@ -189,7 +189,7 @@ static func place_extras(host: Node) -> void:
 			continue
 		var cand: Dictionary = {"cell": c, "cl": cl, "gate": false, "room": r}
 		var cur: Dictionary = by_band.get(band, {})
-		if cur.is_empty() or _better_band(host, cand, cur, _band_target(band)):
+		if cur.is_empty() or closer_to_target_band(host, cand, cur, _band_target(band)):
 			by_band[band] = cand
 	var bands: Array = by_band.keys()
 	bands.sort()
@@ -237,7 +237,11 @@ static func _spawn_spots(host: Node, spots: Array, reset: bool) -> void:
 		if bool(s.gate):
 			host.data.crystal = cell
 
-static func _better_band(host: Node, cand: Dictionary, cur: Dictionary, target_cl: int) -> bool:
+static func relocate_if_already_on(crystal: Node) -> void:
+	if bool(crystal.get("crystal_on")):
+		CrystalNet.relocate_inside(crystal)
+
+static func closer_to_target_band(host: Node, cand: Dictionary, cur: Dictionary, target_cl: int) -> bool:
 	var d_new: int = absi(int(cand.cl) - target_cl)
 	var d_old: int = absi(int(cur.cl) - target_cl)
 	if d_new != d_old:

@@ -27,3 +27,18 @@ A performance investigation found many `_process` and `process_floor` callbacks 
 - Crystal safe-zone rules work as described.
 - Release builds do not walk enemies for telemetry or run hitch/floor timing.
 - User confirms nothing feels broken.
+
+## User confirmations (post-all-slices)
+User confirmations required after all process-cleanup slices land
+(cannot be fully proven in scratch):
+
+- Non-pursuing enemies reverse direction on volume enter (go back the way they came).
+- Pursuing / aggroed enemies ignore the volume and continue chasing.
+- Crystal activation and interaction blocked while volume enemy count > 0.
+- Already-activated crystals that appear with enemies inside relocate those enemies to a nearby valid off-screen floor cell.
+- Inactive crystals leave enemies in place for clearing.
+- No other gameplay regressions (movement, combat, interact, web/gamepad).
+- Release builds contain no enemy-group walks for telemetry or unconditional hitch/floor timing.
+
+## Progress
+Slice 4 emitted: reveal_around fire-once on cells; stairs/hint dirty-flagged; plates walk stubbed for object-trigger. Remaining: torch billboard, residual Touch-HUD/camp signals.

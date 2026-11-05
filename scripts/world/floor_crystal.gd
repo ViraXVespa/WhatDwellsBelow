@@ -46,6 +46,8 @@ func _title() -> String:
 		return tr("floor_crystal.entrance_crystal_cl") % crystal_cl
 	return tr("floor_crystal.floor_crystal_cl") % crystal_cl
 
+func _ensure_volume() -> void:
+	CrystalNet.setup_volume(self)
 func interact(who: Node) -> String:
 	if kind != "crystal":
 		return super.interact(who)

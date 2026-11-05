@@ -264,23 +264,8 @@ func warmup_restore() -> void:
 	Warm.restore(self)
 
 func _process(_delta: float) -> void:
-	if Engine.is_editor_hint():
-		return
-	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
-		if App.ui_open and ui and ui.visible:
-			ui.close_ui()
-			if App.has_method("swallow_close_pad"):
-				App.swallow_close_pad()
-		elif App.pause_menu and App.pause_menu.has_method("toggle"):
-			App.pause_menu.toggle()
-	if hint:
-		var hot := ""
-		if App.prog.food_t > 0.0:
-			hot = "  ·  Food HoT %ds" % int(ceil(App.prog.food_t))
-		hint.text = Prompts.fmt(tr("camp.placeholdia_bank_g_ore_wood")) % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
-	if prompt:
-		prompt.text = App.interact_prompt
-
+	# pause + labels now driven by Pad edges / signals
+	pass
 func ensure_dummy() -> void:
 	if dummy != null:
 		return

@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
@@ -193,7 +193,16 @@ static func blocked(action: String) -> bool:
 		return false
 	return action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]
 
+static var _dirty: bool = true
+
+static func mark_dirty() -> void:
+	_dirty = true
+
 static func tick() -> void:
+	if not _dirty:
+		return
+	_dirty = false
+
 	Touch.tick()
 	Look.tick(_dt())
 	if Touch.active():
