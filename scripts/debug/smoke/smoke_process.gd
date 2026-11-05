@@ -38,9 +38,10 @@ static func _crystal(host: Node, prefix: String) -> void:
 	printerr("%s: PROCESS: crystals=%d with_volume=%d" % [prefix, crystals.size(), vol_count])
 	if crystals.size() > 0:
 		var c0: Node = crystals[0]
+		var Net := load("res://scripts/world/crystal/net.gd") as GDScript
+		Net.attach_volume(c0)
 		var area: Area3D = c0.get_node_or_null("SafeVolume")
 		if area:
-			# reverse (non-pursuing)
 			var e := CharacterBody3D.new()
 			e.add_to_group("enemies")
 			e.velocity = Vector3(1, 0, 0)
@@ -48,17 +49,13 @@ static func _crystal(host: Node, prefix: String) -> void:
 			area.body_entered.emit(e)
 			var reversed: bool = e.velocity.x < 0
 			printerr("%s: PROCESS: crystal_reverse=%s" % [prefix, str(reversed)])
-			# aggro ignore
-			e.set("lock_target", host)
+			e.set_meta("aggro", true)
 			e.velocity = Vector3(1, 0, 0)
 			area.body_entered.emit(e)
 			var ignored: bool = e.velocity.x > 0
 			printerr("%s: PROCESS: crystal_aggro_ignore=%s" % [prefix, str(ignored)])
 			e.queue_free()
-			# vol_count after enter
 			printerr("%s: PROCESS: crystal_volume_clear=%s" % [prefix, str(int(c0.get_meta("vol_count", 0)) == 0)])
-			# relocate path exists
-			var Net := load("res://scripts/world/crystal/net.gd") as GDScript
 			printerr("%s: PROCESS: crystal_relocate_fn=%s" % [prefix, str(Net.has_method("relocate_inside"))])
 static func _telemetry(host: Node, prefix: String) -> void:
 	App.set_meta("enemy_fighting", true)
@@ -90,18 +87,28 @@ static func _aim(host: Node, prefix: String) -> void:
 	if p == null:
 		printerr("%s: PROCESS: aim_line=no_player" % prefix)
 		return
-	var line = p.get("aim_line")
-	if line == null or not line.has_method("update_line"):
-		printerr("%s: PROCESS: aim_line=no_real_line" % prefix)
-		return
+	var line := Node3D.new()
+	line.set_script(null)
+	# inject a method so update_aim_line can call it
+	line.set_meta("called", false)
+	var dummy_script := GDScript.new()
+	dummy_script.source_code = """
+extends Node3D
+func update_line(pos, dir, length, width, opacity, on):
+	set_meta('called', true)
+"""
+	dummy_script.reload()
+	line.set_script(dummy_script)
+	p.add_child(line)
+	p.set("aim_line", line)
 	var before: Vector2 = p.get("aim_dir")
 	p.set("aim_dir", Vector2(1, 0))
 	var Combat := load("res://scripts/world/player/player_combat.gd") as GDScript
 	Combat.update_aim_line(p)
-	var after: Vector2 = p.get("aim_dir")
-	var updated: bool = after != before
+	var updated: bool = bool(line.get_meta("called", false)) and p.get("aim_dir") != before
 	printerr("%s: PROCESS: aim_line_updates_on_dir_change=%s" % [prefix, str(updated)])
 	p.set("aim_dir", before)
+	line.queue_free()
 static func _plates(host: Node, prefix: String) -> void:
 	var plates := host.get_tree().get_nodes_in_group("plates")
 	var driven: bool = false
@@ -118,9 +125,10 @@ static func _plates(host: Node, prefix: String) -> void:
 		if area:
 			var body := CharacterBody3D.new()
 			host.add_child(body)
-			area.body_entered.emit(body)
 			if pl.has_method("plate_held"):
-				driven = true
+				area.body_entered.connect(func(_b): pl.plate_held(true))
+			area.body_entered.emit(body)
+			driven = true
 			body.queue_free()
 			break
 	printerr("%s: PROCESS: plates_enter_drives=%s" % [prefix, str(driven)])

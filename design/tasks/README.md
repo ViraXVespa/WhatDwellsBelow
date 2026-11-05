@@ -33,7 +33,6 @@ wall-merge-physics | build | open | Wall merge with smooth edges + physics and o
 ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 bug-report-relay | web | active | In-game bug reports via pause menu and a GitHub issue relay | -
-process-cleanup | web | open | Remove unnecessary per-frame work; convert to events and triggers | -
 hub-bake-checks | bot | open | Hub light leak + dumpster shadow, bake/shadow checks with planted faults | -
 local-ai-tuner | bot | open | Local AI: two models, a playtester and a balance tuner (recommend-only, runs on Vira's PC) | -
 shot-catalog-gaps | bot | open | Bottie Boop shot-catalog gaps: views, set/name fixes, new movies | -

@@ -250,23 +250,40 @@ static func _reverse(e: Node) -> void:
 		v = Vector3(e.aim.x, 0.0, e.aim.y) if e.get("aim") != null else Vector3.FORWARD
 	e.aim = Vector2(-v.x, -v.z).normalized()
 
-static func relocate_inside(crystal: Node) -> void:
-	var tree := _tree(crystal)
-	if tree == null:
+static func relocate_inside(crystal: Node, scene: Node = null) -> void:
+	var area: Area3D = crystal.get_node_or_null("SafeVolume")
+	if area == null:
 		return
-	var cell: Vector2i = Vector2i(crystal.get("crystal_cell"))
-	var rad: int = _arrive_r()
-	for e in tree.get_nodes_in_group("enemies"):
-		if e == null or not is_instance_valid(e):
+	for body in area.get_overlapping_bodies():
+		if not body.is_in_group("enemies"):
 			continue
-		var ec := Vector2i(int(e.global_position.x), int(e.global_position.z))
-		if absi(ec.x - cell.x) + absi(ec.y - cell.y) > rad:
-			continue
-		e.global_position += Vector3(float(rad) + 4.0, 0.0, 0.0)
-
+		# simple push out of the volume
+		body.global_position += Vector3(3, 0, 0)
 static func volume_clear(crystal: Node) -> bool:
 	return int(crystal.get_meta("vol_count", 0)) == 0
 
+static func attach_volume(crystal: Node) -> void:
+	var area: Area3D = crystal.get_node_or_null("SafeVolume")
+	if area == null:
+		area = Area3D.new()
+		area.name = "SafeVolume"
+		var shape := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = float(_arrive_r())
+		shape.shape = sphere
+		area.add_child(shape)
+		crystal.add_child(area)
+	for c in area.body_entered.get_connections():
+		area.body_entered.disconnect(c.callable)
+	area.body_entered.connect(func(body: Node):
+		if not body.is_in_group("enemies"):
+			return
+		var count: int = int(crystal.get_meta("vol_count", 0)) + 1
+		crystal.set_meta("vol_count", count)
+		var aggro: bool = body.get("lock_target") != null or bool(body.get_meta("aggro", false))
+		if not aggro:
+			body.velocity = -body.velocity
+	)
 static func warp_floor(n: int) -> void:
 	n = clampi(n, 1, maxi(1, int(App.prog.deepest)))
 	if n == App.floor_n:
