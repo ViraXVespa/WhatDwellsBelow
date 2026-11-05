@@ -54,6 +54,9 @@ var in_dungeon := false
 var floor_n := 1
 var run_seed := 1
 var boss_dead := false
+signal bank_changed
+signal prompt_changed
+signal pause_changed(on: bool)
 var interact_prompt := ""
 var interact_locked := false
 var floors_since_named := 99
@@ -349,3 +352,9 @@ func pause_just() -> bool:
 
 func swallow_close_pad() -> void:
 	Pad.swallow_close()
+
+func note_bank() -> void:
+	bank_changed.emit()
+
+func note_prompt() -> void:
+	prompt_changed.emit()

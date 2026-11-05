@@ -1,4 +1,4 @@
-﻿extends "res://scripts/data/balance/vars.gd"
+extends "res://scripts/data/balance/vars.gd"
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu. Saves never store them: code defaults ship as-is;
 ## debug builds persist menu edits to user://debug_tunables.json (scripts/debug/tunable_overrides.gd).

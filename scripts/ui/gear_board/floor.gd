@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Act := preload("res://scripts/ui/gear_board/board_act.gd")

@@ -82,10 +82,7 @@ static func _process(host: Node, delta: float) -> void:
 	App.Pad.tick()
 	Dbg.hitch_tick(host, delta)
 	DynRes.tick(host)
-	if host._in_world() and not host.ui_open:
-		var vp := host.get_viewport()
-		if vp and vp.gui_get_focus_owner() != null:
-			vp.gui_release_focus()
+	# focus release moved to one-shot on menu close / world enter
 	App.AppRun.tick(host, delta)
 
 static func _input(host: Node, event: InputEvent) -> void:
@@ -108,6 +105,11 @@ static func _press_focused(host: Node, event: InputEvent) -> void:
 	if f is BaseButton and not (f as BaseButton).disabled and not (f as BaseButton).toggle_mode:
 		(f as BaseButton).pressed.emit()
 		host.get_viewport().set_input_as_handled()
+
+static func release_focus_once(host: Node) -> void:
+	var vp := host.get_viewport()
+	if vp:
+		vp.gui_release_focus()
 
 static func _unhandled_input(host: Node, event: InputEvent) -> void:
 	App.Pad.note_event(event)

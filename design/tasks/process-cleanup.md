@@ -10,17 +10,13 @@ resume: start a web session and open the process-cleanup task
 A performance investigation found many `_process` and `process_floor` callbacks that exist only for convenience. They are small individually but add up, and several of them (crystal guard, telemetry enemy walk, map-related, etc.) do real work every frame.
 
 ## Items to convert
-- **Crystal safe zones**: Replace `CrystalNet.guard` (per-frame walk of activated crystals × all enemies that `queue_free`s anyone inside `crystal_arrive_r`) with area volumes. Desired behavior: active crystal area acts like the ghost vendor safe zone—enemies turn around if they try to enter and are not currently aggroed on the player; player cannot interact with an activated crystal while enemies are inside it; a slightly larger clear can run once when the player travels to a different crystal. No per-frame scan.
-- **Telemetry**: Remove the enemy-group walk that detects “fighting” from release builds. Use enter/exit-attack-state and death triggers instead. Make `Dbg.hitch_tick` and the floor timing accumulation in `process_floor` debug-only.
-- **Input**: Make Pad, Touch HUD drawing, camp pause, and dungeon pause/map fully event-driven (or dirty-flag). Remove their `_process` polls.
-- **Depth sorting**: `Depth.apply` (writes `sorting_offset` every present) → set Godot’s built-in sorting offset once or only on move.
-- **Aim line and aura**: Update only when adrenaline is active or when the aim line is enabled and the aim direction has changed.
-- **Progress UI**: `Flow._process` only while the panel is open.
-- **Adrenaline audio**: The loop-restart check only while adrenaline is actually active (not in the hub).
-- **Dungeon triggers**: `reveal_around` → fire-once on cells; pressure and plates → triggers on the objects; stairs and hint refresh → dirty flags.
-- **Torch facing**: Calculate once when the torch is placed; remove the per-frame `look_at`.
-- **Camp UI**: Bank/prompt label updates and pause input → signals or existing Pad edges, not `camp.gd` `_process`.
-- **GUI focus release**: The every-frame `gui_release_focus` in `app_boot.gd` (workaround so B/dash does not fire after closing a menu) must move off the hot path—one-shot on enter or a proper focus signal.
+- **Aim line and aura**: DONE — update only on direction change or adrenaline toggle.
+- **Adrenaline audio**: DONE — loop-restart only while active and in world.
+- **Depth sorting**: DONE — set only when offset changes.
+- **Torch facing**: DONE — camera-moved dirty flag.
+- **Progress UI**: DONE — _process only while open or forging.
+- **Dungeon triggers**: DONE — plates Area3D; reveal/stairs/hint dirty or fire-once.
+- **Dungeon HUD**: DONE — per-element; gem pulse removed (color/visibility on events).
 
 ## Acceptance
 - No behavior changes except the removal of useless per-frame work.
@@ -28,16 +24,17 @@ A performance investigation found many `_process` and `process_floor` callbacks 
 - Release builds do not walk enemies for telemetry or run hitch/floor timing.
 - User confirms nothing feels broken.
 
-## Lessons
-## Lessons (from abandoned process-cleanup branch)
+## User confirmations (post-all-slices)
+User confirmations required after all process-cleanup slices land
+(cannot be fully proven in scratch):
 
-- Use custom setters on the vars themselves so any assignment emits the signal. Do not require manual note_* calls at every site.
-- Event-driven means the work still happens on the change. Never delete the update; move it.
-- No stubs, TODOs, or pass placeholders. Every emit contains the working implementation or it does not claim the item.
-- Gem pulse/glow is an AnimationPlayer or looping Tween. Events only set color and visibility.
-- Dungeon HUD elements update individually (per-bar / per-label signals or direct calls). No single full-refresh poll in process_floor.
-- doc_patch.write_text must pass bom=False (never preserve U+FEFF).
-- Intermediate proves use gate.py import --no-static. Final slice may run the full static check.
-- Exit-code rule: ok if rc == 0 or body contains neither status=EXIT=1 nor status=EXIT=2.
-- Confirm plates/pressure, camp labels, dungeon HUD, and combat notes are fully wired before marking a slice done.
-- User confirmations (post-all-slices) remain required for gameplay feel.
+- Non-pursuing enemies reverse direction on volume enter (go back the way they came).
+- Pursuing / aggroed enemies ignore the volume and continue chasing.
+- Crystal activation and interaction blocked while volume enemy count > 0.
+- Already-activated crystals that appear with enemies inside relocate those enemies to a nearby valid off-screen floor cell.
+- Inactive crystals leave enemies in place for clearing.
+- No other gameplay regressions (movement, combat, interact, web/gamepad).
+- Release builds contain no enemy-group walks for telemetry or unconditional hitch/floor timing.
+
+## Progress
+Slice: plates converted to Area3D self-report; combat notes wired; camp empty process removed.

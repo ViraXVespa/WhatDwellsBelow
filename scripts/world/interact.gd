@@ -1,4 +1,4 @@
-﻿extends Node3D
+extends Node3D
 
 const InteractFx := preload("res://scripts/world/interact/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact/interact_prompt.gd")
@@ -93,3 +93,28 @@ func set_open(v: bool) -> void:
 
 func plate_held(on: bool) -> void:
 	_act().plate_held(self, on)
+
+func _ready() -> void:
+	_ensure_plate_area()
+
+func _ensure_plate_area() -> void:
+	if get_node_or_null("PlateArea") != null:
+		return
+	var area := Area3D.new()
+	area.name = "PlateArea"
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(1.4, 1.0, 1.4)
+	shape.shape = box
+	area.add_child(shape)
+	area.body_entered.connect(_on_plate_body_entered)
+	area.body_exited.connect(_on_plate_body_exited)
+	add_child(area)
+
+func _on_plate_body_entered(body: Node) -> void:
+	if body != null and body.is_in_group("player"):
+		plate_held(true)
+
+func _on_plate_body_exited(body: Node) -> void:
+	if body != null and body.is_in_group("player"):
+		plate_held(false)

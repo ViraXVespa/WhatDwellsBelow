@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Split from hitch_log.gd: _hub_ctx, _counted, _mesh_n....
 

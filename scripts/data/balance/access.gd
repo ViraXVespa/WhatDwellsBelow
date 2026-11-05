@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Split from balance.gd: getv, setv, snapshot.
 

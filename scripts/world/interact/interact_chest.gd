@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Chest loot open for world interactables.
 

@@ -1,4 +1,4 @@
-﻿extends CanvasLayer
+extends CanvasLayer
 
 ## Title Archives browser. Shared two-column shell.
 

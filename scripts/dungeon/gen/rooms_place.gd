@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Hall ambush / dead-end marks. Host module is scripts/dungeon/gen/rooms.gd.
 

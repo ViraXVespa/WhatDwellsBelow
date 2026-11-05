@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## The one home for input bindings: every action, its default keys / mouse / pad buttons, and which
 ## pools the Controls page may rebind. Defaults, Reset Controls, the rebind page, saves, and every

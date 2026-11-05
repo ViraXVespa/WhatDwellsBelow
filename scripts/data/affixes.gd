@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const LocS := preload("res://scripts/app/app_loc.gd")
 const ItemNames := preload("res://scripts/data/item_names.gd")

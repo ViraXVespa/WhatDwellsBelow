@@ -198,20 +198,13 @@ static func tick_play(host: Node, delta: float) -> void:
 		if p:
 			var atk_state: Variant = p.get("atk_state")
 			fighting = (atk_state != null and int(atk_state) != 0) or p.get("lock_target") != null
-			if not fighting:
-				for e in host.get_tree().get_nodes_in_group("enemies"):
-					if e != null and is_instance_valid(e):
-						var st_v: Variant = e.get("state")
-						var st: int = int(st_v) if st_v != null else 0
-						if st >= 1 and st <= 6:
-							fighting = true
-							break
+		# enemy enter/exit hooks set App.enemy_fighting; OR it in
+		fighting = fighting or bool(host.get_meta("enemy_fighting", false))
 		host.tel.tick(delta, fighting)
 	if host.prog:
 		host.prog.tick_food(delta)
 	if host.adrenaline and host.clock - host.last_kill > host.bal.adrenaline_timeout:
 		end_adrenaline(host)
-
 static func debug_sequence(host: Node, delta: float) -> void:
 	var down := shoulders_down()
 	var up := shoulders_up()
@@ -246,6 +239,10 @@ static func shoulders_down() -> bool:
 		and Input.is_joy_button_pressed(d, JOY_BUTTON_LEFT_SHOULDER)
 		and Input.is_joy_button_pressed(d, JOY_BUTTON_RIGHT_SHOULDER)
 	)
+
+static func note_enemy_fighting(on: bool) -> void:
+	if App:
+		App.set_meta("enemy_fighting", on)
 
 static func shoulders_up() -> bool:
 	var pads := Input.get_connected_joypads()

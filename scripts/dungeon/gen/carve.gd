@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Hall := preload("res://scripts/dungeon/gen/carve_hall.gd")
 const Near := preload("res://scripts/dungeon/gen/carve_near.gd")

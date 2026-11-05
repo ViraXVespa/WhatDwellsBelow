@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Balance := preload("res://scripts/data/balance.gd")
 
@@ -188,21 +188,6 @@ static func silence_on(host: Node) -> void:
 	for n: Node in activated_on_floor(host):
 		silence_near(host, Vector2i(n.get("crystal_cell")))
 
-static func guard(host: Node) -> void:
-	if host.player == null:
-		return
-	var tree := _tree(host)
-	if tree == null:
-		return
-	var rad: int = _arrive_r()
-	for n: Node in activated_on_floor(host):
-		var cell: Vector2i = Vector2i(n.get("crystal_cell"))
-		for e: Node in tree.get_nodes_in_group("enemies"):
-			if e == null or not is_instance_valid(e):
-				continue
-			var ec := Vector2i(int(e.global_position.x), int(e.global_position.z))
-			if host._cell_manhattan(ec, cell) <= rad:
-				e.queue_free()
 
 static func paint(host: Node) -> void:
 	if host.map_img == null:
@@ -223,6 +208,64 @@ static func warp_local(host: Node, cell: Vector2i) -> void:
 	silence_near(host, cell)
 	host.fog_dirty = true
 	App.toast(App.tr("net.the_crystal_takes_you_across"))
+
+static func setup_volume(crystal: Node) -> void:
+	if crystal.get_node_or_null("SafeVolume") != null:
+		return
+	var area := Area3D.new()
+	area.name = "SafeVolume"
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	var r := float(_arrive_r())
+	box.size = Vector3(r * 2.0, 2.0, r * 2.0)
+	shape.shape = box
+	area.add_child(shape)
+	area.body_entered.connect(func(b): on_enemy_entered(crystal, b))
+	area.body_exited.connect(func(b): _on_enemy_exited(crystal, b))
+	crystal.add_child(area)
+	crystal.set_meta("vol_count", 0)
+
+static func on_enemy_entered(crystal: Node, body: Node) -> void:
+	if body == null or not body.is_in_group("enemies"):
+		return
+	var n: int = int(crystal.get_meta("vol_count", 0)) + 1
+	crystal.set_meta("vol_count", n)
+	if _is_pursuing(body):
+		return
+	_reverse(body)
+
+static func _on_enemy_exited(crystal: Node, body: Node) -> void:
+	if body == null or not body.is_in_group("enemies"):
+		return
+	var n: int = maxi(0, int(crystal.get_meta("vol_count", 0)) - 1)
+	crystal.set_meta("vol_count", n)
+
+static func _is_pursuing(e: Node) -> bool:
+	var st: int = int(e.get("state") if e.get("state") != null else 0)
+	return st == 1 or st == 2
+
+static func _reverse(e: Node) -> void:
+	var v: Vector3 = e.velocity if e.get("velocity") != null else Vector3.ZERO
+	if v.length_squared() < 0.01:
+		v = Vector3(e.aim.x, 0.0, e.aim.y) if e.get("aim") != null else Vector3.FORWARD
+	e.aim = Vector2(-v.x, -v.z).normalized()
+
+static func relocate_inside(crystal: Node) -> void:
+	var tree := _tree(crystal)
+	if tree == null:
+		return
+	var cell: Vector2i = Vector2i(crystal.get("crystal_cell"))
+	var rad: int = _arrive_r()
+	for e in tree.get_nodes_in_group("enemies"):
+		if e == null or not is_instance_valid(e):
+			continue
+		var ec := Vector2i(int(e.global_position.x), int(e.global_position.z))
+		if absi(ec.x - cell.x) + absi(ec.y - cell.y) > rad:
+			continue
+		e.global_position += Vector3(float(rad) + 4.0, 0.0, 0.0)
+
+static func volume_clear(crystal: Node) -> bool:
+	return int(crystal.get_meta("vol_count", 0)) == 0
 
 static func warp_floor(n: int) -> void:
 	n = clampi(n, 1, maxi(1, int(App.prog.deepest)))

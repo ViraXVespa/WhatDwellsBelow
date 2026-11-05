@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 static var _setup_s: GDScript
 
@@ -122,9 +122,15 @@ static func hit_norm() -> float:
 		return App.bal.bow_hit_norm
 	return App.bal.axe_hit_norm
 
+static var _last_aim := Vector2.ZERO
+static var _last_adren := false
+
 static func update_aim_line(p: CharacterBody3D) -> void:
 	if p.aim_line == null:
 		return
+	if p.aim_dir == _last_aim:
+		return
+	_last_aim = p.aim_dir
 	var bow_spec: bool = App.weapon == "longbow" and (p.atk_state == p.ATK_WIND or p.atk_state == p.ATK_ACT)
 	var on: bool = bool(App.bal.aim_line_on) and not bow_spec
 	var length: float = App.bal.aim_line_length
@@ -133,7 +139,6 @@ static func update_aim_line(p: CharacterBody3D) -> void:
 	if App.weapon == "longbow":
 		length = App.bal.bow_range + App.gear("atk_range")
 	p.aim_line.update_line(p.global_position, p.aim_dir, length, App.bal.aim_line_width, App.bal.aim_line_opacity, on)
-
 static func weapon_reach() -> float:
 	var extra: float = App.gear("atk_range")
 	if App.weapon == "great_axe":
@@ -146,6 +151,8 @@ static func update_aura(p: CharacterBody3D, delta: float) -> void:
 	if p.aura == null:
 		return
 	var a: float = 0.55 if App.adrenaline else 0.0
+	if absf(p.aura.modulate.a - a) < 0.01 and not App.adrenaline:
+		return
 	p.aura.modulate.a = move_toward(p.aura.modulate.a, a, delta * 3.0)
 	p.aura.visible = p.aura.modulate.a > 0.02
 	if p.aura.visible:

@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Postcard shot capture: arm, warm, grab frames, write strips, quit.
 

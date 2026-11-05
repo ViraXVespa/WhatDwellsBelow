@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Live Sprite3D filter. System uses nearest + optional mips/aniso; debug can use 3–4.
 

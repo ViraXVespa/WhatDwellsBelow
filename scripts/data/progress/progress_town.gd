@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Extract := preload("res://scripts/data/progress/extract.gd")
 const Quest := preload("res://scripts/data/progress_quest.gd")

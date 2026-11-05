@@ -1,4 +1,4 @@
-﻿extends Node3D
+extends Node3D
 
 const BOW_Y := 1.08
 const GROUND_Y := 0.06
@@ -8,6 +8,8 @@ const FADE := 0.22
 var mesh_i: MeshInstance3D
 var mat: ShaderMaterial
 var col: Color = Color(1.0, 0.92, 0.55, 0.85)
+var _last_dir: Vector2 = Vector2.ZERO
+var _last_on: bool = false
 
 func _ready() -> void:
 	visible = false
@@ -43,6 +45,13 @@ void fragment() {
 }
 """
 	return sh
+
+func update_if_changed(origin: Vector3, dir: Vector2, length: float, width: float, opacity: float, on: bool) -> void:
+	if dir == _last_dir and on == _last_on:
+		return
+	_last_dir = dir
+	_last_on = on
+	update_line(origin, dir, length, width, opacity, on)
 
 func update_line(origin: Vector3, dir: Vector2, length: float, width: float, opacity: float, on: bool) -> void:
 	var usable: float = length - CLIP

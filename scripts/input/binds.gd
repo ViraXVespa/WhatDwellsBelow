@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const Pool := preload("res://scripts/input/binds/binds_pool.gd")
 const Defaults := preload("res://scripts/input/binds/defaults.gd")

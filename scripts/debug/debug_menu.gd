@@ -1,4 +1,4 @@
-﻿extends CanvasLayer
+extends CanvasLayer
 
 ## Secret debug. Default engine controls allowed.
 

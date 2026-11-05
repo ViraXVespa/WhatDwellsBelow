@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Fills the InputMap from table.gd (the single home for bindings). Host module is scripts/input/binds.gd.
 

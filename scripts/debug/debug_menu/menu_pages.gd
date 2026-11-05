@@ -1,4 +1,4 @@
-﻿# Playtest and animation browser pages for DebugMenu
+# Playtest and animation browser pages for DebugMenu
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")

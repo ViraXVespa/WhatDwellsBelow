@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")

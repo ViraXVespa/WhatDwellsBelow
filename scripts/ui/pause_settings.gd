@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")

@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Interaction handlers for world interactables.
 

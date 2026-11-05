@@ -128,7 +128,7 @@ def godot_cmd(exe: Path, root: Path, name: str, uargs: list[str], ns, log_dir: P
     if name == "boot":
         cmd += ["--quit-after", str(BOOT_FRAMES)]
     if name == "static":
-        cmd += ["--script", str(log_dir / "_static_load.gd")]
+        cmd += ["--script", str(log_dir / "_static_load.gd"), "--quit"]
     cmd += ["--path", str(root)]
     if uargs:
         cmd += ["--", *uargs]

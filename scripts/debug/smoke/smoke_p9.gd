@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
 const EnemyS := preload("res://scripts/combat/enemy.gd")

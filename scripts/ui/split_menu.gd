@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 

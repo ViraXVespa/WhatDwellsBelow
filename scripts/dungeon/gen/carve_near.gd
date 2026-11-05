@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Gen carve near-mask and hug checks for winding halls. Owns the near mask.
 

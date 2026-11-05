@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Pad := preload("res://scripts/input/pad.gd")
 

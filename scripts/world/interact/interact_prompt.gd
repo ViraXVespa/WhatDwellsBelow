@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Prompt / title refresh for world interactables.
 
