@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.2",
+			"points": [
+				{
+					"text": "Voxel walk proof: external pure-Go voxelizer as submodule under tools/extern; female bible frames to quad sheet; voxel model; Blender MCP walk recreation and side-by-side comparison."
+				},
+				{
+					"text": "Finished task female-voxel-walk-proof: Female voxel walk proof (external voxelizer)."
+				}
+			],
+			"summary": "Grok Build \u2014 female voxel walk proof pipeline (external CLI tool, frame prep, Blender comparison)."
+		},
+		{
 			"label": "0.10.1",
 			"points": [
 				{
