@@ -199,10 +199,6 @@ static func mark_dirty() -> void:
 	_dirty = true
 
 static func tick() -> void:
-	if not _dirty:
-		return
-	_dirty = false
-
 	Touch.tick()
 	Look.tick(_dt())
 	if Touch.active():
