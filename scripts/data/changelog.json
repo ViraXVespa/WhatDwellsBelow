@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.7",
+			"points": [
+				{
+					"text": "fix: dungeon HUD refresh no longer depends on `hint_dirty` (flag was never set). `process_floor` now calls `_refresh_hint()` every frame; individual paints already early-out on unchanged values."
+				}
+			],
+			"summary": ""
+		},
+		{
+			"label": "0.10.6",
+			"points": [
+				{
+					"text": "process-cleanup: event-driven conversion carried forward (crystals, telemetry, input, HUD wiring)."
+				},
+				{
+					"text": "Known gap: dungeon HUD refresh was gated on `hint_dirty` which nothing set."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.10.5",
 			"points": [
 				{
