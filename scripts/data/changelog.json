@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.4",
+			"points": [
+				{
+					"text": "doc_patch.write_text no longer preserves BOMs. process-cleanup task records setter, event-driven, and prove rules from the abandoned branch."
+				}
+			],
+			"summary": "tool + task: BOM fix and process-cleanup lessons"
+		},
+		{
 			"label": "0.10.3",
 			"points": [
 				{
