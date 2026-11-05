@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.8",
+			"points": [
+				{
+					"text": "Touch HUD now redraws and becomes visible on web/mobile play surfaces (removed early-return dirty gate that blocked Draw.tick)."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.10.7",
 			"points": [
 				{
