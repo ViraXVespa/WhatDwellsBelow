@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.3",
+			"points": [
+				{
+					"text": "Finished task shader-light-sample: Simplify ground/wall light sample (16 fetches \u2192 1 bilinear)."
+				},
+				{
+					"text": "- Ground and wall light samples now use one hardware bilinear textureLod (LOD 0) at cell center instead of a 16-texelFetch box average. Visual difference is negligible."
+				}
+			],
+			"summary": "Finished task shader-light-sample: Simplify ground/wall light sample (16 fetches \u2192 1 bilinear)."
+		},
+		{
 			"label": "0.10.2",
 			"points": [
 				{
