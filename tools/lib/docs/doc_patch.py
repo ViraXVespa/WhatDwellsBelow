@@ -129,7 +129,7 @@ def write_text(path: Path, text: str) -> None:
     if DRY:
         print("  would write %s (%d bytes)" % (_shown(path), len(text.encode("utf-8"))))
         return
-    md.write_text(path, text, eol=EOL, mkdir=True)
+    md.write_text(path, text, eol=EOL, mkdir=True, bom=False)
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
 def _miss(where: str, old: str) -> str:

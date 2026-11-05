@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Gen carve hall bookkeeping: width rolls, span dig, axis carve, hall rect notes. Owns the hall list.
 

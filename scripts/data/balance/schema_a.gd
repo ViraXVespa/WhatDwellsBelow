@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 static func rows() -> Array:
 	return [

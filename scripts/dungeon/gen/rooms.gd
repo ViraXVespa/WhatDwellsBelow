@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const WALL := 0
 const FLOOR := 1

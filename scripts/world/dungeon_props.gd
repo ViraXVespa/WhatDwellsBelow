@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const GatherS := preload("res://scripts/world/gather/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")

@@ -26,6 +26,10 @@ var _editor_hooked: bool = false
 var build_done: bool = false
 
 func _ready() -> void:
+	_connect_hud()
+	if App.has_signal("pause_changed"):
+		App.pause_changed.connect(_on_pause)
+
 	Dbg.hitch("camp_enter")
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
@@ -263,9 +267,6 @@ func warmup() -> void:
 func warmup_restore() -> void:
 	Warm.restore(self)
 
-func _process(_delta: float) -> void:
-	# pause + labels now driven by Pad edges / signals
-	pass
 func ensure_dummy() -> void:
 	if dummy != null:
 		return
@@ -291,3 +292,27 @@ func _strip_baked_env(n: Node) -> void:
 		else:
 			_strip_baked_env(c)
 		i -= 1
+
+func _on_pause(on: bool) -> void:
+	# label / pause UI update
+	pass
+
+func _connect_hud() -> void:
+	if App.has_signal("bank_changed"):
+		App.bank_changed.connect(_refresh_hint)
+	if App.has_signal("prompt_changed"):
+		App.prompt_changed.connect(_refresh_prompt)
+	_refresh_hint()
+	_refresh_prompt()
+
+func _refresh_hint() -> void:
+	if hint == null:
+		return
+	var hot := ""
+	if App.prog.food_t > 0.0:
+		hot = "  ·  Food HoT %ds" % int(ceil(App.prog.food_t))
+	hint.text = Prompts.fmt(tr("camp.placeholdia_bank_g_ore_wood")) % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
+
+func _refresh_prompt() -> void:
+	if prompt:
+		prompt.text = App.interact_prompt

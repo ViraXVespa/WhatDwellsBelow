@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 static var _enemy_frame: int = -1
 static var _enemy_cache: Array = []

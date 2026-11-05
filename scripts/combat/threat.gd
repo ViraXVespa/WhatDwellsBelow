@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Balance := preload("res://scripts/data/balance.gd")
 

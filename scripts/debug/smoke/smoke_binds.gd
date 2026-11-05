@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Binding flows: one table, Esc bindable, swap / refuse results, Back-key confirm, toasts, hint tokens.
 

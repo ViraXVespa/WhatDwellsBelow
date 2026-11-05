@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Standalone postcard worker. Not a numbered P1–P9 smoke.
 ## CLI: --wdb-shot

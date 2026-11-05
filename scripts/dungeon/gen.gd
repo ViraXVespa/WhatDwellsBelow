@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Dbg := preload("res://scripts/app/dbg.gd")
 const WALL := 0

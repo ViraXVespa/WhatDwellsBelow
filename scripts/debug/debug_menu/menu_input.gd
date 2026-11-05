@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Debug menu stick + page input. Host is scripts/debug/debug_menu.gd.
 

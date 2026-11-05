@@ -115,7 +115,6 @@ static func process_floor(host: Node, delta: float) -> void:
 		if grew:
 			host.fog_dirty = true
 	host._note_verge()
-	host._tick_plates()
 	if host.fog_dirty or (host.map_layer and host.map_layer.visible):
 		host._redraw_map()
 		CrystalNet.paint(host)

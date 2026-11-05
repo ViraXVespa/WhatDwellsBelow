@@ -1,4 +1,4 @@
-﻿extends Node3D
+extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
 const HudS := preload("res://scripts/ui/hud.gd")

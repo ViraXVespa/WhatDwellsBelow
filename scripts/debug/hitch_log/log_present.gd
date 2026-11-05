@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Split from hitch_log.gd: present, _present_at, _present_row....
 

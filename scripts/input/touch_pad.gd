@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Web-only virtual pad state. TouchHud writes sticks/buttons; Pad reads them.
 

@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Playtest journal helpers. Format bodies live in fmt.gd.
 

@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 var move := Vector2.ZERO
 var aim := Vector2.ZERO

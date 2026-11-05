@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const Table := preload("res://scripts/input/binds/table.gd")
 

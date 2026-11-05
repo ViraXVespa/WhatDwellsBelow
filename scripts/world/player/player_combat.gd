@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 static var _setup_s: GDScript
 

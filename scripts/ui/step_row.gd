@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")

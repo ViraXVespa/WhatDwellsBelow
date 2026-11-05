@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Dungeon stream mesh emit: wall mesh, floors, floor lip, ribbon boxes. Owns the shared floor plane.
 

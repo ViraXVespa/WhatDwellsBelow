@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Named balance profiles. Host is scripts/debug/debug_menu.gd.
 

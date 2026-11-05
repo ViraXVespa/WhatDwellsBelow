@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const ScrollBox := preload("res://scripts/ui/scroll_box.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")

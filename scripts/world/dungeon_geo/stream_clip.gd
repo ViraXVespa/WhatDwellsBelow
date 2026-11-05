@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Dungeon stream wall runs, outline spans, and span/face clipping to a chunk.
 

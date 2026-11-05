@@ -41,4 +41,4 @@ User confirmations required after all process-cleanup slices land
 - Release builds contain no enemy-group walks for telemetry or unconditional hitch/floor timing.
 
 ## Progress
-Slice 4 emitted: reveal_around fire-once on cells; stairs/hint dirty-flagged; plates walk stubbed for object-trigger. Remaining: torch billboard, residual Touch-HUD/camp signals.
+Slice: plates converted to Area3D self-report; combat notes wired; camp empty process removed.

@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Local / localhost hitch JSONL. Append on miss. Tail 256. Localhost web also POSTs rows to `perf.py hitch`.
 
