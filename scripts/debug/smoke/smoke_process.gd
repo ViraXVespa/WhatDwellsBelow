@@ -54,6 +54,8 @@ static func _crystal(host: Node, prefix: String) -> void:
 			area.body_entered.emit(e)
 			var ignored: bool = e.velocity.x > 0
 			printerr("%s: PROCESS: crystal_aggro_ignore=%s" % [prefix, str(ignored)])
+			area.body_exited.emit(e)
+			area.body_exited.emit(e)
 			e.queue_free()
 			printerr("%s: PROCESS: crystal_volume_clear=%s" % [prefix, str(int(c0.get_meta("vol_count", 0)) == 0)])
 			printerr("%s: PROCESS: crystal_relocate_fn=%s" % [prefix, str(Net.has_method("relocate_inside"))])
