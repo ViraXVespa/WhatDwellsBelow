@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const ItemNames := preload("res://scripts/data/item_names.gd")
 const Affix := preload("res://scripts/data/affixes.gd")

@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const Dbg := preload("res://scripts/app/dbg.gd")
 const T := preload("res://scripts/data/tunables.gd")

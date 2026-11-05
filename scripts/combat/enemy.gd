@@ -1,4 +1,4 @@
-﻿extends CharacterBody3D
+extends CharacterBody3D
 
 const EnemySetup := preload("res://scripts/combat/enemy/enemy_setup.gd")
 const EnemyAI := preload("res://scripts/combat/enemy/enemy_ai.gd")

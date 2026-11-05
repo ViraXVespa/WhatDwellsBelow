@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")

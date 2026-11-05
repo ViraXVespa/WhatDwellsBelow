@@ -106,6 +106,8 @@ static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host._show()
 
 static func _process(host: CanvasLayer, delta: float) -> void:
+	if not host.open and host.forge_t <= 0.0:
+		return
 	if host.open:
 		MenuPad.web_back()
 	if host.open and host._gear_busy():
@@ -121,7 +123,6 @@ static func _process(host: CanvasLayer, delta: float) -> void:
 			ForgeUI.refresh_bar(host)
 		return
 	ForgeUI.finish(host)
-
 static func _input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open or not host._gear_busy():
 		return

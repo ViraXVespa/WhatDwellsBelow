@@ -54,7 +54,13 @@ var in_dungeon := false
 var floor_n := 1
 var run_seed := 1
 var boss_dead := false
-var interact_prompt := ""
+signal bank_changed
+signal prompt_changed
+signal pause_changed(on: bool)
+var interact_prompt := "":
+	set(v):
+		interact_prompt = v
+		prompt_changed.emit()
 var interact_locked := false
 var floors_since_named := 99
 var quest_named_type := ""
@@ -62,9 +68,18 @@ var quest_named_name := ""
 var gold := 0
 var ore := 0
 var wood := 0
-var bank_gold: int = Def.bank_gold
-var bank_ore: int = Def.bank_ore
-var bank_wood: int = Def.bank_wood
+var bank_gold: int = Def.bank_gold:
+	set(v):
+		bank_gold = v
+		bank_changed.emit()
+var bank_ore: int = Def.bank_ore:
+	set(v):
+		bank_ore = v
+		bank_changed.emit()
+var bank_wood: int = Def.bank_wood:
+	set(v):
+		bank_wood = v
+		bank_changed.emit()
 var bank_root: int = Def.bank_root
 var mine_lv := 1
 var wood_lv := 1
@@ -349,3 +364,9 @@ func pause_just() -> bool:
 
 func swallow_close_pad() -> void:
 	Pad.swallow_close()
+
+func note_bank() -> void:
+	bank_changed.emit()
+
+func note_prompt() -> void:
+	prompt_changed.emit()

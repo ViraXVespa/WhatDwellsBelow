@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")

@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Split from hitch_log.gd: _post, _flush_web, _web_q.
 

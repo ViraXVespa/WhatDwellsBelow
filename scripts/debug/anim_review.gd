@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Animation Browser review ledger. Not part of SaveStore / live settings.
 ## Disk file is editor-only under the live checkout and is gitignored.

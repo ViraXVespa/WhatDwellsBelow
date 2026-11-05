@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Values categories and key -> category rules. First matching prefix wins; no match is "Other".
 ## Left column is the first half of CATS (player, combat, enemies); right is world and economy.

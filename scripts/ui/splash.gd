@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 ## Credit splash. Portrait + Grok / xAI marks. Locked line lives in the card.
 

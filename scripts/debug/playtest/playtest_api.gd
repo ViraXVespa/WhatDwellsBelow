@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 ## State, public API, and live driver. playtest.gd extends this.
 

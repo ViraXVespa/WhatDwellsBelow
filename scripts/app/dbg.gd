@@ -41,10 +41,11 @@ static func hitch_begin(host: Node) -> void:
 		host.tree_exiting.connect(func(): s.close())
 
 static func hitch_tick(host: Node, delta: float) -> void:
+	if not OS.has_feature("debug"):
+		return
 	var s := script("hitch_log")
 	if s:
 		s.tick(host, delta)
-
 static func lt_mark(id: String) -> void:
 	var s := script("load_timing")
 	if s:

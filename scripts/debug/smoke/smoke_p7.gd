@@ -79,8 +79,9 @@ static func p7(host: Node) -> void:
 	store_check()
 	campaign_check()
 	hub_check()
+	var Process := load("res://scripts/debug/smoke/smoke_process.gd") as GDScript
+	Process.run_p7(host)
 	tree(host).create_timer(0.4, true, false, true).timeout.connect(func(): tree(host).quit())
-
 static func store_check() -> void:
 	StoreS.store_check()
 

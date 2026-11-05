@@ -11,6 +11,8 @@ static func quit_in(host: Node, sec: float) -> void:
 	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())
 
 static func p12(host: Node) -> void:
+	var Process := load("res://scripts/debug/smoke/smoke_process.gd") as GDScript
+	Process.run_p1(host)
 	P3.p12(host)
 
 static func p12_fire(host: Node) -> void:
@@ -49,6 +51,8 @@ static func count_proj(host: Node) -> int:
 	return n
 
 static func p3(host: Node) -> void:
+	var Process := load("res://scripts/debug/smoke/smoke_process.gd") as GDScript
+	Process.run_p3(host)
 	P3.p3(host)
 
 static func p3_roles() -> void:

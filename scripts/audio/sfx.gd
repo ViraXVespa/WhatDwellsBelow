@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 ## Appendix E SFX. Gendered VO uses the active character type.
 
@@ -107,7 +107,7 @@ func _apply_one(p: AudioStreamPlayer) -> void:
 	p.volume_db = linear_to_db(maxf(0.001, App.vol_sfx * App.vol_master))
 
 func _process(_delta: float) -> void:
-	if adrenaline_loop and loop_player.stream and not loop_player.playing:
+	if App.adrenaline and adrenaline_loop and loop_player.stream and not loop_player.playing:
 		loop_player.play()
 
 func _exit_tree() -> void:

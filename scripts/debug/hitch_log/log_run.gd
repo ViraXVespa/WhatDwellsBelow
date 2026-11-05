@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Split from hitch_log.gd: _copy_run, _break_run, _track_run....
 

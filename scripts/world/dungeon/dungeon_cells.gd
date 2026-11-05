@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 

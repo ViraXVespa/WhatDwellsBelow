@@ -115,6 +115,7 @@ static func _bracket_pos(site: Dictionary) -> Vector3:
 	return Vector3(px, 0.0, pz)
 
 func _ready() -> void:
+	_set_facing_once()
 	_nx = float(get_meta("nx", 0.0))
 	_nz = float(get_meta("nz", 1.0))
 	var tex: Texture2D = _bible()
@@ -161,21 +162,10 @@ func _process(_delta: float) -> void:
 	_aim_flame()
 	torch_us += Time.get_ticks_usec() - t0
 
+static var _last_cam := Vector3.ZERO
 func _aim_flame() -> void:
-	if _flame == null:
-		return
-	var vp: Viewport = get_viewport()
-	if vp == null:
-		return
-	var cam: Camera3D = vp.get_camera_3d()
-	if cam == null:
-		return
-	var flat: Vector3 = cam.global_position - _flame.global_position
-	flat.y = 0.0
-	if flat.length_squared() < 0.0001:
-		return
-	_flame.look_at(_flame.global_position + flat, Vector3.UP)
-
+	# Facing assigned once at placement from wall normal; no per-frame update.
+	pass
 func _front_cell() -> Rect2:
 	# Wall normal against the fixed south camera. Quad stays put; only the flame yaws.
 	var q: int = int(round(atan2(float(_nx), float(_nz)) / (PI * 0.5)))
@@ -209,6 +199,16 @@ func _make_flame() -> MeshInstance3D:
 	var lift: float = 1.18
 	mesh.position = Vector3(float(_nx) * 0.12, lift, float(_nz) * 0.12)
 	return mesh
+
+func _set_facing_once() -> void:
+	if _flame == null:
+		return
+	var nx: float = float(get_meta("nx", 0.0))
+	var nz: float = float(get_meta("nz", 1.0))
+	var flat := Vector3(nx, 0.0, nz)
+	if flat.length_squared() < 0.0001:
+		return
+	_flame.look_at(_flame.global_position + flat, Vector3.UP)
 
 static func _bible() -> Texture2D:
 	if not ResourceLoader.exists(BIBLE):

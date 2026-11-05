@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Playtest log field formatters. Host module is log_util.gd.
 

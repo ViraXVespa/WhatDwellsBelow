@@ -25,8 +25,9 @@ func _ready() -> void:
 	Draw.ready(self)
 
 func _process(_delta: float) -> void:
+	if not App.Pad._dirty:
+		return
 	Draw.tick(self, _delta)
-
 func _input(event: InputEvent) -> void:
 	PadInput.handle_input(self, event)
 

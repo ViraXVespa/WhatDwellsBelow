@@ -1,4 +1,4 @@
-﻿extends Node3D
+extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
 const HudS := preload("res://scripts/ui/hud.gd")
@@ -221,10 +221,5 @@ func _center_room(r: Dictionary) -> Vector2i:
 	return DungeonCells.center_room(r)
 
 func _tick_plates() -> void:
-	if player == null:
-		return
-	for n: Node in get_tree().get_nodes_in_group("plates"):
-		if n == null or not is_instance_valid(n) or not n.has_method("plate_held"):
-			continue
-		var d: float = Vector2(n.global_position.x - player.global_position.x, n.global_position.z - player.global_position.z).length()
-		n.plate_held(d < 0.7)
+	# Area3D enter/exit on plate objects now drives plate_held; no per-frame walk.
+	pass

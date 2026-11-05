@@ -14,16 +14,18 @@ func setup_crystal(pos: Vector3, cell: Vector2i, cl: int, gate: bool) -> void:
 	crystal_on = gate or CrystalNet.is_on(cell)
 	setup("crystal", pos, false)
 	add_to_group("floor_crystals")
+	CrystalNet.attach_volume(self)
 	if crystal_on:
 		CrystalNet.mark_on(cell)
+		CrystalNet.relocate_inside(self, get_tree().current_scene)
 	refresh()
-
 func refresh() -> void:
 	if kind != "crystal":
 		super.refresh()
 		return
 	locked = false
-	prompt_locked = not crystal_on and CrystalNet.area_hostile(self)
+	var clear := CrystalNet.volume_clear(self)
+	prompt_locked = not crystal_on and not clear
 	if not crystal_on:
 		prompt = tr("floor_crystal.clear_the_area_to_activate") if prompt_locked else tr("floor_crystal.activate_crystal")
 	else:
@@ -38,7 +40,6 @@ func refresh() -> void:
 	if mesh and mesh.material_override is StandardMaterial3D:
 		var mat: StandardMaterial3D = mesh.material_override
 		mat.albedo_color = tint
-
 func _title() -> String:
 	if kind != "crystal":
 		return super._title()
@@ -46,6 +47,8 @@ func _title() -> String:
 		return tr("floor_crystal.entrance_crystal_cl") % crystal_cl
 	return tr("floor_crystal.floor_crystal_cl") % crystal_cl
 
+func _ensure_volume() -> void:
+	CrystalNet.setup_volume(self)
 func interact(who: Node) -> String:
 	if kind != "crystal":
 		return super.interact(who)
@@ -53,7 +56,7 @@ func interact(who: Node) -> String:
 		return ""
 	refresh()
 	if not crystal_on:
-		if CrystalNet.area_hostile(self):
+		if not CrystalNet.volume_clear(self):
 			return prompt
 		CrystalNet.activate(self)
 		refresh()

@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const SpotS := preload("res://scripts/world/interact.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")

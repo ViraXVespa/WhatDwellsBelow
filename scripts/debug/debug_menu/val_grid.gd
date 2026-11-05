@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Two-column Values categories. Expand-in-place under the category cell.
 

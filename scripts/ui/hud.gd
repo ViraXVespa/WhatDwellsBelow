@@ -1,4 +1,4 @@
-﻿extends CanvasLayer
+extends CanvasLayer
 
 ## Dungeon gauntlet cluster (top-left) + minimap (top-right).
 ## Custom ColorRects, no default ProgressBar.

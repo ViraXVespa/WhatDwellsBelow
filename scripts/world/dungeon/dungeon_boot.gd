@@ -86,6 +86,8 @@ static func ready_floor(host: Node) -> void:
 		App.call_deferred("_pump_enter_async")
 	Dbg.smoke_attach("dungeon", host)
 
+static var _visited: Dictionary = {}
+
 static func process_floor(host: Node, delta: float) -> void:
 	var t0: int = 0
 	if floor_on:
@@ -102,14 +104,17 @@ static func process_floor(host: Node, delta: float) -> void:
 		host.frame_n = 0
 	if host.player:
 		var t: Vector2i = Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
-		var grew: bool = host._reveal_around(t, int(App.bal.fog_radius))
+		var key := "%d:%d" % [t.x, t.y]
+		var grew: bool = false
+		if not _visited.get(key, false):
+			_visited[key] = true
+			grew = host._reveal_around(t, int(App.bal.fog_radius))
 		host._tick_pressure(delta, grew)
 		DungeonStream.tick(host, delta)
-		CrystalNet.guard(host)
+		# CrystalNet.guard removed; volumes handle safe zones
 		if grew:
 			host.fog_dirty = true
 	host._note_verge()
-	host._tick_plates()
 	if host.fog_dirty or (host.map_layer and host.map_layer.visible):
 		host._redraw_map()
 		CrystalNet.paint(host)
@@ -137,9 +142,12 @@ static func process_floor(host: Node, delta: float) -> void:
 				MapActS.reset(host)
 				host._redraw_map()
 				CrystalNet.paint(host)
-	if host.stairs:
+	if host.stairs and host.get("stairs_dirty"):
 		host.stairs.refresh()
-	host._refresh_hint()
+		host.stairs_dirty = false
+	if host.get("hint_dirty"):
+		host._refresh_hint()
+		host.hint_dirty = false
 	if t0 > 0:
 		floor_us += Time.get_ticks_usec() - t0
 

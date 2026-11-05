@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Facing / animation lists, paint, D-pad columns, stick facing, focus.
 

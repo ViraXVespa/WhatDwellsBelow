@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Cat := preload("res://scripts/data/archives/archives_catalog.gd")
 const Docs := preload("res://scripts/data/archives/docs.gd")

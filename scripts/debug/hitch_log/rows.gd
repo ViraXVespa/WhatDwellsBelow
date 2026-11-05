@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## Split from hitch_log.gd: _hitch_row, _session_row, _sample_proc....
 

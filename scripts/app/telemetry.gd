@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Capped Section 13 telemetry. One row per run.
 

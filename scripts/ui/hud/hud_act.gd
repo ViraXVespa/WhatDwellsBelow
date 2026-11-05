@@ -129,11 +129,18 @@ static func paint_gem(host: CanvasLayer, dungeon: Node) -> void:
 	var show_gem: bool = bool(App.get("danger_gem"))
 	host.gem.visible = show_gem
 	if not show_gem:
+		if host.gem.has_meta("pulse_tween"):
+			var tw: Tween = host.gem.get_meta("pulse_tween")
+			if tw:
+				tw.kill()
 		return
 	var col: Color = gem_color(dungeon)
-	var pulse: float = 0.72 + 0.28 * sin(float(Time.get_ticks_msec()) * 0.005)
-	host.gem.modulate = Color(col.r, col.g, col.b, pulse)
-
+	host.gem.modulate = col
+	if not host.gem.has_meta("pulse_tween") or host.gem.get_meta("pulse_tween") == null:
+		var tw: Tween = host.gem.create_tween().set_loops()
+		tw.tween_property(host.gem, "modulate:a", 0.44, 0.6).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(host.gem, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+		host.gem.set_meta("pulse_tween", tw)
 static func gem_color(dungeon: Node) -> Color:
 	var green := Color(0.28, 0.86, 0.38)
 	var yellow := Color(0.95, 0.82, 0.22)

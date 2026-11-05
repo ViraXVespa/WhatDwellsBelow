@@ -1,4 +1,4 @@
-﻿extends Node3D
+extends Node3D
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")

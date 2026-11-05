@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 
