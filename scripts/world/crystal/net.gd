@@ -215,25 +215,24 @@ static func setup_volume(crystal: Node) -> void:
 	var area := Area3D.new()
 	area.name = "SafeVolume"
 	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	var r := float(_arrive_r())
-	box.size = Vector3(r * 2.0, 2.0, r * 2.0)
-	shape.shape = box
+	var sphere := SphereShape3D.new()
+	sphere.radius = float(_arrive_r())
+	shape.shape = sphere
 	area.add_child(shape)
 	area.body_entered.connect(func(b): on_enemy_entered(crystal, b))
 	area.body_exited.connect(func(b): _on_enemy_exited(crystal, b))
 	crystal.add_child(area)
 	crystal.set_meta("vol_count", 0)
-
 static func on_enemy_entered(crystal: Node, body: Node) -> void:
 	if body == null or not body.is_in_group("enemies"):
 		return
 	var n: int = int(crystal.get_meta("vol_count", 0)) + 1
 	crystal.set_meta("vol_count", n)
-	if _is_pursuing(body):
+	var aggro: bool = body.get("lock_target") != null or bool(body.get_meta("aggro", false))
+	if aggro:
 		return
-	_reverse(body)
-
+	if body.get("velocity") != null:
+		body.velocity = -body.velocity
 static func _on_enemy_exited(crystal: Node, body: Node) -> void:
 	if body == null or not body.is_in_group("enemies"):
 		return
@@ -263,27 +262,16 @@ static func volume_clear(crystal: Node) -> bool:
 	return int(crystal.get_meta("vol_count", 0)) == 0
 
 static func attach_volume(crystal: Node) -> void:
+	setup_volume(crystal)
 	var area: Area3D = crystal.get_node_or_null("SafeVolume")
 	if area == null:
-		area = Area3D.new()
-		area.name = "SafeVolume"
-		var shape := CollisionShape3D.new()
-		var sphere := SphereShape3D.new()
-		sphere.radius = float(_arrive_r())
-		shape.shape = sphere
-		area.add_child(shape)
-		crystal.add_child(area)
+		return
 	for c in area.body_entered.get_connections():
 		area.body_entered.disconnect(c.callable)
-	area.body_entered.connect(func(body: Node):
-		if not body.is_in_group("enemies"):
-			return
-		var count: int = int(crystal.get_meta("vol_count", 0)) + 1
-		crystal.set_meta("vol_count", count)
-		var aggro: bool = body.get("lock_target") != null or bool(body.get_meta("aggro", false))
-		if not aggro:
-			body.velocity = -body.velocity
-	)
+	area.body_entered.connect(func(b): on_enemy_entered(crystal, b))
+	for c in area.body_exited.get_connections():
+		area.body_exited.disconnect(c.callable)
+	area.body_exited.connect(func(b): _on_enemy_exited(crystal, b))
 static func warp_floor(n: int) -> void:
 	n = clampi(n, 1, maxi(1, int(App.prog.deepest)))
 	if n == App.floor_n:
