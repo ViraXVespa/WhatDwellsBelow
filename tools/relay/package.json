@@ -11,6 +11,7 @@
     "dry-run": "wrangler deploy --dry-run"
   },
   "devDependencies": {
+    "miniflare": "5.20261104.0-beta",
     "sql.js": "^1.12.0",
     "typescript": "7.0.2",
     "wrangler": "4.158.0"

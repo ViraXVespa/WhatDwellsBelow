@@ -40,7 +40,7 @@ test("HTTPS request uses stable idempotency and preserves text with escaped HTML
     assert.deepEqual(await sendEmail({ ...ready, EMAIL_FROM: `WDB <${sender}>` }, to, "Update", text, key, request), { sent: true, providerId: "mock-accepted", stage: "accepted", httpStatus: 200 });
   assert.equal(calls[0].url, "https://api.resend.com/emails");
   const init = calls[0].init, message = JSON.parse(init.body);
-  assert.equal(init.method, "POST"); assert.equal(init.redirect, "error"); assert.ok(init.signal instanceof AbortSignal);
+  assert.equal(init.method, "POST"); assert.equal(init.redirect, "manual"); assert.ok(init.signal instanceof AbortSignal);
   assert.equal(init.headers.Authorization, "Bearer re_fixture");
   assert.equal(init.headers["Idempotency-Key"], key); assert.equal(calls[1].init.headers["Idempotency-Key"], key);
   assert.equal(message.text, text); assert.equal(message.to, to); assert.equal(message.from, `WDB <${sender}>`);
@@ -50,7 +50,7 @@ test("HTTPS request uses stable idempotency and preserves text with escaped HTML
 test("only Resend id means accepted; quota, timeout, malformed and oversized replies stay unsent", async () => {
   for (const value of [null, {}, { messageId: "obsolete-api" }, { id: "" }, { id: " " }, { id: 7 }])
     assert.deepEqual(await send(ready, async () => reply(value)), { sent: false, reason: "email_not_accepted", stage: "decode", httpStatus: 200 });
-  for (const status of [400, 401, 403, 409, 429, 500]) {
+  for (const status of [301, 302, 307, 308, 400, 401, 403, 409, 429, 500]) {
     let calls = 0;
     assert.deepEqual(await send(ready, async () => { calls++; return reply({ private: to }, status); }), { sent: false, reason: "email_send_failed", stage: "response", httpStatus: status });
     assert.equal(calls, 1, "no blind retries, including quota errors");

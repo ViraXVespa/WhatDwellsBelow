@@ -29,7 +29,7 @@ export async function sendEmail(env, to, subject, body, idempotencyKey, request 
   let stage = "fetch", httpStatus = null;
   try {
     const response = await request("https://api.resend.com/emails", {
-      method: "POST", redirect: "error", signal: AbortSignal.timeout(8000),
+      method: "POST", redirect: "manual", signal: AbortSignal.timeout(8000),
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
       body: JSON.stringify({ from, to: recipient, subject, text: body, html: `<pre>${escaped}</pre>` }),
     });

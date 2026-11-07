@@ -16,3 +16,5 @@ No Cron Trigger is configured (`triggers.crons=[]`), and outbox_retry is initial
 4. Remove the temporary Cron Trigger after observing consumption. Read private stage/error/status/provider_id. A failure requires separate diagnosis/approval before another permit; never blindly rearm. Provider acceptance requires separate read-only delivery confirmation and does not prove inbox placement. Do not rely on a retry after the24hour window without reconciliation.
 
 The production relay uses installed Worker secrets. Deployment must preserve them; never use file-reference strings as credential values, extract credentials, or add a public debug/send endpoint.
+
+Workers supports `redirect:manual`, not `error`. The adapter rejects3xx without following; a real local Workerd regression constructs the production request with fake credentials and no outbound HTTP.
