@@ -16,6 +16,7 @@ var doors: Array = []
 var stairs: Node
 var visited: PackedByteArray
 var fog_dirty := true
+var reveal_cells: Dictionary = {}
 var floor_mm: MultiMeshInstance3D
 var hint: Label
 var prompt: Label

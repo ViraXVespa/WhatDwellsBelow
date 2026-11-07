@@ -25,8 +25,10 @@ func refresh() -> void:
 		return
 	locked = false
 	var clear := CrystalNet.volume_clear(self)
-	prompt_locked = not crystal_on and not clear
-	if not crystal_on:
+	prompt_locked = not clear
+	if not clear:
+		prompt = tr("floor_crystal.clear_the_area_to_activate")
+	elif not crystal_on:
 		prompt = tr("floor_crystal.clear_the_area_to_activate") if prompt_locked else tr("floor_crystal.activate_crystal")
 	else:
 		prompt = tr("floor_crystal.transport_network")
@@ -55,9 +57,9 @@ func interact(who: Node) -> String:
 	if App.ui_open:
 		return ""
 	refresh()
+	if not CrystalNet.volume_clear(self):
+		return prompt
 	if not crystal_on:
-		if not CrystalNet.volume_clear(self):
-			return prompt
 		CrystalNet.activate(self)
 		refresh()
 		App.toast(tr("floor_crystal.crystal_bound_to_this_floor"))

@@ -39,6 +39,7 @@ func setup(k: String, pos: Vector3, lock := false) -> void:
 	InteractFx.add_label(self)
 	refresh()
 	LightRt.note_prop(self)
+	_ensure_plate_area()
 
 func setup_extract_gate(pos: Vector3) -> void:
 	role = "gate"
@@ -98,10 +99,12 @@ func _ready() -> void:
 	_ensure_plate_area()
 
 func _ensure_plate_area() -> void:
-	if get_node_or_null("PlateArea") != null:
+	if kind != "plate" or get_node_or_null("PlateArea") != null:
 		return
 	var area := Area3D.new()
 	area.name = "PlateArea"
+	area.collision_layer = 0
+	area.collision_mask = 2
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(1.4, 1.0, 1.4)

@@ -86,8 +86,6 @@ static func ready_floor(host: Node) -> void:
 		App.call_deferred("_pump_enter_async")
 	Dbg.smoke_attach("dungeon", host)
 
-static var _visited: Dictionary = {}
-
 static func process_floor(host: Node, delta: float) -> void:
 	var t0: int = 0
 	if floor_on:
@@ -104,10 +102,10 @@ static func process_floor(host: Node, delta: float) -> void:
 		host.frame_n = 0
 	if host.player:
 		var t: Vector2i = Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
-		var key := "%d:%d" % [t.x, t.y]
+		var key := Vector3i(t.x, t.y, int(App.bal.fog_radius))
 		var grew: bool = false
-		if not _visited.get(key, false):
-			_visited[key] = true
+		if not host.reveal_cells.get(key, false):
+			host.reveal_cells[key] = true
 			grew = host._reveal_around(t, int(App.bal.fog_radius))
 		host._tick_pressure(delta, grew)
 		DungeonStream.tick(host, delta)
@@ -119,9 +117,6 @@ static func process_floor(host: Node, delta: float) -> void:
 		host._redraw_map()
 		CrystalNet.paint(host)
 		host.fog_dirty = false
-	if host.stairs and host.get("stairs_dirty"):
-		host.stairs.refresh()
-		host.stairs_dirty = false
 	# HUD refresh: paints early-out; call every frame so bars/prompt/gem stay live
 	host._refresh_hint()
 	if t0 > 0:

@@ -85,6 +85,21 @@ def selftest(root):
     assert 'ceili(food_t) != ceili(v)' in progress and 'camp_hint_changed.emit()' in progress
     assert 'camp_hint_changed.connect(_refresh_hint)' in camp and 'NOTIFICATION_TRANSLATION_CHANGED' in camp
     assert 'if interact_prompt == v:' in read("scripts/app.gd")
+    volume = read("scripts/world/crystal/net.gd")
+    assert 'area.collision_mask = 4' in volume and 'weakref(body)' in volume
+    assert 'bool(crystal.get("crystal_on")) and not _is_pursuing(body)' in volume
+    assert 'area.body_entered.disconnect' not in volume
+    pursuing = function(volume, "_is_pursuing", {"int": int}, "e")
+    assert [pursuing(NS(get=lambda key, n=n: n)) for n in range(8)] == [False, True, True, False, True, True, True, False]
+    plate = read("scripts/world/interact.gd")
+    assert 'kind != "plate" or' in plate and 'area.collision_mask = 2' in plate
+    assert plate.count('_ensure_plate_area()') >= 3
+    assert 'host.reveal_cells' in dungeon and 'static var _visited' not in dungeon
+    assert 'Vector3i(t.x, t.y, int(App.bal.fog_radius))' in dungeon
+    crystal = read("scripts/world/floor_crystal.gd")
+    assert 'prompt_locked = not clear' in crystal
+    interact = crystal.split('func interact(', 1)[1]
+    assert interact.index('if not CrystalNet.volume_clear(self):') < interact.index('if not crystal_on:')
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 
