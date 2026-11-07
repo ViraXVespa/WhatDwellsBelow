@@ -36,6 +36,6 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 Reading (implementation): this file + the path file + (web / Build) the plan pair + the topic doc and gates whose `when` matches. **A job that touches several systems: read first.** List every system, then read each one's doc and code-map row before changing anything.
 Do not fetch this file again. Routing work: `design/load-graph.md`.
 
-Build pickup is git plus `session.py summary --job <name>` (`_logs/` is PC job output). Fresh Build: this file, then `design/grok-build.md`. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
+Slice pickup is the opening `slice.py start` command, then the pc-offload skill. A new week follows `design/build-week-start.md` on clean `main`. Earlier work is `find.py changed` and `session.py summary --job <name>` (`_logs/` is PC job output). Fresh Build: this file, then `design/grok-build.md`. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
 Imagine (Build only): `design/isolated-media.md` first; Web / chat and Grok Bot never run the isolated runner.
 Ask as many questions, in as many rounds, as the job needs. Report when done, with rough edges (`tools.md` rule 9). Build and Web may add a tool that will help later (rule 5) and tell the User.
