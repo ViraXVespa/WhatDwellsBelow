@@ -8,6 +8,7 @@ const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
 static func _ready(host: Node) -> void:
 	LocS.setup()
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
+	host.world_action.connect(func(action: String): world_action(host, action))
 	host.bal = App.BalanceS.new()
 	host.prog = App.ProgressS.new()
 	App.Binds.register()
@@ -121,3 +122,14 @@ static func _unhandled_input(host: Node, event: InputEvent) -> void:
 		if host.pause_menu and host.pause_menu.has_method("show_inventory"):
 			host.pause_menu.show_inventory()
 		host.get_viewport().set_input_as_handled()
+
+static func world_action(host: Node, action: String) -> void:
+	if not host._in_world() or host._menu_loading or host.ui_open:
+		return
+	if (host.debug and host.debug.get("open")) or (host.recap and host.recap.get("open")):
+		return
+	var scene: Node = host.get_tree().current_scene
+	if action == "pause" and host.pause_menu:
+		host.pause_menu.toggle()
+	elif action == "map_view" and scene and scene.has_method("toggle_map"):
+		scene.toggle_map()

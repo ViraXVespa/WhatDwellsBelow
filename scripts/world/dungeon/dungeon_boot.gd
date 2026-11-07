@@ -119,29 +119,6 @@ static func process_floor(host: Node, delta: float) -> void:
 		host._redraw_map()
 		CrystalNet.paint(host)
 		host.fog_dirty = false
-	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
-		if App.debug and App.debug.get("open"):
-			pass
-		elif App.recap and App.recap.get("open"):
-			pass
-		elif App.ui_open and host.ui and host.ui.has_method("close_ui") and host.ui.visible:
-			host.ui.close_ui()
-			if App.has_method("swallow_close_pad"):
-				App.swallow_close_pad()
-		elif App.pause_menu and App.pause_menu.has_method("toggle"):
-			App.pause_menu.toggle()
-	if Input.is_action_just_pressed("map_view") or App.pad_just("map_view"):
-		if host.map_layer == null:
-			host._map()
-			if host.hud and host.hud.has_method("bind_map") and host.map_tex:
-				host.hud.bind_map(host.map_tex)
-		if host.map_layer:
-			host.map_layer.visible = not host.map_layer.visible
-			if host.map_layer.visible:
-				var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
-				MapActS.reset(host)
-				host._redraw_map()
-				CrystalNet.paint(host)
 	if host.stairs and host.get("stairs_dirty"):
 		host.stairs.refresh()
 		host.stairs_dirty = false
@@ -226,3 +203,16 @@ static func on_boss_dead(host: Node) -> void:
 	chest.setup("chest" if gate else "base_chest", host._cell_pos(bp), false)
 	host.add_child(chest)
 	host._mark_cell(bp)
+
+static func toggle_map(host: Node) -> void:
+	if host.map_layer == null:
+		host._map()
+		if host.hud and host.hud.has_method("bind_map") and host.map_tex:
+			host.hud.bind_map(host.map_tex)
+	if host.map_layer:
+		host.map_layer.visible = not host.map_layer.visible
+		if host.map_layer.visible:
+			var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
+			MapActS.reset(host)
+			host._redraw_map()
+			CrystalNet.paint(host)

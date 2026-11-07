@@ -14,13 +14,13 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools/lib"))
 import agent_log
 
-def function(source, name, env):
+def function(source, name, env, args=None):
     match = re.search(r"^static func " + name + r"\([^\n]*\n(.*?)(?=^static (?:func|var)|\Z)", source, re.M | re.S)
     assert match, name
-    body = re.sub(r"\bvar (\w+)(?:: [\w]+)?(?::)? =", r"\1 =", match[1])
+    body = re.sub(r"\bvar (\w+)(?:: [\w]+)?\s*(?::=|=)", r"\1 =", match[1])
     for old, new in (("true", "True"), ("false", "False"), ("null", "None")):
         body = re.sub(r"\b" + old + r"\b", new, body)
-    args = {"advance_attack": "p, delta", "cooldowns": "host, delta", "basic_duration": ""}.get(name, "p")
+    args = args if args is not None else {"advance_attack": "p, delta", "cooldowns": "host, delta", "basic_duration": ""}.get(name, "p")
     exec(compile("def " + name + "(" + args + "):\n" + body.expandtabs(4), name, "exec"), env)
     return env[name]
 

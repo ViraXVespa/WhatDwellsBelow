@@ -26,10 +26,6 @@ var _editor_hooked: bool = false
 var build_done: bool = false
 
 func _ready() -> void:
-	_connect_hud()
-	if App.has_signal("pause_changed"):
-		App.pause_changed.connect(_on_pause)
-
 	Dbg.hitch("camp_enter")
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
@@ -198,6 +194,7 @@ func _step_rest() -> void:
 	else:
 		ensure_dummy()
 	Hud._hud(self)
+	_connect_hud()
 	_music()
 	var hold_wake: bool = (
 		App.present != null
@@ -292,10 +289,6 @@ func _strip_baked_env(n: Node) -> void:
 		else:
 			_strip_baked_env(c)
 		i -= 1
-
-func _on_pause(on: bool) -> void:
-	# label / pause UI update
-	pass
 
 func _connect_hud() -> void:
 	if App.has_signal("bank_changed"):

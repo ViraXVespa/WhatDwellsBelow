@@ -16,6 +16,7 @@ static var eat_pause := false
 static var mode := false
 
 static func note_event(event: InputEvent) -> void:
+	App.input_changed.emit()
 	Touch.note_event(event)
 	Look.note_event(event)
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
@@ -193,11 +194,6 @@ static func blocked(action: String) -> bool:
 		return false
 	return action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]
 
-static var _dirty: bool = true
-
-static func mark_dirty() -> void:
-	_dirty = true
-
 static func tick() -> void:
 	Touch.tick()
 	Look.tick(_dt())
@@ -225,6 +221,13 @@ static func tick() -> void:
 			held_close = true
 		if not held_close:
 			eat_pause = false
+
+	# Publish edges once from the input sampler; UI/world nodes do not poll them.
+	if not App.ui_open:
+		if pause_just():
+			App.world_action.emit("pause")
+		if just("map_view"):
+			App.world_action.emit("map_view")
 
 static func _dt() -> float:
 	var loop := Engine.get_main_loop()

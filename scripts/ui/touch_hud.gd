@@ -23,11 +23,31 @@ var _park: Dictionary = {}
 
 func _ready() -> void:
 	Draw.ready(self)
+	get_viewport().size_changed.connect(request_refresh)
+	get_tree().scene_changed.connect(request_refresh)
+	Input.joy_connection_changed.connect(_on_joy_connection)
+	App.input_changed.connect(request_refresh)
+	request_refresh()
 
-func _process(_delta: float) -> void:
-	Draw.tick(self, _delta)
+var _refresh_queued := false
+
+func request_refresh() -> void:
+	if _refresh_queued:
+		return
+	_refresh_queued = true
+	call_deferred("_refresh")
+
+func _refresh() -> void:
+	_refresh_queued = false
+	Draw.tick(self, 0.0)
+
+func _on_joy_connection(_device: int, _connected: bool) -> void:
+	request_refresh()
+
 func _input(event: InputEvent) -> void:
 	PadInput.handle_input(self, event)
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		request_refresh()
 
 func _layout() -> void:
 	Draw.layout(self)

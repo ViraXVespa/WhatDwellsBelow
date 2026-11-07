@@ -159,11 +159,13 @@ static func _depth(host: Node, prefix: String) -> void:
 
 static func _input(host: Node, prefix: String) -> void:
 	var Pad := load("res://scripts/input/pad.gd") as GDScript
-	Pad.mark_dirty()
-	var was_dirty: bool = Pad._dirty
-	Pad.tick()
-	var cleared: bool = not Pad._dirty
-	printerr("%s: PROCESS: input_dirty_cleared=%s" % [prefix, str(was_dirty and cleared)])
+	var count := [0]
+	var note: Callable = func(): count[0] += 1
+	App.input_changed.connect(note)
+	Pad.note_event(InputEventKey.new())
+	App.input_changed.disconnect(note)
+	assert(count[0] == 1, "input event must invalidate touch drawing")
+	printerr("%s: PROCESS: input_event_invalidates=true" % prefix)
 
 static func _progress(host: Node, prefix: String) -> void:
 	var Flow := load("res://scripts/ui/progress_ui/ui_flow.gd") as GDScript
