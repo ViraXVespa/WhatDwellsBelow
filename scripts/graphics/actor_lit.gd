@@ -260,6 +260,9 @@ func _lay(host: Node3D, delta: float) -> void:
 	_mark_us(1, t0)
 	Place._place(self, tex, feet)
 
+func _biased(away: Vector2) -> Vector2:
+	return Place._biased(self, away)
+
 func _mix(sample: Color) -> Color:
 	return Color(_game.r * sample.r, _game.g * sample.g, _game.b * sample.b, _game.a)
 
