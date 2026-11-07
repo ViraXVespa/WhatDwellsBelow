@@ -108,6 +108,10 @@ def selftest(root):
     assert 'App.Boot.release_focus_once(App)' in read("scripts/ui/ui_session.gd")
     assert 'if not OS.has_feature("debug"):' in read("scripts/app/dbg.gd")
     assert 'if floor_on:' in dungeon and 'floor_on = false' in dungeon
+    smoke = read("scripts/debug/smoke/smoke_process.gd")
+    assert 'p.set("aim_line", saved_line)' in smoke
+    assert 'adrenaline_audio_gated=true' not in smoke and 'torch_facing_once=' not in smoke
+    assert 'not a physics-overlap proof' in smoke and 'assert(not ui.is_processing())' in smoke
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 
