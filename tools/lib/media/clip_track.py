@@ -3,7 +3,7 @@
 
   keys / track   a callout box over time: inline [[t, x, y, w, h], ...], a named track in movies.json
                  (movie["tracks"][name], same rows, px or fractions), or a per-frame JSON file ([{"t": s, "box": [...]}, ...])
-  tracked        callout whose box and chip follow the keys (piecewise-linear ffmpeg expressions in t)
+  tracked        keyed box with owned half-open occupancy and a sticky/eased/clamped chip slot
   hold           freeze one frame for a while, then play on
   lower_third    a full-width title strip low in the frame (distinct from the top-left chip titles)
   place_chip     chip spot beside a box that keeps out of the label/title corners and of chips already placed
@@ -84,11 +84,72 @@ def at(rows: list[list[float]], t: float) -> list[float]:
             return [a[k] + (b[k] - a[k]) * f for k in range(1, 5)]
     return rows[-1][1:]
 
+def chip_records(placed):
+    """Read owned (rect,start,end,owner) records and legacy 3-tuples."""
+    for row in placed or ():
+        yield (*row[:3], row[3] if len(row) > 3 else None)
+
+
+def live_chips(placed, t: float, owner=None):
+    """Half-open windows; a callout never avoids its own previous-frame records."""
+    return [rect for rect, start, end, other in chip_records(placed)
+            if start <= t < end and (owner is None or other is not owner)]
+
+
+class ChipMotion:
+    """Sticky relative slot, short switch hold and eased motion, clamped every frame.
+
+    An unsafe interpolated/held point snaps to the safe target rather than covering
+    the subject. Owner identity and occupancy are handled separately by live_chips.
+    """
+    def __init__(self, cw, ch, w, h, hold=0.18, ease=0.12):
+        self.cw, self.ch, self.w, self.h = cw, ch, w, h
+        self.hold, self.ease = hold, ease
+        self.slot = None
+        self.point = None
+        self.pending = None
+        self.since = self.last_t = 0.0
+
+    def at(self, box, t, avoid=(), gap=4):
+        import math
+        x, y, bw, bh = box
+        clamp = lambda p: (min(max(0, p[0]), max(0, self.w - self.cw)), min(max(0, p[1]), max(0, self.h - self.ch)))
+        blocked = [box, *avoid]
+        safe = lambda p: not any(_hit((*p, self.cw, self.ch), r) for r in blocked)
+        slots = {"below": (x, y + bh + gap), "above": (x, y - self.ch - gap),
+                 "right": (x + bw + gap, y), "left": (x - self.cw - gap, y)}
+        slots = {key: clamp(p) for key, p in slots.items()}
+        valid = {key: p for key, p in slots.items() if safe(p)}
+        chosen = self.slot if self.slot in valid else next(iter(valid), "free")
+        target = valid[chosen] if chosen in valid else place_chip(self.cw, self.ch, box, self.w, self.h, avoid, gap)
+        if self.point is None:
+            self.point, self.slot = target, chosen
+        elif chosen != self.slot:
+            if self.pending != chosen:
+                self.pending, self.since = chosen, t
+            if t - self.since < self.hold and safe(tuple(int(round(v)) for v in clamp(self.point))):
+                self.last_t = t
+                return tuple(int(round(v)) for v in clamp(self.point))
+            self.slot, self.pending = chosen, None
+        else:
+            self.pending = None
+        dt = max(0.0, t - self.last_t)
+        alpha = 1.0 - math.exp(-dt / self.ease) if self.ease > 0 else 1.0
+        point = clamp(tuple(a + (b - a) * alpha for a, b in zip(self.point, target)))
+        rounded = tuple(int(round(v)) for v in point)
+        if not safe(rounded):
+            point = target
+        self.point, self.last_t = point, t
+        return tuple(int(round(v)) for v in point)
+
+
 def tracked(src: Path, rows: list[list[float]], text: str, out: Path, start: float = 0.0, end: float = 0.0,
-            color: str = "#ffd23f", font: str = "", avoid=(), placed: list | None = None) -> Path:
-    """Box outline and chip that follow the track (one overlay frame per video frame, drawn with PIL); the chip takes
-    place_chip's spot each frame, so it keeps out of the corners, of `avoid` and of `placed` chips live at that time
-    [(rect, t0, t1)]; each frame's chip is appended to `placed` so later callouts keep off it."""
+            color: str = "#ffd23f", font: str = "", avoid=(), placed: list | None = None, owner=None) -> Path:
+    """Track a box with a stable, eased chip slot; active during [start,end).
+
+    placed receives (rect,t0,t1,owner) with a real per-callout identity (not label
+    text); legacy 3-tuples are accepted. Other callouts avoid its live records.
+    """
     from PIL import Image, ImageColor, ImageDraw
     i = ce.info(src)
     w, h, fps = i["w"], i["h"], float(i["fps"]) or 30.0
@@ -99,19 +160,26 @@ def tracked(src: Path, rows: list[list[float]], text: str, out: Path, start: flo
         T = Path(td)
         clip_promo.chip(text, "", rgb + (255,), ce._font(font), int(h * 0.6), T / "c.png")
         c = Image.open(T / "c.png")
+        from imglib import geom
+        if c.width > w or c.height > h:
+            ratio = min(w / c.width, h / c.height)
+            c = geom.resize_rgba(c, (max(1, int(c.width * ratio)), max(1, int(c.height * ratio))))
+        motion = ChipMotion(c.width, c.height, w, h)
+        owner = object() if owner is None else owner
+        prior = list(placed or [])
         av = corners(w, h) + list(avoid)
         blank = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         for n in range(int(round(i["sec"] * fps))):
             t = n / fps
             img = blank.copy()
-            if start <= t <= end:
+            if start <= t < end:
                 x, y, bw, bh = at(rows, t)
                 ImageDraw.Draw(img).rectangle([x, y, x + bw, y + bh], outline=rgb, width=th)
-                live = [r for r, a, b in (placed or []) if a <= t <= b]
-                p = place_chip(c.width, c.height, (x, y, bw, bh), w, h, av + live, th)
+                live = live_chips(prior, t, owner)
+                p = motion.at((x, y, bw, bh), t, av + live, th)
                 img.alpha_composite(c, p)
                 if placed is not None:
-                    placed.append(((p[0], p[1], c.width, c.height), t, t + 1.0 / fps))
+                    placed.append(((p[0], p[1], c.width, c.height), max(t, start), min((n + 1) / fps, end), owner))
             img.save(T / ("o%05d.png" % n))
         ce._run(["-i", str(src), "-framerate", "%g" % fps, "-i", str(T / "o%05d.png"),
                  "-filter_complex", "[0:v][1:v]overlay=0:0:shortest=1,format=yuv420p[o]", "-map", "[o]", "-an", *ce.H264, str(out)])
@@ -294,6 +362,7 @@ def selftest(t: Path) -> list[str]:
     for how, want in (("cut", 6.0), ("dip", 5.5), ("whip", 5.75), ("fade", 5.6)):
         if abs(ce.info(join([g, g], how, 0.4, t / ("j_%s.mp4" % how)))["sec"] - want) > 0.15:
             bad.append("join %s: %s" % (how, ce.info(t / ("j_%s.mp4" % how))))
+    bad += flicker_selftest(t)
     w, h = 640, 360
     av = corners(w, h)
     p = place_chip(120, 40, (20, 10, 60, 30), w, h, av)
@@ -302,4 +371,56 @@ def selftest(t: Path) -> list[str]:
     q = place_chip(120, 40, (200, 150, 60, 30), w, h, av + [(p[0], p[1], 120, 40), (200, 184, 120, 40)])
     if _hit((q[0], q[1], 120, 40), (200, 184, 120, 40)):
         bad.append("place_chip overlap not nudged: %s" % (q,))
+    return bad
+
+
+def flicker_selftest(t: Path) -> list[str]:
+    """Regression: real same-text owners, frame seams, sticky slots, hold/ease/clamp."""
+    import clip_fx
+    bad = []
+    owner, other = object(), object()
+    rect = (10, 10, 20, 20)
+    records = [(rect, 0.0, 1 / 30, owner), (rect, 0.0, 1 / 30, other)]
+    if live_chips(records, 1 / 30) or live_chips(records[:1], 0, owner) or live_chips(records, 0, owner) != [rect]:
+        bad.append("owned half-open frame windows")
+    if live_chips([(rect, 0, 1)], 0.5, owner) != [rect]:
+        bad.append("legacy occupancy compatibility")
+    motion = ChipMotion(100, 40, 640, 360)
+    p0 = motion.at((200, 140, 60, 40), 0)
+    p1 = motion.at((210, 140, 60, 40), 1 / 30)
+    if not p0[0] < p1[0] < 210:
+        bad.append("chip motion must ease instead of jump")
+    edge = ChipMotion(100, 40, 640, 360)
+    edge.at((0, 300, 60, 60), 0)
+    edge.at((0, 180, 60, 60), 0.1)
+    point = edge.at((-20, 180, 60, 60), 0.2)
+    if edge.slot != "above" or not (0 <= point[0] <= 540 and 0 <= point[1] <= 320):
+        bad.append("slot must stay locked and edge-clamped")
+    held = ChipMotion(100, 40, 640, 360, hold=0.2)
+    initial = held.at((200, 140, 60, 40), 0)
+    point = held.at((300, 140, 60, 40), 0.05, [(300, 184, 100, 40)])
+    if point != initial or held.slot != "below":
+        bad.append("short-lived slot obstruction must hold a safe previous position")
+    held.at((300, 140, 60, 40), 0.3, [(300, 184, 100, 40)])
+    if held.slot == "below":
+        bad.append("persistent obstruction must eventually switch slot")
+    ce._run(["-f", "lavfi", "-i", "color=c=gray:size=320x180:rate=30:duration=1", *ce.H264, str(t / "still.mp4")])
+    placed = []
+    rows = [[0, 160, 90, 60, 40]]
+    tracked(t / "still.mp4", rows, "SAME", t / "still-one.mp4", 0, 0.5, "#ff0000", placed=placed)
+    first = list(placed)
+    tracked(t / "still-one.mp4", rows, "SAME", t / "still-two.mp4", 0, 0.5, "#00ff00", placed=placed)
+    second = placed[len(first):]
+    if len(first) != 15 or len({r[0] for r in first}) != 1 or len({r[0] for r in second}) != 1:
+        bad.append("stationary tracked labels must not alternate slots across frames")
+    if not first or not second or first[0][3] is second[0][3]:
+        bad.append("same-text callouts need distinct real owners")
+    if first and second and _hit(first[0][0], second[0][0]):
+        bad.append("different owners must avoid each other")
+    if live_chips(placed, 0.5):
+        bad.append("callout end frame must have no live records")
+    active = clip_fx._px(t / "still-two.mp4", 0.25, (160, 105))
+    ended = clip_fx._px(t / "still-two.mp4", 0.6, (160, 105))
+    if not (active[1] > 150 and active[0] < 100) or max(ended) - min(ended) > 20:
+        bad.append("rendered callout window: active=%s ended=%s" % (active, ended))
     return bad

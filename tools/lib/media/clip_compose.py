@@ -181,13 +181,13 @@ def _union(boxes) -> list[float]:
     return [x0, y0, max(b[0] + b[2] for b in boxes) - x0, max(b[1] + b[3] for b in boxes) - y0]
 
 def _step(s: dict, cur: Path, nxt: Path, T: Path, root, font: str, base: Path, placed: list) -> Path:
-    """One spec step from cur into nxt. placed: [(chip rect, start, end)] of earlier callouts, nudged around."""
+    """One spec step from cur into nxt. placed: owned (chip rect, start, end, owner) records; legacy 3-tuples accepted."""
     op = s["op"]
     i = ce.info(cur)
     rel = lambda p: p if Path(p).is_absolute() else base / p
     box = clip_fx.box_px(s["box"], i["w"], i["h"], root, s.get("movie", "")) if "box" in s else None
     st, en = float(s.get("start", 0.0)), float(s.get("end", 0.0)) or i["sec"]
-    avoid = [r for r, a, b in placed if a < en and st < b]
+    avoid = [r for r, a, b, _ in clip_track.chip_records(placed) if a < en and st < b]
     if op == "punch":
         punch(cur, box, nxt, s.get("start", 0.5), s.get("dur", 0.4), s.get("hold", 1.2))
     elif op == "callout" and "track" in s:
@@ -197,7 +197,7 @@ def _step(s: dict, cur: Path, nxt: Path, T: Path, root, font: str, base: Path, p
     elif op == "callout":
         callout(cur, box, s["text"], nxt, st, en, s.get("color", "#ffd23f"), font, s.get("style", "box"), bool(s.get("leader", False)), avoid)
         REGIONS.append(list(box))
-        placed.append((tuple(LAST_CHIP), st, en))
+        placed.append((tuple(LAST_CHIP), st, en, object()))
     elif op == "hold":
         clip_track.hold(cur, float(s["at"]), float(s.get("dur", 1.0)), nxt)
     elif op == "lower_third":
