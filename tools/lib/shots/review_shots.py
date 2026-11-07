@@ -179,8 +179,11 @@ assert "--always-approve" not in sys.argv
 assert os.path.isfile("local/review_local.py") and os.path.isfile("full/01-a.png")
 cfg = json.load(open(".grok/hooks/wdb-review.json"))
 assert cfg["hooks"]["PreToolUse"][0]["hooks"][0]["type"] == "command"
-if mode in ("text", "textzoom"):
-    assert json.load(open(".wdb-review.json"))["text_review"]
+if mode in ("text", "textzoom", "why"):
+    manifest = json.load(open(".wdb-review.json"))
+    assert manifest["text_review"]
+    if mode == "why":
+        assert manifest["why"] and not os.path.isdir("_logs/ocr"), "exception must be explicit, not a fabricated attempt"
     hook = shlex.split(cfg["hooks"]["PreToolUse"][0]["hooks"][0]["command"])
     ev = {"toolName": "read_file", "toolInput": {"target_file": "01-a.png"}, "cwd": os.getcwd()}
     checked = subprocess.run(hook, input=json.dumps(ev), capture_output=True, text=True)
@@ -250,7 +253,7 @@ def selftest() -> int:
                  ("greedy", grok_bin, 1, "round cap"), ("text", grok_bin, 0, "VERDICT: PASS"), ("textzoom", grok_bin, 0, "round 2: resumed"), ("why", grok_bin, 0, "VERDICT: PASS")]
         for mode, grok, want, needle in cases:
             env = dict(os.environ, FAKE_MODE=mode)
-            r = subprocess.run(me + [str(png), "--question", "Read the label" if mode in ("text", "textzoom") else "Is the panel visible?", "--rubric", "- panel",
+            r = subprocess.run(me + [str(png), "--question", "Read the label" if mode in ("text", "textzoom", "why") else "Is the panel visible?", "--rubric", "- panel",
                                      "--grok", grok] + (["--why", "meaning rather than transcription"] if mode == "why" else []), text=True, capture_output=True, env=env)
             out = r.stdout + r.stderr
             ok = (r.returncode == 0) == (want == 0) and needle in out and ("PLACEHOLDER" not in out)
