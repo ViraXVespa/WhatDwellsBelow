@@ -71,7 +71,7 @@ Framing and overlays (`lib/media/clip_fx.py`; flags: `media.py clip --help`): `-
 
 Before/after recipe: `clip ba BEFORE AFTER` finds the changed area; a small one (at most 35% of the frame) is zoomed in and slider-wiped, a subtle one (mean difference at most 24 levels) is wiped however wide, only a strong wide change gets `sbs`. `--layout` or `--box` overrides; it prints the pick. `--style promo` (`clip_promo.py`, also `clip wipe`): eased grip wipe, BEFORE/AFTER chip (`--subs`), `--end-card "T|S"`. Then `export --for x` and `--for gif`.
 
-Compose: `media.py clip` (`clip_compose.py` schema/examples; spec paths relative to the file). Portrait `--size 720x900 --fill track|focus|box --box B` crops per segment before chips and a native card; tall titles are centred. `clip_track.py` owns held/eased chip slots and owned half-open windows. Module docstrings document ops and compatibility.
+Compose: `media.py clip` (`clip_compose.py` schema/examples; spec paths relative to the file). Portrait `--size 720x900 --fill track|focus|box --box B` crops per segment before chips and a native card; tall titles are centred. `lib/media/clip_track.py` owns held/eased chip slots and owned half-open windows. Module docstrings document ops and compatibility.
 
 ## Ref compare and scenario catalog
 
