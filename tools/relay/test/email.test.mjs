@@ -64,7 +64,7 @@ test("only Resend id means accepted; quota, timeout, malformed and oversized rep
 
 test("metadata preserves independently provisioned secrets even with named upserts", () => {
   const config = JSON.parse(readFileSync(new URL("../wrangler.jsonc", import.meta.url), "utf8"));
-  assert.equal(CONFIG.script, "wdb-bug-relay"); assert.equal(CONFIG.vars.EMAIL_SEND, "off");
+  assert.equal(CONFIG.script, "wdb-bug-relay"); assert.equal(CONFIG.vars.EMAIL_SEND, "on");
   assert.equal(CONFIG.vars.EMAIL_FROM, "WDB Bug Reports <bugs@mail.viraxvespa.com>");
   assert.deepEqual(config.secrets.required, ["RESEND_API_KEY"]); assert.equal(config.send_email, undefined);
   for (const supplied of [[], [{ type: "secret_text", name: "RELAY_SALT", text: "fixture" }]]) {
@@ -98,7 +98,7 @@ test("both payload CLI modes retain unknown secrets using temporary fake credent
       const header = calls[0].body.split(String.fromCharCode(13,10,13,10))[1].split(String.fromCharCode(13,10))[0];
       const metadata = JSON.parse(header);
       assert.deepEqual(metadata.keep_bindings, ["secret_text"]);
-      assert.equal(metadata.bindings.find((b) => b.name === "EMAIL_SEND").text, "off");
+      assert.equal(metadata.bindings.find((b) => b.name === "EMAIL_SEND").text, "on");
       assert.ok(!metadata.bindings.some((b) => b.name === "RESEND_API_KEY"));
       assert.equal(metadata.bindings.filter((b) => b.type === "secret_text").length, mode.length ? 3 : 0);
     }

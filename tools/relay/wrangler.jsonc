@@ -5,7 +5,7 @@
   "compatibility_date": "2025-09-01",
   "vars": {
     "REPO": "ViraXVespa/WhatDwellsBelow",
-    "EMAIL_SEND": "off",
+    "EMAIL_SEND": "on",
     "EMAIL_FROM": "WDB Bug Reports <bugs@mail.viraxvespa.com>"
   },
   "d1_databases": [
