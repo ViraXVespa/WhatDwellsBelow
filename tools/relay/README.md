@@ -1,25 +1,30 @@
 # WDB bug-report relay
 
-Cloudflare Worker `wdb-bug-relay`; report/GitHub webhook state stays in D1, screenshots in KV. Selected outbound provider: **Resend**, not Cloudflare Paid Email Sending. The verified application domain is `mail.viraxvespa.com`; the configured sender is `WDB Bug Reports <bugs@mail.viraxvespa.com>`. This is an outbound identity, not a promise that replies reach an inbox.
+Cloudflare Worker `wdb-bug-relay`; D1 holds private report/outbox state, KV screenshots. Selected provider: **Resend**, not Cloudflare Paid Email Sending. Application sender: `WDB Bug Reports <bugs@mail.viraxvespa.com>`; this is an outbound identity, not a receiving-inbox promise.
 
-## Sending and readiness
+## Sending and credentials
 
-The User authorized live activation on 2026-11-07; deployment configuration is now `EMAIL_SEND="on"`. The sender itself still fails closed unless the exact flag is on and the key is present. Only the exact value `"on"` enables future opted-in webhook notifications. Provision the restricted domain-scoped Resend key as Worker secret **`RESEND_API_KEY`** on **`wdb-bug-relay`** through the sanctioned write-only setup; never put it in source, vars, local fixtures or logs. `wrangler.jsonc` declares the required secret name for generated types, not its value. No Cloudflare `send_email` binding or paid Workers upgrade is needed.
+The User authorized activation on 2026-11-07; configuration is `EMAIL_SEND="on"`. Only that exact flag enables sending. The domain-scoped key is Worker secret **`RESEND_API_KEY`** on **`wdb-bug-relay`**. Provision write-only through sanctioned setup; never put values in source, vars, fixtures or logs. Wrangler declares the secret name for generated types, not its value. No `send_email` binding or Workers Paid upgrade is needed.
 
-The sender uses the official `POST https://api.resend.com/emails` HTTPS API, a stable `Idempotency-Key` (`wdb-bug-relay/outbox/<id>`), plain text plus escaped HTML, an eight-second timeout and a bounded acceptance response. Only successful JSON with a nonempty Resend `id` means provider acceptance, **not delivery**. Failures, timeouts and quota errors leave the row queued and expose no provider details. There is no automatic retry/drain, so enabling cannot silently flush old rows; idempotency retention at Resend is 24 hours. Existing report ingress limits, webhook delivery dedupe and opt-in/unsubscribe handling remain. The inherited outbox has no aggregate pending-row cap; this patch does not invent one or delete old records.
+Official `POST https://api.resend.com/emails` uses stable `Idempotency-Key: wdb-bug-relay/outbox/<id>`, plain text plus escaped HTML, an eight-second timeout and a bounded response. Successful JSON with a nonempty Resend `id` means acceptance, **not delivery**. Failures/timeouts/quota errors leave the row queued without exposing provider details. No automatic retry/drain exists; enabling cannot silently flush old rows. Resend idempotency retention is 24 hours. Existing ingress limits, webhook dedupe and opt-in/unsubscribe remain. The inherited outbox has no aggregate pending-row cap; no arbitrary cap or deletion was introduced.
 
-Before live activation, read state counts and last outbox id without reading message contents, deploy off, verify required binding names and health, then use only a separately approved exact test. The normal GitHub webhook derives its own subject and appends issue/unsubscribe links: it **cannot carry a footer-free arbitrary test unchanged**. Do not send a transformed test or substitute a direct provider call for proving the deployed relay. No public arbitrary-mail endpoint is provided here.
+## Live validation
 
-## Configuration, deployment and tests
+Read outbox counts/last id before activation, deploy off, verify binding names/health, then use only the approved live test. The GitHub webhook derives its subject and appends issue/unsubscribe links; it cannot carry a footer-free test unchanged. No public arbitrary-mail endpoint exists. Public test issues/comments and resulting messages require explicit approval. Closing an opted-in test issue triggers another email; do not clean it up unasked.
 
-`wrangler.jsonc` is JSON-compatible and owns bindings/vars for both Wrangler and `deploy-payload.mjs`. The payload always retains existing `secret_text` bindings, including independently provisioned `RESEND_API_KEY`, even when `--with-secrets` upserts named legacy secrets. Importing the metadata builder never reads credentials or writes a payload. Never inspect real credential files as tests. Both payload modes are tested using temporary fake credentials only.
+Health confirms flags, not upstream credentials. The approved test reached `/report` but returned `502 github_error: GitHub returned 401`. Refresh the existing `GITHUB_TOKEN` through sanctioned provisioning; never extract the box CLI token or inspect credential files. A private reporter is allocated before GitHub submission: inspect reports/outbox before retrying, preserve partial records. That rejected attempt created no issue/comment/email.
 
-From this directory: `npm test`, `npm run typecheck`, `npm run dry-run`. These use mocked provider requests and upload-free compilation; they neither send mail nor prove live delivery. `node deploy-payload.mjs` creates the normal connector payload without reading secrets. Deployment, enablement and the exact single approved live test are separately tracked; this source update alone does not claim any of them happened.
+## Client contract
 
-Official API: https://resend.com/docs/api-reference/emails/send-email ; idempotency: https://resend.com/docs/dashboard/emails/idempotency-keys .
+Managed workers.dev can reject library-default User-Agent headers with Cloudflare Error 1010 before the Worker runs. Official guidance is a truthful application identifier, not browser impersonation; the test uses `WDB-Relay-Integration-Test/0.10.9` on the same public route/network. No cookies, policy changes or alternate routes. The game sends JSON through HTTPRequest; `/report` requires no Origin header or application auth. Managed-zone blocks do not appear in this account's Worker logs/security events.
 
-## Scripted clients and edge errors
+Reference: https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/
 
-On managed `workers.dev`, Cloudflare Error 1010 can reject a library-default User-Agent before this Worker runs. Official guidance is an honest descriptive application identifier, not browser impersonation: the approved integration test client uses `WDB-Relay-Integration-Test/0.10.9`. Same public endpoint/network, no cookies, credentials, WAF changes or alternate route. The native game sends JSON through HTTPRequest; this relay does not require an Origin header or application auth for `/report`. See https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/ . Managed-zone blocks do not appear in this account's Worker logs/security events.
+## Deployment and tests
 
-A health success confirms configuration flags, not upstream credential validity. The live approved test reached `/report` after the documented client correction but received `502 github_error: GitHub returned 401`. Refresh the existing Worker `GITHUB_TOKEN` through sanctioned credential provisioning; do not extract the box CLI token or read secret files. Creation allocates a private reporter before GitHub submission, so check report/outbox state before any retry; never delete partial records unasked. No test issue, comment or email was created by that rejected attempt.
+JSON-compatible `wrangler.jsonc` owns bindings/vars for Wrangler and `deploy-payload.mjs`. Both payload modes retain existing `secret_text`, including independently provisioned Resend keys, while upserting supplied named secrets. Importing the builder reads no credentials. Never use real secrets mode as a test.
+
+Run `npm test`, `npm run typecheck`, `npm run dry-run` here: mocked requests and upload-free compilation, not delivery proof. Both payload modes have temporary fake-secret tests. `node deploy-payload.mjs` generates the normal connector payload without reading secrets.
+
+API: https://resend.com/docs/api-reference/emails/send-email
+Idempotency: https://resend.com/docs/dashboard/emails/idempotency-keys
