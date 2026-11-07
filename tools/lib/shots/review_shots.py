@@ -241,6 +241,8 @@ def main() -> int:
     ap.add_argument("--grok", default="grok", help="Grok Build executable (default: grok)")
     ap.add_argument("--max-turns", type=int, default=6, help="Max child turns. The run rises with the image count (at least 8, +2 per image, cap 16, 24 with --zoom) when this is lower.")
     ap.add_argument("--zoom", action="append", default=[], help="N:X,Y,W,H — also stage a 4x crop of shot N (1-based) from its full-size original (shots.py zoom); box in the shot's pixels as viewed. Repeat. Raises the turn cap to 24.")
+    ap.add_argument("--ocr", action="store_true", help="Local Tesseract pre-pass (shots.py ocr); its text goes into the child prompt so the child reads less")
+    ap.add_argument("--why", default="", help="Why an LLM text read is needed without a recent shots.py ocr run (logged; the pretool hook accepts it)")
     ap.add_argument("--selftest", action="store_true", help="Run against a mock grok; no Grok needed")
     args = ap.parse_args()
     root = agent_log.resolve_root(args)
@@ -252,7 +254,19 @@ def main() -> int:
     if rubric.startswith("@"):
         rubric = Path(rubric[1:]).read_text(encoding="utf-8")
     paths = [Path(p) if Path(p).is_absolute() or not (root / p).exists() else root / p for p in args.paths]
-    return review(paths, args.question.strip(), rubric.strip(), args.grok, args.max_turns, args.zoom)
+    question = args.question.strip()
+    if args.why.strip():
+        print("why-llm-read: " + args.why.strip())
+    if args.ocr:
+        import ocr_lib
+        status, rows = ocr_lib.ocr([str(p) for p in paths])
+        if status == "SKIP":
+            print("ocr: SKIP (tesseract not found)")
+        else:
+            pre = "\n".join(ocr_lib.fmt(r) for r in rows)
+            print(pre)
+            question += "\n\nLocal OCR pre-pass (Tesseract; trust READ ok lines, check weak/fail ones by eye):\n" + pre
+    return review(paths, question, rubric.strip(), args.grok, args.max_turns, args.zoom)
 
 if __name__ == "__main__":
     sys.exit(main())

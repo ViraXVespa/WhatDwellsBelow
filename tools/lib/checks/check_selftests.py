@@ -26,7 +26,7 @@ from check_prove import SELFTEST_FLAG
 
 EXTRA = [("tools/lib/docs/task_compact.py", "python3 tools/docs.py task compact --selftest")]
 SUBSUB = {"tools/lib/docs/task.py"}  # its --selftest sits on a sub-subcommand (EXTRA)
-EXES = ("grok", "godot", "chrome", "chromium", "msedge", "edge", "ffmpeg", "ffprobe", "gh")
+EXES = ("grok", "godot", "chrome", "chromium", "msedge", "edge", "ffmpeg", "ffprobe", "gh", "tesseract")
 SKIP_RE = re.compile(r"ModuleNotFoundError: No module named '([\w.]+)'|No such file or directory: '[^']*?(" + "|".join(EXES) + r")[^']*'"
                      r"|\b(" + "|".join(EXES) + r")\b[^\n]{0,40}\b(?:not found|not on PATH|missing|is not installed)|RESULT SKIP\b[^\n]*|not run: [^\n]+", re.I)
 
