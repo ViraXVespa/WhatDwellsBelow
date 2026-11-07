@@ -19,6 +19,7 @@ The geometry author needs the pixels, not only a text review. Use the supported 
 2. Grant the canonical source directly:
    `python tools/slice.py references grant --task modular-voxel-walk-proof --reason "Blender modeling requires the new female source's proportions and equipment" --path _src/new_bibles/female.png`
 3. Read that original with the direct image-read tool. Preserve its path, hash and native dimensions in the comparison notes. Inspect its layout before choosing any details; record half-open source crop coordinates and output dimensions for later crops, without resizing the reference. Grant exact crop or current-walk paths separately if needed. Do not combine old and new Bibles or run the legacy cell exporter on this unverified layout.
+   - If it would be better for the task, you can additionally split and key the individual cells and add those individually to the references grant. Either way, be sure not to add the magenta chroma to the model.
 4. Inspect the available Blender MCP schema in Vira's Build environment before modeling. Use it for this task; do not route Blender work through Imagine/I2V. Missing MCP access is a setup gap to report, not a reason to invent commands or broaden permissions.
 5. Revoke the reference grant when the reference work ends. Geometry hidden by the 2D views still needs explicit design judgment; do not silently invent disputed anatomy or attachment behavior.
 
