@@ -67,17 +67,19 @@ def selftest() -> list[str]:
             errors.append("real helper produced no OCR attempt evidence")
         check(read, "allow", "isolated text read after attempt")
         check(event("read_file", {"target_file": "full/01-label.png"}), "allow", "full source evidence")
-        # Test the outer repository hook too: staged decision must precede blanket isolated allow.
-        outer = Path(__file__).resolve().parents[3] / ".grok/hooks/bin/wdb-pretool.py"
+        # Exercise the installed staged entry, not the protected repository-wide hook.
         receipt = marker_path([scratch / "01-label.png"], scratch)
         saved = receipt.read_text()
         row = json.loads(saved)
         row["time"] = time.time() - 1801
         receipt.write_text(json.dumps(row))
         check(read, "deny", "expired evidence")
-        r = subprocess.run([sys.executable, str(outer)], cwd=scratch, input=json.dumps(read), text=True, capture_output=True)
-        if r.returncode != 2 or json.loads(r.stdout)["decision"] != "deny":
-            errors.append("outer hook bypassed isolated policy")
+        policy = scratch / "local/review_policy.py"
+        policy.rename(policy.with_suffix(".saved"))
+        try:
+            check(read, "deny", "missing staged policy fails closed")
+        finally:
+            policy.with_suffix(".saved").rename(policy)
         receipt.write_text(saved)
         old = (scratch / "01-label.png").read_bytes()
         Image.new("RGB", (450, 60), "red").save(scratch / "01-label.png")

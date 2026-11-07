@@ -5,7 +5,7 @@
 Per region: words read, mean confidence, glyph x-height (px, scaled to 1080p), WCAG contrast of text vs the
 ring around it, and READ ok|weak|fail (ok = conf >= 80, x-height >= 9 px at 1080p, contrast >= 4.5; weak = one
 miss; fail = two or more, or nothing read). --expect adds a fuzzy match ratio (difflib) and fails under 0.8.
-Writes _logs/ocr/.tried-<sha1 of the PNG path set> (repo root; key shared with .grok/hooks/bin/wdb_ocr_gate.py)
+Writes _logs/ocr/.tried-<sha1 of the PNG path set> (repo root; shared content-bound contract in ocr_evidence.py)
 so the pretool hook lets an LLM text read follow (30 min).
 Tesseract: PATH, or WDB_TESSERACT=path. Missing binary prints RESULT SKIP (exit 0).
 Install: apt install tesseract-ocr; Windows UB-Mannheim build; no root: micromamba -c conda-forge tesseract.

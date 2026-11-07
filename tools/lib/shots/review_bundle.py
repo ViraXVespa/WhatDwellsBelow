@@ -30,7 +30,7 @@ def stage(scratch: Path, images: list[tuple[Path, str]], *, text_review: bool = 
     local.mkdir(exist_ok=True)
     for name in ("ocr_core.py", "ocr_evidence.py", "review_local.py", "review_policy.py"):
         shutil.copy2(HERE / name, local / name)
-    shutil.copy2(HERE.parents[2] / ".grok/hooks/bin/wdb-review.py", local / "wdb-review.py")
+    shutil.copy2(HERE / "review_hook.py", local / "wdb-review.py")
     for name in ("agent_log.py", "run_log_lib.py"):
         shutil.copy2(HERE.parent / name, local / name)
     # Reuse the existing package, not a second image implementation.
