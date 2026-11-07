@@ -21,23 +21,37 @@ import clip_promo
 CORNERS = ((0.0, 0.0, 0.36, 0.2), (0.64, 0.0, 0.36, 0.2))
 
 def corners(w: int, h: int) -> list[tuple[float, float, float, float]]:
-    return [(x * w, y * h, cw * w, ch * h) for x, y, cw, ch in CORNERS]
+    return [(0, 0, w, h * 0.2)] if h > w else [(x * w, y * h, cw * w, ch * h) for x, y, cw, ch in CORNERS]
 
 def _hit(a, b) -> bool:
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 
 def place_chip(cw: int, ch: int, box, w: int, h: int, avoid=(), gap: int = 4) -> tuple[int, int]:
-    """Below the box, above it, right, left; then stepped down the frame: the first spot inside the frame that hits no
-    avoid rect (corners plus chips already placed). Falls back to below, clamped."""
+    """Find an in-frame spot clear of the subject box and avoid rectangles.
+
+    Prefer below/above/right/left, then rectangle edges. If packing is impossible,
+    minimize overlap (subject overlap is most expensive); never return negatives.
+    """
     x, y, bw, bh = box
-    clamp = lambda cx, cy: (int(min(max(0, cx), w - cw)), int(min(max(0, cy), h - ch)))
+    clamp = lambda cx, cy: (int(min(max(0, cx), max(0, w - cw))), int(min(max(0, cy), max(0, h - ch))))
+    blocked = [box, *avoid]
     cands = [(x, y + bh + gap), (x, y - ch - gap), (x + bw + gap, y), (x - cw - gap, y)]
-    cands += [(x, y + bh + gap + k * (ch + gap)) for k in range(1, 6)] + [(x, y - (k + 1) * (ch + gap)) for k in range(1, 6)]
-    for cx, cy in cands:
-        p = clamp(cx, cy)
-        if (p[0], p[1]) == (int(cx), int(cy)) and not any(_hit((p[0], p[1], cw, ch), r) for r in avoid):
-            return p
-    return clamp(x, y + bh + gap)
+    xs, ys = [0, w - cw, x], [0, h - ch, y]
+    for rx, ry, rw, rh in blocked:
+        xs.extend((rx - cw - gap, rx + rw + gap))
+        ys.extend((ry - ch - gap, ry + rh + gap))
+    cands.extend((cx, cy) for cy in ys for cx in xs)
+    candidates = list(dict.fromkeys(clamp(cx, cy) for cx, cy in cands))
+    for cx, cy in candidates:
+        if not any(_hit((cx, cy, cw, ch), r) for r in blocked):
+            return cx, cy
+    def overlap(p):
+        cx, cy = p
+        return sum(max(0, min(cx + cw, r[0] + r[2]) - max(cx, r[0])) *
+                   max(0, min(cy + ch, r[1] + r[3]) - max(cy, r[1])) * (1000 if n == 0 else 1)
+                   for n, r in enumerate(blocked))
+    return min(candidates, key=overlap)
+
 
 def keys(spec, w: int, h: int, root: Path | None = None, movie: str = "", base: Path | None = None) -> list[list[float]]:
     """Track rows [t, x, y, w, h] in px, sorted by t."""
@@ -193,20 +207,32 @@ def join_each(segs: list[Path], hows: list[str], fade: float, out: Path) -> Path
         shutil.copy2(acc, out)
     return out
 
+def portrait_geometry(region, w: int, h: int, size=(720, 1280)):
+    """Shared source crop and native-canvas content rectangle for portrait/map boxes."""
+    import clip_fx
+    W, H = size
+    ph = min(H, W * 9 // 8) // 2 * 2
+    aspect = W / ph
+    x, y, cw, ch = clip_fx.aspect_box(region, aspect, w, h, pad=0.125, min_w=h * 0.6 * aspect)
+    cw, ch = max(2, int(cw) // 2 * 2), max(2, int(ch) // 2 * 2)
+    return (int(min(x, w - cw)), int(min(y, h - ch)), cw, ch), (0, (H - ph) // 2, W, ph)
+
+
+def portrait_box(box, geometry):
+    """Map source-pixel callout geometry after the portrait crop (not burned-in chips)."""
+    (x, y, cw, ch), (dx, dy, dw, dh) = geometry
+    return [(box[0] - x) * dw / cw + dx, (box[1] - y) * dh / ch + dy, box[2] * dw / cw, box[3] * dh / ch]
+
+
 def portrait(src: Path, region, out: Path, title: str = "", sub: str = "", font: str = "", size=(720, 1280)) -> Path:
-    """Portrait focus: an 8:9 crop around region (x, y, w, h px; grown to fit it) scaled into the middle of size, dark
-    bands above and below with a big title (top) and subline (bottom)."""
+    """Crop source pixels to the native canvas before any chips; optional band text.
+
+    size is preserved (including 4:5); geometry is shared with portrait_box.
+    """
     from PIL import Image, ImageDraw
     i = ce.info(src)
     W, H = size
-    ph = W * 9 // 8
-    x, y, bw, bh = region
-    ch = min(i["h"], max(bh * 1.25, i["h"] * 0.6, bw * 1.25 * 9 / 8))
-    cw = min(i["w"], ch * 8 / 9)
-    ch = cw * 9 / 8
-    cx = min(max(0, x + bw / 2 - cw / 2), i["w"] - cw)
-    cy = min(max(0, y + bh / 2 - ch / 2), i["h"] - ch)
-    top = (H - ph) // 2
+    (cx, cy, cw, ch), (_, top, _, ph) = portrait_geometry(region, i["w"], i["h"], size)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
         img = Image.new("RGBA", (W, H), (0, 0, 0, 0))

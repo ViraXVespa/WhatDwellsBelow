@@ -62,19 +62,26 @@ def grip(h: int, path: Path) -> int:
     return hw
 
 def card(title: str, sub: str, font: str, w: int, h: int, path: Path) -> None:
+    """Draw a native-size end card; fit both lines inside its width, including portrait."""
     from PIL import Image, ImageDraw, ImageFilter
     k = h / 720
     im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     t, s = _f(font, int(92 * k)), _f(font, int(44 * k), "Medium")
-    tw, sw, y = t.getbbox(title)[2], s.getbbox(sub)[2] if sub else 0, int(270 * k)
+    while t.getbbox(title)[2] > w * 0.9 and t.size > 12:
+        t = _f(font, max(12, t.size - 2))
+    while sub and s.getbbox(sub)[2] > w * 0.9 and s.size > 12:
+        s = _f(font, max(12, s.size - 2), "Medium")
+    tw, sw = t.getbbox(title)[2], s.getbbox(sub)[2] if sub else 0
+    gap = min(142 * k, t.size * 1.55)
+    y = int((h - (gap + s.size if sub else t.size)) / 2)
     sh = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     ImageDraw.Draw(sh).text(((w - tw) // 2 + 4, y + 4), title, font=t, fill=(0, 0, 0, 220))
     im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(5 * k)))
     d = ImageDraw.Draw(im)
     d.text(((w - tw) // 2, y), title, font=t, fill=GOLD)
     if sub:
-        d.line(((w - 360 * k) // 2, y + 122 * k, (w + 360 * k) // 2, y + 122 * k), fill=GOLD[:3] + (180,), width=2)
-        d.text(((w - sw) // 2, y + 142 * k), sub, font=s, fill=(240, 235, 220, 255))
+        d.line(((w - min(360 * k, w * 0.65)) // 2, y + gap - s.size * 0.4, (w + min(360 * k, w * 0.65)) // 2, y + gap - s.size * 0.4), fill=GOLD[:3] + (180,), width=2)
+        d.text(((w - sw) // 2, y + gap), sub, font=s, fill=(240, 235, 220, 255))
     im.save(path)
 
 def _ease_expr(t0: float, d: float) -> str:

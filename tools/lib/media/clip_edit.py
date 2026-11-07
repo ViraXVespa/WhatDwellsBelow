@@ -9,7 +9,7 @@
   python tools/media.py clip export IN --for x|gif [--width W] --out O               # X: H.264 <=1280x720, <=140 s, <=512 MB; GIF <=15 MB
   python tools/media.py clip crop IN --box X,Y,W,H|NAME [--movie M] [--size x|WxH] --out O.mp4   # static crop
   python tools/media.py clip zoom IN --box FROM --to TO [--start S --end E] [--size x] --out O.mp4        # Ken Burns
-  python tools/media.py clip fit IN --size x|x-square|x-portrait|WxH [--fill pad|crop|blur] --out O.mp4
+  python tools/media.py clip fit IN --size x|x-square|x-portrait|WxH [--fill pad|crop|blur|track|focus|box] --out O.mp4
   python tools/media.py clip join A B --transition wipeleft|slideup|dissolve|...          # any xfade transition
   python tools/media.py clip sbs BEFORE AFTER --stack v                                    # before over after
   python tools/media.py clip wipe BEFORE AFTER [--hold 0.6 --sweep 1.6 --once] --out O.mp4  # slider reveal line
@@ -19,7 +19,8 @@
   python tools/media.py clip ba BEFORE AFTER [--layout auto|wipe|sbs|stack] [--box B] --out O.mp4  # auto zoom + wipe
   python tools/media.py clip punch IN --box B [--start S --sweep 0.4 --hold 1.2]        # punch-in: ease in, hold, ease out
   python tools/media.py clip callout IN --box B --text T [--shape ring --leader --start S --end E] # box outline + chip label, faded
-  python tools/media.py clip montage A B C [--labels "One,Two,Three"] [--end-card "T|S"]  # titled segments, crossfaded
+  python tools/media.py clip montage A B C [--labels "One,Two,Three"] [--end-card "T|S"] [--size 720x900 --fill focus]  # crop EACH segment, then chips/card
+  python tools/media.py clip export IN --for portrait --fill track|focus|box [--box X,Y,W,H] --out O.mp4
   python tools/media.py clip spec EDIT.json --out O.mp4                                   # JSON edit list (clip_compose.py)
   python tools/media.py clip wipe|ba A B --style promo [--subs "Week 8,Week 9"] [--end-card "TITLE|SUB"]  # promo chips + grip
   python tools/media.py clip --selftest                                          # synthetic clips through every op (ffmpeg only)
@@ -208,12 +209,12 @@ OPS = ("info", "trim", "join", "caption", "sbs", "export", "crop", "zoom", "fit"
 # Per-op --help: the flags each op reads (shared --out/--root/--json always shown).
 OP_FLAGS = {
     "info": [], "trim": ["start", "end"], "join": ["fade", "transition"], "caption": ["text", "pos", "start", "end", "cue", "font"],
-    "sbs": ["labels", "stack", "font"], "export": ["kind", "width", "size", "fill"], "crop": ["box", "size", "movie"],
-    "zoom": ["box", "to", "size", "start", "end", "movie"], "fit": ["size", "fill"],
+    "sbs": ["labels", "stack", "font"], "export": ["kind", "width", "size", "fill", "box", "movie"], "crop": ["box", "size", "movie"],
+    "zoom": ["box", "to", "size", "start", "end", "movie"], "fit": ["size", "fill", "box", "movie"],
     "wipe": ["labels", "hold", "sweep", "once", "style", "subs", "end_card", "font"], "pip": ["corner", "scale", "start", "end"],
     "mark": ["box", "no_arrows", "start", "end", "color", "movie"], "ba": ["box", "layout", "labels", "style", "subs", "end_card", "font"],
     "punch": ["box", "start", "sweep", "hold"], "callout": ["box", "text", "start", "end", "color", "font", "shape", "leader", "movie"],
-    "montage": ["labels", "fade", "end_card", "font"], "spec": [],
+    "montage": ["labels", "fade", "end_card", "font", "size", "fill", "box", "movie"], "spec": [],
 }
 USAGE = {"spec": "spec EDIT.json --out O.mp4   (JSON edit list; see clip_compose.py)", "montage": "montage A.mp4 B.mp4 ... --out O.mp4",
          "join": "join A.mp4 B.mp4 ... --out O.mp4", "sbs": "sbs A.mp4 B.mp4", "wipe": "wipe A.mp4 B.mp4", "pip": "pip A.mp4 B.mp4", "ba": "ba A.mp4 B.mp4"}
@@ -246,7 +247,14 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
         to = clip_fx.box_px(args.to, i["w"], i["h"], root, args.movie) if args.to else boxes[0]
         clip_fx.zoom(ins[0], boxes[0], to, out, size, args.start, max(0.0, args.end - args.start))
     elif args.op == "fit":
-        clip_fx.fit(ins[0], size or clip_fx.SIZES["x"], out, args.fill)
+        if args.fill in ("track", "focus", "box"):
+            import clip_compose, clip_track
+            if args.fill == "box" and not boxes:
+                agent_log.fail("--fill box requires --box")
+            reg = clip_compose.focus_region([], i, root, box=boxes[0] if boxes else None)
+            clip_track.portrait(ins[0], reg, out, size=size if size[0] else clip_fx.SIZES["x-portrait"])
+        else:
+            clip_fx.fit(ins[0], size if size[0] else clip_fx.SIZES["x"], out, args.fill)
     elif args.op == "wipe":
         if args.style == "promo":
             import clip_promo
@@ -266,7 +274,8 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
         elif args.op == "callout":
             clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font, args.shape, args.leader)
         elif args.op == "montage":
-            clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font)
+            clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font,
+                                 root=root, size=size, fill=args.fill, box=args.box[0] if args.box else None)
     elif args.op == "ba":
         pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font, style=args.style, subs=subs, end=end)
         print("ba pick: %s" % json.dumps(pick))
@@ -286,11 +295,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--font", default="", help="caption font file (default fontconfig sans)")
     ap.add_argument("--for", dest="kind", choices=("x", "gif", "portrait"), default="x", help="export target (portrait: 720x1280, --fill blur unless set)")
     ap.add_argument("--width", type=int, default=0, help="export width (x: max 1280; gif: default 640)")
-    ap.add_argument("--box", action="append", default=[], help="crop/zoom/mark/ba: X,Y,W,H in px or fractions, or a region name (mark: repeat)")
+    ap.add_argument("--box", action="append", default=[], help="crop/zoom/mark/ba/portrait: X,Y,W,H in px or fractions, or a region name (mark: repeat)")
     ap.add_argument("--to", default="", help="zoom: end box (the view eases from --box to --to)")
     ap.add_argument("--movie", default="", help="movie in tools/data/movies.json whose regions --box names")
     ap.add_argument("--size", default="", help="crop/zoom/fit/export: x, x-square, x-portrait or WxH")
-    ap.add_argument("--fill", choices=("pad", "crop", "blur"), default="pad", help="fit/export --size: how a different aspect is filled")
+    ap.add_argument("--fill", choices=("pad", "crop", "blur", "track", "focus", "box"), default="pad", help="fit/export/montage: pad/crop/blur or portrait track/focus/box (--box; montage per segment)")
     ap.add_argument("--transition", choices=clip_fx.TRANSITIONS, default="fade", help="join: xfade transition")
     ap.add_argument("--stack", choices=("h", "v"), default="h", help="sbs: h side by side, v before over after")
     ap.add_argument("--hold", type=float, default=0.6, help="wipe: seconds on before before the sweep")
@@ -342,10 +351,19 @@ def main(argv: list[str] | None = None) -> int:
         sbs(ins[0], ins[1], out, (labs[0], labs[1]), args.font, args.stack)
     elif args.op == "export":
         src = ins[0]
-        size = args.size or ("x-portrait" if args.kind == "portrait" else "")
+        size = args.size or ("x-portrait" if args.kind == "portrait" or args.fill in ("track", "focus", "box") else "")
         if size:
-            fill = "blur" if args.kind == "portrait" and "--fill" not in (argv if argv is not None else sys.argv) else args.fill
-            src = clip_fx.fit(src, clip_fx.size_of(size), out.with_suffix(".fit.mp4"), fill)
+            explicit_fill = any(a == "--fill" or a.startswith("--fill=") for a in av)
+            fill = "blur" if args.kind == "portrait" and not explicit_fill else args.fill
+            if fill in ("track", "focus", "box"):
+                import clip_compose
+                region = clip_compose.focus_region([], info(src), root, box=args.box[0] if args.box else None, movie=args.movie)
+                if fill == "box" and not args.box:
+                    ap.error("--fill box requires --box")
+                import clip_track
+                src = clip_track.portrait(src, region, out.with_suffix(".fit.mp4"), size=clip_fx.size_of(size))
+            else:
+                src = clip_fx.fit(src, clip_fx.size_of(size), out.with_suffix(".fit.mp4"), fill)
         _, problems = export(src, args.kind, out, args.width)
         if src != ins[0]:
             src.unlink()

@@ -39,6 +39,10 @@ def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float
         T = Path(td)
         clip_promo.chip(text, "", ImageColor.getrgb(color) + (255,), font, int(h * 0.6), T / "c.png")
         c = Image.open(T / "c.png")
+        from imglib import geom
+        if c.width > w or c.height > h:
+            ratio = min(w / c.width, h / c.height)
+            c = geom.resize_rgba(c, (max(1, int(c.width * ratio)), max(1, int(c.height * ratio))))
         img, lab = Image.new("RGBA", (w, h), (0, 0, 0, 0)), Image.new("RGBA", (w, h), (0, 0, 0, 0))
         d = ImageDraw.Draw(img)
         x, y, bw, bh = [int(v) for v in box]
@@ -66,17 +70,46 @@ def callout(src: Path, box, text: str, out: Path, start: float = 0.0, end: float
                  "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(out)])
     return out
 
+def focus_region(steps: list[dict], info: dict, root=None, base=Path("."), box=None, movie=""):
+    """One segment's source region; never union regions from unrelated segments."""
+    if box is not None:
+        return clip_fx.box_px(box, info["w"], info["h"], root, movie)
+    boxes = []
+    for step in steps:
+        if "track" in step:
+            rows = clip_track.keys(step["track"], info["w"], info["h"], root, step.get("movie", ""), base)
+            boxes.extend(row[1:] for row in rows)
+        elif "box" in step:
+            boxes.append(clip_fx.box_px(step["box"], info["w"], info["h"], root, step.get("movie", "")))
+    return _union(boxes) if boxes else [info["w"] * 0.25, 0, info["w"] * 0.5, info["h"]]
+
+
+def portrait_step(step: dict, info: dict, geometry, root=None, base=Path(".")) -> dict:
+    """Resolve source-coordinate boxes/tracks once, then move them to the cropped canvas."""
+    step = dict(step)
+    if "box" in step:
+        step["box"] = clip_track.portrait_box(clip_fx.box_px(step["box"], info["w"], info["h"], root, step.get("movie", "")), geometry)
+    if "track" in step:
+        step["track"] = [[row[0], *clip_track.portrait_box(row[1:], geometry)] for row in
+                         clip_track.keys(step["track"], info["w"], info["h"], root, step.get("movie", ""), base)]
+    return step
+
+
 def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float = 0.4, end: tuple[str, str] | None = None, font: str = "",
-            join: str = "fade", title_style: str = "chip", hold_end: float = 0.0, root: Path | None = None, base: Path = Path(".")) -> Path:
-    """Each clip at the first clip's size, its title over its first 1.6 s (chip top-left, or a lower-third strip), joined by
+            join: str = "fade", title_style: str = "chip", hold_end: float = 0.0, root: Path | None = None, base: Path = Path("."),
+            size=(0, 0), fill: str = "pad", box=None) -> Path:
+    """Each clip at size (else first clip size), title over its first 1.6 s (portrait chip centred), joined by
     `join` (clip_track.JOINS: fade, cut, dip, whip); then the optional end card. A src may be a dict
     {"clip": PATH, "title", "sub", "sub_size" (x h, default 0.045), "trim": [IN, OUT] s (cut before a camera handback),
     "join" (how this segment joins the one before), "callouts": [callout steps]}; its callouts run on that segment only
-    and share one `placed` list (chips keep off each other). hold_end: freeze the last frame (before the end card)."""
+    and share one `placed` list. fill track/focus/box crops EACH segment before chips and remaps callout geometry;
+    segment box overrides the shared box. Native end cards are never cropped. hold_end freezes the last frame."""
     segs_in = [s if isinstance(s, dict) else {"clip": s} for s in srcs]
     srcs = [Path(s["clip"]) for s in segs_in]
     a = ce.info(srcs[0])
-    w, h = a["w"] - a["w"] % 2, a["h"] - a["h"] % 2
+    if fill in ("track", "focus", "box") and not size[0]:
+        size = clip_fx.SIZES["x-portrait"]
+    w, h = size if size[0] else (a["w"] - a["w"] % 2, a["h"] - a["h"] % 2)
     font = ce._font(font)
     titles = (titles or []) + [""] * len(srcs)
     with tempfile.TemporaryDirectory() as td:
@@ -87,9 +120,20 @@ def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float 
                 a0, a1 = (float(v) for v in segs_in[k]["trim"])
                 ce._run(["-ss", "%.3f" % a0, "-i", str(s), "-t", "%.3f" % (a1 - a0), "-an", *ce.H264, str(T / ("tr%d.mp4" % k))])
                 s = T / ("tr%d.mp4" % k)
-            fit = clip_fx.fit(s, (w, h), T / ("f%d.mp4" % k)) if (ce.info(s)["w"], ce.info(s)["h"]) != (w, h) else s
+            source_info = ce.info(s)
+            steps = segs_in[k].get("callouts", [])
+            if fill in ("track", "focus", "box"):
+                explicit = segs_in[k].get("box", box)
+                if fill == "box" and explicit is None:
+                    raise ValueError("portrait fill box needs a segment box or --box")
+                region = focus_region(steps, source_info, root, base, explicit, segs_in[k].get("movie", ""))
+                geometry = clip_track.portrait_geometry(region, source_info["w"], source_info["h"], (w, h))
+                fit = clip_track.portrait(s, region, T / ("f%d.mp4" % k), size=(w, h))
+                steps = [portrait_step(st, source_info, geometry, root, base) for st in steps]
+            else:
+                fit = clip_fx.fit(s, (w, h), T / ("f%d.mp4" % k), fill) if (source_info["w"], source_info["h"]) != (w, h) else s
             seg_placed: list = []
-            for j, st in enumerate(segs_in[k].get("callouts", [])):
+            for j, st in enumerate(steps):
                 fit = _step(st, fit, T / ("c%d_%d.mp4" % (k, j)), T, root, font, base, seg_placed)
             title = segs_in[k].get("title", titles[k])
             if title and title_style == "lower":
@@ -98,9 +142,16 @@ def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float 
                 titles[k] = ""
             elif title:
                 titles[k] = title
-                clip_promo.chip(titles[k], "", clip_promo.COL[1], font, h, T / ("t%d.png" % k))
-                lx = int(30 * h / 720)
-                fc = ("[1:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1,fade=t=out:st=1.6:d=0.3:alpha=1[l];[0:v][l]overlay=%d:%d:shortest=1,format=yuv420p[o]" % (lx, lx))
+                clip_promo.chip(titles[k], segs_in[k].get("sub", ""), clip_promo.COL[1], font, h, T / ("t%d.png" % k))
+                from PIL import Image
+                from imglib import geom
+                with Image.open(T / ("t%d.png" % k)) as chip:
+                    if chip.width > w * 0.92:
+                        geom.resize_rgba(chip, (int(w * 0.92), max(1, int(chip.height * w * 0.92 / chip.width)))).save(T / ("t%d.png" % k))
+                with Image.open(T / ("t%d.png" % k)) as chip:
+                    lx = (w - chip.width) // 2 if h > w else int(30 * h / 720)
+                ly = int(30 * h / 720)
+                fc = ("[1:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1,fade=t=out:st=1.6:d=0.3:alpha=1[l];[0:v][l]overlay=%d:%d:shortest=1,format=yuv420p[o]" % (lx, ly))
                 seg = T / ("s%d.mp4" % k)
                 ce._run(["-i", str(fit), "-loop", "1", "-framerate", "30", "-t", "%.3f" % ce.info(fit)["sec"], "-i", str(T / ("t%d.png" % k)),
                          "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(seg)])
@@ -160,12 +211,15 @@ def _step(s: dict, cur: Path, nxt: Path, T: Path, root, font: str, base: Path, p
     elif op == "export":
         nxt = nxt.with_suffix(".gif" if s.get("for") == "gif" else ".mp4")
         src = cur
-        if s.get("for") == "portrait" and s.get("fill") in ("track", "focus"):
+        if s.get("for") == "portrait" and s.get("fill") in ("track", "focus", "box"):
+            if s.get("fill") == "box" and "box" not in s:
+                raise ValueError("portrait fill box needs box")
             reg = clip_fx.box_px(s["box"], i["w"], i["h"], root, s.get("movie", "")) if "box" in s else (
                 _union(REGIONS) if REGIONS else [i["w"] * 0.25, 0, i["w"] * 0.5, i["h"]])
-            src = clip_track.portrait(cur, reg, T / "portrait_focus.mp4", s.get("title", ""), s.get("sub", ""), font, clip_fx.SIZES["x-portrait"])
+            src = clip_track.portrait(cur, reg, T / "portrait_focus.mp4", s.get("title", ""), s.get("sub", ""), font, clip_fx.size_of(s.get("size", "x-portrait")))
         elif s.get("for") == "portrait":
-            src = clip_fx.fit(cur, clip_fx.SIZES["x-portrait"], T / "portrait_fit.mp4", s.get("fill", "blur"))
+            target = clip_fx.size_of(s.get("size", "x-portrait"))
+            src = clip_fx.fit(cur, target, T / "portrait_fit.mp4", s.get("fill", "blur"))
         ce.export(src, s.get("for", "x"), nxt, s.get("width", 0))
     else:
         raise ValueError("spec step: unknown op %r" % op)
@@ -174,23 +228,35 @@ def _step(s: dict, cur: Path, nxt: Path, T: Path, root, font: str, base: Path, p
 def spec(path: Path, out: Path, root: Path | None = None) -> list[dict]:
     """Run a JSON edit list; returns one row per step (op, sec). Every path (clips, `after`, track .json files) is relative
     to the spec file's folder. Montage keys: join (fade|cut|dip|whip; a segment's own "join" overrides it at its seam),
-    title_style (chip|lower), hold_end (s), and dict segments (title, sub, sub_size, trim, join, callouts). Export
-    {"for": "portrait", "fill": "track"|"focus"} crops to the callout/track regions (or "box"), big title/sub in the bands."""
+    title_style (chip|lower), hold_end (s), and dict segments (title, sub, sub_size, trim, join, callouts, box). Final export
+    {"for": "portrait", "fill": "track"|"focus"|"box", "size": "720x900"} crops per segment BEFORE callout/title chips,
+    then draws a native end card. Non-montage annotation-only specs use the same crop-first path."""
     REGIONS.clear()
     d = json.loads(path.read_text(encoding="utf-8"))
     rel = lambda p: p if Path(p).is_absolute() else path.parent / p
     font = d.get("font", "")
     rows, placed = [], []
+    steps = list(d.get("steps", []))
+    native = steps[-1] if steps and steps[-1].get("op") == "export" and steps[-1].get("for") == "portrait" and steps[-1].get("fill") in ("track", "focus", "box") else None
+    native_size = clip_fx.size_of(native.get("size", "x-portrait")) if native else (0, 0)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
         if "montage" in d:
             segs = [dict(m, clip=str(rel(m["clip"]))) if isinstance(m, dict) else rel(m) for m in d["montage"]]
             cur = montage(segs, T / "m.mp4", d.get("titles"), d.get("fade", 0.4), tuple(d["end_card"]) if d.get("end_card") else None, font,
-                          d.get("join", "fade"), d.get("title_style", "chip"), float(d.get("hold_end", 0.0)), root, path.parent)
+                          d.get("join", "fade"), d.get("title_style", "chip"), float(d.get("hold_end", 0.0)), root, path.parent,
+                          native_size, native["fill"] if native else "pad", native.get("box") if native else None)
             rows.append({"op": "montage", "sec": ce.info(cur)["sec"]})
         else:
             cur = rel(d["in"])
-        for k, s in enumerate(d.get("steps", [])):
+        if native and "montage" not in d and all(s["op"] in ("callout", "caption", "lower_third") for s in steps[:-1]):
+            cur = montage([{"clip": cur, "callouts": steps[:-1], "title": native.get("title", ""), "sub": native.get("sub", "")}], T / "native.mp4", font=font, root=root, base=path.parent,
+                          size=native_size, fill=native["fill"], box=native.get("box"))
+            steps = [native]
+        for k, s in enumerate(steps):
+            if native is s and ("montage" in d or cur == T / "native.mp4"):
+                s = dict(s, fill="pad")  # already composed at native size; never crop the chips or card again
+
             try:
                 cur = _step(s, cur, T / ("s%d.mp4" % k), T, root, font, path.parent, placed)
             except ValueError as e:
@@ -241,5 +307,47 @@ def selftest(t: Path) -> list[str]:
     spec(t / "trk.json", t / "trk.mp4")
     if abs(ce.info(t / "trk.mp4")["sec"] - 3.5) > 0.15:
         bad.append("spec track+hold: %s" % ce.info(t / "trk.mp4"))
+    bad += portrait_selftest(t)
     bad += clip_track.selftest(t)
+    return bad
+
+
+def portrait_selftest(t: Path) -> list[str]:
+    """Synthetic two-subject segments exercise real crop-first composition and CLI."""
+    import subprocess
+    import sys
+    from PIL import Image, ImageDraw
+    bad = []
+    image = Image.new("RGB", (640, 360), (220, 30, 30))
+    ImageDraw.Draw(image).rectangle((320, 0, 640, 360), fill=(30, 30, 220))
+    image.save(t / "subjects.png")
+    ce._run(["-loop", "1", "-framerate", "10", "-i", str(t / "subjects.png"), "-t", "0.8", *ce.H264, str(t / "subjects.mp4")])
+    segments = [{"clip": "subjects.mp4", "title": title, "box": box,
+                 "callouts": [{"op": "callout", "box": box, "text": "SUBJECT", "color": "#00ff00"}]}
+                for title, box in (("Left subject", [30, 120, 60, 60]), ("Right subject", [550, 120, 60, 60]))]
+    data = {"montage": segments, "join": "cut", "fade": 0.1, "end_card": ["Native portrait card", "Full width"],
+            "steps": [{"op": "export", "for": "portrait", "fill": "box", "size": "320x400"}]}
+    (t / "native.json").write_text(json.dumps(data))
+    spec(t / "native.json", t / "native.mp4")
+    got = ce.info(t / "native.mp4")
+    if (got["w"], got["h"]) != (320, 400):
+        bad.append("native portrait dimensions: " + str(got))
+    for when, channel in ((0.4, 0), (1.2, 2)):
+        pixel = clip_fx._px(t / "native.mp4", when, (160, 200))
+        if pixel[channel] < 170 or pixel[1] > 90:
+            bad.append("per-segment focus at %s: %s" % (when, pixel))
+    # Source boxes are mapped before their outline/chip is rendered, not cropped afterward.
+    geometry = clip_track.portrait_geometry([550, 120, 60, 60], 640, 360, (320, 400))
+    mapped = portrait_step({"box": [550, 120, 60, 60], "track": [[0, 550, 120, 60, 60]]}, {"w": 640, "h": 360}, geometry)
+    if mapped["box"] != mapped["track"][0][1:] or not 0 <= mapped["box"][0] < 320:
+        bad.append("portrait source geometry mapping: " + str(mapped))
+    cli = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[2] / "media.py"), "clip", "export",
+                          str(t / "subjects.mp4"), "--for", "portrait", "--size", "160x200", "--fill=box",
+                          "--box", "0,0,0.5,1", "--out", str(t / "box-cli.mp4")], capture_output=True, text=True)
+    if cli.returncode or ce.info(t / "box-cli.mp4")["h"] != 200 or clip_fx._px(t / "box-cli.mp4", 0.4, (80, 100))[0] < 170:
+        bad.append("portrait box CLI: " + cli.stdout + cli.stderr)
+    # Existing placement owner must not cover the subject when another in-frame spot exists.
+    p = clip_track.place_chip(100, 40, (0, 300, 100, 60), 640, 360, clip_track.corners(640, 360))
+    if clip_track._hit((*p, 100, 40), (0, 300, 100, 60)) or min(p) < 0:
+        bad.append("edge chip covers subject: " + str(p))
     return bad
