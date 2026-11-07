@@ -56,6 +56,7 @@ func _ready() -> void:
 	if ResourceLoader.exists(LOOP_PATH):
 		loop_player.stream = load(LOOP_PATH)
 	add_child(loop_player)
+	loop_player.finished.connect(_restart_adrenaline)
 	_apply_vol()
 
 func _load(sfx_id: String, path: String) -> void:
@@ -106,7 +107,7 @@ func _apply_vol() -> void:
 func _apply_one(p: AudioStreamPlayer) -> void:
 	p.volume_db = linear_to_db(maxf(0.001, App.vol_sfx * App.vol_master))
 
-func _process(_delta: float) -> void:
+func _restart_adrenaline() -> void:
 	if App.adrenaline and adrenaline_loop and loop_player.stream and not loop_player.playing:
 		loop_player.play()
 

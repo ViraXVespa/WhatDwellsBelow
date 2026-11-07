@@ -100,6 +100,14 @@ def selftest(root):
     assert 'prompt_locked = not clear' in crystal
     interact = crystal.split('func interact(', 1)[1]
     assert interact.index('if not CrystalNet.volume_clear(self):') < interact.index('if not crystal_on:')
+    panel = read("scripts/ui/progress_ui.gd")
+    assert panel.count('set_process(open or forge_t > 0.0)') == 3
+    audio = read("scripts/audio/sfx.gd")
+    assert 'loop_player.finished.connect(_restart_adrenaline)' in audio and 'func _process' not in audio
+    assert 'App.adrenaline and adrenaline_loop' in audio
+    assert 'App.Boot.release_focus_once(App)' in read("scripts/ui/ui_session.gd")
+    assert 'if not OS.has_feature("debug"):' in read("scripts/app/dbg.gd")
+    assert 'if floor_on:' in dungeon and 'floor_on = false' in dungeon
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 
