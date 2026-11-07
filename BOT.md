@@ -38,7 +38,7 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 Proof rules: the agents file. Say plainly when a message or handoff to a worker did not arrive.
-The repository GitHub bot-gate workflow was removed at the User's request; local proof remains. Local scope allowlist: tools/bot_allow.txt (default deny; deny lines first).
+GitHub bot-gate retired by the User. Local proof and tools/bot_allow.txt remain (default deny; deny lines first).
 Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. If the current truth is unclear, list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
 New `tools/` runners: only after the User approves one this session (`design/tools.md` rule 5). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
@@ -46,7 +46,7 @@ Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read wi
 
 ## Caps (Bot-only)
 
-The Bot alone enforces size; Build and Web never measure or split, and the size tools run only for the Bot (`--bot`, `WDB_BOT`) or when a check explicitly requests Bot mode. Measure with `os.path.getsize`.
+The Bot alone enforces size; Build and Web never measure or split. Size tools run in Bot mode (`--bot`, `WDB_BOT`). Measure with `os.path.getsize`.
 - Scripts: every live `.gd` (`scripts/**`, `tools/data/**`) under 10,000 bytes (ship floor); the 5,000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
 - Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/data/bot_budgets.json` (`check.py load-graph --bot`).
 - Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
