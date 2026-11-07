@@ -19,10 +19,22 @@ var pick_weapon := "great_axe"
 var skills_run: Dictionary = {}
 var skills_perm: Dictionary = {}
 var next_uid := 1
-var deepest := 1
+signal camp_hint_changed
+
+var deepest := 1:
+	set(v):
+		if deepest == v:
+			return
+		deepest = v
+		camp_hint_changed.emit()
 var start_floor := 1
 var food_id := ""
-var food_t := 0.0
+var food_t := 0.0:
+	set(v):
+		var changed: bool = ceili(food_t) != ceili(v)
+		food_t = v
+		if changed:
+			camp_hint_changed.emit()
 var food_left := 0.0
 var potion_cd := 0.0
 var return_potion_uid := 0

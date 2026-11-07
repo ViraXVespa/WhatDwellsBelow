@@ -26,7 +26,6 @@ static func tick(host: Node, delta: float) -> void:
 		return
 	if from_post > App.bal.leash_range:
 		host.state = host.ST_RETURN
-		_note_combat_state(host, false)
 		host.reaggro_t = App.bal.reaggro_cd
 		steer_to(host, host.post, delta)
 		return
@@ -53,14 +52,12 @@ static func tick(host: Node, delta: float) -> void:
 		host.state = host.ST_HUNT
 		if host.hunt_t <= 0.0:
 			host.state = host.ST_RETURN
-			_note_combat_state(host, false)
 			steer_to(host, host.post, delta)
 			return
 		steer_to(host, host.last_seen, delta)
 		var near_last: bool = Vector2(host.last_seen.x - host.global_position.x, host.last_seen.z - host.global_position.z).length() < 0.4
 		if near_last:
 			host.state = host.ST_RETURN
-			_note_combat_state(host, false)
 		return
 	idle(host, delta)
 
@@ -195,11 +192,6 @@ static func go_back(host: Node) -> void:
 		v = Vector3(host.aim.x, 0.0, host.aim.y)
 	host.aim = Vector2(-v.x, -v.z).normalized()
 	host.state = host.ST_RETURN
-	_note_combat_state(host, false)
-
-static func _note_combat_state(host: Node, entering: bool) -> void:
-	if App.tel and App.tel.has_method("note_fighting"):
-		App.tel.note_fighting(entering)
 
 static func move_dir(host: Node, dir: Vector2, spd_m: float, delta: float) -> void:
 	var push: Vector3 = sep(host)

@@ -66,6 +66,25 @@ def selftest(root):
     torch = read("scripts/graphics/torch_bill.gd")
     assert torch.index("add_child(_flame)") < torch.index("_set_facing_once()", torch.index("add_child(_flame)"))
     assert 'func _process(' not in torch and 'func _aim_flame' not in torch
+    class GDMap(dict):
+        def erase(self, key): self.pop(key, None)
+        def is_empty(self): return not self
+    meta = {}
+    app = NS(get_meta=lambda k, default: meta.get(k, GDMap()), set_meta=lambda k, v: meta.__setitem__(k, v))
+    note = function(read("scripts/app/app_run.gd"), "note_enemy_fighting", {"App": app}, "enemy, on")
+    a, b = NS(get_instance_id=lambda: 1), NS(get_instance_id=lambda: 2)
+    note(a, True); note(a, True); note(b, True)
+    assert len(meta["enemy_fighters"]) == 2 and meta["enemy_fighting"]
+    note(a, False); assert meta["enemy_fighting"]
+    note(b, False); note(b, False); assert not meta["enemy_fighting"]
+    enemy = read("scripts/combat/enemy.gd")
+    assert enemy.count("_report_fighting()") >= 4 and "func _exit_tree()" in enemy
+    assert 'not dead and state >= ST_CHASE and state <= ST_REC' in enemy
+    assert 'note_fighting' not in read("scripts/combat/enemy/enemy_ai.gd")
+    progress = read("scripts/data/progress.gd")
+    assert 'ceili(food_t) != ceili(v)' in progress and 'camp_hint_changed.emit()' in progress
+    assert 'camp_hint_changed.connect(_refresh_hint)' in camp and 'NOTIFICATION_TRANSLATION_CHANGED' in camp
+    assert 'if interact_prompt == v:' in read("scripts/app.gd")
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 

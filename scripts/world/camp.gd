@@ -291,10 +291,12 @@ func _strip_baked_env(n: Node) -> void:
 		i -= 1
 
 func _connect_hud() -> void:
-	if App.has_signal("bank_changed"):
+	if not App.bank_changed.is_connected(_refresh_hint):
 		App.bank_changed.connect(_refresh_hint)
-	if App.has_signal("prompt_changed"):
+	if not App.prompt_changed.is_connected(_refresh_prompt):
 		App.prompt_changed.connect(_refresh_prompt)
+	if not App.prog.camp_hint_changed.is_connected(_refresh_hint):
+		App.prog.camp_hint_changed.connect(_refresh_hint)
 	_refresh_hint()
 	_refresh_prompt()
 
@@ -309,3 +311,7 @@ func _refresh_hint() -> void:
 func _refresh_prompt() -> void:
 	if prompt:
 		prompt.text = App.interact_prompt
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		_refresh_hint()

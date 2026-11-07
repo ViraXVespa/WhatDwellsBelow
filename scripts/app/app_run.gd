@@ -198,7 +198,7 @@ static func tick_play(host: Node, delta: float) -> void:
 		if p:
 			var atk_state: Variant = p.get("atk_state")
 			fighting = (atk_state != null and int(atk_state) != 0) or p.get("lock_target") != null
-		# enemy enter/exit hooks set App.enemy_fighting; OR it in
+		# State/death setters and tree exit maintain this aggregate without a group scan.
 		fighting = fighting or bool(host.get_meta("enemy_fighting", false))
 		host.tel.tick(delta, fighting)
 	if host.prog:
@@ -240,9 +240,15 @@ static func shoulders_down() -> bool:
 		and Input.is_joy_button_pressed(d, JOY_BUTTON_RIGHT_SHOULDER)
 	)
 
-static func note_enemy_fighting(on: bool) -> void:
-	if App:
-		App.set_meta("enemy_fighting", on)
+static func note_enemy_fighting(enemy: Node, on: bool) -> void:
+	var fighters: Dictionary = App.get_meta("enemy_fighters", {})
+	var id: int = enemy.get_instance_id()
+	if on:
+		fighters[id] = true
+	else:
+		fighters.erase(id)
+	App.set_meta("enemy_fighters", fighters)
+	App.set_meta("enemy_fighting", not fighters.is_empty())
 
 static func shoulders_up() -> bool:
 	var pads := Input.get_connected_joypads()

@@ -65,6 +65,8 @@ signal world_action(action: String)
 signal input_changed
 var interact_prompt := "":
 	set(v):
+		if interact_prompt == v:
+			return
 		interact_prompt = v
 		prompt_changed.emit()
 var interact_locked := false
@@ -76,14 +78,20 @@ var ore := 0
 var wood := 0
 var bank_gold: int = Def.bank_gold:
 	set(v):
+		if bank_gold == v:
+			return
 		bank_gold = v
 		bank_changed.emit()
 var bank_ore: int = Def.bank_ore:
 	set(v):
+		if bank_ore == v:
+			return
 		bank_ore = v
 		bank_changed.emit()
 var bank_wood: int = Def.bank_wood:
 	set(v):
+		if bank_wood == v:
+			return
 		bank_wood = v
 		bank_changed.emit()
 var bank_root: int = Def.bank_root

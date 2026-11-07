@@ -35,7 +35,12 @@ var post := Vector3.ZERO
 var last_seen := Vector3.ZERO
 var hunt_t := 0.0
 var reaggro_t := 0.0
-var state := ST_IDLE
+var state := ST_IDLE:
+	set(v):
+		if state == v:
+			return
+		state = v
+		_report_fighting()
 var aim := Vector2.DOWN
 var locked_aim := Vector2.DOWN
 var wind_t := 0.0
@@ -48,7 +53,12 @@ var flash := 0.0
 var stagger := 0.0
 var knock := Vector3.ZERO
 var knock_t := 0.0
-var dead := false
+var dead := false:
+	set(v):
+		if dead == v:
+			return
+		dead = v
+		_report_fighting()
 var spr: Sprite3D
 var tag: Label3D
 var bang: Label3D
@@ -67,6 +77,7 @@ var los_t := 0.0
 
 func _ready() -> void:
 	Ready.ready(self)
+	_report_fighting()
 
 func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 	EnemySetup.setup(self, id, floor_n, named, given_name)
@@ -143,3 +154,10 @@ func state_name() -> String:
 			return "flee"
 		_:
 			return "unk"
+
+func _report_fighting() -> void:
+	if is_inside_tree():
+		App.AppRun.note_enemy_fighting(self, not dead and state >= ST_CHASE and state <= ST_REC)
+
+func _exit_tree() -> void:
+	App.AppRun.note_enemy_fighting(self, false)
