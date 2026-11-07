@@ -11,6 +11,9 @@ const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 static func _sync_slot(host: Node, slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
 	var t0: int = host._mark_t()
 	var node: MeshInstance3D = host.marks[slot]
+	if node == null:
+		host._mark_us(3, t0)
+		return
 	var src: Vector2 = Vector2.ZERO
 	if host._src_at[slot].length_squared() > 0.0004:
 		src = host._src_at[slot] - feet
@@ -24,6 +27,21 @@ static func _sync_slot(host: Node, slot: int, tex: Texture2D, soles: Vector4, fl
 	]
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
+		var aim: Vector2 = dir
+		if aim.length_squared() < 0.0004:
+			aim = K.SUN_AWAY
+		else:
+			aim = aim.normalized()
+		var elev: float = K.SUN_ELEV
+		if src.length_squared() > 0.0004:
+			elev = 0.85
+		var shear: float = 1.0
+		if slot == 0 and not App.in_dungeon:
+			shear = 0.0
+		mat.set_shader_parameter("live_shear", shear)
+		mat.set_shader_parameter("aim", aim)
+		mat.set_shader_parameter("stretch", host._stretch_at[slot])
+		mat.set_shader_parameter("elev", elev)
 		var t_albedo: int = host._mark_t()
 		var albedo: Texture2D = Soles._solid(tex, host.solid) if host.solid != "" else Emis.mask(tex, Emis.rule_of(host.get_parent()))
 		host._mark_us(7, t_albedo)
@@ -55,6 +73,6 @@ static func _sync_slot(host: Node, slot: int, tex: Texture2D, soles: Vector4, fl
 		return
 	host._key_at[slot] = key
 	var tq: int = host._mark_t()
-	node.mesh = Geo._quad(host, tex, Soles._span(tex), soles, fl, fr, dir, px, host._stretch_at[slot], src)
+	node.mesh = Geo.sun_mesh(host, tex, soles, fl, fr, px)
 	host._mark_us(5, tq)
 	host._mark_us(3, t0)

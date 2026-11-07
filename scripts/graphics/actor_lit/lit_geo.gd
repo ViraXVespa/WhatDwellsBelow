@@ -5,6 +5,11 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 const Commit := preload("res://scripts/graphics/mesh_commit.gd")
+const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
+
+static var _pin_at: Dictionary = {}
+static var _air_at: Dictionary = {}
+static var _mesh_at: Dictionary = {}
 
 static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, tucked: bool = true) -> Vector2:
 	var dropped: Vector2 = _drop_floor(lit, _sole_world(lit, tx, ty, tw, th))
@@ -86,9 +91,13 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	uvs.append(Vector2(span.z, span.y))
 	uvs.append(Vector2(span.x, span.y))
 	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
-	# UV2.y carries the contact row so grid-snapped reads stop there (no half-coverage daylight line at the sole).
-	var edge: Vector2 = Vector2(0.0, sole_v)
-	return Commit.commit(verts, null, uvs, indices, PackedVector2Array([edge, edge, edge, edge]))
+	# UV2.y is the contact row. UV2.x is the shear height so a later light can re-aim this sun bake.
+	var uv2 := PackedVector2Array()
+	uv2.append(Vector2(_h_of(y1, soles, px), sole_v))
+	uv2.append(Vector2(_h_of(y1, soles, px), sole_v))
+	uv2.append(Vector2(_h_of(y0, soles, px), sole_v))
+	uv2.append(Vector2(_h_of(y0, soles, px), sole_v))
+	return Commit.commit(verts, null, uvs, indices, uv2)
 
 static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
 	# Sole edge is the camera-dropped foot line. Head shears along the light.
@@ -118,3 +127,78 @@ static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vect
 	var h: float = maxf(sole_y - ty, 0.0) * px
 	var reach: float = _reach(h, stretch, src)
 	return Vector3(base.x + aim.x * reach, 0.0, base.y + aim.y * reach)
+
+static func _h_of(ty: float, soles: Vector4, px: float) -> float:
+	return maxf(maxf(soles.y, soles.w) - ty, 0.0) * px
+
+## Feet-relative ground pin. The first sight of a pose fills the cache; later frames look it up.
+static func pin_xz(lit: Variant, tx: float, ty: float, tw: float, th: float, tucked: bool, feet: Vector2) -> Vector2:
+	var key: String = _pin_key(lit, tx, ty, tw, th, tucked)
+	if _pin_at.has(key):
+		return _pin_at[key] as Vector2
+	var got: Vector2 = _sole_xz(lit, tx, ty, tw, th, tucked) - feet
+	_pin_at[key] = got
+	return got
+
+## Straight-down air pin (no camera drop). Cached the same way.
+static func air_pin(lit: Variant, tx: float, ty: float, tw: float, th: float, feet: Vector2) -> Vector2:
+	var key: String = "air|" + _pin_key(lit, tx, ty, tw, th, false)
+	if _air_at.has(key):
+		return _air_at[key] as Vector2
+	var world: Vector3 = _sole_world(lit, tx, ty, tw, th)
+	var got: Vector2 = Vector2(world.x, world.z) - feet
+	_air_at[key] = got
+	return got
+
+## One sun-sheared quad per pose. Point and dungeon slots re-aim it in the shader.
+static func sun_mesh(lit: Variant, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, px: float) -> ArrayMesh:
+	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+		tex.resource_path, lit._flip, snappedf(px, 0.000001),
+		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01), snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
+		K.on_grid(), _basis_key(lit),
+	]
+	if _mesh_at.has(key):
+		return _mesh_at[key] as ArrayMesh
+	var mesh: ArrayMesh = _quad(lit, tex, Soles._span(tex), soles, fl, fr, K.SUN_AWAY, px, K.HUB_STRETCH, Vector2.ZERO)
+	_mesh_at[key] = mesh
+	return mesh
+
+static func _pin_key(lit: Variant, tx: float, ty: float, tw: float, th: float, tucked: bool) -> String:
+	var spr: Sprite3D = lit.spr as Sprite3D
+	var off: Vector2 = Vector2.ZERO
+	var px: float = 0.0
+	var centered: bool = false
+	var y: float = 0.0
+	if spr != null:
+		off = spr.offset
+		px = spr.pixel_size
+		centered = spr.centered
+		y = spr.global_position.y
+	return "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+		snappedf(tx, 0.01), snappedf(ty, 0.01), snappedf(tw, 0.01), snappedf(th, 0.01),
+		tucked, lit._flip, snappedf(px, 0.000001), snappedf(off.x, 0.01), snappedf(off.y, 0.01),
+		centered, lit.foot, snappedf(y, 0.01), _view_key(lit),
+	]
+
+static func _basis_key(lit: Variant) -> String:
+	var cam: Camera3D = _cam(lit)
+	if cam == null:
+		return "nocam"
+	var x: Vector3 = cam.global_transform.basis.x
+	var z: Vector3 = cam.global_transform.basis.z
+	return "%s,%s,%s,%s" % [snappedf(x.x, 0.001), snappedf(x.z, 0.001), snappedf(z.x, 0.001), snappedf(z.z, 0.001)]
+
+static func _view_key(lit: Variant) -> String:
+	var basis: String = _basis_key(lit)
+	var cam: Camera3D = _cam(lit)
+	var spr: Sprite3D = lit.spr as Sprite3D
+	if cam == null or spr == null:
+		return basis
+	var rel: Vector3 = cam.global_position - spr.global_position
+	return "%s|%s,%s,%s" % [basis, snappedf(rel.x, 0.05), snappedf(rel.y, 0.05), snappedf(rel.z, 0.05)]
+
+static func _cam(lit: Variant) -> Camera3D:
+	var spr: Sprite3D = lit.spr as Sprite3D
+	if spr == null or spr.get_viewport() == null:
+		return null
+	return spr.get_viewport().get_camera_3d()

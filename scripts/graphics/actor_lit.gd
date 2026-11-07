@@ -1,30 +1,21 @@
-extends Node
+extends Node3D
 
-## Feet tint from the light RT. Hub keeps one sun mark plus the crystal mark.
-## Player uses the live sticker after flip_h. Dummy and enemies use their still.
-## Sole pixels pin to the sticker's feet. The head shears away from the light.
-## Dungeon alpha is split across the live marks so they do not smear black.
+## Feet tint is a GPU tap of the light RT at the actor's feet (ground-shader uv).
+## Marks come from a shared pool while the actor is inside a light. Hub sun counts as inside.
+## The vendor and the training dummy are not lit.
 
-const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
-
-const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
-const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
-const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
-const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
-const Contact := preload("res://scripts/graphics/actor_lit/lit_contact.gd")
 const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
-
 const Place := preload("res://scripts/graphics/actor_lit/place.gd")
-const Slots := preload("res://scripts/graphics/actor_lit/slots.gd")
 static var _shade: Shader
+static var _sprite_sh: Shader
 ## Debug plant (hub_shadow_check/feet_px.gd): the higher standing foot treated as raised (the one-foot-off of 20611abf).
 static var plant_flat := false
 ## Sweep only. Off leaves live frames untimed. mark_us is the sum of this frame's _process.
 ## The part counters split that sum. foot_us, quad_us, albedo_us, and contact_us sit inside sync_us.
-## sole_us and pin_us sit inside geo_us. sample_xz sits inside tint_us.
+## sole_us and pin_us sit inside geo_us. The feet uniform sits inside tint_us.
 ## _max_us is the slowest single actor this frame.
 static var mark_on: bool = false
 static var mark_us: int = 0
@@ -41,11 +32,14 @@ static var sole_us: int = 0
 static var pin_us: int = 0
 static var _max_us: int = 0
 static var _max_who: String = ""
+static var _pool: Array[MeshInstance3D] = []
+static var _pool_host: Node3D
+static var _areas: Array[Area3D] = []
+static var _cast_seen: int = -1
 
 var spr: Sprite3D
 var marks: Array[MeshInstance3D] = []
-var _game: Color = Color.WHITE
-var _sent: Color = Color(-1.0, -1.0, -1.0, -1.0)
+var _spr_mat: ShaderMaterial
 var _key_at: Array[Array] = []
 var _away_at: Array[Vector2] = []
 var _stretch_at: Array[float] = []
@@ -71,6 +65,13 @@ var foot: int = 0
 ## Airborne mark (enemy move_kind fly / hop, or forced by the mark matrix): last altitude (m) above the floor.
 var air_force: bool = false
 var lift: float = 0.0
+var _hub_sun: bool = false
+var _in_light: bool = false
+var _dirty: bool = true
+var _posed: bool = false
+var _pose: Array = []
+var _easing: bool = false
+var _wake_n: int = 0
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	if body == null or sticker == null:
@@ -84,17 +85,13 @@ static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	body.add_child(lit)
 
 func _ready() -> void:
+	if name == "MarkPool":
+		set_process(true)
+		return
+	set_process(false)
+	set_notify_transform(true)
+	marks.resize(K.MARK_N)
 	for slot in K.MARK_N:
-		var mesh_node: MeshInstance3D = MeshInstance3D.new()
-		mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		var mat: ShaderMaterial = _mat()
-		mat.render_priority = -2
-		mesh_node.sorting_offset = -30.0
-		mesh_node.material_override = mat
-		mesh_node.visible = false
-		mesh_node.top_level = true
-		marks.append(mesh_node)
-		add_child(mesh_node)
 		_key_at.append([])
 		_away_at.append(K.SUN_AWAY)
 		_stretch_at.append(K.HUB_STRETCH)
@@ -112,6 +109,350 @@ func _ready() -> void:
 		_contact_on.append(-1.0)
 		_albedo_id.append(-1)
 		_contact_id.append(-1)
+	_bind_sprite()
+	add_to_group("actor_lit")
+	tree_exiting.connect(_release_all)
+	call_deferred("_wake")
+
+func _wake() -> void:
+	if name == "MarkPool" or spr == null:
+		return
+	_ensure_host()
+	_wake_n += 1
+	var cam_ready: bool = get_viewport() != null and get_viewport().get_camera_3d() != null
+	if not cam_ready and _wake_n < 8:
+		call_deferred("_wake")
+		return
+	if not App.in_dungeon:
+		_hub_sun = true
+		_in_light = true
+	_push_feet()
+	_push_albedo()
+	Place.warm(self)
+	_dirty = true
+	set_process(true)
+	if App.in_dungeon:
+		call_deferred("retouch")
+
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_TRANSFORM_CHANGED or name == "MarkPool":
+		return
+	_push_feet()
+	if _in_light or _hub_sun:
+		_dirty = true
+		set_process(true)
+
+## Standing turn: flip_h does not emit a signal, so the presenter notes it.
+func note_flip() -> void:
+	_dirty = true
+	set_process(true)
+
+## Absolute overlap count. Enter and exit both land here, so a double signal cannot stack.
+## Gather nodes and breakables are plain Node3D, so they use the cast reach instead of the area.
+func retouch() -> void:
+	if name == "MarkPool" or _hub_sun:
+		return
+	var host: Node3D = get_parent() as Node3D
+	var n: int = 0
+	var phys: CollisionObject3D = host as CollisionObject3D
+	if phys != null:
+		for area in _areas:
+			if is_instance_valid(area) and area.overlaps_body(phys):
+				n += 1
+	elif host != null:
+		n = _near_casts(host)
+	var was: bool = _in_light
+	_in_light = n > 0
+	if _in_light or was:
+		_dirty = true
+		set_process(true)
+
+func _near_casts(host: Node3D) -> int:
+	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
+	var n: int = 0
+	for item in LightRt._casts:
+		var xz: Vector2 = item["xz"]
+		var reach: float = float(item["reach"])
+		if feet.distance_to(xz) <= maxf(reach, 0.25):
+			n += 1
+	return n
+
+func _process(delta: float) -> void:
+	if name == "MarkPool":
+		_watch_casts()
+		return
+	if not mark_on:
+		_tick(delta)
+		return
+	var t0: int = Time.get_ticks_usec()
+	_tick(delta)
+	var dt: int = Time.get_ticks_usec() - t0
+	mark_us += dt
+	if dt > _max_us:
+		_max_us = dt
+		var body: Node = get_parent()
+		var who: String = ""
+		while body != null and who == "":
+			var nm: String = str(body.name)
+			if not nm.begins_with("@"):
+				who = nm
+			body = body.get_parent()
+		_max_who = who
+
+func _tick(delta: float) -> void:
+	if spr == null or not is_instance_valid(spr):
+		_release_all()
+		queue_free()
+		return
+	var body: Node = get_parent()
+	if body != null and body.get("dead") == true:
+		_release_all()
+		set_process(false)
+		return
+	var host: Node3D = body as Node3D
+	if host == null:
+		return
+	if not App.in_dungeon:
+		_hub_sun = true
+		_in_light = true
+	# An explicit lit._process from a debug check runs with processing off.
+	var manual: bool = not is_processing()
+	var t0: int = _mark_t()
+	_push_feet()
+	_mark_us(0, t0)
+	if spr.flip_h != _flip:
+		_flip = spr.flip_h
+		_dirty = true
+	var tex_id: int = 0
+	if spr.texture != null:
+		tex_id = spr.texture.get_instance_id()
+	var pose: Array = [spr.flip_h, plant_flat, K.plant_ungrid, host.global_position, air_force, solid, foot, spr.pixel_size, tex_id]
+	if not manual and not _in_light:
+		_release_all()
+		set_process(false)
+		return
+	if not manual and _posed and not _dirty and not _easing and pose == _pose:
+		set_process(false)
+		return
+	_pose = pose
+	_dirty = false
+	_posed = true
+	var before_a: PackedFloat32Array = PackedFloat32Array()
+	var before_d: Array[Vector2] = []
+	for slot in K.MARK_N:
+		before_a.append(_alpha_at[slot])
+		before_d.append(_away_at[slot])
+	_lay(host, delta)
+	_easing = false
+	for slot in K.MARK_N:
+		if absf(_alpha_at[slot] - before_a[slot]) > 0.001:
+			_easing = true
+		if _away_at[slot].distance_squared_to(before_d[slot]) > 0.0004:
+			_easing = true
+	if _easing or _dirty:
+		set_process(true)
+	elif not manual:
+		set_process(false)
+
+func _lay(host: Node3D, delta: float) -> void:
+	if spr.texture == null or not spr.visible:
+		_release_all()
+		return
+	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
+	if App.in_dungeon and not LightRt.floor_open(feet):
+		_release_all()
+		return
+	var tex: Texture2D = spr.texture
+	if not _usable(tex):
+		_release_all()
+		return
+	_flip = spr.flip_h
+	var t0: int = _mark_t()
+	if App.in_dungeon:
+		Drive._drive_many(self, feet, delta)
+	else:
+		Drive._drive_hub(self, host, feet)
+	_mark_us(1, t0)
+	Place._place(self, tex, feet)
+
+func _claim(slot: int) -> MeshInstance3D:
+	var node: MeshInstance3D = _take_node()
+	marks[slot] = node
+	_albedo_id[slot] = -1
+	_contact_id[slot] = -1
+	_shade_set[slot] = false
+	_sun_at[slot] = -1.0
+	_grid_at[slot] = -1.0
+	_contact_on[slot] = -1.0
+	_key_at[slot] = []
+	if node.get_parent() != self:
+		node.reparent(self)
+	node.visible = true
+	return node
+
+func _release(slot: int) -> void:
+	if slot < 0 or slot >= marks.size():
+		return
+	var node: MeshInstance3D = marks[slot]
+	if node == null:
+		return
+	node.visible = false
+	marks[slot] = null
+	_park(node)
+
+func _release_all() -> void:
+	for slot in marks.size():
+		_release(slot)
+
+func _bind_sprite() -> void:
+	if spr == null:
+		return
+	if _sprite_sh == null:
+		var sh: Shader = Shader.new()
+		sh.code = K.SPRITE
+		_sprite_sh = sh
+	var mat: ShaderMaterial = ShaderMaterial.new()
+	mat.shader = _sprite_sh
+	mat.render_priority = spr.render_priority
+	mat.set_shader_parameter("cut", spr.alpha_scissor_threshold)
+	_spr_mat = mat
+	LightRt.bind(mat)
+	_push_albedo()
+	_push_feet()
+	spr.material_override = mat
+	if not spr.texture_changed.is_connected(_on_tex):
+		spr.texture_changed.connect(_on_tex)
+
+func _on_tex() -> void:
+	_push_albedo()
+	Place.warm(self)
+	if _in_light or _hub_sun:
+		_dirty = true
+		set_process(true)
+
+func _push_feet() -> void:
+	if _spr_mat == null or spr == null:
+		return
+	var body: Node3D = get_parent() as Node3D
+	if body == null:
+		return
+	_spr_mat.set_shader_parameter("feet_xz", Vector2(body.global_position.x, body.global_position.z))
+
+func _push_albedo() -> void:
+	if _spr_mat == null or spr == null:
+		return
+	_spr_mat.set_shader_parameter("albedo_tex", spr.texture)
+
+func _biased(away: Vector2) -> Vector2:
+	return Place._biased(self, away)
+
+func _usable(tex: Texture2D) -> bool:
+	return tex != null and tex.get_width() > 8 and tex.get_height() > 8
+
+func _watch_casts() -> void:
+	if LightRt._casts_ver == _cast_seen:
+		return
+	_cast_seen = LightRt._casts_ver
+	_rebuild_areas()
+
+func _rebuild_areas() -> void:
+	var host: Node3D = _pool_host
+	if host == null:
+		return
+	for area in _areas:
+		if is_instance_valid(area):
+			area.queue_free()
+	_areas.clear()
+	if App.in_dungeon:
+		for item in LightRt._casts:
+			var xz: Vector2 = item["xz"]
+			var reach: float = float(item["reach"])
+			var area: Area3D = Area3D.new()
+			area.monitoring = true
+			area.monitorable = false
+			area.collision_layer = 0
+			area.collision_mask = 6
+			area.top_level = true
+			var shape_node: CollisionShape3D = CollisionShape3D.new()
+			var sphere: SphereShape3D = SphereShape3D.new()
+			sphere.radius = maxf(reach, 0.25)
+			shape_node.shape = sphere
+			area.add_child(shape_node)
+			host.add_child(area)
+			area.global_position = Vector3(xz.x, 0.4, xz.y)
+			area.body_entered.connect(_body_in)
+			area.body_exited.connect(_body_out)
+			_areas.append(area)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree != null and not tree.physics_frame.is_connected(_retouch_all):
+		tree.physics_frame.connect(_retouch_all, CONNECT_ONE_SHOT)
+
+func _body_in(body: Node) -> void:
+	_retouch_one(body)
+
+func _body_out(body: Node) -> void:
+	_retouch_one(body)
+
+func _retouch_one(body: Node) -> void:
+	if body == null:
+		return
+	var lit: Node = body.get_node_or_null("ActorLit")
+	if lit != null and lit.has_method("retouch"):
+		lit.retouch()
+
+func _retouch_all() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	for lit in tree.get_nodes_in_group("actor_lit"):
+		if lit.has_method("retouch"):
+			lit.retouch()
+
+func _ensure_host() -> Node3D:
+	if _pool_host != null and is_instance_valid(_pool_host):
+		return _pool_host
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return null
+	var script: GDScript = load("res://scripts/graphics/actor_lit.gd") as GDScript
+	var host: Node3D = script.new() as Node3D
+	host.name = "MarkPool"
+	_pool_host = host
+	tree.root.add_child(host)
+	var made: int = 0
+	while made < K.POOL_N:
+		_park(_new_mark())
+		made += 1
+	return host
+
+func _new_mark() -> MeshInstance3D:
+	var mesh_node: MeshInstance3D = MeshInstance3D.new()
+	mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat: ShaderMaterial = _mat()
+	mat.render_priority = -2
+	mesh_node.sorting_offset = -30.0
+	mesh_node.material_override = mat
+	mesh_node.visible = false
+	mesh_node.top_level = true
+	if _pool_host != null:
+		_pool_host.add_child(mesh_node)
+	return mesh_node
+
+func _take_node() -> MeshInstance3D:
+	_ensure_host()
+	while not _pool.is_empty():
+		var node: MeshInstance3D = _pool.pop_back()
+		if is_instance_valid(node):
+			return node
+	return _new_mark()
+
+func _park(node: MeshInstance3D) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	node.visible = false
+	if _pool_host != null and node.get_parent() != _pool_host:
+		node.reparent(_pool_host)
+	_pool.append(node)
 
 static func arm_mark() -> void:
 	mark_on = true
@@ -190,84 +531,6 @@ func _mark_us(bucket: int, t0: int) -> void:
 		sole_us += dt
 	elif bucket == 10:
 		pin_us += dt
-
-func _process(delta: float) -> void:
-	if not mark_on:
-		_tick(delta)
-		return
-	var t0: int = Time.get_ticks_usec()
-	_tick(delta)
-	var dt: int = Time.get_ticks_usec() - t0
-	mark_us += dt
-	if dt > _max_us:
-		_max_us = dt
-		var body: Node = get_parent()
-		var who: String = ""
-		while body != null and who == "":
-			var nm: String = str(body.name)
-			if not nm.begins_with("@"):
-				who = nm
-			body = body.get_parent()
-		_max_who = who
-
-func _tick(delta: float) -> void:
-	if spr == null or not is_instance_valid(spr):
-		queue_free()
-		return
-	var body: Node = get_parent()
-	if body != null and body.get("dead") == true:
-		_hide_all()
-		return
-	var host: Node3D = body as Node3D
-	if host == null:
-		return
-	var t0: int = _mark_t()
-	_tint(host)
-	_mark_us(0, t0)
-	_lay(host, delta)
-
-func _hide_all() -> void:
-	for slot in marks.size():
-		marks[slot].visible = false
-
-func _tint(host: Node3D) -> void:
-	var cur: Color = spr.modulate
-	if cur != _sent:
-		_game = cur
-	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
-	var sample: Color = LightRt.sample_xz(feet)
-	_sent = _mix(sample)
-	spr.modulate = _sent
-
-func _lay(host: Node3D, delta: float) -> void:
-	if spr.texture == null or not spr.visible:
-		_hide_all()
-		return
-	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
-	if App.in_dungeon and not LightRt.floor_open(feet):
-		_hide_all()
-		return
-	var tex: Texture2D = spr.texture
-	if not _usable(tex):
-		_hide_all()
-		return
-	_flip = spr.flip_h
-	var t0: int = _mark_t()
-	if App.in_dungeon:
-		Drive._drive_many(self, feet, delta)
-	else:
-		Drive._drive_hub(self, host, feet)
-	_mark_us(1, t0)
-	Place._place(self, tex, feet)
-
-func _biased(away: Vector2) -> Vector2:
-	return Place._biased(self, away)
-
-func _mix(sample: Color) -> Color:
-	return Color(_game.r * sample.r, _game.g * sample.g, _game.b * sample.b, _game.a)
-
-func _usable(tex: Texture2D) -> bool:
-	return tex != null and tex.get_width() > 8 and tex.get_height() > 8
 
 static func _mat() -> ShaderMaterial:
 	if _shade == null:

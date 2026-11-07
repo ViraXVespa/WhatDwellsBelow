@@ -21,7 +21,7 @@ static var _script_ms: float = -1.0
 static var _queue_ms: float = -1.0
 static var _tail_ms: float = -1.0
 ## Sweep only. bench_ms is the hub bench _process. lit_ms is every ActorLit _process.
-## sample_ms is LightRt.sample_xz (inside tint_ms). foot_ms and quad_ms sit inside sync_ms.
+## sample_ms is LightRt.sample_xz. Actor tint does not call it. foot_ms and quad_ms sit inside sync_ms.
 ## -1 leaves the keys off the row.
 static var _bench_ms: float = -1.0
 static var _lit_ms: float = -1.0

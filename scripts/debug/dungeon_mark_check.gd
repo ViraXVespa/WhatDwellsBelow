@@ -66,7 +66,9 @@ static func props_fault() -> String:
 		if lit == null or (b.get("spr") as Sprite3D).cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 			return "%s off the hub prop mark (lit=%s)" % [b.name, lit != null]
 		for slot in K.MARK_N:
-			var m: MeshInstance3D = lit.get("marks")[slot]
+			var m: MeshInstance3D = lit.get("marks")[slot] as MeshInstance3D
+			if m == null:
+				continue
 			var mat: ShaderMaterial = m.material_override as ShaderMaterial
 			if not m.visible or mat == null:
 				continue
@@ -113,7 +115,8 @@ static func light_fault(flip: bool) -> String:
 		var away: Vector2 = lit.get("_away_at")[slot]
 		if flip:
 			away = -away
-		var live: bool = float(lit.get("_alpha_at")[slot]) >= K.HIDE_A and (lit.get("marks")[slot] as MeshInstance3D).visible
+		var node: MeshInstance3D = lit.get("marks")[slot] as MeshInstance3D
+		var live: bool = float(lit.get("_alpha_at")[slot]) >= K.HIDE_A and node != null and node.visible
 		var dot: float = away.dot(want)
 		return "" if live and dot >= MIN_DOT else "%s slot%d live=%s dot=%.2f" % [c["kind"], slot, live, dot]
 	return "no mark from %s at %s (feet %s)" % [c["kind"], c["xz"], feet]
@@ -163,6 +166,8 @@ static func fault() -> String:
 				continue
 			bodies += 1
 			for m: MeshInstance3D in lit.get("marks"):
+				if m == null:
+					continue
 				marks += 1
 				var mat: ShaderMaterial = m.material_override as ShaderMaterial
 				if not m.visible or mat == null:

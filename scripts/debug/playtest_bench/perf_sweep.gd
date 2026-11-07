@@ -12,7 +12,7 @@ extends Node
 ## submit_ms is the pre-draw to post-draw window. The same post-draw stamps
 ## obj/prim/draw for the visible, shadow, and canvas passes.
 ## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
-## and sample_ms (LightRt.sample_xz, also counted inside tint_ms).
+## and sample_ms (LightRt.sample_xz; actor tint does not call it).
 ## lit_ms further splits into tint_ms, drive_ms, geo_ms, sync_ms, and shade_ms.
 ## foot_ms, quad_ms, albedo_ms, and contact_ms sit inside sync_ms.
 ## sole_ms and pin_ms sit inside geo_ms. sync_rest_ms, geo_rest_ms, and lit_rest_ms
