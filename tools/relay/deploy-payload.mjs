@@ -1,7 +1,7 @@
 // Writes tools/relay/.secrets/deploy.js (git-ignored by tools/relay/.gitignore): the code for the Cloudflare MCP `execute` tool that uploads this Worker.
 // Usage: node tools/relay/deploy-payload.mjs [--with-secrets]   then call execute with code "$file:<repo>/tools/relay/.secrets/deploy.js"
 // --with-secrets reads GITHUB_TOKEN from env WDB_ISSUES_TOKEN and tools/relay/.secrets/{gh_webhook_secret,relay_salt}; otherwise
-// existing secrets are kept (keep_bindings). Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
+// existing secrets are always kept (keep_bindings), also with named upserts. Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
 import { readFileSync, writeFileSync, readdirSync, chmodSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,10 +22,9 @@ export function buildMetadata(secretBindings = []) {
     bindings: [
       { type: "d1", name: CONFIG.d1.name, database_id: CONFIG.d1.id },
       { type: "kv_namespace", name: CONFIG.kv.name, namespace_id: CONFIG.kv.id },
-      ...config.send_email.map(({ remote, ...binding }) => ({ type: "send_email", ...binding })),
       ...Object.entries(CONFIG.vars).map(([name, text]) => ({ type: "plain_text", name, text })),
       ...secretBindings,
-    ], keep_bindings: secretBindings.length ? [] : ["secret_text"] };
+    ], keep_bindings: ["secret_text"] };
 }
 
 function main() {

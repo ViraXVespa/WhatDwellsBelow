@@ -6,7 +6,7 @@
   "vars": {
     "REPO": "ViraXVespa/WhatDwellsBelow",
     "EMAIL_SEND": "off",
-    "EMAIL_FROM": ""
+    "EMAIL_FROM": "WDB Bug Reports <bugs@mail.viraxvespa.com>"
   },
   "d1_databases": [
     {
@@ -21,10 +21,9 @@
       "id": "579f8fada4f24440bfd6095407b648fa"
     }
   ],
-  "send_email": [
-    {
-      "name": "EMAIL",
-      "remote": false
-    }
-  ]
+  "secrets": {
+    "required": [
+      "RESEND_API_KEY"
+    ]
+  }
 }
