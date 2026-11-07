@@ -44,70 +44,50 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 	row["tree_ms"] = snappedf(rt._tree_ms, 0.1)
 	row["submit_ms"] = snappedf(rt._submit_ms, 0.1)
 	row["after_ms"] = snappedf(rt._after_ms, 0.1)
-	if rt._script_ms >= 0.0:
-		row["script_ms"] = snappedf(rt._script_ms, 0.1)
-	if rt._queue_ms >= 0.0:
-		row["queue_ms"] = snappedf(rt._queue_ms, 0.1)
-	if rt._tail_ms >= 0.0:
-		row["tail_ms"] = snappedf(rt._tail_ms, 0.1)
-	if rt._bench_ms >= 0.0:
-		row["bench_ms"] = snappedf(rt._bench_ms, 0.1)
-	if rt._lit_ms >= 0.0:
-		row["lit_ms"] = snappedf(rt._lit_ms, 0.1)
-	if rt._sample_ms >= 0.0:
-		row["sample_ms"] = snappedf(rt._sample_ms, 0.1)
-	if rt._sample_n >= 0:
-		row["sample_n"] = rt._sample_n
-	if rt._tint_ms >= 0.0:
-		row["tint_ms"] = snappedf(rt._tint_ms, 0.1)
-	if rt._drive_ms >= 0.0:
-		row["drive_ms"] = snappedf(rt._drive_ms, 0.1)
-	if rt._geo_ms >= 0.0:
-		row["geo_ms"] = snappedf(rt._geo_ms, 0.1)
-	if rt._sync_ms >= 0.0:
-		row["sync_ms"] = snappedf(rt._sync_ms, 0.1)
-	if rt._foot_ms >= 0.0:
-		row["foot_ms"] = snappedf(rt._foot_ms, 0.1)
-	if rt._quad_ms >= 0.0:
-		row["quad_ms"] = snappedf(rt._quad_ms, 0.1)
-	if rt._shade_ms >= 0.0:
-		row["shade_ms"] = snappedf(rt._shade_ms, 0.1)
-	if rt._albedo_ms >= 0.0:
-		row["albedo_ms"] = snappedf(rt._albedo_ms, 0.1)
-	if rt._contact_ms >= 0.0:
-		row["contact_ms"] = snappedf(rt._contact_ms, 0.1)
-	if rt._sole_ms >= 0.0:
-		row["sole_ms"] = snappedf(rt._sole_ms, 0.1)
-	if rt._pin_ms >= 0.0:
-		row["pin_ms"] = snappedf(rt._pin_ms, 0.1)
-	if rt._sync_rest_ms >= 0.0:
-		row["sync_rest_ms"] = snappedf(rt._sync_rest_ms, 0.1)
-	if rt._geo_rest_ms >= 0.0:
-		row["geo_rest_ms"] = snappedf(rt._geo_rest_ms, 0.1)
-	if rt._lit_rest_ms >= 0.0:
-		row["lit_rest_ms"] = snappedf(rt._lit_rest_ms, 0.1)
-	if rt._lit_max_ms >= 0.0:
-		row["lit_max_ms"] = snappedf(rt._lit_max_ms, 0.1)
-	if rt._lit_who != "":
-		row["lit_who"] = rt._lit_who
-	if rt._cpu_ms >= 0.0:
-		row["cpu_ms"] = snappedf(rt._cpu_ms, 0.1)
-	if rt._gpu_ms >= 0.0:
-		row["gpu_ms"] = snappedf(rt._gpu_ms, 0.1)
-	if rt._wake_ms >= 0.0:
-		row["wake_ms"] = snappedf(rt._wake_ms, 0.1)
-	if rt._phys_span_ms >= 0.0:
-		row["phys_span_ms"] = snappedf(rt._phys_span_ms, 0.1)
-	if rt._post_phys_ms >= 0.0:
-		row["post_phys_ms"] = snappedf(rt._post_phys_ms, 0.1)
-	if rt._head_ms >= 0.0:
-		row["head_ms"] = snappedf(rt._head_ms, 0.1)
-	if rt._floor_ms >= 0.0:
-		row["floor_ms"] = snappedf(rt._floor_ms, 0.1)
-	if rt._torch_ms >= 0.0:
-		row["torch_ms"] = snappedf(rt._torch_ms, 0.1)
-	if rt._bar_ms >= 0.0:
-		row["bar_ms"] = snappedf(rt._bar_ms, 0.1)
+	var timings: Dictionary = {
+		"script_ms": rt._script_ms,
+		"queue_ms": rt._queue_ms,
+		"tail_ms": rt._tail_ms,
+		"bench_ms": rt._bench_ms,
+		"lit_ms": rt._lit_ms,
+		"sample_ms": rt._sample_ms,
+		"sample_n": rt._sample_n,
+		"tint_ms": rt._tint_ms,
+		"drive_ms": rt._drive_ms,
+		"geo_ms": rt._geo_ms,
+		"sync_ms": rt._sync_ms,
+		"foot_ms": rt._foot_ms,
+		"quad_ms": rt._quad_ms,
+		"shade_ms": rt._shade_ms,
+		"albedo_ms": rt._albedo_ms,
+		"contact_ms": rt._contact_ms,
+		"sole_ms": rt._sole_ms,
+		"pin_ms": rt._pin_ms,
+		"sync_rest_ms": rt._sync_rest_ms,
+		"geo_rest_ms": rt._geo_rest_ms,
+		"lit_rest_ms": rt._lit_rest_ms,
+		"lit_max_ms": rt._lit_max_ms,
+		"lit_who": rt._lit_who,
+		"cpu_ms": rt._cpu_ms,
+		"gpu_ms": rt._gpu_ms,
+		"wake_ms": rt._wake_ms,
+		"phys_span_ms": rt._phys_span_ms,
+		"post_phys_ms": rt._post_phys_ms,
+		"head_ms": rt._head_ms,
+		"floor_ms": rt._floor_ms,
+		"torch_ms": rt._torch_ms,
+		"bar_ms": rt._bar_ms
+	}
+	for key: String in timings:
+		var value: Variant = timings[key]
+		if key == "lit_who":
+			if value != "":
+				row[key] = value
+		elif key == "sample_n":
+			if value >= 0:
+				row[key] = value
+		elif value >= 0.0:
+			row[key] = snappedf(float(value), 0.1)
 	if rt._wake_ms >= 0.0:
 		row["phys_obj"] = int(Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS))
 		row["phys_pairs"] = int(Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS))

@@ -57,30 +57,12 @@ static var _inst: Node = null
 static func active() -> bool:
 	return CliArgs.has(FLAG)
 
-static func _vsync_off() -> void:
-	BU.vsync_off()
-
-static func _warm_user() -> bool:
-	return BU.warm_user()
-
 static func _hb(msg: String) -> void:
 	BU.hb(msg)
 
 static func start() -> void:
-	_vsync_off()
-	if _warm_user():
-		_hb("HB: fresh=0")
-		_hb("HB: missing=warm_user")
-		_hb("HB: ok=0")
-		App.get_tree().quit(1)
+	if not BU.start_fresh("hub"):
 		return
-	var mult: float = CliArgs.float_arg("--wdb-hitch-mult", 1.0)
-	HitchLog.bench_reset(mult)
-	HitchLog.set_score_where("hub")
-	HitchLog.set_phase("wait")
-	_hb("HB: fresh=1")
-	App.character_type = "male"
-	App.character_chosen = true
 	var scr: GDScript = load("res://scripts/debug/playtest_bench/perf_sweep.gd") as GDScript
 	var node: Node = scr.new() as Node
 	node.name = "PerfSweep"
@@ -142,7 +124,7 @@ func _ready() -> void:
 	add_child(tail)
 	_add_phys_edge(false, PHYS_HEAD_PRIORITY, "PhysHead")
 	_add_phys_edge(true, PHYS_TAIL_PRIORITY, "PhysTail")
-	_vsync_off()
+	BU.vsync_off()
 	Draw._arm_render(self)
 
 func _process(delta: float) -> void:

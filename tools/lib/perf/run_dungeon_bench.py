@@ -14,9 +14,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
+import bench_report
 import agent_log  # noqa: E402
-import bench_env  # noqa: E402
-import godot_lib  # noqa: E402
 import run_hub_bench  # noqa: E402
 
 FLAG = "--wdb-dungeon-bench"
@@ -29,23 +28,7 @@ def _report(root: Path, args) -> int:
     if not Path(args.report).is_file():
         msg = "error: --report file not found: %s" % args.report
         return agent_log.finish(JOB + "-report", root, msg, "FAIL", args=args, legacy=False, echo=msg)
-    ordered = run_hub_bench._read_rows(args.report)
-    bench = None
-    for item in ordered:
-        if item.get("ev") == "bench":
-            bench = item
-    hitch_rows = [item for item in ordered if item.get("ev") == "hitch"]
-    ranked = sorted(hitch_rows, key=lambda row: float(row.get("dt_ms", 0) or 0), reverse=True)
-    report = [
-        "dungeon bench report",
-        "path=%s" % args.report,
-        run_hub_bench._present_line(bench),
-        "",
-        "--- HB lines ---",
-    ]
-    report += run_hub_bench._hb_lines(ordered) or ["(no HB: lines)"]
-    report += ["", "--- slow shape ---"] + run_hub_bench._shape_lines(hitch_rows, bench)
-    report += ["", "--- slowest hitches ---"] + (run_hub_bench._slow_lines(ranked) or ["(none)"])
+    report = bench_report.report_lines("dungeon bench report", args.report, run_hub_bench)
     return agent_log.finish(
         JOB + "-report",
         root,
@@ -83,22 +66,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--browser", default="", help="Force the web window binary. Default: Edge if installed, else Chrome.")
     ap.add_argument("--report", default="", help="Reprint slow shape and HB lines from a hitch JSONL. Does not launch a run.")
     ap.add_argument("--walk-layers", action="store_true", help="Web only: during play, time each hidden group, then noenv, linear, rest, and empty. empty1 and empty05 repeat empty with scaling_3d_scale pinned at 1.0 and 0.5. Does not score the 99 percent bar. Keep the reading only when the unhidden submit stays near 35 ms.")
+    ap.add_argument("--selftest", action="store_true", help="Check shared benchmark report assembly without launching a game")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
+    if args.selftest:
+        return bench_report.selftest()
     if args.report:
         return _report(root, args)
-    out_log = agent_log.run_path(JOB, root, "out.log")
-    err_log = agent_log.run_path(JOB, root, "err.log")
+    out_log, err_log, body = bench_report.begin_run(JOB, "dungeon bench", root, args)
     fail = 0
-    body = ["dungeon bench root=.", "leg=%s" % args.leg]
-    body.append(bench_env.env_line(
-        godot=bench_env.godot_version(str(godot_lib.godot_exe())),
-        renderer="gl_compatibility",
-        browser="see web leg" if args.leg in ("both", "web") else "n/a",
-        vsync="see present line",
-        cap="max_fps 120",
-        headless=bool(args.headless),
-    ))
     if args.leg in ("both", "desktop") and not args.walk_layers:
         d_fail, d_body = run_hub_bench._desktop(
             root, args, out_log, err_log,
@@ -122,21 +98,7 @@ def main(argv: list[str] | None = None) -> int:
             w_body.append(_layers_line(w_body))
         fail += w_fail
         body += w_body
-    echo = run_hub_bench._echo_lines(body)
-    summary_dir = root / "_logs" / JOB
-    summary_dir.mkdir(parents=True, exist_ok=True)
-    (summary_dir / "summary.txt").write_text("\n".join(body) + "\n", encoding="utf-8")
-    return agent_log.finish(
-        JOB,
-        root,
-        "\n".join(body),
-        "FAIL" if fail else "PASS",
-        args=args,
-        legacy=False,
-        echo="\n".join(echo),
-        retry=(JOB, run_hub_bench._retry_lines(body)),
-        fail_signals=fail,
-    )
+    return bench_report.finish_run(JOB, root, args, body, fail, run_hub_bench)
 
 
 if __name__ == "__main__":

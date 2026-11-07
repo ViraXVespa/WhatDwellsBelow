@@ -57,6 +57,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/slice/handoff_lib.py` | The survey -> implement handoff, a Build task file (`ID.md` in `design/tasks/`; `units:` / `done:` header lines carry a unit queue): skeleton, validation, saved survey edits and the compact start summary for `slice.py start --handoff` / `--from-handoff` / `--from-task`; `slice.py open` validates a `# Handoff:` prompt |
 | `lib/slice/unit_lib.py` | Unit queue of a door (`unit_queue`, `unit_docs`, `unit_files`, `shot_states` in `routes.yaml`): the unit block of a card (position, flow and state, doc line ranges, files), the queue plan from the slice state or a handoff's `units:` / `done:`, and the `check.py load-graph` lint for those keys |
 | `lib/load_routes.py` | Load design/routes.yaml (constrained YAML subset, stdlib only) |
+| `lib/perf/bench_report.py` | Shared bench reports and summary output; `perf.py dungeon --selftest` tests assembly without a game launch. |
 | `lib/perf/bench_env.py` | One `env:` line (machine, CPU, GPU, RAM, OS, browser, Godot, renderer, vsync, cap, resolution, headless) for benchmark summaries (`perf.py web`, `perf.py hub`, `gate.py bot-smokes` open timing) |
 | `lib/perf/web_perf_lib.py` | Browser side of `perf.py web` (init script, flow replay, one page load) |
 | `lib/shots/shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `shots.py capture` |
