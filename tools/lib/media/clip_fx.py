@@ -250,6 +250,9 @@ def ba(before: Path, after: Path, out: Path, box=None, layout: str = "auto", lab
         if pick["layout"] == "wipe" and style == "promo":
             import clip_promo
             pick["promo"] = clip_promo.wipe(legs[0], legs[1], out, ("BEFORE", "AFTER"), subs if any(subs) else labels, hold=max(1.2, zoom_in + 0.3), end=end, font=font)
+            clip_promo.recipe(out, before, after, labels=["BEFORE", "AFTER"], subs=list(subs if any(subs) else labels),
+                              hold=max(1.2, zoom_in + 0.3), end=list(end) if end else None, font=font,
+                              zoom=list(zb) if zb else None, zoom_in=zoom_in)
         elif pick["layout"] == "wipe":
             wipe(legs[0], legs[1], out, labels, hold=max(0.6, zoom_in + 0.3), font=font)
         else:

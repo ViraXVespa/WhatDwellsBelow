@@ -103,7 +103,7 @@ def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float 
     {"clip": PATH, "title", "sub", "sub_size" (x h, default 0.045), "trim": [IN, OUT] s (cut before a camera handback),
     "join" (how this segment joins the one before), "callouts": [callout steps]}; its callouts run on that segment only
     and share one `placed` list. fill track/focus/box crops EACH segment before chips and remaps callout geometry;
-    segment box overrides the shared box; named boxes use the segment movie or shared movie. Native end cards are never cropped. hold_end freezes the last frame."""
+    comparison recipes rebuild clean A/B before native identity chips; segment box overrides the shared box; named boxes use the segment movie or shared movie. Native end cards are never cropped. hold_end freezes the last frame."""
     segs_in = [s if isinstance(s, dict) else {"clip": s} for s in srcs]
     srcs = [Path(s["clip"]) for s in segs_in]
     a = ce.info(srcs[0])
@@ -116,29 +116,43 @@ def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float 
         T = Path(td)
         segs = []
         for k, s in enumerate(srcs):
+            original = s
             if segs_in[k].get("trim"):
                 a0, a1 = (float(v) for v in segs_in[k]["trim"])
                 ce._run(["-ss", "%.3f" % a0, "-i", str(s), "-t", "%.3f" % (a1 - a0), "-an", *ce.H264, str(T / ("tr%d.mp4" % k))])
                 s = T / ("tr%d.mp4" % k)
             source_info = ce.info(s)
             steps = segs_in[k].get("callouts", [])
+            identity_pad = 0
+            comparison = None
             if fill in ("track", "focus", "box"):
                 explicit = segs_in[k].get("box", box)
                 if fill == "box" and explicit is None:
                     raise ValueError("portrait fill box needs a segment box or --box")
                 region = focus_region(steps, source_info, root, base, explicit, segs_in[k].get("movie", movie))
                 geometry = clip_track.portrait_geometry(region, source_info["w"], source_info["h"], (w, h))
-                fit = clip_track.portrait(s, region, T / ("f%d.mp4" % k), size=(w, h))
+                comparison = segs_in[k].get("comparison")
+                sidecar = original.with_suffix(".comparison.json")
+                if comparison is None and sidecar.is_file():
+                    comparison = json.loads(sidecar.read_text(encoding="utf-8"))
+                    comparison = dict(comparison, **{key: str((sidecar.parent / comparison[key]).resolve())
+                                                     for key in ("before", "after")})
+                if comparison is not None:
+                    identity_pad = clip_promo.identity_space(w, h)
+                if comparison is not None and segs_in[k].get("trim"):
+                    comparison = dict(comparison, trim=segs_in[k]["trim"])
+                fit = clip_track.portrait(original if comparison is not None else s, region, T / ("f%d.mp4" % k),
+                                          size=(w, h), comparison=comparison, base=base, defer_identity=comparison is not None)
                 steps = [portrait_step(st, source_info, geometry, root, base) for st in steps]
             else:
                 fit = clip_fx.fit(s, (w, h), T / ("f%d.mp4" % k), fill) if (source_info["w"], source_info["h"]) != (w, h) else s
-            seg_placed: list = []
+            seg_placed: list = [((0, h - identity_pad, w, identity_pad), 0, ce.info(fit)["sec"], object())] if identity_pad else []
             for j, st in enumerate(steps):
                 fit = _step(st, fit, T / ("c%d_%d.mp4" % (k, j)), T, root, font, base, seg_placed)
             title = segs_in[k].get("title", titles[k])
             if title and title_style == "lower":
                 fit = clip_track.lower_third(fit, title, T / ("l%d.mp4" % k), segs_in[k].get("sub", ""), 0.1, 2.2, font,
-                                             float(segs_in[k].get("sub_size", clip_track.SUB_K)))
+                                             float(segs_in[k].get("sub_size", clip_track.SUB_K)), bottom_pad=identity_pad)
                 titles[k] = ""
             elif title:
                 titles[k] = title
@@ -156,6 +170,8 @@ def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float 
                 ce._run(["-i", str(fit), "-loop", "1", "-framerate", "30", "-t", "%.3f" % ce.info(fit)["sec"], "-i", str(T / ("t%d.png" % k)),
                          "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, str(seg)])
                 fit = seg
+            if comparison is not None:
+                fit = clip_promo.identities(fit, T / ("identity%d.mp4" % k), comparison)
             segs.append(fit)
         body = T / "body.mp4"
         clip_track.join_each(segs, [segs_in[k].get("join", join) for k in range(1, len(segs))], fade, body) if len(segs) > 1 else shutil.copy2(segs[0], body)
@@ -230,7 +246,11 @@ def spec(path: Path, out: Path, root: Path | None = None) -> list[dict]:
     to the spec file's folder. Montage keys: join (fade|cut|dip|whip; a segment's own "join" overrides it at its seam),
     title_style (chip|lower), hold_end (s), and dict segments (title, sub, sub_size, trim, join, callouts, box). Final export
     {"for": "portrait", "fill": "track"|"focus"|"box", "size": "720x900"} crops per segment BEFORE callout/title chips,
-    then draws a native end card. Non-montage annotation-only specs use the same crop-first path."""
+    then draws a native end card. Comparison producers keep a .comparison.json clean-source
+    recipe; legacy segments can supply comparison={before,after,labels,subs,hold,sweep,hold_b,zoom,zoom_in}.
+    Paths are relative to the sidecar/spec. Both clean legs crop before identity chips; missing legs fail.
+    Opaque legacy baked inputs need an explicit recipe, not guessed identity/timing.
+    Non-montage annotation-only specs use the same crop-first path."""
     REGIONS.clear()
     d = json.loads(path.read_text(encoding="utf-8"))
     rel = lambda p: p if Path(p).is_absolute() else path.parent / p
@@ -308,6 +328,7 @@ def selftest(t: Path) -> list[str]:
     if abs(ce.info(t / "trk.mp4")["sec"] - 3.5) > 0.15:
         bad.append("spec track+hold: %s" % ce.info(t / "trk.mp4"))
     bad += portrait_selftest(t)
+    bad += comparison_selftest(t)
     bad += clip_track.selftest(t)
     return bad
 
@@ -371,4 +392,56 @@ def portrait_selftest(t: Path) -> list[str]:
     p = clip_track.place_chip(100, 40, (0, 300, 100, 60), 640, 360, clip_track.corners(640, 360))
     if clip_track._hit((*p, 100, 40), (0, 300, 100, 60)) or min(p) < 0:
         bad.append("edge chip covers subject: " + str(p))
+    return bad
+
+
+def comparison_selftest(t: Path) -> list[str]:
+    """Baked comparison inputs must reconstruct clean legs, retaining identity after crop."""
+    from PIL import Image
+    import subprocess
+    bad = []
+    for name, color in (("clean-a", "#b02020"), ("clean-b", "#2020b0")):
+        ce._run(["-f", "lavfi", "-i", "color=c=%s:s=640x360:r=10:d=2.1" % color, *ce.H264, str(t / (name + ".mp4"))])
+    baked = t / "baked.mp4"
+    clip_promo.wipe(t / "clean-a.mp4", t / "clean-b.mp4", baked, hold=0.5, sweep=0.8, hold_b=0.8)
+    recipe = json.loads(baked.with_suffix(".comparison.json").read_text())
+    shutil.copy2(baked, t / "legacy.mp4")  # no sidecar: exercise the explicit old-asset recipe too
+    for size, fill in (((320, 400), "box"), ((320, 560), "track"), ((320, 400), "focus")):
+        W, H = size
+        data = {"montage": [
+            {"clip": str(baked), "box": [480, 40, 80, 80], "title": "Roof", "sub": "Details", "trim": [0.1, 2.0], "callouts": [{"op": "callout", "box": [0, 0, 640, 360], "text": "Large competing callout", "color": "#00ff00"}]},
+            {"clip": str(t / "legacy.mp4"), "comparison": recipe, "box": [480, 40, 80, 80], "title": "Market"}],
+            "title_style": "lower", "join": "cut", "steps": [{"op": "export", "for": "portrait", "fill": fill, "size": "%dx%d" % size}]}
+        path = t / ("identity-%s.json" % fill);path.write_text(json.dumps(data))
+        output = path.with_suffix(".mp4");spec(path, output)
+        if abs(ce.info(output)["sec"] - 4.0) > 0.15:
+            bad.append("comparison trim/montage duration: %s got=%s" % (fill, ce.info(output)["sec"]))
+        for when, after in ((0.5, False), (1.5, True), (2.5, False), (3.6, True)):
+            raw = subprocess.check_output(["ffmpeg", "-v", "error", "-ss", str(when), "-i", str(output), "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
+            image = Image.frombytes("RGB", size, raw)
+            stamp_dir = t / "expected-chips"; stamp_dir.mkdir(exist_ok=True)
+            clip_promo._chips(stamp_dir, W, H, ("BEFORE", "AFTER"), ("", ""), ce._font(""))
+            stamp = Image.open(stamp_dir / ("b.png" if after else "a.png")).convert("RGBA")
+            lx = int(30 * min(W, H) / 720)
+            x0, y0 = lx // 2 * 2, (H - stamp.height - lx) // 2 * 2  # ffmpeg yuv420 overlay coordinates
+            wanted = clip_promo.COL[int(after)][:3]
+            points = [(x, y) for y in range(stamp.height) for x in range(stamp.width)
+                      if stamp.getpixel((x, y)) == (*wanted, 255)]
+            matched = sum(max(abs(a - b) for a, b in zip(image.getpixel((x0 + x, y0 + y)), wanted)) < 65
+                          for x, y in points)
+            if not points or matched / len(points) < 0.90:
+                bad.append("comparison identity occluded %s t=%s after=%s matched=%s/%s" % (fill, when, after, matched, len(points)))
+
+    stale = dict(recipe, source_sha256="stale")
+    try:
+        clip_promo.reframe(baked, [400, 0, 100, 100], t / "stale-result.mp4", (320, 400), stale)
+        bad.append("stale comparison recipe was trusted")
+    except ValueError:
+        pass
+    missing = dict(recipe, before=str(t / "missing.mp4"))
+    try:
+        clip_promo.reframe(baked, [400, 0, 100, 100], t / "missing-result.mp4", (320, 400), missing)
+        bad.append("comparison missing clean leg silently fell back to baked input")
+    except ValueError:
+        pass
     return bad

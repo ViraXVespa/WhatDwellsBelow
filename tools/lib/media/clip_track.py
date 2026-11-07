@@ -207,7 +207,7 @@ def hold_end(src: Path, dur: float, out: Path) -> Path:
 PLATE_W = 0.44  # lower-third plate width cap, share of the frame width
 SUB_K = 0.045  # lower-third subline height as a share of the frame height
 
-def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accent=(255, 206, 92, 255), sub_k: float = SUB_K) -> tuple[int, int]:
+def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accent=(255, 206, 92, 255), sub_k: float = SUB_K, bottom_pad: int = 0) -> tuple[int, int]:
     """Lower-third strip, bottom-centre (clear of the top BEFORE/AFTER chips): a dark plate sized to the text, accent bar
     on its left, title and optional subline (sub_k x h). Returns its (y, height)."""
     from PIL import Image, ImageDraw
@@ -223,7 +223,7 @@ def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accen
     pad = int(18 * k)
     bh = pad * 2 + (t1[3] - t1[1]) + ((t2[3] - t2[1]) + int(10 * k) if sub else 0)
     bw = min(w, max(t1[2], t2[2]) + int(64 * k) + pad)
-    x, y = (w - bw) // 2, int(h * 0.95) - bh
+    x, y = (w - bw) // 2, int(h * 0.95) - bh - bottom_pad
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rectangle([x, y, x + bw, y + bh], fill=(12, 12, 16, 200))
@@ -235,11 +235,11 @@ def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accen
     return y, bh
 
 def lower_third(src: Path, title: str, out: Path, sub: str = "", start: float = 0.1, dur: float = 2.2, font: str = "",
-                sub_k: float = SUB_K) -> Path:
+                sub_k: float = SUB_K, bottom_pad: int = 0) -> Path:
     i = ce.info(src)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
-        strip_png(title, sub, i["w"], i["h"], ce._font(font), T / "s.png", sub_k=sub_k)
+        strip_png(title, sub, i["w"], i["h"], ce._font(font), T / "s.png", sub_k=sub_k, bottom_pad=bottom_pad)
         fc = ("[1:v]format=rgba,fade=t=in:st=%.3f:d=0.3:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[l];"
               "[0:v][l]overlay=0:0:shortest=1,format=yuv420p[o]") % (start, start + max(0.4, dur - 0.3))
         ce._run(["-i", str(src), "-loop", "1", "-framerate", "30", "-t", "%.3f" % i["sec"], "-i", str(T / "s.png"),
@@ -292,12 +292,15 @@ def portrait_box(box, geometry):
     return [(box[0] - x) * dw / cw + dx, (box[1] - y) * dh / ch + dy, box[2] * dw / cw, box[3] * dh / ch]
 
 
-def portrait(src: Path, region, out: Path, title: str = "", sub: str = "", font: str = "", size=(720, 1280)) -> Path:
+def portrait(src: Path, region, out: Path, title: str = "", sub: str = "", font: str = "", size=(720, 1280), comparison=None, base=Path("."), defer_identity=False) -> Path:
     """Crop source pixels to the native canvas before any chips; optional band text.
 
-    size is preserved (including 4:5); geometry is shared with portrait_box.
+    size is preserved (including 4:5); geometry is shared with portrait_box. Known
+    comparisons rebuild clean A/B legs and redraw identity after cropping.
     """
     from PIL import Image, ImageDraw
+    if comparison is not False and clip_promo.reframe(src, region, out, size, comparison, base, identity=not defer_identity):
+        return out
     i = ce.info(src)
     W, H = size
     (cx, cy, cw, ch), (_, top, _, ph) = portrait_geometry(region, i["w"], i["h"], size)

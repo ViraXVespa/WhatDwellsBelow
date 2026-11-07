@@ -5,6 +5,8 @@ the middle, a smootherstep sweep with a glowing divider and round grip, then an 
 darkened, title + subline fading up). Overlays are drawn once with Pillow and slid or faded by ffmpeg."""
 from __future__ import annotations
 
+import hashlib
+import json
 import tempfile
 from pathlib import Path
 
@@ -100,7 +102,7 @@ def _t_at(frac: float, hold: float, sweep: float) -> float:
     return hold + sweep * lo
 
 def wipe(before: Path, after: Path, out: Path, labels=("BEFORE", "AFTER"), subs=("", ""), hold: float = 1.2, sweep: float = 1.6,
-         hold_b: float = 2.2, end: tuple[str, str] | None = None, end_sec: float = 1.8, font: str = "") -> dict:
+         hold_b: float = 2.2, end: tuple[str, str] | None = None, end_sec: float = 1.8, font: str = "", record: bool = True, identity: bool = True) -> dict:
     """One eased sweep (after revealed from the left), chip crossfade at the middle, optional end card. Returns timings."""
     a = ce.info(before)
     w, h, fps = a["w"] - a["w"] % 2, a["h"] - a["h"] % 2, round(float(a["fps"])) or 30
@@ -114,20 +116,18 @@ def wipe(before: Path, after: Path, out: Path, labels=("BEFORE", "AFTER"), subs=
     norm = "scale=%d:%d:flags=lanczos,setsar=1,fps=%d,tpad=stop_mode=clone:stop_duration=%.2f,trim=duration=%.3f,setpts=PTS-STARTPTS" % (w, h, fps, clip, clip)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
-        chip(labels[0], subs[0], COL[0], font, h, T / "a.png")
-        chip(labels[1], subs[1], COL[1], font, h, T / "b.png")
+        _chips(T, w, h, labels, subs, font)
         hw = grip(h, T / "g.png")
         pngs = [T / "g.png", T / "a.png", T / "b.png"]
-        lx = int(30 * h / 720)
+        lx = int(30 * min(w, h) / 720)
         fc = (f"[0:v]{norm}[a];[1:v]{norm}[b];"
               f"color=c=black:s={w}x{h}:r={fps}:d={clip:.3f}[k];color=c=white:s={w}x{h}:r={fps}:d={clip:.3f}[wt];"
               f"[k][wt]overlay=x='W*{e}-W':eval=frame,format=gray[m];[b]format=yuva420p[ba];[ba][m]alphamerge[bm];[a][bm]overlay=0:0[w0];"
               f"[2:v]fps={fps},trim=duration={clip:.3f},format=rgba,fade=t=in:st={max(hold - 0.25, 0):.3f}:d=0.25:alpha=1,"
               f"fade=t=out:st={t1:.3f}:d=0.3:alpha=1[hd];[w0][hd]overlay=x='W*{e}-{hw // 2}':y=0:eval=frame[w1];"
-              f"[3:v]fps={fps},trim=duration={clip:.3f},format=rgba,fade=t=in:st=0.15:d=0.3:alpha=1,fade=t=out:st={x_lo:.3f}:d={fd:.3f}:alpha=1[la];"
-              f"[4:v]fps={fps},trim=duration={clip:.3f},format=rgba,fade=t=in:st={x_lo + fd * 0.4:.3f}:d={fd * 0.6:.3f}:alpha=1"
-              + (f",fade=t=out:st={clip - 0.6:.3f}:d=0.3:alpha=1" if end else "") + "[lb];"
-              f"[w1][la]overlay=x='{lx}-{lx * 4 // 3}*(1-clip((t-0.15)/0.3,0,1))':y=H-h-{lx}[w2];[w2][lb]overlay=x={lx}:y=H-h-{lx}")
+              "")
+        fc += _identity_filter(fps, clip, hold, sweep, end, lx) if identity else "[w1]null"
+
         if end:
             card(end[0], end[1], font, w, h, T / "e.png")
             pngs.append(T / "e.png")
@@ -139,4 +139,108 @@ def wipe(before: Path, after: Path, out: Path, labels=("BEFORE", "AFTER"), subs=
         fc += ",format=yuv420p[o]"
         loops = [x for p in pngs for x in ("-loop", "1", "-framerate", str(fps), "-t", "%.2f" % (clip + end_sec), "-i", str(p))]
         ce._run(["-i", str(before), "-i", str(after), *loops, "-filter_complex", fc, "-map", "[o]", "-an", *ce.H264, "-r", str(fps), str(out)])
+    if record:
+        recipe(out, before, after, labels=list(labels), subs=list(subs), hold=hold, sweep=sweep,
+               hold_b=hold_b, end=list(end) if end else None, end_sec=end_sec, font=font)
     return {"sec": round(total, 2), "swap": [round(x_lo, 2), round(x_lo + fd, 2)], "end": bool(end)}
+
+
+def recipe(out: Path, before: Path, after: Path, **options) -> None:
+    """Keep clean-source provenance beside a baked comparison; never infer it from pixels/names."""
+    out.with_suffix(".comparison.json").write_text(json.dumps({
+        "before": str(before.resolve()), "after": str(after.resolve()),
+        "source_sha256": _digest(out), "clean_sha256": [_digest(before), _digest(after)], **options}, indent=2) + "\n", encoding="utf-8")
+
+
+def reframe(src: Path, region, out: Path, size, comparison=None, base=Path("."), identity=True) -> bool:
+    """Rebuild a known comparison from clean legs, crop both, THEN draw native identity chips.
+
+    Explicit spec recipes or the producer's sidecar are required; opaque legacy video
+    cannot reveal hidden source pixels or reliable comparison timing. Missing legs fail.
+    """
+    import clip_fx
+    import clip_track
+    sidecar = src.with_suffix(".comparison.json")
+    if comparison is None:
+        if not sidecar.is_file():
+            return False
+        comparison = json.loads(sidecar.read_text(encoding="utf-8"))
+        base = sidecar.parent
+    d = dict(comparison)
+    expected = d.pop("source_sha256", None)
+    if expected and _digest(src) != expected:
+        raise ValueError("comparison recipe is stale for baked source: " + str(src))
+    clean_hashes = d.pop("clean_sha256", None)
+    before, after = [Path(d.pop(key)) for key in ("before", "after")]
+    legs = [p if p.is_absolute() else base / p for p in (before, after)]
+    for leg in legs:
+        if not leg.is_file():
+            raise ValueError("comparison clean source missing: " + str(leg))
+    if clean_hashes and [_digest(leg) for leg in legs] != clean_hashes:
+        raise ValueError("comparison clean sources changed since baking")
+    zoom, zoom_in = d.pop("zoom", None), d.pop("zoom_in", 0.8)
+    start, end = d.pop("trim", (0, None))
+    with tempfile.TemporaryDirectory() as td:
+        T = Path(td)
+        for k, leg in enumerate(legs):
+            if zoom:
+                i = ce.info(leg)
+                leg = clip_fx.zoom(leg, (0, 0, i["w"], i["h"]), zoom, T / ("z%d.mp4" % k), (i["w"], i["h"]), 0, zoom_in)
+            legs[k] = clip_track.portrait(leg, region, T / ("p%d.mp4" % k), size=size, comparison=False)
+        wipe(legs[0], legs[1], T / "native.mp4", record=False, identity=identity, **d)
+        if start or end is not None:
+            ce.trim(T / "native.mp4", start, end if end is not None else ce.info(T / "native.mp4")["sec"], out)
+        else:
+            import shutil
+            shutil.copy2(T / "native.mp4", out)
+    return True
+
+
+def identity_space(w: int, h: int) -> int:
+    """Bottom occupancy of a native comparison chip, including its subline/margin."""
+    return int(min(w, h) * 182 / 720) + 6
+
+
+def _digest(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def _chips(T: Path, w: int, h: int, labels, subs, font: str) -> None:
+    """Shared width-fitted assets for baked and deferred native identity layers."""
+    from PIL import Image
+    from imglib import geom
+    for k, name in enumerate(("a.png", "b.png")):
+        chip(labels[k], subs[k], COL[k], font, min(w, h), T / name)
+        with Image.open(T / name) as image:
+            if image.width > w * 0.9:
+                geom.resize_rgba(image, (int(w * 0.9), max(1, round(image.height * w * 0.9 / image.width)))).save(T / name)
+
+
+def _identity_filter(fps, clip, hold, sweep, end, lx, inputs=(3, 4), span=None, offset=0) -> str:
+    x_lo, x_hi = _t_at(0.30, hold, sweep), _t_at(0.70, hold, sweep)
+    fd = max(0.3, x_hi - x_lo)
+    span = clip if span is None else span
+    shift = f",trim=start={offset},setpts=PTS-STARTPTS" if offset else ""
+    return (f"[{inputs[0]}:v]fps={fps},trim=duration={span:.3f},format=rgba,fade=t=in:st=0.15:d=0.3:alpha=1,fade=t=out:st={x_lo:.3f}:d={fd:.3f}:alpha=1{shift}[la];"
+            f"[{inputs[1]}:v]fps={fps},trim=duration={span:.3f},format=rgba,fade=t=in:st={x_lo + fd * 0.4:.3f}:d={fd * 0.6:.3f}:alpha=1"
+            + (f",fade=t=out:st={clip - 0.6:.3f}:d=0.3:alpha=1" if end else "") + shift + "[lb];"
+            f"[w1][la]overlay=x='{lx}-{lx * 4 // 3}*(1-clip((t-0.15)/0.3,0,1))':y=H-h-{lx}[w2];"
+            f"[w2][lb]overlay=x={lx}:y=H-h-{lx}")
+
+
+def identities(src: Path, out: Path, comparison: dict) -> Path:
+    """Draw native identity LAST, above callout fallback positions, with original trim timing."""
+    i = ce.info(src); d = comparison
+    offset = d.get("trim", [0])[0]
+    hold, sweep = d.get("hold", 1.2), d.get("sweep", 1.6)
+    clip = hold + sweep + d.get("hold_b", 2.2)
+    fps = round(i["fps"]) or 30
+    with tempfile.TemporaryDirectory() as td:
+        T = Path(td)
+        _chips(T, i["w"], i["h"], d.get("labels", ("BEFORE", "AFTER")), d.get("subs", ("", "")), ce._font(d.get("font", "")))
+        fc = "[0:v]null[w1];" + _identity_filter(fps, clip, hold, sweep, d.get("end"), int(30 * min(i["w"], i["h"]) / 720), (1, 2), span=i["sec"] + offset + 0.1, offset=offset)
+        fc += ",setpts=PTS-STARTPTS,format=yuv420p[o]"
+        loops = [x for p in (T / "a.png", T / "b.png") for x in ("-loop", "1", "-framerate", str(fps), "-t", str(i["sec"] + offset + 0.1), "-i", str(p))]
+        ce._run(["-i", str(src), *loops, "-filter_complex", fc, "-map", "[o]", "-an", "-t", str(i["sec"]), "-r", str(fps), *ce.H264, str(out)])
+    return out
