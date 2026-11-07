@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Project PreToolUse policy for staged review jobs, NOT a host sandbox.
+"""Library for the staged JSON-protocol PreToolUse hook; not a tools CLI.
+
+Project PreToolUse policy for staged review jobs, NOT a host sandbox.
 
 Only explicit text-review jobs gate image reads. Ordinary visual read_file stays
 available. Shell use is limited to the bundled helper, never arbitrary Python.
@@ -38,6 +40,8 @@ def decide(event: dict, root: Path) -> tuple[str, str]:
             if len(tokens) < 4 or tokens[0] != data["python"] or tokens[1] != "local/review_local.py":
                 raise ValueError("use the staged helper command exactly as shown in job.md")
             args = parser().parse_args(tokens[2:])
+            if args.root and Path(args.root).resolve() != root.resolve():
+                raise ValueError("helper root must be this staged review")
             names = args.images if args.op == "ocr" else [args.image] if args.op in ("crop", "zoom") else [args.before, args.after]
             for path in names:
                 source(root, path)
@@ -78,7 +82,3 @@ def main() -> int:
         decision, reason = "deny", "Invalid staged review configuration: " + str(exc)
     print(json.dumps({"decision": decision, "reason": reason}))
     return 0 if decision == "allow" else 2
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

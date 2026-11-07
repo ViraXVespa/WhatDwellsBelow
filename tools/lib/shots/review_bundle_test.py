@@ -97,7 +97,7 @@ def selftest() -> list[str]:
         env = dict(os.environ, PATH="", WDB_TESSERACT="")
         r = subprocess.run([sys.executable, "local/review_local.py", "ocr", "01-label.png"], cwd=scratch,
                            capture_output=True, text=True, env=env)
-        if r.returncode or "RESULT SKIP" not in r.stdout:
+        if r.returncode or ("RESULT INFO" not in r.stdout or "ocr=SKIP" not in r.stdout):
             errors.append("missing Tesseract fallback")
         check(read, "allow", "SKIP permits text fallback")
         data = json.loads((scratch / bundle.MANIFEST).read_text())

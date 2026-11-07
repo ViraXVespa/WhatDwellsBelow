@@ -30,6 +30,9 @@ def stage(scratch: Path, images: list[tuple[Path, str]], *, text_review: bool = 
     local.mkdir(exist_ok=True)
     for name in ("ocr_core.py", "ocr_evidence.py", "review_local.py", "review_policy.py"):
         shutil.copy2(HERE / name, local / name)
+    shutil.copy2(HERE.parents[2] / ".grok/hooks/bin/wdb-review.py", local / "wdb-review.py")
+    for name in ("agent_log.py", "run_log_lib.py"):
+        shutil.copy2(HERE.parent / name, local / name)
     # Reuse the existing package, not a second image implementation.
     shutil.copytree(HERE.parent / "imglib", local / "imglib", dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
@@ -52,7 +55,7 @@ def stage(scratch: Path, images: list[tuple[Path, str]], *, text_review: bool = 
         config = scratch / ".grok/hooks/wdb-review.json"
         config.parent.mkdir(parents=True, exist_ok=True)
         config.write_text(json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"type": "command",
-            "command": shlex.join([sys.executable, "local/review_policy.py"]), "timeout": 10}]}]}}), encoding="utf-8")
+            "command": shlex.join([sys.executable, "local/wdb-review.py"]), "timeout": 10}]}]}}), encoding="utf-8")
     return notes
 
 
