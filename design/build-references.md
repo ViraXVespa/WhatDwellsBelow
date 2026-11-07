@@ -25,9 +25,11 @@ Granted images are read-only. The grant does not allow Imagine/I2V, shell image 
 
 ## Export native Bible cells and walk references
 
-`python tools/slice.py references export --task ID --bible assets/sprites/player/bible_locked_female.png --walk-dir assets/sprites/player/female --out _logs/references/ID/native`
+`python tools/slice.py references export --task ID --bible assets/KNOWN_3X3_BIBLE.png --walk-dir assets/sprites/player/female --out _logs/references/ID/native`
 
-This copies the accepted full sheet and current `walk_DIRECTION_N.png` frames, and exports the nine named cells at native resolution using the existing sprite layout/image library. It does not key, recolour, denoise, resize, generate or alter live assets. The output folder must be new.
+Use this only for a verified legacy three-by-three sheet. The voxel task instead grants `_src/new_bibles/female.png` directly: its layout is not verified, so legacy cell crops are not valid evidence.
+
+This copies the selected full sheet and current `walk_DIRECTION_N.png` frames, and exports the nine named cells at native resolution using the existing sprite layout/image library. It does not key, recolour, denoise, resize, generate or alter live assets. The output folder must be new.
 
 `manifest.json` records task, original paths, source hashes and dimensions, each crop's half-open source coordinates, output dimensions, scale 1 and output hashes. Keep it beside the images. To opt in to that exact bundle, replace `--path` with `--manifest _logs/references/ID/native/manifest.json`. Use selected cells/details rather than reading every frame repeatedly. Full sheet and walk originals remain available for context; exported walk files are frames, not an animated playback proof.
 

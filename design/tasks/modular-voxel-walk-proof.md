@@ -11,15 +11,14 @@ Create a modular 3D character in Blender (base body + attachable gear) that matc
 
 ## Reference workflow (before modeling)
 
-Use the accepted `assets/sprites/player/bible_locked_female.png`, not the layout-only GDD example. Current walk frames are `assets/sprites/player/female/walk_DIRECTION_N.png`. Check the animation's actual frame order/timing before comparison; the export is not a new timing specification.
+Use `_src/new_bibles/female.png` as the sole character Bible for this task, replacing the older Bibles. Its layout has not been verified; do not apply the legacy nine-cell mapping. Current walk frames remain `assets/sprites/player/female/walk_DIRECTION_N.png` for the comparison only; check their actual order/timing.
 
-The agent choosing geometry needs the pixels. A text-only screenshot review does not supply that context. The Build reference guide describes the supported task-scoped exception; generation remains isolated and no host permissions change.
+The geometry author needs the pixels, not only a text review. Use the supported task-scoped exception in the Build reference guide; this does not change generation or host permissions.
 
-1. After the normal `slice.py start ... --task modular-voxel-walk-proof`, export without changing live art:
-   `python tools/slice.py references export --task modular-voxel-walk-proof --bible assets/sprites/player/bible_locked_female.png --walk-dir assets/sprites/player/female --out _logs/references/modular-voxel-walk-proof/native`
-2. Opt in only for necessary reference work:
-   `python tools/slice.py references grant --task modular-voxel-walk-proof --reason "Blender modeling needs accepted body and gear proportions plus the current walk reference" --manifest _logs/references/modular-voxel-walk-proof/native/manifest.json`
-3. Read selected native cells, full-sheet details and walk frames with the direct image-read tool. Keep the manifest's source hashes, original dimensions and crop coordinates with subsequent comparisons. Do not substitute OCR, a downsized sheet or rejected art for the accepted source. Use the existing crop/zoom tools for additional details and grant those exact output paths if needed.
+1. Start the task normally with `slice.py start ... --task modular-voxel-walk-proof`.
+2. Grant the canonical source directly:
+   `python tools/slice.py references grant --task modular-voxel-walk-proof --reason "Blender modeling requires the new female source's proportions and equipment" --path _src/new_bibles/female.png`
+3. Read that original with the direct image-read tool. Preserve its path, hash and native dimensions in the comparison notes. Inspect its layout before choosing any details; record half-open source crop coordinates and output dimensions for later crops, without resizing the reference. Grant exact crop or current-walk paths separately if needed. Do not combine old and new Bibles or run the legacy cell exporter on this unverified layout.
 4. Inspect the available Blender MCP schema in Vira's Build environment before modeling. Use it for this task; do not route Blender work through Imagine/I2V. Missing MCP access is a setup gap to report, not a reason to invent commands or broaden permissions.
 5. Revoke the reference grant when the reference work ends. Geometry hidden by the 2D views still needs explicit design judgment; do not silently invent disputed anatomy or attachment behavior.
 
