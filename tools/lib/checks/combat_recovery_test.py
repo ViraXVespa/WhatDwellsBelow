@@ -68,9 +68,9 @@ def selftest(read=None):
                 assert p.atk_state == p.ATK_NONE
                 held[input_kind].add("attack"); funcs["try_basic"](p)
                 assert p.atk_state == p.ATK_BASIC
-                funcs["advance_attack"](p, dur - 0.00001)
+                cool(p, dur - 0.00001); funcs["advance_attack"](p, dur - 0.00001)
                 assert p.atk_state == p.ATK_BASIC
-                funcs["advance_attack"](p, 0.00002)
+                cool(p, 0.00002); funcs["advance_attack"](p, 0.00002)
                 assert p.atk_state == p.ATK_NONE
                 # Holding a rejected special is not newly buffered when cooldown ends.
                 remaining = p.special_cd
