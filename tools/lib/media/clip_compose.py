@@ -3,7 +3,7 @@
 
   punch     punch-in: ease into a box, hold, ease back out (clip_fx.zoom with back)
   callout   a box or ring (style) plus a promo chip label, optional leader line, staggered fade over [start, end]
-  montage   clips joined with crossfades, each opening with its own chip title (top-left), optional end card
+  montage   clips joined with crossfades, each opening with its own chip title (top-left, centred on portrait), optional end card
   spec      a JSON edit list: {"in": CLIP | "montage": [CLIPS], "titles": [...], "steps": [{"op": punch|callout|caption|ba|export, ...}]}
             run in order, each step's output feeding the next (paths relative to the spec file)
 """
@@ -97,13 +97,13 @@ def portrait_step(step: dict, info: dict, geometry, root=None, base=Path(".")) -
 
 def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float = 0.4, end: tuple[str, str] | None = None, font: str = "",
             join: str = "fade", title_style: str = "chip", hold_end: float = 0.0, root: Path | None = None, base: Path = Path("."),
-            size=(0, 0), fill: str = "pad", box=None) -> Path:
+            size=(0, 0), fill: str = "pad", box=None, movie: str = "") -> Path:
     """Each clip at size (else first clip size), title over its first 1.6 s (portrait chip centred), joined by
     `join` (clip_track.JOINS: fade, cut, dip, whip); then the optional end card. A src may be a dict
     {"clip": PATH, "title", "sub", "sub_size" (x h, default 0.045), "trim": [IN, OUT] s (cut before a camera handback),
     "join" (how this segment joins the one before), "callouts": [callout steps]}; its callouts run on that segment only
     and share one `placed` list. fill track/focus/box crops EACH segment before chips and remaps callout geometry;
-    segment box overrides the shared box. Native end cards are never cropped. hold_end freezes the last frame."""
+    segment box overrides the shared box; named boxes use the segment movie or shared movie. Native end cards are never cropped. hold_end freezes the last frame."""
     segs_in = [s if isinstance(s, dict) else {"clip": s} for s in srcs]
     srcs = [Path(s["clip"]) for s in segs_in]
     a = ce.info(srcs[0])
@@ -126,7 +126,7 @@ def montage(srcs: list, out: Path, titles: list[str] | None = None, fade: float 
                 explicit = segs_in[k].get("box", box)
                 if fill == "box" and explicit is None:
                     raise ValueError("portrait fill box needs a segment box or --box")
-                region = focus_region(steps, source_info, root, base, explicit, segs_in[k].get("movie", ""))
+                region = focus_region(steps, source_info, root, base, explicit, segs_in[k].get("movie", movie))
                 geometry = clip_track.portrait_geometry(region, source_info["w"], source_info["h"], (w, h))
                 fit = clip_track.portrait(s, region, T / ("f%d.mp4" % k), size=(w, h))
                 steps = [portrait_step(st, source_info, geometry, root, base) for st in steps]
@@ -245,13 +245,13 @@ def spec(path: Path, out: Path, root: Path | None = None) -> list[dict]:
             segs = [dict(m, clip=str(rel(m["clip"]))) if isinstance(m, dict) else rel(m) for m in d["montage"]]
             cur = montage(segs, T / "m.mp4", d.get("titles"), d.get("fade", 0.4), tuple(d["end_card"]) if d.get("end_card") else None, font,
                           d.get("join", "fade"), d.get("title_style", "chip"), float(d.get("hold_end", 0.0)), root, path.parent,
-                          native_size, native["fill"] if native else "pad", native.get("box") if native else None)
+                          native_size, native["fill"] if native else "pad", native.get("box") if native else None, native.get("movie", "") if native else "")
             rows.append({"op": "montage", "sec": ce.info(cur)["sec"]})
         else:
             cur = rel(d["in"])
         if native and "montage" not in d and all(s["op"] in ("callout", "caption", "lower_third") for s in steps[:-1]):
             cur = montage([{"clip": cur, "callouts": steps[:-1], "title": native.get("title", ""), "sub": native.get("sub", "")}], T / "native.mp4", font=font, root=root, base=path.parent,
-                          size=native_size, fill=native["fill"], box=native.get("box"))
+                          size=native_size, fill=native["fill"], box=native.get("box"), movie=native.get("movie", ""))
             steps = [native]
         for k, s in enumerate(steps):
             if native is s and ("montage" in d or cur == T / "native.mp4"):
@@ -341,11 +341,32 @@ def portrait_selftest(t: Path) -> list[str]:
     mapped = portrait_step({"box": [550, 120, 60, 60], "track": [[0, 550, 120, 60, 60]]}, {"w": 640, "h": 360}, geometry)
     if mapped["box"] != mapped["track"][0][1:] or not 0 <= mapped["box"][0] < 320:
         bad.append("portrait source geometry mapping: " + str(mapped))
-    cli = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[2] / "media.py"), "clip", "export",
-                          str(t / "subjects.mp4"), "--for", "portrait", "--size", "160x200", "--fill=box",
-                          "--box", "0,0,0.5,1", "--out", str(t / "box-cli.mp4")], capture_output=True, text=True)
-    if cli.returncode or ce.info(t / "box-cli.mp4")["h"] != 200 or clip_fx._px(t / "box-cli.mp4", 0.4, (80, 100))[0] < 170:
-        bad.append("portrait box CLI: " + cli.stdout + cli.stderr)
+    # Public box names must use the selected movie, not the first same-named region.
+    (t / "project.godot").write_text('[application]\nconfig/name="clip-selftest"\n')
+    (t / "tools/data").mkdir(parents=True, exist_ok=True)
+    (t / "tools/data/movies.json").write_text(json.dumps({"movies": {
+        "wrong": {"regions": {"subject": [0.5, 0, 0.5, 1]}},
+        "selected": {"regions": {"subject": [0, 0, 0.5, 1]}}}}))
+    entry = str(Path(__file__).resolve().parents[2] / "media.py")
+    for fill in ("box", "focus", "track"):
+        output = t / (fill + "-cli.mp4")
+        cli = subprocess.run([sys.executable, entry, "clip", "export", str(t / "subjects.mp4"), "--root", str(t),
+                              "--for", "portrait", "--size", "160x200", "--fill=" + fill,
+                              "--box", "subject", "--movie", "selected", "--out", str(output)], capture_output=True, text=True)
+        if cli.returncode or ce.info(output)["h"] != 200 or clip_fx._px(output, 0.4, (80, 100))[0] < 170:
+            bad.append("portrait " + fill + " CLI: " + cli.stdout + cli.stderr)
+    cli = subprocess.run([sys.executable, entry, "clip", "montage", str(t / "subjects.mp4"), str(t / "subjects.mp4"),
+                          "--root", str(t), "--size", "160x200", "--fill", "box", "--box", "subject", "--movie", "selected",
+                          "--labels", "", "--out", str(t / "movie-box.mp4")], capture_output=True, text=True)
+    if cli.returncode or clip_fx._px(t / "movie-box.mp4", 0.4, (80, 100))[0] < 170:
+        bad.append("montage selected movie box: " + cli.stdout + cli.stderr)
+    # Measure the existing chip helper's asset, then check its centred accent in a real 4:5 frame.
+    clip_promo.chip("Left subject", "", clip_promo.COL[1], ce._font(""), 400, t / "title-chip.png")
+    with Image.open(t / "title-chip.png") as chip:
+        lx = (320 - chip.width) // 2
+    accent = clip_fx._px(t / "native.mp4", 0.4, (lx + 8, 16 + 26))
+    if not (accent[0] > 180 and accent[1] > 150 and accent[2] < 150):
+        bad.append("4:5 title chip not centred: " + str(accent))
     # Existing placement owner must not cover the subject when another in-frame spot exists.
     p = clip_track.place_chip(100, 40, (0, 300, 100, 60), 640, 360, clip_track.corners(640, 360))
     if clip_track._hit((*p, 100, 40), (0, 300, 100, 60)) or min(p) < 0:

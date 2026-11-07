@@ -275,7 +275,7 @@ def _fx(args, ins: list[Path], out: Path, root: Path) -> list[str]:
             clip_compose.callout(ins[0], boxes[0], args.text, out, args.start, args.end, args.color, args.font, args.shape, args.leader)
         elif args.op == "montage":
             clip_compose.montage(ins, out, args.labels.split(",") if args.labels != "Before,After" else None, args.fade, end, args.font,
-                                 root=root, size=size, fill=args.fill, box=args.box[0] if args.box else None)
+                                 root=root, size=size, fill=args.fill, box=args.box[0] if args.box else None, movie=args.movie)
     elif args.op == "ba":
         pick = clip_fx.ba(ins[0], ins[1], out, boxes[0] if boxes else None, args.layout, labs, font=args.font, style=args.style, subs=subs, end=end)
         print("ba pick: %s" % json.dumps(pick))
