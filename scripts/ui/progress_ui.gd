@@ -13,7 +13,10 @@ const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
 const Reception := preload("res://scripts/ui/progress_ui/receptionist.gd")
 
-var open := false
+var open := false:
+	set(v):
+		open = v
+		set_process(open or forge_t > 0.0)
 var mode := "":
 	set(v):
 		mode = v
@@ -31,7 +34,10 @@ var loadout_wpn := "great_axe"
 var anvil_item: Dictionary = {}
 var anvil_src := ""
 var anvil_tab := "analyze"
-var forge_t := 0.0
+var forge_t := 0.0:
+	set(v):
+		forge_t = v
+		set_process(open or forge_t > 0.0)
 var forge_wait := 0.0
 var forge_it: Dictionary = {}
 var forge_type := ""
@@ -82,6 +88,7 @@ func btn_skin() -> String:
 func _ready() -> void:
 	set_meta("prompt_ink", true)
 	Flow._ready(self)
+	set_process(open or forge_t > 0.0)
 
 func _drop_sub() -> void:
 	gear_sub = false

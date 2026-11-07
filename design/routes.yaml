@@ -155,6 +155,9 @@ gates:
   tools_build:
     file: design/tools-build.md
     when: windows_runner_or_release_tool
+  media_clips:
+    file: design/media-clips.md
+    when: record_edit_or_compare_gameplay_video
   tools_media:
     file: design/tools-media.md
     when: media_pipeline_tool
@@ -164,6 +167,12 @@ gates:
   pc_offload:
     file: design/pc-offload.md
     when: inventory_verify_or_windows_write
+  build_handoff:
+    file: design/build-handoff.md
+    when: build_survey_or_resume_queue
+  build_references:
+    file: design/build-references.md
+    when: task_needs_visual_reference_or_mcp_capability
   build_job_cycle:
     file: design/build-job-cycle.md
     when: build_job

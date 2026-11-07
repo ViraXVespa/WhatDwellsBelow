@@ -50,15 +50,23 @@ var danger_gem: bool = Def.danger_gem
 var salvage_dupes: bool = Def.salvage_dupes
 var salvage_finish: float = Def.salvage_finish
 var salvage_fortune: float = Def.salvage_fortune
-var in_dungeon := false
+var in_dungeon := false:
+	set(v):
+		if in_dungeon == v:
+			return
+		in_dungeon = v
+		input_changed.emit()
 var floor_n := 1
 var run_seed := 1
 var boss_dead := false
 signal bank_changed
 signal prompt_changed
-signal pause_changed(on: bool)
+signal world_action(action: String)
+signal input_changed
 var interact_prompt := "":
 	set(v):
+		if interact_prompt == v:
+			return
 		interact_prompt = v
 		prompt_changed.emit()
 var interact_locked := false
@@ -70,14 +78,20 @@ var ore := 0
 var wood := 0
 var bank_gold: int = Def.bank_gold:
 	set(v):
+		if bank_gold == v:
+			return
 		bank_gold = v
 		bank_changed.emit()
 var bank_ore: int = Def.bank_ore:
 	set(v):
+		if bank_ore == v:
+			return
 		bank_ore = v
 		bank_changed.emit()
 var bank_wood: int = Def.bank_wood:
 	set(v):
+		if bank_wood == v:
+			return
 		bank_wood = v
 		bank_changed.emit()
 var bank_root: int = Def.bank_root
@@ -91,7 +105,12 @@ var run_artifacts: Array[String] = []
 var shrine_t := 0.0
 var toast_msg := ""
 var toast_t := 0.0
-var ui_open := false
+var ui_open := false:
+	set(v):
+		if ui_open == v:
+			return
+		ui_open = v
+		input_changed.emit()
 var extracted := false
 var clerk_t := -1.0
 var mine_hits_landed := 0

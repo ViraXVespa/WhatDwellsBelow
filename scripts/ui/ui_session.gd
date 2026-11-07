@@ -14,3 +14,4 @@ static func open(host: Node) -> void:
 static func close(host: Node) -> void:
 	App.ui_open = false
 	host.get_tree().paused = false
+	App.Boot.release_focus_once(App)

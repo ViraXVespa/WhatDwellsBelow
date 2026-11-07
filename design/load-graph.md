@@ -19,7 +19,9 @@ AGENTS.md
             -> design/build-job-cycle.md when gathering, changing, or proving
             -> design/build-week-start.md when the User says it is a new week (main checkout, no slice)
             -> listed runner from that cycle table when proving; do not invent a flag
-            -> next unit is User-named
+            -> design/build-handoff.md only for a survey or saved queue
+            -> design/build-references.md for necessary direct references or an MCP capability gap
+            -> next task is User-named
     bot   -> BOT.md -> exactly one Job sibling
 
 Then, only if the User named work:

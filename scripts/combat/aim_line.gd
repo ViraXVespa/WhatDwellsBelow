@@ -47,13 +47,15 @@ void fragment() {
 	return sh
 
 func update_if_changed(origin: Vector3, dir: Vector2, length: float, width: float, opacity: float, on: bool) -> void:
-	if dir == _last_dir and on == _last_on:
-		return
-	_last_dir = dir
-	_last_on = on
 	update_line(origin, dir, length, width, opacity, on)
 
+var _last_key: Array = []
+
 func update_line(origin: Vector3, dir: Vector2, length: float, width: float, opacity: float, on: bool) -> void:
+	var key: Array = [origin, dir, length, width, opacity, on, App.weapon]
+	if key == _last_key:
+		return
+	_last_key = key
 	var usable: float = length - CLIP
 	visible = on and usable > 0.05
 	if mesh_i:

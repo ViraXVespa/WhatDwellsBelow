@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: finding where something is used, reading one function, row, tunable, scene or route card, or a tool's last run  
 
-Door, rules, the CLI contract and the Surf / A key: `tools.md`. These print the rows you asked for; open a file only when the row is not enough.
+Use these commands to locate a route, source function or result without dumping unrelated files. Read the relevant source before editing; an inventory alone is not analysis. Tool contracts and surface permissions stay in the tools door.
 
 Entries here: `find.py`, `docs.py`, `session.py`; their code: `tools/lib/docs/`, `tools/lib/lookup/`, `tools/lib/session/`.
 

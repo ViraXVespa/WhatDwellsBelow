@@ -10,10 +10,10 @@ when-to-use: >
   run_shots, seed/floor still, hide Godot window for a capture.
 user-invocable: true
 ---
-# Postcard shot
+# Screenshot capture
 
 Read design/shot-tool.md once per session and follow it.
-Do not reopen this skill or that file after compact.
+After a context break, resume from saved task state rather than repeating completed reads.
 
 Run from repo root: `python tools/shots.py capture --mode web|build|user`.
 Read only `python tools/session.py summary --job shots` (index first, newest run; last line is the RESULT line).

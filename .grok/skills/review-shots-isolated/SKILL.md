@@ -10,11 +10,14 @@ metadata:
 
 # review-shots-isolated
 
-Use it when a text answer is enough → this; the User should see the image → `shots.py show`. Never `read_file` a PNG or JPG in the parent session. The shared gather (`slice.py open`) does not run this. The forked session whose unit needs the frames does. Turn budget rises with the image count (at least 8, +2 per image, cap 16).
+Use isolated review when a text assessment is enough. For pictures the User should see, use `shots.py show`. Necessary direct visual references use the explicit task/session grant in the Build reference guide; neither path is a generation exception.
 
 ## Run
-`python tools/shots.py review PNG... --question "..." [--rubric "- item" | --rubric @FILE]`
 
-- Copies the PNGs to a scratch dir outside the repo, proves isolation with `grok inspect` (no project instructions), runs one child session, and prints only its report with a `VERDICT: PASS|FAIL|UNSURE` line.
-- `RESULT FAIL` means no review happened (grok missing, isolation not proven, child error, no report). Say so; do not guess a verdict or open the PNGs to replace it unless you then follow the `shots.py show` rule.
-- Read-only: writes nothing in the repo.
+`python tools/shots.py review PNG... --question "..." [--rubric TEXT|@FILE]`
+
+The runner stages images, full-size sources and local helpers outside the repository, verifies isolation and returns `report.md` with `VERDICT: PASS|FAIL|UNSURE`. Review only the unit being changed. Turn budget starts at 8 and rises with image count; use `--help` for options.
+
+Text questions attempt local OCR first. Weak/fail/SKIP may use vision; ordinary shape/colour review needs no OCR. `--why REASON` is the separate logged text-review exception, not host permission or a repository image grant.
+
+`RESULT FAIL` means no valid review happened: report the reason and do not invent a verdict. Inputs are read-only; ignored summaries/receipts may be written in the worktree. The child's outputs stay in its staged scratch.

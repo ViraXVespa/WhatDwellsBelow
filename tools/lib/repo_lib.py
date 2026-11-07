@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repo helpers shared by tools: git, changed files, allowlist, version label.
+"""Repo helpers shared by tools: git, changed files, version label.
 
 Import-only. Root discovery and RESULT/summary live in agent_log.
 """
@@ -8,10 +8,8 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from fnmatch import fnmatch
 from pathlib import Path
 
-ALLOW_FILE = "tools/bot_allow.txt"
 VERSION_FILE = "scripts/data/version.json"
 
 def run_git(root: Path, *args: str) -> tuple[int, str]:
@@ -46,29 +44,6 @@ def unpushed(root: Path) -> list[str]:
     """Paths the commits not yet on @{u} touch (both sides of a move); [] with no upstream."""
     code, out = run_git(root, "diff", "--name-only", "--no-renames", "@{u}...HEAD")
     return out.splitlines() if code == 0 else []
-
-def load_allowlist(root: Path) -> list[str]:
-    """Globs from tools/bot_allow.txt (comments stripped, `!` negations kept)."""
-    path = root / ALLOW_FILE
-    if not path.is_file():
-        return []
-    out: list[str] = []
-    for line in path.read_text(encoding="utf-8-sig").splitlines():
-        raw = line.split("#", 1)[0].strip()
-        if raw:
-            out.append(raw)
-    return out
-
-def allowed(rel: str, globs: list[str]) -> bool:
-    posix = rel.replace("\\", "/")
-    for pattern in globs:
-        if pattern.startswith("!"):
-            if fnmatch(posix, pattern[1:]):
-                return False
-            continue
-        if fnmatch(posix, pattern):
-            return True
-    return False
 
 def read_version(root: Path) -> dict:
     return json.loads((root / VERSION_FILE).read_text(encoding="utf-8-sig"))

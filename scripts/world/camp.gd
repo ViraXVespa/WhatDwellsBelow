@@ -26,10 +26,6 @@ var _editor_hooked: bool = false
 var build_done: bool = false
 
 func _ready() -> void:
-	_connect_hud()
-	if App.has_signal("pause_changed"):
-		App.pause_changed.connect(_on_pause)
-
 	Dbg.hitch("camp_enter")
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
@@ -198,6 +194,7 @@ func _step_rest() -> void:
 	else:
 		ensure_dummy()
 	Hud._hud(self)
+	_connect_hud()
 	_music()
 	var hold_wake: bool = (
 		App.present != null
@@ -293,15 +290,13 @@ func _strip_baked_env(n: Node) -> void:
 			_strip_baked_env(c)
 		i -= 1
 
-func _on_pause(on: bool) -> void:
-	# label / pause UI update
-	pass
-
 func _connect_hud() -> void:
-	if App.has_signal("bank_changed"):
+	if not App.bank_changed.is_connected(_refresh_hint):
 		App.bank_changed.connect(_refresh_hint)
-	if App.has_signal("prompt_changed"):
+	if not App.prompt_changed.is_connected(_refresh_prompt):
 		App.prompt_changed.connect(_refresh_prompt)
+	if not App.prog.camp_hint_changed.is_connected(_refresh_hint):
+		App.prog.camp_hint_changed.connect(_refresh_hint)
 	_refresh_hint()
 	_refresh_prompt()
 
@@ -316,3 +311,7 @@ func _refresh_hint() -> void:
 func _refresh_prompt() -> void:
 	if prompt:
 		prompt.text = App.interact_prompt
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		_refresh_hint()

@@ -71,6 +71,9 @@ static func make_map(host: Node) -> void:
 	host.map_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	host.map_rect.gui_input.connect(func(ev: InputEvent) -> void: _map_input(host, ev))
 	host.map_layer.add_child(host.map_rect)
+	var viewport := host.get_viewport()
+	if not viewport.size_changed.is_connected(host._redraw_map):
+		viewport.size_changed.connect(host._redraw_map)
 	host.set_meta("map_pc", Vector2i(-999, -999))
 	redraw_map(host)
 	var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
@@ -82,6 +85,14 @@ static func _map_input(host: Node, event: InputEvent) -> void:
 	var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 	if MapActS.handle_mouse(host, event):
 		host.get_viewport().set_input_as_handled()
+
+static func needs_redraw(host: Node) -> bool:
+	if host.fog_dirty:
+		return true
+	if host.player == null:
+		return false
+	var cell := Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
+	return host.get_meta("map_pc", Vector2i(-999, -999)) != cell
 
 static func redraw_map(host: Node) -> void:
 	if host.map_img == null:
@@ -106,6 +117,8 @@ static func redraw_map(host: Node) -> void:
 				dot(host, cell, Color(0.95, 0.82, 0.35), true)
 			elif k == "shop":
 				dot(host, cell, Color(0.55, 0.85, 1.0), true)
+	var CrystalNet: GDScript = load("res://scripts/world/crystal/net.gd")
+	CrystalNet.paint(host)
 	if host.player:
 		var pc := Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
 		host.set_meta("map_pc", pc)

@@ -18,7 +18,7 @@ Door, rules, the CLI contract and the Surf / A key: `tools.md`. New logic goes i
 2. Add one `COMMANDS` row to the entry tool, and one catalog row (`entry.py sub`) to the area doc.
 3. Run `check.py tool-docs` and `check.py tool-cli --only STEM --smoke-run`.
 
-Owners: run helpers, flags, RESULT, `_logs/`: `agent_log`. Text I/O (BOM, EOL): `md_format_lib`. Git, version, allowlist, selftest repos: `repo_lib`. Godot binary, pin, launch, locks: `godot_lib`. `.gd` parsing: `gd_lib`. Doc edits: `docs.py patch`.
+Owners: run helpers, flags, RESULT, `_logs/`: `agent_log`. Text I/O (BOM, EOL): `md_format_lib`. Git, version, selftest repos: `repo_lib`. Godot binary, pin, launch, locks: `godot_lib`. `.gd` parsing: `gd_lib`. Doc edits: `docs.py patch`.
 
 ## Libs and data
 
@@ -27,15 +27,17 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | File (under `tools/`) | Owns |
 |---|---|
 | `lib/boot.py` | Entry dispatch: `entries()` (every entry's table), `cmd(stem, *args)` child argv, `display(stem)` (`shots.py capture`), area dirs on `sys.path` |
-| `lib/agent_log.py` | Run helpers for every tool: `std_parser(writes=, verbose=)` (`--root`, `--json`, `--dry-run`, `--verbose`), `resolve_root`, `finish` / `emit_result` (RESULT last; `echo=` replaces the stdout body; `retry=` for the red-prove prompt), `fold` (first rows + count), `run_writer` (one-shot art generators), `guarded`, stamped `_logs/<job>` paths. `--selftest`. |
+| `lib/agent_log.py` | Common parser, root resolution, bounded stdout, RESULT/summary writers, guarded operations and generator run helpers. |
 | `lib/md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks |
-| `lib/repo_lib.py` | Git, allowlist, version and changelog-label helpers (`under`, `write_text_nl`); branch kind (`branch_kind`/`head_kind`: grok-build-wN Build, grok-web-wN Web, main, every other named branch Bot; `diff_base`); selftest fixtures `git_test`, `selftest_repo`. |
-| `lib/godot_lib.py` | Godot launch + per-path lock (kills only its own pid, never godot*); `gui=True` picks a display (`--display`). Owns the engine pin: `VERSION`, `resolve_bin` (`GODOT_BIN`, pin file, Steam, box path), `pin_path`; `timing_job` for the load-timing smokes. |
-| `lib/godot_slots.py` | Box-wide Godot slot cap (default 1) for every `run_godot` and direct launcher (`held()`: shots, textsize, load_bars, frame-art, desktop perf; warnscan holds one slot per scan), on only on the Bot box (`/home/box` + user `box`; off on CI/PCs); `WDB_GODOT_SLOTS=N`/`0` overrides. flock slots in `/workspace/.wdb-godot-slots/` shared by all checkouts; dead holders free at once; waits print `waiting on <pid cmd (checkout)> since <time>`. `--selftest`. |
+| `lib/repo_lib.py` | Git/version helpers, branch classification and diff bases; isolated git test fixtures. |
+| `lib/godot_lib.py` | Pinned binary resolution, display choice and per-project launch locks; kills only its own process. |
+| `lib/godot_slots.py` | Shared box-only Godot launch slots across checkouts; dead holders free automatically. `WDB_GODOT_SLOTS` configures the cap. Not enabled on CI/User PCs; `--selftest`. |
 | `lib/gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` |
 | `lib/run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean |
-| `lib/slice/retry_lib.py` | Red-prove RETRY block: `grok -r <original-session-id> --fork-session` for the User (the id the first `slice.py start` run recorded) plus the paste-ready prompt (failed prove, red lines, one small corrective edit); empty off Build (`repo_lib.head_kind`). `--selftest` |
-| `lib/checks/prove_scope.py` | Scoping for `bot_status.py --bot --prove`: dupes, stale-refs, bake repro and textsize print `SKIP untouched` when no branch path matches their globs (`prove_rules.json` rule + `SCOPE`), `SKIP cached pass` when their inputs hash the same as at their last pass (`_logs/prove-cache.json`); `--full` runs all. Visual-review gate: a branch touching hub art, lighting or bake paths (`VISUAL`) fails until `_logs/visual-review/<tip sha>.md` lists `wide:` / `close:` shots and answers questions 1-7 (1-6 a starting point; 7 any other issue, naming what was scanned); the failure prints the questions and shot commands. `--selftest` |
+| `lib/slice/retry_lib.py` | Red-prove instructions in the original Build session; one small corrective edit and rerun. Empty off Build. Does not launch or fork a session; `--selftest`. |
+| `lib/checks/process_cleanup_test.py` | Source-level process-migration event/lifecycle regressions; not a Godot/device/visual proof. |
+| `lib/checks/combat_recovery_test.py` | Source-level special recovery regression with stubbed engine effects; auto-discovered by `check.py selftests`. Does not prove Godot or rendered animation. |
+| `lib/checks/prove_scope.py` | Scope/cache relevant Bot checks. Visual changes require a tip-compatible wide/detail review covering touched areas and observed findings, not bare answers. `--full` bypasses the pass cache. |
 | `lib/bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` |
 | `data/bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode |
 | `lib/gates/bot_warnscan_lib.py` | Log parser for `gate.py warnscan` |
@@ -49,13 +51,13 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/docs/balance_src.py` | Balance source model for `docs.py tunable`: `vars_*.gd` defaults, slider rows, enemy stats, `val_cat_map.gd` categories; in-memory edits, 10 KB cap check before any write |
 | `lib/docs/tunables_code.py` | `docs.py tunable list`, `diff`, `range` and the code side of `set KEY VALUE` / `add KEY --default` |
 | `lib/docs/tunables_selftest.py` | `docs.py tunable --selftest`: set/range/add/diff on a scratch copy |
-| `lib/docs/task_lib.py` | Task files in `design/tasks/`: header fields, the README index, `done` (delete, unblock dependants, changelog line), next opt id, and the `check.py load-graph` lint |
-| `lib/docs/task_compact.py` | `docs.py task compact` and `slice.py start --unit-done`: done units to one line each, their tried/failed/baseline lines dropped; Vira, decisions, open questions kept; `--selftest` |
-| `lib/slice/slice_lib.py` | `slice.py start` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, forked session, retry block, survey vs job, unit queue) and the `slice.py open` area check |
-| `lib/slice/slice_state.py` | `_logs/slice-state.json` and the `SLICE ALREADY STARTED` text of `slice.py start` (steps: import, baseline shots, original session, forked, handoff; resume at Gather or Prepare / Change / Prove / Complete) |
-| `lib/session/session_lib.py` | Finds a Grok session folder and reads `prompt_context.json`, the early skills reminder, `prompt_history.jsonl` and `chat_history.jsonl` for the session facts of `slice.py start` and the `Did not work:` lines (`failed_block`: failed tool results since the last ask) |
-| `lib/slice/handoff_lib.py` | The survey -> implement handoff, a Build task file (`ID.md` in `design/tasks/`; `units:` / `done:` header lines carry a unit queue): skeleton, validation, saved survey edits and the compact start summary for `slice.py start --handoff` / `--from-handoff` / `--from-task`; `slice.py open` validates a `# Handoff:` prompt |
-| `lib/slice/unit_lib.py` | Unit queue of a door (`unit_queue`, `unit_docs`, `unit_files`, `shot_states` in `routes.yaml`): the unit block of a card (position, flow and state, doc line ranges, files), the queue plan from the slice state or a handoff's `units:` / `done:`, and the `check.py load-graph` lint for those keys |
+| `lib/docs/task_lib.py` | Task header/lifecycle/index validation and dependency updates. |
+| `lib/docs/task_compact.py` | Collapse completed units while preserving owner decisions and open work; fixture selftest. |
+| `lib/slice/slice_lib.py` | Startup card and fixture tests for main/worktree, survey/job, saved progress, other-session detection, retries and queues. |
+| `lib/slice/slice_state.py` | Local slice progress/session/task state and concise resume instructions; this is observed state, not a claim of completed proof. |
+| `lib/session/session_lib.py` | Find Build session facts and failed tool results since the last question; used by startup and failed-step reporting. |
+| `lib/slice/handoff_lib.py` | Build task skeleton/validation, saved survey edits and resume summary; launch validation for a survey handoff. |
+| `lib/slice/unit_lib.py` | Route/task unit queues, completion state, unit doc/files/flows and routing lint. |
 | `lib/load_routes.py` | Load design/routes.yaml (constrained YAML subset, stdlib only) |
 | `lib/perf/bench_report.py` | Shared bench reports and summary output; `perf.py dungeon --selftest` tests assembly without a game launch. |
 | `lib/perf/bench_env.py` | One `env:` line (machine, CPU, GPU, RAM, OS, browser, Godot, renderer, vsync, cap, resolution, headless) for benchmark summaries (`perf.py web`, `perf.py hub`, `gate.py bot-smokes` open timing) |

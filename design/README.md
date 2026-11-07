@@ -25,6 +25,10 @@ Design doors: open the facade, then only the Job-table sibling. Isolated Imagine
 
 Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in a Phase 4 emit when that is the goal.
 
+## Build procedures
+
+The Build front door is `grok-build.md`; `build-job-cycle.md` owns the work cycle and context breaks. Conditional guides: `build-handoff.md` (surveys/queues), `build-references.md` (image grants/MCPs), `build-week-start.md` (release routine), `pc-offload.md` (Windows runners), `isolated-media.md` (generation). Tool flags and technical recipes stay in the catalogs and prove standard; these are not another boot read list.
+
 ## Document kinds
 
 | Marker | Meaning |

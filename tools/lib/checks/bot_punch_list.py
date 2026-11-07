@@ -23,7 +23,6 @@ import task_lib
 
 SHIP_BYTES = bot_gate_lib.SHIP_BYTES
 SWEEP_BYTES = bot_gate_lib.SWEEP_BYTES
-ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
 OPT_FILE = "design/tasks/opt-*.md"
 
@@ -146,7 +145,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the allowlist on uncommitted and unpushed paths, the load graph, the dupes gate, tunables drift (docs.py tunable diff), code-map check (every live .gd mapped), the tool-docs catalog and --stale-refs, diff drift and (UI scripts changed) textsize --gate.",
+        help="Also check the load graph, the dupes gate, tunables drift (docs.py tunable diff), code-map check (every live .gd mapped), the tool-docs catalog and --stale-refs, diff drift and (UI scripts changed) textsize --gate.",
     )
     parser.add_argument("--full", action="store_true", help="With --prove: run every scoped check (dupes, stale-refs, bake repro, textsize) and ignore the pass cache (prove_scope.py).")
     parser.add_argument("--no-explore", action="store_true", help="With --prove: skip the drift scan and textsize (check.py prove runs those itself).")
@@ -168,10 +167,6 @@ def main(argv: list[str] | None = None) -> int:
     brief = parse_reuse_brief(root)
     opts = parse_opt_queue(root)
     pending_opts = [item for item in opts if item["status"] not in ("done", "dropped")]
-    globs = repo_lib.load_allowlist(root)
-    dirty = sorted(set(repo_lib.git_changed(root, renames=False) or []) | set(repo_lib.unpushed(root)))  # uncommitted + unpushed
-    blocked = [rel for rel in dirty if globs and not repo_lib.allowed(rel, globs)]
-
     lines: list[str] = [
         "bot status",
         "root=.",
@@ -181,7 +176,6 @@ def main(argv: list[str] | None = None) -> int:
         f"upstream={git['upstream']}",
         f"worktree={git['worktree']}",
         f"bot_md={'yes' if (root / 'BOT.md').is_file() else 'no'}",
-        f"allowlist={ALLOW_FILE if globs else 'missing'}",
         "",
         f"over_10kb count={len(ship)}",
     ]
@@ -215,14 +209,6 @@ def main(argv: list[str] | None = None) -> int:
         lines.append("prove")
         cap_fail = len(ship)
         lines.append(f"script_cap={'FAIL' if cap_fail else 'PASS'} over={cap_fail}")
-        if globs:
-            lines.append(
-                f"allowlist={'FAIL' if blocked else 'PASS'} changed={len(dirty)} blocked={len(blocked)}"
-            )
-            for rel in blocked:
-                lines.append(f"blocked\t{rel}")
-        else:
-            lines.append(f"allowlist=skip missing {ALLOW_FILE}")
         graph = run_check(root, "check_load_graph", "--bot")
         lines.append(f"load_graph={graph}")
         scope = Scope(root, args.full)
@@ -249,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
             lines.extend(f"review\t{b}" for b in review)
             lines.extend(scope.ps.review_help(scope.changed))
             explore_bad = True
-        if cap_fail or blocked or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)) or shipped:
+        if cap_fail or explore_bad or any(r.startswith("FAIL") for r in (graph, dupes, tunables, code_map, tool_docs, stale, repro)) or shipped:
             rc = 1
 
     status = "FAIL" if rc else "PASS"

@@ -25,7 +25,7 @@ def step0_note(door: str, job: str, area: str, flows: str, near: str = "") -> st
     name = job or door or area
     return (f"STEP 0 (not a stop): no shot flow is mapped to {name} in routes.yaml `shot_flows`. Creating or adjusting the flow for the exact screen is the first job step, "
             "and flow files (tools/data/shot-flows/) plus the routes.yaml mapping may be edited before the User answers. In the worktree: `python tools/shots.py flow --list` "
-            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, and map it by job. The forked session shoots it and reviews it (`shots.py review`; do not read_file the PNG). "
+            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, and map it by job. The session changing the screen shoots and reviews it (`shots.py review`). "
             "Say whether that PNG is the screen being changed, and send its path with the ask."
             + (f" Mapped to the door only, so possibly another screen: {near}." if near else ""))
 
@@ -48,10 +48,8 @@ def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
         pass
     return door, job, flows, step0_note(door, job, "" if (door or job) else name, flows, near)
 
-Q0 = ("Q0 only when the task's Open questions do not already settle it: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
-      "including frames or layouts already built. A task whose Open questions are none, or whose body already names the look, the reference, and the bounds, has answered Q0. Do not ask it again. "
-      "When you do ask, look options differ in kind (one look shared by every screen, a look per screen or object, a new look, her words), not in detail, and are not all built on one existing look. "
-      "Each option says `reuse <the existing asset or look>` or `draw new`; an option that only names an asset (\"the stall prop\") is not an option yet.")
+Q0 = ("Q0 (only if the task leaves it open): ask for the desired look, reference and bounds. "
+      "Do not repeat settled questions. If options are needed, distinguish reuse from new art; do not recommend a look as a technical necessity.")
 
 def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool:
     """A survey slice: a door (not a job) with several jobs and no handoff yet. It surveys from text and ends in `--handoff`."""
@@ -69,75 +67,31 @@ def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool
         return False
 
 def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implement", screen: bool = True) -> str:
-    """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib).
-    `mode`: 'implement' (a job), 'survey' (a door with several jobs: text survey, ends in --handoff) or 'handoff' (a fresh session from a handoff).
-    `screen` is false when the job has no shot flow and is not a ui/theme/visual screen: no play-camera baseline."""
-    start = [
-        "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice; a later run says where the slice stands (`--full` reprints this).",
-    ]
-    no_cam = ("NO PLAY CAMERA: this job has no shot flow and it is not a screen. No play-camera baseline, no new shot flow, and no `--visual` on the gate. "
-              "The gate is `python tools/gate.py build --batch`. A keyed still is proved against its source plate with `python tools/media.py rekey-preview`, then `shots.py show` on the paths it prints. "
-              "Pixel counts from that tool are the check. A picture description is not a pixel count. "
-              "A task whose Open questions are none already answered Q0. A picture the task calls rejected is the last attempt, not the reference.")
-    if mode == "handoff":
-        order = [("ORDER (handoff): `python tools/gate.py gd-load` once and `python tools/gate.py import` (a fresh worktree has nothing imported; it takes about a minute: start it with "
-                  "`block_until_ms 0` and poll the output once, no skill needed); open the baselines the handoff lists (a shot that is missing or band=fail is re-shot; a still is not a shot); read the files it lists; "
-                  "then the first unit. Ask about what Open questions lists or what a discovery changes."
-                  + ("" if screen else " " + no_cam))]
-    elif mode == "survey":
-        order = [("ORDER (survey): no import check and no shots yet. Survey from text: `python tools/shots.py flow --survey`, `python tools/find.py route --digest --door D`; write the survey as visible text, "
-                  "then Q0, then which group first. A baseline you did not shoot in a survey is not a `Did not work` item. After her answers to the first ask: `python tools/slice.py start --handoff`, then stop."),
-                 Q0]
-    elif screen:
-        order = [("ORDER: `python tools/gate.py gd-load` once and `python tools/gate.py import` (a fresh worktree has nothing imported; it takes about a minute: start it with "
-                  "`block_until_ms 0` and poll the output once, no skill needed). This session gathers the shared context (the task, the docs, the code, the outcome). "
-                  "Do not shoot, review, or read_file pictures during Gather. A screen's frames are unit-specific; this session will shoot the baseline when the unit needs it and review it with `python tools/shots.py review PNG --question Q` (text only; never read_file a PNG or JPG; band=fail is invalid: fix the cause, re-shoot). "
-                  "Write the restate from the task and the docs; then Q0; then your other questions. "
-                  "A task whose Open questions are none already answered Q0. Do not ask it again."),
-                 Q0]
+    """Lean startup instructions; detailed rules have one owner in the Build guides."""
+    lines = ["IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command; later runs report saved progress (--full reprints)."]
+    lines.append("DEFAULT: load the existing repository pc-offload skill once after this command; use it throughout the Build task, not once per operation. If absent, report it and use documented equivalents only when sufficient. This grants no machine/runtime permissions; no automatic MCP substitution.")
+    if mode == "survey":
+        lines += ["ORDER (survey): inspect text with `shots.py flow --survey` and `find.py route --digest --door D`. State the findings, ask about missing intent and which group first. No imports or shots yet; an absent survey baseline is not a `Did not work` item.",
+                  Q0, "After the answers, `slice.py start --handoff`; fill and validate the task, then stop. build-handoff.md owns this procedure."]
     else:
-        order = [("ORDER: `python tools/gate.py gd-load` once and `python tools/gate.py import` (a fresh worktree has nothing imported; it takes about a minute: start it with "
-                  "`block_until_ms 0` and poll the output once, no skill needed). " + no_cam + " "
-                  "Write the restate as visible text, then change the code."),
-                 Q0]
-    gate = ("`python tools/gate.py build --batch --visual JOB`" if screen
-            else "`python tools/gate.py build --batch` (no `--visual`: this job has no shot flow)")
-    cycle = [] if mode == "survey" else [
-        "CYCLE (build-job-cycle.md): GATHER finishes before any change: no code changes, no new tools; read the code and docs, state the observable outcome "
-        "that shows the task is done, confirm the tooling or in-game signal can show it; for a bug or perf miss, confirm the repro's output names the cause, else that is a missing signal. "
-        "Continue Prepare in this session. Before the first prove, stop for one compact and resume in this same session: run the guided compact, or print the keep-list and stop so the User can compact. "
-        "Do not `/fork`, and do not start a fresh session for that compact. The first session on a task, when nothing earlier has changed, starts unit 1 and does not run `python tools/find.py changed`. "
-        "A later session picks up where the previous session left off and continues gather for what later sessions on this task would not all need "
-        "(this unit's pictures: `shots.py review`, never read_file) and for committed and uncommitted changes earlier sessions left (`python tools/find.py changed`). PREPARE: a missing signal gets the cheapest gated instrument; blocked or a design answer needed: stop "
-        "and update the task. CHANGE: `python tools/gate.py gd-load` once the edits are complete. PROVE is final verification: at most one small corrective "
-        "edit and one rerun; still red: stop and report the log path (the RETRY block stays in this session). COMPLETE: docs and "
-        "the task (`docs.py task done ID`, or notes on what was tried and where to resume), "
-        "`python tools/slice.py start --unit-done` for a unit queue, commit, push, the done notice, then stop. Finish the whole request in this session when it fits; queue the rest for a new session only when it cannot."]
-    return "\n".join(start + order + cycle + [
-        ("EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
-         "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. "
-         + ("Pictures are unit-specific, so this session shoots and `shots.py review`s only that unit's frames (do not read_file them), " if screen else "Order: run the check. A still this unit needs is `shots.py review` in this session (do not read_file it), ")
-         + "`python tools/shots.py show PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
-         + "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it."),
-        "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images, and look details you chose inside her rule: never \"none\" for those); \"Assumptions carried from memory or docs\"; "
-        "\"Also changed\" (shared code and the other screens that use it, filled from `python tools/find.py xref NAME` for each shared script you touched; states not shot; "
-        "every write outside the worktree, Grok memory files included; temp files; reverts of generated churn such as `git checkout -- docs`). "
-        f"Temp files go under `{(root / '_logs').as_posix()}/`; the commit message file is `{(root / '_logs' / 'commit-msg.txt').as_posix()}` (`git commit -F`). "
-        "A script this session or the next one will run again is a file under tools/ with a catalog row (design/tools.md rule 7). "
-        "`python tools/session.py py` deletes a script under `_logs/agent-py/` after the run, and `--keep-script` still leaves it gitignored. "
-        "Before you write \"nothing was written outside this worktree\", check what you wrote and say exactly that.",
-        "DID NOT WORK: any non-zero exit, `RESULT FAIL`, failed edit or skipped step, exploratory ones too, opens your next message. Do not write it from memory: "
-        "`python tools/slice.py start --failed` prints the lines from this session's failed tool results since your last ask (`shots.py show` prints them too); paste them first, and say so when there are none. "
-        "A step this card's ORDER leaves out (a survey's baseline) is not skipped.",
-        "ASK BEFORE THE CODE, not in a ledger line: a change in what a control does or in save or entry behaviour (a button that now saves, a changed trade) is her decision.",
-        ("This tool never starts grok." if mode == "survey" else
-         "Cleanup, docs, tasks, gates, `slice.py commit`, and the plain push to the week branch all finish first (even on red gates). "
-         "Only after that push lands do you open the prove folder, inform that the unit is done, and show the images. "
-         "Say whether a playtest confirmation is required (look, sound, balance, or controls), recommended (feel, hitch, or timing the gates do not score), or not needed (a refactor, tool, doc, or test). "
-         "That notice is not a question. Never move on to another task. "
-         "Do not ask \"Settled? commit?\" or any variant that waits for approval before the commit or the push. "
-         "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
-    ])
+        label = "ORDER (handoff)" if mode == "handoff" else "ORDER"
+        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`; read the task and the route's code/docs, then state the outcome and unresolved questions. Continue in this session."]
+        if mode == "handoff":
+            lines.append("Restore only the saved survey edits and inspect its listed baselines; do not repeat the survey. Keep prior answers unless new evidence changes them.")
+        if screen:
+            lines.append("When this unit needs its screen, shoot the baseline and use `shots.py review PNG --question Q`; invalid or stale frames must be fixed, not called pre-existing. Do not capture unrelated screens during shared reading.")
+        else:
+            lines.append("NO PLAY CAMERA: no invented shot flow, play-camera baseline or --visual gate. Use the task's check; a keyed still uses `media.py rekey-preview` against its source plate. A rejected image is not an accepted reference.")
+        lines += [Q0,
+                  "CYCLE: understand outcome and cause; prepare missing evidence; implement; final verification; finish. CHANGE: `python tools/gate.py gd-load` once the edits are complete. Context breaks follow build-job-cycle.md: save state at a good stopping point and resume in this same session, not at a fixed verification milestone. Do not `/fork`.",
+                  "VERIFY: relevant checks, the unit's flow/UI load check if visual, then `gate.py build --batch`. One small corrective edit and one rerun; still red, report the log. Read each result/summary. build-job-cycle.md and prove.md own verification.",
+                  "FINISH: update docs/task; --unit-done for a queue; revoke temporary reference grants; `slice.py commit`, plain push to the week branch, then the done notice. Record red/skipped gates honestly. Finish the whole request in this session when it fits; save unfinished work in the task."]
+    lines += ["EVERY ASK has its own message first: current result, relevant paths/descriptions, proposed change and unknowns. Option labels are not the message. Use `shots.py show PATH=description ...` when the User should see images; before/after of one area share a sheet.",
+              "DID NOT WORK: put `Did not work: COMMAND REASON` first. `slice.py start --failed` supplies failed tool results since the last ask; paste them first, not from memory. ASK BEFORE THE CODE for unsettled design or behavior, even with always-allow access.",
+              "IMAGES: isolated review by default; necessary direct visual references use `slice.py references grant` (build-references.md). OCR-first is for text. A reference grant does not authorize generation or change host permissions.",
+              f"FILES: temporary scripts under `{(root / '_logs/agent-py').as_posix()}` use `session.py py`; reusable scripts belong in tools/ with a catalog row. Commit message: `{(root / '_logs/commit-msg.txt').as_posix()}`. Disclose assumptions, shared effects and outside-worktree writes; do not claim none without checking.",
+              "This tool never starts grok. Only the User opens implementation sessions. After the push, show required evidence and state whether playtest confirmation is required, recommended or not needed; do not ask permission just to commit. Stop after the task."]
+    return "\n".join(lines)
 
 def doors_hint(root: Path) -> str:
     """'doors: a, b, c; jobs are door.job (python tools/find.py route lists them)' from routes.yaml, or ''."""
@@ -194,7 +148,8 @@ def merge_back_text(week: str) -> str:
 def selftest(script: list[str]) -> int:
     """Main checkout says no slice starts there; a Grok clone prints the card, then SLICE ALREADY STARTED (--full reprints); survey vs implementation ORDER; forked session; retry block; unit queue."""
     me = list(script)
-    bad: list[str] = []
+    from build_docs_test import check as check_docs
+    bad: list[str] = check_docs(Path(__file__).resolve().parents[3])
 
     def run(root: Path, *a: str, area: str = "demo", env: str = "") -> tuple[int, str]:
         cmd = [*me, "--root", str(root)] + (["--area", area] if area else []) + list(a)
@@ -229,9 +184,9 @@ def selftest(script: list[str]) -> int:
         if "worktree=wdb-demo-2" not in out or "Did not work:" not in out:
             bad.append("boot in a worktree must name the folder as the worktree and state the Did not work rule")
         for need in ("This tool is the first command", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
-                     "Also changed", "Grok memory files", "DID NOT WORK", "shots.py show", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0",
-                     "slice.py start --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "slice.py commit", "before your next tool call",
-                     "Do not `/fork`", "resume in this same session", "final verification", "gate.py gd-load` once the edits are complete", "whole request in this session"):
+                     "DID NOT WORK", "shots.py show", "commit-msg.txt", "slice.py start --failed", "ASK BEFORE THE CODE",
+                     "slice.py commit", "Do not `/fork`", "resume in this same session", "final verification",
+                     "gate.py gd-load` once the edits are complete", "whole request in this session", "references grant"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
@@ -347,6 +302,11 @@ def selftest(script: list[str]) -> int:
         git(Path(td), "clone", "-q", str(root), str(plain))
         if worktree_kind(plain) != "" or worktree_kind(root) != "":
             bad.append("a full clone outside .grok/worktrees, and the main checkout, are not worktrees")
+        (clone / "design/tasks/model.md").write_text("# Model\nid: model\nowner: build\nstatus: open\n\n## Goal\nMatch references.\n")
+        code, out = run(clone, "--job", "ui.pause", "--task", "model", "--full", area="", env="new-sess")
+        bound = __import__("json").loads((clone / "_logs/slice-state.json").read_text())
+        if code or bound.get("task") != "model":
+            bad.append("a normal --task without a unit queue must bind reference access to that active task")
     return agent_log.selftest_result(bad)
 
 def retry_selftest() -> int:

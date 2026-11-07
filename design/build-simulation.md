@@ -1,18 +1,12 @@
-# Simulated Build run
+# Review a Build startup procedure
 
-Status: current procedure  
-Read when: the Bot is asked to simulate a Grok Build task run on a week branch  
+Status: current procedure
+Read when: the User asks the Bot to simulate a Build task pickup
 
-A dry walk of what a fresh Build session would do, to find defects before Vira launches one. Throwaway worktree off the week branch; delete it and its branch after.
+Use a disposable fixture/worktree and the Bot's branch/PR rules; do not modify a User's active checkout or launch a Build session. A procedure review does not itself authorize gameplay, art, MCP actions or user-machine execution.
 
-1. Launch: `python tools/slice.py open --dry-run --task ID`; the prompt's start command must match the task's `resume:` area and flags (`docs.py task check`).
-2. Start: run that `slice.py start` line, then `docs.py task show ID`; follow the card ORDER as far as runs without her (gate, flows, shots).
-3. Mechanical: broken commands, dead paths, red checks, stale doc text. Fix these on the week branch, commit per cluster.
-4. Intuitiveness: for each open task, walk every tool call its plan implies (kind, flags, defaults, output name and path) against that tool's `--help`, template and doc. Flag:
-   - names that promise more or less than they do;
-   - defaults that fight the task's intent;
-   - surprising output names or paths;
-   - a flag whose meaning differs between tools.
-   A mechanical fix (wrong flag in a task, doc row) is made; a design change is listed, not made.
-5. Console output: for every tool run above, read stdout and stderr. Flag any line that is not the result, a needed status, or an actionable error: debug prints, banners, progress spam, repeated or verbose lines, stderr or tracebacks on success, unexpected non-ASCII. `python tools/check.py tool-cli --smoke-run` flags the mechanical cases (CONSOLE, NOISE, ASCII); fix clear noise, list the rest.
-6. Report: fixes with hashes, then the intuitiveness flags as a short list for Vira, then judgment calls. Clean up the worktree.
+1. Inspect the task and launch/start command with supported dry-run/help modes. Confirm its area, flags and first command agree with the task header; run `docs.py task check`.
+2. Walk the printed start procedure against actual commands and available capabilities. Execute only checks within the approved scope; record anything that needs a runtime or unavailable connector instead of faking it.
+3. Check each implied tool call: supported kind/flags, defaults, output paths and expected evidence. Fix mechanical doc/tool errors on the Bot branch; ask before changing product design or task acceptance.
+4. Read actual stdout/stderr from checks you ran. Flag misleading success, noisy output, dead paths and surprising defaults; use focused CLI/static checks without starting unapproved runtimes.
+5. Report fixes/commits, remaining usability issues and unverified steps. Remove only the disposable resources this review created.

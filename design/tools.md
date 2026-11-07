@@ -3,11 +3,9 @@
 Status: protocol  
 Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)  
 
-The door for every tool under `tools/`: which command for which job, the rules, and the CLI contract. Open the one sibling the job names; it holds exact commands (Jobs) and the catalog rows. `check.py tool-docs` keeps the rows in step with the entry tools.
+Choose a command below, then open its catalog for usage. `--help` is the flag reference. `check.py tool-docs` checks the catalogs against the actual entries. The rules and CLI contract here apply to every tool.
 
-**Layout.** 14 entry tools at `tools/` top level. Twelve are a list of subcommands: `shots` `bake` `perf` `gate` `check` `find` `lint` `docs` `media` `release` `session` `slice`. `bot_status` and `local-ai-tuner` are single-module entries. The work lives in `tools/lib/<area>/` (one module per subcommand); data in `tools/data/`. You never need to open a module to run it (`tools-libs.md`).
-
-Commands: `python tools/E.py SUB ...` (the Bot's box: `python3`). `python tools/E.py` lists the subcommands; `python tools/E.py SUB --help` gives the flags. Surf: **B** Bot (Linux box), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run it.
+Run `python tools/ENTRY.py` to list commands; append `COMMAND --help` for flags (Bot box: `python3`). Implementations live in the owning library, not a second entry. Catalog surface keys: **B** Bot, **W** web/chat, **D** Build; **A=Y** permits Bot execution.
 
 ## Which tool for which job
 

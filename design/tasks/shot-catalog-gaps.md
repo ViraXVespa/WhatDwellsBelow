@@ -37,7 +37,7 @@ Each new view and movie must render once and be checked by eye. Do not commit me
 - `hub-overhead` is the name of both a movie and a view. Rename one, and update every reference (`check.py tool-docs --stale-refs`).
 
 ## New movies
-- Combat specials: mana cost (now 20) and the recovery (1.5 s).
+- Combat specials: mana cost (now 20) and the special-reuse cooldown (1.5 s).
 - Recap: the drain, then Continue.
 - The quest poster lifting into the pause Quest tab.
 - Title/menu: hover and navigation.

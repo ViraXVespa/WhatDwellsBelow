@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Full behavioral process-cleanup smoke. All gaps covered with real checks.
+## Process-migration callback/lifecycle assertions; real physics and visual checks are separate.
 
 static func run_p1(host: Node) -> void:
 	_aim(host, "P1")
@@ -29,41 +29,60 @@ static func run_p7(host: Node) -> void:
 	printerr("P7: PROCESS: done")
 
 static func _crystal(host: Node, prefix: String) -> void:
-	var tree := host.get_tree()
-	var crystals := tree.get_nodes_in_group("floor_crystals")
-	var vol_count: int = 0
-	for c in crystals:
-		if c.get_node_or_null("SafeVolume"):
-			vol_count += 1
-	printerr("%s: PROCESS: crystals=%d with_volume=%d" % [prefix, crystals.size(), vol_count])
-	if crystals.size() > 0:
-		var c0: Node = crystals[0]
-		var Net := load("res://scripts/world/crystal/net.gd") as GDScript
-		Net.attach_volume(c0)
-		var area: Area3D = c0.get_node_or_null("SafeVolume")
-		if area:
-			var e := CharacterBody3D.new()
-			e.add_to_group("enemies")
-			e.velocity = Vector3(1, 0, 0)
-			host.add_child(e)
-			area.body_entered.emit(e)
-			var reversed: bool = e.velocity.x < 0
-			printerr("%s: PROCESS: crystal_reverse=%s" % [prefix, str(reversed)])
-			e.set_meta("aggro", true)
-			e.velocity = Vector3(1, 0, 0)
-			area.body_entered.emit(e)
-			var ignored: bool = e.velocity.x > 0
-			printerr("%s: PROCESS: crystal_aggro_ignore=%s" % [prefix, str(ignored)])
-			area.body_exited.emit(e)
-			area.body_exited.emit(e)
-			e.queue_free()
-			printerr("%s: PROCESS: crystal_volume_clear=%s" % [prefix, str(int(c0.get_meta("vol_count", 0)) == 0)])
-			printerr("%s: PROCESS: crystal_relocate_fn=%s" % [prefix, str(Net.has_method("relocate_inside"))])
-static func _telemetry(host: Node, prefix: String) -> void:
-	App.set_meta("enemy_fighting", true)
-	var fighting: bool = bool(App.get_meta("enemy_fighting", false))
-	printerr("%s: PROCESS: telemetry_fighting_meta=%s" % [prefix, str(fighting)])
-	App.set_meta("enemy_fighting", false)
+	var crystals := host.get_tree().get_nodes_in_group("floor_crystals")
+	if crystals.is_empty():
+		printerr("%s: PROCESS: crystal_callbacks=SKIP no_crystal" % prefix)
+		return
+	var c: Node = crystals[0]
+	var Net := load("res://scripts/world/crystal/net.gd") as GDScript
+	Net.attach_volume(c)
+	var area: Area3D = c.get_node_or_null("SafeVolume")
+	assert(area != null and area.collision_mask == 4)
+	var previous: Dictionary = c.get_meta("vol_bodies", {}).duplicate()
+	var was_on: bool = c.crystal_on
+	var script := GDScript.new()
+	script.source_code = "extends CharacterBody3D
+const ST_RETURN = 3
+var state = 0
+var aim = Vector2.DOWN
+var reaggro_t = 0.0
+"
+	assert(script.reload() == OK)
+	var e: CharacterBody3D = script.new()
+	host.add_child(e)
+	e.add_to_group("enemies")
+	c.crystal_on = true
+	e.velocity = Vector3.RIGHT
+	area.body_entered.emit(e)
+	assert(e.velocity.x < 0.0)
+	e.state = 1
+	e.velocity = Vector3.RIGHT
+	area.body_entered.emit(e)
+	assert(e.velocity.x > 0.0)
+	assert(int(c.get_meta("vol_count", 0)) <= previous.size() + 1)
+	area.body_exited.emit(e)
+	area.body_exited.emit(e)
+	c.crystal_on = was_on
+	c.set_meta("vol_bodies", previous)
+	c.refresh()
+	e.queue_free()
+	printerr("%s: PROCESS: crystal_callbacks=PASS (not a physics-overlap proof)" % prefix)
+
+static func _telemetry(_host: Node, prefix: String) -> void:
+	var previous: Dictionary = App.get_meta("enemy_fighters", {}).duplicate()
+	var a := Node.new()
+	var b := Node.new()
+	App.AppRun.note_enemy_fighting(a, true)
+	App.AppRun.note_enemy_fighting(a, true)
+	App.AppRun.note_enemy_fighting(b, true)
+	App.AppRun.note_enemy_fighting(a, false)
+	assert(bool(App.get_meta("enemy_fighting", false)))
+	App.AppRun.note_enemy_fighting(b, false)
+	App.set_meta("enemy_fighters", previous)
+	App.set_meta("enemy_fighting", not previous.is_empty())
+	a.free()
+	b.free()
+	printerr("%s: PROCESS: concurrent_fighters=PASS" % prefix)
 
 static func _camp(host: Node, prefix: String) -> void:
 	var bank: bool = App.has_signal("bank_changed")
@@ -102,52 +121,52 @@ func update_line(pos, dir, length, width, opacity, on):
 	dummy_script.reload()
 	line.set_script(dummy_script)
 	p.add_child(line)
+	var saved_line: Node = p.get("aim_line")
 	p.set("aim_line", line)
 	var before: Vector2 = p.get("aim_dir")
-	p.set("aim_dir", Vector2(1, 0))
+	p.set("aim_dir", Vector2.RIGHT if before == Vector2.ZERO else Vector2(-before.y, before.x))
 	var Combat := load("res://scripts/world/player/player_combat.gd") as GDScript
 	Combat.update_aim_line(p)
 	var updated: bool = bool(line.get_meta("called", false)) and p.get("aim_dir") != before
 	printerr("%s: PROCESS: aim_line_updates_on_dir_change=%s" % [prefix, str(updated)])
 	p.set("aim_dir", before)
+	p.set("aim_line", saved_line)
+	assert(updated)
 	line.queue_free()
 static func _plates(host: Node, prefix: String) -> void:
-	var plates := host.get_tree().get_nodes_in_group("plates")
-	var driven: bool = false
-	if plates.size() == 0:
-		var pl := Node3D.new()
-		pl.add_to_group("plates")
-		var area := Area3D.new()
-		area.name = "Area3D"
-		pl.add_child(area)
-		host.add_child(pl)
-		plates = [pl]
-	for pl in plates:
-		var area: Area3D = pl.get_node_or_null("Area3D")
-		if area:
-			var body := CharacterBody3D.new()
-			host.add_child(body)
-			if pl.has_method("plate_held"):
-				area.body_entered.connect(func(_b): pl.plate_held(true))
-			area.body_entered.emit(body)
-			driven = true
-			body.queue_free()
-			break
-	printerr("%s: PROCESS: plates_enter_drives=%s" % [prefix, str(driven)])
+	var body: Node = host.get_tree().get_first_node_in_group("player")
+	if body == null:
+		printerr("%s: PROCESS: plate_callbacks=SKIP no_player" % prefix)
+		return
+	var Spot := load("res://scripts/world/interact.gd") as GDScript
+	var pl: Node = Spot.new()
+	pl.pair = "process_smoke_isolated"
+	pl.setup("plate", Vector3.ZERO)
+	host.add_child(pl)
+	var area: Area3D = pl.get_node_or_null("PlateArea")
+	assert(area != null and area.collision_mask == 2)
+	area.body_entered.emit(body)
+	assert(pl.pressed)
+	area.body_exited.emit(body)
+	assert(not pl.pressed)
+	pl.queue_free()
+	printerr("%s: PROCESS: plate_callbacks=PASS (not a physics-overlap proof)" % prefix)
+
 static func _torch(host: Node, prefix: String) -> void:
 	var torches := host.get_tree().get_nodes_in_group("wall_torch")
-	var once: bool = true
-	if torches.size() == 0:
-		# temporary torch
-		var t := Node3D.new()
-		t.add_to_group("wall_torch")
-		t.set_meta("nx", 1.0)
-		t.set_meta("nz", 0.0)
-		host.add_child(t)
-		torches = [t]
-	printerr("%s: PROCESS: torch_facing_once=%s count=%d" % [prefix, str(once), torches.size()])
+	if torches.is_empty():
+		printerr("%s: PROCESS: torch_facing=SKIP no_torch" % prefix)
+		return
+	for t in torches:
+		var flame: Node3D = t.get("_flame")
+		assert(flame != null)
+		var before: Transform3D = flame.global_transform
+		t._set_facing_once()
+		assert(flame.global_transform.is_equal_approx(before))
+	printerr("%s: PROCESS: torch_facing_idempotent=PASS" % prefix)
+
 static func _depth(host: Node, prefix: String) -> void:
-	var node := GeometryInstance3D.new()
+	var node := MeshInstance3D.new()
 	node.sorting_offset = 0.0
 	var Depth := load("res://scripts/world/depth.gd") as GDScript
 	Depth.apply(node, Vector3(1, 0, 2))
@@ -159,19 +178,36 @@ static func _depth(host: Node, prefix: String) -> void:
 
 static func _input(host: Node, prefix: String) -> void:
 	var Pad := load("res://scripts/input/pad.gd") as GDScript
-	Pad.mark_dirty()
-	var was_dirty: bool = Pad._dirty
-	Pad.tick()
-	var cleared: bool = not Pad._dirty
-	printerr("%s: PROCESS: input_dirty_cleared=%s" % [prefix, str(was_dirty and cleared)])
+	var count := [0]
+	var note: Callable = func(): count[0] += 1
+	App.input_changed.connect(note)
+	Pad.note_event(InputEventKey.new())
+	App.input_changed.disconnect(note)
+	assert(count[0] == 1, "input event must invalidate touch drawing")
+	printerr("%s: PROCESS: input_event_invalidates=true" % prefix)
 
 static func _progress(host: Node, prefix: String) -> void:
-	var Flow := load("res://scripts/ui/progress_ui/ui_flow.gd") as GDScript
-	# early-out path exists; confirm function present
-	printerr("%s: PROCESS: progress_ui_early_out=%s" % [prefix, str(Flow.has_method("_process"))])
-static func _adrenaline(host: Node, prefix: String) -> void:
-	printerr("%s: PROCESS: adrenaline_audio_gated=true" % prefix)
+	var ui: Node = host.get("ui")
+	if ui == null:
+		printerr("%s: PROCESS: progress_processing=SKIP no_ui" % prefix)
+		return
+	var was_open: bool = ui.open
+	var was_time: float = ui.forge_t
+	ui.open = false
+	ui.forge_t = 0.0
+	assert(not ui.is_processing())
+	ui.forge_t = 0.1
+	assert(ui.is_processing())
+	ui.forge_t = was_time
+	ui.open = was_open
+	printerr("%s: PROCESS: progress_idle_and_forge=PASS" % prefix)
+
+static func _adrenaline(_host: Node, prefix: String) -> void:
+	var audio: Node = App.sfx_node
+	assert(audio != null and audio.loop_player.finished.is_connected(Callable(audio, "_restart_adrenaline")))
+	printerr("%s: PROCESS: adrenaline_finished_connected=PASS" % prefix)
+
 static func _hud(host: Node, prefix: String) -> void:
 	var hud: Node = host.get("hud")
 	var has_bits: bool = hud != null and hud.get("hp_lab") != null and hud.get("food_lab") != null
-	printerr("%s: PROCESS: hud_per_element=%s" % [prefix, str(has_bits)])
+	printerr("%s: PROCESS: hud_layout_present=%s" % [prefix, str(has_bits)])

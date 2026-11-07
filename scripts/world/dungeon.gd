@@ -16,6 +16,7 @@ var doors: Array = []
 var stairs: Node
 var visited: PackedByteArray
 var fog_dirty := true
+var reveal_cells: Dictionary = {}
 var floor_mm: MultiMeshInstance3D
 var hint: Label
 var prompt: Label
@@ -99,6 +100,7 @@ func _hud() -> void:
 	fps_lab = null
 	toast_lab = null
 	shrine_lab = null
+	hud.refresh(player, self)
 
 func _refresh_hint() -> void:
 	if hud and hud.has_method("refresh"):
@@ -223,3 +225,6 @@ func _center_room(r: Dictionary) -> Vector2i:
 func _tick_plates() -> void:
 	# Area3D enter/exit on plate objects now drives plate_held; no per-frame walk.
 	pass
+
+func toggle_map() -> void:
+	DungeonBoot.toggle_map(self)

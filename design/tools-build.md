@@ -10,6 +10,7 @@ Entries here: `slice.py`, `session.py`, `release.py`; their code: `tools/lib/rel
 ## Jobs
 
 - **Start a slice:** the User runs `python tools/slice.py open AREA` (or `--task ID`); inside the worktree Build runs `python tools/slice.py start` first.
+- **Necessary visual references:** `slice.py references export`, explicit `grant`, then direct image reads; `status`/`revoke` control the temporary scope.
 - **A one-off script:** `session.py py --script _logs/agent-py/x.py` (deleted after the run); prefer a tool.
 - **Logs:** `session.py clean` (raw logs), `--new-week` (everything).
 - **Web export:** `release.py export-web` (Pages build), `release.py export-web --debug --out DIR` (debug build for perf or hitch work).
@@ -20,6 +21,7 @@ Entries here: `slice.py`, `session.py`, `release.py`; their code: `tools/lib/rel
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
 | `slice.py open` | **User-run launcher** (PowerShell), never run by Build: `python tools/slice.py open [AREA] [--task ID \| --prompt TEXT \| --prompt-file PATH] [--ref REF] [--dry-run]` creates a worktree from `grok-build-w{N}` (`grok worktree create`) and starts `grok --cwd PATH --trust [PROMPT]` there (a new worktree is its own checkout). Prints the commands first; no grok on PATH: prints them to copy, exit 1. AREA is checked against the doors. `--selftest`. Summary: `open-slice`. | D | `--help` | N |
+| `slice.py references` | Necessary direct visual references for an active Build task: `export --task ID --bible FILE [--walk-dir DIR] [--out DIR]`, `grant --task ID --reason TEXT --path FILE` (repeat) or `--manifest FILE`, `status`, `revoke`. Exact content-bound read-only images, original session/unit, 2-hour expiry; no shell or generation exception. `--selftest` uses synthetic fixtures. Summary: `reference-access`. | D | `--help` | N |
 | `slice.py start` | First command inside a slice worktree: the door card (phases, shot flows, STEP 0 note, job cycle, first-message rules, session facts). First run writes `_logs/slice-state.json` and records the original session id for a retry; a later run prints `SLICE ALREADY STARTED` (`--full` reprints). `--door D` / `--job door.job` / `--task ID`; a `unit_queue` door starts its next unit, `--unit-done` marks it. Survey -> implement: `--handoff`, then `--from-handoff PATH` or `--from-task ID`. `--failed` prints `Did not work:` lines. In a main checkout it only points to `slice.py open`. `--selftest`. Summary: `slice-boot`. | D | `--help` | N |
 | `session.py py` | Run a one-off script from `_logs/agent-py/` (`--script PATH [args]`) and delete it after (`--keep-script` keeps it). Prefer a real tool. Summary: `agent-py`. | D | `--help` | N |
 | `session.py clean` | Delete raw logs under `_logs/` (`--max-age-hours`, `--keep-raw`); `--new-week` also every stamped summary and index. Summary: `clean`. | D | `--help` | N |
@@ -42,3 +44,8 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | File (under `tools/`) | Owns |
 |---|---|
 | `data/web_shell.html` | Web export HTML shell |
+| `lib/slice/reference_access.py` | Task-scoped reference CLI, `slice.py references` |
+| `lib/slice/reference_policy.py` | Shared CLI/hook grant validation: task, session, unit, path, content and expiry |
+| `lib/slice/reference_export.py` | Native Bible cells and walk copies with source/crop provenance |
+| `lib/slice/reference_access_test.py` | Synthetic grant, export and hook fixtures |
+| `lib/slice/build_docs_test.py` | Build operating-doc consistency, context rule, reference guidance and size regressions; run by start selftest |

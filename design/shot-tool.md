@@ -1,4 +1,4 @@
-# Postcard shot tool
+# Screenshot capture tool
 
 Status: current plan
 Read when: postcard shot, run_shots, visual proof clipboard, _logs/shots, changing a shot knob
@@ -14,7 +14,7 @@ Not a numbered P1-P9 smoke. Not Imagine. A tool that misbehaves gets fixed (belo
 
 ## What it is
 
-Unattended play-camera postcard. Godot paints a real GPU frame; Python owns mode tails, summary and clipboard/open.
+A postcard is one play-camera screenshot, not a smoke test. Godot renders the frame; the Python runner captures it and writes the summary.
 
 ## Modes
 
@@ -22,8 +22,8 @@ Unattended play-camera postcard. Godot paints a real GPU frame; Python owns mode
 - build: scaled PNG (default 50 percent) under `_logs/shots/`.
 - user: full-res PNG and open it when done.
 
-Command: `python tools/shots.py capture --mode web|build|user` (optional `--seed`, `--floor`, `--scale`, `--settle-ms`, `--timeout-sec`, `--show`, `--out`, `--hud 0|1`, `--fixed-fps N`, `--width`, `--height`, `--zoom`, `--px`, `--pz`, `--cx`, `--cz`, `--steps`, `--no-pixels`, `--dry-run`, `--json`; `--help` is the truth). Presets live in `tools/data/shot-recipes.json`.
-Needs a real GL window, so a display: a Windows desktop with a GPU, or Linux (picked automatically, see Display; the Bot box has X on `:1` and `:2`). Default: HUD on, spawn pose, zoom 1, window parked off-screen.
+Command: `python tools/shots.py capture --mode web|build|user`. `--help` lists camera, viewport, timing and output options; presets are in `tools/data/shot-recipes.json`. A real GL display is required; the runner selects it automatically. Defaults keep HUD on and park the window off-screen.
+
 Summary: `_logs/shots/<stamp>-shots.txt` (also the `summary=` of the last line, `RESULT PASS|INFO|FAIL band=...`). The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
 
 ## Full-floor map (`--full-map`)
@@ -76,7 +76,7 @@ Shots need a real GL frame; `godot_lib.pick_display()` chooses: `$DISPLAY` if th
 
 ## Add or change a knob
 
-One flag or one preset, one prove shot, then stop. Edit `tools/data/shot-recipes.json` or a constant in `tools/shots.py capture`. New flag: parse in `tool_args.gd`, apply in `tool_pose.gd`, `capture.gd` or the step modules, add the `shots.py capture` argument (forwarded by `_extra_flags`). Prove with one `python tools/shots.py capture --mode build` shot, read `_logs/shots/<stamp>-shots.txt`, then `check.py tool-cli`.
+One flag or one preset, one prove shot, then stop. Edit `tools/data/shot-recipes.json` or a constant in `tools/shots.py capture`. New flag: parse in `tool_args.gd`, apply in `tool_pose.gd`, `capture.gd` or the step modules, add the `shots.py capture` argument (forwarded by `_extra_flags`). Prove with one `python tools/shots.py capture --mode build` shot, read `session.py summary shots`, then `check.py tool-cli`.
 
 ## Troubleshooting
 

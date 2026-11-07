@@ -16,8 +16,7 @@ The goal of this task is to update all of the menus to be high-quality, professi
 
 ## Process / Review
 
-Follow the start-card ORDER. The session `slice.py open` started gathers the shared context (this task, `ui-style.md`, `ui-ux-audit.md`) and continues in that session. It does not shoot or open pictures during Gather. Before the first prove, stop for one compact and resume in this same session. Do not `/fork`. The first session, when nothing earlier on the task has changed, starts unit 1 and does not run `find.py changed`. A later session gathers only that unit's frames with `shots.py review` (text only; do not `read_file` a PNG or JPG) and gathers earlier sessions' committed and uncommitted changes with `python tools/find.py changed`.
-Shot review: `grok-build.md` Pictures rule (`shots.py review` for the text, `shots.py show` when she should see the image).
+Follow the start card and the Build job cycle, including its context-break rule. Read the task and shared style/audit context; capture only the unit being changed. Review in isolation, show the User before/after together, and keep unresolved design questions separate from access permission. Later sessions use `find.py changed` and the task's saved progress rather than repeating finished units.
 Unit 1, mockups: edit the live shot of each major screen (title, loadout, vendor, ghost shop, death recap, receptionist, crystal/teleport, HUD, camp HUD bar, extract/gate). The pause menu is not a mockup. It stays as it is. A shell is the frame, the panel material, and the empty interior. No buttons, slots, lists, icons, prompts, or words. Code draws those later. The title background and journal UI are style references only, not edit sources. A world prop may be a second reference so the object survives. Call: `python tools/media.py grok --kind ui --edit --copy <live shot> --dest-name mockups/<screen>.png --out design/refs/ui-png-art --brief "..."` (lands in `design/refs/ui-png-art/mockups/`). Do not pass `--aspect` on an edit. Without `--edit`, one `--copy` plus `--aspect` redraws a new picture and treats the copy as a loose reference. The closer plates are the title and loadout edits below. Other screens wait. Later units build to the edited plates.
 Unit 2 works the crystal UI only. Deliver before/after shots and inform that the unit is done.
 Finish the task in one session when it fits; unfinished work keeps its notes in this task. Vira says when a new session is needed.
@@ -45,7 +44,7 @@ Not the target:
 - Logo, not placed: `mockups/logo.png`.
 - Pause: `mockups/pause-inventory.png` is discarded. Do not redesign the pause menu.
 
-Resume command, from this worktree: `grok -r 01a17fde-814d-7873-a7b8-3b881ebc4b1a --fork-session`.
+Resume through the task header and the current opening prompt; do not reuse the old session fork.
 
 ## Items
 

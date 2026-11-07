@@ -274,6 +274,8 @@ def main(argv: list[str] | None = None) -> int:
         first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done, args.ref)
         if st:
             first.update({k: st[k] for k in ("first_run", "session", "ref", "prompt", "task") if k in st})
+        if args.task.strip():
+            first["task"] = args.task.strip()
         if tunits:
             first.update({"units": tunits, "done": tdone, "unit": tcur, "task": args.task.strip(), "task_units": True})
         if tid:
@@ -287,7 +289,7 @@ def main(argv: list[str] | None = None) -> int:
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/gate.py smokes --door/--job; add or update asserts for new systems)",
             f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/shots.py flow --job J, one boot; UI states: tools/shots.py gaps --changed)",
-            "cycle=Gather (no code, no new tools; outcome + signal; continue in this session) > Prepare > Change (gate.py gd-load once the edits are complete) > compact once before Prove and resume here > Prove (final verification: compile check, the job's shot flows + UI load check if visual, run_build_gate --batch; one small corrective edit, one rerun) > Complete (docs, task, commit, push, done notice); build-job-cycle.md",
+            "cycle=Understand > Prepare > Implement > Verify > Finish; context breaks follow build-job-cycle.md, not a fixed pre-prove step",
             slice_lib.merge_back_text(week or ref)]
     if tunits:
         unit_line = (f"unit={tcur} ({tunits.index(tcur) + 1} of {len(tunits)}, task {args.task.strip()}); done: {', '.join(tdone) or 'none'}. "

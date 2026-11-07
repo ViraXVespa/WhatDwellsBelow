@@ -6,9 +6,13 @@ Grep of one file stays allowed. gate.py build and reading a file under edit stay
 from __future__ import annotations
 
 import json
+import shlex
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools/lib/slice"))
+import reference_policy
 
 IMAGINE_TOOLS = {
     "image_gen",
@@ -57,7 +61,8 @@ IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 IMAGE_READ = (
     "Reading an image into this session is denied. "
     "Use python tools/shots.py review PNG --question Q (only the text report comes back). "
-    "shots.py show opens pictures for the User."
+    "shots.py show opens pictures for the User. Necessary task references may opt in with "
+    "slice.py references grant --task ID --reason REASON --path IMAGE; build-references.md."
 )
 
 def out(decision: str, reason: str = "") -> int:
@@ -106,9 +111,6 @@ def is_isolated(cwd: Path | None, repo: Path | None) -> bool:
         resolved = cwd.resolve()
     except OSError:
         return False
-    parts = {p.lower() for p in resolved.parts}
-    if "wdb-iso" in parts:
-        return True
     if repo is None:
         return True
     try:
@@ -126,10 +128,10 @@ def tool_blob(event: dict) -> tuple[str, dict]:
 
 def input_paths(inp: dict) -> list[str]:
     found = []
-    for key in ("path", "file_path", "filePath", "target_file", "targetFile", "target_directory", "targetDirectory", "directory", "glob", "pattern", "command", "cmd"):
+    for key in ("path", "file_path", "filePath", "target_file", "targetFile", "target_directory", "targetDirectory", "directory", "glob", "pattern", "paths", "command", "cmd"):
         val = inp.get(key)
         if val:
-            found.append(str(val))
+            found.extend(str(v) for v in val) if isinstance(val, list) else found.append(str(val))
     return found
 
 def norm(text: str) -> str:
@@ -224,6 +226,27 @@ def shell_reason(cmd: str, repo: Path | None, cwd: Path | None) -> str:
             return list_reason(cmd, repo, cwd)
     return ""
 
+def managed_image_command(cmd: str, repo: Path, cwd: Path | None) -> bool:
+    """Existing image tools retain their normal contract; no raw shell image reader.
+
+    A reference grant never authorizes shell execution. Reject chaining, inline code
+    and substitution; platform security still controls what these tools can do.
+    """
+    if re.search(r"[;&|<>`$\n\r]", cmd):
+        return False
+    try:
+        tokens = [p.strip("\"'") for p in shlex.split(cmd, posix=False)]
+        if not tokens or not re.fullmatch(r"(?:python(?:3)?|py)(?:\.exe)?", Path(tokens[0]).name, re.I):
+            return False
+        i = 2 if len(tokens) > 1 and tokens[1] == "-3" else 1
+        script = reference_policy.contained(repo, str((cwd or repo) / tokens[i]))
+        rel = script.relative_to(repo).as_posix()
+        return rel in {"tools/shots.py", "tools/media.py", "tools/bake.py"} or (
+            rel == "tools/slice.py" and tokens[i + 1] == "references")
+    except (OSError, ValueError, IndexError, RuntimeError):
+        return False
+
+
 def decide(event: dict) -> tuple[str, str]:
     cwd = as_path(event.get("cwd") or event.get("workspaceRoot"))
     workspace = as_path(event.get("workspaceRoot") or event.get("cwd"))
@@ -256,16 +279,35 @@ def decide(event: dict) -> tuple[str, str]:
 
     if name in READ_TOOLS or low_name in {"read", "read_file", "readfile"}:
         for item in input_paths(inp):
-            if is_image_path(item):
+            if reference_policy.image_candidate(repo, item, cwd):
+                if reference_policy.permits(repo, reference_policy.session_id(event), str((cwd or repo) / item)):
+                    continue
                 return "deny", IMAGE_READ
             if is_logs_path(item):
                 return "deny", "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
+
+    if low_name in {"write", "write_file", "writefile", "edit", "edit_file", "search_replace"}:
+        grant = reference_policy.active(repo, reference_policy.session_id(event))
+        for item in input_paths(inp):
+            try:
+                path = reference_policy.contained(repo, str((cwd or repo) / item))
+                if path.relative_to(repo).as_posix() in grant.get("files", {}):
+                    return "deny", "Granted reference images are read-only. Revoke the grant before an independently approved source edit."
+            except (OSError, ValueError, RuntimeError):
+                pass
 
     cmd = shell_command(name, inp)
     if cmd:
         reason = shell_reason(cmd, repo, cwd)
         if reason:
             return "deny", reason
+        try:
+            image_args = any(reference_policy.image_candidate(repo, token.strip("\"'"), cwd)
+                             for token in shlex.split(cmd, posix=False))
+        except ValueError:
+            image_args = False
+        if (image_args or re.search(r"\.(?:png|jpe?g|webp|gif)\b", cmd, re.I)) and not managed_image_command(cmd, repo, cwd):
+            return "deny", "Shell image readers are not authorized by reference grants. Use the direct image-read tool, or a catalog image command."
 
     return "allow", ""
 

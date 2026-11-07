@@ -2,7 +2,7 @@
 
 Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
-**Build slice: the first command is the one your first message names, before any memory topic or file read (`design/grok-build.md` Work). A new week is not a slice: `design/build-week-start.md` only, no `slice.py start`.**
+**Build slice: the first command is the one your first message names, before any memory topic or file read (`design/grok-build.md` Start or resume). A new week is not a slice: `design/build-week-start.md` only, no `slice.py start`.**
 
 **Proof rules** (`design/prove.md`). A missing or invalid required asset fails loudly; a fallback needs the User's OK. Before changing behavior, state the intended outcome in one line and prove against it (ask if unclear). Prove against intent and a reference the User confirmed, not a prior run of the same code. Report "gates pass", never "proved"; visuals and audio stay unverified until the User confirms. Fix the bug; do not drop the improvement.
 
@@ -10,7 +10,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
 | Path | Recognize | Deliver |
 |------|-----------|---------|
-| **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`. Edit live files. Same-system APIs just do; design decisions, a new cross-system owner or a named live-module replace are asked first (`ask_user_question`, even under always-allow). |
+| **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`. Default: repository pc-offload skill after startup. Same-system APIs just do; design decisions, a new cross-system owner or a named live-module replace are asked first (`ask_user_question`, even under always-allow). |
 | **Web / chat** | You cannot write the repo | `design/web-session.md`. Never assume a disk write landed. |
 | **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python tools/bot_status.py`, then one printed Job file. Refactor only, plus a `tools/` runner the User approved. Smokes, shots, gates: `BOT.md`. Ship via branch + PR. |
 
