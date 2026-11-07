@@ -30,7 +30,8 @@ def place_chip(cw: int, ch: int, box, w: int, h: int, avoid=(), gap: int = 4) ->
     """Find an in-frame spot clear of the subject box and avoid rectangles.
 
     Prefer below/above/right/left, then rectangle edges. If packing is impossible,
-    minimize overlap (subject overlap is most expensive); never return negatives.
+    reserve avoid rectangles first, then minimize subject overlap; never return negatives.
+    Identity/title reservations are hard constraints whenever any reserved-free spot exists.
     """
     x, y, bw, bh = box
     clamp = lambda cx, cy: (int(min(max(0, cx), max(0, w - cw))), int(min(max(0, cy), max(0, h - ch))))
@@ -47,9 +48,9 @@ def place_chip(cw: int, ch: int, box, w: int, h: int, avoid=(), gap: int = 4) ->
             return cx, cy
     def overlap(p):
         cx, cy = p
-        return sum(max(0, min(cx + cw, r[0] + r[2]) - max(cx, r[0])) *
-                   max(0, min(cy + ch, r[1] + r[3]) - max(cy, r[1])) * (1000 if n == 0 else 1)
-                   for n, r in enumerate(blocked))
+        areas = [max(0, min(cx + cw, r[0] + r[2]) - max(cx, r[0])) *
+                 max(0, min(cy + ch, r[1] + r[3]) - max(cy, r[1])) for r in blocked]
+        return sum(areas[1:]), areas[0]
     return min(candidates, key=overlap)
 
 
@@ -99,8 +100,9 @@ def live_chips(placed, t: float, owner=None):
 class ChipMotion:
     """Sticky relative slot, short switch hold and eased motion, clamped every frame.
 
-    An unsafe interpolated/held point snaps to the safe target rather than covering
-    the subject. Owner identity and occupancy are handled separately by live_chips.
+    Free-band fallback anchors stay locked and preserve identity reservations even
+    when a subject box is too large for disjoint packing. Owner identity and
+    occupancy are handled separately by live_chips.
     """
     def __init__(self, cw, ch, w, h, hold=0.18, ease=0.12):
         self.cw, self.ch, self.w, self.h = cw, ch, w, h
@@ -116,12 +118,19 @@ class ChipMotion:
         clamp = lambda p: (min(max(0, p[0]), max(0, self.w - self.cw)), min(max(0, p[1]), max(0, self.h - self.ch)))
         blocked = [box, *avoid]
         safe = lambda p: not any(_hit((*p, self.cw, self.ch), r) for r in blocked)
+        reserved_free = lambda p: not any(_hit((*p, self.cw, self.ch), r) for r in avoid)
         slots = {"below": (x, y + bh + gap), "above": (x, y - self.ch - gap),
                  "right": (x + bw + gap, y), "left": (x - self.cw - gap, y)}
         slots = {key: clamp(p) for key, p in slots.items()}
         valid = {key: p for key, p in slots.items() if safe(p)}
         chosen = self.slot if self.slot in valid else next(iter(valid), "free")
         target = valid[chosen] if chosen in valid else place_chip(self.cw, self.ch, box, self.w, self.h, avoid, gap)
+        # Keep a free-band anchor rather than chasing the least-overlap subject edge.
+        # Oversized subject boxes can make fully disjoint packing impossible.
+        if chosen == self.slot == "free" and self.point is not None:
+            previous = tuple(int(round(v)) for v in clamp(self.point))
+            if safe(previous) or (reserved_free(previous) and not safe(target)):
+                target = previous
         if self.point is None:
             self.point, self.slot = target, chosen
         elif chosen != self.slot:
@@ -138,7 +147,10 @@ class ChipMotion:
         point = clamp(tuple(a + (b - a) * alpha for a, b in zip(self.point, target)))
         rounded = tuple(int(round(v)) for v in point)
         if not safe(rounded):
-            point = target
+            # A best-effort subject overlap must not defeat easing or reservations.
+            fallback = not safe(target) or not safe(tuple(int(round(v)) for v in self.point))
+            if not (fallback and reserved_free(rounded)):
+                point = target
         self.point, self.last_t = point, t
         return tuple(int(round(v)) for v in point)
 
@@ -407,6 +419,7 @@ def flicker_selftest(t: Path) -> list[str]:
     held.at((300, 140, 60, 40), 0.3, [(300, 184, 100, 40)])
     if held.slot == "below":
         bad.append("persistent obstruction must eventually switch slot")
+    bad += fallback_selftest()
     ce._run(["-f", "lavfi", "-i", "color=c=gray:size=320x180:rate=30:duration=1", *ce.H264, str(t / "still.mp4")])
     placed = []
     rows = [[0, 160, 90, 60, 40]]
@@ -426,4 +439,26 @@ def flicker_selftest(t: Path) -> list[str]:
     ended = clip_fx._px(t / "still-two.mp4", 0.6, (160, 105))
     if not (active[1] > 150 and active[0] < 100) or max(ended) - min(ended) > 20:
         bad.append("rendered callout window: active=%s ended=%s" % (active, ended))
+    return bad
+
+
+def fallback_selftest() -> list[str]:
+    """Exact 4:5 grass trace: baked identity band and a 540x87 tracked chip.
+
+    Before this regression, the label occupied (0,779), covered identity, then
+    snapped 620.7px to (180,185) at segment-local 4.000s.
+    """
+    import math
+    rows = [[2.5, 100.8, 126, 201.6, 648], [3.5, 28.8, 126, 201.6, 648],
+            [4.5, -72, 126, 201.6, 648]]
+    avoid = corners(720, 900) + [(0, 712, 720, 188)]
+    motion = ChipMotion(540, 87, 720, 900)
+    points = [motion.at(at(rows, n / 30), n / 30, avoid, 5) for n in range(78, 147)]
+    bad = []
+    if any(_hit((*p, 540, 87), r) for p in points for r in avoid):
+        bad.append("4:5 fallback must never occupy comparison identity/title reservations")
+    if any(math.dist(a, b) > 15 for a, b in zip(points, points[1:])):
+        bad.append("4:5 grass free-band fallback must not snap at 4.000s")
+    if any(not (0 <= x <= 180 and 0 <= y <= 813) for x, y in points):
+        bad.append("4:5 fallback must remain edge-clamped")
     return bad
