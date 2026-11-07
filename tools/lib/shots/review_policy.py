@@ -28,7 +28,12 @@ def decide(event: dict, root: Path) -> tuple[str, str]:
         return "deny", "Malformed staged review tool input"
     if name in SHELL_TOOLS:
         try:
-            tokens = shlex.split(str(inp.get("command") or inp.get("cmd") or ""))
+            command = str(inp.get("command") or inp.get("cmd") or "")
+            # shlex alone does not reject shell substitution inside a valid output
+            # filename. Deny shell syntax even when quoted: staged paths need none.
+            if any(char in command for char in "$`;&|<>\n\r"):
+                raise ValueError("shell syntax is not a local helper argument")
+            tokens = shlex.split(command)
             # No flags to the interpreter, pipelines, chained commands or inline Python.
             if len(tokens) < 4 or tokens[0] != data["python"] or tokens[1] != "local/review_local.py":
                 raise ValueError("use the staged helper command exactly as shown in job.md")

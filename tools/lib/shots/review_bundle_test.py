@@ -57,6 +57,11 @@ def selftest() -> list[str]:
         for command in ("python -c 'print(1)'", bundle.helper_command("ocr", "../inputs/label.png"),
                         bundle.helper_command("ocr", "01-label.png") + "; touch nope"):
             check(event("run_terminal_command", {"command": command}), "deny", "unscoped shell rejected")
+        crop_command = bundle.helper_command("crop", "01-label.png", "--box", "10,10,20,10", "--out", "out/check.png")
+        check(event("run_terminal_command", {"command": crop_command}), "allow", "scoped crop command")
+        for replacement in ("out/$(id).png", "out/`id`.png", "out/check.png>outside.png", "out/check.png\nid"):
+            command = crop_command.replace("out/check.png", replacement)
+            check(event("run_terminal_command", {"command": command}), "deny", "shell syntax in helper arguments")
         output = bundle.prepass(scratch, ["01-label.png"])
         if "READ " not in output or not tried(scratch, [scratch / "01-label.png"]):
             errors.append("real helper produced no OCR attempt evidence")
