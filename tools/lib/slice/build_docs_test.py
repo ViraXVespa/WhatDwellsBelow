@@ -43,4 +43,7 @@ def check(root: Path) -> list[str]:
     for phrase in ("GROK_SESSION_ID", "read-only", "OCR", "Blender", "Godot", "live schema", "host"):
         if phrase not in references:
             bad.append("reference guide contract missing: " + phrase)
+    voxel = (root / "design/tasks/modular-voxel-walk-proof.md").read_text()
+    if "_src/new_bibles/female.png" not in voxel or "bible_locked_female.png" in voxel or "references export" in voxel:
+        bad.append("voxel task must read the new source without assumed legacy crops")
     return bad

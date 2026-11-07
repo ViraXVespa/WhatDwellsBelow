@@ -6,7 +6,7 @@ Code: `tools/media.py i2v-seeds`, `tools/media.py plate-remap`, `tools/media.py 
 
 Always work **one unit** at a time. A unit is exactly one **character type** + one **facing** + one **action**. After the seed and prompt exist, stop and wait for the User.
 
-Generate the clip with `tools/media.py grok --kind i2v --seed <png> --prompt-file <txt>` (isolated_media); never `image_to_video` in the game-repo session unless that file’s exception table matches. The child does not harvest or pack.
+Generate the clip with `tools/media.py grok --kind i2v --seed <png> --prompt-file <txt>` (isolated_media); not `image_to_video` in the game-repo session. The child does not harvest or pack.
 
 ## Prompts
 

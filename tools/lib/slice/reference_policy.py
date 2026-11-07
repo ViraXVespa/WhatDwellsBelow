@@ -49,7 +49,6 @@ def task_file(root: Path, task: str) -> Path:
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", task):
         raise ValueError("a task id is required")
     path = contained(root, f"design/tasks/{task}.md")
-    # Header syntax is intentionally the same as task_lib; import only in the CLI.
     text = path.read_text(encoding="utf-8").split("\n## ", 1)[0]
     for key, expected in (("id", task), ("owner", "build")):
         if not re.search(rf"^{key}: {re.escape(expected)}$", text, re.M):

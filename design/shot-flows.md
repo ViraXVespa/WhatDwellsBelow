@@ -47,7 +47,7 @@ The checked-in dungeon flows cover spawns, ambushes, elites, props, boss and HUD
 
 ## Screenshot update step (docs and guide images)
 
-`shots.py flow --flow NAME --publish` stages frames and a hash manifest under `_out/shots/`, never directly under assets. The owning packaging job installs accepted images. After UI changes, `--check-published` detects stale files; publish again and pass the frames to that job. `shots.py gaps` also detects files altered outside the manifest.
+`shots.py flow --flow NAME --publish` stages frames and a hash manifest under `_out/shots/`, never directly under assets. Packaging installs accepted images. `--check-published` detects stale files; publish again and pass the frames to that job. `shots.py gaps` also detects files altered outside the manifest.
 
 ## New UI state checklist (Build)
 
