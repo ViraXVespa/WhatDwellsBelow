@@ -234,6 +234,10 @@ def decide(event: dict) -> tuple[str, str]:
     name, inp = tool_blob(event)
     isolated = is_isolated(cwd, repo)
 
+    staged = wdb_ocr_gate.isolated_decision(event, cwd)
+    if staged is not None:
+        return staged
+
     if name in IMAGINE_TOOLS:
         if isolated:
             return "allow", ""
@@ -244,7 +248,7 @@ def decide(event: dict) -> tuple[str, str]:
     if repo is None or isolated:
         return "allow", ""
 
-    ocr_why = wdb_ocr_gate.tool_reason(name, input_paths(inp), repo, cwd) or wdb_ocr_gate.review_reason(shell_command(name, inp) or "", repo, cwd)
+    ocr_why = wdb_ocr_gate.review_reason(shell_command(name, inp) or "", repo, cwd)
     if ocr_why:
         return "deny", ocr_why
 
@@ -335,16 +339,14 @@ def selftest() -> int:
         (ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-selftest.png --question \"What does the label say?\""}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-selftest.png --ocr --question \"Read the label\""}), "allow"),
         (ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-selftest.png --why \"need meaning\" --question \"Read the label\""}), "allow"),
-        (ev("ocr", {"path": "zz-ocr-selftest.png"}), "deny"),
-        (ev("ocr", {"path": "zz-ocr-selftest.png"}, cwd=outside), "allow"),
     ]
     fresh = [repo / "zz-ocr-fresh.png"]
     mark = wdb_ocr_gate.marker(repo, fresh)
-    had = mark.is_file()
-    mark.parent.mkdir(parents=True, exist_ok=True)
-    mark.touch()
-    cases += [(ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-fresh.png --question \"Read the label\""}), "allow"),
-              (ev("ocr", {"path": "zz-ocr-fresh.png"}), "allow")]
+    previous = mark.read_bytes() if mark.is_file() else None
+    previous_image = fresh[0].read_bytes() if fresh[0].is_file() else None
+    fresh[0].write_bytes(b"hook-selftest")
+    wdb_ocr_gate.record(fresh, repo, "ATTEMPT", ["test only"])
+    cases += [(ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-fresh.png --question \"Read the label\""}), "allow")]
     failed = 0
     for event, want in cases:
         got, reason = decide(event)
@@ -352,8 +354,14 @@ def selftest() -> int:
             failed += 1
             cmd = event["toolInput"].get("command") or event["toolInput"].get("path") or event["toolInput"].get("target_directory") or event["toolInput"].get("target_file") or ""
             print(f"FAIL {event['toolName']} {cmd!r} want={want} got={got} reason={reason}", file=sys.stderr)
-    if not had:
+    if previous_image is None:
+        fresh[0].unlink()
+    else:
+        fresh[0].write_bytes(previous_image)
+    if previous is None:
         mark.unlink()
+    else:
+        mark.write_bytes(previous)
     if failed:
         print(f"selftest: {failed} failed", file=sys.stderr)
         return 1
