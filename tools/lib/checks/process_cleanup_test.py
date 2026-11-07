@@ -112,6 +112,17 @@ def selftest(root):
     assert 'p.set("aim_line", saved_line)' in smoke
     assert 'adrenaline_audio_gated=true' not in smoke and 'torch_facing_once=' not in smoke
     assert 'not a physics-overlap proof' in smoke and 'assert(not ui.is_processing())' in smoke
+    minimap = read("scripts/world/dungeon/minimap.gd")
+    needs_map = function(minimap, "needs_redraw", {"Vector2i": lambda x, y: (x, y), "int": int}, "host")
+    m = NS(fog_dirty=False, player=NS(global_position=NS(x=2.0, z=3.0)), get_meta=lambda k, d: (2, 3))
+    assert not needs_map(m)
+    m.player.global_position.x = 4.0; assert needs_map(m)
+    m.fog_dirty = True; assert needs_map(m)
+    m.fog_dirty = False; m.player = None; assert not needs_map(m)
+    assert minimap.index('CrystalNet.paint(host)') < minimap.index('host.map_tex.update(host.map_img)')
+    assert 'viewport.size_changed.connect(host._redraw_map)' in minimap
+    assert 'host.fog_dirty or (host.map_layer' not in dungeon
+    assert 'host.fog_dirty = true' in read("scripts/world/dungeon/dungeon_cells.gd")
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 

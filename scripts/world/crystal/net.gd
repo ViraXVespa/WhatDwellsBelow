@@ -157,6 +157,7 @@ static func activate(spot: Node) -> void:
 		return
 	var scene: Node = tree.current_scene
 	if scene:
+		scene.fog_dirty = true
 		silence_near(scene, cell)
 
 static func blocks_spawn(host: Node, cell: Vector2i) -> bool:

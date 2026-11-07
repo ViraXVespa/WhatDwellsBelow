@@ -76,6 +76,7 @@ static func world_cell(p: Vector3) -> Vector2i:
 static func mark_cell(host: Node, c: Vector2i) -> void:
 	if c.x >= 0 and c.y >= 0:
 		host.occupied[c] = true
+		host.fog_dirty = true
 
 static func is_floor_cell(host: Node, c: Vector2i) -> bool:
 	var w: int = host.data.w

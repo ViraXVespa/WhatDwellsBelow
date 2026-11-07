@@ -113,9 +113,8 @@ static func process_floor(host: Node, delta: float) -> void:
 		if grew:
 			host.fog_dirty = true
 	host._note_verge()
-	if host.fog_dirty or (host.map_layer and host.map_layer.visible):
+	if DungeonMinimap.needs_redraw(host):
 		host._redraw_map()
-		CrystalNet.paint(host)
 		host.fog_dirty = false
 	# HUD refresh: paints early-out; call every frame so bars/prompt/gem stay live
 	host._refresh_hint()
@@ -210,4 +209,3 @@ static func toggle_map(host: Node) -> void:
 			var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 			MapActS.reset(host)
 			host._redraw_map()
-			CrystalNet.paint(host)
