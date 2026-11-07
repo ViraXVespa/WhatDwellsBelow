@@ -8,9 +8,11 @@ and rendered animation still need the normal game verification.
 from pathlib import Path
 from types import SimpleNamespace as NS
 import re
-import argparse
+import sys
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools/lib"))
+import agent_log
 
 def function(source, name, env):
     match = re.search(r"^static func " + name + r"\([^\n]*\n(.*?)(?=^static (?:func|var)|\Z)", source, re.M | re.S)
@@ -92,9 +94,11 @@ def selftest(read=None):
     return 0
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = agent_log.std_parser(__doc__)
     ap.add_argument("--selftest", action="store_true", help="Run source-level regressions without Godot.")
     args = ap.parse_args()
     if not args.selftest:
         ap.error("use --selftest")
-    raise SystemExit(selftest())
+    root = agent_log.resolve_root(args)
+    result = selftest(lambda path: (root / path).read_text())
+    raise SystemExit(agent_log.emit_result("PASS" if result == 0 else "FAIL", scenarios=12, runtime="not-run"))
