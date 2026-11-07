@@ -1,7 +1,8 @@
 // Writes tools/relay/.secrets/deploy.js (git-ignored by tools/relay/.gitignore): the code for the Cloudflare MCP `execute` tool that uploads this Worker.
-// Usage: node tools/relay/deploy-payload.mjs [--with-secrets]   then call execute with code "$file:<repo>/tools/relay/.secrets/deploy.js"
-// --with-secrets reads GITHUB_TOKEN from env WDB_ISSUES_TOKEN and tools/relay/.secrets/{gh_webhook_secret,relay_salt}; otherwise
-// existing secrets are always kept (keep_bindings), also with named upserts. Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
+// Usage: node tools/relay/deploy-payload.mjs [--with-secrets] [--rotate-github-token]   then call execute with code "$file:<repo>/tools/relay/.secrets/deploy.js"
+// --with-secrets reads only tools/relay/.secrets/{gh_webhook_secret,relay_salt}. GITHUB_TOKEN is preserved, even if
+// a stale WDB_ISSUES_TOKEN is set; explicit --rotate-github-token opts into replacing it from that env.
+// Existing secrets are always kept (keep_bindings), also with named upserts. Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
 import { readFileSync, writeFileSync, readdirSync, chmodSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,11 +34,14 @@ const modules = Object.fromEntries(readdirSync(join(here, "src")).filter((f) => 
 const bindings = [];
 
 const withSecrets = process.argv.includes("--with-secrets");
+const rotateGithubToken = process.argv.includes("--rotate-github-token");
+if (rotateGithubToken && !withSecrets) throw new Error("--rotate-github-token requires --with-secrets");
+if (rotateGithubToken && !process.env.WDB_ISSUES_TOKEN?.trim()) throw new Error("explicit rotation requires WDB_ISSUES_TOKEN");
 if (withSecrets) {
   const sec = (f) => readFileSync(join(here, ".secrets", f), "utf8").trim();
   bindings.push({ type: "secret_text", name: "GH_WEBHOOK_SECRET", text: sec("gh_webhook_secret") });
   bindings.push({ type: "secret_text", name: "RELAY_SALT", text: sec("relay_salt") });
-  if (process.env.WDB_ISSUES_TOKEN) bindings.push({ type: "secret_text", name: "GITHUB_TOKEN", text: process.env.WDB_ISSUES_TOKEN });
+  if (rotateGithubToken) bindings.push({ type: "secret_text", name: "GITHUB_TOKEN", text: process.env.WDB_ISSUES_TOKEN });
 }
 const metadata = buildMetadata(bindings);
 

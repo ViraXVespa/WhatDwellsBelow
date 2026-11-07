@@ -75,7 +75,7 @@ test("metadata preserves independently provisioned secrets even with named upser
   }
 });
 
-test("both payload CLI modes retain unknown secrets using temporary fake credentials only", async () => {
+test("all payload CLI modes retain unknown secrets using temporary fake credentials only", async () => {
   const dir = mkdtempSync(join(tmpdir(), "wdb-relay-payload-"));
   try {
     for (const name of ["src", "deploy-payload.mjs", "wrangler.jsonc"])
@@ -84,7 +84,7 @@ test("both payload CLI modes retain unknown secrets using temporary fake credent
     mkdirSync(join(dir, ".secrets"));
     writeFileSync(join(dir, ".secrets/gh_webhook_secret"), "fixture-webhook");
     writeFileSync(join(dir, ".secrets/relay_salt"), "fixture-salt");
-    for (const mode of [[], ["--with-secrets"]]) {
+    for (const mode of [[], ["--with-secrets"], ["--with-secrets", "--rotate-github-token"]]) {
       const result = spawnSync(process.execPath, [join(dir, "deploy-payload.mjs"), ...mode], {
         encoding: "utf8", env: { ...process.env, WDB_ISSUES_TOKEN: "fixture-github" },
       });
@@ -100,7 +100,15 @@ test("both payload CLI modes retain unknown secrets using temporary fake credent
       assert.deepEqual(metadata.keep_bindings, ["secret_text"]);
       assert.equal(metadata.bindings.find((b) => b.name === "EMAIL_SEND").text, "on");
       assert.ok(!metadata.bindings.some((b) => b.name === "RESEND_API_KEY"));
-      assert.equal(metadata.bindings.filter((b) => b.type === "secret_text").length, mode.length ? 3 : 0);
+      assert.equal(metadata.bindings.filter((b) => b.type === "secret_text").length, mode.length ? (mode.includes("--rotate-github-token") ? 3 : 2) : 0);
+      assert.equal(metadata.bindings.some((b) => b.name === "GITHUB_TOKEN"), mode.includes("--rotate-github-token"), "stale legacy env must not silently rotate the deployed key");
+    }
+    for (const args of [["--rotate-github-token"], ["--with-secrets", "--rotate-github-token"]]) {
+      const result = spawnSync(process.execPath, [join(dir, "deploy-payload.mjs"), ...args], {
+        encoding: "utf8", env: { ...process.env, WDB_ISSUES_TOKEN: "" },
+      });
+      assert.notEqual(result.status, 0, "rotation must fail without explicit mode and source");
+      assert.ok(!result.stderr.includes("fixture-github"));
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

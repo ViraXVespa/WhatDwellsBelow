@@ -12,7 +12,7 @@ Official `POST https://api.resend.com/emails` uses stable `Idempotency-Key: wdb-
 
 Read outbox counts/last id before activation, deploy off, verify binding names/health, then use only the approved live test. The GitHub webhook derives its subject and appends issue/unsubscribe links; it cannot carry a footer-free test unchanged. No public arbitrary-mail endpoint exists. Public test issues/comments and resulting messages require explicit approval. Closing an opted-in test issue triggers another email; do not clean it up unasked.
 
-Health confirms flags, not upstream credentials. The approved test reached `/report` but returned `502 github_error: GitHub returned 401`. Refresh the existing `GITHUB_TOKEN` through sanctioned provisioning; never extract the box CLI token or inspect credential files. A private reporter is allocated before GitHub submission: inspect reports/outbox before retrying, preserve partial records. That rejected attempt created no issue/comment/email.
+Health confirms flags, not upstream credentials. The approved test reached `/report` but returned `502 github_error: GitHub returned 401`. Validate the installed `GITHUB_TOKEN` through sanctioned provisioning; never extract the box CLI token or inspect credential files. A private reporter is allocated before GitHub submission: inspect reports/outbox before retrying, preserve partial records. That rejected attempt created no issue/comment/email.
 
 ## Client contract
 
@@ -22,7 +22,7 @@ Reference: https://developers.cloudflare.com/support/troubleshooting/http-status
 
 ## Deployment and tests
 
-JSON-compatible `wrangler.jsonc` owns bindings/vars for Wrangler and `deploy-payload.mjs`. Both payload modes retain existing `secret_text`, including independently provisioned Resend keys, while upserting supplied named secrets. Importing the builder reads no credentials. Never use real secrets mode as a test.
+JSON-compatible `wrangler.jsonc` owns bindings/vars for Wrangler and `deploy-payload.mjs`. Both payload modes retain existing `secret_text`, including independently provisioned Resend keys, while upserting supplied named secrets. Even `--with-secrets` preserves `GITHUB_TOKEN`; only explicit `--rotate-github-token` replaces it from `WDB_ISSUES_TOKEN`. Importing the builder reads no credentials. Never use real secrets mode as a test.
 
 Run `npm test`, `npm run typecheck`, `npm run dry-run` here: mocked requests and upload-free compilation, not delivery proof. Both payload modes have temporary fake-secret tests. `node deploy-payload.mjs` generates the normal connector payload without reading secrets.
 
