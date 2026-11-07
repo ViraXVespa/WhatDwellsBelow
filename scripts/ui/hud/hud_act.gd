@@ -10,7 +10,7 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
-	var lay_key := Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y)
+	var lay_key: Vector3 = Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y)
 	if lay_key != host._lay_key:
 		host._lay_key = lay_key
 		View.layout(host)
