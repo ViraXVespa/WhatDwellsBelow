@@ -290,7 +290,16 @@ def build(items, plan, path, root, in_folder=False):
         txt = parts[0] + "\n" + (pre + "\n\n" if pre else "") + ("\n".join(decls) + "\n\n" if decls else "") + "\n".join(funcs)
         out[hdir / (fname[stem] + ".gd")] = txt
     fac, added = [], False
-    keep = {n for n in owner if byname[n]["kind"] == "func" and (not n.startswith("_") or ext[n] or (n in inst and strs[n]))}
+    bound = set()
+    for it in items:
+        if it["name"] in owner:
+            continue
+        text = body(it)
+        kinds = fr.kinds(text)
+        for n in inst & owner.keys():
+            if any(kinds[m.start()] == "c" for m in re.finditer(r"(?<![\w.])" + re.escape(n) + r"\b(?!\s*\()", text)):
+                bound.add(n)
+    keep = {n for n in owner if byname[n]["kind"] == "func" and (not n.startswith("_") or ext[n] or n in bound or (n in inst and strs[n]))}
     hostcall = re.compile(r"(?<![\w.$\"'])(" + "|".join(sorted(re.escape(n) for n in inst if n in owner and n not in keep) or ["(?!x)x"]) + r")\((\)?)")
     new_pre = "\n".join(f'const {alias[s]} := preload("{hres[s]}")' for s in plan)
     last_pre = max([i for i, it in enumerate(items) if it["name"] in preloads and it["name"] not in owner], default=-1)
@@ -299,7 +308,7 @@ def build(items, plan, path, root, in_folder=False):
     for i, it in enumerate(items):
         n = it["name"]
         if n in owner:
-            if it["kind"] == "func" and (not n.startswith("_") or ext[n] or (n in inst and strs[n])):
+            if it["kind"] == "func" and n in keep:
                 sig, args, ret = sig_of(it)
                 if n in inst:
                     args = ["self"] + args
@@ -386,6 +395,7 @@ def _selftest() -> int:
     called from the facade must compile (all four wrote broken code that PASSed before)."""
     import tempfile
     src = ("extends Node3D\n\nvar dead := false\n\nfunc hit() -> void:\n\tif not dead:\n\t\t_die()\n\n"
+           "func _ready() -> void:\n\tif not tree_entered.is_connected(_die):\n\t\ttree_entered.connect(_die)\n\n"
            "func _die() -> void:\n\tdead = true\n\tremove_from_group(\"x\")\n\tprint(global_position)\n"
            "\tvar tw := create_tween()\n\ttw.finished.connect(queue_free)\n\n"
            "func _drop() -> void:\n\tvar host := get_parent()\n\tprint(host)\n")
