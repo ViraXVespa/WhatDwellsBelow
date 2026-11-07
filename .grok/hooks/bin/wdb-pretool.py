@@ -10,6 +10,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import wdb_ocr_gate  # noqa: E402
+
 IMAGINE_TOOLS = {
     "image_gen",
     "image_edit",
@@ -241,6 +244,10 @@ def decide(event: dict) -> tuple[str, str]:
     if repo is None or isolated:
         return "allow", ""
 
+    ocr_why = wdb_ocr_gate.tool_reason(name, input_paths(inp), repo, cwd) or wdb_ocr_gate.review_reason(shell_command(name, inp) or "", repo, cwd)
+    if ocr_why:
+        return "deny", ocr_why
+
     blob = " ".join([name, *input_paths(inp)])
     low_name = name.lower()
 
@@ -324,7 +331,20 @@ def selftest() -> int:
         (ev("run_terminal_command", {"command": "Get-ChildItem site/data"}), "allow"),
         (ev("image_gen", {"prompt": "x"}), "deny"),
         (ev("image_gen", {"prompt": "x"}, cwd=outside), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/shots.py review a.png --question \"Is the panel visible?\""}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-selftest.png --question \"What does the label say?\""}), "deny"),
+        (ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-selftest.png --ocr --question \"Read the label\""}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-selftest.png --why \"need meaning\" --question \"Read the label\""}), "allow"),
+        (ev("ocr", {"path": "zz-ocr-selftest.png"}), "deny"),
+        (ev("ocr", {"path": "zz-ocr-selftest.png"}, cwd=outside), "allow"),
     ]
+    fresh = [repo / "zz-ocr-fresh.png"]
+    mark = wdb_ocr_gate.marker(repo, fresh)
+    had = mark.is_file()
+    mark.parent.mkdir(parents=True, exist_ok=True)
+    mark.touch()
+    cases += [(ev("run_terminal_command", {"command": "python tools/shots.py review zz-ocr-fresh.png --question \"Read the label\""}), "allow"),
+              (ev("ocr", {"path": "zz-ocr-fresh.png"}), "allow")]
     failed = 0
     for event, want in cases:
         got, reason = decide(event)
@@ -332,6 +352,8 @@ def selftest() -> int:
             failed += 1
             cmd = event["toolInput"].get("command") or event["toolInput"].get("path") or event["toolInput"].get("target_directory") or event["toolInput"].get("target_file") or ""
             print(f"FAIL {event['toolName']} {cmd!r} want={want} got={got} reason={reason}", file=sys.stderr)
+    if not had:
+        mark.unlink()
     if failed:
         print(f"selftest: {failed} failed", file=sys.stderr)
         return 1
