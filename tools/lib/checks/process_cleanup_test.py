@@ -123,6 +123,36 @@ def selftest(root):
     assert 'viewport.size_changed.connect(host._redraw_map)' in minimap
     assert 'host.fog_dirty or (host.map_layer' not in dungeon
     assert 'host.fog_dirty = true' in read("scripts/world/dungeon/dungeon_cells.gd")
+    hud = read("scripts/ui/hud.gd")
+    assert 'host._refresh_hint()' not in dungeon
+    assert 'hud.refresh(player, self)' in read("scripts/world/dungeon.gd")
+    assert 'is_instance_valid(_player) and is_instance_valid(_dungeon)' in hud
+    assert 'App.interact_locked, View.UiText.frame_scale(), View.UiText.applied()' in gem
+    assert 'host._state.clear()' in gem and 'size.y)' in gem
+    assert 'pcd > 0.0, TranslationServer.get_locale()' in gem
+    dirty = function(gem, "changed", {}, "host, key, value")
+    h = NS(_state={})
+    for key in ("hp", "mana", "level", "resources", "floor", "shrine", "food", "toast", "look", "prompt", "boss"):
+        assert dirty(h, key, [1, "en"])
+        assert not dirty(h, key, [1, "en"])
+        assert dirty(h, key, [2, "en"])
+        assert dirty(h, key, [2, "fr"])
+        assert not dirty(h, key, [2, "fr"])
+    h._state.clear(); assert dirty(h, "hp", [2, "fr"])
+    class Size:
+        writes = 0
+        _x = 0.0
+        @property
+        def x(self): return self._x
+        @x.setter
+        def x(self, v): self._x = v; self.writes += 1
+    size = Size()
+    fill = function(gem, "fill", {"clampf": lambda v, low, high: max(low, min(v, high))}, "r, w, t")
+    rect = NS(size=size)
+    fill(rect, 100, .5); fill(rect, 100, .5)
+    assert size.x == 50 and size.writes == 1
+    fill(rect, 100, 2); fill(rect, 100, 2)
+    assert size.x == 100 and size.writes == 2
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 

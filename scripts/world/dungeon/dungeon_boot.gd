@@ -116,8 +116,6 @@ static func process_floor(host: Node, delta: float) -> void:
 	if DungeonMinimap.needs_redraw(host):
 		host._redraw_map()
 		host.fog_dirty = false
-	# HUD refresh: paints early-out; call every frame so bars/prompt/gem stay live
-	host._refresh_hint()
 	if t0 > 0:
 		floor_us += Time.get_ticks_usec() - t0
 

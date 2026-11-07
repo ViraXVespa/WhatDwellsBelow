@@ -47,10 +47,10 @@ var fps_lab: Label
 var look_lab: Label
 var portrait_path := ""
 
-var _prompt_shown := ""
-var _prompt_scheme := ""
+var _state: Dictionary = {}
+var _player: Node
+var _dungeon: Node
 var _lay_key := Vector3(-1.0, -1.0, -1.0)
-var _txt_key: Array = []
 var _boss: Node = null
 var _boss_n := -1
 
@@ -62,5 +62,12 @@ func bind_map(tex: Texture2D) -> void:
 	if mini_map:
 		mini_map.texture = tex
 
+# Continuous fractions require sampling; cached static components do not repaint.
+func _process(_delta: float) -> void:
+	if is_instance_valid(_player) and is_instance_valid(_dungeon):
+		Act.refresh(self, _player, _dungeon)
+
 func refresh(player: Node, dungeon: Node) -> void:
+	_player = player
+	_dungeon = dungeon
 	Act.refresh(self, player, dungeon)

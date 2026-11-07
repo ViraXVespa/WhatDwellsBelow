@@ -100,6 +100,7 @@ func _hud() -> void:
 	fps_lab = null
 	toast_lab = null
 	shrine_lab = null
+	hud.refresh(player, self)
 
 func _refresh_hint() -> void:
 	if hud and hud.has_method("refresh"):

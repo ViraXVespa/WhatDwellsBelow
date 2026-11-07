@@ -1,6 +1,6 @@
 extends Object
 
-## HUD refresh. Host is the CanvasLayer at scripts/ui/hud.gd.
+## Sample dynamic HUD values; repaint individual elements only when their inputs change.
 
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
@@ -10,10 +10,11 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
-	var lay_key := Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, 0.0)
+	var lay_key := Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y)
 	if lay_key != host._lay_key:
 		host._lay_key = lay_key
 		View.layout(host)
+		host._state.clear()
 	View.load_portrait(host)
 	var hp := 1.0
 	var maxh := 1.0
@@ -44,48 +45,56 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	var pcd: float = App.prog.potion_cd
 	var pmax: float = maxf(0.05, App.bal.potion_cooldown)
 	fill(host.pot_fill, host.POT_W - inner, 1.0 if pcd <= 0.0 and pn > 0 else 1.0 - clampf(pcd / pmax, 0.0, 1.0))
-	if pcd > 0.0:
-		host.pot_lab.text = App.tr("hud_act.potion_x_s") % [pn, pcd]
-	else:
-		host.pot_lab.text = App.tr("hud_act.potion_x") % pn
+	if changed(host, "potion", [pn, snappedf(pcd, 0.1), pcd > 0.0, TranslationServer.get_locale()]):
+		paint_potion(host, pn, pcd)
 	fill(host.dash_fill, host.DASH_W - inner, dash)
 	fill(host.spec_fill, host.SPEC_W - inner, spec)
 	var clv := App.prog.combat_lv()
 	var slv := App.prog.style_lv()
-	var txt_key: Array = [int(hp), int(maxh), int(mana_now), int(mana_cap), clv, slv, App.weapon, App.gold, App.ore, App.wood, App.floor_n, TranslationServer.get_locale()]
-	if txt_key != host._txt_key:
-		host._txt_key = txt_key
+	var locale: String = TranslationServer.get_locale()
+	if changed(host, "hp", [int(hp), int(maxh), locale]):
 		host.hp_lab.text = App.tr("hud_act.text") % [int(hp), int(maxh)]
+	if changed(host, "mana", [int(mana_now), int(mana_cap), locale]):
 		host.mana_lab.text = App.tr("hud_act.text") % [int(mana_now), int(mana_cap)]
-		if slv < clv:
-			host.lvl.text = App.tr("hud_act.level") % [clv, style_name(), slv]
-		else:
-			host.lvl.text = App.tr("hud_act.level_2") % clv
+	if changed(host, "level", [clv, slv, App.weapon, locale]):
+		host.lvl.text = App.tr("hud_act.level") % [clv, style_name(), slv] if slv < clv else App.tr("hud_act.level_2") % clv
+	if changed(host, "resources", [App.gold, App.ore, App.wood, locale]):
 		host.res.text = App.tr("hud_act.g_ore_wood") % [App.gold, App.ore, App.wood]
+	if changed(host, "floor", [App.floor_n, locale]):
 		host.floor_lab.text = App.tr("hud_act.f") % App.floor_n
-	if App.shrine_t > 0.0:
-		host.shrine_icon.visible = true
-		host.shrine_lab.visible = true
-		host.shrine_lab.text = App.tr("hud_act.shrine_s") % [int(App.bal.shrine_dmg * 100.0), int(ceil(App.shrine_t))]
-	else:
-		host.shrine_icon.visible = false
-		host.shrine_lab.visible = false
-	if App.prog.food_t > 0.0:
-		host.food_icon.visible = true
-		host.food_lab.visible = true
-		host.food_lab.text = App.tr("hud_act.food_hot_s") % int(ceil(App.prog.food_t))
-	else:
-		host.food_icon.visible = false
-		host.food_lab.visible = false
+	if changed(host, "shrine", [ceili(App.shrine_t), App.bal.shrine_dmg, locale]):
+		host.shrine_icon.visible = App.shrine_t > 0.0
+		host.shrine_lab.visible = App.shrine_t > 0.0
+		if App.shrine_t > 0.0:
+			host.shrine_lab.text = App.tr("hud_act.shrine_s") % [int(App.bal.shrine_dmg * 100.0), ceili(App.shrine_t)]
+	if changed(host, "food", [ceili(App.prog.food_t), locale]):
+		host.food_icon.visible = App.prog.food_t > 0.0
+		host.food_lab.visible = App.prog.food_t > 0.0
+		if App.prog.food_t > 0.0:
+			host.food_lab.text = App.tr("hud_act.food_hot_s") % ceili(App.prog.food_t)
 	paint_prompt(host)
 	paint_gem(host, dungeon)
 	paint_look(host)
-	host.toast.text = App.toast_msg if App.toast_t > 0.0 else ""
+	var toast: String = App.toast_msg if App.toast_t > 0.0 else ""
+	if changed(host, "toast", toast):
+		host.toast.text = toast
 	boss(host, dungeon, player)
-	if host.fps_lab:
+	if host.fps_lab and host.fps_lab.text != "":
 		host.fps_lab.text = ""
 
+## Snapshots reconcile direct resource/dictionary writes as well as setters. No scene walk.
+static func changed(host: CanvasLayer, key: String, value: Variant) -> bool:
+	if host._state.get(key) == value:
+		return false
+	host._state[key] = value
+	return true
+
+static func paint_potion(host: CanvasLayer, count: int, cooldown: float) -> void:
+	host.pot_lab.text = App.tr("hud_act.potion_x_s") % [count, cooldown] if cooldown > 0.0 else App.tr("hud_act.potion_x") % count
+
 static func paint_look(host: CanvasLayer) -> void:
+	if not changed(host, "look", [Look.blocked(), Look.map_open(), Look.mode, TranslationServer.get_locale()]):
+		return
 	if host.look_lab == null:
 		return
 	if Look.blocked():
@@ -99,10 +108,8 @@ static func paint_look(host: CanvasLayer) -> void:
 static func paint_prompt(host: CanvasLayer) -> void:
 	var text := str(App.interact_prompt)
 	var scheme: String = Prompts.scheme()
-	if text == host._prompt_shown and scheme == host._prompt_scheme:
+	if not changed(host, "prompt", [text, scheme, App.interact_locked, View.UiText.frame_scale(), View.UiText.applied(), TranslationServer.get_locale()]):
 		return
-	host._prompt_shown = text
-	host._prompt_scheme = scheme
 	host.prompt_row.set_meta("prompt_tap", false)
 	if text == "":
 		PromptView.fill(host.prompt_row, [])
@@ -135,7 +142,8 @@ static func paint_gem(host: CanvasLayer, dungeon: Node) -> void:
 		return
 	var col: Color = gem_color(dungeon)
 	var alpha: float = host.gem.modulate.a
-	host.gem.modulate = Color(col.r, col.g, col.b, alpha)
+	if host.gem.modulate.r != col.r or host.gem.modulate.g != col.g or host.gem.modulate.b != col.b:
+		host.gem.modulate = Color(col.r, col.g, col.b, alpha)
 	if not host.gem.has_meta("pulse_tween") or host.gem.get_meta("pulse_tween") == null:
 		var tw: Tween = host.gem.create_tween().set_loops()
 		tw.tween_property(host.gem, "modulate:a", 0.44, 0.6).set_trans(Tween.TRANS_SINE)
@@ -163,7 +171,9 @@ static func gem_color(dungeon: Node) -> Color:
 	return yellow.lerp(red, float(diff - 3) / 4.0)
 
 static func fill(r: ColorRect, w: float, t: float) -> void:
-	r.size.x = w * clampf(t, 0.0, 1.0)
+	var width: float = w * clampf(t, 0.0, 1.0)
+	if r.size.x != width:
+		r.size.x = width
 
 static func boss(host: CanvasLayer, dungeon: Node, player: Node) -> void:
 	var b: Node = _boss_node(host, dungeon)
@@ -183,7 +193,8 @@ static func boss(host: CanvasLayer, dungeon: Node, player: Node) -> void:
 	var title := App.tr("hud_act.guardian")
 	if b.get("tag") != null and str(b.tag.text) != "":
 		title = str(b.tag.text)
-	host.boss_lab.text = App.tr("hud_act.text_2") % [title, int(bh), int(bm)]
+	if changed(host, "boss", [title, int(bh), int(bm), TranslationServer.get_locale()]):
+		host.boss_lab.text = App.tr("hud_act.text_2") % [title, int(bh), int(bm)]
 
 ## First "boss" group node, re-fetched only when the group size changes or the cached node is gone.
 static func _boss_node(host: CanvasLayer, dungeon: Node) -> Node:
