@@ -45,7 +45,7 @@ Use `--help` for filters, baselines and output options rather than guessing stat
 
 The checked-in dungeon flows cover spawns, ambushes, elites, props, boss and HUD states at seed 42 with fixed fps. They freeze enemies and seed random state for byte-identical repeats. Keep the player in the subject's room for valid lighting, close the big map and do not freeze the host for HUD tests. The flow file is the executable setup reference.
 
-## Screenshot update step (docs and guide images)
+## Update published guide shots
 
 `shots.py flow --flow NAME --publish` stages frames and a hash manifest under `_out/shots/`, never directly under assets. Packaging installs accepted images. `--check-published` detects stale files; publish again and pass the frames to that job. `shots.py gaps` also detects files altered outside the manifest.
 
