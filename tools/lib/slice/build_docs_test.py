@@ -28,7 +28,7 @@ def check(root: Path) -> list[str]:
     if "Default workflow for every Grok Build task" not in skill_meta:
         bad.append("pc-offload metadata must make the repository Build default explicit")
     canonical = (root / "design/build-job-cycle.md").read_text()
-    for phrase in ("context is above 120K", "next good stopping point", "same session"):
+    for phrase in ("compact would be safe", "before Prove", "follow-up Gather or Change", "same session"):
         if phrase not in canonical:
             bad.append("canonical context rule missing: " + phrase)
     if "--fork-session" in (root / "design/tasks/ui-png-art.md").read_text() or "--fork-session" in (root / "design/tasks/perf-sweep.md").read_text():

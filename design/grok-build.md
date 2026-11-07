@@ -3,7 +3,7 @@
 Status: protocol
 Read when: starting or resuming a Grok Build CLI task
 
-Build implements the requested work. Vira owns design and scope. Work in the User-opened worktree, never on `main`; never force-push. Platform permissions and secret protections still apply.
+Build implements the requested work. Vira owns design and scope. Work in the User-opened worktree, never on `main`, except a new week: that starts on clean `main` and then leaves it (`build-week-start.md`). Never force-push. Platform permissions and secret protections still apply.
 
 ## Start or resume
 

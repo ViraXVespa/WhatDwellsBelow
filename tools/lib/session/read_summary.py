@@ -9,9 +9,13 @@
     python tools/session.py summary --job perf-sweep --match fps_pct --max 20
     python tools/session.py summary --list 'perf-sweep-web-*/*.jsonl'
     python tools/session.py summary --path _logs/web-perf/hitch.jsonl --jsonl --where ev=eq:hitch --where seg=eq:hub1 --group phase --stat submit_ms --stat draw
+    python tools/session.py summary --job changed --files
+    python tools/session.py summary --job changed --files --read
 
 No filter prints a bounded job summary (the printer; --verbose prints every line). A filter prints a capped
-slice or an aggregate and never the whole file. A .jsonl path with no filter
+slice or an aggregate and never the whole file. --files lists that log's other files (same-stamp artifacts,
+then repo paths the text names) and does not print their bodies. --files --read prints a capped text slice
+of each; images and other binaries are listed and skipped. A .jsonl path with no filter
 is refused. --jsonl walks the file once and keeps numbers for --stat only.
 PowerShell: single-quote globs, regexes, and --- headings. Compares are
 key=ge:N, le:N, gt:N, lt:N, ne:TEXT, has:TEXT, eq:TEXT. An unquoted > or <
@@ -42,12 +46,17 @@ _PS_HINT = (
 _MAX_SERIES = 50000
 _BODY_CAP = 200
 _LINE_CAP = 1000000
+_CITE_PREFIXES = ("_logs/", "scripts/", "scenes/", "tools/", "design/", ".grok/")
+_ROOT_FILES = {"AGENTS.md", "BOT.md"}
+_SKIP_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".exr", ".wav", ".ogg", ".mp3", ".glb", ".bin"}
+_TOKEN_RE = re.compile(r"[A-Za-z0-9_./\\+-]{3,}")
 
 
 def _filtered(args) -> bool:
     return bool(
         args.match or args.section or args.head or args.tail
         or args.jsonl or args.where or args.group or args.stat or args.pick or args.list
+        or args.files
     )
 
 
@@ -79,6 +88,70 @@ def _list_logs(root: Path, pattern: str) -> list[str]:
         lines.append("bytes=%d mtime=%s path=%s" % (path.stat().st_size, stamp, agent_log.rel(root, path)))
     if not found and not any(ch in pattern for ch in "*?["):
         lines.append("hint=pattern has no wildcard. PowerShell expands * before Python. Single-quote the glob. " + _PS_HINT)
+    return lines
+
+
+def _clean_cite(raw: str) -> str:
+    text = raw.replace("\\", "/").strip()
+    while text and text[-1] in ".,:;)]":
+        text = text[:-1]
+    return text
+
+
+def _run_files(root: Path, summary: Path, text: str) -> tuple[list[Path], list[str]]:
+    """Additional files for one log: same-stamp siblings, then paths the text names. The log itself is omitted."""
+    found: list[Path] = []
+    missing: list[str] = []
+    seen = {summary.resolve()} if summary.exists() else set()
+    stamp = run_log_lib.stamp_of(summary.name)
+    if stamp and summary.parent.is_dir():
+        for child in sorted(summary.parent.iterdir(), key=lambda p: p.name):
+            if child.is_file() and child.resolve() not in seen and run_log_lib.stamp_of(child.name) == stamp:
+                if _under_root(root, child):
+                    seen.add(child.resolve())
+                    found.append(child)
+    named: list[str] = []
+    have: set[str] = set()
+    for match in _TOKEN_RE.finditer(text):
+        rel = _clean_cite(match.group(0))
+        if not rel or rel in have:
+            continue
+        tracked = rel in _ROOT_FILES or rel.startswith(_CITE_PREFIXES)
+        if not tracked and "/" not in rel and "." not in rel:
+            continue
+        have.add(rel)
+        if tracked or "/" in rel or "." in rel:
+            named.append(rel)
+    for rel in named:
+        if not (rel in _ROOT_FILES or rel.startswith(_CITE_PREFIXES) or "/" in rel or "." in rel):
+            continue
+        full = _resolve_file(root, rel)
+        try:
+            key = full.resolve()
+        except OSError:
+            key = full
+        if key in seen:
+            continue
+        if full.is_file() and _under_root(root, full):
+            seen.add(key)
+            found.append(full)
+        elif rel in _ROOT_FILES or rel.startswith(_CITE_PREFIXES):
+            missing.append(rel)
+    return found, missing
+
+
+def _file_slice(path: Path, cap: int) -> list[str]:
+    if path.suffix.lower() in _SKIP_EXT:
+        return ["skip=binary"]
+    try:
+        blob = path.read_bytes()[:4096]
+    except OSError as exc:
+        return ["error=%s" % (getattr(exc, "strerror", None) or exc)]
+    if b"\0" in blob:
+        return ["skip=binary"]
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    if cap > 0 and len(lines) > cap:
+        return lines[:cap] + ["... %d more lines (--max %d)" % (len(lines) - cap, cap)]
     return lines
 
 
@@ -387,7 +460,33 @@ def _plain_selftest() -> int:
         bad.append("verbose must preserve every line")
     if _plain_summary([], "small\nRESULT PASS") != ["small", "RESULT PASS"]:
         bad.append("small summaries must stay unchanged")
+    bad.extend(_files_selftest())
     return agent_log.selftest_result(bad)
+
+
+def _files_selftest() -> list[str]:
+    bad = []
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        log_dir = root / "_logs" / "demo"
+        log_dir.mkdir(parents=True)
+        summary = log_dir / "20260101-000000-demo.txt"
+        extra = log_dir / "20260101-000000-extra.log"
+        image = log_dir / "20260101-000000-shot.png"
+        (root / "AGENTS.md").write_text("agents\n", encoding="utf-8")
+        summary.write_text("see AGENTS.md and scripts/missing.gd\n", encoding="utf-8")
+        extra.write_text("extra line\n", encoding="utf-8")
+        image.write_bytes(b"\x89PNG\r\n")
+        found, missing = _run_files(root, summary, summary.read_text(encoding="utf-8"))
+        rels = [agent_log.rel(root, p) for p in found]
+        if rels != ["_logs/demo/20260101-000000-extra.log", "_logs/demo/20260101-000000-shot.png", "AGENTS.md"]:
+            bad.append("files from a log must list siblings then cited paths, got " + ",".join(rels))
+        if missing != ["scripts/missing.gd"]:
+            bad.append("a named missing path must be reported")
+        if _file_slice(image, 5) != ["skip=binary"] or _file_slice(extra, 5) != ["extra line"]:
+            bad.append("read must skip binaries and print text")
+    return bad
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -399,6 +498,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--index", action="store_true", help="Print only the run index of the job.")
     ap.add_argument("--run", type=int, default=1, help="Which run's summary to print: 1 = newest (default), 2 = the one before.")
     ap.add_argument("--list", default="", help="Glob under _logs, single-quoted in PowerShell. No file bodies.")
+    ap.add_argument("--files", action="store_true", help="List this log's other files: same-stamp artifacts, then repo paths the text names. No bodies.")
+    ap.add_argument("--read", action="store_true", help="With --files, print a capped text slice of each additional file. Images and other binaries are skipped.")
     ap.add_argument("--match", default="", help="Case-insensitive regex. Single-quote it in PowerShell.")
     ap.add_argument("--context", type=int, default=0, help="Lines before and after a --match hit (max 5).")
     ap.add_argument("--section", default="", help="One block. Single-quote a --- heading in PowerShell.")
@@ -416,6 +517,12 @@ def main(argv: list[str] | None = None) -> int:
         return _plain_selftest()
     if args.head < 0 or args.tail < 0 or args.context < 0 or args.max < 0:
         print("error: --head, --tail, --context, and --max must be >= 0. " + _PS_HINT, file=sys.stderr, flush=True)
+        return 2
+    if args.read and not args.files:
+        print("error: --read requires --files", file=sys.stderr, flush=True)
+        return 2
+    if args.files and (args.match or args.section or args.head or args.tail or args.jsonl or args.list or args.index or args.where or args.group or args.stat or args.pick):
+        print("error: --files does not combine with other filters", file=sys.stderr, flush=True)
         return 2
     root, where = agent_log.cwd_scan_root(args)
     if args.list:
@@ -480,7 +587,7 @@ def main(argv: list[str] | None = None) -> int:
         print("error: path is outside this checkout", file=sys.stderr, flush=True)
         return 2
     shown = agent_log.rel(root, full)
-    capped = bool(args.head or args.tail or args.match or args.section)
+    capped = bool(args.head or args.tail or args.match or args.section or args.files)
     if full.suffix.lower() == ".jsonl" and not args.jsonl and not capped:
         print("error: refusing to print %s whole. Pass --jsonl, or --head N. %s" % (shown, _PS_HINT), file=sys.stderr, flush=True)
         return 2
@@ -488,6 +595,24 @@ def main(argv: list[str] | None = None) -> int:
         if args.jsonl:
             specs = [_parse_where(item) for item in args.where]
             report = [where, "file=%s" % shown, *_jsonl_report(full, args, specs)]
+            return _finish_query(root, args, report)
+        if args.files:
+            text = full.read_text(encoding="utf-8", errors="replace")
+            paths, missing = _run_files(root, full, text)
+            cap = args.max if args.max > 0 else 40
+            shown_paths = paths[:cap]
+            report = [where, "source=%s files=%d missing=%d" % (shown, len(paths), len(missing))]
+            for path in shown_paths:
+                rel = agent_log.rel(root, path)
+                report.append("path=%s bytes=%d" % (rel, path.stat().st_size))
+                if args.read:
+                    report.append("--- %s ---" % rel)
+                    report.extend(_file_slice(path, cap))
+            if len(paths) > len(shown_paths):
+                report.append("... %d more files (--max %d)" % (len(paths) - len(shown_paths), cap))
+            report.extend("missing=%s" % rel for rel in missing[:cap])
+            if len(missing) > cap:
+                report.append("... %d more missing (--max %d)" % (len(missing) - cap, cap))
             return _finish_query(root, args, report)
         if _filtered(args):
             text = full.read_text(encoding="utf-8", errors="replace")

@@ -23,7 +23,9 @@ For game work, follow the start card's load/import steps. Run `gate.py gd-load` 
 
 ## Context breaks (authoritative rule)
 
-When context is above 120K, compact at the next good stopping point. Finish the coherent operation already in progress; do not interrupt a mutation, test or tool call halfway through. Save the task state and a short resume note: outcome, decisions, changed files, open questions, running job identifiers and latest result/log paths. Keep these through compaction; discard raw exploratory output. Use guided compact if available, otherwise print that keep-list and stop for the User to compact. Resume in the same session. This is not a fixed step before verification and does not create a new session or survey handoff.
+Stop when a compact would be safe. Finish the coherent operation already in progress; do not interrupt a mutation, test, or tool call halfway through. A compact is safe before Prove, and before a follow-up Gather or Change. Do not stop in the middle of the first Gather or the Change that follows it.
+
+Save the task state and a short resume note: outcome, decisions, changed files, open questions, running job identifiers, and latest result or log paths. Keep these through the compact; discard raw exploratory output. Use guided compact if available. Otherwise print that keep-list and stop for the User to compact. Resume in the same session. This does not open a new session or a survey handoff.
 
 ## Permissions and questions
 
