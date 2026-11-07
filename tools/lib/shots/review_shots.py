@@ -57,9 +57,9 @@ def build_job(names: list[str], question: str, rubric: str, zooms: list[str] | N
               "Write the file in the same turn you finish looking. Then stop."] + rr.protocol_lines()
     return "\n".join(lines) + "\n"
 
-def fail(why: str) -> int:
-    print(f"REVIEW FAILED: {why}")
-    return agent_log.emit_result("FAIL", reason=why)
+def fail(reason: str, why: str = "") -> int:
+    body = f"REVIEW FAILED: {reason}" + ("\nwhy-llm-read: " + why if why else "")
+    return agent_log.finish("shot-review", agent_log.repo_root(), body, "FAIL", reason=reason)
 
 def stage_zooms(paths: list[Path], specs: list[str], scratch: Path, tag: str = "") -> list[str]:
     """--zoom N:X,Y,W,H (N = 1-based shot, box in that shot's pixels as viewed): crop from the full/ original via
@@ -87,9 +87,9 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
            ocr: bool = False, why: str = "") -> int:
     missing = [str(p) for p in paths if not p.is_file()]
     if missing:
-        return fail("missing " + ", ".join(missing))
+        return fail("missing " + ", ".join(missing), why)
     if iso._which_grok(grok) is None:
-        return fail(f"grok not on PATH ({grok}); isolated review cannot run")
+        return fail(f"grok not on PATH ({grok}); isolated review cannot run", why)
     with tempfile.TemporaryDirectory(prefix="wdb-review-") as tmp:
         scratch = Path(tmp).resolve()
         names = []
@@ -107,17 +107,17 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
                 question += "\n\nLogged OCR exception: " + why
             zl = stage_zooms(paths, zoom or [], scratch)
         except (ValueError, IndexError) as e:
-            return fail(str(e))
+            return fail(str(e), why)
         job = scratch / "job.md"
         iso.write_job(job, build_job(names, question, rubric, zl))
         try:
             ins = subprocess.run([grok, "inspect"], cwd=scratch, text=True, capture_output=True, check=False)
         except OSError as e:
-            return fail(f"grok inspect: {e}")
+            return fail(f"grok inspect: {e}", why)
         text = (ins.stdout or "") + "\n" + (ins.stderr or "")
         n = iso.inspect_instruction_count(text)
         if ins.returncode != 0 or iso.inspect_mentions_repo_agents(text) or n != 0:
-            return fail(f"isolation not proven (inspect exit {ins.returncode}, project instructions {n})")
+            return fail(f"isolation not proven (inspect exit {ins.returncode}, project instructions {n})", why)
         budget = turn_budget(len(paths), max_turns, len(zl))
         sizes, rounds, sid, prior = rr.sizes_of(paths), [], "", None
         cut = len(zl)
@@ -133,14 +133,14 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
                 err = (child.stderr or "").strip()
                 if err:
                     sys.stderr.write(err[-1500:] + "\n")
-                why = f"isolated session exited {child.returncode} in round {rno}"
+                reason = f"isolated session exited {child.returncode} in round {rno}"
                 if "max turns" in err.lower():
-                    why += f" (turn budget {budget} spent before {REPORT}; {len(paths)} image(s))"
-                return fail(why)
+                    reason += f" (turn budget {budget} spent before {REPORT}; {len(paths)} image(s))"
+                return fail(reason, why)
             sid = sid or iso.parse_session_id(child.stdout or "")
             rep = scratch / REPORT
             if not rep.is_file() or not rep.read_text(encoding="utf-8").strip():
-                return fail(f"isolated session wrote no {REPORT} in round {rno}")
+                return fail(f"isolated session wrote no {REPORT} in round {rno}", why)
             body = rep.read_text(encoding="utf-8").strip()[:MAX_REPORT]
             rep.unlink()
             reqs, rejected = rr.parse(body, sizes)
@@ -161,10 +161,12 @@ def review(paths: list[Path], question: str, rubric: str, grok: str, max_turns: 
             budget = min(rr.FOLLOW_TURNS, 2 + 2 * max(1, len(crops)))
     verdict = next((ln.split(":", 1)[1].strip().upper() for ln in reversed(body.splitlines())
                     if ln.strip().upper().startswith("VERDICT:")), "")
-    print("REVIEW_SHOTS (isolated)\n" + body + "\n\nROUNDS\n" + "\n".join(rounds))
+    report = "REVIEW_SHOTS (isolated)\n" + body + "\n\nROUNDS\n" + "\n".join(rounds)
+    context = "Question: " + question + ("\nwhy-llm-read: " + why if why else "")
     if verdict not in ("PASS", "FAIL", "UNSURE"):
-        return fail(f"report has no VERDICT line after {len(rounds) - 1} round(s)" + (" (round cap)" if len(rounds) - 1 == rr.MAX_ROUNDS else ""))
-    return agent_log.emit_result("PASS", verdict=verdict, files=len(paths), rounds=len(rounds) - 1, crops=cut)
+        return fail(f"report has no VERDICT line after {len(rounds) - 1} round(s)" + (" (round cap)" if len(rounds) - 1 == rr.MAX_ROUNDS else ""), why)
+    return agent_log.finish("shot-review", agent_log.repo_root(), context + "\n\n" + report, "PASS",
+                            echo=report, verdict=verdict, files=len(paths), rounds=len(rounds) - 1, crops=cut)
 
 FAKE = """#!/usr/bin/env python3
 import json, os, sys, shlex, subprocess
@@ -191,7 +193,7 @@ def say(t):
     open("report.md", "w").write(t)
 if mode == "silent":
     sys.exit(0)
-if mode in ("ok", "text"):
+if mode in ("ok", "text", "why"):
     assert "01-a.png" in job and "Rubric" in job and "ZOOM N:X,Y,W,H" in job
     say("01-a.png: panel visible.\\nVERDICT: PASS\\n")
 elif mode == "greedy":
@@ -245,14 +247,18 @@ def selftest() -> int:
                  ("crash", grok_bin, 1, "exited 4"), ("silent", grok_bin, 1, "no report.md"),
                  ("ok", str(t / "nogrok"), 1, "not on PATH"), ("zoom", grok_bin, 0, "round 2: resumed"),
                  ("nosid", grok_bin, 0, "round 2: fresh"), ("bad", grok_bin, 0, "rejected `ZOOM 7"),
-                 ("greedy", grok_bin, 1, "round cap"), ("text", grok_bin, 0, "VERDICT: PASS"), ("textzoom", grok_bin, 0, "round 2: resumed")]
+                 ("greedy", grok_bin, 1, "round cap"), ("text", grok_bin, 0, "VERDICT: PASS"), ("textzoom", grok_bin, 0, "round 2: resumed"), ("why", grok_bin, 0, "VERDICT: PASS")]
         for mode, grok, want, needle in cases:
             env = dict(os.environ, FAKE_MODE=mode)
             r = subprocess.run(me + [str(png), "--question", "Read the label" if mode in ("text", "textzoom") else "Is the panel visible?", "--rubric", "- panel",
-                                     "--grok", grok], text=True, capture_output=True, env=env)
+                                     "--grok", grok] + (["--why", "meaning rather than transcription"] if mode == "why" else []), text=True, capture_output=True, env=env)
             out = r.stdout + r.stderr
             ok = (r.returncode == 0) == (want == 0) and needle in out and ("PLACEHOLDER" not in out)
             print(f"{'ok ' if ok else 'BAD'} {mode} grok={Path(grok).name} exit={r.returncode}")
+            if ok and mode == "why":
+                summary = out.rsplit("summary=", 1)[-1].split()[0]
+                if "why-llm-read: meaning rather than transcription" not in (agent_log.repo_root() / summary).read_text():
+                    bad.append("why missing from persistent summary")
             if not ok:
                 bad.append(mode)
                 print(out[-400:].replace("\n", " | "))
