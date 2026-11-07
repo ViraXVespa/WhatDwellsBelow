@@ -26,7 +26,7 @@ Set up the pure-Go CLI voxelizer from https://github.com/ViraXVespa/2d-to-3d-vox
 5. From _src/new_bibles/female.png (3x3 grid on solid magenta background), extract the four directional views needed for quad mode: Left, Front, Right, Back (in that exact order).
 6. Key out the magenta background if present.
 7. Assemble them into a single horizontal sprite sheet (equal-width frames, centered artwork) that the voxelizer accepts for -mode quad.
-8. Save the sheet somewhere convenient for the task (e.g. tools/extern/female_quad.png or a temp dir).
+8. Save the sheet to a temporary directory and use its real path in the command below.
 
 ## Voxelize
 9. Run the CLI:
