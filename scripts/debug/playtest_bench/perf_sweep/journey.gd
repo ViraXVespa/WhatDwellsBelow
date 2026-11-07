@@ -103,7 +103,7 @@ static func _begin_dispel(host: Node) -> void:
 		App.finish_end("dispel")
 	_set_state(host, host.ST_DISPEL)
 
-static func _wake_camp(host: Node) -> void:
+static func _wake_camp(_host: Node) -> void:
 	# Same handoff recap finish uses after a human dispel. consume_recap returns
 	# before those lines, so the sweep runs them once the recap has closed.
 	App.wake_pending = true

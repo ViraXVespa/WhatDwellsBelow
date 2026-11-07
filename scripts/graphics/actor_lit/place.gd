@@ -88,7 +88,7 @@ static func _place(host: Node, tex: Texture2D, feet: Vector2) -> void:
 		node.visible = true
 		host._mark_us(6, ts)
 
-static func _biased(host: Node, away: Vector2) -> Vector2:
+static func _biased(_host: Node, away: Vector2) -> Vector2:
 	# Keep a little Z so a side-on light does not flatten the quad.
 	# Sign follows the light so a source toward the camera can cast up-screen.
 	var dir: Vector2 = away

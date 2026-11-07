@@ -146,7 +146,10 @@ def host_body(it, facade, owner, inst, pre, stem, alias, htype="Node"):
             last = e
     out.append(t[last:])
     t = "".join(out)
-    t = t[: head.start()] + re.sub(r"^([ \t]*)(?:static\s+)?func\s+(\w+)\(\)?", lambda k: k.group(1) + "static func " + k.group(2) + ("(host: %s)" if k.group(0).endswith(")") else "(host: %s, ") % htype, t[head.start() :], count=1, flags=re.M)
+    code = fr.kinds(t)
+    used_host = any(code[m.start()] == "c" for m in re.finditer(r"\bhost\b", t))
+    host_name = "host" if used_host or "_host" in loc else "_host"
+    t = t[: head.start()] + re.sub(r"^([ \t]*)(?:static\s+)?func\s+(\w+)\(\)?", lambda k: k.group(1) + "static func " + k.group(2) + ("(%s: %s)" if k.group(0).endswith(")") else "(%s: %s, ") % (host_name, htype), t[head.start() :], count=1, flags=re.M)
     return t, deps
 
 def sig_of(it):
@@ -371,7 +374,7 @@ def main() -> int:
         if r.returncode:
             bad += 1
             print(r.stdout.strip())
-    strip = re.compile(r"\b(" + "|".join(alias.values()) + r")\.|\bhost(: \w+)?(\.|, ?)?|\bself\b,? ?|^static ", re.M)
+    strip = re.compile(r"\b(" + "|".join(alias.values()) + r")\.|\b_?host(: \w+)?(\.|, ?)?|\bself\b,? ?|^static ", re.M)
     ign = ("extends", "##", "const ")
 
     def lines(t):
@@ -398,12 +401,13 @@ def _selftest() -> int:
            "func _ready() -> void:\n\tif not tree_entered.is_connected(_die):\n\t\ttree_entered.connect(_die)\n\n"
            "func _die() -> void:\n\tdead = true\n\tremove_from_group(\"x\")\n\tprint(global_position)\n"
            "\tvar tw := create_tween()\n\ttw.finished.connect(queue_free)\n\n"
-           "func _drop() -> void:\n\tvar host := get_parent()\n\tprint(host)\n")
+           "func _drop() -> void:\n\tvar host := get_parent()\n\tprint(host)\n\n"
+           "func _constant() -> int:\n\treturn 1\n")
     bad = []
     with tempfile.TemporaryDirectory(prefix="wdb-split-st-") as td:
         t = Path(td)
         (t / "project.godot").write_text('config_version=5\n[application]\nconfig/name="t"\n', encoding="utf-8")
-        for plan, want in (({"brk_drop": ["_drop"]}, 2), ({"brk_die": ["_die"]}, 0)):
+        for plan, want in (({"brk_drop": ["_drop"]}, 2), ({"brk_die": ["_die"]}, 0), ({"brk_constant": ["_constant"]}, 0)):
             import shutil
             shutil.rmtree(t / "scripts", ignore_errors=True)
             (t / "scripts").mkdir()
@@ -411,6 +415,8 @@ def _selftest() -> int:
             (t / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
             r = subprocess.run([*boot.cmd("split_funcs"), "--root", td, str(t / "scripts/brk.gd"), "--plan", str(t / "plan.json")],
                                capture_output=True, text=True, cwd=td)
+            if "brk_constant" in plan and "_host: Node3D" not in next((t / "scripts/brk").glob("*.gd")).read_text():
+                bad.append("state-free moved function must retain an underscore-prefixed unused host")
             if r.returncode != want:
                 bad.append(f"plan {plan}: rc={r.returncode} want {want}: {(r.stdout + r.stderr).strip().splitlines()[-3:]}")
     return agent_log.selftest_result(bad)

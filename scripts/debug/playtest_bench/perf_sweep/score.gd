@@ -113,7 +113,7 @@ static func _camp_scene(host: Node) -> bool:
 		return true
 	return str(scene.scene_file_path).find("camp") >= 0
 
-static func _loader_up(host: Node) -> bool:
+static func _loader_up(_host: Node) -> bool:
 	var loader_v: Variant = App.get("loader")
 	if loader_v is Node:
 		var loader: Node = loader_v as Node
@@ -121,17 +121,17 @@ static func _loader_up(host: Node) -> bool:
 			return true
 	return false
 
-static func _live(host: Node) -> bool:
+static func _live(_host: Node) -> bool:
 	return App.playtest != null and bool(App.playtest.get("live_running"))
 
-static func _recap_open(host: Node) -> bool:
+static func _recap_open(_host: Node) -> bool:
 	var recap_v: Variant = App.get("recap")
 	return recap_v is Node and bool((recap_v as Node).get("open"))
 
 static func _wall_s(host: Node) -> float:
 	return float(Time.get_ticks_msec() - host._wall0) / 1000.0
 
-static func _pct(host: Node, frames: int, slow: int) -> float:
+static func _pct(_host: Node, frames: int, slow: int) -> float:
 	if frames <= 0:
 		return 100.0
 	return snappedf(100.0 * float(frames - slow) / float(frames), 0.1)

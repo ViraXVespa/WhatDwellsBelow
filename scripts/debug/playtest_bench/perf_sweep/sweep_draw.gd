@@ -81,5 +81,5 @@ static func _stamp_draw(host: Node) -> void:
 		_draw_info(host, rid, RenderingServer.VIEWPORT_RENDER_INFO_TYPE_CANVAS, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME)
 	)
 
-static func _draw_info(host: Node, rid: RID, kind: RenderingServer.ViewportRenderInfoType, info: RenderingServer.ViewportRenderInfo) -> int:
+static func _draw_info(_host: Node, rid: RID, kind: RenderingServer.ViewportRenderInfoType, info: RenderingServer.ViewportRenderInfo) -> int:
 	return int(RenderingServer.viewport_get_render_info(rid, kind, info))
