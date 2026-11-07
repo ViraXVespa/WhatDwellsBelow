@@ -3,6 +3,7 @@
 import { json, err, CORS, now, sha256, randomToken, hit, sweepRate } from "./util.js";
 import { Bad, LIMITS, validate, spamReason, labels, issueTitle, issueBody } from "./report.js";
 import { githubWebhook, unsubscribe } from "./hooks.js";
+import { retryAuthorizedOutbox } from "./outbox.js";
 
 export const VERSION = "1";
 export const RATE = { ipHour: 10, ipDay: 30, installHour: 5, installDay: 15, globalDay: 300 };
@@ -96,6 +97,7 @@ async function shot(key, env) {
 }
 
 export default {
+  async scheduled(_controller, env) { await retryAuthorizedOutbox(env); },
   async fetch(req, env) {
     const { pathname } = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });

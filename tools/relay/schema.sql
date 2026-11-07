@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS rate (
   count INTEGER NOT NULL,
   expires INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS outbox (        -- queued player emails (sending not wired yet)
+CREATE TABLE IF NOT EXISTS outbox (        -- private transactional outbox
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   reporter_code TEXT NOT NULL,             -- email looked up at send time, never copied here
   issue_number INTEGER,
@@ -34,9 +34,24 @@ CREATE TABLE IF NOT EXISTS outbox (        -- queued player emails (sending not 
   body TEXT NOT NULL,
   created INTEGER NOT NULL,
   state TEXT NOT NULL DEFAULT 'queued',    -- queued | sent | failed | dropped
-  sent_at INTEGER
+  sent_at INTEGER,
+  sender TEXT,                            -- fixed application sender, not reporter contact
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at INTEGER,
+  last_stage TEXT,
+  last_error TEXT,                         -- fixed enum only, never provider/exception text
+  last_http_status INTEGER,
+  provider_id TEXT
 );
 CREATE TABLE IF NOT EXISTS hooks (         -- webhook delivery dedupe
   delivery_id TEXT PRIMARY KEY,
   created INTEGER NOT NULL
+);
+
+-- Operator-armed single authorization, consumed before attempting one existing row.
+CREATE TABLE IF NOT EXISTS outbox_retry (
+  slot INTEGER PRIMARY KEY CHECK (slot=1),
+  outbox_id INTEGER NOT NULL,
+  armed INTEGER NOT NULL DEFAULT 0,
+  consumed_at INTEGER
 );

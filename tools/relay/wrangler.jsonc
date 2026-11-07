@@ -25,5 +25,8 @@
     "required": [
       "RESEND_API_KEY"
     ]
+  },
+  "triggers": {
+    "crons": []
   }
 }

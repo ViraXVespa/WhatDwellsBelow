@@ -6,13 +6,13 @@ Cloudflare Worker `wdb-bug-relay`; D1 holds private report/outbox state, KV scre
 
 The User authorized activation on 2026-11-07; configuration is `EMAIL_SEND="on"`. Only that exact flag enables sending. The domain-scoped key is Worker secret **`RESEND_API_KEY`** on **`wdb-bug-relay`**. Provision write-only through sanctioned setup; never put values in source, vars, fixtures or logs. Wrangler declares the secret name for generated types, not its value. No `send_email` binding or Workers Paid upgrade is needed.
 
-Official `POST https://api.resend.com/emails` uses stable `Idempotency-Key: wdb-bug-relay/outbox/<id>`, plain text plus escaped HTML, an eight-second timeout and a bounded response. Successful JSON with a nonempty Resend `id` means acceptance, **not delivery**. Failures/timeouts/quota errors leave the row queued without exposing provider details. No automatic retry/drain exists; enabling cannot silently flush old rows. Resend idempotency retention is 24 hours. Existing ingress limits, webhook dedupe and opt-in/unsubscribe remain. The inherited outbox has no aggregate pending-row cap; no arbitrary cap or deletion was introduced.
+Official `POST https://api.resend.com/emails` uses stable `Idempotency-Key: wdb-bug-relay/outbox/<id>`, plain text plus escaped HTML, an eight-second timeout and a bounded response. Successful JSON with a nonempty Resend `id` means acceptance, **not delivery**. Failures/timeouts/quota errors leave the row queued with private sanitized status. No automatic retry/drain exists; enabling cannot silently flush old rows. Resend idempotency retention is 24 hours. Existing ingress limits, webhook dedupe and opt-in/unsubscribe remain. The inherited outbox has no aggregate pending-row cap; no arbitrary cap or deletion was introduced.
 
 ## Live validation
 
 Read outbox counts/last id before activation, deploy off, verify binding names/health, then use only the approved live test. The GitHub webhook derives its subject and appends issue/unsubscribe links; it cannot carry a footer-free test unchanged. No public arbitrary-mail endpoint exists. Public test issues/comments and resulting messages require explicit approval. Closing an opted-in test issue triggers another email; do not clean it up unasked.
 
-Health adds boolean type/whitespace/PAT-shape checks, never credential values, lengths or hashes. Shape does not verify upstream authorization. The approved test reached `/report` but returned `502 github_error: GitHub returned 401`. Validate the installed `GITHUB_TOKEN` through sanctioned provisioning; never extract the box CLI token or inspect credential files. A private reporter is allocated before GitHub submission: inspect reports/outbox before retrying, preserve partial records. That rejected attempt created no issue/comment/email.
+Health shape checks are not upstream authorization proof. Private attempt records and single-row recovery: [outbox operations](outbox-ops.md). Apply the additive migration before deploying the diagnostic dispatcher.
 
 ## Client contract
 

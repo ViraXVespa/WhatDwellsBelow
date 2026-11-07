@@ -1,6 +1,6 @@
 // GitHub webhook -> outbox, unsubscribe, and the gated email sender.
 import { json, err, now, hmacHex, safeEqual } from "./util.js";
-import { sendEmail } from "./email.js";
+import { dispatchOutbox } from "./outbox.js";
 export { sendEmail } from "./email.js";
 
 const MAINTAINER = ["OWNER", "MEMBER", "COLLABORATOR"];
@@ -18,10 +18,9 @@ async function queue(env, origin, rep, issue, kind, subject, text) {
   const unsub = await unsubUrl(env, origin, rep.reporter_code);
   const body = `${text}\n\nIssue: https://github.com/${env.REPO}/issues/${issue}\nStop these emails: ${unsub}`;
   const row = await env.DB.prepare(
-    "INSERT INTO outbox (reporter_code, issue_number, kind, subject, body, created) VALUES (?1, ?2, ?3, ?4, ?5, ?6) RETURNING id"
-  ).bind(rep.reporter_code, issue, kind, subject, body, now()).first();
-  const res = await sendEmail(env, rep.email, subject, body, `wdb-bug-relay/outbox/${row.id}`);
-  if (res.sent) await env.DB.prepare("UPDATE outbox SET state='sent', sent_at=?1 WHERE id=?2").bind(now(), row.id).run();
+    "INSERT INTO outbox (reporter_code, issue_number, kind, subject, body, created, sender) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) RETURNING id"
+  ).bind(rep.reporter_code, issue, kind, subject, body, now(), env.EMAIL_FROM || null).first();
+  const res = await dispatchOutbox(env, row.id);
   return { queued: true, outbox_id: row.id, sent: res.sent };
 }
 
