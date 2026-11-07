@@ -451,7 +451,8 @@ func _park(node: MeshInstance3D) -> void:
 		return
 	node.visible = false
 	if _pool_host != null and node.get_parent() != _pool_host:
-		node.reparent(_pool_host)
+		# Keeping the global transform reads it, and that errors once the actor's children have left the tree.
+		node.reparent(_pool_host, false)
 	_pool.append(node)
 
 static func arm_mark() -> void:
