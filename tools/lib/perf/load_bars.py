@@ -4,6 +4,7 @@ Placeholdia loader (scripts/ui/loader.gd, ?wdb-loader-trace).
 
     python tools/perf.py bars --site DIR [--mbps 16] [--tag NAME]
     python tools/perf.py bars --desktop [--tag NAME]
+    python tools/perf.py bars --selftest   # failure injection, real loopback socket; no browser/game
 
 --desktop runs the game itself (Godot pin, OpenGL on $DISPLAY) twice instead: cold (shader caches cleared) then warm.
 
@@ -67,18 +68,21 @@ def run(page, url: str, timeout_s: int) -> dict:
             game.append([round((time.time() - t0) * 1000), float(parts[2]), float(parts[3]), parts[4] if len(parts) > 4 else ""])
 
     page.on("console", on_msg)
-    page.goto(url, wait_until="commit")
-    end = time.time() + timeout_s
-    while time.time() < end:
-        page.wait_for_timeout(250)
-        if game and game[-1][2] >= 0.999 and "100%" in game[-1][3]:
-            break
-    page.wait_for_timeout(300)
-    lb = page.evaluate("window.__lb || {rows: []}")
-    page.remove_listener("console", on_msg)
-    off = round((time.time() - t0) * 1000) - round(page.evaluate("performance.now() - window.__lb.t0")) if lb.get("rows") else 0
-    web = [[r[0] + off, r[1], r[2], r[3], r[4]] for r in lb["rows"]]
-    return {"web": web, "web_gone_ms": (lb.get("gone") or 0) + off, "game": game}
+    try:
+        page.goto(url, wait_until="commit")
+        end = time.time() + timeout_s
+        while time.time() < end:
+            page.wait_for_timeout(250)
+            if game and game[-1][2] >= 0.999 and "100%" in game[-1][3]:
+                break
+        page.wait_for_timeout(300)
+        lb = page.evaluate("window.__lb || {rows: []}")
+        off = round((time.time() - t0) * 1000) - round(page.evaluate("performance.now() - window.__lb.t0")) if lb.get("rows") else 0
+        web = [[r[0] + off, r[1], r[2], r[3], r[4]] for r in lb["rows"]]
+        return {"web": web, "web_gone_ms": (lb.get("gone") or 0) + off, "game": game}
+    finally:
+        page.remove_listener("console", on_msg)
+
 
 def problems(run_: dict) -> list[str]:
     out = []
@@ -170,9 +174,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tag", default="load-bars", help="Output name under _logs/load-bars/.")
     ap.add_argument("--timeout-sec", type=int, default=240, help="Per-run timeout in seconds (default 240).")
     ap.add_argument("--desktop", action="store_true", help="Trace the desktop game (cold + warm shader cache) instead of web.")
+    ap.add_argument("--selftest", action="store_true", help="Inject web-run failures and verify server/browser/listener cleanup (no game or browser launch)")
     ap.add_argument("--chart", default="", help="Only redraw the chart from a saved _logs/load-bars JSON.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
+    if args.selftest:
+        return agent_log.selftest_result(selftest())
     if args.chart:
         src = Path(args.chart)
         chart(json.loads(src.read_text(encoding="utf-8")), src.with_suffix(".png"))
@@ -180,8 +187,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.desktop:
         runs = desktop(root, args.timeout_sec)
         return _report(root, args, runs)
-    site = Path(args.site).resolve()
+    runs = web_runs(Path(args.site).resolve(), args)
+    return _report(root, args, runs)
 
+
+def web_runs(site: Path, args) -> dict:
+    """Own server/thread/browser lifetime, including failed imports, launch and tracing."""
     class H(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a):
             pass
@@ -196,24 +207,35 @@ def main(argv: list[str] | None = None) -> int:
             pass
 
     srv = S(("127.0.0.1", 0), functools.partial(H, directory=str(site)))
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    url = "http://127.0.0.1:%d/index.html?wdb-load-timing-smoke&wdb-loader-trace" % srv.server_address[1]
-    from playwright.sync_api import sync_playwright
-    runs = {}
-    with sync_playwright() as pw:
-        br = pw.chromium.launch(channel="chrome", args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
-        ctx = br.new_context(viewport={"width": 1280, "height": 720}, service_workers="block")
-        page = ctx.new_page()
-        page.add_init_script(SAMPLE)
-        cdp = ctx.new_cdp_session(page)
-        cdp.send("Network.enable")
-        cdp.send("Network.emulateNetworkConditions", {"offline": False, "latency": 20, "downloadThroughput": args.mbps * 125000, "uploadThroughput": args.mbps * 125000})
-        runs["cold %g Mbit/s" % args.mbps] = run(page, url, args.timeout_sec)
-        cdp.send("Network.emulateNetworkConditions", {"offline": False, "latency": 0, "downloadThroughput": -1, "uploadThroughput": -1})
-        runs["cached"] = run(page, url, args.timeout_sec)
-        br.close()
-    srv.shutdown()
-    return _report(root, args, runs)
+    thread = threading.Thread(target=srv.serve_forever, daemon=True, name="wdb-load-bars-server")
+    try:
+        thread.start()
+        url = "http://127.0.0.1:%d/index.html?wdb-load-timing-smoke&wdb-loader-trace" % srv.server_address[1]
+        from playwright.sync_api import sync_playwright
+        runs = {}
+        with sync_playwright() as pw:
+            br = pw.chromium.launch(channel="chrome", args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+            try:
+                ctx = br.new_context(viewport={"width": 1280, "height": 720}, service_workers="block")
+                page = ctx.new_page()
+                page.add_init_script(SAMPLE)
+                cdp = ctx.new_cdp_session(page)
+                cdp.send("Network.enable")
+                cdp.send("Network.emulateNetworkConditions", {"offline": False, "latency": 20, "downloadThroughput": args.mbps * 125000, "uploadThroughput": args.mbps * 125000})
+                runs["cold %g Mbit/s" % args.mbps] = run(page, url, args.timeout_sec)
+                cdp.send("Network.emulateNetworkConditions", {"offline": False, "latency": 0, "downloadThroughput": -1, "uploadThroughput": -1})
+                runs["cached"] = run(page, url, args.timeout_sec)
+            finally:
+                br.close()
+        return runs
+    finally:
+        try:
+            if thread.is_alive():
+                srv.shutdown()
+                thread.join(timeout=5)
+        finally:
+            srv.server_close()
+
 
 def _report(root: Path, args, runs: dict) -> int:
     out = root / "_logs" / "load-bars"
@@ -231,6 +253,72 @@ def _report(root: Path, args, runs: dict) -> int:
     bad = sum(1 for r in runs.values() for p in problems(r) if "longest" not in p)
     return agent_log.finish("load-bars", root, "\n".join(body + ["", f"chart {agent_log.rel(root, out / (args.tag + '.png'))}"]),
                             "FAIL" if bad else "PASS", args=args, problems=bad)
+
+def selftest() -> list[str]:
+    """Real loopback server cleanup with injected failures; no browser or game."""
+    import contextlib
+    import tempfile
+    import types
+    from unittest import mock
+    bad = []
+    init = http.server.ThreadingHTTPServer.__init__
+    for stage in ("thread", "import", "enter", "launch", "context", "cold", "cached", "success"):
+        servers = []
+        def capture(server, *args, **kw):
+            init(server, *args, **kw)
+            servers.append(server)
+        browser = mock.Mock()
+        if stage == "context":
+            browser.new_context.side_effect = RuntimeError("injected context")
+        chromium = mock.Mock()
+        chromium.launch.return_value = browser
+        if stage == "launch":
+            chromium.launch.side_effect = RuntimeError("injected launch")
+        @contextlib.contextmanager
+        def manager():
+            if stage == "enter":
+                raise RuntimeError("injected enter")
+            yield types.SimpleNamespace(chromium=chromium)
+        api = types.ModuleType("playwright.sync_api")
+        api.sync_playwright = manager
+        package = types.ModuleType("playwright")
+        calls = []
+        def trace(*args):
+            calls.append(args)
+            if stage == "cold" or stage == "cached" and len(calls) == 2:
+                raise RuntimeError("injected " + stage)
+            return {}
+        modules = {"playwright": package, "playwright.sync_api": None if stage == "import" else api}
+        with tempfile.TemporaryDirectory() as td, contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(sys.modules, modules))
+            stack.enter_context(mock.patch.object(http.server.ThreadingHTTPServer, "__init__", capture))
+            stack.enter_context(mock.patch.dict(globals(), {"run": trace}))
+            if stage == "thread":
+                stack.enter_context(mock.patch.object(threading.Thread, "start", side_effect=RuntimeError("injected thread")))
+            try:
+                result = web_runs(Path(td), types.SimpleNamespace(mbps=16.0, timeout_sec=1))
+                if stage != "success" or len(result) != 2:
+                    bad.append(stage + ": expected injected failure")
+            except (RuntimeError, ModuleNotFoundError) as exc:
+                if stage == "success" or stage != "import" and str(exc) != "injected " + stage:
+                    bad.append(stage + ": unexpected error " + str(exc))
+        if len(servers) != 1 or servers[0].fileno() != -1:
+            bad.append(stage + ": listening socket leaked")
+        if any(t.name == "wdb-load-bars-server" for t in threading.enumerate()):
+            bad.append(stage + ": server thread leaked")
+        expected_close = stage in ("context", "cold", "cached", "success")
+        if browser.close.call_count != int(expected_close):
+            bad.append(stage + ": browser cleanup count " + str(browser.close.call_count))
+    page = mock.Mock()
+    page.goto.side_effect = RuntimeError("injected navigation")
+    try:
+        run(page, "http://127.0.0.1/", 1)
+        bad.append("navigation failure swallowed")
+    except RuntimeError:
+        if page.remove_listener.call_count != 1 or page.remove_listener.call_args.args != ("console", page.on.call_args.args[1]):
+            bad.append("navigation failure leaked console listener")
+    return bad
+
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
