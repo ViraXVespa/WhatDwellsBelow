@@ -17,6 +17,8 @@ const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
 const Contact := preload("res://scripts/graphics/actor_lit/lit_contact.gd")
 const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 
+const Place := preload("res://scripts/graphics/actor_lit/place.gd")
+const Slots := preload("res://scripts/graphics/actor_lit/slots.gd")
 static var _shade: Shader
 ## Debug plant (hub_shadow_check/feet_px.gd): the higher standing foot treated as raised (the one-foot-off of 20611abf).
 static var plant_flat := false
@@ -256,154 +258,13 @@ func _lay(host: Node3D, delta: float) -> void:
 	else:
 		Drive._drive_hub(self, host, feet)
 	_mark_us(1, t0)
-	_place(tex, feet)
+	Place._place(self, tex, feet)
 
 func _mix(sample: Color) -> Color:
 	return Color(_game.r * sample.r, _game.g * sample.g, _game.b * sample.b, _game.a)
 
 func _usable(tex: Texture2D) -> bool:
 	return tex != null and tex.get_width() > 8 and tex.get_height() > 8
-
-func _place(tex: Texture2D, feet: Vector2) -> void:
-	var t0: int = _mark_t()
-	var t_sole: int = _mark_t()
-	var soles: Vector4 = Soles._soles(tex)
-	_mark_us(9, t_sole)
-	var tw: float = float(maxi(1, tex.get_width()))
-	var th: float = float(maxi(1, tex.get_height()))
-	var px: float = spr.pixel_size
-	# Both pins on the grounded (lowest) sole row: a raised foot keeps its x but not its lift, so it shows a gap
-	# above the mark in proportion to the lift (hub_shadow_check/mark_matrix.gd).
-	var sole_y: float = maxf(soles.y, soles.w)
-	var up: float = K.RAISED_M / maxf(spr.pixel_size, 1e-5)
-	var gl: bool = sole_y - soles.y < up and not (plant_flat and soles.y < sole_y)
-	var gr: bool = sole_y - soles.w < up and not (plant_flat and soles.w < sole_y)
-	# A grounded foot pins at its own sole (contact) row; the shader (lit_k feet) casts its rows from there.
-	var t_pin: int = _mark_t()
-	var fl: Vector2 = Geo._sole_xz(self, soles.x, soles.y if gl else sole_y, tw, th, gl) - feet
-	var fr: Vector2 = Geo._sole_xz(self, soles.z, soles.w if gr else sole_y, tw, th, gr) - feet
-	lift = 0.0
-	var kind: Variant = get_parent().get("move_kind")
-	if air_force or kind == "fly" or kind == "hop":
-		# Straight-down pins (no camera drop, no tuck): the mark stays under the body, detached by the altitude.
-		var wl: Vector3 = Geo._sole_world(self, soles.x, sole_y, tw, th)
-		var wr: Vector3 = Geo._sole_world(self, soles.z, sole_y, tw, th)
-		if minf(wl.y, wr.y) - T.FLOOR_Y > K.AIR_MIN:
-			lift = minf(wl.y, wr.y) - T.FLOOR_Y
-			fl = Vector2(wl.x, wl.z) - feet
-			fr = Vector2(wr.x, wr.z) - feet
-	_mark_us(10, t_pin)
-	var s_air: float = clampf(1.0 - lift / K.AIR_S_M, K.AIR_S_MIN, 1.0)
-	var a_air: float = clampf(1.0 - lift / K.AIR_A_M, K.AIR_A_MIN, 1.0)
-	var origin: Vector3 = Vector3(feet.x, T.FLOOR_Y, feet.y)
-	var ink: float = 0.0
-	if App.in_dungeon:
-		for slot in K.MARK_N:
-			if _alpha_at[slot] >= K.HIDE_A:
-				ink += _alpha_at[slot]
-	var scale: float = 1.0
-	if App.in_dungeon and _ink_budget > 0.001 and ink > _ink_budget:
-		scale = _ink_budget / ink
-	var glow: bool = Emis.rule_of(get_parent()) == "glow"
-	_mark_us(2, t0)
-	for slot in K.MARK_N:
-		var node: MeshInstance3D = marks[slot]
-		var live: bool = _alpha_at[slot] >= K.HIDE_A and not glow
-		if not live:
-			node.visible = false
-			continue
-		var dir: Vector2 = _biased(_away_at[slot])
-		_sync_slot(slot, tex, soles, fl, fr, dir, px, feet)
-		var ts: int = _mark_t()
-		var at: Vector3 = origin
-		if lift > 0.0:
-			var run: Vector2 = dir * Geo._reach(lift, _stretch_at[slot], _src_at[slot])
-			at += Vector3(run.x, 0.0, run.y)
-		node.global_transform = Transform3D(Basis.IDENTITY.scaled(Vector3(s_air, 1.0, s_air)), at)
-		var shade_mat: ShaderMaterial = node.material_override as ShaderMaterial
-		if shade_mat != null:
-			var shown: float = _alpha_at[slot] * scale * a_air
-			var shade: Color = Color(0.02, 0.02, 0.02, shown)
-			if not _shade_set[slot] or shade != _shade_at[slot]:
-				shade_mat.set_shader_parameter("shade", shade)
-				_shade_at[slot] = shade
-				_shade_set[slot] = true
-			var sun_c: float = 1.0 if slot == 0 and not App.in_dungeon else 0.0
-			if sun_c != _sun_at[slot]:
-				shade_mat.set_shader_parameter("sun_cancel", sun_c)
-				_sun_at[slot] = sun_c
-			if slot == 0 and _hull_n != Hulls._n:
-				Hulls.bind(shade_mat)
-				_hull_n = Hulls._n
-			var grid_v: float = K.HUB_GRID if K.on_grid() else 0.0
-			if grid_v != _grid_at[slot]:
-				shade_mat.set_shader_parameter("grid", grid_v)
-				_grid_at[slot] = grid_v
-		node.visible = true
-		_mark_us(6, ts)
-
-func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
-	var t0: int = _mark_t()
-	var node: MeshInstance3D = marks[slot]
-	var src: Vector2 = Vector2.ZERO
-	if _src_at[slot].length_squared() > 0.0004:
-		src = _src_at[slot] - feet
-	var reach: Vector2 = dir * _stretch_at[slot]
-	var key: Array = [
-		tex.get_instance_id(), px, _flip,
-		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
-		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
-		snappedf(reach.x, 0.01), snappedf(reach.y, 0.01),
-		snappedf(src.x, 0.05), snappedf(src.y, 0.05),
-	]
-	var mat: ShaderMaterial = node.material_override as ShaderMaterial
-	if mat != null:
-		var t_albedo: int = _mark_t()
-		var albedo: Texture2D = Soles._solid(tex, solid) if solid != "" else Emis.mask(tex, Emis.rule_of(get_parent()))
-		_mark_us(7, t_albedo)
-		var aid: int = albedo.get_instance_id() if albedo != null else 0
-		if aid != _albedo_id[slot]:
-			mat.set_shader_parameter("albedo_tex", albedo)
-			_albedo_id[slot] = aid
-		if solid == "profile":
-			var tf: int = _mark_t()
-			foot = Soles._foot(tex)
-			_mark_us(4, tf)
-		else:
-			foot = 0
-		var t_contact: int = _mark_t()
-		var per_col: bool = solid == "" and K.on_grid()
-		var contact_flag: float = 1.0 if per_col else 0.0
-		if contact_flag != _contact_on[slot]:
-			mat.set_shader_parameter("contact_on", contact_flag)
-			_contact_on[slot] = contact_flag
-		if per_col:
-			var ctex: Texture2D = Contact.tex(tex, Soles._soles(tex), px, plant_flat)
-			var cid: int = ctex.get_instance_id() if ctex != null else 0
-			if cid != _contact_id[slot]:
-				mat.set_shader_parameter("contact_tex", ctex)
-				_contact_id[slot] = cid
-		_mark_us(8, t_contact)
-	if key == _key_at[slot] and node.mesh != null:
-		_mark_us(3, t0)
-		return
-	_key_at[slot] = key
-	var tq: int = _mark_t()
-	node.mesh = Geo._quad(self, tex, Soles._span(tex), soles, fl, fr, dir, px, _stretch_at[slot], src)
-	_mark_us(5, tq)
-	_mark_us(3, t0)
-
-func _biased(away: Vector2) -> Vector2:
-	# Keep a little Z so a side-on light does not flatten the quad.
-	# Sign follows the light so a source toward the camera can cast up-screen.
-	var dir: Vector2 = away
-	if dir.length_squared() < 0.0004:
-		dir = K.SUN_AWAY
-	else:
-		dir = dir.normalized()
-	if absf(dir.y) < K.MIN_DOWN:
-		dir.y = K.MIN_DOWN if dir.y >= 0.0 else -K.MIN_DOWN
-	return dir.normalized()
 
 static func _mat() -> ShaderMaterial:
 	if _shade == null:
