@@ -2,9 +2,7 @@ extends Object
 
 ## Local / localhost hitch JSONL. Append on miss. Tail 256. Localhost web also POSTs rows to `perf.py hitch`.
 
-const CAP := 256
-const REL_DIR := "hitch"
-const REL_FILE := "hitch.jsonl"
+const CAP := Tick.CAP
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const Ctx := preload("res://scripts/debug/hitch_log/ctx.gd")
 const Web := preload("res://scripts/debug/hitch_log/log_web.gd")
@@ -12,6 +10,8 @@ const Run := preload("res://scripts/debug/hitch_log/log_run.gd")
 const Present := preload("res://scripts/debug/hitch_log/log_present.gd")
 const Rows := preload("res://scripts/debug/hitch_log/rows.gd")
 const LogFile := preload("res://scripts/debug/hitch_log/log_file.gd")
+const Session := preload("res://scripts/debug/hitch_log/session.gd")
+const Tick := preload("res://scripts/debug/hitch_log/log_tick.gd")
 static var hitch_n: int = 0
 static var worst_ms: float = 0.0
 static var file_path: String = ""
@@ -155,138 +155,17 @@ static func note_span(host: Node, reason: String, sec: float) -> void:
 		Rows._whys.remove_at(0)
 	Rows._whys.append("%s:0" % reason)
 	Rows.why = reason
-	_note(host, sec)
+	Tick._note(host, sec)
 
 ## Bench start: apply the multiplier and replace the hitch file so the run is one session.
 static func bench_reset(mult_value: float) -> void:
-	set_mult(mult_value)
-	close()
-	var path: String = OS.get_user_data_dir().path_join(REL_DIR).path_join(REL_FILE)
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(path)
-	Rows.started = false
-	hitch_n = 0
-	worst_ms = 0.0
-	Rows.why = ""
-	Rows.gx = 0
-	Rows.gy = 0
-	Rows._whys = PackedStringArray()
-	Rows._mark_ms = 0
-	Rows._mark_frame = -1
-	_skip_gap = false
-	Rows._keep_all = true
-	frame_n = 0
-	slow_n = 0
-	pause_slow_n = 0
-	bar_slow_n = 0
-	Present._dts = PackedFloat32Array()
-	Present._pts = PackedFloat32Array()
-	Rows.clear_harness()
-	Rows.set_tree_split(-1.0, -1.0, -1.0)
-	Rows.clear_edge()
-	Rows.set_bench_ms(-1.0)
-	Rows.set_lit_mark(-1.0, -1.0, -1)
-	Rows.set_render_ms(-1.0, -1.0)
-	Rows.set_lit_peak(-1.0, "")
-	Rows.set_unscored(false)
-	Rows._phase = ""
-	Rows._play_s = 0.0
-	Rows._last_proc = -1.0
-	Rows._proc_held = 0
-	Run._run_n = 0
-	Run._run_best = 0
-	Run._run_vals = PackedFloat32Array()
-	Run._run_best_vals = PackedFloat32Array()
-	Web._web_q = PackedStringArray()
-	Present._present_at = -100000
-	Present._present_row = {}
-	Ctx._counted = false
-	Ctx._mesh_n = 0
-	Ctx._light_n = 0
-	Ctx.set_score_where("hub")
-	_emit_at = -100000
-	Rows._bench_gen += 1
-	file_path = ""
-	Rows._t0_ms = 0
-	begin()
+	Session.bench_reset(mult_value)
 
 static func begin(_host: Node = null) -> void:
-	if Rows.started or not enabled():
-		return
-	if Present._mult <= 0.0:
-		var cli_mult: float = CliArgs.float_arg("--wdb-hitch-mult", 0.0)
-		if cli_mult > 0.0:
-			set_mult(cli_mult)
-	Rows.ver = Ctx._ver_label()
-	Rows._t0_ms = Time.get_ticks_msec()
-	var dir_path: String = OS.get_user_data_dir().path_join(REL_DIR)
-	DirAccess.make_dir_recursive_absolute(dir_path)
-	file_path = dir_path.path_join(REL_FILE)
-	LogFile._trim_file()
-	Rows._fh = FileAccess.open(file_path, FileAccess.READ_WRITE)
-	if Rows._fh == null:
-		Rows._fh = FileAccess.open(file_path, FileAccess.WRITE_READ)
-	if Rows._fh == null:
-		return
-	Rows._fh.seek_end()
-	Rows.started = true
-	hitch_n = LogFile._count_hitches()
-	Rows._write_row(Rows._session_row())
+	Session.begin(_host)
 
 static func tick(host: Node, delta: float) -> void:
-	if not enabled():
-		return
-	Rows.stamp_edge(Time.get_ticks_usec())
-	if not Rows.started:
-		begin(host)
-	if not Rows.started:
-		return
-	if Engine.time_scale != 1.0:
-		return
-	# Harness credit is the previous iteration's playtest tick. Rotate on every
-	# real-time tick so a paused or loader frame does not apply it one frame late.
-	var scored: float = delta
-	if Rows.harness_on():
-		scored = delta - Rows.rotate_harness()
-		if scored < 0.0:
-			scored = 0.0
-	Rows._sample_proc()
-	if _skip_gap:
-		_skip_gap = false
-		Run._break_run()
-		Rows._write_gap(scored, "skip_gap")
-		return
-	var tree: SceneTree = host.get_tree()
-	if tree != null and tree.paused:
-		Run._break_run()
-		if Present._over_budget(scored):
-			pause_slow_n += 1
-			_note_paused(host, scored)
-		return
-	# The 99% bar is the whole time the scored scene is on screen (hub camp, or
-	# the dungeon when the dungeon bench set that). Loader-up frames are not it.
-	if not Ctx._score_on_screen(host):
-		Run._break_run()
-		if Present._over_budget(scored):
-			bar_slow_n += 1
-			Rows._note_bar(host, scored)
-		return
-	# The sweep's hidden-group window is on screen and must stay out of fps_pct.
-	if Rows.unscored():
-		Run._break_run()
-		return
-	frame_n += 1
-	var dt_ms: float = snappedf(scored * 1000.0, 0.1)
-	if Rows._keep_all:
-		Present._dts.append(dt_ms)
-		if Rows.harness_on():
-			Present._pts.append(Rows.pt_ms())
-	var slow: bool = Present._over_budget(scored)
-	Run._track_run(dt_ms, slow)
-	if not slow:
-		return
-	slow_n += 1
-	_note(host, scored)
+	Tick.tick(host, delta)
 
 static func copy_text() -> String:
 	var txt: String = LogFile._read_all()
@@ -295,18 +174,7 @@ static func copy_text() -> String:
 	return txt
 
 static func clear_log() -> void:
-	Rows._close()
-	if file_path != "" and FileAccess.file_exists(file_path):
-		DirAccess.remove_absolute(file_path)
-	Rows.started = false
-	hitch_n = 0
-	worst_ms = 0.0
-	frame_n = 0
-	slow_n = 0
-	Present._dts = PackedFloat32Array()
-	Present._pts = PackedFloat32Array()
-	if enabled():
-		begin()
+	Session.clear_log()
 
 static func close() -> void:
 	Rows._close()
@@ -327,25 +195,7 @@ static func fps_pct() -> float:
 
 ## One session row the hub bench runner reads (desktop file and the localhost hitch sink).
 static func bench_done(sec: float, ok: bool, missing: String) -> void:
-	if not enabled():
-		return
-	if not Rows.started:
-		begin()
-	var row: Dictionary = {
-		"ev": "bench",
-		"sec": snappedf(sec, 0.1),
-		"ok": 1 if ok else 0,
-		"missing": missing,
-		"hitches": hitch_n,
-		"frames": frame_n,
-		"slow": slow_n,
-		"fps_pct": fps_pct(),
-		"worst_ms": snappedf(worst_ms, 0.1),
-		"web": 1 if OS.has_feature("web") else 0,
-		"pause_slow": pause_slow_n,
-		"bar_slow": bar_slow_n,
-	}
-	Rows.emit_bench(row)
+	Session.bench_done(sec, ok, missing)
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	Rows.mark(reason, origin)
@@ -357,46 +207,6 @@ static func status_line() -> String:
 	if worst_ms > 0.0:
 		worst = str(snappedf(worst_ms, 0.1))
 	return "Hitch %d/%d  worst %s ms  x%.2f  %s" % [hitch_n, CAP, worst, mult(), file_path]
-
-static func _note(host: Node, delta: float) -> void:
-	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
-	var fresh: bool = dt_ms > worst_ms
-	if fresh:
-		worst_ms = dt_ms
-	hitch_n += 1
-	# The counters above are the 99% bar. Building the row on every miss costs
-	# another present on web, so a single stall becomes the rest of the walk.
-	var now: int = Time.get_ticks_msec()
-	if not fresh and now - _emit_at < 100:
-		return
-	_emit_at = now
-	Rows._write_row(Rows._hitch_row(host, dt_ms))
-	Rows.why = ""
-	Rows.gx = 0
-	Rows.gy = 0
-	Rows._whys.clear()
-	Rows._mark_ms = 0
-	if hitch_n > CAP and not Rows._keep_all:
-		Rows._close()
-		LogFile._trim_file()
-		Rows._fh = FileAccess.open(file_path, FileAccess.READ_WRITE)
-		if Rows._fh == null:
-			Rows._fh = FileAccess.open(file_path, FileAccess.WRITE_READ)
-		if Rows._fh != null:
-			Rows._fh.seek_end()
-		hitch_n = LogFile._count_hitches()
-
-static func _note_paused(host: Node, delta: float) -> void:
-	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
-	var row: Dictionary = Rows._hitch_row(host, dt_ms)
-	row["paused"] = 1
-	hitch_n += 1
-	Rows._write_row(row)
-	Rows.why = ""
-	Rows.gx = 0
-	Rows.gy = 0
-	Rows._whys.clear()
-	Rows._mark_ms = 0
 
 static func flush_web() -> void:
 	Web._flush_web()
