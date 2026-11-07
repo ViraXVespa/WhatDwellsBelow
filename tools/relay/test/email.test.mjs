@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { runInNewContext } from "node:vm";
 import { buildMetadata, CONFIG } from "../deploy-payload.mjs";
 import { sendEmail } from "../src/hooks.js";
+import worker from "../src/worker.js";
 
 
 // Fixtures only: no real credentials, network, mail or deployment.
@@ -111,4 +112,18 @@ test("all payload CLI modes retain unknown secrets using temporary fake credenti
       assert.ok(!result.stderr.includes("fixture-github"));
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+
+test("existing health checks credential shape without disclosing value, length or hash or fetching", async () => {
+  for (const value of [undefined, {}, "github_pat_fixture", "ghp_fixture", "github_pat_fixture\n", '"github_pat_fixture"', "Bearer github_pat_fixture", "$file:/fixture"]) {
+    const response = await worker.fetch(new Request("https://relay.example.test/health"), { GITHUB_TOKEN: value });
+    const health = await response.json();
+    assert.equal(health.github_token_string, typeof value === "string");
+    assert.equal(health.github_token_trimmed, typeof value === "string" && value === value.trim());
+    assert.equal(health.github_token_pat_shape, value === "github_pat_fixture" || value === "ghp_fixture");
+    const serialized = JSON.stringify(health);
+    assert.ok(!serialized.includes("fixture"));
+    assert.ok(!/hash|length/.test(serialized));
+  }
 });

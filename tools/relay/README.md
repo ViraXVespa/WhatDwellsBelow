@@ -12,7 +12,7 @@ Official `POST https://api.resend.com/emails` uses stable `Idempotency-Key: wdb-
 
 Read outbox counts/last id before activation, deploy off, verify binding names/health, then use only the approved live test. The GitHub webhook derives its subject and appends issue/unsubscribe links; it cannot carry a footer-free test unchanged. No public arbitrary-mail endpoint exists. Public test issues/comments and resulting messages require explicit approval. Closing an opted-in test issue triggers another email; do not clean it up unasked.
 
-Health confirms flags, not upstream credentials. The approved test reached `/report` but returned `502 github_error: GitHub returned 401`. Validate the installed `GITHUB_TOKEN` through sanctioned provisioning; never extract the box CLI token or inspect credential files. A private reporter is allocated before GitHub submission: inspect reports/outbox before retrying, preserve partial records. That rejected attempt created no issue/comment/email.
+Health adds boolean type/whitespace/PAT-shape checks, never credential values, lengths or hashes. Shape does not verify upstream authorization. The approved test reached `/report` but returned `502 github_error: GitHub returned 401`. Validate the installed `GITHUB_TOKEN` through sanctioned provisioning; never extract the box CLI token or inspect credential files. A private reporter is allocated before GitHub submission: inspect reports/outbox before retrying, preserve partial records. That rejected attempt created no issue/comment/email.
 
 ## Client contract
 

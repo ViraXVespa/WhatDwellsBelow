@@ -101,6 +101,10 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     if (pathname === "/health" && req.method === "GET")
       return json({ ok: true, service: "wdb-bug-relay", version: VERSION, repo: env.REPO, github_token: !!env.GITHUB_TOKEN,
+        // Shape checks are booleans only, not validation with GitHub; never expose a credential, length or hash.
+        github_token_string: typeof env.GITHUB_TOKEN === "string",
+        github_token_trimmed: typeof env.GITHUB_TOKEN === "string" && env.GITHUB_TOKEN === env.GITHUB_TOKEN.trim(),
+        github_token_pat_shape: typeof env.GITHUB_TOKEN === "string" && /^(github_pat_|ghp_)[A-Za-z0-9_]+$/.test(env.GITHUB_TOKEN),
         webhook_secret: !!env.GH_WEBHOOK_SECRET, email_send: env.EMAIL_SEND || "off", screenshots: !!env.SHOTS });
     if (pathname === "/report" && req.method === "POST") return report(req, env);
     if (pathname.startsWith("/shot/") && req.method === "GET") return shot(pathname.slice(6), env);
