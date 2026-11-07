@@ -10,6 +10,7 @@ DOCS = (
     "design/pc-offload.md", "design/isolated-media.md", "design/prove.md", "design/shot-tool.md",
     "design/shot-flows.md", "design/tools.md", "design/tools-build.md", "design/tools-shots.md",
     "design/tools-media.md", "design/tools-gates.md", "design/tools-lookup.md", "design/tools-libs.md",
+    "design/tools-perf.md", "design/debug-smokes.md",
     "design/tasks/README.md", "design/tasks/modular-voxel-walk-proof.md", "design/tasks/ui-png-art.md",
     "design/tasks/perf-sweep.md", ".grok/skills/pc-offload/SKILL.md",
     ".grok/skills/review-shots-isolated/SKILL.md", ".grok/skills/shot-tool/SKILL.md",

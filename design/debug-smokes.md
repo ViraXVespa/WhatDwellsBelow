@@ -47,15 +47,12 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 | p8 | Hub spots, building depth, save backup on the smoke slot, archive catalog |
 | p9 | Audio, archive catalog, anim models, playtest hook |
 
-## Dedicated smoke session
+## A named smoke-coverage task
 
-Build slices do not need this session: they run the phases mapped in `routes.yaml` `smokes` and add or update asserts for what they implement (Build job cycle). The limits below apply to this dedicated session only.
+Ordinary Build tasks run their mapped phases and add or update relevant assertions. A dedicated coverage task stays within the phase/helper the User named:
 
-Smoke coverage is a Build session kept thin (summaries, not Godot logs in chat). Slice, Bot-notes and PC-offload chats must not rewrite these habits.
+1. Edit the existing routing/helper. Touch live code only for required marks, assertions or a called facade. Existing owners are listed in the code map; dedicated load/map runs are flags, not new numbered phases.
+2. Run the named phase or dedicated runner above and inspect its bounded summary, including `SCRIPT ERROR` lines. Do not paste raw logs into chat.
+3. Ask before adding a numbered phase, an unrequested smoke flag or a host scene. A map dump reads `spawn_jobs`; do not replace it with `stream_all`/`force_all`.
 
-- Purpose: write named smoke coverage. Numbered P1–P9: `smoke.gd` (`route_boot` / `attach_*`) plus `smoke_early.gd` (helpers `early_p3.gd`, `early_p4.gd`) / `smoke_late.gd` / `smoke_p5.gd`, `smoke_p6.gd` (+ `smoke_escape.gd`: every hub menu closes by each Back bind, the Back chip, and from one to three levels in), `smoke_p7.gd`, `p79.gd`, `smoke_p8.gd`, `smoke_p9.gd`. Dedicated sweeps are extra flags, not a new N: `--wdb-load-timing-smoke` and `--wdb-dungeon-load-timing-smoke` (`load_timing.gd` mark / dmark), `--wdb-load-timing-smoke --wdb-open-timing` (`open_timing.gd`: after the real title → hub load, each hub menu's first and second open, `OPEN:` lines in ms; exit 1 when a first open stalls; `gate.py bot-smokes --phases 6` runs it as `open_timing`), `--wdb-dungeon-map-smoke` (`dungeon_map.gd`)
-- Typical slice: one named add. Edit `smoke.gd` routing and that helper (live path only for marks/asserts the smoke must emit). Run that phase (`gate.py smokes`) or extra-flag runner. Read only `_logs/smokes/<stamp>-smokes.txt`, or `_logs/load-timing/<stamp>-load-timing.txt` / `_logs/dungeon-load-timing/<stamp>-dungeon-load-timing.txt` / `_logs/dungeon-map/<stamp>-dungeon-map.txt` when that flag is the job. Stop
-- Just do: same-phase / same-helper assertions; `LoadTiming.mark` / `dmark` / `dnote` the smoke must call; hostify facades the phase still calls (`dungeon_boot.ready_floor`, `AppFlow` enter / `play_from_menu`). Headless skip of splash / title / enter overlay. Pin seed 42 / floor 1 on gen-dependent flags. Map dump reads `spawn_jobs`, does not `stream_all`
-- Ask first: new numbered phase; a new `--wdb-*-smoke` flag the User did not name this session; a new smoke host scene; `stream_all` / `force_all` for a map dump
-- Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; invent coverage the User did not name; postcard shots (`tools/shots.py capture`) which are not numbered smokes; tree dumps; raw Godot logs in chat; parking Bot opt notes; folding slice or catalog-runner work in
-- Overlap: other Build CLIs **run** existing smokes via the prove-cycle runner table; this job **writes** them. PC-offload owns new runners; Bot-notes parks refactor notes. Do not fold those roles in unless the User names them.
+Do not expand the coverage task into art generation, promo captures, unrelated gameplay or runner work. Record an uncovered requirement rather than inventing unnamed coverage.
