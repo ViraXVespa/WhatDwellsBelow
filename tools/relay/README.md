@@ -17,3 +17,9 @@ Before live activation, read state counts and last outbox id without reading mes
 From this directory: `npm test`, `npm run typecheck`, `npm run dry-run`. These use mocked provider requests and upload-free compilation; they neither send mail nor prove live delivery. `node deploy-payload.mjs` creates the normal connector payload without reading secrets. Deployment, enablement and the exact single approved live test are separately tracked; this source update alone does not claim any of them happened.
 
 Official API: https://resend.com/docs/api-reference/emails/send-email ; idempotency: https://resend.com/docs/dashboard/emails/idempotency-keys .
+
+## Scripted clients and edge errors
+
+On managed `workers.dev`, Cloudflare Error 1010 can reject a library-default User-Agent before this Worker runs. Official guidance is an honest descriptive application identifier, not browser impersonation: the approved integration test client uses `WDB-Relay-Integration-Test/0.10.9`. Same public endpoint/network, no cookies, credentials, WAF changes or alternate route. The native game sends JSON through HTTPRequest; this relay does not require an Origin header or application auth for `/report`. See https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/ . Managed-zone blocks do not appear in this account's Worker logs/security events.
+
+A health success confirms configuration flags, not upstream credential validity. The live approved test reached `/report` after the documented client correction but received `502 github_error: GitHub returned 401`. Refresh the existing Worker `GITHUB_TOKEN` through sanctioned credential provisioning; do not extract the box CLI token or read secret files. Creation allocates a private reporter before GitHub submission, so check report/outbox state before any retry; never delete partial records unasked. No test issue, comment or email was created by that rejected attempt.
