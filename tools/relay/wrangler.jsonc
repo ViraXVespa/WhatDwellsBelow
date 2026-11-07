@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wdb-bug-relay",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  "vars": {
+    "REPO": "ViraXVespa/WhatDwellsBelow",
+    "EMAIL_SEND": "off",
+    "EMAIL_FROM": ""
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wdb-bug-relay",
+      "database_id": "ac9512aa-20c5-45b0-932e-692609241ba6"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SHOTS",
+      "id": "579f8fada4f24440bfd6095407b648fa"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "remote": false
+    }
+  ]
+}

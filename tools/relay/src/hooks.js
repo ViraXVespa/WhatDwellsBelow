@@ -1,5 +1,7 @@
-// GitHub webhook -> outbox, unsubscribe, and the (stubbed) email sender.
+// GitHub webhook -> outbox, unsubscribe, and the gated email sender.
 import { json, err, now, hmacHex, safeEqual } from "./util.js";
+import { sendEmail } from "./email.js";
+export { sendEmail } from "./email.js";
 
 const MAINTAINER = ["OWNER", "MEMBER", "COLLABORATOR"];
 
@@ -11,12 +13,6 @@ export async function unsubUrl(env, origin, code) {
   return `${origin}/unsubscribe?r=${encodeURIComponent(code)}&t=${await unsubToken(env, code)}`;
 }
 
-// TODO(email): wire a sender once Vira picks a domain (Cloudflare Email Sending needs one she owns).
-// Until then EMAIL_SEND stays "off" and every message waits in outbox with state 'queued'.
-export async function sendEmail(env, _to, _subject, _body) {
-  if (env.EMAIL_SEND !== "on") return { sent: false, reason: "email_send_off" };
-  return { sent: false, reason: "sender_not_implemented" };
-}
 
 async function queue(env, origin, rep, issue, kind, subject, text) {
   const unsub = await unsubUrl(env, origin, rep.reporter_code);

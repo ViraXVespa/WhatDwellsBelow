@@ -34,7 +34,7 @@ Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira
 
 ## Left
 - **Web proof:** done 2026-10-31: `release.py export-web --debug --out DIR`, then `perf.py web --site DIR --flow bug-dry` (`window.wdbBugDry`, `scripts/debug/web_hook.gd`) returned 200 with labels `bug-report, door:triage, build:debug, platform:web`, email `none`; no GitHub token string in the export.
-- **Email sending:** Cloudflare Email Sending needs a domain Vira owns (GoDaddy domain, "decide later"; mail stays stored, unsent); then wire `sendEmail` in `tools/relay/src/hooks.js` and flip `EMAIL_SEND`. Player replies to `/ask` need the same domain.
+- **Email sending:** optional structured binding/sender prep is implemented and locally tested, **not deployed or enabled** (`tools/relay/README.md`). `EMAIL_SEND=off`, sender empty. Current Cloudflare arbitrary-recipient Email Sending requires Workers Paid, conflicting with this task's free-only decision; free verified Routing destinations do not cover arbitrary reporters. Owner plan/provider decision, service/domain verification and a chosen/restricted sender block activation. Do not upgrade, switch providers or flip the flag implicitly. Player replies to `/ask` remain unimplemented.
 - **Webhook:** live (id 703111592, issues + issue_comment, ping 200).
 
 ## Intent

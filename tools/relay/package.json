@@ -4,10 +4,15 @@
   "type": "module",
   "description": "Cloudflare Worker: in-game bug reports -> GitHub issues (design/tasks/bug-report-relay.md)",
   "scripts": {
-    "test": "node --test test/",
-    "doors": "node gen-doors.mjs"
+    "test": "node --test test/*.test.mjs",
+    "doors": "node gen-doors.mjs",
+    "types": "wrangler types --strict-vars=false",
+    "typecheck": "npm run types && tsc -p tsconfig.json",
+    "dry-run": "wrangler deploy --dry-run"
   },
   "devDependencies": {
-    "sql.js": "^1.12.0"
+    "sql.js": "^1.12.0",
+    "typescript": "7.0.2",
+    "wrangler": "4.158.0"
   }
 }
