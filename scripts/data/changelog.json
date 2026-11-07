@@ -3,6 +3,57 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.10.10",
+			"points": [
+				{
+					"text": "Build can explicitly view necessary task references without turning off isolated image review; native Bible and walk exports retain source identity and crop coordinates."
+				},
+				{
+					"text": "Build instructions now use short procedures, one safe-point compaction rule above 120K, clear Blender/Godot MCP capability boundaries, and the existing pc-offload skill as the repository Build default."
+				},
+				{
+					"text": "Use `_src/new_bibles/female.png` alone for the modular voxel character reference; read its original before choosing crops instead of assuming the legacy cell layout."
+				},
+				{
+					"text": "Separate special reuse cooldown from attack/animation recovery. Specials release after the equipped weapon\u2019s normal recovery window; normal attacks can resume while the unchanged special timer continues. The HUD follows that independent timer."
+				},
+				{
+					"text": "Remove duplicated performance-catalog flag/metric prose and obsolete smoke-session ceremony; keep the detailed benchmark specification and correct its per-stretch pass wording."
+				},
+				{
+					"text": "Remove the retired repository file-change allowlist from local status/proof/catalog checks as well as its obsolete configuration. Correctness checks and image/secret controls remain."
+				},
+				{
+					"text": "Restore hub pause opening through one input-edge event shared with the dungeon; map opening also leaves the world tick. Existing menus retain paused-tree close/back ownership. Initialize hub labels after mounting them."
+				},
+				{
+					"text": "Fix process-migration effect invalidation: aim lines track position/configuration/weapon per instance, hidden danger-gem tweens restart, and torch facing runs after its flame exists rather than through an empty tick."
+				},
+				{
+					"text": "Restore event-driven enemy-fighting telemetry across state changes, deaths and scene removal without scans; track concurrent enemies independently. Hub hints now update for food seconds, deepest-floor changes and translations, and unchanged assignments no longer flood label signals."
+				},
+				{
+					"text": "Repair migrated trigger wiring: plate/player and crystal/enemy masks, plate-only mounting in either setup order, idempotent crystal overlap tracking, active-crystal interaction blocking and real AI aggro states. Fog discovery is now scoped per floor instance and radius instead of leaking through a static cache."
+				},
+				{
+					"text": "Disable progress-panel processing while closed and idle, while preserving active forging timers through direct property writes. Restart adrenaline audio from its finished signal instead of polling, and release GUI focus at the common menu-close boundary."
+				},
+				{
+					"text": "Replace misleading process-smoke existence/hardcoded-success checks with callback/lifecycle assertions, label unavailable coverage as skipped, and restore the real aim effect after its test double. These fixtures still require a future Godot run."
+				},
+				{
+					"text": "Redraw/upload floor-map pixels only for discovery, player-cell changes, object placement, crystal activation, map opening or viewport changes. Keep input-driven pan/zoom; paint crystal markers before upload instead of relying on the next frame."
+				},
+				{
+					"text": "HUD updates now invalidate individual labels, include prompt lock/font and full viewport size, and skip unchanged bar/color writes. The HUD owns bounded live-value sampling; dungeon ticks no longer repaint the full overlay. Direct inventory/resource writes remain visible without manual notification calls."
+				},
+				{
+					"text": "Reconcile relay acceptance with the confirmed single delivered fixture and the remaining user-run in-game submission. Keep automated abuse-protection coverage; do not generate live rate-limit bursts or duplicate test mail."
+				}
+			],
+			"summary": "Clearer Build instructions and scoped visual references."
+		},
+		{
 			"label": "0.10.9",
 			"points": [
 				{
