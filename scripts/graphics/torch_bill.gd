@@ -115,7 +115,6 @@ static func _bracket_pos(site: Dictionary) -> Vector3:
 	return Vector3(px, 0.0, pz)
 
 func _ready() -> void:
-	_set_facing_once()
 	_nx = float(get_meta("nx", 0.0))
 	_nz = float(get_meta("nz", 1.0))
 	var tex: Texture2D = _bible()
@@ -137,6 +136,7 @@ func _ready() -> void:
 		add_child(spr)
 	_flame = _make_flame()
 	add_child(_flame)
+	_set_facing_once()
 
 ## Sweep only. Off leaves the flame yaw untimed.
 static var torch_on: bool = false
@@ -154,18 +154,6 @@ static func torch_ms() -> float:
 		return -1.0
 	return float(torch_us) / 1000.0
 
-func _process(_delta: float) -> void:
-	if not torch_on:
-		_aim_flame()
-		return
-	var t0: int = Time.get_ticks_usec()
-	_aim_flame()
-	torch_us += Time.get_ticks_usec() - t0
-
-static var _last_cam := Vector3.ZERO
-func _aim_flame() -> void:
-	# Facing assigned once at placement from wall normal; no per-frame update.
-	pass
 func _front_cell() -> Rect2:
 	# Wall normal against the fixed south camera. Quad stays put; only the flame yaws.
 	var q: int = int(round(atan2(float(_nx), float(_nz)) / (PI * 0.5)))

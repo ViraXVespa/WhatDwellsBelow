@@ -58,6 +58,14 @@ def selftest(root):
         assert producer in touch, producer
     assert 'PROCESS_MODE_ALWAYS' in boot and 'PROCESS_MODE_ALWAYS' in read("scripts/ui/pause_menu/pause_menu_view.gd")
     assert 'event.is_action_pressed("pause")' in read("scripts/ui/menu_pad.gd")
+    aim = read("scripts/combat/aim_line.gd")
+    assert "[origin, dir, length, width, opacity, on, App.weapon]" in aim
+    assert "_last_aim" not in read("scripts/world/player/player_combat.gd")
+    gem = read("scripts/ui/hud/hud_act.gd")
+    assert 'set_meta("pulse_tween", null)' in gem and 'Color(col.r, col.g, col.b, alpha)' in gem
+    torch = read("scripts/graphics/torch_bill.gd")
+    assert torch.index("add_child(_flame)") < torch.index("_set_facing_once()", torch.index("add_child(_flame)"))
+    assert 'func _process(' not in torch and 'func _aim_flame' not in torch
     print("process migration: pause routing/edge/suppression and coalesced redraw source fixtures passed")
     return 0
 

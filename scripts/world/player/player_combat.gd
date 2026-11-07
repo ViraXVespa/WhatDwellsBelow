@@ -123,15 +123,9 @@ static func hit_norm() -> float:
 		return App.bal.bow_hit_norm
 	return App.bal.axe_hit_norm
 
-static var _last_aim := Vector2.ZERO
-static var _last_adren := false
-
 static func update_aim_line(p: CharacterBody3D) -> void:
 	if p.aim_line == null:
 		return
-	if p.aim_dir == _last_aim:
-		return
-	_last_aim = p.aim_dir
 	var bow_spec: bool = App.weapon == "longbow" and (p.atk_state == p.ATK_WIND or p.atk_state == p.ATK_ACT)
 	var on: bool = bool(App.bal.aim_line_on) and not bow_spec
 	var length: float = App.bal.aim_line_length

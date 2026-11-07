@@ -131,9 +131,11 @@ static func paint_gem(host: CanvasLayer, dungeon: Node) -> void:
 			var tw: Tween = host.gem.get_meta("pulse_tween")
 			if tw:
 				tw.kill()
+			host.gem.set_meta("pulse_tween", null)
 		return
 	var col: Color = gem_color(dungeon)
-	host.gem.modulate = col
+	var alpha: float = host.gem.modulate.a
+	host.gem.modulate = Color(col.r, col.g, col.b, alpha)
 	if not host.gem.has_meta("pulse_tween") or host.gem.get_meta("pulse_tween") == null:
 		var tw: Tween = host.gem.create_tween().set_loops()
 		tw.tween_property(host.gem, "modulate:a", 0.44, 0.6).set_trans(Tween.TRANS_SINE)
