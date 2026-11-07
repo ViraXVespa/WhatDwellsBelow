@@ -9,6 +9,10 @@ resume: python tools/slice.py open debug.playtest --task perf-sweep
 ## Intent
 One continuous run, no exits between states: cold game load, enter the hub, hub walk test, enter the dungeon (no exit), dungeon perf walkthrough, dispel when the dungeon timer ends (no exit), hub walkthrough again, enter the dungeon again, dungeon walkthrough again, then exit. fps_pct counts every frame where the hub or dungeon is showing and the loader bar is down, scored per segment and for the whole run. Goal: 100% of frames at 60+ FPS. Pass: each of cold hub, cold dungeon, warm hub, and warm dungeon, and the whole run, at 99% on desktop and on two consecutive cold web runs (cold web window, as below). Replaces `hub-perf-fix` and `dungeon-perf` (merged 2026-10-31 at Vira's request so later states, return trips and the dispel path are covered).
 
+## Optional scene inspection
+
+Vira confirmed Godot MCP is available in her Build environment (2026-11-07). Prefer the existing sweep/report tools. Use MCP only when the task requires it or a named missing capability needs live scene information. Inspect the actual tool/schema first; missing access is a setup gap, not permission to invent calls or start an unapproved runtime. Scene inspection is not a scored sweep and cannot replace desktop/two-cold-web artifacts.
+
 ## Next
 Parked at the end of week 10 (2026-11-03). The 99% bar is still open. A later week resumes from this note. The paragraphs under it are the measurement log. An older line that says the next session starts from this score is that log.
 
@@ -42,7 +46,7 @@ Aim. Cut the work inside the frame as low as it will go. The 19.7 ms line is onl
 
 Still banned. Do not hide floor, walls, sprites, props, the sun, the HUD, the environment, or the Label3Ds on a scored stretch. Do not uncap. Do not rebake soles. Do not change `sample_xz`. Do not move the bench node's process priority. Do not put the per-pixel hull walk back. Do not go back to `get_pixel` in `Contact.tex`. Do not add a hide group or a cpu/gpu probe. Sweep-only edge timers are allowed. Do not pass `--walk-layers` on a scored baseline. Marks stay off outside the sweep.
 
-Close is still two consecutive cold web runs, plus the desktop pass already on the books, at fps_pct >= 99 on hub1, dungeon1, hub2, dungeon2, and the total. Goal 100%. Resume: `python tools/slice.py open debug.playtest --task perf-sweep`.
+Historical close note: the older desktop pass was on the books then. Current acceptance is the header and queue reconciliation above; all five bars need current-code evidence.
 
 The sweep runner is in. `python tools/perf.py sweep --leg desktop` and `--leg web` chain the hub walk, a dungeon playtest (seed 42, Great Axe, time scale 1, 30 s acting), dispel, the hub walk, the dungeon walk, then quit. `HB: seg=` is each stretch. The last `fps_pct` is the whole run. Hitch rows still carry `tree_ms`, `submit_ms`, `after_ms`, `pt_ms`. The sweep also stamps `script_ms`, `queue_ms`, and `tail_ms`. Those three add up to `tree_ms`. The slow-run line prints `script_med`, `queue_med`, and `tail_med`. Cold web `20261103-021955` measured that split: the steady cost is `script_ms`.
 
@@ -126,11 +130,11 @@ Cold web `20261103-083445` with those stamps (`ok=1`) misses the bar. fps_pct 82
 
 The target is the work inside the frame, as low as it will go. The 19.7 ms line is only the slow check. A 60 Hz present still pads a finished frame out to one refresh, so the displayed rate cannot pass the refresh. Cutting the work is what leaves margin when a frame spikes. The mark-path buffer reuse was restored to commit `5bac54d3` after cold webs `20261103-092242` (fps_pct 72.8) and `20261103-093009` (fps_pct 62.0) scored under `20261103-083445` (fps_pct 82.8). The first great-axe slam is the dungeon pause: `Cover` used to scan every sprite in the circle with `get_pixel` on the first occupancy test, and that same frame was the first draw of the slam telegraph and the crack sprite. The mask is packed under the hub loader. Cold web `20261103-095803` still showed the dungeon submit stall (t=66.5 and t=67.0, submit about 470), so a hub draw does not compile that shader. The warm, the later scores, and the resume are the parked note at the top of Next. Cast `kind` stays off the query row.
 
-`--walk-layers` on `perf.py sweep` is the window above. The hub bench `--walk-layers` and the dungeon bench `--walk-layers` are older flags. Desktop already passes. Do not rescore it unless a dungeon draw change lands.
+`--walk-layers` on `perf.py sweep` is the window above. The hub bench `--walk-layers` and the dungeon bench `--walk-layers` are older flags. Those historical desktop scores do not establish current-code acceptance; follow the reconciliation above.
 
 Marks stay off outside the sweep. The bench node stays at the default process priority. `design/code-map.md` lists `sweep_layers.gd` on the Debug row.
 
-Read a log without dumping it: `python tools/session.py summary --list 'GLOB'`, `--match`, `--section '--- places ---'`, or `--path FILE --jsonl --where key=eq:VALUE --group KEY --stat FIELD`. PowerShell compares are `key=ge:N`, `le`, `gt`, `lt`, `ne`, `has`, `eq`. Single-quote globs and `---` headings. An unquoted `>` redirects and drops the filter. A `.jsonl` path with no filter is refused. A bad regex, a broken `--where`, or a heading of only dashes prints `error:` and does not print the file. The full job summary is still the default when no filter is set. Retry from this worktree: `grok -r 01a1a123-9593-7462-bf46-01cbffe8f07d --fork-session`. Gather reset stays `01a1a01c-624f-7321-97f4-942a766579a4`.
+Read a log without dumping it: `python tools/session.py summary --list 'GLOB'`, `--match`, `--section '--- places ---'`, or `--path FILE --jsonl --where key=eq:VALUE --group KEY --stat FIELD`. PowerShell compares are `key=ge:N`, `le`, `gt`, `lt`, `ne`, `has`, `eq`. Single-quote globs and `---` headings. An unquoted `>` redirects and drops the filter. A `.jsonl` path with no filter is refused. A bad regex, a broken `--where`, or a heading of only dashes prints `error:` and does not print the file. The full job summary is still the default when no filter is set. Resume through this task's current header/opening prompt, not historical session forks.
 
 Reading runs: use `perf.py hub --report HITCH.jsonl` (about 2.3 KB) or the run's summary txt; do not open the raw hitch.jsonl (about 190 KB, 578 rows per 30 s desktop run).
 
@@ -183,10 +187,10 @@ Web Auto stays at scale 1.0. Do not turn the drop back on to chase the old 30 ms
 ## Handoff
 The live next step is the parked note at the top of Next. The paragraphs below are the pre-merge benches.
 
-Hub: Gather reset: `grok -r 01a17ec2-2017-75a0-9ed2-e148e542fe49 --fork-session` from this worktree. Do not re-gather. Latest measured session: `01a17f3a-7a84-7831-bd00-3d7a09599856`.
+Hub: historical measurements follow; resume from Next, not an old session.
 
 The draw split stays (`tree_ms`, `submit_ms`, `after_ms` on the hitch row, `submit` on a layer line). `gd-load` passed after the bench script edit. The scored bar is still red.
 
-Dungeon: Gather reset: grok -r 01a18192-f080-76d0-b879-f3b5e46db230 --fork-session from this worktree. Do not re-gather. Latest measured session 01a181de-3c57-7490-854e-5ea1f67b591d. The runner is `python tools/perf.py dungeon`. Desktop PASS is summary `_logs/dungeon-bench/20261028-033831-dungeon-bench.txt`. First web FAIL is summary `_logs/dungeon-bench/20261028-033953-dungeon-bench.txt`. Layer keep is summary `_logs/dungeon-bench/20261028-035545-dungeon-bench.txt`. Harness web FAIL is summary `_logs/dungeon-bench/20261028-041329-dungeon-bench.txt`. Bare-split keep is summary `_logs/dungeon-bench/20261028-042812-dungeon-bench.txt`. Scale keep is summary `_logs/dungeon-bench/20261028-044236-dungeon-bench.txt`. Scored web after the Auto change is summary `_logs/dungeon-bench/20261028-044706-dungeon-bench.txt` (fps_pct 84.1). That `--walk-layers` is the old dungeon bench (50 s of acting). The live window is `perf.py sweep --leg web --walk-layers`, and the reading from it is in Next.
+Dungeon: historical bench evidence. The runner is `python tools/perf.py dungeon`. Desktop PASS is summary `_logs/dungeon-bench/20261028-033831-dungeon-bench.txt`. First web FAIL is summary `_logs/dungeon-bench/20261028-033953-dungeon-bench.txt`. Layer keep is summary `_logs/dungeon-bench/20261028-035545-dungeon-bench.txt`. Harness web FAIL is summary `_logs/dungeon-bench/20261028-041329-dungeon-bench.txt`. Bare-split keep is summary `_logs/dungeon-bench/20261028-042812-dungeon-bench.txt`. Scale keep is summary `_logs/dungeon-bench/20261028-044236-dungeon-bench.txt`. Scored web after the Auto change is summary `_logs/dungeon-bench/20261028-044706-dungeon-bench.txt` (fps_pct 84.1). That `--walk-layers` is the old dungeon bench (50 s of acting). The live window is `perf.py sweep --leg web --walk-layers`, and the reading from it is in Next.
 
 Note from Vira: We changed a bunch of lighting stuff with Grok Bot since you last worked on the perf stuff. That may have impacted things and those newer changes may need to be optimized.

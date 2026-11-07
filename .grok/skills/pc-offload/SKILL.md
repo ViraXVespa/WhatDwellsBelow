@@ -1,74 +1,27 @@
 ---
 name: pc-offload
 description: >
-  Run local PC inventory, search, scene, code-map, Godot import, smoke,
-  gate, route-card and summary-read tools for What Dwells Below. Use when about to measure files, list changed paths,
-  search the tree, open many untouched scripts
-  or scenes, write multi-line files on Windows, or run import/smokes/gates.
-  Do not use for Imagine stills or I2V (those stay Build-only).
+  Default workflow for every Grok Build task in What Dwells Below on the User PC.
+  Load once after the startup command; use the existing repository inventory,
+  search, code-map, task, Windows-write, gate and summary tools throughout.
+  Not for Grok Bot, web/chat or isolated media/review children. This skill grants
+  no new machine, runtime or network permissions and does not perform Imagine/I2V.
 when-to-use: >
-  measure files (find.py stat; not python -c), inventory scripts, list changed files, git inventory,
-  docs-vs-code history (find.py changed --history),
-  repo search (list_xref, not grep), code-map row, patch code-map row,
-  check code-map coverage, scene nodes, Godot import,
-  smokes, load timing, dungeon map, build gate, post-split gate,
-  Windows write (docs.py patch write), session.py py, show_func, task files (docs.py task),
-  session.py summary, find.py route, shots.py show, add a new local runner. If this session already opened this skill
-  or design/pc-offload.md, do not open them again.
+  Every Grok Build task: startup/resume, implementation, tools/docs work and release
+  routines. Reuse the loaded skill; do not reload for every command or after compact.
 user-invocable: true
 metadata:
-  short-description: Offload inventory and verify to the local PC
+  short-description: Default repository-tool workflow for Grok Build
 ---
 
-# PC offload
+# Default Build tool workflow
 
-Open design/pc-offload.md only for inventory, verify, a Windows write or a new local runner, and design/tools.md only when running, adding or documenting a tool (design/load-graph.md); each once per session.
+Use this repository skill for every Grok Build task. Run the opening prompt's `slice.py start` command first, then load this skill once; reuse it after context breaks. A User-requested new-week routine follows its own entry procedure instead. This is not for Bot, web/chat or isolated children.
 
-You are on a local checkout. Do not measure files by reading their bodies.
-Do not paste raw Godot logs, whole .gd files, whole .tscn files, or
-unbounded search output into the session.
+Choose the existing command from design/tools.md; design/pc-offload.md owns Windows writing, bounded summaries and runner habits. Use `--help` for flags, not tool source. Common commands are `find.py route`, `find.py xref`, `find.py func`, `find.py changed`, `docs.py code-map row`, `docs.py task` and `session.py summary`.
 
-Intercept (raw tool is a failed lookup, not a fallback). `.grok/hooks/bin/wdb-pretool.py` denies these in the game repo, including the same command in the shell. Grep of one file stays allowed. `gate.py build` and reading a file you are editing stay allowed.
-- grep / rg of a directory under scripts/, design/, tools/, scenes/, or site/ -> tools/find.py xref (`--path site` for site/)
-- list_dir of those trees -> find.py xref or find.py scenes
-- list_dir of the repo root -> tools/find.py route
-- git status / git log / git diff / git show -> tools/find.py changed
-- python -c -> tools/find.py stat, or tools/docs.py patch write for a script body
-- any read of `_logs/` -> `python tools/session.py summary`. One job summary: `--job NAME`. A slice: `--section`, `--match`, `--head`, `--tail`, `--list 'GLOB'`. JSON lines: `--path FILE --jsonl --where key=eq:VALUE --group KEY --stat FIELD`. PowerShell: single-quote globs and `---` headings. Compares are `key=ge:N`, `le`, `gt`, `lt`, `ne`, `has`, `eq`. An unquoted `>` redirects and can drop the filter. A `.jsonl` path with no filter is refused.
-- a PNG or JPG, including under `_logs/` or `design/refs/` -> `shots.py review` in the forked session whose unit needs it. Do not read_file it. The shared gather does not open pictures. The summary is for logs, not pictures.
-- open whole design/code-map.md -> tools/docs.py code-map (row / patch / check)
-- open a whole script of the system being edited -> tools/find.py func
-- bytes / newlines / indent / BOM on a live path -> tools/find.py stat
-- a script body goes through a single-quoted here-string piped to tools/docs.py patch write FILE, then
-  tools/session.py py. A script this session or the next one will run again
-  is FILE under tools/ with a catalog row. session.py py deletes FILE when
-  it is under _logs/agent-py/
-- open tools/*.py to learn flags -> catalog row only
-- read the same job summary again this slice -> stop;
-  one read via tools/session.py summary (filters above; unfiltered `--job` prints the newest summary;
-  the hook denies opening any `_logs/` file directly)
-- a design doc, the agents file, or BOT.md edit -> python tools/check.py load-graph
-  before the change is reported done. RESULT PASS is required. Do not defer it to ship
-- door or job routing by opening README / load-graph / memory topics ->
-  tools/find.py route --door <name> or --job door.job
+Read relevant source for the edit, not entire trees for inventory. Read each distinct run's actual result/summary; do not dump raw logs or repeat unchanged lookups. Design/agent-doc changes require the load-graph check. Extend the owning tool when a reusable capability is missing.
 
-1. Pick the catalog row that matches the job.
-2. Run that command from the repo root.
-3. Read only that row's summary with session.py summary --job <name> (or stdout
-   when the catalog says there is no summary). Once per runner per slice.
-4. If no row exists and the work would be expensive in-session, write the
-   runner yourself when it would help future tasks (design/tools.md rule 5)
-   and tell the User afterward.
-5. A new week is `design/build-week-start.md` and does not run `slice.py start`. Build slices: the first command is python tools/slice.py start,
-   before any file read or memory topic. Pass --job <door.job> or --door <name>, then run python tools/docs.py task show <id> and read that task file whole. It prints the slice rules (session facts, Q0,
-   ledger, "Did not work:" from slice.py start --failed, shots.py show for
-   pictures she should see, handoff, slice.py commit, merge-back) and the docs
-   to read, the single source. A later
-   run says where the slice stands. A door with a unit queue (ui) is worked one
-   unit at a time: slice.py start --unit-done at each Complete; finish what
-   fits one session, a task file keeps the rest, no new survey. The User reopens a committed task
-   with its resume: line; that session starts with the command its first message names. Only the User launches grok.
+Images default to isolated review. Necessary direct references require the explicit task/session grant; text questions use OCR first. Do not use shell readers, cwd changes or this skill to bypass the hook. Generation remains isolated.
 
-Before the first prove, stop for one compact and resume in this same session. Either run the guided compact, or print the keep-list and stop so the User can compact. Keep-list: the restate, the intended observable outcome, the systems and doors read, the files changed this unit, any open questions, and the last RESULT. Do not `/fork`, do not start a fresh session, and do not use `slice.py start --handoff` or `grok -r <original-session-id> --fork-session` as the compact handoff. After Prove, update the task, commit, and push, then stop. Whether Gather also compacts, or the User rewinds to Gather instead of compacting every cycle, is not decided.
-
-Imagine-isolated and i2v-isolated must stay skipped.
+The Build job cycle owns questions, context breaks, verification and finish. Save unfinished work in the task, not a session-fork recipe. This skill adds no machine/runtime/network permission and does not automatically substitute MCPs for repository tools.

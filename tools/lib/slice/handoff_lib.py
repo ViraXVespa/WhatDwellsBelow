@@ -6,7 +6,7 @@ defaults to the door), and stops.
 main checkout: `python tools/slice.py open AREA --prompt-file PATH`. The file becomes the first message of a NEW session, whose first command
 `slice.py start --door D --from-handoff PATH` prints a compact start summary and points the file's first command at `--from-task ID`. Its
 `resume:` line is the User's launch line (`slice.py open AREA --task ID`, run from the repo root); a session she opens with it starts with
-`--from-task ID`, so the committed task resumes from any checkout. It is not the compact before Prove, and it is not the retry. A retry stays in
+`--from-task ID`, so the committed task resumes from any checkout. It is not a same-session context break or a retry. A retry stays in
 the session that ran the prove. The handoff moves a survey into a fresh implementation session.
 The fresh worktree is cut from the week branch, so survey-session edits to shot-flow files and the routes.yaml mapping are saved to
 `_logs/handoff/survey-edits/` (the task file with them) and put back by `--from-handoff` (a file that differs is only listed when the week branch moved).
@@ -78,7 +78,7 @@ def skeleton(root: Path, area: str, door: str, job: str, session: str = "", unit
     head += [f"from: survey session {session or '(id unknown)'} in {root}",
              f"Your first command, before any file read or memory topic: {first}",
              "The survey is done and the answers below stand; ask again only what Open questions lists or what a discovery changes. "
-             "Open no pictures except the baselines listed for the chosen surface.", ""]
+             "Review only this unit's baselines/references; direct image reads need the explicit task grant.", ""]
     body: list[str] = []
     for title, hint in SECTIONS:
         body += [f"## {title}", hint, ""]
@@ -232,7 +232,7 @@ def start_block(root: Path, path: Path, queue: bool = False, restore: bool = Tru
     where = f"area={head.get('area', '')} door={head.get('door', '')} job={head.get('job', '')}"
     if survey:
         lines = [f"HANDOFF from {path}: survey done. {where}",
-                 "Do not re-run the survey and do not open pictures other than the baselines below. Q0 answers, decisions and the ledger are in the handoff; they stand."]
+                 "Do not repeat the survey or gather unrelated images. Necessary task references use the explicit grant. Q0 answers, decisions and the ledger are in the handoff; they stand."]
     elif units:
         pos = f"unit {units.index(cur) + 1} of {len(units)} ({cur})" if cur else f"all {len(units)} units done"
         lines = [f"RESUMING UNIT QUEUE from task {path.stem} ({path}): {pos}. {where}",
@@ -337,7 +337,7 @@ def selftest(script: list[str]) -> list[str]:
         git(Path(td), "clone", "-q", str(main), str(fresh))
         git(fresh, "checkout", "-q", "-B", "grok-build-w9", "origin/grok-build-w9")
         code, out = run(fresh, "--door", "ui", "--from-handoff", str(hp), "--dry-run")
-        if (code != 0 or "HANDOFF from" not in out or "Do not re-run the survey" not in out or "restored tools/data/shot-flows/new-flow.json" not in out
+        if (code != 0 or "HANDOFF from" not in out or "Do not repeat the survey" not in out or "restored tools/data/shot-flows/new-flow.json" not in out
                 or "restored design/routes.yaml" not in out or "pause page, before" not in out):
             bad.append(f"--from-handoff must print the compact summary, the listed baselines and restore the survey edits (code={code})")
         if "ORDER:" in out or "Q0, in every slice" in out:

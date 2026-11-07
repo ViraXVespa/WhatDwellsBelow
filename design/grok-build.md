@@ -1,48 +1,30 @@
-# Grok Build session flow
+# Grok Build
 
 Status: protocol
-Read when: Grok Build (CLI) path; every CLI instance after a gap
+Read when: starting or resuming a Grok Build CLI task
 
-**Intent.** Vira owns design; Build implements and defers to her on design. The docs are a living plan, not a fixed route. Hard rules: gates before a PR, no loops, never `main`. You can write the live tree. Second topic door: read it when the job touches that system.
+Build implements the requested work. Vira owns design and scope. Work in the User-opened worktree, never on `main`; never force-push. Platform permissions and secret protections still apply.
 
-## Design: Vira decides
+## Start or resume
 
-A design or product question the docs do not settle goes to the User, before the design doc or any code, with `ask_user_question` where it exists (plain text alongside is fine); so do improvements. Ask in as many rounds as needed, again whenever a discovery changes what she will see or what was assumed. Offer 2-4 options; free text is welcome. Mark one recommended only for code shape or process, never a look, feel or scope.
-Always-allow covers permissions only (Access), never a design question. A dismissed or timed-out question is not an answer: stop and report. No `ask_user_question` tool: ask in plain text and stop.
-Build decides code shape inside one system; open numbers start coherent (`tunables.md`).
+1. Run the `slice.py start` command in the opening prompt before other reads. Run it even if told the slice already started: it reports the current state; `--full` reprints the card. A `route=in-worktree` failure means this is not a slice; do not create a replacement checkout.
+2. Load the existing repository `pc-offload` skill once and use it throughout every Build task, including tools/docs and release work. It selects existing commands; it grants no PC/runtime permission. Do not reload it after each step or compact. Bot, web/chat and isolated children do not load it. If unavailable, report that fact and use documented equivalents only where they cover the task.
+3. With `--task ID`, run `python tools/docs.py task show ID` and read that task before other topic files. Its `resume:` line is the User's launcher, not an agent command.
+4. Read the route's documents and relevant code. Read the plan pair once if missing. Use `find.py route`, `find.py xref`, `find.py func` and `docs.py code-map row`; use `find.py changed` for earlier work, not on an untouched first unit.
+5. State the requested outcome, the evidence that would show it works, and anything unsettled. Do not repeat design questions the task already answers.
 
-## Restate, then change
-
-The first command's card is the source for the rules of the first message and every ask. In short: the session `slice.py open` started imports and gathers, then writes the restate as visible text before any question (what was asked, what would be visible if it worked, what you do not yet know). It shoots and opens no pictures. **Q0** only when the task's Open questions do not already settle the look, reference, and bounds; a task whose Open questions are none, or whose body names those three, has answered it. Prepare, Change, and Prove continue in this session. Before the first prove, stop for one compact and resume in this same session. Either run the guided compact, or print the keep-list and stop so the User can compact. The first session on a task, when nothing earlier has changed, starts unit 1 and does not run `find.py changed`. A later session gathers this unit's frames and earlier sessions' committed and uncommitted changes (`find.py changed`).
-
-**Every ask, a re-ask included, has its own message first** (start-card format). The session that needs pictures shoots only those frames and looks with one `python tools/shots.py review PNG... --question Q`: isolated, only its report returns; FAIL means no review ran. Do not `read_file` a PNG or JPG. Ref jpgs, sibling states and other units stay unread (the review carries no pixels). When she should see them, one `python tools/shots.py show --ask NAME --group AREA PATH=description ...` call (`_logs/prove-view/<ask>/`, one sheet per area; opens the first file, Photos arrows through). Same place is one sheet: side by side when taller than wide, stacked when wider. No other way to open PNGs, no window per PNG. She sees before and after together in the done notice. A failed step opens the next message as `Did not work: <command> <one line>` (`slice.py start --failed`, `shots.py show`), never from memory.
-
-After a rejection the next step is a question, not an edit; after a second rejection of one thing offer "send me a reference" before more options. Generated source assets and their generators: isolated-media gate (`_src/`, `tools/`). Missing required assets fail loudly.
-
-**Finish a unit** that touched the tree, even on red gates or imperfect work: update affected design docs, code-map rows and tunables; close or update tasks (`docs.py task done ID`); `python tools/slice.py commit`, then plain `git push origin grok-build-wN` (never main, never force). Only after the push lands: open the prove folder, say the unit is done and what is on each sheet, and say whether a playtest confirmation is required (look, sound, balance, controls), recommended (feel, hitch, timing the gates do not score) or not needed (refactor, tool, doc, test). That notice is not a question; never ask "Settled? commit?". Bad work is reverted or fixed by a new commit or a fresh session; a `--handoff` file is only for a survey that never implemented; unfinished work keeps notes in its task.
-
-## First (once, before anything else)
-
-New week (main checkout, she says so): `build-week-start.md` only, no `slice.py start`. Else classify the request: **new feature / system** (the game lacks it, or a player-facing rework) or **change to what exists** (fix, tune, refactor, same-system API). If unclear, ask.
-
-New feature flow: `build-job-cycle.md`. A new system: plan it and ask every open question.
-
-## Read
-
-Agents file once, then this file. Plan pair only if missing, then the named topic. Route first: read what the route card names, not sibling docs (`find.py route --digest --door D`: headings with line numbers). A survey starts from text (`shots.py flow --survey`, `find.py route --digest --door D`: one line per doc); open a doc only for the unit she chose, a picture only for the unit being compared.
-
-Git inventory (not gather): `find.py changed`. Search: `find.py xref` (`--texts` for shot-flow words), not grep. Extract: `find.py func --path <script> --name <func>`. No `python -c`.
+Only the User launches sessions with `slice.py open`. Do not fork, launch a second implementation session or edit the main checkout. A new-week request from the main checkout follows `build-week-start.md`, not slice startup.
 
 ## Work
 
-The User starts the slice with `python tools/slice.py open [AREA]`: a NEW session in a Grok worktree (a week-branch clone); you are already inside it. Only she runs it (the isolated-media runner is the one exception); never run, print or suggest it. Your FIRST command, before any file read or memory topic: the `slice.py start` line your first message names (from a task: `--job door.job` or `--door door`, plus `--task ID`; else `--door <door>`, `--job` or `--area`): the door card, smokes, flows and session facts. Told it is already started? Run it anyway (`SLICE ALREADY STARTED` says where it stands; `--full` reprints the card). `RESULT FAIL route=in-worktree`: wrong tool; go on with the files present. With a task, next run `docs.py task show <id>` and read that task file whole before any other file; never run its `resume:` line. Your first text to her names the area and which of the agents file and skill you opened. A door with several jobs is a survey from text; it ends at her answers to its first ask: `python tools/slice.py start --handoff`, then stop (task file, `design/tasks/README.md`). A door with `unit_queue` (ui) is not surveyed. A task's own `units:` labels are its queue. A visual job with no `shot_flows` gets a STEP 0 note: creating the flow is the first job step (`shot-flows.md`).
+Follow `build-job-cycle.md`: understand the task, prepare evidence, implement, verify, finish. It owns context breaks, permissions, questions and red-gate handling. `build-handoff.md` covers surveys and saved work across sessions.
 
-## Other roles
+Use isolated `shots.py review` when a text assessment is sufficient; use `shots.py show` for the User. Necessary direct reference access uses the explicit task/session grant in `build-references.md`. That guide also covers when Blender/Godot MCPs may fill a tooling gap. A reference grant does not authorize image generation or bypass host controls.
 
-Prove is final verification (`tools.md` rule 10); never merge into main. Bot notes: `docs.py task new opt-next --owner bot ...`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
+Generated media still follows the isolated-media gate. Read only the art job needed for this task. Second topic door: a system touched by the job needs its own source/docs review; unresolved design goes to Vira before implementation.
 
-## After a job
+## Finish
 
-Gates (`tools.md` rule 10): `gate.py gd-load` once the edits are complete (read every output), then `gate.py build` (`--batch --visual JOB` for a visual change) and `session.py summary --job build-gate` once; `slice.py commit` refuses without that gate; a gate never run: `--gate-skipped` (`Did not work: gate not run (why)`); still red at Complete: `--red-gate LOGPATH`. A job with no shot flow does not add `--visual`; a still rekey is that case (`media.py rekey-preview`). Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9). Then Finish a unit (above).
+Update the task and affected docs, run relevant checks, then `slice.py commit` and a plain push to the current `grok-build-wN` branch. Never hand-edit `version.json` or commit `_logs/`. Build records outcomes in commit messages, not changelog files. Explicitly report red or skipped gates; do not call them passes.
 
-`build-job-cycle.md` holds reading habits, Gather / Prepare / Change / Prove / Complete, Access and Just do / Ask first, red prove, merge-back, the playtest confirm, unit queue, process notes and session close (hard rules).
+After pushing, report the changes, evidence paths and remaining limits. Show before/after together when visual confirmation is needed. Say whether playtest confirmation is required (look, sound, balance, controls), recommended (feel/timing not covered by gates), or unnecessary (tools/docs/refactor). The done notice is not a request for permission to commit. Stop after this task; keep unfinished work in its task file.

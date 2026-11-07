@@ -80,12 +80,12 @@ def next_step(st: dict, s: dict) -> str:
         return "`python tools/gate.py gd-load` and `python tools/gate.py import`"
     unit = f" ({st['unit']})" if st.get("units") and st.get("unit") else ""
     if not s["forked"]:
-        return (f"Gather{unit}: shared context only (task, docs, code, outcome). Do not shoot or read pictures. "
-                "Restate, Q0 and her answers, then continue Prepare in this session. Before the first prove, stop for one compact and resume in this same session")
+        return (f"Gather{unit}: read the task, docs and code; state the outcome and ask only unresolved questions. "
+                "Continue Prepare here; context breaks follow build-job-cycle.md and resume in this same session. Necessary visual references use the task-scoped grant")
     tail = " (`python tools/slice.py start --unit-done` updates the task's done: line)" if unit else ""
     return (f"This session is not the one that started the slice{unit}. Continue the unit in hand: "
             "`python tools/find.py changed` for earlier sessions' committed and uncommitted work, "
-            "then only this unit's pictures (`shots.py review`, never read_file). "
+            "then only this unit's pictures (isolated review, or an explicit necessary-reference grant). "
             f"Then Prepare / Change / Prove / Complete for the unit in hand{unit}{tail}; "
             "then the done notice (finish the whole request in this session when it fits; queue the rest for a new session only when it cannot)")
 

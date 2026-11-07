@@ -10,6 +10,7 @@ Entries here: `slice.py`, `session.py`, `release.py`; their code: `tools/lib/rel
 ## Jobs
 
 - **Start a slice:** the User runs `python tools/slice.py open AREA` (or `--task ID`); inside the worktree Build runs `python tools/slice.py start` first.
+- **Necessary visual references:** `slice.py references export`, explicit `grant`, then direct image reads; `status`/`revoke` control the temporary scope.
 - **A one-off script:** `session.py py --script _logs/agent-py/x.py` (deleted after the run); prefer a tool.
 - **Logs:** `session.py clean` (raw logs), `--new-week` (everything).
 - **Web export:** `release.py export-web` (Pages build), `release.py export-web --debug --out DIR` (debug build for perf or hitch work).
@@ -47,3 +48,4 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/slice/reference_policy.py` | Shared CLI/hook grant validation: task, session, unit, path, content and expiry |
 | `lib/slice/reference_export.py` | Native Bible cells and walk copies with source/crop provenance |
 | `lib/slice/reference_access_test.py` | Synthetic grant, export and hook fixtures |
+| `lib/slice/build_docs_test.py` | Build operating-doc consistency, context rule, reference guidance and size regressions; run by start selftest |
