@@ -274,6 +274,8 @@ def main(argv: list[str] | None = None) -> int:
         first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done, args.ref)
         if st:
             first.update({k: st[k] for k in ("first_run", "session", "ref", "prompt", "task") if k in st})
+        if args.task.strip():
+            first["task"] = args.task.strip()
         if tunits:
             first.update({"units": tunits, "done": tdone, "unit": tcur, "task": args.task.strip(), "task_units": True})
         if tid:

@@ -347,6 +347,11 @@ def selftest(script: list[str]) -> int:
         git(Path(td), "clone", "-q", str(root), str(plain))
         if worktree_kind(plain) != "" or worktree_kind(root) != "":
             bad.append("a full clone outside .grok/worktrees, and the main checkout, are not worktrees")
+        (clone / "design/tasks/model.md").write_text("# Model\nid: model\nowner: build\nstatus: open\n\n## Goal\nMatch references.\n")
+        code, out = run(clone, "--job", "ui.pause", "--task", "model", "--full", area="", env="new-sess")
+        bound = __import__("json").loads((clone / "_logs/slice-state.json").read_text())
+        if code or bound.get("task") != "model":
+            bad.append("a normal --task without a unit queue must bind reference access to that active task")
     return agent_log.selftest_result(bad)
 
 def retry_selftest() -> int:

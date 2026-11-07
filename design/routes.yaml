@@ -164,6 +164,9 @@ gates:
   pc_offload:
     file: design/pc-offload.md
     when: inventory_verify_or_windows_write
+  build_references:
+    file: design/build-references.md
+    when: task_needs_visual_reference_or_mcp_capability
   build_job_cycle:
     file: design/build-job-cycle.md
     when: build_job
