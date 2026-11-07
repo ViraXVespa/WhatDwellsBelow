@@ -28,4 +28,4 @@ This file, `design/refactor.md` (recipe only), one `design/code-map.md` system r
 ## Pass
 
 Inventory first, no edits: `python tools/check.py script-cap` plus `bot_status.py`; rank over 10KB, then over 5KB where whole functions can move (optional `python tools/find.py scripts --over-kb 5 --top-funcs 3`). Show the ranked list. Sizes use `os.path.getsize`.
-Split every over-10KB script first (each to under 10KB), then over-5KB files only when whole functions can move. One size PR may batch both; no extract, relocate or reuse-map work in it. Stale design-doc lines that name moved symbols: flag them in the PR body (`BOT.md` Prove). Do not add allowlist rows. Each new `.gd` needs a `.uid` sidecar (`BOT.md` Smokes).
+Split every over-10KB script first (each to under 10KB), then over-5KB files only when whole functions can move. One size PR may batch both; no extract, relocate or reuse-map work in it. Stale design-doc lines that name moved symbols: flag them in the PR body (`BOT.md` Prove). Each new `.gd` needs a `.uid` sidecar (`BOT.md` Smokes).

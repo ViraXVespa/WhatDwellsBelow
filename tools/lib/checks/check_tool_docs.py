@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt.
+"""Check the tools catalog (design/tools*.md) against the entry tools.
 
 Catalog rows name commands: one row per entry subcommand (`shots.py capture`), or the entry alone when it has
 no subcommands (`bot_status.py`). Every lib module (tools/lib/**/*.py that is not a subcommand, plus
@@ -137,7 +137,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     return bad + stale_cmds.scan(root, tracked) + stale_cmds.branch_scan(root, tracked) + stale_cmds.grok_scan(root, tracked), narr
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools and tools/bot_allow.txt (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)
+    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against the entry tools (A=Y needs the entry allowed; globs and ! denies count).", json_out=True, verbose=True)
     ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers, and the repo for tool commands with unknown flags/subcommands, instead of checking the catalog.")
     ap.add_argument("--selftest", action="store_true", help="Check the stale-refs command scan on fixed lines and the scanned doc set.")
     ap.add_argument("--narration", action="store_true", help="With --stale-refs: also list will-be-added / legacy / formerly / no-longer lines (advisory).")
@@ -179,9 +179,6 @@ def main(argv: list[str] | None = None) -> int:
     named |= {"lib/imglib/"} | {f"data/{p.name}" + ("/" if p.is_dir() else "") for p in (tools / "data").iterdir()}
     named |= {p.name for p in tools.iterdir() if p.is_file() and p.suffix != ".py" and not p.name.startswith(".")}
     stray = sorted(p.name for p in tools.glob("*.py") if p.stem not in table and p.name != "_scratch.py")
-    globs = repo_lib.load_allowlist(root)
-    allow = {n for n in files if repo_lib.allowed(f"tools/{entry_of[n]}", globs)}  # honours globs (`tools/*`), `!` denies and exact lines
-    exact = {g[len("tools/"):] for g in globs if g.startswith("tools/") and not any(c in g for c in "*?[!")}
     rows: dict[str, tuple[str, str]] = {}
     bad: list[str] = [f"ENTRY   tools/{n}: top-level tools/*.py must be an entry tool (COMMANDS or MODULE table)" for n in stray]
     text = ""
@@ -199,20 +196,16 @@ def main(argv: list[str] | None = None) -> int:
         bad.append(f"MISSING {n}: no catalog row")  # every subcommand of every entry tool
     for n in sorted(rows.keys() - files):
         bad.append(f"STALE   {n}: catalog row but no such command")
-    for n in sorted(exact - {p.relative_to(tools).as_posix() for p in tools.rglob("*") if p.is_file()}):
-        bad.append(f"ALLOW   {n}: on bot_allow.txt but no such file")
     for n in sorted(named):
         if f"`{n}" not in text and f"`tools/{n}" not in text:
             bad.append(f"UNNAMED tools/{n}: name it in backticks in the tools*.md that owns its area (libs: tools-libs.md)")
     for n, (surf, a) in sorted(rows.items()):
-        if n in files and a == "Y" and n not in allow:
-            bad.append(f"ALLOWED {n}: catalog A=Y but tools/{n} is not allowed by bot_allow.txt (add a line or mark A=N)")
         if a == "Y" and "B" not in surf and "D" not in surf:
-            bad.append(f"SURF    {n}: allowlisted but no B/D surface")
+            bad.append(f"SURF    {n}: Bot-callable but no B/D surface")
     n_bad = len(bad)
-    head = f"tool-docs: commands={len(files)} rows={len(rows)} libs_data={len(named)} allowlisted={len(allow)} problems={n_bad}"
+    head = f"tool-docs: commands={len(files)} rows={len(rows)} libs_data={len(named)} problems={n_bad}"
     if bad:
-        bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); UNNAMED = name the lib or data file in its area doc; ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
+        bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); UNNAMED = name the lib or data file in its area doc; then rerun")
     echo = "\n".join(agent_log.fold(bad[:-1], args.verbose, keep=20, limit=28) + bad[-1:] + [head]) if bad else None
     return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args, echo=echo,
                             legacy=False, commands=len(files), rows=len(rows), problems=n_bad)  # not the next: hint

@@ -38,8 +38,8 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 Proof rules: the agents file. Say plainly when a message or handoff to a worker did not arrive.
-GitHub bot-gate retired by the User. Local proof and tools/bot_allow.txt remain (default deny; deny lines first).
-Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. If the current truth is unclear, list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
+The User retired the repository file-change gate, including its local allowlist. Correctness checks remain.
+Stale docs: fix stale doc lines in the job you are on. If the current truth is unclear, list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
 New `tools/` runners: only after the User approves one this session (`design/tools.md` rule 5). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
 Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read with `session.py summary --job <name>`.
@@ -72,4 +72,4 @@ Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ bey
 
 ## After-cluster report
 
-PR URL, squash-merge reminder, path + bytes before/after, changelog path (every PR ships one, never omitted; tone and shape: `design/versioning-log.md`), what is still over the floor, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable (outside the allowlist) goes in the PR body for the User.
+PR URL, squash-merge reminder, path + bytes before/after, changelog path (every PR ships one, never omitted; tone and shape: `design/versioning-log.md`), what is still over the floor, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable within the requested scope goes in the PR body for the User.

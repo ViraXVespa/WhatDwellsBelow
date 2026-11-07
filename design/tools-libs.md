@@ -18,7 +18,7 @@ Door, rules, the CLI contract and the Surf / A key: `tools.md`. New logic goes i
 2. Add one `COMMANDS` row to the entry tool, and one catalog row (`entry.py sub`) to the area doc.
 3. Run `check.py tool-docs` and `check.py tool-cli --only STEM --smoke-run`.
 
-Owners: run helpers, flags, RESULT, `_logs/`: `agent_log`. Text I/O (BOM, EOL): `md_format_lib`. Git, version, allowlist, selftest repos: `repo_lib`. Godot binary, pin, launch, locks: `godot_lib`. `.gd` parsing: `gd_lib`. Doc edits: `docs.py patch`.
+Owners: run helpers, flags, RESULT, `_logs/`: `agent_log`. Text I/O (BOM, EOL): `md_format_lib`. Git, version, selftest repos: `repo_lib`. Godot binary, pin, launch, locks: `godot_lib`. `.gd` parsing: `gd_lib`. Doc edits: `docs.py patch`.
 
 ## Libs and data
 
@@ -29,7 +29,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/boot.py` | Entry dispatch: `entries()` (every entry's table), `cmd(stem, *args)` child argv, `display(stem)` (`shots.py capture`), area dirs on `sys.path` |
 | `lib/agent_log.py` | Common parser, root resolution, bounded stdout, RESULT/summary writers, guarded operations and generator run helpers. |
 | `lib/md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks |
-| `lib/repo_lib.py` | Git/version/allowlist helpers, branch classification and diff bases; isolated git test fixtures. |
+| `lib/repo_lib.py` | Git/version helpers, branch classification and diff bases; isolated git test fixtures. |
 | `lib/godot_lib.py` | Pinned binary resolution, display choice and per-project launch locks; kills only its own process. |
 | `lib/godot_slots.py` | Shared box-only Godot launch slots across checkouts; dead holders free automatically. `WDB_GODOT_SLOTS` configures the cap. Not enabled on CI/User PCs; `--selftest`. |
 | `lib/gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` |
