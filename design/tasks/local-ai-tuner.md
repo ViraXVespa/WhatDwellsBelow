@@ -41,3 +41,6 @@ Long runs happen on Vira's own dedicated PC. She launches them herself with one 
 
 ## Hold
 Vira said go on 2026-11-03. The set-and-forget command is `python tools/local-ai-tuner.py loop`. Each campaign process runs until the delve ends in death, then the loop trains. Export and import move the policy file between PCs. Status stays open until a live run on her PC reports the held-out rates and a recommended config that beats the current one across repeat seeds.
+
+## Status
+I've tested the loop command and it looped multiple times, but it exited with no decisions after 10 loops or so. I'm guessing there's something wrong with the setup. Investigate and fix it so the loop command functions and trains as expected.
