@@ -200,6 +200,36 @@ def publish(root: Path, flow: dict, frames_dir: Path, dest_override: str, dry: b
         (dest / ("%sshots.json" % prefix)).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return {"dir": rel(root, dest) if dest.is_absolute() and str(dest).startswith(str(root)) else str(dest), "files": len(rows)}
 
+def _ocr_specs(steps: list, out: dict) -> dict:
+    for s in steps:
+        if isinstance(s, dict):
+            if s.get("op") == "shot" and isinstance(s.get("ocr"), dict):
+                out[str(s.get("name", ""))] = s["ocr"]
+            _ocr_specs(s.get("steps", []) if isinstance(s.get("steps"), list) else [], out)
+    return out
+
+def ocr_asserts(flow: dict, fdir: Path) -> list[dict]:
+    """Shot steps may carry {"ocr": {"box": [x, y, w, h], "expect": "Report bug", "min": "ok"|"weak", "psm": 7}}: read the
+    frame with local Tesseract (shots.py ocr) and FAIL below `min` (default ok). No tesseract: SKIP rows, never FAIL."""
+    specs = _ocr_specs(flow.get("steps", []), {})
+    if not specs:
+        return []
+    import ocr_lib
+    exe = ocr_lib.tesseract_exe()
+    order = {"fail": 0, "weak": 1, "ok": 2}
+    rows = []
+    for fr in json.loads((fdir / "flow.json").read_text(encoding="utf-8")).get("frames", []):
+        spec = specs.get(str(fr.get("name", "")))
+        if spec is None or not fr.get("file"):
+            continue
+        if not exe:
+            rows.append({"frame": fr["name"], "status": "SKIP", "line": "tesseract not found"})
+            continue
+        box = tuple(int(v) for v in spec["box"]) if spec.get("box") else None
+        r = ocr_lib.analyse(exe, fdir / fr["file"], box, str(spec.get("expect", "")), int(spec.get("psm", 7)))
+        rows.append({"frame": fr["name"], "status": "PASS" if order[r["read"]] >= order.get(str(spec.get("min", "ok")), 2) else "FAIL", "line": ocr_lib.fmt(r)})
+    return rows
+
 def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
     fdir = out_root / name
     if fdir.exists() and not args.dry_run:
@@ -222,6 +252,13 @@ def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
         row["cmd"] = " ".join(str(a) for a in res["godot_args"])
         return row
     row["errors"] = res.get("errors", [])[:5]
+    if not args.no_pixels and (fdir / "flow.json").is_file():
+        ocr_rows = ocr_asserts(flow, fdir)
+        if ocr_rows:
+            row["ocr"] = ocr_rows
+            if any(r["status"] == "FAIL" for r in ocr_rows):
+                row["ok"] = False
+                row["fail"] = row["fail"] or "ocr: " + next(r["line"] for r in ocr_rows if r["status"] == "FAIL")
     if args.save_baseline and not args.no_pixels:
         dst = Path(args.save_baseline) / name
         dst.mkdir(parents=True, exist_ok=True)

@@ -3,7 +3,7 @@
 
   keys / track   a callout box over time: inline [[t, x, y, w, h], ...], a named track in movies.json
                  (movie["tracks"][name], same rows, px or fractions), or a per-frame JSON file ([{"t": s, "box": [...]}, ...])
-  tracked        callout whose box and chip follow the keys (piecewise-linear ffmpeg expressions in t)
+  tracked        keyed box with owned half-open occupancy and a sticky/eased/clamped chip slot
   hold           freeze one frame for a while, then play on
   lower_third    a full-width title strip low in the frame (distinct from the top-left chip titles)
   place_chip     chip spot beside a box that keeps out of the label/title corners and of chips already placed
@@ -21,23 +21,38 @@ import clip_promo
 CORNERS = ((0.0, 0.0, 0.36, 0.2), (0.64, 0.0, 0.36, 0.2))
 
 def corners(w: int, h: int) -> list[tuple[float, float, float, float]]:
-    return [(x * w, y * h, cw * w, ch * h) for x, y, cw, ch in CORNERS]
+    return [(0, 0, w, h * 0.2)] if h > w else [(x * w, y * h, cw * w, ch * h) for x, y, cw, ch in CORNERS]
 
 def _hit(a, b) -> bool:
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 
 def place_chip(cw: int, ch: int, box, w: int, h: int, avoid=(), gap: int = 4) -> tuple[int, int]:
-    """Below the box, above it, right, left; then stepped down the frame: the first spot inside the frame that hits no
-    avoid rect (corners plus chips already placed). Falls back to below, clamped."""
+    """Find an in-frame spot clear of the subject box and avoid rectangles.
+
+    Prefer below/above/right/left, then rectangle edges. If packing is impossible,
+    reserve avoid rectangles first, then minimize subject overlap; never return negatives.
+    Identity/title reservations are hard constraints whenever any reserved-free spot exists.
+    """
     x, y, bw, bh = box
-    clamp = lambda cx, cy: (int(min(max(0, cx), w - cw)), int(min(max(0, cy), h - ch)))
+    clamp = lambda cx, cy: (int(min(max(0, cx), max(0, w - cw))), int(min(max(0, cy), max(0, h - ch))))
+    blocked = [box, *avoid]
     cands = [(x, y + bh + gap), (x, y - ch - gap), (x + bw + gap, y), (x - cw - gap, y)]
-    cands += [(x, y + bh + gap + k * (ch + gap)) for k in range(1, 6)] + [(x, y - (k + 1) * (ch + gap)) for k in range(1, 6)]
-    for cx, cy in cands:
-        p = clamp(cx, cy)
-        if (p[0], p[1]) == (int(cx), int(cy)) and not any(_hit((p[0], p[1], cw, ch), r) for r in avoid):
-            return p
-    return clamp(x, y + bh + gap)
+    xs, ys = [0, w - cw, x], [0, h - ch, y]
+    for rx, ry, rw, rh in blocked:
+        xs.extend((rx - cw - gap, rx + rw + gap))
+        ys.extend((ry - ch - gap, ry + rh + gap))
+    cands.extend((cx, cy) for cy in ys for cx in xs)
+    candidates = list(dict.fromkeys(clamp(cx, cy) for cx, cy in cands))
+    for cx, cy in candidates:
+        if not any(_hit((cx, cy, cw, ch), r) for r in blocked):
+            return cx, cy
+    def overlap(p):
+        cx, cy = p
+        areas = [max(0, min(cx + cw, r[0] + r[2]) - max(cx, r[0])) *
+                 max(0, min(cy + ch, r[1] + r[3]) - max(cy, r[1])) for r in blocked]
+        return sum(areas[1:]), areas[0]
+    return min(candidates, key=overlap)
+
 
 def keys(spec, w: int, h: int, root: Path | None = None, movie: str = "", base: Path | None = None) -> list[list[float]]:
     """Track rows [t, x, y, w, h] in px, sorted by t."""
@@ -70,11 +85,83 @@ def at(rows: list[list[float]], t: float) -> list[float]:
             return [a[k] + (b[k] - a[k]) * f for k in range(1, 5)]
     return rows[-1][1:]
 
+def chip_records(placed):
+    """Read owned (rect,start,end,owner) records and legacy 3-tuples."""
+    for row in placed or ():
+        yield (*row[:3], row[3] if len(row) > 3 else None)
+
+
+def live_chips(placed, t: float, owner=None):
+    """Half-open windows; a callout never avoids its own previous-frame records."""
+    return [rect for rect, start, end, other in chip_records(placed)
+            if start <= t < end and (owner is None or other is not owner)]
+
+
+class ChipMotion:
+    """Sticky relative slot, short switch hold and eased motion, clamped every frame.
+
+    Free-band fallback anchors stay locked and preserve identity reservations even
+    when a subject box is too large for disjoint packing. Owner identity and
+    occupancy are handled separately by live_chips.
+    """
+    def __init__(self, cw, ch, w, h, hold=0.18, ease=0.12):
+        self.cw, self.ch, self.w, self.h = cw, ch, w, h
+        self.hold, self.ease = hold, ease
+        self.slot = None
+        self.point = None
+        self.pending = None
+        self.since = self.last_t = 0.0
+
+    def at(self, box, t, avoid=(), gap=4):
+        import math
+        x, y, bw, bh = box
+        clamp = lambda p: (min(max(0, p[0]), max(0, self.w - self.cw)), min(max(0, p[1]), max(0, self.h - self.ch)))
+        blocked = [box, *avoid]
+        safe = lambda p: not any(_hit((*p, self.cw, self.ch), r) for r in blocked)
+        reserved_free = lambda p: not any(_hit((*p, self.cw, self.ch), r) for r in avoid)
+        slots = {"below": (x, y + bh + gap), "above": (x, y - self.ch - gap),
+                 "right": (x + bw + gap, y), "left": (x - self.cw - gap, y)}
+        slots = {key: clamp(p) for key, p in slots.items()}
+        valid = {key: p for key, p in slots.items() if safe(p)}
+        chosen = self.slot if self.slot in valid else next(iter(valid), "free")
+        target = valid[chosen] if chosen in valid else place_chip(self.cw, self.ch, box, self.w, self.h, avoid, gap)
+        # Keep a free-band anchor rather than chasing the least-overlap subject edge.
+        # Oversized subject boxes can make fully disjoint packing impossible.
+        if chosen == self.slot == "free" and self.point is not None:
+            previous = tuple(int(round(v)) for v in clamp(self.point))
+            if safe(previous) or (reserved_free(previous) and not safe(target)):
+                target = previous
+        if self.point is None:
+            self.point, self.slot = target, chosen
+        elif chosen != self.slot:
+            if self.pending != chosen:
+                self.pending, self.since = chosen, t
+            if t - self.since < self.hold and safe(tuple(int(round(v)) for v in clamp(self.point))):
+                self.last_t = t
+                return tuple(int(round(v)) for v in clamp(self.point))
+            self.slot, self.pending = chosen, None
+        else:
+            self.pending = None
+        dt = max(0.0, t - self.last_t)
+        alpha = 1.0 - math.exp(-dt / self.ease) if self.ease > 0 else 1.0
+        point = clamp(tuple(a + (b - a) * alpha for a, b in zip(self.point, target)))
+        rounded = tuple(int(round(v)) for v in point)
+        if not safe(rounded):
+            # A best-effort subject overlap must not defeat easing or reservations.
+            fallback = not safe(target) or not safe(tuple(int(round(v)) for v in self.point))
+            if not (fallback and reserved_free(rounded)):
+                point = target
+        self.point, self.last_t = point, t
+        return tuple(int(round(v)) for v in point)
+
+
 def tracked(src: Path, rows: list[list[float]], text: str, out: Path, start: float = 0.0, end: float = 0.0,
-            color: str = "#ffd23f", font: str = "", avoid=(), placed: list | None = None) -> Path:
-    """Box outline and chip that follow the track (one overlay frame per video frame, drawn with PIL); the chip takes
-    place_chip's spot each frame, so it keeps out of the corners, of `avoid` and of `placed` chips live at that time
-    [(rect, t0, t1)]; each frame's chip is appended to `placed` so later callouts keep off it."""
+            color: str = "#ffd23f", font: str = "", avoid=(), placed: list | None = None, owner=None) -> Path:
+    """Track a box with a stable, eased chip slot; active during [start,end).
+
+    placed receives (rect,t0,t1,owner) with a real per-callout identity (not label
+    text); legacy 3-tuples are accepted. Other callouts avoid its live records.
+    """
     from PIL import Image, ImageColor, ImageDraw
     i = ce.info(src)
     w, h, fps = i["w"], i["h"], float(i["fps"]) or 30.0
@@ -85,19 +172,26 @@ def tracked(src: Path, rows: list[list[float]], text: str, out: Path, start: flo
         T = Path(td)
         clip_promo.chip(text, "", rgb + (255,), ce._font(font), int(h * 0.6), T / "c.png")
         c = Image.open(T / "c.png")
+        from imglib import geom
+        if c.width > w or c.height > h:
+            ratio = min(w / c.width, h / c.height)
+            c = geom.resize_rgba(c, (max(1, int(c.width * ratio)), max(1, int(c.height * ratio))))
+        motion = ChipMotion(c.width, c.height, w, h)
+        owner = object() if owner is None else owner
+        prior = list(placed or [])
         av = corners(w, h) + list(avoid)
         blank = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         for n in range(int(round(i["sec"] * fps))):
             t = n / fps
             img = blank.copy()
-            if start <= t <= end:
+            if start <= t < end:
                 x, y, bw, bh = at(rows, t)
                 ImageDraw.Draw(img).rectangle([x, y, x + bw, y + bh], outline=rgb, width=th)
-                live = [r for r, a, b in (placed or []) if a <= t <= b]
-                p = place_chip(c.width, c.height, (x, y, bw, bh), w, h, av + live, th)
+                live = live_chips(prior, t, owner)
+                p = motion.at((x, y, bw, bh), t, av + live, th)
                 img.alpha_composite(c, p)
                 if placed is not None:
-                    placed.append(((p[0], p[1], c.width, c.height), t, t + 1.0 / fps))
+                    placed.append(((p[0], p[1], c.width, c.height), max(t, start), min((n + 1) / fps, end), owner))
             img.save(T / ("o%05d.png" % n))
         ce._run(["-i", str(src), "-framerate", "%g" % fps, "-i", str(T / "o%05d.png"),
                  "-filter_complex", "[0:v][1:v]overlay=0:0:shortest=1,format=yuv420p[o]", "-map", "[o]", "-an", *ce.H264, str(out)])
@@ -125,7 +219,7 @@ def hold_end(src: Path, dur: float, out: Path) -> Path:
 PLATE_W = 0.44  # lower-third plate width cap, share of the frame width
 SUB_K = 0.045  # lower-third subline height as a share of the frame height
 
-def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accent=(255, 206, 92, 255), sub_k: float = SUB_K) -> tuple[int, int]:
+def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accent=(255, 206, 92, 255), sub_k: float = SUB_K, bottom_pad: int = 0) -> tuple[int, int]:
     """Lower-third strip, bottom-centre (clear of the top BEFORE/AFTER chips): a dark plate sized to the text, accent bar
     on its left, title and optional subline (sub_k x h). Returns its (y, height)."""
     from PIL import Image, ImageDraw
@@ -141,7 +235,7 @@ def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accen
     pad = int(18 * k)
     bh = pad * 2 + (t1[3] - t1[1]) + ((t2[3] - t2[1]) + int(10 * k) if sub else 0)
     bw = min(w, max(t1[2], t2[2]) + int(64 * k) + pad)
-    x, y = (w - bw) // 2, int(h * 0.95) - bh
+    x, y = (w - bw) // 2, int(h * 0.95) - bh - bottom_pad
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rectangle([x, y, x + bw, y + bh], fill=(12, 12, 16, 200))
@@ -153,11 +247,11 @@ def strip_png(title: str, sub: str, w: int, h: int, font: str, path: Path, accen
     return y, bh
 
 def lower_third(src: Path, title: str, out: Path, sub: str = "", start: float = 0.1, dur: float = 2.2, font: str = "",
-                sub_k: float = SUB_K) -> Path:
+                sub_k: float = SUB_K, bottom_pad: int = 0) -> Path:
     i = ce.info(src)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
-        strip_png(title, sub, i["w"], i["h"], ce._font(font), T / "s.png", sub_k=sub_k)
+        strip_png(title, sub, i["w"], i["h"], ce._font(font), T / "s.png", sub_k=sub_k, bottom_pad=bottom_pad)
         fc = ("[1:v]format=rgba,fade=t=in:st=%.3f:d=0.3:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[l];"
               "[0:v][l]overlay=0:0:shortest=1,format=yuv420p[o]") % (start, start + max(0.4, dur - 0.3))
         ce._run(["-i", str(src), "-loop", "1", "-framerate", "30", "-t", "%.3f" % i["sec"], "-i", str(T / "s.png"),
@@ -193,20 +287,35 @@ def join_each(segs: list[Path], hows: list[str], fade: float, out: Path) -> Path
         shutil.copy2(acc, out)
     return out
 
-def portrait(src: Path, region, out: Path, title: str = "", sub: str = "", font: str = "", size=(720, 1280)) -> Path:
-    """Portrait focus: an 8:9 crop around region (x, y, w, h px; grown to fit it) scaled into the middle of size, dark
-    bands above and below with a big title (top) and subline (bottom)."""
+def portrait_geometry(region, w: int, h: int, size=(720, 1280)):
+    """Shared source crop and native-canvas content rectangle for portrait/map boxes."""
+    import clip_fx
+    W, H = size
+    ph = min(H, W * 9 // 8) // 2 * 2
+    aspect = W / ph
+    x, y, cw, ch = clip_fx.aspect_box(region, aspect, w, h, pad=0.125, min_w=h * 0.6 * aspect)
+    cw, ch = max(2, int(cw) // 2 * 2), max(2, int(ch) // 2 * 2)
+    return (int(min(x, w - cw)), int(min(y, h - ch)), cw, ch), (0, (H - ph) // 2, W, ph)
+
+
+def portrait_box(box, geometry):
+    """Map source-pixel callout geometry after the portrait crop (not burned-in chips)."""
+    (x, y, cw, ch), (dx, dy, dw, dh) = geometry
+    return [(box[0] - x) * dw / cw + dx, (box[1] - y) * dh / ch + dy, box[2] * dw / cw, box[3] * dh / ch]
+
+
+def portrait(src: Path, region, out: Path, title: str = "", sub: str = "", font: str = "", size=(720, 1280), comparison=None, base=Path("."), defer_identity=False) -> Path:
+    """Crop source pixels to the native canvas before any chips; optional band text.
+
+    size is preserved (including 4:5); geometry is shared with portrait_box. Known
+    comparisons rebuild clean A/B legs and redraw identity after cropping.
+    """
     from PIL import Image, ImageDraw
+    if comparison is not False and clip_promo.reframe(src, region, out, size, comparison, base, identity=not defer_identity):
+        return out
     i = ce.info(src)
     W, H = size
-    ph = W * 9 // 8
-    x, y, bw, bh = region
-    ch = min(i["h"], max(bh * 1.25, i["h"] * 0.6, bw * 1.25 * 9 / 8))
-    cw = min(i["w"], ch * 8 / 9)
-    ch = cw * 9 / 8
-    cx = min(max(0, x + bw / 2 - cw / 2), i["w"] - cw)
-    cy = min(max(0, y + bh / 2 - ch / 2), i["h"] - ch)
-    top = (H - ph) // 2
+    (cx, cy, cw, ch), (_, top, _, ph) = portrait_geometry(region, i["w"], i["h"], size)
     with tempfile.TemporaryDirectory() as td:
         T = Path(td)
         img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -268,6 +377,7 @@ def selftest(t: Path) -> list[str]:
     for how, want in (("cut", 6.0), ("dip", 5.5), ("whip", 5.75), ("fade", 5.6)):
         if abs(ce.info(join([g, g], how, 0.4, t / ("j_%s.mp4" % how)))["sec"] - want) > 0.15:
             bad.append("join %s: %s" % (how, ce.info(t / ("j_%s.mp4" % how))))
+    bad += flicker_selftest(t)
     w, h = 640, 360
     av = corners(w, h)
     p = place_chip(120, 40, (20, 10, 60, 30), w, h, av)
@@ -276,4 +386,79 @@ def selftest(t: Path) -> list[str]:
     q = place_chip(120, 40, (200, 150, 60, 30), w, h, av + [(p[0], p[1], 120, 40), (200, 184, 120, 40)])
     if _hit((q[0], q[1], 120, 40), (200, 184, 120, 40)):
         bad.append("place_chip overlap not nudged: %s" % (q,))
+    return bad
+
+
+def flicker_selftest(t: Path) -> list[str]:
+    """Regression: real same-text owners, frame seams, sticky slots, hold/ease/clamp."""
+    import clip_fx
+    bad = []
+    owner, other = object(), object()
+    rect = (10, 10, 20, 20)
+    records = [(rect, 0.0, 1 / 30, owner), (rect, 0.0, 1 / 30, other)]
+    if live_chips(records, 1 / 30) or live_chips(records[:1], 0, owner) or live_chips(records, 0, owner) != [rect]:
+        bad.append("owned half-open frame windows")
+    if live_chips([(rect, 0, 1)], 0.5, owner) != [rect]:
+        bad.append("legacy occupancy compatibility")
+    motion = ChipMotion(100, 40, 640, 360)
+    p0 = motion.at((200, 140, 60, 40), 0)
+    p1 = motion.at((210, 140, 60, 40), 1 / 30)
+    if not p0[0] < p1[0] < 210:
+        bad.append("chip motion must ease instead of jump")
+    edge = ChipMotion(100, 40, 640, 360)
+    edge.at((0, 300, 60, 60), 0)
+    edge.at((0, 180, 60, 60), 0.1)
+    point = edge.at((-20, 180, 60, 60), 0.2)
+    if edge.slot != "above" or not (0 <= point[0] <= 540 and 0 <= point[1] <= 320):
+        bad.append("slot must stay locked and edge-clamped")
+    held = ChipMotion(100, 40, 640, 360, hold=0.2)
+    initial = held.at((200, 140, 60, 40), 0)
+    point = held.at((300, 140, 60, 40), 0.05, [(300, 184, 100, 40)])
+    if point != initial or held.slot != "below":
+        bad.append("short-lived slot obstruction must hold a safe previous position")
+    held.at((300, 140, 60, 40), 0.3, [(300, 184, 100, 40)])
+    if held.slot == "below":
+        bad.append("persistent obstruction must eventually switch slot")
+    bad += fallback_selftest()
+    ce._run(["-f", "lavfi", "-i", "color=c=gray:size=320x180:rate=30:duration=1", *ce.H264, str(t / "still.mp4")])
+    placed = []
+    rows = [[0, 160, 90, 60, 40]]
+    tracked(t / "still.mp4", rows, "SAME", t / "still-one.mp4", 0, 0.5, "#ff0000", placed=placed)
+    first = list(placed)
+    tracked(t / "still-one.mp4", rows, "SAME", t / "still-two.mp4", 0, 0.5, "#00ff00", placed=placed)
+    second = placed[len(first):]
+    if len(first) != 15 or len({r[0] for r in first}) != 1 or len({r[0] for r in second}) != 1:
+        bad.append("stationary tracked labels must not alternate slots across frames")
+    if not first or not second or first[0][3] is second[0][3]:
+        bad.append("same-text callouts need distinct real owners")
+    if first and second and _hit(first[0][0], second[0][0]):
+        bad.append("different owners must avoid each other")
+    if live_chips(placed, 0.5):
+        bad.append("callout end frame must have no live records")
+    active = clip_fx._px(t / "still-two.mp4", 0.25, (160, 105))
+    ended = clip_fx._px(t / "still-two.mp4", 0.6, (160, 105))
+    if not (active[1] > 150 and active[0] < 100) or max(ended) - min(ended) > 20:
+        bad.append("rendered callout window: active=%s ended=%s" % (active, ended))
+    return bad
+
+
+def fallback_selftest() -> list[str]:
+    """Exact 4:5 grass trace: baked identity band and a 540x87 tracked chip.
+
+    Before this regression, the label occupied (0,779), covered identity, then
+    snapped 620.7px to (180,185) at segment-local 4.000s.
+    """
+    import math
+    rows = [[2.5, 100.8, 126, 201.6, 648], [3.5, 28.8, 126, 201.6, 648],
+            [4.5, -72, 126, 201.6, 648]]
+    avoid = corners(720, 900) + [(0, 712, 720, 188)]
+    motion = ChipMotion(540, 87, 720, 900)
+    points = [motion.at(at(rows, n / 30), n / 30, avoid, 5) for n in range(78, 147)]
+    bad = []
+    if any(_hit((*p, 540, 87), r) for p in points for r in avoid):
+        bad.append("4:5 fallback must never occupy comparison identity/title reservations")
+    if any(math.dist(a, b) > 15 for a, b in zip(points, points[1:])):
+        bad.append("4:5 grass free-band fallback must not snap at 4.000s")
+    if any(not (0 <= x <= 180 and 0 <= y <= 813) for x, y in points):
+        bad.append("4:5 fallback must remain edge-clamped")
     return bad

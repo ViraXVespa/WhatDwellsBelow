@@ -1,36 +1,49 @@
 // Writes tools/relay/.secrets/deploy.js (git-ignored by tools/relay/.gitignore): the code for the Cloudflare MCP `execute` tool that uploads this Worker.
-// Usage: node tools/relay/deploy-payload.mjs [--with-secrets]   then call execute with code "$file:<repo>/tools/relay/.secrets/deploy.js"
-// --with-secrets reads GITHUB_TOKEN from env WDB_ISSUES_TOKEN and tools/relay/.secrets/{gh_webhook_secret,relay_salt}; otherwise
-// existing secrets are kept (keep_bindings). Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
+// Usage: node tools/relay/deploy-payload.mjs [--with-secrets] [--rotate-github-token]   then call execute with code "$file:<repo>/tools/relay/.secrets/deploy.js"
+// --with-secrets reads only tools/relay/.secrets/{gh_webhook_secret,relay_salt}. GITHUB_TOKEN is preserved, even if
+// a stale WDB_ISSUES_TOKEN is set; explicit --rotate-github-token opts into replacing it from that env.
+// Existing secrets are always kept (keep_bindings), also with named upserts. Delete tools/relay/.secrets/deploy.js after the call; it may hold secrets.
 import { readFileSync, writeFileSync, readdirSync, chmodSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+// Keep this JSON-compatible: both Wrangler and the connector payload use the same bindings.
+const config = JSON.parse(readFileSync(join(here, "wrangler.jsonc"), "utf8"));
 export const CONFIG = {
-  script: "wdb-bug-relay",
-  d1: { name: "DB", id: "ac9512aa-20c5-45b0-932e-692609241ba6" },
-  kv: { name: "SHOTS", id: "579f8fada4f24440bfd6095407b648fa" },
-  vars: { REPO: "ViraXVespa/WhatDwellsBelow", EMAIL_SEND: "off" },
-  compatibility_date: "2025-09-01",
+  script: config.name,
+  d1: { name: config.d1_databases[0].binding, id: config.d1_databases[0].database_id },
+  kv: { name: config.kv_namespaces[0].binding, id: config.kv_namespaces[0].id },
+  vars: config.vars, compatibility_date: config.compatibility_date,
 };
 
+// Importing this pure builder never reads credentials or writes a deployment payload.
+export function buildMetadata(secretBindings = []) {
+  return { main_module: "worker.js", compatibility_date: CONFIG.compatibility_date,
+    bindings: [
+      { type: "d1", name: CONFIG.d1.name, database_id: CONFIG.d1.id },
+      { type: "kv_namespace", name: CONFIG.kv.name, namespace_id: CONFIG.kv.id },
+      ...Object.entries(CONFIG.vars).map(([name, text]) => ({ type: "plain_text", name, text })),
+      ...secretBindings,
+    ], keep_bindings: ["secret_text"] };
+}
+
+function main() {
 const modules = Object.fromEntries(readdirSync(join(here, "src")).filter((f) => f.endsWith(".js"))
   .map((f) => [f, readFileSync(join(here, "src", f), "utf8")]));
-const bindings = [
-  { type: "d1", name: CONFIG.d1.name, id: CONFIG.d1.id },
-  { type: "kv_namespace", name: CONFIG.kv.name, namespace_id: CONFIG.kv.id },
-  ...Object.entries(CONFIG.vars).map(([name, text]) => ({ type: "plain_text", name, text })),
-];
+const bindings = [];
+
 const withSecrets = process.argv.includes("--with-secrets");
+const rotateGithubToken = process.argv.includes("--rotate-github-token");
+if (rotateGithubToken && !withSecrets) throw new Error("--rotate-github-token requires --with-secrets");
+if (rotateGithubToken && !process.env.WDB_ISSUES_TOKEN?.trim()) throw new Error("explicit rotation requires WDB_ISSUES_TOKEN");
 if (withSecrets) {
   const sec = (f) => readFileSync(join(here, ".secrets", f), "utf8").trim();
   bindings.push({ type: "secret_text", name: "GH_WEBHOOK_SECRET", text: sec("gh_webhook_secret") });
   bindings.push({ type: "secret_text", name: "RELAY_SALT", text: sec("relay_salt") });
-  if (process.env.WDB_ISSUES_TOKEN) bindings.push({ type: "secret_text", name: "GITHUB_TOKEN", text: process.env.WDB_ISSUES_TOKEN });
+  if (rotateGithubToken) bindings.push({ type: "secret_text", name: "GITHUB_TOKEN", text: process.env.WDB_ISSUES_TOKEN });
 }
-const metadata = { main_module: "worker.js", compatibility_date: CONFIG.compatibility_date, bindings,
-  keep_bindings: withSecrets ? [] : ["secret_text"] };
+const metadata = buildMetadata(bindings);
 
 const code = `async () => {
   const modules = ${JSON.stringify(modules)};
@@ -49,3 +62,6 @@ const code = `async () => {
 const out = join(here, ".secrets", "deploy.js");
 mkdirSync(dirname(out), { recursive: true }); writeFileSync(out, code); chmodSync(out, 0o600);
 console.log("wrote", out, withSecrets ? "(with secrets)" : "(keeps existing secrets)");
+
+}
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

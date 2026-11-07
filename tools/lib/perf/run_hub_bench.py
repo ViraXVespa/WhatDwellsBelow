@@ -22,6 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib; boot adds every area dir
 import boot  # noqa: E402,F401
+import bench_report
 import agent_log
 import bench_env
 import godot_lib
@@ -883,23 +884,7 @@ def main(argv: list[str] | None = None) -> int:
         if not Path(args.report).is_file():
             msg = "error: --report file not found: %s" % args.report
             return agent_log.finish("hub-bench-report", root, msg, "FAIL", args=args, legacy=False, echo=msg)
-        ordered = _read_rows(args.report)
-        bench = None
-        for item in ordered:
-            if item.get("ev") == "bench":
-                bench = item
-        hitch_rows = [item for item in ordered if item.get("ev") == "hitch"]
-        ranked = sorted(hitch_rows, key=lambda r: float(r.get("dt_ms", 0) or 0), reverse=True)
-        report = [
-            "hub bench report",
-            "path=%s" % args.report,
-            _present_line(bench),
-            "",
-            "--- HB lines ---",
-        ]
-        report += _hb_lines(ordered) or ["(no HB: lines)"]
-        report += ["", "--- slow shape ---"] + _shape_lines(hitch_rows, bench)
-        report += ["", "--- slowest hitches ---"] + (_slow_lines(ranked) or ["(none)"])
+        report = bench_report.report_lines("hub bench report", args.report, sys.modules[__name__])
         return agent_log.finish(
             "hub-bench-report",
             root,
@@ -910,12 +895,8 @@ def main(argv: list[str] | None = None) -> int:
             echo="\n".join(report),
             fail_signals=0,
         )
-    out_log = agent_log.run_path("hub-bench", root, "out.log")
-    err_log = agent_log.run_path("hub-bench", root, "err.log")
+    out_log, err_log, body = bench_report.begin_run("hub-bench", "hub bench", root, args)
     fail = 0
-    body = ["hub bench root=.", "leg=%s" % args.leg]
-    body.append(bench_env.env_line(godot=bench_env.godot_version(str(godot_lib.godot_exe())), renderer="gl_compatibility",
-        browser="see web leg" if args.leg in ("both", "web") else "n/a", vsync="see present line", cap="max_fps 120", headless=bool(args.headless)))
     if args.leg in ("both", "desktop") and not args.isolate and not args.walk_layers and not args.fill_aba:
         d_fail, d_body = _desktop(root, args, out_log, err_log)
         fail += d_fail
@@ -924,21 +905,7 @@ def main(argv: list[str] | None = None) -> int:
         w_fail, w_body = _web(root, args)
         fail += w_fail
         body += w_body
-    echo = _echo_lines(body)
-    summary_dir = root / "_logs" / "hub-bench"
-    summary_dir.mkdir(parents=True, exist_ok=True)
-    (summary_dir / "summary.txt").write_text("\n".join(body) + "\n", encoding="utf-8")
-    return agent_log.finish(
-        "hub-bench",
-        root,
-        "\n".join(body),
-        "FAIL" if fail else "PASS",
-        args=args,
-        legacy=False,
-        echo="\n".join(echo),
-        retry=("hub-bench", _retry_lines(body)),
-        fail_signals=fail,
-    )
+    return bench_report.finish_run("hub-bench", root, args, body, fail, sys.modules[__name__])
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))

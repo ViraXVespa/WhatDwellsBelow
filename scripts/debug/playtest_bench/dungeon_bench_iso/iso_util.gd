@@ -1,5 +1,7 @@
 extends Object
 
+const BU := preload("res://scripts/debug/playtest_bench/bench_util.gd")
+
 ## Split from dungeon_bench_iso.gd: _kinds, _tag, _child_covered....
 
 static func _kinds() -> PackedStringArray:
@@ -40,20 +42,10 @@ static func _child_covered(n: Node, tag: String, under: bool) -> bool:
 	return false
 
 static func _mid(vals: Array[float]) -> float:
-	if vals.is_empty():
-		return 0.0
-	var ordered: Array[float] = vals.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.5))
-	return ordered[at]
+	return BU.percentile(vals, 0.5, 0.0)
 
 static func _p95(host: Node) -> float:
-	if host._iso_dts.is_empty():
-		return 0.0
-	var ordered: Array[float] = host._iso_dts.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.95))
-	return ordered[at]
+	return BU.percentile(host._iso_dts, 0.95, 0.0)
 
 static func _root_vp(host: Node) -> Viewport:
 	var tree: SceneTree = host.get_tree()

@@ -18,6 +18,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("diff",      "shots/shot_diff",              "Before/after pixel diff of two PNGs or folders (--tol, --mask, --max-ratio)"),
     ("crop",      "shots/shot_crop",              "Crop and enlarge one region of a shot (PNG --box X,Y,W,H --zoom N)"),
     ("zoom",      "shots/shot_zoom",              "Zoom regions of a downsized shot from its full-size original (--box, --center, --rect-norm; montage)"),
+    ("ocr",       "shots/ocr_lib",                "Local Tesseract OCR: text, confidence, x-height, contrast, READ ok|weak|fail (--box, --expect)"),
     ("inspect",   "shots/img_inspect",            "Named image checks: describe, layout, contrast, grid, zoom, diff, montage"),
     ("gaps",      "shots/check_shot_gaps",        "UI states with no shot flow; flow and published-shot problems (--changed)"),
     ("show",      "shots/show_png",               "Stage pictures for the User in one prove folder and open them"),

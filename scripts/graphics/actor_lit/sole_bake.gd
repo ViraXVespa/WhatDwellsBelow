@@ -35,6 +35,7 @@ static func run(tree: SceneTree) -> void:
 		rows[path] = packed
 		lines.append(_line(path, packed))
 	lines.append("soles:" + _script_sha("res://scripts/graphics/actor_lit/soles.gd"))
+	lines.append("scan:" + _script_sha("res://scripts/graphics/actor_lit/soles_scan.gd"))
 	lines.append("bake:" + _script_sha("res://scripts/graphics/actor_lit/sole_bake.gd"))
 	lines.append("soles-v1")
 	var stamp: String = _sha_text("\n".join(lines)).substr(0, 16)

@@ -36,7 +36,7 @@ By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it nev
 
 ## Rules
 
-1. **Bot scope.** The Bot runs only `A=Y` commands and changes only the paths its scope allows (`BOT.md`; CI `bot-gate.yml`).
+1. **Bot scope.** The Bot runs only `A=Y` commands and changes only the paths its scope allows (`BOT.md`; local scope policy). The retired GitHub bot-gate workflow is not a required check.
 2. **Platform.** Every tool is Python, except the bug-report relay Worker in `tools/relay/` (JavaScript, it runs on Cloudflare; `npm test`, task `bug-report-relay`). Windows and Godot rules: `pc-offload.md`.
 3. **Usage truth.** `--help` on every subcommand; libs carry a module docstring. Docs give the job's exact command, not every flag.
 4. **Summaries.** Every run writes `_logs/<job>/<stamp>-<job>.txt` (gitignored, last 20 kept, `index.txt` newest first). Read the `RESULT` line, then the summary once (`session.py summary JOB`), not raw logs or module bodies. Every root `_*/` folder carries a committed `.gdignore`.

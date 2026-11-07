@@ -6,6 +6,9 @@ const Ctx := preload("res://scripts/debug/hitch_log/ctx.gd")
 const Present := preload("res://scripts/debug/hitch_log/log_present.gd")
 const Web := preload("res://scripts/debug/hitch_log/log_web.gd")
 
+const Schema := preload("res://scripts/debug/hitch_log/rows_schema.gd")
+const Clock := preload("res://scripts/debug/hitch_log/rows_clock.gd")
+const Sink := preload("res://scripts/debug/hitch_log/rows_sink.gd")
 static var _phase: String = ""
 ## Sweep stretch: hub1, dungeon1, hub2, dungeon2. Empty leaves the key off the row.
 static var _seg: String = ""
@@ -83,7 +86,6 @@ static var gx: int = 0
 static var gy: int = 0
 static var ver: String = ""
 static var why: String = ""
-const KIND := "wdb_hitch_log"
 static var _last_proc: float = -1.0
 static var _bench_gen: int = 0
 static var _fh: FileAccess = null
@@ -103,137 +105,10 @@ static func _t_sec() -> float:
 	return snappedf(float(Time.get_ticks_msec() - _t0_ms) / 1000.0, 0.1) if _t0_ms > 0 else 0.0
 
 static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
-	var row: Dictionary = {
-		"ev": "hitch",
-		"ver": ver,
-		"at": Time.get_datetime_string_from_system(false, true),
-		"t": _t_sec(),
-		"dt_ms": dt_ms,
-		"where": Ctx._where(host),
-		"fl": int(App.floor_n) if App else 0,
-		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
-		"draw": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
-		"proc_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1),
-		"phys_ms": snappedf(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, 0.1),
-		"proc_held": _proc_held,
-		"refresh_n": Present._refresh_n(dt_ms),
-		"play_s": snappedf(_play_s, 0.1),
-		"frame": int(Engine.get_process_frames()),
-		"mult": Present.mult(),
-		"thr_ms": snappedf(Present.BUDGET_SEC * Present.mult() * 1000.0, 0.1),
-	}
-	if _phase != "":
-		row["phase"] = _phase
-	if _seg != "":
-		row["seg"] = _seg
-	if not _whys.is_empty():
-		row["why"] = ",".join(_whys)
-	elif why != "":
-		row["why"] = why
-	if why == "geo_activate" or (not _whys.is_empty() and _whys[_whys.size() - 1].begins_with("geo_activate")):
-		row["gx"] = gx
-		row["gy"] = gy
-	if str(row.get("where", "")) == "hub":
-		Ctx._hub_ctx(host, row)
-	row["tree_ms"] = snappedf(_tree_ms, 0.1)
-	row["submit_ms"] = snappedf(_submit_ms, 0.1)
-	row["after_ms"] = snappedf(_after_ms, 0.1)
-	if _script_ms >= 0.0:
-		row["script_ms"] = snappedf(_script_ms, 0.1)
-	if _queue_ms >= 0.0:
-		row["queue_ms"] = snappedf(_queue_ms, 0.1)
-	if _tail_ms >= 0.0:
-		row["tail_ms"] = snappedf(_tail_ms, 0.1)
-	if _bench_ms >= 0.0:
-		row["bench_ms"] = snappedf(_bench_ms, 0.1)
-	if _lit_ms >= 0.0:
-		row["lit_ms"] = snappedf(_lit_ms, 0.1)
-	if _sample_ms >= 0.0:
-		row["sample_ms"] = snappedf(_sample_ms, 0.1)
-	if _sample_n >= 0:
-		row["sample_n"] = _sample_n
-	if _tint_ms >= 0.0:
-		row["tint_ms"] = snappedf(_tint_ms, 0.1)
-	if _drive_ms >= 0.0:
-		row["drive_ms"] = snappedf(_drive_ms, 0.1)
-	if _geo_ms >= 0.0:
-		row["geo_ms"] = snappedf(_geo_ms, 0.1)
-	if _sync_ms >= 0.0:
-		row["sync_ms"] = snappedf(_sync_ms, 0.1)
-	if _foot_ms >= 0.0:
-		row["foot_ms"] = snappedf(_foot_ms, 0.1)
-	if _quad_ms >= 0.0:
-		row["quad_ms"] = snappedf(_quad_ms, 0.1)
-	if _shade_ms >= 0.0:
-		row["shade_ms"] = snappedf(_shade_ms, 0.1)
-	if _albedo_ms >= 0.0:
-		row["albedo_ms"] = snappedf(_albedo_ms, 0.1)
-	if _contact_ms >= 0.0:
-		row["contact_ms"] = snappedf(_contact_ms, 0.1)
-	if _sole_ms >= 0.0:
-		row["sole_ms"] = snappedf(_sole_ms, 0.1)
-	if _pin_ms >= 0.0:
-		row["pin_ms"] = snappedf(_pin_ms, 0.1)
-	if _sync_rest_ms >= 0.0:
-		row["sync_rest_ms"] = snappedf(_sync_rest_ms, 0.1)
-	if _geo_rest_ms >= 0.0:
-		row["geo_rest_ms"] = snappedf(_geo_rest_ms, 0.1)
-	if _lit_rest_ms >= 0.0:
-		row["lit_rest_ms"] = snappedf(_lit_rest_ms, 0.1)
-	if _lit_max_ms >= 0.0:
-		row["lit_max_ms"] = snappedf(_lit_max_ms, 0.1)
-	if _lit_who != "":
-		row["lit_who"] = _lit_who
-	if _cpu_ms >= 0.0:
-		row["cpu_ms"] = snappedf(_cpu_ms, 0.1)
-	if _gpu_ms >= 0.0:
-		row["gpu_ms"] = snappedf(_gpu_ms, 0.1)
-	if _wake_ms >= 0.0:
-		row["wake_ms"] = snappedf(_wake_ms, 0.1)
-	if _phys_span_ms >= 0.0:
-		row["phys_span_ms"] = snappedf(_phys_span_ms, 0.1)
-	if _post_phys_ms >= 0.0:
-		row["post_phys_ms"] = snappedf(_post_phys_ms, 0.1)
-	if _head_ms >= 0.0:
-		row["head_ms"] = snappedf(_head_ms, 0.1)
-	if _floor_ms >= 0.0:
-		row["floor_ms"] = snappedf(_floor_ms, 0.1)
-	if _torch_ms >= 0.0:
-		row["torch_ms"] = snappedf(_torch_ms, 0.1)
-	if _bar_ms >= 0.0:
-		row["bar_ms"] = snappedf(_bar_ms, 0.1)
-	if _wake_ms >= 0.0:
-		row["phys_obj"] = int(Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS))
-		row["phys_pairs"] = int(Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS))
-		row["phys_islands"] = int(Performance.get_monitor(Performance.PHYSICS_3D_ISLAND_COUNT))
-	if _obj_3d >= 0:
-		row["obj_3d"] = _obj_3d
-		row["prim_3d"] = _prim_3d
-		row["draw_3d"] = _draw_3d
-		row["obj_shadow"] = _obj_shadow
-		row["prim_shadow"] = _prim_shadow
-		row["draw_shadow"] = _draw_shadow
-		row["obj_canvas"] = _obj_canvas
-		row["prim_canvas"] = _prim_canvas
-		row["draw_canvas"] = _draw_canvas
-	if _harness_on:
-		row["pt_ms"] = _pt_ms
-	return row
+	return Schema._hitch_row(host, dt_ms)
 
 static func _session_row() -> Dictionary:
-	var row: Dictionary = {
-		"ev": "session",
-		"kind": KIND,
-		"ver": ver,
-		"at": Time.get_datetime_string_from_system(false, true),
-		"os": OS.get_name(),
-		"web": 1 if OS.has_feature("web") else 0,
-		"godot": str(Engine.get_version_info().get("string", "")),
-		"mult": Present.mult(),
-		"thr_ms": snappedf(Present.BUDGET_SEC * Present.mult() * 1000.0, 0.1),
-	}
-	Present._stamp_present(row)
-	return row
+	return Schema._session_row()
 
 static func _sample_proc() -> void:
 	var proc: float = snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1)
@@ -243,29 +118,8 @@ static func _sample_proc() -> void:
 		_proc_held = 0
 	_last_proc = proc
 
-static func _write_mark(reason: String, gap_ms: int) -> void:
-	var row: Dictionary = {
-		"ev": "mark",
-		"why": reason,
-		"dt_ms": gap_ms,
-		"t": _t_sec(),
-		"play_s": snappedf(_play_s, 0.1),
-	}
-	if _phase != "":
-		row["phase"] = _phase
-	_write_row(row)
-
 static func _write_gap(delta: float, reason: String) -> void:
-	var row: Dictionary = {
-		"ev": "gap",
-		"why": reason,
-		"dt_ms": snappedf(delta * 1000.0, 0.1),
-		"t": _t_sec(),
-		"play_s": snappedf(_play_s, 0.1),
-	}
-	if _phase != "":
-		row["phase"] = _phase
-	_write_row(row)
+	Sink._write_gap(delta, reason)
 
 static func set_phase(phase_name: String) -> void:
 	_phase = phase_name
@@ -322,46 +176,10 @@ static func tick_us() -> int:
 ## Call at the hitch tick, before the row is built. The physics probes have
 ## already run. head_ms is whatever the sweep stored on the previous frame.
 static func stamp_edge(now_us: int) -> void:
-	_tick_us = now_us
-	if _edge_post_us <= 0:
-		_wake_ms = -1.0
-		_phys_span_ms = -1.0
-		_post_phys_ms = -1.0
-		return
-	if not _phys_open:
-		var bare: float = float(now_us - _edge_post_us) / 1000.0
-		if bare < 0.0:
-			bare = 0.0
-		_wake_ms = bare
-		_phys_span_ms = 0.0
-		_post_phys_ms = 0.0
-		return
-	var wake: float = float(_phys_head_us - _edge_post_us) / 1000.0
-	var span: float = float(_phys_tail_us - _phys_head_us) / 1000.0
-	var after_phys: float = float(now_us - _phys_tail_us) / 1000.0
-	if wake < 0.0:
-		wake = 0.0
-	if span < 0.0:
-		span = 0.0
-	if after_phys < 0.0:
-		after_phys = 0.0
-	_wake_ms = wake
-	_phys_span_ms = span
-	_post_phys_ms = after_phys
+	Clock.stamp_edge(now_us)
 
 static func clear_edge() -> void:
-	_edge_post_us = 0
-	_tick_us = 0
-	_phys_head_us = 0
-	_phys_tail_us = 0
-	_phys_open = false
-	_wake_ms = -1.0
-	_phys_span_ms = -1.0
-	_post_phys_ms = -1.0
-	_head_ms = -1.0
-	_floor_ms = -1.0
-	_torch_ms = -1.0
-	_bar_ms = -1.0
+	Clock.clear_edge()
 
 static func set_bench_ms(ms: float) -> void:
 	_bench_ms = ms
@@ -378,47 +196,7 @@ static func set_draw_split(obj_3d: int, prim_3d: int, draw_3d: int, obj_shadow: 
 	_draw_canvas = draw_canvas
 
 static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0, albedo_ms: float = -1.0, contact_ms: float = -1.0, sole_ms: float = -1.0, pin_ms: float = -1.0) -> void:
-	_lit_ms = lit_ms
-	_sample_ms = sample_ms
-	_sample_n = sample_n
-	_tint_ms = tint_ms
-	_drive_ms = drive_ms
-	_geo_ms = geo_ms
-	_sync_ms = sync_ms
-	_foot_ms = foot_ms
-	_quad_ms = quad_ms
-	_shade_ms = shade_ms
-	_albedo_ms = albedo_ms
-	_contact_ms = contact_ms
-	_sole_ms = sole_ms
-	_pin_ms = pin_ms
-	_sync_rest_ms = _rest4(sync_ms, albedo_ms, contact_ms, foot_ms, quad_ms)
-	_geo_rest_ms = _rest2(geo_ms, sole_ms, pin_ms)
-	_lit_rest_ms = _rest_lit(lit_ms, tint_ms, drive_ms, geo_ms, sync_ms, shade_ms)
-
-static func _rest2(total: float, a: float, b: float) -> float:
-	if total < 0.0 or a < 0.0 or b < 0.0:
-		return -1.0
-	var rest: float = total - a - b
-	if rest < 0.0:
-		return 0.0
-	return rest
-
-static func _rest4(total: float, a: float, b: float, c: float, d: float) -> float:
-	if total < 0.0 or a < 0.0 or b < 0.0 or c < 0.0 or d < 0.0:
-		return -1.0
-	var rest: float = total - a - b - c - d
-	if rest < 0.0:
-		return 0.0
-	return rest
-
-static func _rest_lit(total: float, tint_ms: float, drive_ms: float, geo_ms: float, sync_ms: float, shade_ms: float) -> float:
-	if total < 0.0 or tint_ms < 0.0 or drive_ms < 0.0 or geo_ms < 0.0 or sync_ms < 0.0 or shade_ms < 0.0:
-		return -1.0
-	var rest: float = total - tint_ms - drive_ms - geo_ms - sync_ms - shade_ms
-	if rest < 0.0:
-		return 0.0
-	return rest
+	Clock.set_lit_mark(lit_ms, sample_ms, sample_n, tint_ms, drive_ms, geo_ms, sync_ms, foot_ms, quad_ms, shade_ms, albedo_ms, contact_ms, sole_ms, pin_ms)
 
 static func set_render_ms(cpu_ms: float, gpu_ms: float) -> void:
 	_cpu_ms = cpu_ms
@@ -479,14 +257,7 @@ static func add_harness_us(us: int) -> void:
 ## the previous iteration's playtest, and the after window the bench is about to
 ## close holds the playtest that just ran. submit (pre_draw to post_draw) holds neither.
 static func rotate_harness() -> float:
-	if not _harness_on:
-		_pt_ms = 0.0
-		return 0.0
-	var credit_us: int = _harness_hold_us
-	_harness_hold_us = _harness_open_us
-	_harness_open_us = 0
-	_pt_ms = snappedf(float(credit_us) / 1000.0, 0.1)
-	return float(credit_us) / 1000000.0
+	return Clock.rotate_harness()
 
 static func harness_in_after_ms() -> float:
 	if not _harness_on:
@@ -494,63 +265,17 @@ static func harness_in_after_ms() -> float:
 	return snappedf(float(_harness_hold_us) / 1000.0, 0.1)
 
 static func _write_row(row: Dictionary) -> void:
-	row["bench_gen"] = _bench_gen
-	var line: String = JSON.stringify(row)
-	# Post before the file write. A web user:// write on the stall frame held
-	# the next present. The sink is what the web runner reads.
-	Web._post(line)
-	if OS.has_feature("web") or _fh == null:
-		return
-	_fh.store_line(line)
-	_fh.flush()
+	Sink._write_row(row)
 
 static func _note_bar(host: Node, delta: float) -> void:
-	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
-	var row: Dictionary = _hitch_row(host, dt_ms)
-	row["bar"] = 1
-	_write_row(row)
-	why = ""
-	gx = 0
-	gy = 0
-	_whys.clear()
-	_mark_ms = 0
+	Sink._note_bar(host, delta)
 
 static func _close() -> void:
-	if _fh != null:
-		_fh.flush()
-		_fh.close()
-		_fh = null
+	Sink._close()
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
-	var now: int = Time.get_ticks_msec()
-	var frame: int = int(Engine.get_process_frames())
-	var gap: int = 0
-	if _mark_ms > 0:
-		gap = now - _mark_ms
-	var dt: int = 0
-	if frame != _mark_frame:
-		_whys.clear()
-		_mark_frame = frame
-	elif _mark_ms > 0:
-		dt = gap
-	_mark_ms = now
-	why = reason
-	gx = int(origin.x)
-	gy = int(origin.y)
-	if _whys.size() >= 16:
-		_whys.remove_at(0)
-	_whys.append("%s:%d" % [reason, dt])
-	# A bench frame can run for a long time before the next tick. Post the mark
-	# now so a hung load still names the last step.
-	if _keep_all and started:
-		_write_mark(reason, gap)
+	Sink.mark(reason, origin)
 
 ## The bench row (hitch_log.gd bench_done): stats, generation, then the file or the localhost sink.
 static func emit_bench(row: Dictionary) -> void:
-	Present.bench_stats(row)
-	row["bench_gen"] = _bench_gen
-	if started and _fh != null:
-		_write_row(row)
-	else:
-		Web._post(JSON.stringify(row))
-	Web._flush_web()
+	Sink.emit_bench(row)

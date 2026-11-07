@@ -11,12 +11,13 @@ import { fakeD1, fakeKV } from "./fakes.mjs";
 const EMAIL = "Player.One+wdb@Example.com";
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 0, 0, 0, 0]).toString("base64");
 
-function setup(extra = {}) {
+function setup(extra = {}, mail = async () => new Response(JSON.stringify({ id: "mock-accepted" }))) {
   const env = { DB: fakeD1(), SHOTS: fakeKV(), REPO: "ViraXVespa/WhatDwellsBelow", RELAY_SALT: "salt", GH_WEBHOOK_SECRET: "whsec",
     GITHUB_TOKEN: "tok", EMAIL_SEND: "off", ...extra };
   const calls = [];
   let n = 100;
   globalThis.fetch = async (url, init) => {
+    if (url === "https://api.resend.com/emails") return mail(JSON.parse(init.body), init);
     calls.push({ url, body: JSON.parse(init.body), auth: init.headers.Authorization });
     n += 1;
     return new Response(JSON.stringify({ number: n, html_url: `https://github.com/x/y/issues/${n}` }), { status: 201 });
@@ -167,4 +168,39 @@ test("webhook ignores issues the relay did not file and other repos", async () =
   const { env } = setup();
   assert.equal((await (await hook(env, "issues", { action: "closed", issue: { number: 5 }, repository: { full_name: "ViraXVespa/WhatDwellsBelow" } })).json()).ignored, "not_a_relay_issue");
   assert.equal((await (await hook(env, "issues", { action: "closed", issue: { number: 5 }, repository: { full_name: "a/b" } })).json()).ignored, "other_repo");
+});
+
+
+test("Resend acceptance marks outbox sent, dedupe and opt-out prevent extra calls", async () => {
+  const sent = [];
+  const { env } = setup({ EMAIL_SEND: "on", EMAIL_FROM: "relay@example.test", RESEND_API_KEY: "re_fixture" },
+    async (message, init) => { sent.push(message); assert.match(init.headers["Idempotency-Key"], /^wdb-bug-relay\/outbox\/\d+$/); return new Response(JSON.stringify({ id: "mock-accepted" })); });
+  const rep = await (await post(env, base({ email: EMAIL, opt_in: true }))).json();
+  const payload = { action: "closed", issue: { number: rep.issue }, repository: { full_name: env.REPO } };
+  const response = await (await hook(env, "issues", payload, "email-accepted")).json();
+  assert.equal(response.sent, true); assert.equal(sent.length, 1);
+  assert.deepEqual(env.DB.rows("SELECT state FROM outbox"), [["sent"]]);
+  assert.ok(env.DB.rows("SELECT sent_at FROM outbox")[0][0] > 0);
+  assert.equal(sent[0].to, EMAIL.toLowerCase()); assert.match(sent[0].text, /Stop these emails: https:\/\/relay.test\/unsubscribe/);
+  assert.ok(!JSON.stringify(response).includes(EMAIL.toLowerCase()));
+  assert.equal((await (await hook(env, "issues", payload, "email-accepted")).json()).duplicate, true);
+  const token = await unsubToken(env, rep.reporter);
+  await worker.fetch(new Request(`https://relay.test/unsubscribe?r=${rep.reporter}&t=${token}`), env);
+  assert.equal((await (await hook(env, "issues", payload, "after-unsub")).json()).reason, "no_opt_in");
+  assert.equal(sent.length, 1);
+});
+
+test("provider failures and unaccepted messages remain privately queued", async () => {
+  for (const reject of [false, true]) {
+    const { env } = setup({ EMAIL_SEND: "on", EMAIL_FROM: "relay@example.test", RESEND_API_KEY: "re_fixture" }, async () => {
+      if (reject) throw new Error(`provider details ${EMAIL.toLowerCase()}`);
+      return new Response("{}");
+    });
+    const rep = await (await post(env, base({ email: EMAIL, opt_in: true }))).json();
+    const response = await hook(env, "issues", { action: "closed", issue: { number: rep.issue } });
+    assert.equal(response.status, 200);
+    const result = await response.json(); assert.equal(result.sent, false);
+    assert.ok(!JSON.stringify(result).includes(EMAIL.toLowerCase()));
+    assert.deepEqual(env.DB.rows("SELECT state, sent_at FROM outbox"), [["queued", null]]);
+  }
 });

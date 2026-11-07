@@ -34,12 +34,6 @@ const HARD_SEC := 45.0
 static func active() -> bool:
 	return CliArgs.has(FLAG)
 
-static func _vsync_off() -> void:
-	BU.vsync_off()
-
-static func _warm_user() -> bool:
-	return BU.warm_user()
-
 static func _hb(msg: String) -> void:
 	BU.hb(msg)
 
@@ -70,19 +64,8 @@ func _phase_name() -> String:
 	return "wait"
 
 static func start() -> void:
-	_vsync_off()
-	if _warm_user():
-		_hb("HB: fresh=0")
-		_hb("HB: missing=warm_user")
-		_hb("HB: ok=0")
-		App.get_tree().quit(1)
+	if not BU.start_fresh():
 		return
-	var mult: float = CliArgs.float_arg("--wdb-hitch-mult", 1.0)
-	HitchLog.bench_reset(mult)
-	HitchLog.set_phase("wait")
-	_hb("HB: fresh=1")
-	App.character_type = "male"
-	App.character_chosen = true
 	attach(App)
 	App.call_deferred("play_from_menu")
 
@@ -157,7 +140,7 @@ func _ready() -> void:
 			RenderingServer.frame_post_draw.connect(_on_post_draw)
 	if CliArgs.has(ISO_FLAG):
 		process_priority = 100
-	_vsync_off()
+	BU.vsync_off()
 	_dirs = [
 		Vector2(1, 0),
 		Vector2(0.70710678, 0.70710678),

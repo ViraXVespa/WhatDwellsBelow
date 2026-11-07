@@ -47,15 +47,9 @@ static func _iso_gather(host: Node) -> void:
 					host._iso_tag.append("marks")
 				k += 1
 		if n is Node3D and tag != "":
-			var body: Node3D = n as Node3D
-			host._iso_all.append(body)
-			host._iso_on.append(body.visible)
-			host._iso_tag.append(tag)
+			BU.iso_add(host, n, tag)
 		elif n is CanvasLayer:
-			var layer: CanvasLayer = n as CanvasLayer
-			host._iso_all.append(layer)
-			host._iso_on.append(layer.visible)
-			host._iso_tag.append("hud")
+			BU.iso_add(host, n, "hud")
 		for c in n.get_children():
 			stack.append(c)
 
@@ -101,12 +95,7 @@ static func _iso_stand(host: Node, actor: Node3D) -> void:
 	App.playtest.attack = false
 
 static func _iso_mid(vals: Array[float]) -> float:
-	if vals.is_empty():
-		return 0.0
-	var ordered: Array[float] = vals.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.5))
-	return ordered[at]
+	return BU.percentile(vals, 0.5, 0.0)
 
 static func _iso_report(host: Node, kind: String) -> void:
 	var n: int = host._iso_dts.size()
@@ -124,12 +113,7 @@ static func _iso_report(host: Node, kind: String) -> void:
 	])
 
 static func _iso_p95(host: Node) -> float:
-	if host._iso_dts.is_empty():
-		return 0.0
-	var ordered: Array[float] = host._iso_dts.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.95))
-	return ordered[at]
+	return BU.percentile(host._iso_dts, 0.95, 0.0)
 
 static func _iso_sample(host: Node, delta: float) -> void:
 	if host._iso_t < 0.35:

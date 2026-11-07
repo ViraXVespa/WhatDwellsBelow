@@ -445,6 +445,7 @@ def grok_child_argv(
     resume: str | None = None,
     fork: bool = False,
     output_format: str = "plain",
+    always_approve: bool = True,
 ) -> list[str]:
     argv = grok_argv(grok_bin)
     if resume:
@@ -461,10 +462,11 @@ def grok_child_argv(
         str(max_turns),
         "--disable-web-search",
         "--no-subagents",
-        "--always-approve",
         "--output-format",
         output_format,
     ]
+    if always_approve:
+        argv.append("--always-approve")
     return argv
 
 def harvest_session_media(scratch: Path, dest: Path) -> Path | None:
@@ -732,6 +734,14 @@ def main() -> None:
             copy_into(args.prompt_file, scratch)
             copied.append(args.prompt_file.name)
 
+        import review_bundle
+        image_sources = [(p, p.name) for p in sources if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")]
+        if image_sources:
+            review_bundle.stage(scratch, image_sources, hook=False)
+            write_job(scratch / "local-image-help.md", review_bundle.instructions([n for _, n in image_sources]))
+            copied.extend(p.relative_to(scratch).as_posix() for p in scratch.rglob("*") if p.is_file() and p.relative_to(scratch).parts[0] in ("local", "full"))
+            copied.extend(["local-image-help.md", ".wdb-review.json"])
+
         dest_name = safe_dest(args.dest_name.strip() or DEFAULT_DEST[args.kind])
         (scratch / dest_name).parent.mkdir(parents=True, exist_ok=True)
         job_path = scratch / "job.md"
@@ -777,6 +787,11 @@ def main() -> None:
                     edit_name=args.copy[0].name if args.edit else "",
                 ),
             )
+
+        if image_sources:
+            with job_path.open("a", encoding="utf-8") as job:
+                job.write("\nLocal image helpers and source originals are available; see local-image-help.md. "
+                          "Use local Tesseract before any text transcription, and vision only for weak/fail/SKIP or meaning.\n")
 
         print(f"scratch={scratch}")
         print(f"kind={args.kind}")

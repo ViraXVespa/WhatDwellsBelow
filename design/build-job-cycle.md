@@ -16,11 +16,6 @@ Gather finishes before any change.
 3. Confirm whether the existing tooling or in-game signal can show that outcome. Record what is missing, if anything.
 4. For a bug or perf miss: does the repro's output name the cause (a row, phase, or field that points at one cause)? A repro that shows the failure but not its cause is a missing signal; Prepare adds detail to that repro before any fix.
 
-No code changes. No new tools.  
-Gather ends in this session. Continue Prepare here. Do not `/fork`, and do not start a fresh session from Gather. Whether Gather also compacts, or the User rewinds to Gather after each change and prove, is not decided. Do not add a compact at the end of Gather on top of the one before Prove.
-
-The session `slice.py open` started holds the shared gather (unit-only material stays out until that unit). The first session on a task, when nothing earlier has changed, starts unit 1 and does not run `find.py changed`. A later session continues gather for earlier sessions' changes (`find.py changed`) and material only that unit needs, then adds its own unit-only material (`shots.py review`, text report only).
-
 ### Prepare
 
 If a signal is missing, add the cheapest instrument that provides it, or run the information-gathering pass that does not alter behavior. Gate new instrumentation the same way existing debug logging is gated (runtime check, localhost/web or bench flag only) so shipping builds are unaffected. A tool that would help later tasks is added under `tools.md` rule 5.
@@ -32,11 +27,7 @@ If Prepare discovers the task is blocked or needs a design answer, stop and upda
 Implement the task using the information and tooling from Gather and Prepare. A fix targets a cause the signal named, not a guess.  
 No formal prove yet.
 
-Before the first prove run (or when context is approaching 120–150K): stop for one compact and resume in this same session. Either run the guided compact, or print the keep-list and stop so the User can compact.
-
-/compact keep the restate, the intended observable outcome, the systems and doors read, the files changed this unit, any open questions, and the last RESULT if one exists. Drop raw tool logs and exploratory search results.
-
-Do not `/fork`, do not start a fresh session, and do not use `slice.py start --handoff` or `grok -r <original-session-id> --fork-session` as this handoff. Then proceed to Prove.
+Before any prove run, if context is approaching 120–150K: stop for one compact and resume in this same session. Print the keep-list and stop so the User can compact: keep the restate, the intended observable outcome, the systems and doors read, the files changed this unit, any open questions, and the last RESULT if one exists. Drop raw tool logs and exploratory search results.
 
 ### Prove
 

@@ -3,6 +3,7 @@ extends RefCounted
 ## Shared by dungeon_bench / hub_bench and their _iso helpers: frame-cap setup,
 ## heartbeat line, isolate-leg reset, and per-tag node counts.
 
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 ## Above the 60 FPS bar, and finite. VSYNC_DISABLED with max_fps 0 can peg the GPU.
@@ -60,3 +61,43 @@ static func walk_leg(host: Node, delta: float) -> bool:
 	host._sub_t = 0.0
 	host._fill_i += 1
 	return true
+
+static func start_fresh(score_where: String = "", harness: bool = false) -> bool:
+	vsync_off()
+	if warm_user():
+		hb("HB: fresh=0")
+		hb("HB: missing=warm_user")
+		hb("HB: ok=0")
+		App.get_tree().quit(1)
+		return false
+	var mult: float = CliArgs.float_arg("--wdb-hitch-mult", 1.0)
+	HitchLog.bench_reset(mult)
+	if score_where != "":
+		HitchLog.set_score_where(score_where)
+	if harness:
+		HitchLog.arm_harness()
+	HitchLog.set_phase("wait")
+	hb("HB: fresh=1")
+	App.character_type = "male"
+	App.character_chosen = true
+	return true
+
+static func iso_add(host: Node, n: Node, tag: String) -> void:
+	if n is Node3D:
+		var body: Node3D = n as Node3D
+		host._iso_all.append(body)
+		host._iso_on.append(body.visible)
+		host._iso_tag.append(tag)
+	elif n is CanvasLayer:
+		var layer: CanvasLayer = n as CanvasLayer
+		host._iso_all.append(layer)
+		host._iso_on.append(layer.visible)
+		host._iso_tag.append(tag)
+
+static func percentile(vals: Array[float], fraction: float, empty: float = 0.0) -> float:
+	if vals.is_empty():
+		return empty
+	var ordered: Array[float] = vals.duplicate()
+	ordered.sort()
+	var at: int = int(round(float(ordered.size() - 1) * fraction))
+	return ordered[at]

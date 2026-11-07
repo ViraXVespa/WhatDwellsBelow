@@ -149,16 +149,7 @@ static func _gather(host: Node) -> void:
 				_env_saved.append(env)
 		var tag: String = _tag(n)
 		if tag != "":
-			if n is Node3D:
-				var body: Node3D = n as Node3D
-				host._iso_all.append(body)
-				host._iso_on.append(body.visible)
-				host._iso_tag.append(tag)
-			elif n is CanvasLayer:
-				var layer: CanvasLayer = n as CanvasLayer
-				host._iso_all.append(layer)
-				host._iso_on.append(layer.visible)
-				host._iso_tag.append(tag)
+			BU.iso_add(host, n, tag)
 		for c in n.get_children():
 			stack.append(c)
 
@@ -219,12 +210,7 @@ static func _take(bucket: Array[float], value: float) -> void:
 		bucket.append(value)
 
 static func _mid(vals: Array[float]) -> float:
-	if vals.is_empty():
-		return -1.0
-	var ordered: Array[float] = vals.duplicate()
-	ordered.sort()
-	var at: int = int(round(float(ordered.size() - 1) * 0.5))
-	return ordered[at]
+	return BU.percentile(vals, 0.5, -1.0)
 
 static func _num(value: float) -> String:
 	if value < 0.0:

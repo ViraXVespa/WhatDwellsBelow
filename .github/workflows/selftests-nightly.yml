@@ -62,6 +62,15 @@ jobs:
         run: |
           if [ -f tools/requirements.txt ]; then pip install -r tools/requirements.txt; fi
 
+      - name: System test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg xvfb xauth libgl1 libgl1-mesa-dri libvulkan1 mesa-vulkan-drivers
+          command -v ffmpeg ffprobe xvfb-run
+
+      - name: Pinned Godot test dependency
+        run: python3 tools/gate.py bot-smokes --setup
+
       - name: Selftests
         id: run
         shell: bash

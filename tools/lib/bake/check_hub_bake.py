@@ -54,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.selftest:
         import tempfile
         with tempfile.TemporaryDirectory() as td:
-            return agent_log.selftest_result(bake_inputs.selftest(Path(td)) + bake_leak.selftest(Path(td)) + bake_roof.selftest(Path(td)))
+            return agent_log.selftest_result(bake_inputs.selftest(Path(td)) + bake_leak.selftest(Path(td)) + bake_roof.selftest(Path(td)) + bake_soles.selftest(Path(td)))
     root = agent_log.resolve_root(args)
     png, src = root / PNG, root / SRC
     lines: list[str] = []

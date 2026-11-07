@@ -5,7 +5,7 @@
 
 Headless. Godot scans every assets/sprites/**/*.png and assets/fx/**/*.png with Soles._scan and writes the table.
 Play only looks that table up. Stamp is the first 16 hex of SHA-256 over the sorted rows plus the
-normalized soles.gd / sole_bake.gd sources. The tool pastes stamp= into SOLE_BAKE_STAMP.
+normalized soles.gd / soles_scan.gd / sole_bake.gd sources. The tool pastes stamp= into SOLE_BAKE_STAMP.
 bake.py check fails when a png or those scripts changed since the bake.
 """
 from __future__ import annotations
@@ -24,6 +24,7 @@ import godot_lib
 JSON_REL = "scripts/data/actor_soles.json"
 SOLES_REL = "scripts/graphics/actor_lit/soles.gd"
 BAKE_REL = "scripts/graphics/actor_lit/sole_bake.gd"
+SCAN_REL = "scripts/graphics/actor_lit/soles_scan.gd"
 _STAMP_RE = re.compile(r'const SOLE_BAKE_STAMP := "[0-9a-f]*"')
 
 
@@ -45,6 +46,7 @@ def _line(path: str, packed: list) -> str:
 def stamp_of(root: Path, rows: dict) -> str:
     lines = [_line(path, rows[path]) for path in sorted(rows)]
     lines.append("soles:" + _script_sha(root / SOLES_REL))
+    lines.append("scan:" + _script_sha(root / SCAN_REL))
     lines.append("bake:" + _script_sha(root / BAKE_REL))
     lines.append("soles-v1")
     return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()[:16]
@@ -146,3 +148,20 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
+
+
+def selftest(root: Path) -> list[str]:
+    """A moved scan remains a bake input; stamp constants do not hash themselves."""
+    for rel in (SOLES_REL, SCAN_REL, BAKE_REL):
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text('const SOLE_BAKE_STAMP := "1234"\n# scan fixture\n')
+    rows = {"res://fixture.png": ["fixture", "0", "0", "0", "0", 0, 0, 1, 1, 1, 1]}
+    original = stamp_of(root, rows)
+    p = root / SCAN_REL
+    p.write_text(p.read_text().replace('"1234"', '"5678"'))
+    bad = [] if stamp_of(root, rows) == original else ["sole stamp must exclude embedded stamp constants"]
+    p.write_text(p.read_text() + "# changed scan algorithm\n")
+    if stamp_of(root, rows) == original:
+        bad.append("moved sole scan helper must invalidate the bake stamp")
+    return bad

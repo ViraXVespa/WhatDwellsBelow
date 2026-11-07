@@ -10,7 +10,7 @@
     python tools/session.py summary --list 'perf-sweep-web-*/*.jsonl'
     python tools/session.py summary --path _logs/web-perf/hitch.jsonl --jsonl --where ev=eq:hitch --where seg=eq:hub1 --group phase --stat submit_ms --stat draw
 
-No filter prints the whole job summary (the printer). A filter prints a capped
+No filter prints a bounded job summary (the printer; --verbose prints every line). A filter prints a capped
 slice or an aggregate and never the whole file. A .jsonl path with no filter
 is refused. --jsonl walks the file once and keeps numbers for --stat only.
 PowerShell: single-quote globs, regexes, and --- headings. Compares are
@@ -361,8 +361,38 @@ def _install_error(ap: object) -> None:
     ap.error = error.__get__(ap, type(ap))
 
 
+def _plain_summary(index: list[str], text: str, verbose: bool = False) -> list[str]:
+    """Bound console noise only; keep the source RESULT and the complete log on disk."""
+    if verbose:
+        return [*index, *text.splitlines()]
+    intro = agent_log.fold(index, keep=4, limit=6)
+    if index and index[-1].startswith("--- run") and index[-1] not in intro:
+        intro.append(index[-1])
+    lines = text.splitlines()
+    shown = agent_log.fold(lines, keep=16, limit=20)
+    result = next((line for line in reversed(lines) if line.startswith("RESULT ")), "")
+    if result and result not in shown:
+        shown.append(result)
+    return [*intro, *shown]
+
+
+def _plain_selftest() -> int:
+    index = ["index", *["old run " + str(i) for i in range(20)], "--- run 1: fixture ---"]
+    body = "\n".join(["detail " + str(i) for i in range(50)] + ["RESULT FAIL summary=fixture.txt"])
+    compact = _plain_summary(index, body)
+    bad = []
+    if len(compact) > 29 or compact[-1] != "RESULT FAIL summary=fixture.txt" or index[-1] not in compact:
+        bad.append("bounded view must retain source file and failure")
+    if _plain_summary(index, body, True) != [*index, *body.splitlines()]:
+        bad.append("verbose must preserve every line")
+    if _plain_summary([], "small\nRESULT PASS") != ["small", "RESULT PASS"]:
+        bad.append("small summaries must stay unchanged")
+    return agent_log.selftest_result(bad)
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Print a job's run index and newest summary, or a short slice of a log.")
+    ap = agent_log.std_parser("Print a job's run index and newest summary, or a short slice of a log.", verbose=True)
+    ap.add_argument("--selftest", action="store_true", help="Check bounded output, preserved failure result and full verbose output")
     ap.add_argument("job_pos", nargs="?", default="", help="Job name (same as --job).")
     ap.add_argument("--job", default="", help="Job name, e.g. smokes.")
     ap.add_argument("--path", default="", help="Repo-relative or absolute file under this checkout.")
@@ -382,6 +412,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pick", default="", help="Comma-separated JSON keys to print for each kept row. Capped by --max.")
     _install_error(ap)
     args = ap.parse_args(argv)
+    if args.selftest:
+        return _plain_selftest()
     if args.head < 0 or args.tail < 0 or args.context < 0 or args.max < 0:
         print("error: --head, --tail, --context, and --max must be >= 0. " + _PS_HINT, file=sys.stderr, flush=True)
         return 2
@@ -469,9 +501,7 @@ def main(argv: list[str] | None = None) -> int:
                 report.extend(index_lines[:1])
             report.extend(sliced)
             return _finish_query(root, args, report)
-        if index_lines:
-            print("\n".join(index_lines))
-        sys.stdout.write(full.read_text(encoding="utf-8", errors="replace"))
+        print("\n".join(_plain_summary(index_lines, full.read_text(encoding="utf-8", errors="replace"), args.verbose)))
     except _Missing as exc:
         print("error: %s" % exc, file=sys.stderr, flush=True)
         return 1

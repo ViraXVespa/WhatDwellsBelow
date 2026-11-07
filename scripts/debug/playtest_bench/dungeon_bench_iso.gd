@@ -78,16 +78,7 @@ static func _gather(host: Node) -> void:
 		var under: bool = covered.pop_back()
 		var tag: String = Util._tag(n)
 		if tag != "":
-			if n is Node3D:
-				var body: Node3D = n as Node3D
-				host._iso_all.append(body)
-				host._iso_on.append(body.visible)
-				host._iso_tag.append(tag)
-			elif n is CanvasLayer:
-				var layer: CanvasLayer = n as CanvasLayer
-				host._iso_all.append(layer)
-				host._iso_on.append(layer.visible)
-				host._iso_tag.append(tag)
+			BU.iso_add(host, n, tag)
 		elif not under:
 			_note_rest(n)
 		if tag == "floor" or tag == "walls" or tag == "sprites" or tag == "hud":

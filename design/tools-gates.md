@@ -53,5 +53,5 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6). `local-ai
 | File (under `tools/`) | Owns |
 |---|---|
 | `lib/checks/prove_graph.py`, `lib/checks/prove_selftest.py` | `check.py prove` change set, reference graph, drift; its selftest repo |
-| `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. |
+| `bot_allow.txt` | Local Bot scope: the paths the Bot may change. Deny lines first; the former GitHub bot-gate consumer is retired. |
 | `data/release_smoke/` | `release_drive.gd`: the autoload `gate.py release` adds to its scratch project copy (never in the game) |
