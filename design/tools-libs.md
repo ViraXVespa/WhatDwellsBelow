@@ -35,6 +35,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` |
 | `lib/run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean |
 | `lib/slice/retry_lib.py` | Red-prove instructions in the original Build session; one small corrective edit and rerun. Empty off Build. Does not launch or fork a session; `--selftest`. |
+| `lib/checks/combat_recovery_test.py` | Source-level special recovery regression with stubbed engine effects; auto-discovered by `check.py selftests`. Does not prove Godot or rendered animation. |
 | `lib/checks/prove_scope.py` | Scope/cache relevant Bot checks. Visual changes require a tip-compatible wide/detail review covering touched areas and observed findings, not bare answers. `--full` bypasses the pass cache. |
 | `lib/bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` |
 | `data/bot_budgets.json` | Budgets and the `no_budget` boot files, read by `bot_gate_lib` in Bot mode |

@@ -27,10 +27,8 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 		var atk := int(player.get("atk_state"))
 		if atk == 2 or atk == 3:
 			spec = 0.0
-		elif atk == 4:
-			spec = clampf(float(player.get("atk_t")) / maxf(0.05, App.bal.special_recovery), 0.0, 1.0)
 		else:
-			spec = 1.0
+			spec = 1.0 - clampf(float(player.get("special_cd")) / maxf(0.05, App.bal.special_recovery), 0.0, 1.0)
 	var inner: float = View.BAR_INSET * 2.0
 	fill(host.hp_fill, host.HP_W - inner, hp / maxh)
 	var mana_now: float = float(App.prog.mana)
@@ -40,7 +38,7 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	if player:
 		atk_now = int(player.get("atk_state"))
 	if atk_now == 0:
-		spec = minf(1.0, mana_now / maxf(1.0, float(App.bal.special_mana)))
+		spec = minf(spec, mana_now / maxf(1.0, float(App.bal.special_mana)))
 	var pot: Dictionary = App.prog.slots.get("potion", {})
 	var pn := int(pot.get("stack", 0))
 	var pcd: float = App.prog.potion_cd

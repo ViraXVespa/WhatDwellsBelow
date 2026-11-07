@@ -144,6 +144,7 @@ static func try_interact(host: Node) -> void:
 
 static func cooldowns(host: Node, delta: float) -> void:
 	host.dash_cd = maxf(0.0, host.dash_cd - delta)
+	host.special_cd = maxf(0.0, host.special_cd - delta)
 	host.iframe = maxf(0.0, host.iframe - delta)
 	host.interact_lock = maxf(0.0, host.interact_lock - delta)
 	if host.dash_t > 0.0:

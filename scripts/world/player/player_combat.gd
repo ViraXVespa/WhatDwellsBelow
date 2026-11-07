@@ -38,7 +38,7 @@ static func try_special(p: CharacterBody3D) -> void:
 	p.special_held = held
 	if not pressed:
 		return
-	if p.atk_state != p.ATK_NONE or p.dash_t > 0.0:
+	if p.atk_state != p.ATK_NONE or p.dash_t > 0.0 or p.special_cd > 0.0:
 		return
 	if float(App.prog.mana) < float(App.bal.special_mana):
 		return
@@ -98,12 +98,13 @@ static func advance_attack(p: CharacterBody3D, delta: float) -> void:
 	if p.atk_state == p.ATK_ACT:
 		if p.atk_t >= 0.16:
 			p.atk_state = p.ATK_REC
+			p.special_cd = App.bal.special_recovery
 			p.atk_t = 0.0
 			if p.telegraph:
 				p.telegraph.hide_now()
 		return
 	if p.atk_state == p.ATK_REC:
-		if p.atk_t >= App.bal.special_recovery:
+		if p.atk_t >= p._basic_duration():
 			p.atk_state = p.ATK_NONE
 
 static func basic_duration() -> float:

@@ -37,6 +37,7 @@ var dash_dir := Vector2.DOWN
 var trail_acc := 0.0
 var atk_state := ATK_NONE
 var atk_t := 0.0
+var special_cd := 0.0
 var hit_done := false
 var spec_point := Vector3.ZERO
 var lock_armed := false
