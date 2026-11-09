@@ -304,8 +304,10 @@ def selftest(script: list[str]) -> int:
         seen = linked / "addons" / "godot_ai" / "plugin.cfg"
         if not seen.is_file() or ("junction" not in line and "symlink" not in line and "ADDONS COPIED" not in line):
             bad.append(f"addons must be visible in the worktree through a junction, symlink, or copy ({line})")
-        if _reparse(linked / "addons"):
+        if _reparse(linked / "addons") and os.name == "nt":
             subprocess.run(["cmd", "/c", "rmdir", str(linked / "addons")], check=False)
+        elif _reparse(linked / "addons"):
+            (linked / "addons").unlink()  # a symlink off Windows: drops the link, not the install
         elif (linked / "addons").exists():
             shutil.rmtree(linked / "addons")
         if not (src / "plugin.cfg").is_file():
