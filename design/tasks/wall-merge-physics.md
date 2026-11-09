@@ -40,4 +40,4 @@ These are consistent with walls not being first-class physics and occlusion obje
 ## Notes from Vira
 - This may touch some of the dungeon.gen area as well. I'm not certain.
 - Be sure that the dungeon gen test scripts are correctly detecting any gaps in the walls.
-- When you've finished with the work for this task, please include a python command I can run later to test 100 random dungeon seeds for any gaps in their walls.
+- When you've finished with the work for this task, please include a python command I can run later to test 100 random dungeon seeds for any gaps in their walls. Do not run that many tests yourself. You should only test a maximum of 5 random seeds (making sure the default 42 seed is not in that list) for gaps.
