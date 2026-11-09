@@ -7,13 +7,13 @@ A **slice** is the User-opened worktree/session; a **unit** is one piece of its 
 
 ## 1. Understand
 
-A named door or job begins with one gather. `python tools/slice.py start` writes `session-plan.md` in the worktree root (gitignored). Read that file. It holds the door/job card, matching code-map key paths, the door's primary doc, the job doc when a job is named, and plain function-name lists for the key scripts. Do not re-read those sources or repeat those lookups.
+A named door or job begins with one gather. `python tools/slice.py start` writes `session-plan.md` in the worktree root (gitignored). Read that file. Do not re-read what it holds.
 
 On a new session, read the named task file once. It stays the assignment. The plan does not replace it or a survey handoff.
 
-Use `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names` only for a gap the plan does not cover. Then trim `session-plan.md` and add what you gathered: door/job and systems, the rows or key paths you still need, function names, the one-line observable outcome, open questions, changed files, and latest result or log paths. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups.
+Use `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names` only for a gap the plan does not cover. In that same turn, trim the half under `<!-- gathered -->` to paths and names this unit will open again, and replace the four sections above it. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
 
-State the observable outcome in the plan and how to measure it. For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
+For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
 
 An answered task needs no repeated opening questionnaire. Ask only for missing look/reference/bounds or a discovery that changes an earlier answer. Do not shoot unrelated screens or read another session's memory inbox.
 
@@ -31,9 +31,9 @@ A planned compact stop is mandatory. Stop and wait. Do not continue into the nex
 
 Stop when a compact would be safe. Finish the operation already in progress; do not interrupt a mutation, test, or tool call. A compact is safe before Prove, and before a follow-up Gather or Change. Do not stop in the middle of the first Gather or the Change that follows it.
 
-Before the stop, update `session-plan.md`: outcome, decisions, changed files, open questions, running job identifiers, and latest result or log paths. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
+Before the stop, those four sections and the trim must already match the turn. Write them when the fact lands, not for the first time at the stop. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
 
-On any post-compact turn, the first action is to read `session-plan.md`. Do not re-walk the repo or re-run the same lookups unless that file is missing or clearly stale. Rebuild with `python tools/slice.py plan` (`--refresh` keeps your notes and replaces the gathered half). Update the plan after significant progress and before the next planned stop.
+On any post-compact turn, the first action is to read `session-plan.md`. Do not re-walk the repo or re-run the same lookups unless that file is missing or clearly stale. `python tools/slice.py plan --refresh` rebuilds the gathered half and erases a trim; use it only when that half is stale. Keep the four sections current as facts land, and again before the next planned stop.
 
 ## Permissions and questions
 

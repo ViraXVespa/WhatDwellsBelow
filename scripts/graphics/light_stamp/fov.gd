@@ -47,7 +47,7 @@ static func _disc(
 		var px: int = px0
 		while px <= px1:
 			var i: int = row + px
-			if walk[i] != 0 and (_n < 1 or not block or _vis_buf[i] != 0):
+			if walk[i] == 1 and (_n < 1 or not block or _vis_buf[i] != 0):
 				var wx: float = float(x0) + (float(px) + 0.5) / float(K.SUB)
 				var wz: float = float(z0) + (float(py) + 0.5) / float(K.SUB)
 				var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
@@ -105,7 +105,7 @@ static func _mark_ray(
 ) -> void:
 	if x0 < 0 or y0 < 0 or x0 >= iw or y0 >= ih:
 		return
-	if walk[y0 * iw + x0] == 0:
+	if walk[y0 * iw + x0] != 1:
 		return
 	_vis_buf[y0 * iw + x0] = 1
 	if x0 == x1 and y0 == y1:
@@ -135,7 +135,7 @@ static func _mark_ray(
 			var cy: int = y + step_y
 			if cx < 0 or cy < 0 or cx >= iw or cy >= ih:
 				return
-			if walk[y * iw + cx] == 0 or walk[cy * iw + x] == 0:
+			if walk[y * iw + cx] == 2 or walk[cy * iw + x] == 2:
 				return
 			x = cx
 			y = cy
@@ -149,9 +149,10 @@ static func _mark_ray(
 			iy += 1
 		if x < 0 or y < 0 or x >= iw or y >= ih:
 			return
-		if walk[y * iw + x] == 0:
+		if walk[y * iw + x] == 2:
 			return
-		_vis_buf[y * iw + x] = 1
+		if walk[y * iw + x] == 1:
+			_vis_buf[y * iw + x] = 1
 
 static func _seed(
 	walk: PackedByteArray,
@@ -173,6 +174,6 @@ static func _seed(
 				var py: int = cy + oy
 				if px < 0 or py < 0 or px >= iw or py >= ih:
 					continue
-				if walk[py * iw + px] != 0:
+				if walk[py * iw + px] == 1:
 					return py * iw + px
 	return -1

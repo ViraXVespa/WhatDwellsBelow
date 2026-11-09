@@ -1,10 +1,9 @@
 extends Object
 
-## Fine solid blocks. Discs flood walkable texels from the mount. Cold fill is those samples only.
-## Falloff is straight-line meters on a clear segment. Wall mass blocks the disc.
-## The walk mask is gen solid under the texel center. Loops do not replace that mask.
-## A 4-neighbor does not open a cell past the lip.
-## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
+## Walk 1 is floor (solid != 0): cold fill, disc, and visible.
+## Walk 2 is the wall band: a non-floor cell with a 4-neighbor floor, including a pit that touches floor. It blocks.
+## Walk 0 is uncarved: the ray passes, the texel stays black, and it gets no neighbor copy.
+## Out of the stamp rect still stops the ray. Loops do not replace this mask. SUB stays 4.
 
 const K := preload("res://scripts/graphics/light_stamp/stamp_k.gd")
 const Job := preload("res://scripts/graphics/light_stamp/stamp_job.gd")

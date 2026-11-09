@@ -41,3 +41,14 @@ These are consistent with walls not being first-class physics and occlusion obje
 - This may touch some of the dungeon.gen area as well. I'm not certain.
 - Be sure that the dungeon gen test scripts are correctly detecting any gaps in the walls.
 - When you've finished with the work for this task, please include a python command I can run later to test 100 random dungeon seeds for any gaps in their walls. Do not run that many tests yourself. You should only test a maximum of 5 random seeds (making sure the default 42 seed is not in that list) for gaps.
+
+## Results
+Code is in. Automated gates pass. Look and movement are not confirmed.
+
+- One welded shell per chunk: wall surface, then the floor lip. One concave body on the wall triangles. Joins miter or bevel. End caps only where a run ends in open void.
+- The light stamp blocks on the wall band. Uncarved ground stays black and does not stop the ray.
+- `outline.gd` publishes solid/void edges the rect pass skipped. The map check fails a seed with an unmarked floor edge.
+- Seeds 7, 11, 19, 23, and 31 pass rim_closed, span_on_solid, and gates_placed. Seed 42 was not in that list.
+- `python tools/gate.py gd-load`, `python tools/gate.py import`, and `python tools/gate.py build --batch` pass.
+- Still open: confirm continuous edges, no escape, no edge snag, and light occluded by walls.
+- Later, not run here: `python tools/perf.py map --sweep --count 100`

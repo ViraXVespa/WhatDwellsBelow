@@ -81,7 +81,7 @@ def next_step(st: dict, s: dict) -> str:
     unit = f" ({st['unit']})" if st.get("units") and st.get("unit") else ""
     if not s["forked"]:
         return (f"Gather{unit}: read session-plan.md (same-worktree plan). On a new session, read the task file once; it stays the assignment. "
-                "Use find.py only for a gap the plan does not cover, then trim the plan and state the outcome. "
+                "Use find.py only for a gap the plan does not cover. In that same turn, trim the gathered half to this unit and write the four sections above the marker. "
                 "Continue Prepare here; context breaks follow build-job-cycle.md and resume in this same session. Necessary visual references use the task-scoped grant")
     tail = " (`python tools/slice.py start --unit-done` updates the task's done: line)" if unit else ""
     return (f"This session is not the one that started the slice{unit}. Continue the unit in hand: "

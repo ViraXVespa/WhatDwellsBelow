@@ -1,7 +1,6 @@
 extends RefCounted
 
 const Dbg := preload("res://scripts/app/dbg.gd")
-const T := preload("res://scripts/data/tunables.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 const Clip := preload("res://scripts/world/dungeon_geo/stream_clip.gd")
 const Emit := preload("res://scripts/world/dungeon_geo/stream_emit.gd")
@@ -145,14 +144,10 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	if outlined or not wall_cells.is_empty():
 		runs = Clip._wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
 	Dbg.hitch("geo_runs")
+	var pieces: Array = []
 	if not floor_cells.is_empty():
 		if outlined:
-			var lip: Node3D = Emit._emit_floor_lip(Clip._outline_loops(host), ox * n, oy * n, x1 * n, y1 * n, fine_m, host.floor_mat)
-			Dbg.hitch("geo_lip")
-			root.add_child(lip)
-			var mm: MultiMeshInstance3D = Emit._first_mm(lip)
-			if host.floor_mm == null and mm != null:
-				host.floor_mm = mm
+			pieces = Emit._lip_pieces(Clip._outline_loops(host), ox * n, oy * n, x1 * n, y1 * n)
 		else:
 			var fm: MultiMeshInstance3D = Emit._emit_floors(WallRects.merge(floor_cells), fine_m, host.floor_mat)
 			root.add_child(fm)
@@ -160,36 +155,13 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 				host.floor_mm = fm
 			host.floor_mm = fm
 		Dbg.hitch("geo_lip")
-	if not runs.is_empty():
-		var wall_inst: MeshInstance3D = Emit._ensure_wall_mesh(host, runs, fine_m)
+	if not runs.is_empty() or not pieces.is_empty():
+		var wall_inst: MeshInstance3D = Emit._emit_shell(host, runs, pieces, fine_m)
 		if wall_inst != null:
 			root.add_child(wall_inst)
 		Dbg.hitch("geo_walls")
-	if outlined or not runs.is_empty():
-		Emit._add_ribbon_boxes(root, runs, fine_m)
-		Dbg.hitch("geo_col")
-	elif not wall_cells.is_empty():
-		add_collision(root, wall_cells, fine_m)
 	job.node = root
 	job.state = "live"
-
-static func add_collision(root: Node3D, walls: Array[Vector2i], fine_m: float) -> void:
-	if walls.is_empty():
-		return
-	var body := StaticBody3D.new()
-	body.collision_layer = 1
-	body.collision_mask = 0
-	root.add_child(body)
-	var rects: Array[Rect2i] = WallRects.merge(walls)
-	for r: Rect2i in rects:
-		var sx: float = float(r.size.x) * fine_m
-		var sz: float = float(r.size.y) * fine_m
-		var cs := CollisionShape3D.new()
-		var box := BoxShape3D.new()
-		box.size = Vector3(sx, T.WALL_H, sz)
-		cs.shape = box
-		cs.position = Vector3((float(r.position.x) + float(r.size.x) * 0.5) * fine_m, T.WALL_H * 0.5, (float(r.position.y) + float(r.size.y) * 0.5) * fine_m)
-		body.add_child(cs)
 
 static func sleep_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "live":

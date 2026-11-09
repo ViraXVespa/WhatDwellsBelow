@@ -75,7 +75,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
                   Q0, "After the answers, `slice.py start --handoff`; fill and validate the task, then stop. build-handoff.md owns this procedure."]
     else:
         label = "ORDER (handoff)" if mode == "handoff" else "ORDER"
-        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`. Read session-plan.md (this start writes it for a named door or job), then the task file once on a new session. Use find.py only for a gap the plan does not cover, then trim the plan and state the outcome there. Continue in this session."]
+        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`. Read session-plan.md (this start writes it for a named door or job), then the task file once on a new session. Use find.py only for a gap the plan does not cover. In that same turn, trim the gathered half to this unit and write the four sections above the marker. Continue in this session."]
         if mode == "handoff":
             lines.append("Restore only the saved survey edits and inspect its listed baselines; do not repeat the survey. Keep prior answers unless new evidence changes them.")
         if screen:
@@ -84,7 +84,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
             lines.append("NO PLAY CAMERA: no invented shot flow, play-camera baseline or --visual gate. Use the task's check; a keyed still uses `media.py rekey-preview` against its source plate. A rejected image is not an accepted reference.")
         lines += [Q0,
                   "CYCLE: understand outcome and cause; prepare missing evidence; implement; final verification; finish. CHANGE: `python tools/gate.py gd-load` once the edits are complete. Context breaks follow build-job-cycle.md: stop when a compact would be safe, before Prove and before a follow-up Gather or Change, then resume in this same session. Do not `/fork`.",
-                  "COMPACT: a planned stop is mandatory. Update session-plan.md, then stop and wait for the User to compact or say continue. Do not keep working until an automatic compact.",
+                  "COMPACT: a planned stop is mandatory. session-plan.md is already trimmed and its four sections already match the turn. Then stop and wait for the User to compact or say continue. Do not write the plan for the first time at the stop, and do not keep working until an automatic compact.",
                   "VERIFY: relevant checks, the unit's flow/UI load check if visual, then `gate.py build --batch`. One small corrective edit and one rerun; still red, report the log. Read each result with `session.py summary JOB`. build-job-cycle.md and prove.md own verification.",
                   "FINISH: update docs/task; --unit-done for a queue; revoke temporary reference grants; `slice.py commit`, plain push to the week branch, then the done notice. Record red/skipped gates honestly. Finish the whole request in this session when it fits; save unfinished work in the task."]
     lines += ["NAMES: function inventories are `find.py scripts --names` or `--all-names` (one `--path`). Do not xref `^func` to list functions. RESULTS: `session.py summary JOB` (JOB is the `_logs/<job>/` folder). Never open `_logs/` with a file read.",

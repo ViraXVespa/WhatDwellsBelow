@@ -7,7 +7,7 @@ Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk in
 
 Enemy jobs and floor/wall geometry both stream around the player so a whole floor stays inside the 60 FPS budget.
 
-Stream instances gen's published runs. Ribbon boxes fire when those runs exist, not only when the outlined flag is set. WallRects.merge collision is fallback for chunks with no runs. It does not derive a wall, a lip, or a silhouette. Floor edge, wall ribbon recipe, and BoxShapes on a slant follow the same published origin, delta, and normal. Interior floor may stay merged rects. Do not clip 4-connected cells to invent an edge. Do not call WallRects.merge on wall_cells to build a stair lip. Wall collision is BoxShape on void that touches that bounded solid, flush with the published run, not a 1 m slab and not a second staircase.
+Stream instances gen's published runs as one welded shell per chunk when those runs exist, not only when the outlined flag is set. One StaticBody per chunk uses a concave shape from the wall triangles of that shell. Thickness sits into the solid, flush with the floor edge. There is no per-ribbon BoxShape and no WallRects.merge fallback for wall collision. The shell does not derive a wall, a lip, or a silhouette. Interior floor may stay merged rects. Do not clip 4-connected cells to invent an edge. Do not call WallRects.merge on wall_cells to build a stair lip. Do not merge wall_cells into the body. A chunk with no published runs keeps no wall body. Missing exits stay a gen miss.
 
 Stream radii and chunk sizes: tunables-world, Dungeon generation.
 

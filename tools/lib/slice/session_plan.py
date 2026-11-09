@@ -3,8 +3,9 @@
 
     python tools/slice.py plan [--door D | --job door.job] [--task ID] [--refresh] [--dry-run]
 The file is gitignored. It is the same-worktree continuity note across a compact. It does not replace
-the task file or a survey handoff. `slice.py start` writes it when it is missing. `--refresh` replaces
-only the gathered half under the marker line and keeps Outcome, Open questions, Changed files, and Latest results.
+the task file or a survey handoff. `slice.py start` writes it when it is missing. Build trims the gathered
+half to the working set; `--refresh` replaces that half and erases the trim. It keeps Outcome, Open questions,
+Changed files, and Latest results.
 
 --selftest builds a throwaway repo and checks the gather, the refresh keep, and the worktree guard.
 """
@@ -39,8 +40,9 @@ KEPT_HEADS = (
 INTRO = (
     "# Session plan\n\n"
     "Same-worktree continuity after a compact. Not a task file and not a survey handoff.\n"
-    "Edit the four sections below. `python tools/slice.py plan --refresh` replaces only the gathered half under the marker.\n"
-    "On a post-compact turn, read this file first. Do not re-run the lookups it already holds.\n"
+    "Write the four sections above the marker in the same turn a fact lands. Trim the gathered half to this unit once the working set is known, before the first edit.\n"
+    "`python tools/slice.py plan --refresh` rebuilds the gathered half and erases that trim. Use it only when the gather is stale.\n"
+    "On a post-compact turn, read this file first. Do not re-run the lookups it still holds.\n"
 )
 CODE_RE = re.compile(r"^Code:\s*(.+)$", re.M)
 TICK_RE = re.compile(r"`([^`]+)`")
@@ -295,7 +297,7 @@ def ensure(root: Path, door: str, job: str, area: str = "", mode: str = "", task
     md.write_text(path, render(root, existing, door, job, area, mode, task, route_lines))
     if refresh and existing:
         return "session-plan.md refreshed (gathered half replaced; outcome, questions, changed files, and results kept). Read it next."
-    return "session-plan.md written. Read it next. Use find.py only for a gap it does not cover, then trim the plan."
+    return "session-plan.md written. Read it next. Use find.py only for a gap it does not cover, then trim the gathered half to this unit in that same turn and write the four sections above the marker. --refresh erases a trim."
 
 def _from_state(root: Path, door: str, job: str, area: str, task: str) -> tuple[str, str, str, str, str]:
     st = slice_state.load(root)
@@ -333,7 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     existed = path.is_file()
     line = ensure(root, door, job, area, mode, task, None, refresh=args.refresh)
     if not line:
-        line = "session-plan.md present. Read it. Pass --refresh only when the gathered half is stale."
+        line = "session-plan.md present. Read it. Pass --refresh only when the gathered half is stale. A refresh erases a trim."
     return agent_log.finish("session-plan", root, line, "PASS", args=args, write=not args.dry_run, echo=line,
                             door=door, plan_job=job, refreshed=bool(args.refresh and existed))
 
