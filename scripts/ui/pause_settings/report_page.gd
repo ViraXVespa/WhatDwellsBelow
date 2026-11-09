@@ -31,6 +31,7 @@ static func build(host: Node) -> void:
 	em.text = str(form.email)
 	em.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
 	em.text_changed.connect(func(t: String) -> void: form.email = t)
+	guard_backspace(em)
 	_field(host, em)
 	_toggle(host, "bug_report.opt_in", "opt_in")
 	_toggle(host, "bug_report.shot", "shot")
@@ -89,6 +90,21 @@ static func _cycle(host: Node, key: String, val_key: String, field: String, n: i
 		if i < host.info_btns.size():
 			(host.info_btns[i] as Control).grab_focus()
 	))
+
+## Backspace is also ui_cancel (binds/table.gd MENU), and LineEdit checks ui_cancel first, so it stopped editing
+## instead of deleting. The gui_input signal runs before LineEdit's own handler: delete here and accept the key.
+static func guard_backspace(le: LineEdit) -> void:
+	le.gui_input.connect(func(e: InputEvent) -> void:
+		var k := e as InputEventKey
+		if k == null or not k.pressed or k.keycode != KEY_BACKSPACE or not le.is_editing():
+			return
+		if le.has_selection():
+			le.delete_text(le.get_selection_from_column(), le.get_selection_to_column())
+		elif le.caret_column > 0:
+			le.delete_text(le.caret_column - 1, le.caret_column)
+		le.text_changed.emit(le.text)
+		le.accept_event()
+	)
 
 static func _toggle(host: Node, key: String, field: String) -> void:
 	Pages._add_check_centered(host, Pages._check(App.tr(key), bool(form[field]), func(on: bool) -> void: form[field] = on))

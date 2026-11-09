@@ -6,7 +6,7 @@ status: active
 done-when: Pause-menu Report Bug opens a GitHub issue on ViraXVespa/WhatDwellsBelow through the relay (no player GitHub account, no token in any build), with rate limit and spam filter live.
 resume: Vira names this task in a web session, which reads this file whole.
 
-Vira approved 2026-10-25 (t601u). Server side is live; game side built (2026-10-25), waiting on a web-export send.
+Vira approved 2026-10-25 (t601u). Server side is live; game side built (2026-10-25). Desktop live UI proven 2026-11-09 (#81, #82); a live web-build send remains.
 
 ## Decisions (Vira, 2026-10-25)
 - Report Bug shows in **all** builds (web, desktop; release and debug).
@@ -33,11 +33,13 @@ Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira
 - Live dry run (stores nothing; counts toward the 10/h IP limit): a `--script` SceneTree that waits two frames, `load()`s `bug_send.gd` and calls `post(payload(form, "", true), cb)`; desktop 2026-10-25 returned 200 with labels `bug-report, door:ui, build:dev, platform:linux` and no email in the response.
 
 ## Left
-- **Web proof:** done 2026-10-31: `release.py export-web --debug --out DIR`, then `perf.py web --site DIR --flow bug-dry` (`window.wdbBugDry`, `scripts/debug/web_hook.gd`) returned 200 with labels `bug-report, door:triage, build:debug, platform:web`, email `none`; no GitHub token string in the export.
-- **Email sending:** live Resend delivery verified on 2026-11-07 for the user-approved standard fixture [issue #78](https://github.com/ViraXVespa/WhatDwellsBelow/issues/78). The single outbox row was sent and provider delivery confirmed; this is not proof of inbox placement. No additional test mail is needed. The relay retains sanitized attempt diagnostics, immutable payload/idempotency and default-disabled private retry authorization. See `tools/relay/README.md`. Player replies to `/ask` remain a separate unimplemented capability, not part of this task's stated done-when.
-- **Remaining UI acceptance:** Vira plans to submit an actual in-game report after the pause regression is repaired. Desktop/web dry runs above do not prove that live UI submission. Keep this task active until the required UI path is checked. Do not create extra reports or messages on Vira's behalf for this check.
-- **Abuse protection:** keep the existing rate limits and spam filter. Automated mocked rate-limit tests cover refusal; no live rate-limit burst is requested or required before the pause/process audit.
+- **Desktop UI proof:** done 2026-11-09. Vira sent live in-game reports from a Windows dev build (`0.11.0 @cffcfb69`) through Pause > Settings > Report Bug: [#81](https://github.com/ViraXVespa/WhatDwellsBelow/issues/81) and [#82](https://github.com/ViraXVespa/WhatDwellsBelow/issues/82), each labelled `bug-report, door:dungeon, build:dev, platform:windows`, with screenshot and state report and no email in the issue.
+- **Web proof:** dry run only (2026-10-31: `release.py export-web --debug --out DIR`, then `perf.py web --site DIR --flow bug-dry` returned 200 with labels `bug-report, door:triage, build:debug, platform:web`, email `none`; no GitHub token string in the export). A live web-build submission is the one item "Proves it" still lacks. It is Vira's to send; the Bot does not create reports.
+- **Email sending:** live Resend delivery verified 2026-11-07 for [#78](https://github.com/ViraXVespa/WhatDwellsBelow/issues/78) (provider delivery, not inbox placement). See `tools/relay/README.md`. Player replies to `/ask` are a separate, unimplemented capability.
+- **Abuse protection:** rate limits and spam filter live; mocked tests cover refusal. No live burst test is required.
 - **Webhook:** live (id 703111592, issues + issue_comment, ping 200).
+- **Backspace in the email field:** fixed 2026-11-09 (`report_page.gd` `guard_backspace`; Backspace is also `ui_cancel`, which LineEdit checked first). P1 `bug_report_ok` now covers it.
+- **Vira's follow-ups (notes/wdb_todo_list.txt, not started):** Area as a combobox instead of a click toggle; separate door and job pickers with descriptions pulled from the design docs, ideally auto-populated; a summary input above the selector. These are new UI, for Build.
 
 ## Intent
 Players report bugs from inside the game without a GitHub account. Logged 2026-10-24.

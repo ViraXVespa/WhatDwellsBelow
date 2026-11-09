@@ -9,6 +9,7 @@ const Send := preload("res://scripts/app/bug_report/bug_send.gd")
 const State := preload("res://scripts/app/bug_report/bug_state.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
 const Settings := preload("res://scripts/ui/pause_settings.gd")
+const Page := preload("res://scripts/ui/pause_settings/report_page.gd")
 
 static func run(_host: Node) -> void:
 	var fails: PackedStringArray = []
@@ -49,7 +50,29 @@ static func run(_host: Node) -> void:
 	Crash.crashed_log = log0
 	if str(body.get("category", "")) != "ui" or str(st.get("version", "")) == "" or not bool(body.get("dry_run", false)):
 		fails.append("payload category/version/dry_run")
+	if not _backspace_ok(_host):
+		fails.append("Backspace in the email field does not delete")
 	printerr("P1: bug_report payload_keys=" + ",".join(PackedStringArray(body.keys())) + " state_keys=" + str(st.size()))
 	printerr("P1: bug_report_ok=" + str(fails.is_empty()))
 	if fails.size():
 		printerr("SMOKE FAIL: Report Bug (bug_report_check.gd): " + "; ".join(fails))
+
+## Backspace is bound to ui_cancel too; in a focused, editing LineEdit it must delete a character.
+static func _backspace_ok(host: Node) -> bool:
+	if host == null or not host.is_inside_tree():
+		return true
+	var le := LineEdit.new()
+	le.text = "abc"
+	host.add_child(le)
+	Page.guard_backspace(le)
+	le.grab_focus()
+	le.edit()
+	le.caret_column = 3
+	var k := InputEventKey.new()
+	k.keycode = KEY_BACKSPACE
+	k.physical_keycode = KEY_BACKSPACE
+	k.pressed = true
+	host.get_viewport().push_input(k)
+	var ok := le.text == "ab" and InputMap.event_is_action(k, "ui_cancel")
+	le.queue_free()
+	return ok
