@@ -87,7 +87,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 - Ships with deduced baseline impact coefficients generated at build time; these are refined by real telemetry.
 - Presents ideal values as fly-out information when a variable is highlighted: one ideal for the fresh-start save (tuned toward first-extraction goals) and one ideal for the progressed save (tuned toward later constraints).
 - Supports accelerated, background, and headless runs. Unlimited queued runs; any run is interruptible without loss of already-collected telemetry.
-- The entire system ships in the public demo but remains hidden behind the secret input sequence.
+- The system lives in `scripts/debug/` behind the secret input sequence. Release presets (`Web` for the public Pages demo, `Linux`) exclude `scripts/debug/*`, so it ships only in debug exports (`Web Debug`, `Linux Debug`) and the editor (debug door, Release vs debug builds).
 
 ## Playtest journal (PC / Xbox debug only)
 
