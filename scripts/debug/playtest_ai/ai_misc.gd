@@ -7,7 +7,13 @@ const A := preload("res://scripts/debug/playtest_ai/ai_act.gd")
 const CLOSE := 2.4
 const Human := preload("res://scripts/debug/playtest_ai/ai_human.gd")
 
-static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> void:
+static func press_at(reach: float) -> float:
+	if reach < 1.18:
+		return 1.18
+	return reach
+
+
+static func use_prop(pt: Node, p: Node, dest: Node, reach: float = 1.18) -> void:
 	if dest == null or not is_instance_valid(dest):
 		pt.move = Vector2.ZERO
 		pt.path_goal = null
@@ -15,7 +21,7 @@ static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> voi
 	var d: float = pt._dist(p, dest)
 	pt.aim = pt._xz_to(p, dest)
 	pt.path_goal = dest
-	if d < 1.18:
+	if d < press_at(reach):
 		pt.path.clear()
 		pt.path_i = 0
 		pt.move = Vector2.ZERO

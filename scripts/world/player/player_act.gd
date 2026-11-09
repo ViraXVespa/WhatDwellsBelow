@@ -134,7 +134,9 @@ static func refresh_prompt(host: Node) -> void:
 static func try_interact(host: Node) -> void:
 	if App.ui_open or host.interact_lock > 0.0:
 		return
-	var best: Node = Near.nearest(host as Node3D, 1.25)
+	var best: Node = Near.aimed(host as Node3D, 1.25)
+	if best == null:
+		best = Near.nearest(host as Node3D, 1.25)
 	if best and best.has_method("interact"):
 		App.interact_locked = false
 		var msg: String = str(best.interact(host))

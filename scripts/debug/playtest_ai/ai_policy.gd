@@ -203,7 +203,19 @@ static func _apply(pt: Node, p: Node, delta: float, goal: String) -> bool:
 		Misc.use_prop(pt, p, stairs)
 		return true
 	if goal == "wander":
+		if yields_for_depth(str(pt.slot), _depth_open(pt, p)):
+			return false
 		L.decide(pt, p, "wander", "policy")
 		U.wander(pt, p, delta)
 		return true
 	return false
+
+
+static func yields_for_depth(slot_name: String, depth_open: bool) -> bool:
+	return slot_name == "campaign" and depth_open
+
+
+static func _depth_open(pt: Node, p: Node) -> bool:
+	if Misc._living_boss(pt, p) != null:
+		return true
+	return Misc._floor_stairs(pt) != null
