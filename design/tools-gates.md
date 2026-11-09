@@ -11,7 +11,7 @@ Entries here: `gate.py`, `slice.py`, `bot_status.py`, `local-ai-tuner.py`, `chec
 
 - **Build slice prove (User PC):** `python tools/gate.py gd-load` (read every error) -> `python tools/gate.py build --batch` (`--visual door.job` for a visual change) -> `python tools/slice.py commit`. Red: one corrective edit, one re-run (`tools.md` rule 10).
 - **Bot prove:** `check.py prove` (BOT.md Prove).
-- **Nightly selftests:** `.github/workflows/selftests-nightly.yml` (08:00 UTC + manual) runs `check.py selftests` on every branch head; one open `tooling-selftests` issue lists failing branch, sha and selftests, closed when all pass. GITHUB_TOKEN only.
+- **Nightly selftests:** `.github/workflows/selftests-nightly.yml` (08:00 UTC + manual) runs `check.py selftests` on every branch head; then the advisory `lint.py unused` sweep (report mode; findings never fail, counts + `unused-funcs.json` are in the run artifact; a sweep crash or missing RESULT line counts as a failure). One open `tooling-selftests` issue lists failing branch, sha, selftests and sweep crashes, closed when all pass. GITHUB_TOKEN only.
 - **Docs or routing changed:** `check.py load-graph`. Tool rows or doc paths: `check.py tool-docs`, then `check.py tool-docs --stale-refs`.
 - **A tool changed:** `check.py tool-cli --only STEM --smoke-run` (default: every uncommitted or unpushed tool).
 - **Smokes:** PC `gate.py smokes --door D` (or `--job door.job`, `--phases 1 2`). Bot box `gate.py bot-smokes --phases 1,2,6` (or `--door D`); `gate.py bot-smokes --for FILE` names the covering phases without running (from `tools/data/phase_loads.json`, what each phase really loaded; `--record-loads` re-records it after code moves between phases).
