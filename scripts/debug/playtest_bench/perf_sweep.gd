@@ -76,7 +76,7 @@ static func start() -> void:
 static func claim_hub(_host: Node, miss: String) -> bool:
 	if _inst == null or not is_instance_valid(_inst):
 		return false
-	return _inst._claim_hub(miss)
+	return Journey._claim_hub(_inst, miss)
 
 var _state: int = ST_HUB
 var _act_limit: float = 30.0
