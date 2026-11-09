@@ -32,7 +32,6 @@ ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 hub-bake-checks | bot | open | Hub light leak + dumpster shadow, bake/shadow checks with planted faults | -
 local-ai-tuner | bot | open | Local AI: two models, a playtester and a balance tuner (recommend-only, runs on Vira's PC) | -
-shot-catalog-gaps | bot | open | Bottie Boop shot-catalog gaps: views, set/name fixes, new movies | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
