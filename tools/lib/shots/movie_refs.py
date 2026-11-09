@@ -129,7 +129,13 @@ def record(root: Path, data: dict, wt: Path, name: str, kind: str, out: Path) ->
         work.mkdir(exist_ok=True)
         (work / "flow.json").write_text(json.dumps(view_flow(root, data, name), indent=1), encoding="utf-8")
         argv = ["--steps", str(work / "flow.json"), "--frames-dir", str(work), "--mode", "build", "--scale", "100", "--out", str(png)]
-    res = run_shots.capture(run_shots.build_parser().parse_args(argv), wt, set())
+    given: set = set()
+    if v.get("viewport"):
+        # A phone/tablet view: the window at CSS size x dpr, --dpr to the game, as shots.py textsize runs it.
+        w, h, dpr = json.loads((root / "tools/data/text-size.json").read_text(encoding="utf-8"))["viewports"][v["viewport"]]
+        argv += ["--width", str(int(w * dpr)), "--height", str(int(h * dpr)), "--dpr", str(dpr)]
+        given = {"width", "height", "scale"}
+    res = run_shots.capture(run_shots.build_parser().parse_args(argv), wt, given)
     return (png if res.get("ok") and png.is_file() else None), str(res.get("band", ""))
 
 def still_diff(a: Path, b: Path) -> dict:
