@@ -7,7 +7,6 @@ extends Node3D
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
-const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 const Place := preload("res://scripts/graphics/actor_lit/place.gd")
 const Pool := preload("res://scripts/graphics/actor_lit/lit_pool.gd")
 const Tick := preload("res://scripts/graphics/actor_lit/lit_tick.gd")

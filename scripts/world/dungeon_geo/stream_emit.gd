@@ -157,11 +157,3 @@ static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 		for k in tris.size():
 			indices.append(base + int(tris[k]))
 	return Commit.commit(verts, norms, uvs, indices)
-
-static func _seg_dist(p: Vector2, o: Vector2, d: Vector2) -> float:
-	var l2: float = d.length_squared()
-	if l2 < 0.0001:
-		return p.distance_to(o)
-	var t: float = clampf((p - o).dot(d) / l2, 0.0, 1.0)
-	return p.distance_to(o + d * t)
-

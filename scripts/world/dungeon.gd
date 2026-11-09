@@ -222,9 +222,5 @@ func _note(k: String) -> void:
 func _center_room(r: Dictionary) -> Vector2i:
 	return DungeonCells.center_room(r)
 
-func _tick_plates() -> void:
-	# Area3D enter/exit on plate objects now drives plate_held; no per-frame walk.
-	pass
-
 func toggle_map() -> void:
 	DungeonBoot.toggle_map(self)

@@ -3,11 +3,7 @@ extends RefCounted
 const GatherS := preload("res://scripts/world/gather/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
-const Spawn := preload("res://scripts/world/dungeon_props/spawn.gd")
 const Place := preload("res://scripts/world/dungeon_props/props_place.gd")
-
-static func spawn_world(host: Node) -> void:
-	Spawn.spawn_world(host)
 
 static func spawn_vein(host: Node, r: Dictionary) -> void:
 	if host._near_spawn(host._center_room(r)):
