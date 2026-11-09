@@ -42,9 +42,6 @@ static func scaled_dmg(base: float, is_special: bool) -> float:
 		d *= 1.0 + App.bal.shrine_dmg
 	return d
 
-static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", _is_special := false, glance := false, can_crit := true) -> void:
-	Atk.damage_enemy(host, e, dmg, stagger, xp, _is_special, glance, can_crit)
-
 static func _life_tap(host: Node, e: Node) -> void:
 	var hit_heal: float = App.gear("hp_on_hit")
 	if hit_heal > 0.0 and host.has_method("heal"):

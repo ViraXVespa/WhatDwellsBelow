@@ -25,8 +25,6 @@ const PerfSweep := preload("res://scripts/debug/playtest_bench/perf_sweep.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
-static var enter_flag: bool = false
-
 static func args() -> PackedStringArray:
 	# Prefer user args (after --). Fall back to full cmdline so Steam/redirected
 	# launches still see --wdb-phaseN-smoke when user-args arrive empty.
@@ -162,6 +160,3 @@ static func attach_camp(host: Node) -> void:
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
-static func quit_in(host: Node, sec: float) -> void:
-	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())

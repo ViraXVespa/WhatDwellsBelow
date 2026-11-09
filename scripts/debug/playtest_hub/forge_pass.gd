@@ -4,7 +4,6 @@ const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Act := preload("res://scripts/data/progress_forge/forge_act.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
-const Affix := preload("res://scripts/data/affixes.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
 const Plan := preload("res://scripts/debug/playtest_hub/forge_pass/plan.gd")

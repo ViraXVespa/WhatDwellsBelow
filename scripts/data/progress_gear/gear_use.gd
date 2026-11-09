@@ -146,17 +146,5 @@ static func stat(p: Object, key: String) -> float:
 		n += float(p.potion_bonus_amt)
 	return n
 
-static func tool_quality(p: Object) -> float:
-	return load("res://scripts/data/progress_combat.gd").tool_quality(p)
-
-static func set_counts(p: Object) -> Dictionary:
-	return load("res://scripts/data/progress_combat.gd").set_counts(p)
-
 static func set_stats(p: Object) -> Dictionary:
 	return load("res://scripts/data/progress_combat.gd").set_stats(p)
-
-static func set_bonus_text(p: Object, sid: String) -> String:
-	return load("res://scripts/data/progress_combat.gd").set_bonus_text(p, sid)
-
-static func sync_artifacts(p: Object) -> void:
-	load("res://scripts/data/progress_combat.gd").sync_artifacts(p)

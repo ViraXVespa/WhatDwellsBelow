@@ -2,12 +2,7 @@ extends Object
 
 const Binds7 := preload("res://scripts/debug/smoke/smoke_binds.gd")
 const UiPrep := preload("res://scripts/debug/smoke/smoke_ui_prep.gd")
-const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
-const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
-const PlaytestHub := preload("res://scripts/debug/playtest_hub/forge_pass.gd")
 const Store := preload("res://scripts/data/save_store.gd")
-const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
-const Affix := preload("res://scripts/data/affixes.gd")
 
 const StoreS := preload("res://scripts/debug/smoke/p7_store.gd")
 const Campaign := preload("res://scripts/debug/smoke/p7_campaign.gd")

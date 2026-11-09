@@ -2,7 +2,6 @@ extends Object
 
 ## Split from hitch_log.gd: _hitch_row, _session_row, _sample_proc....
 
-const Ctx := preload("res://scripts/debug/hitch_log/ctx.gd")
 const Present := preload("res://scripts/debug/hitch_log/log_present.gd")
 const Web := preload("res://scripts/debug/hitch_log/log_web.gd")
 

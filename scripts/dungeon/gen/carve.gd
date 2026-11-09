@@ -6,10 +6,6 @@ const Near := preload("res://scripts/dungeon/gen/carve_near.gd")
 const WALL := Hall.WALL
 const FLOOR := Hall.FLOOR
 
-static var _disk_ox: PackedInt32Array = PackedInt32Array()
-static var _disk_oy: PackedInt32Array = PackedInt32Array()
-static var _disk_rad: int = -1
-
 static func begin_halls() -> void:
 	Hall.begin_halls()
 

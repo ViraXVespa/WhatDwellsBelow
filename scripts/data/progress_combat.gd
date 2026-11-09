@@ -116,9 +116,6 @@ static func set_counts(p) -> Dictionary:
 static func set_stats(p) -> Dictionary:
 	return Stat.set_stats(p)
 
-static func item_stat(it: Dictionary, key: String) -> float:
-	return Stat.item_stat(it, key)
-
 static func gear_stat(p, key: String) -> float:
 	return Xp.gear_stat(p, key)
 

@@ -238,10 +238,6 @@ static func _spawn_spots(host: Node, spots: Array, reset: bool) -> void:
 		if bool(s.gate):
 			host.data.crystal = cell
 
-static func relocate_if_already_on(crystal: Node) -> void:
-	if bool(crystal.get("crystal_on")):
-		CrystalNet.relocate_inside(crystal)
-
 static func closer_to_target_band(host: Node, cand: Dictionary, cur: Dictionary, target_cl: int) -> bool:
 	var d_new: int = absi(int(cand.cl) - target_cl)
 	var d_old: int = absi(int(cur.cl) - target_cl)

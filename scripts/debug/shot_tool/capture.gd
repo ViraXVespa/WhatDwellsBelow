@@ -88,14 +88,6 @@ static func _quit(host: Node, code: int) -> void:
 		return
 	tree.create_timer(0.2).timeout.connect(func() -> void: tree.quit(code))
 
-static func _hide_label3d(n: Node) -> void:
-	if n is Label3D:
-		(n as Label3D).visible = false
-	var i: int = 0
-	while i < n.get_child_count():
-		_hide_label3d(n.get_child(i))
-		i += 1
-
 static func _kick_pose(host: Node) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")

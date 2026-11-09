@@ -186,13 +186,6 @@ static func call_help(host: Node) -> void:
 		for i: int in n:
 			parent.spawn_reinforcement(host.type_id, host.global_position, host.group_id)
 
-static func go_back(host: Node) -> void:
-	var v: Vector3 = host.velocity
-	if v.length_squared() < 0.01:
-		v = Vector3(host.aim.x, 0.0, host.aim.y)
-	host.aim = Vector2(-v.x, -v.z).normalized()
-	host.state = host.ST_RETURN
-
 static func move_dir(host: Node, dir: Vector2, spd_m: float, delta: float) -> void:
 	var push: Vector3 = sep(host)
 	var wish: Vector2 = dir.normalized() * host.move_spd * spd_m

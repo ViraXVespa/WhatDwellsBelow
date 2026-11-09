@@ -84,17 +84,5 @@ static func hp(p: Object) -> int:
 static func stat(p: Object, key: String) -> float:
 	return Use.stat(p, key)
 
-static func tool_quality(p: Object) -> float:
-	return Use.tool_quality(p)
-
-static func set_counts(p: Object) -> Dictionary:
-	return Use.set_counts(p)
-
 static func set_stats(p: Object) -> Dictionary:
 	return Use.set_stats(p)
-
-static func set_bonus_text(p: Object, sid: String) -> String:
-	return Use.set_bonus_text(p, sid)
-
-static func sync_artifacts(p: Object) -> void:
-	Use.sync_artifacts(p)
