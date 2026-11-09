@@ -12,7 +12,7 @@ import boot  # noqa: E402
 
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("xref",     "lookup/list_xref",              "Text search in the project (TEXT, --regex, --path, --include)"),
-    ("func",     "lookup/show_func",              "One GDScript or Python declaration (PATH NAME)"),
+    ("func",     "lookup/show_func",              "One GDScript or Python declaration (PATH NAME or NAME --path PATH)"),
     ("route",    "lookup/list_route",             "One routes.yaml door or job card (--door, --job, --digest)"),
     ("scenes",   "lookup/list_scenes",            ".tscn nodes and scripts without dumping scenes"),
     ("facade",   "lookup/list_facade_cluster",    "A facade and its stem-folder helpers by bytes"),

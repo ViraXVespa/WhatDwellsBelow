@@ -39,6 +39,11 @@ def declared_names(lines: list[str], python: bool) -> list[str]:
         found = [m.group(1) for ln in lines if (m := re.match(r"(?:static\s+)?(?:func|const|var|signal|enum)\s+(\w+)", ln))]
     return sorted(set(found))
 
+def looks_like_path(s: str) -> bool:
+    """True if s looks like a repo path rather than a declaration name."""
+    s = s.replace("\\", "/")
+    return "/" in s or s.endswith((".gd", ".py", ".tscn", ".uid", ".json"))
+
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Extract one GDScript or Python declaration.", json_out=True)
     p.add_argument("pos", nargs="*", metavar="PATH NAME", help="Same as --path and --name")
@@ -51,6 +56,11 @@ def main(argv: list[str] | None = None) -> int:
         args.path = args.pos[0]
     if len(args.pos) > 1 and not args.name:
         args.name = args.pos[1]
+    # Accept NAME --path PATH and swapped positionals by detecting path-like vs name-like.
+    if args.path and args.name and looks_like_path(args.name) and not looks_like_path(args.path):
+        args.path, args.name = args.name, args.path
+    elif args.pos and not args.name and args.path and not looks_like_path(args.pos[0]):
+        args.name = args.pos[0]
     if not (args.path and args.name):
         agent_log.fail("pass PATH and NAME (example: find.py func scripts/app.gd _ready)")
     root, where = agent_log.cwd_scan_root(args)
