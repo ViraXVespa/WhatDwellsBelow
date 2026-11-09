@@ -1,8 +1,9 @@
 extends Object
 
-## Pause > Settings > Report Bug page (design/tasks/bug-report-relay.md). Gamepad-first: area and "what happened"
-## cycle on A, so a report can go without typing; details and email are optional text fields. The form lives in
-## static vars so a rebuild (cycle, send result) keeps it. Sending goes through bug_send.gd.
+## Pause > Settings > Report Bug page (design/tasks/bug-report-relay.md). Gamepad-first: an optional one-line summary
+## (the issue title), then Door and Job comboboxes (report_pick.gd) with the highlighted one's description, and a
+## "what happened" cycle on A, so a report can go without typing; details and email are optional text fields. The
+## form lives in static vars so a rebuild (cycle, send result) keeps it. Sending goes through bug_send.gd.
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
@@ -10,13 +11,22 @@ const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Send := preload("res://scripts/app/bug_report/bug_send.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
+const Pick := preload("res://scripts/ui/pause_settings/report_pick.gd")
 
-static var form := {"area": 0, "kind": 0, "details": "", "email": "", "opt_in": false, "shot": true, "crash": true}
+static var form := {"summary": "", "door": "", "job": "", "kind": 0, "details": "", "email": "", "opt_in": false, "shot": true, "crash": true}
 static var status := ""
 static var busy := false
 
 static func build(host: Node) -> void:
-	_cycle(host, "bug_report.area", Send.AREAS[int(form.area)][0], "area", Send.AREAS.size())
+	var sm := LineEdit.new()
+	sm.name = "report_summary"
+	sm.placeholder_text = App.tr("bug_report.summary_hint")
+	sm.text = str(form.summary)
+	sm.max_length = 80
+	sm.text_changed.connect(func(t: String) -> void: form.summary = t)
+	guard_backspace(sm)
+	_field(host, sm)
+	Pick.build(host, form, func(c: Control) -> void: _field(host, c))
 	_cycle(host, "bug_report.kind", Send.KINDS[int(form.kind)], "kind", Send.KINDS.size())
 	var te := TextEdit.new()
 	te.placeholder_text = App.tr("bug_report.details_hint")
@@ -63,6 +73,7 @@ static func send(host: Node, dry_run: bool = false) -> void:
 		busy = false
 		if code == 201:
 			form.details = ""
+			form.summary = ""
 		_done(host, Send.status_text(code, data))
 	)
 

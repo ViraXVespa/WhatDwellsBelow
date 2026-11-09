@@ -2309,44 +2309,32 @@ msgstr "Dying or Dispelling opens the recap. It shows the run, then each skill's
 msgid "pause_settings.report_bug"
 msgstr "Report Bug"
 
-msgid "bug_report.area"
-msgstr "Area: %s"
+msgid "bug_report.summary_hint"
+msgstr "Summary (optional, one line: the report title)"
+
+msgid "bug_report.door"
+msgstr "Door"
+
+msgid "bug_report.job"
+msgstr "Job"
+
+msgid "bug_report.door_none"
+msgstr "Not sure"
+
+msgid "bug_report.job_none"
+msgstr "Whole door"
+
+msgid "bug_report.job_pick_door"
+msgstr "Pick a door first"
+
+msgid "bug_report.door_none_about"
+msgstr "No door: the report goes to triage and gets sorted there."
+
+msgid "bug_report.job_none_about"
+msgstr "No job: the report is filed under the whole door."
 
 msgid "bug_report.kind"
 msgstr "What happened: %s"
-
-msgid "bug_report.area_unsure"
-msgstr "Not sure"
-
-msgid "bug_report.area_combat"
-msgstr "Combat"
-
-msgid "bug_report.area_enemies"
-msgstr "Enemies"
-
-msgid "bug_report.area_controls"
-msgstr "Controls"
-
-msgid "bug_report.area_gear"
-msgstr "Gear and inventory"
-
-msgid "bug_report.area_menus"
-msgstr "Menus and HUD"
-
-msgid "bug_report.area_graphics"
-msgstr "Graphics"
-
-msgid "bug_report.area_camp"
-msgstr "Placeholdia"
-
-msgid "bug_report.area_dungeon"
-msgstr "Dungeon"
-
-msgid "bug_report.area_sound"
-msgstr "Sound and effects"
-
-msgid "bug_report.area_saving"
-msgstr "Saving and loading"
 
 msgid "bug_report.kind_looks_wrong"
 msgstr "Something looks wrong"
