@@ -1,6 +1,8 @@
 extends Object
 
-## A solid cell with a void or out-of-bounds 4-neighbor fails when that shared edge has no facing run.
+## A solid cell with a void or out-of-bounds 4-neighbor fails when no span that survives the wall prepare lies on that edge.
+
+const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 
 static func rim_report(data: Dictionary) -> Dictionary:
 	var empty: Dictionary = {"holes": 0, "cells": [], "sample": "-"}
@@ -15,7 +17,8 @@ static func rim_report(data: Dictionary) -> Dictionary:
 	if per < 1 or sw < 2 or sh < 2 or solid.size() != sw * sh:
 		return empty
 	var marked: Dictionary = {}
-	for raw_span: Variant in spans:
+	var drawn: Array = WallMesh.prepare(spans)
+	for raw_span: Variant in drawn:
 		if not (raw_span is Dictionary):
 			continue
 		var sp: Dictionary = raw_span
