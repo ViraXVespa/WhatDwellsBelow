@@ -3,7 +3,7 @@ extends SceneTree
 ## Fixed-expectation fixtures for the shared edge marker (dungeon/gen/edge_mark.gd), the outline seal pass
 ## (dungeon/gen/outline_seal.gd) and the debug rim check (debug/dungeon_map/map_rim.gd). Every expected key and
 ## fragment below is written by hand, not computed by the code under test.
-## Run: python tools/perf.py map --fixtures  (godot --headless --script this file; exit 1 on any FAIL).
+## Run: python tools/perf.py map --fixtures (Godot runs this file as its main script; exit 1 on any FAIL).
 
 const Edge := preload("res://scripts/dungeon/gen/edge_mark.gd")
 const Seal := preload("res://scripts/dungeon/gen/outline_seal.gd")
