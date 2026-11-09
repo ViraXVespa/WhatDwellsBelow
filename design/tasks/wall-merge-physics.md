@@ -4,7 +4,7 @@ id: wall-merge-physics
 owner: build
 status: open
 done-when: wall ribbons and floor lips are merged per chunk with natural continuous edges (no strange caps); missing-wall map exits are eliminated; enemies no longer snag on edges; light and shadow marks are occluded by walls rather than by black ground regions; User confirms look and behavior; gates pass
-resume: python tools/slice.py open dungeon --task wall-merge-physics
+resume: python tools/slice.py open dungeon.stream --task wall-merge-physics
 
 ## Background
 Dungeon geometry streaming (`scripts/world/dungeon_geo/geo_stream.gd` + `stream_emit.gd`):
@@ -36,3 +36,8 @@ These are consistent with walls not being first-class physics and occlusion obje
 ## Acceptance
 - Multiple generated dungeons show continuous walls, no escape holes, clean light occlusion, and no edge-snagging.
 - User confirms both the visual merge quality and the gameplay fixes.
+
+## Notes from Vira
+- This may touch some of the dungeon.gen area as well. I'm not certain.
+- Be sure that the dungeon gen test scripts are correctly detecting any gaps in the walls.
+- When you've finished with the work for this task, please include a python command I can run later to test 100 random dungeon seeds for any gaps in their walls.
