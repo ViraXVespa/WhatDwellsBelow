@@ -1,15 +1,6 @@
 {
  "_about": "lint.py unused --apply never deletes these (path + func/var name, or name \"*\" for the whole file). Each needs a why; drop the entry once its decision is made.",
  "hold": [
-  {"path": "scripts/data/progress_gear/gear_use.gd", "name": "stat", "why": "consumable/forge bonus reader: disconnected from the live stat path, but whether to reconnect or retire it is an open design decision (door audit 2026-11-09)"},
-  {"path": "scripts/data/progress_gear/gear_use.gd", "name": "dmg", "why": "reader over gear_use.stat (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear/gear_use.gd", "name": "def", "why": "reader over gear_use.stat (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear/gear_use.gd", "name": "hp", "why": "reader over gear_use.stat (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear/gear_use.gd", "name": "set_stats", "why": "called by gear_use.stat (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear.gd", "name": "stat", "why": "facade of gear_use.stat (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear.gd", "name": "dmg", "why": "facade of gear_use.dmg (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear.gd", "name": "def", "why": "facade of gear_use.def (bonus decision pending)"},
-  {"path": "scripts/data/progress_gear.gd", "name": "hp", "why": "facade of gear_use.hp (bonus decision pending)"},
   {"path": "scripts/world/dungeon.gd", "name": "walls", "why": "live empty-body initializer: DungeonGeo.collision_walls builds it every floor; it lacks consumers, it is not dead (init_only_var)"},
   {"path": "scripts/world/dungeon_geo.gd", "name": "collision_walls", "why": "live initializer of Dungeon.walls"},
   {"path": "scripts/graphics/torch_bill.gd", "name": "torch_ms", "why": "live debug/perf readout; its disconnection is dataflow the sweep cannot see"}

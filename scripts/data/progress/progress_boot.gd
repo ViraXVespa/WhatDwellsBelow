@@ -127,11 +127,14 @@ static func _clamp_food_slot(p: Object) -> void:
 		p.slots["food"] = fd
 
 static func clear_food(p: Object) -> void:
+	var was_hp: bool = p.food_t > 0.0 and p.food_bonus_id == "hp"
 	p.food_id = ""
 	p.food_t = 0.0
 	p.food_left = 0.0
 	p.food_bonus_id = ""
 	p.food_bonus_amt = 0.0
+	if was_hp:
+		p._refresh_player_hp()
 
 static func to_meta(p: Object) -> Dictionary:
 	var m := Town.to_meta(p)

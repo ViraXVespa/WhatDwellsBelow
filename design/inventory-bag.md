@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: bag, equipment slots, food vs potion  
-Code: `scripts/data/progress_gear/gear_bag.gd`, `consumable.gd`, `consumable_roll.gd`, `gear_use.gd` (timed food/potion bonus), `gear_req.gd`
+Code: `scripts/data/progress_gear/gear_bag.gd`, `consumable.gd`, `consumable_roll.gd`, `gear_use.gd` (eat, bonus timers), `scripts/data/progress_combat/combat_xp.gd` (`consumable_bonus` in `gear_stat`), `gear_req.gd`
 
 ## Bag
 
@@ -28,7 +28,7 @@ Shared pause / loadout / anvil presentation is specified in gear_ui.
 ## Food vs potion (locked distinction)
 
 - **Potion:** Equipment, not a stack. Each potion has charges (per run), a cooldown, a heal amount, and a heal speed. Use consumes a charge, not a stack count. Unequipping is allowed, and the slot stays on the last equipped potion until the player unequips it. The default starter potion has two charges; charges refill at the start of a run rather than behaving like “Potion x2” in the bag. On return to Placeholdia the potion that was equipped at the start of that dive is equipped again. A rolled potion may also carry a short bonus to a stat equipment can modify.
-- **Food:** Heal-over-time. Each kind restores its own total of X HP smoothly over Y seconds, plus a small bonus that fits that food (all tunable). Food remains the stacked consumable. On return, a stack that still has servings is equipped again; if the slot came back empty and any stack remains, the next stack is equipped; if none remain, the slot stays empty.
+- **Food:** Heal-over-time. Each kind restores its own total of X HP smoothly over Y seconds, plus a small bonus that fits that food (all tunable). A food bonus counts in `App.gear` while that food still heals; a potion bonus while its timer runs. An `hp` bonus raises max HP for that time. Food remains the stacked consumable. On return, a stack that still has servings is equipped again; if the slot came back empty and any stack remains, the next stack is equipped; if none remain, the slot stays empty.
 - While a food effect is active, a HUD indicator MUST show that food is ticking.
 - Using the same food type again while its effect is active does NOT stack and does NOT consume another item until the current effect ends.
 - Using a different food type while an effect is active cancels the current effect, consumes the new item, and starts the new food’s effect.
