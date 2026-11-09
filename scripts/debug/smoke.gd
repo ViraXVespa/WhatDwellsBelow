@@ -147,12 +147,15 @@ static func attach_dungeon(host: Node) -> void:
 	if phase(9):
 		Late.p9(host)
 
+static var _p6_ran := false
+
 static func attach_camp(host: Node) -> void:
 	if HubBench.active():
 		HubBench.attach(host)
 	if ShotTool.active():
 		ShotTool.attach_dungeon(host)
-	if phase(6):
+	if phase(6) and not _p6_ran:
+		_p6_ran = true  # the P6 deep sweep enters the dungeon and comes back; the new camp must not restart it
 		Late.p6(host)
 	if phase(8):
 		Late.p8(host)

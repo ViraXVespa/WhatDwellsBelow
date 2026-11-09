@@ -1,56 +1,20 @@
 extends Object
 
-## Menu escape sweep (phase 6, camp). Opens every hub menu, sends each bound Back event
+## Menu escape sweep (phase 6, camp). The deep press sweep runs first (smoke_deep.gd). Opens every hub menu, sends each bound Back event
 ## (ui_cancel and pause, key and pad), and asserts the menu closed, the tree unpaused and
 ## a focus owner existed while it was open. Then taps the footer Back chip (mouse/touch).
 ## Prints "P6: esc_<menu>_<how>=true|false" rows and "P6: escape_ok=".
 
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
+const Deep := preload("res://scripts/debug/smoke/smoke_deep.gd")
 
 static func run(host: Node) -> void:
 	var tree: SceneTree = host.get_tree()
+	var ok: bool = await Deep.run(tree, _menus(tree))
+	host = tree.current_scene  # a deep press can leave the hub; the sweep goes on in the camp it came back to
 	var ui: Variant = host.get("ui")
-	var ok: bool = true
-	var menus: Array = [
-		["crystal", func(): load("res://scripts/ui/crystal_ui.gd").open(_spot(host))],
-		["inv", func(): ui.open_inventory()],
-		["extract", func(): ui.open_extract("gate", null)],
-		["shop", func(): ui.open_shop(null)],
-		["vendor", func(): ui.open_vendor()],
-		["controls", func(): ui.open_controls()],
-		["flavor", func(): ui.open_flavor("Dumpster", "x")],
-		["quest", func(): ui.open_quest()],
-		["receptionist", func(): ui.open_receptionist()],
-		["anvil", func(): ui.open_anvil()],
-		["loadout", func(): ui.open_loadout()],
-		["pause", func(): App.pause_menu.show_menu()],
-	]
-	for m: Array in menus:
-		for depth: int in [1, 2, 3]:
-			(m[1] as Callable).call()
-			for i: int in 3:
-				await tree.process_frame
-			for d: int in depth:
-				var f: Control = host.get_viewport().gui_get_focus_owner()
-				if f is BaseButton:
-					(f as BaseButton).pressed.emit()
-				await tree.create_timer(0.15, true, false, true).timeout
-			var lost: bool = App.ui_open and host.get_viewport().gui_get_focus_owner() == null
-			var n: int = 0
-			while App.ui_open and n < 6:
-				var a := InputEventAction.new()
-				a.action = "ui_cancel"
-				_send(a, true)
-				await tree.process_frame
-				_send(a, false)
-				await tree.create_timer(0.15, true, false, true).timeout
-				n += 1
-			printerr("P6: deep_%s_%d closed=%s backs=%d focus_lost=%s" % [m[0], depth, not App.ui_open, n, lost])
-			ok = ok and not App.ui_open and n <= depth + 1
-			_force_close(tree)
-			for i: int in 2:
-				await tree.process_frame
+	var menus: Array = _menus(tree)
 	var hows: Array = []
 	for act: String in ["ui_cancel", "pause"]:
 		for ev: InputEvent in InputMap.action_get_events(act):
@@ -155,6 +119,24 @@ static func run(host: Node) -> void:
 	ok = ok and bleed_ok
 	printerr("P6: escape_ok=" + str(ok))
 	assert(ok)
+
+## Every hub menu opener; each call reads the live camp scene (a deep press can replace it).
+static func _menus(tree: SceneTree) -> Array:
+	var ui: Callable = func() -> Variant: return tree.current_scene.get("ui")
+	return [
+		["crystal", func(): load("res://scripts/ui/crystal_ui.gd").open(_spot(tree.current_scene))],
+		["inv", func(): ui.call().open_inventory()],
+		["extract", func(): ui.call().open_extract("gate", null)],
+		["shop", func(): ui.call().open_shop(null)],
+		["vendor", func(): ui.call().open_vendor()],
+		["controls", func(): ui.call().open_controls()],
+		["flavor", func(): ui.call().open_flavor("Dumpster", "x")],
+		["quest", func(): ui.call().open_quest()],
+		["receptionist", func(): ui.call().open_receptionist()],
+		["anvil", func(): ui.call().open_anvil()],
+		["loadout", func(): ui.call().open_loadout()],
+		["pause", func(): App.pause_menu.show_menu()],
+	]
 
 static func _spot(host: Node) -> Node:
 	var s := GDScript.new()
