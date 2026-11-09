@@ -436,8 +436,11 @@ def plan_of(root: Path, g, rows: dict, decls: list) -> tuple[list[dict], list[di
             raw = g.scripts[r["rel"]].lines[r["line"] - 1]
             init = raw.split("#", 1)[0].split("=", 1)[1].strip() if "=" in raw.split("#", 1)[0] else ""
             init = init.lstrip(":= ").strip() if init else ""
-            if VAR_LINE.match(raw) is None or (init and PURE_INIT.match(init) is None) or ("set(" in raw or "get:" in raw):
-                refused.append(dict(r, refuse="initializer may have side effects (call) or setter/getter"))
+            lines = g.scripts[r["rel"]].lines
+            nxt = lines[r["line"]] if r["line"] < len(lines) else ""
+            block = raw.split("#", 1)[0].rstrip().endswith((":", "(", "[", "{", "\\")) or (nxt.strip() and nxt[:1].isspace())
+            if VAR_LINE.match(raw) is None or (init and PURE_INIT.match(init) is None) or block or "set(" in raw or "get:" in raw:
+                refused.append(dict(r, refuse="property block (get/set), multi-line or call initializer: side effects possible"))
                 continue
         plan.append(dict(r, evidence=r["why"] + "; no word match in docs/tools/data text"))
     return plan, refused

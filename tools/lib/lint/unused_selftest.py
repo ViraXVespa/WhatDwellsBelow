@@ -21,6 +21,9 @@ const D := preload("res://scripts/d.gd")
 const Child := preload("res://scripts/child.gd")
 const TABS := ["_tab_a"]
 var never_used := 3
+var prop_never: int:
+	get:
+		return 1
 var wo := 0
 var built: Node
 
@@ -135,6 +138,8 @@ def run() -> list[str]:
         for gone in ("func helper", "func dead_a", "func dead_b", "func dead_root", "func leaf"):
             if gone in c_text:
                 bad.append(f"apply: c.gd still has {gone}")
+        if "var prop_never: int:" not in app_text or "\tget:\n\t\treturn 1" not in app_text:
+            bad.append("apply: property block prop_never touched (must be refused whole)")
         if "never_used" in app_text:
             bad.append("apply: unused var never_used kept")
         if (root / "scripts/orphan.gd").exists():
