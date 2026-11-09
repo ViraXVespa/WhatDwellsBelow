@@ -106,7 +106,7 @@ def _write_stamp(root: Path, stamp: str) -> None:
     src = root / SOLES_REL
     text = src.read_bytes().decode("utf-8")
     nxt = _STAMP_RE.sub(f'const SOLE_BAKE_STAMP := "{stamp}"', text, count=1)
-    if nxt == text:
+    if nxt == text and f'const SOLE_BAKE_STAMP := "{stamp}"' not in text:
         raise SystemExit(f"FAIL could not paste SOLE_BAKE_STAMP in {SOLES_REL}")
     src.write_bytes(nxt.encode("utf-8"))
 
