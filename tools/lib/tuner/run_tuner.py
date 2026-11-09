@@ -13,6 +13,7 @@ import random
 import socket
 import struct
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -473,14 +474,36 @@ def score_frames(folder: str) -> str:
     return f"frames={len(files)} frame_flags={n_flag}"
 
 
-def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
+def open_frame_map(tag: str):
+    """Fixed-size named frame region (design/tasks/local-ai-tuner.md). Windows: a named file mapping (`tagname`,
+    Windows-only in Python). Elsewhere: a same-named file in /dev/shm (else the temp dir), opened by both sides."""
     import mmap
+    if os.name == "nt":
+        return mmap.mmap(-1, MMAP_SIZE, tagname=tag)
+    base = Path("/dev/shm") if Path("/dev/shm").is_dir() else Path(tempfile.gettempdir())
+    fd = os.open(base / tag, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        if os.fstat(fd).st_size != MMAP_SIZE:
+            os.ftruncate(fd, MMAP_SIZE)
+        return mmap.mmap(fd, MMAP_SIZE)
+    finally:
+        os.close(fd)
+
+
+def close_frame_map(tag: str) -> None:
+    if os.name != "nt":
+        for base in (Path("/dev/shm"), Path(tempfile.gettempdir())):
+            (base / tag).unlink(missing_ok=True)
+
+
+def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
     if MMAP_SIZE != 230464:
         return "size"
+    tag = f"{tag}-{os.getpid()}"
     width, height, stride = 4, 2, 16
     pix = bytes([7, 8, 9, 10]) * (width * height)
     try:
-        writer = mmap.mmap(-1, MMAP_SIZE, tagname=tag)
+        writer = open_frame_map(tag)
     except TypeError:
         return "tagname"
     except OSError:
@@ -494,7 +517,7 @@ def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
         writer.write(pix)
         writer.seek(20)
         writer.write(struct.pack("<I", 3))
-        reader = mmap.mmap(-1, MMAP_SIZE, tagname=tag)
+        reader = open_frame_map(tag)
         try:
             reader.seek(0)
             magic = reader.read(4)
@@ -507,6 +530,7 @@ def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
             reader.close()
     finally:
         writer.close()
+        close_frame_map(tag)
     return ""
 
 
