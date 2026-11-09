@@ -49,7 +49,8 @@ HOSTCALLS = ("get_tree get_node get_node_or_null get_viewport get_window add_chi
              "get_children get_child get_child_count get_parent get set has_method call call_deferred "
              "is_inside_tree create_tween set_process set_process_input set_physics_process add_to_group remove_from_group "
              "is_in_group tr tr_n emit_signal connect disconnect is_connected get_meta set_meta has_meta notification "
-             "to_global to_local look_at get_instance_id is_queued_for_deletion find_child get_index").split()
+             "to_global to_local look_at get_instance_id is_queued_for_deletion find_child get_index "
+             "is_processing is_physics_processing set_process_unhandled_input is_visible_in_tree").split()
 HOSTVALS = frozenset(HOSTCALLS) - {"get", "set", "call"}  # bare (no `(`) = a bound Callable: tw.finished.connect(queue_free)
 HOSTPROPS = frozenset(("position global_position rotation global_rotation scale transform global_transform basis "
                        "visible name owner modulate process_mode").split())  # bare Node/Node3D/CanvasItem members
