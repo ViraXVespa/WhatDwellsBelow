@@ -1,6 +1,6 @@
 extends Object
 
-## Report Bug client (design/tasks/bug-report-relay.md): stable install id, the payload and the POST to the relay.
+## Report Bug client (tools/relay/README.md): stable install id, the payload and the POST to the relay.
 ## The game holds no token, only RELAY_URL. The optional email goes only in the `email` field (the relay keeps it
 ## private in D1); the state report is built by bug_state.gd. HTTPRequest uses fetch on the web export.
 

@@ -1,6 +1,6 @@
 extends Object
 
-## P1 check (design/tasks/bug-report-relay.md): Report Bug is a Settings row in every build, its Door/Job pickers list
+## P1 check (tools/relay/README.md): Report Bug is a Settings row in every build, its Door/Job pickers list
 ## exactly the routes.yaml doors and jobs (bug_doors.json = bug_doors.gd) with descriptions and walk with the pad, the
 ## summary is the title, the install id is stable, the state report carries only the relay's keys and no email, and
 ## logs ride only with a crash. Offline: the live dry_run recipe is in the task file.

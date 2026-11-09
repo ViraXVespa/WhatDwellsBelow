@@ -1,6 +1,6 @@
 extends Object
 
-## Pause > Settings > Report Bug page (design/tasks/bug-report-relay.md). Gamepad-first: an optional one-line summary
+## Pause > Settings > Report Bug page (tools/relay/README.md). Gamepad-first: an optional one-line summary
 ## (the issue title), then Door and Job comboboxes (report_pick.gd) with the highlighted one's description, and a
 ## "what happened" cycle on A, so a report can go without typing; details and email are optional text fields. The
 ## form lives in static vars so a rebuild (cycle, send result) keeps it. Sending goes through bug_send.gd.
