@@ -20,7 +20,7 @@ Use this repository skill for every Grok Build task. Run the opening prompt's `s
 
 Choose the existing command from design/tools.md; design/pc-offload.md owns Windows writing, bounded summaries and runner habits. Use `--help` for flags, not tool source. Common commands are `find.py route`, `find.py xref`, `find.py func`, `find.py scripts --names`, `find.py changed`, `docs.py code-map row`, `docs.py task`, `slice.py plan` and `session.py summary`. `slice.py plan` rebuilds a missing or stale `session-plan.md`; `--refresh` replaces only its gathered half.
 
-Read relevant source for the edit, not entire trees for inventory. Read each distinct run's actual result/summary; do not dump raw logs or repeat unchanged lookups. Design/agent-doc changes require the load-graph check. Extend the owning tool when a reusable capability is missing.
+Read relevant source for the edit, not entire trees for inventory. Function and const names missing from the plan are `python tools/find.py scripts --names --path PATH` or `--all-names` (one `--path`). Do not inventory them with `find.py xref --regex ^func`. Read each distinct run once with `python tools/session.py summary JOB`, where `JOB` is the `_logs/<job>/` folder on the RESULT line. Never open `_logs/` with a file read or a shell reader. Do not repeat unchanged lookups. Design/agent-doc changes require the load-graph check. Extend the owning tool when a reusable capability is missing.
 
 Images default to isolated review. Necessary direct references require the explicit task/session grant; text questions use OCR first. Do not use shell readers, cwd changes or this skill to bypass the hook. Generation remains isolated.
 

@@ -60,6 +60,7 @@ Callers link a facade, never an art / UI / input / inventory / debug / hub / dun
 conflicts_with: web does not implement both cores of a listed pair in one slice. Build reads every door a multi-system job touches (read-first, `grok-build.md`).
 See also is never a read list.
 The checker fails leftover relic-index names and `notes/<file>` cites.
+The slice writes `session-plan.md` at the worktree root. It is gitignored and not a routed doc. `check.py load-graph` does not classify it.
 
 ## 10/10 checks
 
