@@ -292,6 +292,7 @@ doors:
     jobs:
       menu: design/debug-menu.md
       playtest: design/debug-playtest.md
+      bench: design/debug-bench.md
       anim_browser: design/debug-anim-browser.md
       smokes: design/debug-smokes.md
   audio_visual:
@@ -364,6 +365,7 @@ job_read_when:
   ui.receptionist: "talk cycle, ask topics"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
+  debug.bench: "scored legs, continuous sweep"
   debug.anim_browser: "timeline scrubber, review queue"
   debug.smokes: "phase assertions, runner summary"
   art_pipeline.i2v: "seed unit, spoken cue"

@@ -19,7 +19,7 @@ const DOORS: Dictionary = {
 	"enemies": [],
 	"interactables": [],
 	"ui": ["theme", "title_web", "hud", "pause", "run_flow", "gear_entry", "style", "controls", "anvil", "loadout", "extract", "ghost_shop", "recap", "quest_board", "receptionist"],
-	"debug": ["menu", "playtest", "anim_browser", "smokes"],
+	"debug": ["menu", "playtest", "bench", "anim_browser", "smokes"],
 	"audio_visual": [],
 	"save_tech": ["persist", "web", "runtime", "benchmarks"],
 	"feel": [],

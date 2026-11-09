@@ -4,7 +4,7 @@ id: perf-sweep
 owner: build
 status: open
 done-when: On Vira's machine, the continuous sweep (cold load, hub walk, dungeon walk, dispel, hub walk, dungeon walk, exit) scores fps_pct >= 99 on each of the four stretches (cold hub, cold dungeon, warm hub, warm dungeon) and overall, on desktop and on two consecutive cold web runs. Goal 100%. Docs and code-map updated if ownership or tunables changed.
-resume: python tools/slice.py open debug.playtest --task perf-sweep
+resume: python tools/slice.py open debug.bench --task perf-sweep
 
 ## Intent
 One continuous run, no exits between states: cold game load, enter the hub, hub walk test, enter the dungeon (no exit), dungeon perf walkthrough, dispel when the dungeon timer ends (no exit), hub walkthrough again, enter the dungeon again, dungeon walkthrough again, then exit. fps_pct counts every frame where the hub or dungeon is showing and the loader bar is down, scored per segment and for the whole run. Goal: 100% of frames at 60+ FPS. Pass: each of cold hub, cold dungeon, warm hub, and warm dungeon, and the whole run, at 99% on desktop and on two consecutive cold web runs (cold web window, as below). Replaces `hub-perf-fix` and `dungeon-perf` (merged 2026-10-31 at Vira's request so later states, return trips and the dispel path are covered).

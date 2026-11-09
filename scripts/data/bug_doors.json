@@ -324,6 +324,11 @@
      "about": "automated playtest or playtest journal"
     },
     {
+     "key": "bench",
+     "name": "Benchmarks: hub bench, dungeon bench, perf sweep",
+     "about": "hub bench, dungeon bench, perf sweep, web perf hook"
+    },
+    {
      "key": "anim_browser",
      "name": "Anim browser",
      "about": "animation browser debug page"
