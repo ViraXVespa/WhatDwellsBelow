@@ -6,7 +6,6 @@ extends Object
 ## heel) starts the cast; legs and raised feet read 0. Cached per texture.
 
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
-const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
 static var _cache: Dictionary = {}
 ## Lowest opaque row per column, keyed by texture rid. The row texture above still depends on px.
 static var _cols: Dictionary = {}
@@ -29,13 +28,12 @@ static func tex(t: Texture2D, soles: Vector4, px: float, flat := false) -> Textu
 	var up: float = K.RAISED_M / maxf(px, 1e-5)
 	var sole_y: float = maxf(soles.y, soles.w)
 	var split: float = (soles.x + soles.z) * 0.5
-	var g: int = Soles.grounded(t, soles, px, flat)
 	var out: Image = Image.create(w, 1, false, Image.FORMAT_RF)
 	for x in w:
 		var left: bool = (float(x) < split) == (soles.x <= soles.z)
 		var fy: float = soles.y if left else soles.w
 		var dv: float = 0.0
-		if g & (1 if left else 2) != 0:  # this side's foot is grounded
+		if sole_y - fy < up and not (flat and fy < sole_y):  # this side's foot is grounded
 			var low: int = int(lows[x])
 			if low >= 0 and fy - float(low) < up:
 				dv = (sole_y - float(low)) / float(rows)

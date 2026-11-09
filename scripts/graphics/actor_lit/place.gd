@@ -21,9 +21,9 @@ static func _place(host: Node, tex: Texture2D, feet: Vector2) -> void:
 	# Both pins on the grounded (lowest) sole row: a raised foot keeps its x but not its lift, so it shows a gap
 	# above the mark in proportion to the lift (hub_shadow_check/mark_matrix.gd).
 	var sole_y: float = maxf(soles.y, soles.w)
-	var g: int = Soles.grounded(tex, soles, host.spr.pixel_size, host.plant_flat)
-	var gl: bool = g & 1 != 0
-	var gr: bool = g & 2 != 0
+	var up: float = K.RAISED_M / maxf(host.spr.pixel_size, 1e-5)
+	var gl: bool = sole_y - soles.y < up and not (host.plant_flat and soles.y < sole_y)
+	var gr: bool = sole_y - soles.w < up and not (host.plant_flat and soles.w < sole_y)
 	# A grounded foot pins at its own sole (contact) row; the shader (lit_k feet) casts its rows from there.
 	var t_pin: int = host._mark_t()
 	var fl: Vector2 = Geo.pin_xz(host, soles.x, soles.y if gl else sole_y, tw, th, gl, feet)
@@ -119,9 +119,9 @@ static func warm(host: Node) -> void:
 	var th: float = float(maxi(1, tex.get_height()))
 	var px: float = spr.pixel_size
 	var sole_y: float = maxf(soles.y, soles.w)
-	var g: int = Soles.grounded(tex, soles, px, host.plant_flat)
-	var gl: bool = g & 1 != 0
-	var gr: bool = g & 2 != 0
+	var up: float = K.RAISED_M / maxf(px, 1e-5)
+	var gl: bool = sole_y - soles.y < up and not (host.plant_flat and soles.y < sole_y)
+	var gr: bool = sole_y - soles.w < up and not (host.plant_flat and soles.w < sole_y)
 	var feet: Vector2 = Vector2(body.global_position.x, body.global_position.z)
 	var fl: Vector2 = Geo.pin_xz(host, soles.x, soles.y if gl else sole_y, tw, th, gl, feet)
 	var fr: Vector2 = Geo.pin_xz(host, soles.z, soles.w if gr else sole_y, tw, th, gr, feet)
