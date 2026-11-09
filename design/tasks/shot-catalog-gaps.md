@@ -45,4 +45,6 @@ Each new view and movie must render once and be checked by eye. Do not commit me
 - vendor-stall-close (stall close-up, 2.6x to 3.4x while the player walks up): added, rendered and checked
 
 ## Where it stands
-report-bug view and vendor-stall-close movie added (hub-ui set). Everything else above is still open.
+Done on grok-build-w11 (7e85d605): every listed view (22 new, phone viewports included) and movie (combat-special, recap-drain, quest-take, title-nav) rendered once and eyeballed; hub-overhead still renamed hub-overhead-still; f1-fight and combat-special in sets. recap-drain stops before Continue (Continue changes scene and restarts the flow).
+
+Open: done-when needs a full bot prove PASS. 2026-11-09 prove (vs main) is red on items outside this task: P6 smoke TIMEOUT (smoke_escape loses its scene at deep_loadout; bisected to 006b19cc present.gd headless wait_painted), AGENTS.md over its boot byte budget (48aea042), and bot_status over_10kb (actor_lit.gd, outline.gd, mesh_span.gd). Bottie Boop not told yet (goes through Vira).
