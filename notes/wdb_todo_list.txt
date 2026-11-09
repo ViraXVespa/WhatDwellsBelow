@@ -1,12 +1,8 @@
 ### For Grok Build
 Enemy animations need to be generated.
-Swap Lightning Staff special to use Mana instead of a timer and add mana drops to breakable objects. - Make all specials use mana, actually.
 Resource gathering needs dedicated animations.
 Need to regenerate animation videos to not have holes in faces.
-Placeholdia needs real art, not placeholders from archived builds.
-Need to add lighting decorations to dungeon
 Need assets for updated placeholdia UI.
-Add lighting/torch decorations to the walls.
 Animation handling to correct idle depending on active front foot.
 Need to fix design of pressure plate trap things.
 
@@ -19,15 +15,13 @@ Cleanup leftover hitching in pack_locomotion.py and/or player_anim.gd.
 Need to add view on web logic to archive docs. Could use custom html to open browser and load GitHub render of docs in a clean UI.
 Chest needs Open state.
 Ore label needs to be raised (or removed)
-Fix the chroma keying so no pink shows up on sprites.
 Add run modifier system similar to the fountain in HoH1.
 Have Quests affect a Guild Rank that increases quest difficulty and gives an XP boost
+Bug Reporting needs a combobox instead of a click toggle. It should also be split into separate door and job options with descriptions for each area pulled from the design docs. We can probably add an automated system to make those options automatically populate based on the actual design docs. There should be a summary input area for the menu that works on top of the current selector. Backspace doesn't work that menu, either.
 
 ## Unsexy
 Need to fix automated playtest
-Need to organize debug vars menu.
 Need to fix animation browser controls.
-Have to set up tools to check seams so there isn't extra work doing that in the future.
 
 ### Needs Investigation
 pc-offload logics for grok build
