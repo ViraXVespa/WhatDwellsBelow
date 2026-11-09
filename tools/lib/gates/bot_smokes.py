@@ -35,6 +35,7 @@ from agent_log import repo_root  # noqa: F401  (bot_warnscan imports it from her
 
 from godot_lib import BIN_NAME, STEAM_WIN, VERSION, ZIP_NAME, ZIP_URL, pin_path, resolve_bin  # noqa: F401  (engine pin lives in godot_lib)
 from godot_lib import GODOT_AI_SHA256, GODOT_AI_URL, GODOT_AI_VERSION
+import godot_lib
 
 def setup(pin: Path) -> Path:
     if pin.is_file():
@@ -282,6 +283,9 @@ def main(argv: list[str] | None = None) -> int:
         exe = setup(pin)
     if ns.setup:
         setup_addon(root)
+        # A fresh checkout (nightly CI) has no .godot/imported: import once, or fonts and textures load as missing.
+        stale = godot_lib.reimport_stale(root)
+        print(f"import={'ran' if stale else 'fresh'}\tstale={len(stale)}")
     if ns.record_loads:
         return record_loads(exe, root, ns.timeout, ns.verbose)
     if (ns.flows or ns.release) and not ns.phases:
