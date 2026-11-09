@@ -47,9 +47,4 @@ The loop stopped after five gathers because each headless campaign stalled at `g
 
 A headless campaign on this PC wrote 1924 new decide rows before a 10 minute cap stopped that check. The dive was still open. `python tools/local-ai-tuner.py train` fit a bot policy from those rows: held-out 199/383, scripted ladder 22/383. That is imitation of the scripted journal. The labels were heavy on door and wander.
 
-Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach.
-
-This task stays open until a live loop on Vira's PC reports the held-out rates and a recommended config that beats the current one across repeat seeds.
-
-## Update from Vira
-I ran the loop for a while and it looked to be making improvements. Unfortunately, after a certain number of runs it started just running continuously on the same run. That makes me think it's not correctly pathing through floors or doing some other necessary step to continue the run. That'll need to be fixed before I can do a full and thorough run.
+Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach. The current setup was testing and found to not be working (still not progressing floors) prior to the Grok Build usage quota. Further investigation is still required.
