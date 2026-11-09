@@ -2,6 +2,7 @@ extends Object
 
 ## Split from actor_lit.gd: _place, _biased.
 
+const Pool := preload("res://scripts/graphics/actor_lit/lit_pool.gd")
 const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
 const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
 const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
@@ -55,11 +56,11 @@ static func _place(host: Node, tex: Texture2D, feet: Vector2) -> void:
 	for slot in K.MARK_N:
 		var live: bool = host._alpha_at[slot] >= K.HIDE_A and not glow
 		if not live:
-			host._release(slot)
+			Pool._release(host, slot)
 			continue
 		var node: MeshInstance3D = host.marks[slot]
 		if node == null:
-			node = host._claim(slot)
+			node = Pool._claim(host, slot)
 		var dir: Vector2 = _biased(host, host._away_at[slot])
 		Slots._sync_slot(host, slot, tex, soles, fl, fr, dir, px, feet)
 		var ts: int = host._mark_t()
