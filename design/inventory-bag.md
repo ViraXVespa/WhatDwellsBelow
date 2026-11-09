@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: bag, equipment slots, food vs potion  
+Code: `scripts/data/progress_gear/gear_bag.gd`, `consumable.gd`, `consumable_roll.gd`, `gear_use.gd` (timed food/potion bonus), `gear_req.gd`
 
 ## Bag
 
