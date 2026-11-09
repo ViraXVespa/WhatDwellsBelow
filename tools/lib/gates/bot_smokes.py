@@ -2,7 +2,8 @@
 """Headless phase smokes for the Grok Bot Linux VM.
 
 Not a boot step. Setup downloads the official Godot 4.7.2 Linux tools
-binary only when the pin is missing. Editor playtest is out of scope.
+binary only when the pin is missing, and the gitignored Godot AI addon
+(godot_lib.GODOT_AI_*) only when addons/godot_ai is missing. Editor playtest is out of scope.
 
   python tools/gate.py bot-smokes --doctor
   python tools/gate.py bot-smokes --setup
@@ -33,6 +34,7 @@ from load_routes import SMOKE_PHASES
 from agent_log import repo_root  # noqa: F401  (bot_warnscan imports it from here)
 
 from godot_lib import BIN_NAME, STEAM_WIN, VERSION, ZIP_NAME, ZIP_URL, pin_path, resolve_bin  # noqa: F401  (engine pin lives in godot_lib)
+from godot_lib import GODOT_AI_SHA256, GODOT_AI_URL, GODOT_AI_VERSION
 
 def setup(pin: Path) -> Path:
     if pin.is_file():
@@ -60,6 +62,28 @@ def setup(pin: Path) -> Path:
     zpath.unlink(missing_ok=True)
     print(f"setup=installed\t{pin}")
     return pin
+
+def addon_state(root: Path) -> str:
+    return "present" if (root / "addons" / "godot_ai" / "plugin.cfg").is_file() else "missing"
+
+def setup_addon(root: Path) -> None:
+    """Install the pinned Godot AI addon into the gitignored addons/ when absent; never replaces an install."""
+    if addon_state(root) == "present":
+        print(f"addon=present\taddons/godot_ai")
+        return
+    import hashlib
+    import tempfile
+    print(f"addon=download\t{GODOT_AI_URL}")
+    with tempfile.TemporaryDirectory() as tmp:
+        zpath = Path(tmp) / "godot-ai-plugin.zip"
+        urlretrieve(GODOT_AI_URL, zpath)
+        got = hashlib.sha256(zpath.read_bytes()).hexdigest()
+        if got != GODOT_AI_SHA256:
+            agent_log.fail(f"setup: godot_ai zip sha256 {got} != pinned {GODOT_AI_SHA256}")
+        with zipfile.ZipFile(zpath) as zf:
+            names = [n for n in zf.namelist() if n.startswith("addons/godot_ai/") and ".." not in n]
+            zf.extractall(root, members=names)
+    print(f"addon=installed\taddons/godot_ai v{GODOT_AI_VERSION} (gitignored)")
 
 def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = None) -> list[str]:
     args = [
@@ -249,12 +273,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"version={VERSION}")
         print(f"pin={pin}")
         print(f"bin={'missing' if found is None else found}")
+        print(f"addon_godot_ai={addon_state(root)}\t(gitignored; --setup installs v{GODOT_AI_VERSION})")
         print("editor_playtest=forbidden")
         print("doctor=PASS")
         return agent_log.emit_result("PASS", mode="doctor", bin="missing" if found is None else "found")
     exe = found
     if ns.setup or exe is None:
         exe = setup(pin)
+    if ns.setup:
+        setup_addon(root)
     if ns.record_loads:
         return record_loads(exe, root, ns.timeout, ns.verbose)
     if (ns.flows or ns.release) and not ns.phases:

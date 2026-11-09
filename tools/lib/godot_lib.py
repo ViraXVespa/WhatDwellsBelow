@@ -41,6 +41,13 @@ ZIP_URL = (
     "https://github.com/godotengine/godot-builds/releases/download/"
     f"{VERSION}-stable/" + ZIP_NAME
 )
+# Godot AI editor plugin (Asset Library id 5050, github.com/hi-godot/godot-ai). project.godot enables it and
+# autoloads its runtime/game_helper.gd, but addons/ is gitignored: each checkout installs it locally.
+# `gate.py bot-smokes --setup` fetches this Asset Library release when addons/godot_ai is absent; warnscan
+# reports the missing-addon load lines as env-artifact, never a failure.
+GODOT_AI_VERSION = "3.2.5"
+GODOT_AI_URL = f"https://github.com/hi-godot/godot-ai/releases/download/v{GODOT_AI_VERSION}/godot-ai-plugin.zip"
+GODOT_AI_SHA256 = "72c7d4a0abc28d7aa4ab7b07d875c011f7e68399f90b25fcbe35e4a5e2a795eb"
 STEAM_WIN = (
     "C:\\Program Files (x86)\\Steam\\steamapps\\common\\"
     "Godot Engine\\godot.windows.opt.tools.64.exe"
