@@ -121,7 +121,7 @@ static func bind(m: ShaderMaterial) -> bool:
 	return true
 
 
-## One texel per MASK_GRID cell over the shifted hulls. Red 255 inside, 200 within FINE_GAP, 0 farther (the bake decides).
+## One texel per MASK_GRID cell over the shifted hulls. Red 255 inside, 165 within FINE_GAP, 0 farther (the bake decides).
 static func _mask_of(polys: Array[PackedVector2Array]) -> Texture2D:
 	if polys.is_empty():
 		return null
@@ -216,10 +216,11 @@ static func _band(buf: PackedByteArray, w: int, rows: int, a: Vector2, b: Vector
 			if den > 1.0e-10:
 				along = clampf((q - a).dot(ab) / den, 0.0, 1.0)
 			if q.distance_to(a + ab * along) <= FINE_GAP:
-				# 200 stays between the 0.25 and 0.75 cuts if the sampler is linear or sRGB.
-				buf[at] = 200
-				buf[at + 1] = 200
-				buf[at + 2] = 200
+				# 165 stays between the 0.25 and 0.75 cuts read raw (0.65) or sRGB-decoded (0.38); 200 read raw is 0.78,
+				# inside, which widened every building shadow by FINE_GAP.
+				buf[at] = 165
+				buf[at + 1] = 165
+				buf[at + 2] = 165
 				buf[at + 3] = 255
 
 ## CPU twin of GLSL hub_sun on the unshifted hulls: 1 sun, 0 shade, at ground point q with bake light ll.
