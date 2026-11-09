@@ -37,7 +37,7 @@ _PLACES = (
 _PAIR_KEYS = (
     "dt_ms", "submit_ms", "tree_ms", "lit_ms", "geo_ms",
     "wake_ms", "phys_span_ms", "post_phys_ms", "head_ms",
-    "floor_ms", "torch_ms", "bar_ms", "phys_obj", "phys_pairs", "phys_islands",
+    "floor_ms", "bar_ms", "phys_obj", "phys_pairs", "phys_islands",
 )
 # Present only when the sweep stamped the pass. Older hitch files omit them.
 _DRAW_KEYS = (

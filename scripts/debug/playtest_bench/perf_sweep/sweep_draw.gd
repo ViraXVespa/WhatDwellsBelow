@@ -7,7 +7,6 @@ const DungeonBoot := preload("res://scripts/world/dungeon/dungeon_boot.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const HpBar := preload("res://scripts/combat/hp_bar.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
 
 static func _on_pre_draw(host: Node) -> void:
 	var now: int = Time.get_ticks_usec()
@@ -36,7 +35,7 @@ static func _on_post_draw(host: Node) -> void:
 	HitchLog.set_lit_mark(ActorLit.mark_ms(), LightRt.mark_ms(), LightRt.mark_n, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8], parts[9], parts[10])
 	HitchLog.set_lit_peak(ActorLit.max_ms(), ActorLit.max_who())
 	HitchLog.set_submit_ms(float(now - host._pre_us) / 1000.0)
-	HitchLog.set_idle_ms(DungeonBoot.floor_ms(), TorchBill.torch_ms(), HpBar.bar_ms())
+	HitchLog.set_idle_ms(DungeonBoot.floor_ms(), HpBar.bar_ms())
 	_stamp_draw(host)
 	_stamp_render(host)
 	host._post_us = now

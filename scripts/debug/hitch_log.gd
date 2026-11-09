@@ -83,8 +83,8 @@ static func note_phys_head() -> void:
 static func note_phys_tail() -> void:
 	Rows.note_phys_tail()
 
-static func set_idle_ms(floor_ms: float, torch_ms: float, bar_ms: float) -> void:
-	Rows.set_idle_ms(floor_ms, torch_ms, bar_ms)
+static func set_idle_ms(floor_ms: float, bar_ms: float) -> void:
+	Rows.set_idle_ms(floor_ms, bar_ms)
 
 static func set_head_ms(ms: float) -> void:
 	Rows.set_head_ms(ms)

@@ -45,7 +45,6 @@ static func clear_edge() -> void:
 	rt._post_phys_ms = -1.0
 	rt._head_ms = -1.0
 	rt._floor_ms = -1.0
-	rt._torch_ms = -1.0
 	rt._bar_ms = -1.0
 
 static func set_lit_mark(lit_ms: float, sample_ms: float, sample_n: int, tint_ms: float = -1.0, drive_ms: float = -1.0, geo_ms: float = -1.0, sync_ms: float = -1.0, foot_ms: float = -1.0, quad_ms: float = -1.0, shade_ms: float = -1.0, albedo_ms: float = -1.0, contact_ms: float = -1.0, sole_ms: float = -1.0, pin_ms: float = -1.0) -> void:

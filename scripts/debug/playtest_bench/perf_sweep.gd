@@ -22,7 +22,7 @@ extends Node
 ## wake_ms, phys_span_ms, and post_phys_ms split the gap from post-draw to the
 ## hitch tick (App._process, where dt is measured). head_ms is that tick until
 ## this node's _process. phys_ms stays the engine monitor.
-## floor_ms, torch_ms, and bar_ms are armed here and copied at post-draw.
+## floor_ms and bar_ms are armed here and copied at post-draw.
 ## phys_obj, phys_pairs, and phys_islands are read on the hitch row when wake_ms is set.
 
 const FLAG := "--wdb-perf-sweep"
@@ -32,7 +32,6 @@ const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const DungeonBoot := preload("res://scripts/world/dungeon/dungeon_boot.gd")
-const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
 const HpBar := preload("res://scripts/combat/hp_bar.gd")
 
 const Draw := preload("res://scripts/debug/playtest_bench/perf_sweep/sweep_draw.gd")
@@ -132,7 +131,6 @@ func _process(delta: float) -> void:
 		ActorLit.mark_off()
 		LightRt.mark_off()
 		DungeonBoot.disarm_floor()
-		TorchBill.disarm_torch()
 		HpBar.disarm_bar()
 		return
 	var now: int = Time.get_ticks_usec()
@@ -150,7 +148,6 @@ func _process(delta: float) -> void:
 	ActorLit.arm_mark()
 	LightRt.arm_mark()
 	DungeonBoot.arm_floor()
-	TorchBill.arm_torch()
 	HpBar.arm_bar()
 	_post_t += delta
 	if _post_t >= 0.5:

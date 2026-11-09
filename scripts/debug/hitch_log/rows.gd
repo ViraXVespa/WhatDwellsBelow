@@ -60,10 +60,9 @@ static var _wake_ms: float = -1.0
 static var _phys_span_ms: float = -1.0
 static var _post_phys_ms: float = -1.0
 static var _head_ms: float = -1.0
-## Sweep only. Dungeon process_floor, torch flame yaw, and hp-bar _process.
+## Sweep only. Dungeon process_floor and hp-bar _process.
 ## -1 leaves the keys off the row.
 static var _floor_ms: float = -1.0
-static var _torch_ms: float = -1.0
 static var _bar_ms: float = -1.0
 ## Sweep layer window. Those frames are not in fps_pct.
 static var _unscored: bool = false
@@ -158,9 +157,8 @@ static func note_phys_head() -> void:
 static func note_phys_tail() -> void:
 	_phys_tail_us = Time.get_ticks_usec()
 
-static func set_idle_ms(floor_ms: float, torch_ms: float, bar_ms: float) -> void:
+static func set_idle_ms(floor_ms: float, bar_ms: float) -> void:
 	_floor_ms = floor_ms
-	_torch_ms = torch_ms
 	_bar_ms = bar_ms
 
 static func set_head_ms(ms: float) -> void:

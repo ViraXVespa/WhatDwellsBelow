@@ -1,8 +1,5 @@
 {
  "_about": "lint.py unused --apply never deletes these (path + func/var name, or name \"*\" for the whole file). Each needs a why; drop the entry once its decision is made.",
  "hold": [
-  {"path": "scripts/world/dungeon.gd", "name": "walls", "why": "live empty-body initializer: DungeonGeo.collision_walls builds it every floor; it lacks consumers, it is not dead (init_only_var)"},
-  {"path": "scripts/world/dungeon_geo.gd", "name": "collision_walls", "why": "live initializer of Dungeon.walls"},
-  {"path": "scripts/graphics/torch_bill.gd", "name": "torch_ms", "why": "live debug/perf readout; its disconnection is dataflow the sweep cannot see"}
  ]
 }

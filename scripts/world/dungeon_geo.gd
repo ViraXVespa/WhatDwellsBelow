@@ -11,20 +11,6 @@ static func world(host: Node) -> void:
 		host, Color(0.03, 0.035, 0.05), Color(0.62, 0.68, 0.74), 0.85, Vector3(-52.0, 28.0, 0.0), 0.65, Color(0.82, 0.88, 0.95)
 	)
 
-static func collision_walls(host: Node) -> void:
-	host.walls = StaticBody3D.new()
-	host.walls.collision_layer = 1
-	host.walls.collision_mask = 0
-	host.add_child(host.walls)
-
-static func box(body: StaticBody3D, size: Vector3, offset: Vector3) -> void:
-	var cs := CollisionShape3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = size
-	cs.shape = sh
-	cs.position = offset
-	body.add_child(cs)
-
 static func build_visuals(host: Node) -> void:
 	host.floor_mat = GroundShader.material("res://assets/tiles/dungeon_floor.png", Color(0.18, 0.2, 0.24))
 	host.wall_mat = WallShader.material("res://assets/tiles/wall_brick.png", Color(0.22, 0.22, 0.26))
