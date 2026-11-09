@@ -16,6 +16,9 @@ export_credentials.cfg.uid
 /_logs/*
 !/_logs/.gdignore
 
+# Same-worktree Build continuity (not a task file; not under _logs, so a direct read is allowed)
+/session-plan.md
+
 # Local scratch from asset processing
 /_old/*
 !/_old/.gdignore

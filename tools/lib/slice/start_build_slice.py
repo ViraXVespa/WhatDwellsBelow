@@ -33,6 +33,7 @@ import agent_log
 import handoff_lib
 import repo_lib
 import session_lib
+import session_plan
 import slice_lib
 import task_compact
 import slice_state
@@ -218,6 +219,12 @@ def main(argv: list[str] | None = None) -> int:
     same = not st or not (args.door or args.job) or (st.get("door", ""), st.get("job", "")) == (args.door.strip(), args.job.strip())
     if st and same and not args.full and not args.dry_run:
         text = slice_state.short(root, st)
+        plan_line = session_plan.ensure(
+            root, (args.door or st.get("door") or "").strip(), (args.job or st.get("job") or "").strip(),
+            (args.area or st.get("area") or "").strip(), st.get("mode", ""),
+            args.task.strip() or st.get("task", ""), None)
+        if plan_line:
+            text += "\n" + plan_line
         return agent_log.finish("slice-boot", root, text, "PASS", args=args, write=True, echo=text, worktree=wt, route="already-started")
     route_lines, route = [], "skipped"
     if args.door or args.job:
@@ -303,7 +310,14 @@ def main(argv: list[str] | None = None) -> int:
         head = "route failed:\n" + "\n".join(route_lines)
     else:
         head = f"smokes={smokes or 'n/a'} flows={('per job: ' + per_job) if per_job else (flows or 'n/a')}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
-    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref)}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "")
+    plan_line = ""
+    if not args.dry_run and (args.door.strip() or args.job.strip()):
+        plan_line = session_plan.ensure(
+            root, args.door.strip(), args.job.strip(), args.area.strip(), mode,
+            args.task.strip() or tid or (st.get("task", "") if st else ""), route_lines)
+    if plan_line:
+        body.append(plan_line)
+    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref)}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "") + (f"\n{plan_line}" if plan_line else "")
     return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
                             args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)
 

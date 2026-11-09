@@ -25,7 +25,7 @@ Run `python tools/ENTRY.py` to list commands; append `COMMAND --help` for flags 
 | Localization (keys, copy on screen) | No dedicated tool: `find.py xref KEY` (code and `en.po`), `find.py xref TEXT --texts` after a shot flow, `shots.py inspect contrast` | `tools-lookup.md` |
 | Art, stills, I2V, rekey, audio | `media.py grok --kind K --brief "..." --out DIR`; `media.py rekey --only PATH`; `media.py anim-review`; `media.py sfx` | `tools-media.md` |
 | Gameplay video, before/after clips for X | `shots.py movie NAME [--game DIR]`; `media.py clip sbs A B`; `media.py clip export IN --for x\|gif`; `perf.py web --flow F --video DIR` | `tools-media.md` |
-| Start a slice, logs, export, week, Pages | `slice.py open` (User), `slice.py start`, `session.py clean`, `release.py export-web` | `tools-build.md` |
+| Start a slice, logs, export, week, Pages | `slice.py open` (User), `slice.py start`, `slice.py plan`, `session.py clean`, `release.py export-web` | `tools-build.md` |
 | Write or change a tool | `check.py tool-cli --only STEM --smoke-run`, `check.py tool-docs`; owners in `tools-libs.md` | `tools-libs.md` |
 
 Runner habits on the User PC: `pc-offload.md`. Retired one-off tools: `tools/retired/README.md` (not run, not catalogued).

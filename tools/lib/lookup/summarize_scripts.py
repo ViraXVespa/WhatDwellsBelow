@@ -6,6 +6,11 @@ Usage (from repo root):
   python tools/find.py scripts --path scripts/combat/enemy.gd
   python tools/find.py scripts --top-funcs 8
 
+  python tools/find.py scripts --names --path scripts/combat/enemy.gd
+  python tools/find.py scripts --all-names --path scripts/combat/enemy.gd
+
+--names prints function names only (no line ranges or byte sizes), still limited by --top-funcs.
+--all-names prints every function name in source order and ignores --top-funcs.
 Output: _logs/script-summary/<stamp>-script-summary.txt
 """
 from __future__ import annotations
@@ -32,11 +37,21 @@ def select(root: Path, paths: list[Path] | None) -> list[Path]:
         return sorted(out)
     return gd_lib.live_gd(root)
 
+def plain_names(text: str, top: int, all_names: bool) -> list[str]:
+    """Function names only. all_names keeps source order; otherwise the largest `top` funcs."""
+    fns = gd_lib.funcs_of(text)
+    if all_names:
+        return [name for name, _start, _end, _size in fns]
+    ranked = sorted(fns, key=lambda item: item[3], reverse=True)
+    return [name for name, _start, _end, _size in ranked[: max(0, top)]]
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Func-level script inventory for live .gd files.", json_out=True)
     ap.add_argument("--path", action="append", default=[], help="Limit to one or more .gd paths")
     ap.add_argument("--over-kb", type=float, default=0.0, help=argparse.SUPPRESS)
     ap.add_argument("--top-funcs", type=int, default=6, help="Largest funcs to list per file")
+    ap.add_argument("--names", action="store_true", help="Print function names only, no line ranges or byte sizes. Limited by --top-funcs unless --all-names.")
+    ap.add_argument("--all-names", action="store_true", help="Every function name in source order. Implies --names and ignores --top-funcs.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     args.path = agent_log.split_list(args.path)
@@ -59,12 +74,18 @@ def main(argv: list[str] | None = None) -> int:
         if over_bytes and length < over_bytes:
             continue
         rel = agent_log.rel(root, p)
-        fns = gd_lib.funcs_of(p.read_text(encoding="utf-8-sig"))
-        fns_sorted = sorted(fns, key=lambda t: t[3], reverse=True)
-        top = fns_sorted[: max(0, args.top_funcs)]
-        lines.append(f"{rel} bytes={length} funcs={len(fns)}")
-        for name, start, end, b in top:
-            lines.append(f"  {name} L{start}-{end} bytes={b}")
+        text = p.read_text(encoding="utf-8-sig")
+        fns = gd_lib.funcs_of(text)
+        if args.names or args.all_names:
+            shown = plain_names(text, args.top_funcs, args.all_names)
+            lines.append(f"{rel} funcs={len(fns)}")
+            lines.append("  " + (", ".join(shown) if shown else "(none)"))
+        else:
+            fns_sorted = sorted(fns, key=lambda t: t[3], reverse=True)
+            top = fns_sorted[: max(0, args.top_funcs)]
+            lines.append(f"{rel} bytes={length} funcs={len(fns)}")
+            for name, start, end, b in top:
+                lines.append(f"  {name} L{start}-{end} bytes={b}")
         lines.append("")
         listed += 1
 

@@ -46,5 +46,8 @@ The geometry author needs the pixels, not only a text review. Use the supported 
 - Baked sprites preserve the pixel-art look.
 - Side-by-side comparison exists and its path is reported.
 
-## Notes
-If/after everything gets approved, land the sources under `_src/sources/models`.
+## Notes from Vira
+- If/after everything gets approved, land the model sources under `_src/sources/models` and the new walk animation frames in the relevant `assets` location.
+- I have no idea how the Blender MCP works or how difficult this modelling task will be. If I were handling this task myself, I would probably chroma key the Front/Back/Left/Right cells from the bible, import them into Blender as flat face placed next to one another (with the Front/Back placed back-to-back in on location and the Left/Right frames intersecting them perpendicularly), and then I would extrude the pixels as voxels until it visibly replicated the bible from all directions. That would require some manual adjustments on the feet positionings on the side views, but I think that would be the optimal route for a human tackling this task. This may or may not be the ideal route for an agent, but I figured I would mention it in case it helps guide you to the ideal approach for completing this work.
+- Since there is no documentation for this workflow, it may be helpful for you to take notes about how to accomplish similar tasks in the future. If this workflow is viable and the results are approved, we will be using this same workflow for generating new art and animations for all of the enemies in the game, so you'll want to update the design docs with usage and workflow documentation if I approve the work.
+- `blender` has been added to the system path, so you can easily launch it via a shell command whenever needed without having to manually locate the Blender executable.

@@ -3,13 +3,17 @@
 Status: protocol
 Read when: Grok Build understands, changes, verifies or finishes a task
 
-A **slice** is the User-opened worktree/session; a **unit** is one piece of its task. A route **door** owns a system, and `door.job` selects one part. **Q0** in older cards means the opening questions about look, reference and bounds, not a mandatory questionnaire.
+A **slice** is the User-opened worktree/session; a **unit** is one piece of its task. A route **door** owns a system, and `door.job` selects one part. **Q0** means opening look, reference and bounds questions.
 
 ## 1. Understand
 
-- Read the named task and route's docs. Identify every system touched and read its code-map row before changing it.
-- Use public commands: `find.py xref TEXT` for uses, `find.py func PATH NAME` for a function, `docs.py code-map row --path PATH` for ownership. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups.
-- State the observable outcome and how to measure it. For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
+A named door or job begins with one gather. `python tools/slice.py start` writes `session-plan.md` in the worktree root (gitignored). Read that file. It holds the door/job card, matching code-map key paths, the door's primary doc, the job doc when a job is named, and plain function-name lists for the key scripts. Do not re-read those sources or repeat those lookups.
+
+On a new session, read the named task file once. It stays the assignment. The plan does not replace it or a survey handoff.
+
+Use `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names` only for a gap the plan does not cover. Then trim `session-plan.md` and add what you gathered: door/job and systems, the rows or key paths you still need, function names, the one-line observable outcome, open questions, changed files, and latest result or log paths. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups.
+
+State the observable outcome in the plan and how to measure it. For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
 
 An answered task needs no repeated opening questionnaire. Ask only for missing look/reference/bounds or a discovery that changes an earlier answer. Do not shoot unrelated screens or read another session's memory inbox.
 
@@ -23,9 +27,13 @@ For game work, follow the start card's load/import steps. Run `gate.py gd-load` 
 
 ## Context breaks (authoritative rule)
 
-Stop when a compact would be safe. Finish the coherent operation already in progress; do not interrupt a mutation, test, or tool call halfway through. A compact is safe before Prove, and before a follow-up Gather or Change. Do not stop in the middle of the first Gather or the Change that follows it.
+A planned compact stop is mandatory. Stop and wait. Do not continue into the next phase, and do not keep working until an automatic compact fires. The User compacts, or explicitly says continue.
 
-Save the task state and a short resume note: outcome, decisions, changed files, open questions, running job identifiers, and latest result or log paths. Keep these through the compact; discard raw exploratory output. Use guided compact if available. Otherwise print that keep-list and stop for the User to compact. Resume in the same session. This does not open a new session or a survey handoff.
+Stop when a compact would be safe. Finish the operation already in progress; do not interrupt a mutation, test, or tool call. A compact is safe before Prove, and before a follow-up Gather or Change. Do not stop in the middle of the first Gather or the Change that follows it.
+
+Before the stop, update `session-plan.md`: outcome, decisions, changed files, open questions, running job identifiers, and latest result or log paths. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
+
+On any post-compact turn, the first action is to read `session-plan.md`. Do not re-walk the repo or re-run the same lookups unless that file is missing or clearly stale. Rebuild with `python tools/slice.py plan` (`--refresh` keeps your notes and replaces the gathered half). Update the plan after significant progress and before the next planned stop.
 
 ## Permissions and questions
 
@@ -46,7 +54,7 @@ Use the cheapest check that would fail if this outcome were wrong. The prove sta
 
 A failed/stale baseline or one with script errors is not evidence: fix the cause and capture again. Review the wide view first, then details; compare against accepted intent/reference and main, not merely a previous run of the same code. Isolated reviews return text; direct references require the scoped grant. OCR is for text, not shapes. Gates passing does not establish visual or audio acceptance.
 
-Read each run's result and summary once through `session.py summary JOB`; filters are in the lookup catalog. Do not call unread errors harmless. A same-command retry is for truncation, timeout, crash, a busy lock or wrong scene, once. Prove is final verification, not another diagnostic loop: one small corrective edit and one rerun; still red, stop and report the log path. Retries stay in the session that ran the check. The tools door owns overall rerun limits.
+Read each run's result and summary once through `session.py summary JOB`. Do not call unread errors harmless. A same-command retry is for truncation, timeout, crash, a busy lock or wrong scene, once. Prove is one small corrective edit and one rerun; still red, stop and report the log path. Retries stay in the session that ran the check. The tools door owns overall rerun limits.
 
 ## 4. Finish
 

@@ -7,6 +7,7 @@ The existing repository `pc-offload` skill is the default for every Build task; 
 
 ## Find and read
 
+- The opening gather for a named door or job is `session-plan.md` at the worktree root. Read that file. It is gitignored and it is not under `_logs/`. Use `find.py func`, `find.py xref`, `find.py scripts --names` and `docs.py code-map row` only for a gap the plan does not cover, then trim the plan.
 - Use `find.py route`, `find.py xref`, `find.py func`, `find.py changed` and `docs.py code-map row` rather than tree dumps, whole-file inventories or raw git output. Read the code actually being edited, not untouched siblings for size information; use `find.py stat` or filesystem Length for sizes.
 - After a distinct planned run, read `python tools/session.py summary JOB` once. Do not read raw `_logs/` files. Filters (`--section`, `--match`, `--jsonl --where`) are documented in the lookup catalog. `summary JOB --files` lists the log's other files; `--files --read` prints their text. Quote PowerShell globs and headings; use `key=ge:N`, not an unquoted `>` which redirects output.
 - Images default to isolated review. A necessary direct reference needs the task/session grant; shell readers are not an alternative. Image access and text OCR-first are separate rules.

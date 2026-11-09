@@ -17,7 +17,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("scenes",   "lookup/list_scenes",            ".tscn nodes and scripts without dumping scenes"),
     ("facade",   "lookup/list_facade_cluster",    "A facade and its stem-folder helpers by bytes"),
     ("stat",     "lookup/file_stat",              "Bytes, BOM, EOL and indent for a path or glob"),
-    ("scripts",  "lookup/summarize_scripts",      "Func inventory per .gd (--path, --top-funcs)"),
+    ("scripts",  "lookup/summarize_scripts",      "Func inventory per .gd (--path, --top-funcs, --names, --all-names)"),
     ("changed",  "lookup/list_changed",           "Git-changed paths with bytes; --history PATH"),
 ]
 
