@@ -28,7 +28,6 @@ map-rework | build | open | Event-driven minimap with fog reveal mask and separa
 modular-voxel-walk-proof | build | open | Modular 3D walk proof (Blender + bake) | -
 perf-sweep | build | open | Perf sweep - one continuous hub/dungeon run at 60+ FPS, desktop and web | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
-wall-merge-physics | build | open | Wall merge with smooth edges + physics and occlusion correctness | -
 ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 bug-report-relay | web | active | In-game bug reports via pause menu and a GitHub issue relay | -
