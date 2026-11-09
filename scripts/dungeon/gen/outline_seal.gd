@@ -1,45 +1,19 @@
 extends Object
 
-## Split from outline.gd: _seal_open, _seal_mark_horiz, _seal_mark_vert....
+## Split from outline.gd: _seal_gaps publishes solid/void edges no span covers (edge keys: edge_mark.gd).
+
+const Edge := preload("res://scripts/dungeon/gen/edge_mark.gd")
 
 static func _seal_open(solid: PackedByteArray, sw: int, sh: int, x: int, y: int) -> bool:
 	if x < 0 or y < 0 or x >= sw or y >= sh:
 		return true
 	return solid[y * sw + x] == 0
 
-static func _seal_mark_horiz(marked: Dictionary, y_edge: int, x0: float, x1: float) -> void:
-	var lo: float = minf(x0, x1)
-	var hi: float = maxf(x0, x1)
-	var x: int = int(floor(lo))
-	var last: int = int(ceil(hi))
-	while x < last:
-		if float(x + 1) > lo + 0.001 and float(x) < hi - 0.001:
-			marked[Vector3i(0, y_edge, x)] = true
-		x += 1
-
-static func _seal_mark_vert(marked: Dictionary, x_edge: int, y0: float, y1: float) -> void:
-	var lo: float = minf(y0, y1)
-	var hi: float = maxf(y0, y1)
-	var y: int = int(floor(lo))
-	var last: int = int(ceil(hi))
-	while y < last:
-		if float(y + 1) > lo + 0.001 and float(y) < hi - 0.001:
-			marked[Vector3i(1, x_edge, y)] = true
-		y += 1
-
 static func _seal_mark_spans(marked: Dictionary, spans: Array) -> void:
-	for raw_span: Variant in spans:
-		if not (raw_span is Dictionary):
-			continue
-		var sp: Dictionary = raw_span
-		var o: Vector2 = Vector2(sp.get("origin", Vector2.ZERO))
-		var d: Vector2 = Vector2(sp.get("delta", Vector2.ZERO))
-		if d.length() < 0.5:
-			continue
-		if absf(d.y) <= 0.2 and absf(d.x) >= 0.5 and absf(o.y - float(roundi(o.y))) <= 0.35:
-			_seal_mark_horiz(marked, roundi(o.y), o.x, o.x + d.x)
-		elif absf(d.x) <= 0.2 and absf(d.y) >= 0.5 and absf(o.x - float(roundi(o.x))) <= 0.35:
-			_seal_mark_vert(marked, roundi(o.x), o.y, o.y + d.y)
+	for part: Array in Edge.parts(spans):
+		var d: Vector2 = part[1]
+		if d.length() >= 0.5:
+			Edge.mark_axis(marked, part[0], d)
 
 # Solid/void edges the rect pass skipped. Not added to floor loops.
 static func _seal_gaps(solid: PackedByteArray, sw: int, sh: int, spans: Array) -> void:

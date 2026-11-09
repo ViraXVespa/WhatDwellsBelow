@@ -5,6 +5,8 @@ const Gen := preload("res://scripts/dungeon/gen.gd")
 const Util := preload("res://scripts/debug/dungeon_map/map_util.gd")
 
 const DungeonMapRim := preload("res://scripts/debug/dungeon_map/map_rim.gd")
+const Edge := preload("res://scripts/dungeon/gen/edge_mark.gd")
+
 static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs: Array) -> int:
 	var fail: int = 0
 	var rooms: Array = data.get("rooms", []) as Array
@@ -100,12 +102,10 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 	fail += Util._spec(lines, "solid_size", n >= 1 and sw == gw * n and sh == gh * n and solid.size() == sw * sh, "n=%d sw=%d sh=%d want=%dx%d bytes=%d" % [n, sw, sh, gw * n, gh * n, solid.size()])
 	var span_hits: int = 0
 	var span_miss: int = 0
-	for raw_span: Variant in spans:
-		if not (raw_span is Dictionary):
-			continue
-		var sp: Dictionary = raw_span
-		var o: Vector2 = Vector2(sp.get("origin", Vector2.ZERO))
-		var d: Vector2 = Vector2(sp.get("delta", Vector2.ZERO))
+	for part: Array in Edge.parts(spans):
+		var sp: Dictionary = part[2]
+		var o: Vector2 = part[0]
+		var d: Vector2 = part[1]
 		var slen: float = d.length()
 		if slen < 0.5:
 			continue

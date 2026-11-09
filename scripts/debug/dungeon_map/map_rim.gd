@@ -3,6 +3,7 @@ extends Object
 ## A solid cell with a void or out-of-bounds 4-neighbor fails when no span that survives the wall prepare lies on that edge.
 
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
+const Edge := preload("res://scripts/dungeon/gen/edge_mark.gd")
 
 static func rim_report(data: Dictionary) -> Dictionary:
 	var empty: Dictionary = {"holes": 0, "cells": [], "sample": "-"}
@@ -16,16 +17,17 @@ static func rim_report(data: Dictionary) -> Dictionary:
 	var per: int = int(data.get("solid_n", 0))
 	if per < 1 or sw < 2 or sh < 2 or solid.size() != sw * sh:
 		return empty
+	return rim_holes(data, WallMesh.prepare(spans))
+
+## Same check on an already prepared span list (rim_report passes the live WallMesh.prepare output).
+static func rim_holes(data: Dictionary, drawn: Array) -> Dictionary:
+	var solid: PackedByteArray = data["solid"]
+	var sw: int = int(data["solid_w"])
+	var sh: int = int(data["solid_h"])
+	var per: int = int(data["solid_n"])
 	var marked: Dictionary = {}
-	var drawn: Array = WallMesh.prepare(spans)
-	for raw_span: Variant in drawn:
-		if not (raw_span is Dictionary):
-			continue
-		var sp: Dictionary = raw_span
-		var o: Vector2 = Vector2(sp.get("origin", Vector2.ZERO))
-		var d: Vector2 = Vector2(sp.get("delta", Vector2.ZERO))
-		var nrm: Vector2 = Vector2(sp.get("normal", Vector2.ZERO))
-		_mark_span(marked, o, d, nrm)
+	for part: Array in Edge.parts(drawn):
+		_mark_span(marked, part[0], part[1], Vector2((part[2] as Dictionary).get("normal", Vector2.ZERO)))
 	var hole_n: int = 0
 	var cells: Array[Vector2i] = []
 	var seen: Dictionary = {}
@@ -93,11 +95,7 @@ static func _mark_span(marked: Dictionary, o: Vector2, d: Vector2, nrm: Vector2)
 		return
 	if nrm.length_squared() > 0.0001:
 		nrm = nrm.normalized()
-	if absf(d.y) <= 0.2 and absf(d.x) >= 0.5 and absf(o.y - float(roundi(o.y))) <= 0.35:
-		_mark_horiz(marked, roundi(o.y), o.x, o.x + d.x)
-		return
-	if absf(d.x) <= 0.2 and absf(d.y) >= 0.5 and absf(o.x - float(roundi(o.x))) <= 0.35:
-		_mark_vert(marked, roundi(o.x), o.y, o.y + d.y)
+	if Edge.mark_axis(marked, o, d):
 		return
 	var steps: int = maxi(1, int(ceil(slen * 2.0)))
 	var si: int = 0
@@ -105,26 +103,6 @@ static func _mark_span(marked: Dictionary, o: Vector2, d: Vector2, nrm: Vector2)
 		var p: Vector2 = o + d * (float(si) / float(steps))
 		_mark_near(marked, p, nrm)
 		si += 1
-
-static func _mark_horiz(marked: Dictionary, y_edge: int, x0: float, x1: float) -> void:
-	var lo: float = minf(x0, x1)
-	var hi: float = maxf(x0, x1)
-	var x: int = int(floor(lo))
-	var last: int = int(ceil(hi))
-	while x < last:
-		if float(x + 1) > lo + 0.001 and float(x) < hi - 0.001:
-			marked[Vector3i(0, y_edge, x)] = true
-		x += 1
-
-static func _mark_vert(marked: Dictionary, x_edge: int, y0: float, y1: float) -> void:
-	var lo: float = minf(y0, y1)
-	var hi: float = maxf(y0, y1)
-	var y: int = int(floor(lo))
-	var last: int = int(ceil(hi))
-	while y < last:
-		if float(y + 1) > lo + 0.001 and float(y) < hi - 0.001:
-			marked[Vector3i(1, x_edge, y)] = true
-		y += 1
 
 static func _mark_near(marked: Dictionary, p: Vector2, nrm: Vector2) -> void:
 	var y_edge: int = roundi(p.y)
