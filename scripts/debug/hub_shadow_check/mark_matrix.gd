@@ -3,7 +3,7 @@ extends RefCounted
 ## Shadow-mark matrix (hub_shadow_check.matrix, camp-prop-shadows flow): every player kind and enemy type, every
 ## idle/walk/attack frame on disk (all facings present), laid through the live player ActorLit. The mark's near
 ## edge sits on the pins for any light direction, so one pass covers sun, lantern and torch marks. Per foot (Soles: lowest opaque pixel of each foot): grounded (lift < RAISED
-## cells) must attach within TOL cells of its mark pin on screen; raised must show a gap of at least max(MIN_GAP, LIFT_K x lift)
+## cells, or an actor_planted.json row) must attach within TOL cells of its mark pin on screen; raised must show a gap of at least max(MIN_GAP, LIFT_K x lift)
 ## and at most REACH_K x lift + TOL cells (raised = sole over K.RAISED_M; an all-glow body is skipped). Mark mask at cell scale: one main piece
 ## (no detached chunk >= mark_mask.CHUNK cells), no enclosed hole >= mark_mask.HOLE cells. Full-shade double: hub_mark_light.shade (camp-prop-shadows, player placed in shade).
 ## run(plant): "" offset (pin shifted 3 cells), "glue" (raised foot pinned at its own row), "chunk" (stray blob),
@@ -110,16 +110,20 @@ static func foot_faults(lit: Node, spr: Sprite3D, cam: Camera3D, tex: Texture2D,
 	var th: float = tex.get_height()
 	var px: float = spr.pixel_size
 	var sole_y: float = maxf(s.y, s.w)
+	var g: int = Soles.grounded(tex, s, px)
 	var c0: Vector3 = Vector3(spr.global_position.x, T.FLOOR_Y, spr.global_position.z)
 	var cell: float = cam.unproject_position(c0).distance_to(cam.unproject_position(c0 + Vector3(CELL, 0.0, 0.0)))
 	for f in 2:
 		var tx: float = (s.x if f == 0 else s.z) + 0.5
 		var ty: float = (s.y if f == 0 else s.w) + 0.5
-		var lift: float = (sole_y - ty + 0.5) * px / CELL
-		var hit: Vector3 = xf * _uv_world(vs, uv, Vector2(tx / tw, minf(ty, sole_y + 0.5) / th))
+		var down: bool = g & (1 << f) != 0  # lift under RAISED, or a planted row (actor_planted.json)
+		# A planted row (grounded above RAISED) casts from the contact row: lit_contact lifts its column there.
+		var listed: bool = down and (sole_y - ty + 0.5) * px / CELL >= RAISED
+		var hv: float = (sole_y + 0.5) if listed else minf(ty, sole_y + 0.5)
+		var hit: Vector3 = xf * _uv_world(vs, uv, Vector2(tx / tw, hv / th))
 		var foot: Vector2 = cam.unproject_position(_foot_world(spr, tx, ty, tw, th))
 		var mark: Vector2 = cam.unproject_position(hit)
-		if plant == "glue" and lift >= RAISED:
+		if plant == "glue" and not down:
 			mark = foot  # a raised foot glued to its mark
 		var gap: float = foot.distance_to(mark) / maxf(cell, 0.01)
 		var lifted: float = foot.distance_to(cam.unproject_position(_foot_world(spr, tx, sole_y + 0.5, tw, th))) / maxf(cell, 0.01)
@@ -127,7 +131,7 @@ static func foot_faults(lit: Node, spr: Sprite3D, cam: Camera3D, tex: Texture2D,
 		last_gaps[f] = gap
 		var dx: float = (mark.x - foot.x) / maxf(cell, 0.01)
 		var dy: float = (mark.y - foot.y) / maxf(cell, 0.01)
-		if lift < RAISED:
+		if down:
 			# Grounded: the pin may tuck up-screen under the boot (Geo tuck, hidden by the boot) but never sit below
 			# it or beside it; what the eye sees is checked on rendered pixels (feet_px.gd).
 			if dy > TOL or dy < -TUCK or absf(dx) > 2.0 * TOL:

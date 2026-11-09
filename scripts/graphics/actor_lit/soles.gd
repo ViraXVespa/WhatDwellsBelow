@@ -3,14 +3,18 @@ extends Object
 ## Baked actor soles. Play looks up scripts/data/actor_soles.json. The pixel scan runs only in the bake.
 
 const Scan := preload("res://scripts/graphics/actor_lit/soles_scan.gd")
-const SOLE_BAKE_STAMP := "69e1e86544b5a793"
+const SOLE_BAKE_STAMP := "9f80d8b777a9a660"
 const BAKE_PATH := "res://scripts/data/actor_soles.json"
+## Hand-checked planted feet the height test misreads (a depth stride's far foot): path -> "L" or "R".
+const PLANTED_PATH := "res://scripts/data/actor_planted.json"
+const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
 
 static var _spans: Dictionary = {}
 static var _sole_at: Dictionary = {}
 static var _foot_at: Dictionary = {}
 static var _table: Dictionary = {}
 static var _table_ok: bool = false
+static var _planted: Dictionary = {}
 
 static func warm() -> void:
 	if _table_ok:
@@ -34,6 +38,23 @@ static func warm() -> void:
 		return
 	_table = rows_v as Dictionary
 	_table_ok = true
+	var pv: Variant = JSON.parse_string(FileAccess.get_file_as_string(PLANTED_PATH))
+	if pv is Dictionary and (pv as Dictionary).get("planted") is Dictionary:
+		_planted = (pv as Dictionary).planted
+
+## Grounded feet of a frame (bit 1 = L, bit 2 = R): within RAISED_M of the lowest sole, or listed in actor_planted.json.
+## flat: the debug plant (actor_lit.plant_flat), a higher standing foot read as raised.
+static func grounded(tex: Texture2D, soles: Vector4, px: float, flat := false) -> int:
+	warm()
+	var sole_y: float = maxf(soles.y, soles.w)
+	var up: float = K.RAISED_M / maxf(px, 1e-5)
+	var side: String = str(_planted.get(tex.resource_path.replace("\\", "/"), ""))
+	var out: int = 0
+	if (sole_y - soles.y < up or side == "L") and not (flat and soles.y < sole_y):
+		out |= 1
+	if (sole_y - soles.w < up or side == "R") and not (flat and soles.w < sole_y):
+		out |= 2
+	return out
 
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
