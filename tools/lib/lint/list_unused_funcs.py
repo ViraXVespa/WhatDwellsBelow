@@ -419,6 +419,12 @@ def analyse(root: Path) -> tuple[object, dict]:
     g = unused_graph.Graph(root)
     return g, g.analyse()
 
+def multiline_decl(lines: list[str], idx: int) -> bool:
+    """A var/const/signal line that opens a block, continues, or has an indented body under it."""
+    head = lines[idx].split("#", 1)[0].rstrip() if 0 <= idx < len(lines) else ""
+    nxt = lines[idx + 1] if idx + 1 < len(lines) else ""
+    return head.endswith(("(", "[", "{", ",", "\\", ":")) or bool(nxt.strip() and nxt[:1].isspace())
+
 def plan_of(root: Path, g, rows: dict, decls: list) -> tuple[list[dict], list[dict]]:
     """Verified removals (unused_graph.verified + var/decl side-effect checks) and refusals, each with evidence."""
     import unused_graph
@@ -431,6 +437,9 @@ def plan_of(root: Path, g, rows: dict, decls: list) -> tuple[list[dict], list[di
         seen = [w for w in words.get(r["name"], []) if w != r["rel"]] if r["kind"] != "orphan_file" else []
         if seen:
             refused.append(dict(r, refuse="name appears in non-GDScript text: " + ", ".join(sorted(seen)[:3])))
+            continue
+        if r["kind"] == "decl" and r["rel"] in g.scripts and multiline_decl(g.scripts[r["rel"]].lines, r["line"] - 1):
+            refused.append(dict(r, refuse="multi-line declaration"))
             continue
         if r["kind"] == "unused_var":
             raw = g.scripts[r["rel"]].lines[r["line"] - 1]
@@ -485,17 +494,33 @@ def apply_plan(root: Path, plan: list[dict]) -> list[str]:
         path = root / rel
         if not path.is_file():
             continue
+        import unused_graph
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         for r in sorted(items, key=lambda x: -x["line"]):
             idx = r["line"] - 1
-            head = lines[idx].split("#", 1)[0] if 0 <= idx < len(lines) else ""
+            sc = unused_graph.Script(rel, "\n".join(lines) + "\n")  # masked lexer: spans step over multi-line strings
+            head = sc.lines[idx].split("#", 1)[0] if 0 <= idx < len(lines) else ""
+            if sc.inner_at(idx):
+                done.append(f"skip\t{rel}:{r['line']}\t{r['name']}\tinside an inner class")
+                continue
             fm, vm, dm = FUNC_RE.match(head), VAR_LINE.match(head), DECL_RE.match(head)
             name = (fm and fm.group(1)) or (vm and vm.group(1)) or (dm and dm.group(2)) or (ALIAS_RE.match(head) and ALIAS_RE.match(head).group(1))
             if name != r["name"]:
                 done.append(f"skip\t{rel}:{r['line']}\t{r['name']}\tline no longer declares it")
                 continue
             start = span_start(lines, idx)
-            end = span_end(lines, idx) if fm else idx + 1
+            if fm:
+                _ln, a, end = sc.funcs.get(name, (0, -1, -1))
+                if a != idx:
+                    done.append(f"skip\t{rel}:{r['line']}\t{name}\tspan mismatch")
+                    continue
+                while end > idx + 1 and not lines[end - 1].strip():
+                    end -= 1
+            else:
+                if multiline_decl(sc.lines, idx):
+                    done.append(f"skip\t{rel}:{r['line']}\t{name}\tmulti-line declaration")
+                    continue
+                end = idx + 1
             del lines[start:end]
             done.append(f"deleted_{r['kind']}\t{rel}:{r['line']}\t{r['name']}\t{r['evidence']}")
         path.write_text(collapse_blanks(lines), encoding="utf-8", newline=chr(10))

@@ -42,6 +42,8 @@ PATH_RE = re.compile(r"(?<![\w/])((?:scripts|tools/data|scenes)/[\w./-]+\.(?:gd|
 DIR_PREFIX_RE = re.compile(r"[\"']res://([\w/]+/)[\"']")
 TYPE_RE = re.compile(r"(?:\bvar[ \t]+)?([A-Za-z_]\w*)[ \t]*(?::[ \t]*([A-Z]\w*)\b[^=]*=?|:?=[ \t]*([A-Z]\w*)\.new\()")
 RETCALL_RE = re.compile(r"(?:const|var)[ \t]+([A-Za-z_]\w*)[ \t]*(?::[^=]*)?:?=[ \t]*(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)\.([A-Za-z_]\w*)\([ \t]*\)(?=[ \t]*(?:as[ \t]+\w+[ \t]*)?(?:$|[;#]))")
+INNER_RE = re.compile(r"^class[ \t]+([A-Za-z_]\w*)")
+INNER_DECL_RE = re.compile(r"^[ \t]+(?:static[ \t]+)?(?:func|var|const|signal)[ \t]+([A-Za-z_]\w*)", re.M)
 LOCAL_RE = re.compile(r"\b(?:var|const|for)[ \t]+([A-Za-z_]\w*)")
 RET_LOAD_RE = re.compile(r"return[ \t]+(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)(?:[ \t]+as[ \t]+\w+)?$")
 METHOD_POS_RE = re.compile(r"\b(?:call|call_deferred|callv|has_method|connect|disconnect|is_connected|rpc|rpc_id|emit_signal|tween_method)[ \t]*\([ \t]*[\"'](\w+)[\"']|\bCallable[ \t]*\([^,()]+,[ \t]*[\"'](\w+)[\"']|[\"']method[\"'][ \t]*:[ \t]*[\"'](\w+)[\"']")
@@ -80,6 +82,55 @@ def code_of(raw: str) -> str:
         out.append(ch)
         i += 1
     return "".join(out)
+
+def mask_multiline(text: str) -> tuple[list[str], set[int], list[tuple[int, str]]]:
+    """Lines with every string that spans lines (triple-quoted, or a quote continued by a backslash) blanked to spaces,
+    keeping line count and columns. Returns (lines, indices of its continuation lines, [(index, word)] inside them).
+    Single-line strings stay as written: code_of/strings_of handle those per line. Comments end at the newline."""
+    out, ml, words = [], set(), []
+    buf, i, n, line = [], 0, len(text), 0
+    while i < n:
+        ch = text[i]
+        if ch == "\n":
+            out.append("".join(buf))
+            buf, line, i = [], line + 1, i + 1
+            continue
+        if ch == "#":
+            j = text.find("\n", i)
+            j = n if j < 0 else j
+            buf.append(text[i:j])
+            i = j
+            continue
+        if ch in "\"'":
+            q = text[i:i + 3] if text[i:i + 3] in ('"""', "'''") else ch
+            j = i + len(q)
+            while j < n and text[j:j + len(q)] != q and (len(q) == 3 or text[j] != "\n"):
+                j += 2 if text[j] == "\\" else 1
+            end = min(n, j + len(q))
+            lit = text[i:end]
+            if "\n" not in lit:
+                buf.append(lit)
+            else:
+                first = True
+                for part in lit.split("\n"):
+                    if not first:
+                        out.append("".join(buf))
+                        buf, line = [], line + 1
+                    if not first:
+                        ml.add(line)
+                    words.extend((line, w) for w in IDENT.findall(part))
+                    keep = part[:len(q)] if first else ""
+                    tail = part[-len(q):] if part.endswith(q) and not first else ""
+                    buf.append(keep + " " * (len(part) - len(keep) - len(tail)) + tail)
+                    first = False
+            i = end
+            continue
+        buf.append(ch)
+        i += 1
+    out.append("".join(buf))
+    if text.endswith("\n"):
+        out.pop()
+    return out, ml, words
 
 def strings_of(raw: str) -> list[str]:
     head = raw
@@ -156,7 +207,9 @@ def listing(root: Path) -> list[Path]:
 class Script:
     def __init__(self, rel: str, text: str):
         self.rel = rel
-        self.lines = text.splitlines()
+        self.raw = text.splitlines()
+        self.lines, self.ml_lines, self.ml_words = mask_multiline(text)
+        self.inner: list[tuple[str, int, int, set[str]]] = []  # inner classes: (name, start idx, end idx, names declared inside)
         self.size = len(text.encode("utf-8"))
         self.funcs: dict[str, tuple[int, int, int]] = {}  # name -> (lineno, start idx, end idx)
         self.vars: dict[str, int] = {}
@@ -229,11 +282,21 @@ class Script:
         self.arity: dict[str, tuple[int, int]] = {}
         for i, name in starts:
             self.arity.setdefault(name, _arity(self.lines[i]))
+        for i, raw in enumerate(self.lines):
+            m = INNER_RE.match(raw)
+            if m:
+                end = i + 1
+                while end < len(self.lines) and (not self.lines[end].strip() or self.lines[end][:1].isspace() or self.lines[end].startswith("#") or end in self.ml_lines):
+                    end += 1
+                names = set()
+                for ln in self.lines[i + 1:end]:
+                    names.update(INNER_DECL_RE.findall(ln))
+                self.inner.append((m.group(1), i, end, names))
         for k, (i, name) in enumerate(starts):
             end = i + 1
             while end < len(self.lines):
                 ln = self.lines[end]
-                if ln and not ln[0].isspace() and not ln.startswith("#"):
+                if ln and not ln[0].isspace() and not ln.startswith("#") and end not in self.ml_lines:
                     break
                 end += 1
             self.funcs.setdefault(name, (i + 1, i, end))
@@ -256,7 +319,13 @@ class Script:
                 if m:
                     self.func_ret[name] = m.group(1)
 
+    def inner_at(self, idx: int):
+        return next((c for c in self.inner if c[1] <= idx < c[2]), None)
+
     def owner_of(self, idx: int) -> str:
+        c = self.inner_at(idx)
+        if c:
+            return f"<class:{c[0]}>"
         for name, (_ln, s, e) in self.funcs.items():
             if s <= idx < e:
                 return name
@@ -395,6 +464,9 @@ class Graph:
             for v in s.vars:
                 var_owners[v].add(rel)
         for rel, s in self.scripts.items():
+            for ln, w in s.ml_words:  # names inside multi-line strings (JS/GLSL/text): a mention, never code
+                if w in all_names or w in var_owners:
+                    self.weak_strings[w].append(f"{rel}:{ln + 1}")
             near = None
             for idx, raw in enumerate(s.lines):
                 src = (rel, s.owner_of(idx))
@@ -445,6 +517,8 @@ class Graph:
                     recv = self._receiver(code, toks, ti, raw)
                     targets, kind = [], ""
                     if recv is None and name in s.locals.get(src[1], ()):
+                        continue
+                    if src[1].startswith("<class:") and (recv is None or recv == ["self"]) and name in s.inner_at(idx)[3]:
                         continue
                     if recv is None or recv == ["self"]:
                         t = self.find(rel, name)
@@ -643,6 +717,7 @@ class Graph:
             if rel not in self.scripts:
                 continue
             out.append(((rel, "<file>"), "file"))
+            out.extend(((rel, f"<class:{c[0]}>"), "file") for c in self.scripts[rel].inner)
             for name in self.scripts[rel].funcs:
                 if name in VIRTUAL:
                     out.append(((rel, name), "hook"))
@@ -723,7 +798,8 @@ class Graph:
         for rel in orphan:
             s = self.scripts[rel]
             stem = rel.rsplit("/", 1)[-1][:-3]
-            mention = [r for r, s2 in self.scripts.items() if r != rel and any(stem == x for raw in s2.lines for x in strings_of(raw))]
+            mention = [r for r, s2 in self.scripts.items() if r != rel and (any(stem == x for raw in s2.lines for x in strings_of(raw))
+                       or any(w == stem for _l, w in s2.ml_words) or ("res://" + rel) in "\n".join(s2.raw))]
             mention += [r for r, t in self.other.items() if rel in t and not r.endswith(".uid")]
             conf = "medium" if mention else "high"
             why = "never loaded: no preload/load/res:// path, uid, class_name, extends or Dbg/dir loader reaches it from project.godot, scenes or tool roots"
@@ -847,6 +923,10 @@ def verified(g: Graph, rows: dict, hold: dict) -> tuple[list[dict], list[dict]]:
                 reason = "held: " + hold.get((rel, name), hold.get((rel, "*"), ""))
             elif r["conf"] != "high":
                 reason = f"confidence {r['conf']}"
+            elif rel.startswith("addons/") or (rel in g.scripts and any(ln.strip().startswith("@tool") for ln in g.scripts[rel].lines[:5])):
+                reason = "editor/@tool or addon script"
+            elif kind != "orphan_file" and rel in g.scripts and any(name in c[3] for c in g.scripts[rel].inner):
+                reason = "also declared inside an inner class of this file (ambiguous owner)"
             elif kind == "orphan_file" and rel in weak_in:
                 reason = "untyped/dynamic calls elsewhere may target its funcs"
             elif kind != "orphan_file" and (name.startswith(("_on_", "_js_")) or name in VIRTUAL):

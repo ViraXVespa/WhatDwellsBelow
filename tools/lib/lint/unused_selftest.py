@@ -19,6 +19,7 @@ const B := preload("res://scripts/b.gd")
 const C := preload("res://scripts/c.gd")
 const D := preload("res://scripts/d.gd")
 const Child := preload("res://scripts/child.gd")
+const ML := preload("res://scripts/ml.gd")
 const TABS := ["_tab_a"]
 var never_used := 3
 var prop_never: int:
@@ -41,6 +42,7 @@ func _ready() -> void:
 	Child.new().run()
 	untyped(null)
 	C.live_c()
+	ML.live_ml()
 
 func smoke_attach(what: String) -> void:
 	call("attach_" + what)
@@ -83,6 +85,47 @@ static func documented_fn() -> void:
 static func held_fn() -> void:
 	pass
 """,
+    "scripts/ml.gd": '''static func live_ml() -> String:
+	return """
+func ghost_fn():
+	call("ghost_target")
+var g = preload("res://scripts/ghost.gd")
+"""
+
+static func dead_ml() -> String:
+	var t := """
+static func after():
+	pass
+"""
+	return t + "x"
+
+static func ghost_target() -> void:
+	pass
+
+class Inner:
+	func dup() -> void:
+		pass
+	func inner_only() -> void:
+		helper_outer()
+
+static func dup() -> void:
+	pass
+
+static func helper_outer() -> void:
+	pass
+
+const MULTI := [
+	1,
+]
+var side_eff := _bump()
+var prop_side: int:
+	set(v):
+		_bump()
+
+static func _bump() -> int:
+	return 1
+''',
+    "scripts/ghost.gd": "static func boo() -> void:\n\tpass\n",
     "scripts/d.gd": "static func maybe_fn(_v: int) -> void:\n\tpass\n",
     "scripts/base.gd": "extends Node\nfunc run() -> void:\n\thook()\n\nfunc hook() -> void:\n\tpass\n",
     "scripts/child.gd": 'extends "res://scripts/base.gd"\nfunc hook() -> void:\n\tpass\n',
@@ -128,6 +171,18 @@ def run() -> list[str]:
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")
+        allrows = {(r["rel"].rsplit("/", 1)[-1], r["name"]): (k, r) for k, v in rows.items() for r in v}
+        for name in ("ghost_fn", "after", "inner_only"):
+            if any(n == name for _f, n in allrows):
+                bad.append(f"lexer/inner: {name} (inside a string or inner class) reported as {allrows[[k for k in allrows if k[1] == name][0]][0]}")
+        if ("ml.gd", "helper_outer") in allrows:
+            bad.append("inner: helper_outer (called from inner class) reported dead")
+        if allrows.get(("ml.gd", "ghost_target"), ("", {"conf": ""}))[1]["conf"] not in ("medium", "low"):
+            bad.append(f"lexer: ghost_target (named in a multi-line string) not demoted: {allrows.get(('ml.gd', 'ghost_target'))}")
+        if allrows.get(("ghost.gd", "ghost.gd"), ("", {"conf": ""}))[1]["conf"] != "medium":
+            bad.append(f"lexer: ghost.gd (path only in a multi-line string) should be a medium orphan: {allrows.get(('ghost.gd', 'ghost.gd'))}")
+        if allrows.get(("ml.gd", "dead_ml"), ("",))[0] != "unused":
+            bad.append(f"lexer: dead_ml expected unused, got {allrows.get(('ml.gd', 'dead_ml'))}")
         cyc = [r for r in rows.get("dead_chain", []) if r["name"] == "dead_a"]
         if not cyc or "cycle" not in cyc[0]["why"]:
             bad.append("dead_a: cycle not named in why")
@@ -152,6 +207,15 @@ def run() -> list[str]:
             bad.append("apply: removed ambiguous maybe_fn")
         if "func helper" not in (root / "scripts/b.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed live same-name b.helper")
+        ml = (root / "scripts/ml.gd").read_text(encoding="utf-8")
+        if "func dead_ml" in ml or "static func after" in ml:
+            bad.append("apply: dead_ml (with its multi-line string) not removed whole")
+        for kept in ("func live_ml", "func ghost_fn():", "func ghost_target", "class Inner:", "\tfunc dup", "static func dup",
+                     "func helper_outer", "const MULTI := [\n\t1,\n]", "var side_eff := _bump()", "var prop_side: int:\n\tset(v):"):
+            if kept not in ml:
+                bad.append(f"apply: ml.gd lost {kept!r}")
+        if not (root / "scripts/ghost.gd").exists():
+            bad.append("apply: ghost.gd deleted although a multi-line string names its path")
         blob = json.loads((root / "_logs/unused-funcs/unused-funcs.json").read_text(encoding="utf-8"))
         refused = {r["name"]: r["refuse"] for r in blob["apply_refused"]}
         if "held" not in refused.get("held_fn", ""):
