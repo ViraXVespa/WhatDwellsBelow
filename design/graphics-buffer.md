@@ -3,6 +3,8 @@
 Status: current plan
 Read when: four-texel radiance buffer, disc blobs, fine occupancy
 
+Shared file with hub.bake: `scripts/graphics/light_rt.gd` is this job's light RT, but its `HUB_SUB` and the `scripts/graphics/light_rt/hub_*.gd` helpers belong to hub.bake. A change to the shared stamp or sample path reads both docs.
+
 The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. Actors may query nearest_cast (one) or up to three in-range casts, nearest first. Stamp, occupancy, and the source list do not change for that query. Stamp density is four texels per tile (`SUB` 4). Do not retune range or energy to fake smoothness.
 
 Occupancy is three walk bytes on the stamp grid. Floor, door, opening, and stairs pass (walk 1). A wall band blocks (walk 2): a non-floor sample whose 4-neighbor is walkable floor, including a pit that touches floor. Uncarved void does not block (walk 0), stays black, and gets no neighbor-light copy. Do not build a floor-wide walk mask from outline_loops. Do not flood a fine solid of the whole floor. SUB is how densely the RT is stamped, not a second dungeon. A disc does not wash through the wall band. Line of sight is a 1 m trace. An open doorway still passes light. Cold fill only on walkable floor samples. The wall band stays unlit except a neighbor-edge copy along the bake.

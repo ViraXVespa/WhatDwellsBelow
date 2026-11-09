@@ -388,7 +388,7 @@ job_read_when:
   dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance"
   graphics.env: "hearth-warm hole-cold Environment, abyss-plinth, caller redirect"
   graphics.ground: "hashed field albedo, shared spatial shader, turf quilts, carved planes"
-  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon"
+  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, welded mass, provided ribbon"
   graphics.buffer: "four-texel radiance buffer, disc blobs, fine occupancy"
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
@@ -569,6 +569,15 @@ conflicts_with:
     - player
     - enemies
     - interactables
+  # shared-write files: stream_emit.gd (skin vs body), light_rt.gd (buffer vs hub bake)
+  dungeon.stream:
+    - graphics.volume
+  graphics.volume:
+    - dungeon.stream
+  hub.bake:
+    - graphics.buffer
+  graphics.buffer:
+    - hub.bake
 
 boot_max:
   web:

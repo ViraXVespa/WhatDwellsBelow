@@ -154,9 +154,10 @@ def _resolve(root: Path, token: str, rows: list, prefer: list) -> str:
     return ""
 
 def _key_scripts(root: Path, door_text: str, job_text: str, rows: list, prefer: list) -> tuple[list[str], list[str]]:
-    """(resolved .gd paths, unresolved tokens). Code: lines win; otherwise facade groups on the preferred rows."""
+    """(resolved .gd paths, unresolved tokens). Code: lines win (the job's first, so the MAX_SCRIPTS cap
+    keeps a job binding over a long door line); otherwise facade groups on the preferred rows."""
     tokens: list[str] = []
-    for text in (door_text, job_text):
+    for text in (job_text, door_text):
         for line in CODE_RE.findall(text or ""):
             tokens.extend(TICK_RE.findall(line))
     resolved: list[str] = []

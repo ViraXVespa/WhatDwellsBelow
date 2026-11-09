@@ -69,7 +69,7 @@
     {
      "key": "volume",
      "name": "Graphics volume",
-     "about": "exposed coplanar brick runs, BoxMesh retirement, one body on the welded shell, provided ribbon"
+     "about": "exposed coplanar brick runs, BoxMesh retirement, welded mass, provided ribbon"
     },
     {
      "key": "buffer",

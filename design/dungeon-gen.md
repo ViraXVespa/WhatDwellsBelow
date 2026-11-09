@@ -1,9 +1,9 @@
 # Dungeon — generation and placement
 
-Live outline fills per room and hall shape, then one seal pass (`scripts/dungeon/gen/outline_seal.gd`) publishes the solid/void edges no span covers. rim_closed (debug map check on the prepared wall spans) fails `perf.py map`; `perf.py map --fixtures` pins the shared edge keys (`scripts/dungeon/gen/edge_mark.gd`).
-
 Status: current plan  
 Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, deadend termini, unused stone, hug clearance, outline spans
+
+Live outline fills per room and hall shape, then one seal pass (`scripts/dungeon/gen/outline_seal.gd`) publishes the solid/void edges no span covers. rim_closed (debug map check on the prepared wall spans) fails `perf.py map`; `perf.py map --fixtures` pins the shared edge keys (`scripts/dungeon/gen/edge_mark.gd`).
 
 ## Overall structure
 

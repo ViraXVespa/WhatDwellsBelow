@@ -1,7 +1,10 @@
 # Dungeon — streaming
 
 Status: current plan  
-Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance
+Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance  
+Code: `scripts/world/dungeon_geo/geo_stream.gd` (chunk ring: setup, follow, tick, activate_job, sleep_job), `scripts/world/dungeon_geo/stream_clip.gd` (published runs on a chunk: _wall_runs, _clip_span, _faces_on_chunk), `scripts/world/dungeon_geo/stream_emit.gd` (_add_wall_body, _surface_tris, _emit_floors), `scripts/world/wall_rects.gd` (solid_cells, volume_cells; merge for interior floor only), `scripts/world/dungeon_stream.gd` (enemy job ring)
+
+Shared with graphics.volume: in stream_emit.gd, `_emit_shell` and the lip helpers are the volume skin; this job owns the wall body and the chunk lifecycle. Runs come from dungeon.gen; neither job edits them.
 
 ## Streaming
 
