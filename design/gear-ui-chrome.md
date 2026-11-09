@@ -1,7 +1,7 @@
-# Anvil tabs, slot actions, focus, live scripts
+# Anvil tabs, slot actions, focus
 
 Status: current plan  
-Read when: Analyze Forge bumpers, verbs, deferred teardown, script map  
+Read when: Analyze Forge bumpers, verbs, deferred teardown, background focus  
 
 ## Anvil tabs
 

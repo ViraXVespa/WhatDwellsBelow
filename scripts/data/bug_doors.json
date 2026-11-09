@@ -150,8 +150,8 @@
     },
     {
      "key": "chrome",
-     "name": "Anvil tabs, slot actions, focus, live scripts",
-     "about": "Analyze Forge bumpers, verbs, deferred teardown, script map"
+     "name": "Anvil tabs, slot actions, focus",
+     "about": "Analyze Forge bumpers, verbs, deferred teardown, background focus"
     }
    ]
   },

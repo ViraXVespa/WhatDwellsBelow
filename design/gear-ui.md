@@ -13,4 +13,4 @@ This file is the door. Open the Job-table sibling only when that row matches.
 | armor columns, plate icons, rarity wash, stepper neighbors | `design/gear-ui-board.md` |
 | kit deltas, combat totals, hover highlight, Y preview | `design/gear-ui-stats.md` |
 | re-equip lists, submenu chrome | `design/gear-ui-reequip.md` |
-| Analyze Forge bumpers, verbs, deferred teardown, script map | `design/gear-ui-chrome.md` |
+| Analyze Forge bumpers, verbs, deferred teardown, background focus | `design/gear-ui-chrome.md` |

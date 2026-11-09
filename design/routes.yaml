@@ -338,11 +338,11 @@ doors:
       ui: design/archives-ui.md
 
 job_read_when:
-  input.platforms_gamepad: "face buttons, rumble pulses"
+  input.platforms_gamepad: "face buttons, Xbox layout"
   input.rebind_prompts: "rebind prompts, remap grid"
-  input.kb_mouse: "WASD walk, click point"
-  input.web_touch: "canvas thumbs, virtual nubs"
-  input.input_live: "desktop defaults, chromium-pad capture"
+  input.kb_mouse: "WASD walk, LMB, Alt display toggle"
+  input.web_touch: "canvas thumbs, touch-HUD"
+  input.input_live: "desktop defaults, navigator gamepads"
   inventory.bag: "pouch tiles, ration versus flask"
   inventory.gear: "item level, duplicate rule, white baseline"
   inventory.meta: "set bonuses, shopkeep restock"
@@ -376,7 +376,7 @@ job_read_when:
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
-  gear_ui.chrome: "Analyze Forge bumpers, verbs, deferred teardown, script map"
+  gear_ui.chrome: "Analyze Forge bumpers, verbs, deferred teardown, background focus"
   hub.crystal: "consciousness-transfer VFX, Dispel wake-up, deepest row"
   hub.benches: "ore-for-gold stall, dumpster flavor, plaza_tarp host"
   hub.guild: "receptionist bust, notice errands, welcome cloth"
