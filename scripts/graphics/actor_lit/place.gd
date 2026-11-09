@@ -2,6 +2,7 @@ extends Object
 
 ## Split from actor_lit.gd: _place, _biased.
 
+const Pool := preload("res://scripts/graphics/actor_lit/lit_pool.gd")
 const Emis := preload("res://scripts/graphics/actor_lit/lit_emis.gd")
 const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
 const Hulls := preload("res://scripts/graphics/light_rt/hub_hulls.gd")
@@ -26,8 +27,8 @@ static func _place(host: Node, tex: Texture2D, feet: Vector2) -> void:
 	var gr: bool = sole_y - soles.w < up and not (host.plant_flat and soles.w < sole_y)
 	# A grounded foot pins at its own sole (contact) row; the shader (lit_k feet) casts its rows from there.
 	var t_pin: int = host._mark_t()
-	var fl: Vector2 = Geo._sole_xz(host, soles.x, soles.y if gl else sole_y, tw, th, gl) - feet
-	var fr: Vector2 = Geo._sole_xz(host, soles.z, soles.w if gr else sole_y, tw, th, gr) - feet
+	var fl: Vector2 = Geo.pin_xz(host, soles.x, soles.y if gl else sole_y, tw, th, gl, feet)
+	var fr: Vector2 = Geo.pin_xz(host, soles.z, soles.w if gr else sole_y, tw, th, gr, feet)
 	host.lift = 0.0
 	var kind: Variant = host.get_parent().get("move_kind")
 	if host.air_force or kind == "fly" or kind == "hop":
@@ -36,8 +37,8 @@ static func _place(host: Node, tex: Texture2D, feet: Vector2) -> void:
 		var wr: Vector3 = Geo._sole_world(host, soles.z, sole_y, tw, th)
 		if minf(wl.y, wr.y) - T.FLOOR_Y > K.AIR_MIN:
 			host.lift = minf(wl.y, wr.y) - T.FLOOR_Y
-			fl = Vector2(wl.x, wl.z) - feet
-			fr = Vector2(wr.x, wr.z) - feet
+			fl = Geo.air_pin(host, soles.x, sole_y, tw, th, feet)
+			fr = Geo.air_pin(host, soles.z, sole_y, tw, th, feet)
 	host._mark_us(10, t_pin)
 	var s_air: float = clampf(1.0 - host.lift / K.AIR_S_M, K.AIR_S_MIN, 1.0)
 	var a_air: float = clampf(1.0 - host.lift / K.AIR_A_M, K.AIR_A_MIN, 1.0)
@@ -53,11 +54,13 @@ static func _place(host: Node, tex: Texture2D, feet: Vector2) -> void:
 	var glow: bool = Emis.rule_of(host.get_parent()) == "glow"
 	host._mark_us(2, t0)
 	for slot in K.MARK_N:
-		var node: MeshInstance3D = host.marks[slot]
 		var live: bool = host._alpha_at[slot] >= K.HIDE_A and not glow
 		if not live:
-			node.visible = false
+			Pool._release(host, slot)
 			continue
+		var node: MeshInstance3D = host.marks[slot]
+		if node == null:
+			node = Pool._claim(host, slot)
 		var dir: Vector2 = _biased(host, host._away_at[slot])
 		Slots._sync_slot(host, slot, tex, soles, fl, fr, dir, px, feet)
 		var ts: int = host._mark_t()
@@ -99,3 +102,28 @@ static func _biased(_host: Node, away: Vector2) -> Vector2:
 	if absf(dir.y) < K.MIN_DOWN:
 		dir.y = K.MIN_DOWN if dir.y >= 0.0 else -K.MIN_DOWN
 	return dir.normalized()
+
+## Fill the pin and sun-quad caches for the sticker's current frame. Gameplay lays then only look up.
+static func warm(host: Node) -> void:
+	var spr: Sprite3D = host.spr as Sprite3D
+	if spr == null or spr.texture == null or spr.get_viewport() == null:
+		return
+	if spr.get_viewport().get_camera_3d() == null:
+		return
+	var body: Node3D = host.get_parent() as Node3D
+	if body == null:
+		return
+	Soles.warm()
+	var tex: Texture2D = spr.texture
+	var soles: Vector4 = Soles._soles(tex)
+	var tw: float = float(maxi(1, tex.get_width()))
+	var th: float = float(maxi(1, tex.get_height()))
+	var px: float = spr.pixel_size
+	var sole_y: float = maxf(soles.y, soles.w)
+	var up: float = K.RAISED_M / maxf(px, 1e-5)
+	var gl: bool = sole_y - soles.y < up and not (host.plant_flat and soles.y < sole_y)
+	var gr: bool = sole_y - soles.w < up and not (host.plant_flat and soles.w < sole_y)
+	var feet: Vector2 = Vector2(body.global_position.x, body.global_position.z)
+	var fl: Vector2 = Geo.pin_xz(host, soles.x, soles.y if gl else sole_y, tw, th, gl, feet)
+	var fr: Vector2 = Geo.pin_xz(host, soles.z, soles.w if gr else sole_y, tw, th, gr, feet)
+	Geo.sun_mesh(host, tex, soles, fl, fr, px)

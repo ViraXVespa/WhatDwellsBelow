@@ -2,7 +2,7 @@
   "name": "wdb-bug-relay",
   "private": true,
   "type": "module",
-  "description": "Cloudflare Worker: in-game bug reports -> GitHub issues (design/tasks/bug-report-relay.md)",
+  "description": "Cloudflare Worker: in-game bug reports -> GitHub issues (tools/relay/README.md)",
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "doors": "node gen-doors.mjs",

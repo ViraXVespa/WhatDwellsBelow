@@ -45,7 +45,12 @@ static func present(host: CharacterBody3D, delta: float) -> void:
 	# The body carries the lift (physics sets global y); the sprite sits on it, so a flyer draws at fly_height once.
 	host.spr.position.y = host.size_u * 0.48
 	var fk := Facing.from_aim(host.aim)
-	host.spr.flip_h = fk == "left" or fk == "up_left" or fk == "down_left"
+	var face_left: bool = fk == "left" or fk == "up_left" or fk == "down_left"
+	if host.spr.flip_h != face_left:
+		host.spr.flip_h = face_left
+		var lit: Node = host.get_node_or_null("ActorLit")
+		if lit != null:
+			lit.call("note_flip")
 	Depth.apply(host.spr, host.global_position)
 	if host.flash > 0.0:
 		host.flash -= delta

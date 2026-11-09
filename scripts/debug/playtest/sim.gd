@@ -2,7 +2,6 @@ extends Object
 
 const Store := preload("res://scripts/data/save_store.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
-const WebHook := preload("res://scripts/debug/web_hook.gd")
 const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")

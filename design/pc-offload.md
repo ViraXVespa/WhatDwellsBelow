@@ -7,8 +7,13 @@ The existing repository `pc-offload` skill is the default for every Build task; 
 
 ## Find and read
 
+- The opening gather for a named door or job is `session-plan.md` at the worktree root. Read that file. It is gitignored and it is not under `_logs/`. The tool writes an index under `<!-- gathered -->` (identity, card, code-map paths, door doc, job doc, function names). That index is a starting set.
+- In the same turn the working set is known, and before the first edit, trim that half. Delete every path, function list, and pasted paragraph this unit will not open again. Keep identity and only the names a later turn must not look up again.
+- In the same turn a fact lands, replace the matching section above the marker, before the next lookup. Outcome stays one measurable line. Open questions lists only what is still unanswered. Changed files lists paths this unit edited. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. Do not paste a transcript of files you read. `build-job-cycle.md` owns this rule.
+- A gap the trimmed plan does not cover uses `find.py func`, `find.py xref`, `find.py scripts --names` or `--all-names` (one `--path`), or `docs.py code-map row`, then that same trim and section update. Function and const names are not an xref of `^func`.
+- `python tools/slice.py plan --refresh` rebuilds the gathered half from the route and erases a trim. Use it only when that half is stale. It keeps the four sections.
 - Use `find.py route`, `find.py xref`, `find.py func`, `find.py changed` and `docs.py code-map row` rather than tree dumps, whole-file inventories or raw git output. Read the code actually being edited, not untouched siblings for size information; use `find.py stat` or filesystem Length for sizes.
-- After a distinct planned run, read `python tools/session.py summary JOB` once. Do not read raw `_logs/` files. Filters (`--section`, `--match`, `--jsonl --where`) are documented in the lookup catalog. Quote PowerShell globs and headings; use `key=ge:N`, not an unquoted `>` which redirects output.
+- After a distinct planned run, read `python tools/session.py summary JOB` once. Do not read raw `_logs/` files. Filters (`--section`, `--match`, `--jsonl --where`) are documented in the lookup catalog. `summary JOB --files` lists the log's other files; `--files --read` prints their text. Quote PowerShell globs and headings; use `key=ge:N`, not an unquoted `>` which redirects output.
 - Images default to isolated review. A necessary direct reference needs the task/session grant; shell readers are not an alternative. Image access and text OCR-first are separate rules.
 
 The repository hook enforces these defaults. Do not disguise a command, change cwd or use arbitrary inline Python to avoid it. An explicit reference grant changes only selected direct image reads, not generation or host controls.

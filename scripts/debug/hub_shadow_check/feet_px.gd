@@ -64,8 +64,11 @@ static func _lit_of(n: Node) -> Node:
 
 static func _draw(lit: Node, marks_on: bool) -> Image:
 	if not marks_on:
-		for m: MeshInstance3D in lit.marks:
-			m.visible = false
+		for m in lit.marks:
+			var mesh_node: MeshInstance3D = m as MeshInstance3D
+			if mesh_node == null:
+				continue
+			mesh_node.visible = false
 	RenderingServer.force_draw(false)
 	return lit.spr.get_viewport().get_texture().get_image()
 

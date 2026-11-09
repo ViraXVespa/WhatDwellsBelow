@@ -313,6 +313,13 @@ def _selftest() -> int:
         bad.append("a leak tagged flaky (1/3 runs) became a diff row")
     if diff_rows([], ran_rows(base, {"p5": 1}))[1]:
         bad.append("a baseline row from an area that did not run (static) shows as FIXED")
+    from bot_warnscan_lib import parse_stream
+    gone = ("ERROR: Attempt to open script 'res://addons/godot_ai/runtime/game_helper.gd' resulted in error 'File not found'.\n"
+            "ERROR: Failed to instantiate an autoload, can't load from path: res://addons/godot_ai/runtime/game_helper.gd.\n"
+            "SCRIPT ERROR: Parse Error: x\n   at: res://addons/godot_ai/plugin.gd:3\n")
+    kinds = [f.kind for f in parse_stream(gone, "static", "err")]
+    if kinds != ["env-artifact", "env-artifact", "script-error"]:
+        bad.append(f"missing godot_ai addon lines must be env-artifact, a broken addon a script-error: {kinds}")
     return agent_log.selftest_result(bad)
 
 def main(argv: list[str] | None = None) -> int:

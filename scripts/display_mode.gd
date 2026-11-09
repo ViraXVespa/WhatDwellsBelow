@@ -92,9 +92,6 @@ static func web_label() -> String:
 static func try_fullscreen_gesture() -> bool:
 	return Desk.try_fullscreen_gesture()
 
-static func toggle_alt_enter() -> void:
-	Desk.toggle_alt_enter()
-
 static func handle_input(event: InputEvent) -> bool:
 	return Web.handle_input(event)
 

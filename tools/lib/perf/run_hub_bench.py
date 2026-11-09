@@ -227,7 +227,6 @@ def _run_line(rows: list[dict]) -> str:
         "post_phys_ms": [],
         "head_ms": [],
         "floor_ms": [],
-        "torch_ms": [],
         "bar_ms": [],
         "phys_obj": [],
         "phys_pairs": [],

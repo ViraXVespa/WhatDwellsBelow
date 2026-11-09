@@ -59,6 +59,11 @@ func wait_painted() -> void:
 	var tree: SceneTree = get_tree()
 	if tree:
 		await tree.create_timer(0.0, true, false, true).timeout
+	# The dummy renderer never emits frame_post_draw, so a headless enter would wait until the stall gate.
+	if DisplayServer.get_name() == "headless":
+		if tree:
+			await tree.process_frame
+		return
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 

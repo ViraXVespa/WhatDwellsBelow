@@ -99,7 +99,7 @@ static func _loco(host: CharacterBody3D, delta: float) -> void:
 		move = App.pad_move()
 	Ground.settle(host, Vector3(move.x, 0.0, move.y) * App.bal.move_speed, delta)
 
-## Gear move speed, recomputed only when the equipped slots change (App.gear walks every slot and set).
+## Gear move speed, recomputed only when the equipped slots or a timed food/potion bonus change (App.gear walks every slot and set).
 static var _gear_key: int = 0
 static var _gear_prog: Object = null
 static var _gear_val: float = 0.0
@@ -107,7 +107,8 @@ static var _gear_val: float = 0.0
 static func _move_gear() -> float:
 	if App.prog == null:
 		return App.gear("move_spd")
-	var key: int = App.prog.slots.hash()
+	var pr: Object = App.prog
+	var key: int = [pr.slots, pr.food_t > 0.0, pr.food_bonus_id, pr.potion_bonus_t > 0.0, pr.potion_bonus_id].hash()
 	if key != _gear_key or _gear_prog != App.prog:
 		_gear_key = key
 		_gear_prog = App.prog

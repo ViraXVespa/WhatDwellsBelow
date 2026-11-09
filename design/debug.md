@@ -8,6 +8,7 @@ Code: `scripts/debug/` (menu helpers in `scripts/debug/debug_menu/`)
 |-----|------|
 | balance sliders, profile banks | `design/debug-menu.md` |
 | sim walker, recommended config | `design/debug-playtest.md` |
+| scored legs, continuous sweep | `design/debug-bench.md` |
 | timeline scrubber, review queue | `design/debug-anim-browser.md` |
 | phase assertions, runner summary | `design/debug-smokes.md` |
 

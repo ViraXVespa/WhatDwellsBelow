@@ -30,20 +30,42 @@ static func p6(host: Node) -> void:
 	App.prog.add_item(App.prog.make_food("ration", 3))
 	App.prog.add_item(App.prog.make_food("bread", 2))
 	App.prog.add_item(App.prog.make_potion(2))
-	App.prog.slots["potion"] = App.prog.make_potion(2)
-	App.prog.slots["food"] = App.prog.make_food("ration", 3)
+	var bonus_pot: Dictionary = App.prog.make_potion(2)
+	bonus_pot["bonus_id"] = "dmg"
+	bonus_pot["bonus_amt"] = 2.0
+	bonus_pot["bonus_secs"] = 5.0
+	App.prog.slots["potion"] = bonus_pot
+	var ration: Dictionary = App.prog.make_food("ration", 3)
+	App.prog.slots["food"] = ration
 	player.set("hp", 40.0)
+	var dmg0: float = App.gear("dmg")
 	var p1: String = App.prog.use_potion()
 	var hp1: float = float(player.get("hp"))
 	printerr("P6: potion=" + p1 + " hp=" + str(hp1) + " instant_ok=" + str(hp1 > 40.0))
+	var pot_d: float = App.gear("dmg") - dmg0
+	printerr("P6: potion_bonus dmg+%.2f want +2.00 potion_bonus_ok=%s" % [pot_d, str(is_equal_approx(pot_d, 2.0))])
 	player.set("hp", 40.0)
+	var bonus_key: String = str(ration.get("bonus_id", ""))
+	var def0: float = App.gear(bonus_key)
 	var f1: String = App.prog.use_food()
+	var food_d: float = App.gear(bonus_key) - def0
+	printerr("P6: food_bonus %s+%.2f want +%.2f food_bonus_ok=%s" % [bonus_key, food_d, float(ration.get("bonus_amt", 0.0)), str(bonus_key != "" and is_equal_approx(food_d, float(ration.get("bonus_amt", 0.0))))])
 	var f2: String = App.prog.use_food()
 	printerr("P6: food1=" + f1 + " food_same=" + f2)
 	printerr("P6: food_hot=" + str(App.prog.food_t > 0.0) + " same_blocked=" + str(f2.find("Already") >= 0))
 	App.prog.slots["food"] = App.prog.make_food("bread", 2)
 	var f3: String = App.prog.use_food()
 	printerr("P6: food_swap=" + f3 + " id=" + App.prog.food_id + " swap_ok=" + str(App.prog.food_id == "bread"))
+	var stew: Dictionary = App.prog.make_food("stew", 1)
+	var mh0: float = float(player.get("max_hp"))
+	App.prog.slots["food"] = stew
+	App.prog.use_food()
+	var mh1: float = float(player.get("max_hp"))
+	App.prog.clear_food()
+	var mh2: float = float(player.get("max_hp"))
+	printerr("P6: stew_max_hp %.1f->%.1f->%.1f stew_hp_ok=%s" % [mh0, mh1, mh2, str(is_equal_approx(mh1 - mh0, float(stew.get("bonus_amt", 0.0))) and is_equal_approx(mh2, mh0))])
+	App.prog.slots["food"] = App.prog.make_food("bread", 2)
+	App.prog.use_food()
 	App.gold = 80
 	App.ore = 12
 	App.prog.root = 6
@@ -106,5 +128,6 @@ static func p6(host: Node) -> void:
 	var extra2: Dictionary = {"kind": "loot", "name": "Spare", "uid": 9002}
 	var blocked2: bool = not App.prog.add_to_bag(extra2)
 	printerr("P6: toast_hold=" + str(App.toast_t) + " hold_ok=" + str(is_equal_approx(App.toast_t, hold) and blocked2 and App.toast_msg == "Bag full."))
+	var t: SceneTree = host.get_tree()
 	await Escape.run(host)
-	quit_in(host, 0.4)
+	quit_in(t.current_scene, 0.4)  # the escape sweep may have replaced the camp scene

@@ -108,46 +108,6 @@ static func local_unlocked(host: Node) -> bool:
 static func floor_unlocked() -> bool:
 	return int(App.prog.deepest) > int(App.floor_n)
 
-static func area_hostile(spot: Node) -> bool:
-	var tree := _tree(spot)
-	if tree == null:
-		return false
-	var scene: Node = tree.current_scene
-	if scene == null or scene.get("spawn_jobs") == null:
-		return _live_near(spot)
-	var cell: Vector2i = Vector2i(spot.get("crystal_cell"))
-	var rad: int = _clear_r()
-	for job: Variant in scene.spawn_jobs:
-		if str(job.state) == "cleared":
-			continue
-		if scene._cell_manhattan(Vector2i(job.cell), cell) <= rad:
-			if str(job.state) == "pending":
-				return true
-			for raw: Variant in job.get("live", []):
-				if raw == null or not is_instance_valid(raw):
-					continue
-				var e: Node = raw
-				if e.has_method("is_alive") and not e.is_alive():
-					continue
-				return true
-	return _live_near(spot)
-
-static func _live_near(spot: Node) -> bool:
-	var tree := _tree(spot)
-	if tree == null:
-		return false
-	var cell: Vector2i = Vector2i(spot.get("crystal_cell"))
-	var rad: int = _clear_r()
-	for e: Node in tree.get_nodes_in_group("enemies"):
-		if e == null or not is_instance_valid(e):
-			continue
-		if e.has_method("is_alive") and not e.is_alive():
-			continue
-		var ec := Vector2i(int(e.global_position.x), int(e.global_position.z))
-		if absi(ec.x - cell.x) + absi(ec.y - cell.y) <= rad:
-			return true
-	return false
-
 static func activate(spot: Node) -> void:
 	var cell: Vector2i = Vector2i(spot.get("crystal_cell"))
 	mark_on(cell)
@@ -188,7 +148,6 @@ static func silence_near(host: Node, cell: Vector2i) -> void:
 static func silence_on(host: Node) -> void:
 	for n: Node in activated_on_floor(host):
 		silence_near(host, Vector2i(n.get("crystal_cell")))
-
 
 static func paint(host: Node) -> void:
 	if host.map_img == null:

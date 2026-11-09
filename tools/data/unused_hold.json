@@ -1,0 +1,5 @@
+{
+ "_about": "lint.py unused --apply never deletes these (path + func/var name, or name \"*\" for the whole file). Each needs a why; drop the entry once its decision is made.",
+ "hold": [
+ ]
+}

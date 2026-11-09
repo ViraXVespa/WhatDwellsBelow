@@ -99,9 +99,6 @@ static func skill_row_sb(lit: bool) -> StyleBoxFlat:
 static func skill_row() -> PanelContainer:
 	return Skill.skill_row()
 
-static func skill_name(id: String) -> String:
-	return Skill.skill_name(id)
-
 static func skill_tip(id: String, lv: int) -> String:
 	return Skill.skill_tip(id, lv)
 

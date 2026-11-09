@@ -1,7 +1,7 @@
 extends Object
 
-
 const Dbg := preload("res://scripts/app/dbg.gd")
+const Seal := preload("res://scripts/dungeon/gen/outline_seal.gd")
 const FLOOR := 1
 
 static func _on_rim(grid: PackedByteArray, gw: int, gh: int, per: int, mid: Vector2, nrm: Vector2) -> bool:
@@ -54,11 +54,6 @@ static func _on_collinear_room_rim(horiz: Dictionary, vert: Dictionary, mid: Vec
 			return true
 	return false
 
-static func _emit_frag_run(spans: Array, a: Vector2, dir: Vector2, t0: float, t1: float, nrm: Vector2) -> void:
-	if t1 - t0 < 0.04:
-		return
-	spans.append({"origin": a + dir * t0, "delta": dir * (t1 - t0), "normal": nrm, "thick": 0.25})
-
 static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, a: Vector2, b: Vector2, nrm: Vector2, horiz: Dictionary, vert: Dictionary, skip_rims: bool) -> void:
 	var d: Vector2 = b - a
 	var span_l: float = d.length()
@@ -78,11 +73,11 @@ static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, pe
 			if run0 < 0.0:
 				run0 = t
 		elif run0 >= 0.0:
-			_emit_frag_run(spans, a, dir, run0, t, nrm)
+			Seal._emit_frag_run(spans, a, dir, run0, t, nrm)
 			run0 = -1.0
 		t = t1
 	if run0 >= 0.0:
-		_emit_frag_run(spans, a, dir, run0, span_l, nrm)
+		Seal._emit_frag_run(spans, a, dir, run0, span_l, nrm)
 
 static func _rect(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
 	var poly: PackedVector2Array = PackedVector2Array()
@@ -174,6 +169,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var hy1: float = float(int(hall["y1"]) + 1) * scale
 		_stamp_rect(solid, sw, sh, spans, grid, w, h, per, hx0, hy0, hx1, hy1, horiz, vert, true)
 		loops.append(_rect(hx0, hy0, hx1, hy1))
+	Seal._seal_gaps(solid, sw, sh, spans)
 	Dbg.lt_dnote("outline_loops", str(loops.size()))
 	Dbg.lt_dnote("outline_spans_n", str(spans.size()))
 	data["outline_fine_m"] = fine_m

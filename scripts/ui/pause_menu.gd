@@ -41,7 +41,6 @@ var status: Label
 var focus_btn: Control
 var pending: bool = false
 var pending_id: String = ""
-var pending_fn: Callable
 var rebind_action: String = ""
 var sys_page: String = "main"
 var tip_host: PanelContainer

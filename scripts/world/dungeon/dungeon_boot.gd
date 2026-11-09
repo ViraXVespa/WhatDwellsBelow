@@ -50,8 +50,6 @@ static func ready_floor(host: Node) -> void:
 	Dbg.lt_dmark("travel")
 	host._world()
 	Dbg.lt_dmark("world")
-	host._collision_walls()
-	Dbg.lt_dmark("collision")
 	host._build_visuals()
 	Dbg.lt_dmark("visuals")
 	host._spawns()

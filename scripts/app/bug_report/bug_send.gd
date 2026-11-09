@@ -1,6 +1,6 @@
 extends Object
 
-## Report Bug client (design/tasks/bug-report-relay.md): stable install id, the payload and the POST to the relay.
+## Report Bug client (tools/relay/README.md): stable install id, the payload and the POST to the relay.
 ## The game holds no token, only RELAY_URL. The optional email goes only in the `email` field (the relay keeps it
 ## private in D1); the state report is built by bug_state.gd. HTTPRequest uses fetch on the web export.
 
@@ -12,20 +12,6 @@ const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
 const SHOT_W := 1280
 const SHOT_MAX := 1_400_000
 
-## Player-facing areas -> a door or door.job from routes.yaml ("" = triage). bug_report_check.gd keeps them valid.
-const AREAS: Array = [
-	["bug_report.area_unsure", ""],
-	["bug_report.area_combat", "combat"],
-	["bug_report.area_enemies", "enemies"],
-	["bug_report.area_controls", "input"],
-	["bug_report.area_gear", "inventory"],
-	["bug_report.area_menus", "ui"],
-	["bug_report.area_graphics", "graphics"],
-	["bug_report.area_camp", "hub"],
-	["bug_report.area_dungeon", "dungeon"],
-	["bug_report.area_sound", "audio_visual"],
-	["bug_report.area_saving", "save_tech"],
-]
 ## Quick "what happened" picks, so a gamepad-only player can send without typing.
 const KINDS: Array = ["bug_report.kind_looks_wrong", "bug_report.kind_stuck", "bug_report.kind_controls",
 	"bug_report.kind_crash", "bug_report.kind_other"]
@@ -63,15 +49,26 @@ static func email_ok(e: String) -> bool:
 	var s: String = e.strip_edges()
 	return s == "" or RegEx.create_from_string("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$").search(s) != null
 
-## form: area, kind (indices), details, email, opt_in, crash (attach last session's log). shot: base64 or "".
+## Picked Door and Job -> the relay category: "" (no door, triage), "door", or "door.job".
+static func category(form: Dictionary) -> String:
+	var door: String = str(form.get("door", ""))
+	var job: String = str(form.get("job", ""))
+	if door == "":
+		return ""
+	return door + ("." + job if job != "" else "")
+
+## form: summary (the issue title), door, job, kind (index), details, email, opt_in, crash (attach last session's log).
+## shot: base64 or "".
 static func payload(form: Dictionary, shot: String, dry_run: bool) -> Dictionary:
 	var kind: String = App.tr(str(KINDS[clampi(int(form.get("kind", 0)), 0, KINDS.size() - 1)]))
+	var summary: String = str(form.get("summary", "")).strip_edges().left(80)
 	var details: String = str(form.get("details", "")).strip_edges().left(3800)
+	var cat: String = category(form)
 	var body := {
 		"install_id": install_id(),
-		"title": kind,
+		"title": summary if summary != "" else kind,
 		"description": kind + "\n\n" + (details if details != "" else "(no details given)"),
-		"category": str(AREAS[clampi(int(form.get("area", 0)), 0, AREAS.size() - 1)][1]),
+		"category": cat if valid_category(cat) else "",
 		"state": State.build(),
 	}
 	var email: String = str(form.get("email", "")).strip_edges()

@@ -7,9 +7,6 @@ const P79 := preload("res://scripts/debug/smoke/p79.gd")
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
 
-static func quit_in(host: Node, sec: float) -> void:
-	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())
-
 static func p5(host: Node) -> void:
 	P5.p5(host)
 

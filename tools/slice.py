@@ -12,7 +12,8 @@ import boot  # noqa: E402
 
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("open",    "slice/open_slice",             "User-run launcher: open a slice worktree (AREA, --task ID)"),
-    ("start",   "slice/start_build_slice",      "First command inside a slice worktree: the door card"),
+    ("start",   "slice/start_build_slice",      "First command inside a slice worktree: the door card (writes session-plan.md)"),
+    ("plan",    "slice/session_plan",            "Opening gather: write session-plan.md for the named door/job"),
     ("references", "slice/reference_access",     "Task-scoped visual references: export, grant, status, revoke"),
     ("commit",  "slice/commit_slice",           "Commit the slice after a passing gate build"),
 ]

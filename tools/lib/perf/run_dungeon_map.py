@@ -3,7 +3,9 @@
 
     python tools/perf.py map [--seed 42] [--floor 1] [--scale 8] [--timeout-sec 180]
     python tools/perf.py map --sweep [--count 10 | --seeds 42,7,9] [--floor 1] [--scale 8]
+    python tools/perf.py map --fixtures   (edge marker / seal / rim fixed-expectation fixtures, debug/dungeon_map/edge_fixture.gd)
 One seed:  _logs/dungeon-map/<stamp>-dungeon-map.txt (full dump _logs/dungeon-map/dump.txt).
+--fixtures: _logs/dungeon-map-fixtures/<stamp>-dungeon-map-fixtures.txt.
 --sweep:   one row per seed in _logs/dungeon-map-sweep/<stamp>-dungeon-map-sweep.txt.
 """
 from __future__ import annotations
@@ -27,9 +29,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--count", type=int, default=10, help="Sweep size when --seeds is empty (default 10).")
     ap.add_argument("--floor", type=int, default=1, help="Floor number (default 1).")
     ap.add_argument("--scale", type=int, default=8, help="Pixels per cell in the map PNG (default 8).")
+    ap.add_argument("--fixtures", action="store_true", help="Run the fixed-expectation edge/seal/rim fixtures (no seed, no floor).")
     ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
+    if args.fixtures:
+        return fixtures(args, root)
     if args.sweep or args.seeds:
         return sweep(args, root)
     out_log, err_log = agent_log.run_path("dungeon-map", root, "out.log"), agent_log.run_path("dungeon-map", root, "err.log")
@@ -54,6 +59,23 @@ def main(argv: list[str] | None = None) -> int:
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
     return agent_log.finish("dungeon-map", root, "\n".join(body), "FAIL" if fail else "PASS", args=args,
                             retry=("perf.py map", body), fail_signals=fail, spec_fail=spec_fail, map_ok=str(has_ok))
+
+FIXTURE = "res://scripts/debug/dungeon_map/edge_fixture.gd"
+
+def fixtures(args, root: Path) -> int:
+    """Godot --script the fixture file: every EDGE_FIX line, PASS only when it exits 0 with RESULT PASS and no script error."""
+    job = "dungeon-map-fixtures"
+    out_log, err_log = agent_log.run_path(job, root, "out.log"), agent_log.run_path(job, root, "err.log")
+    ga = ["--headless", "--display-driver", "headless", "--audio-driver", "Dummy", "--path", str(root), "--script", FIXTURE]
+    r = godot_lib.run_godot(root, root, ga, out_log, err_log, args.timeout_sec)
+    lines = godot_lib.grep_logs([out_log, err_log], r"^EDGE_FIX:")
+    errs = godot_lib.grep_logs([err_log, out_log], r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to")
+    bad = [ln for ln in lines if ln.startswith("EDGE_FIX: FAIL")]
+    ok = r["status"] == "EXIT=0" and not errs and not bad and any("RESULT PASS" in ln for ln in lines)
+    body = [f"status={r['status']} wall_ms={r['ms']} fixture={FIXTURE}", ""] + (lines or ["(no EDGE_FIX lines)"])
+    body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
+    return agent_log.finish(job, root, "\n".join(body), "PASS" if ok else "FAIL", args=args, echo="\n".join(bad[:10] or lines[-1:]),
+                            cases=sum(ln.startswith("EDGE_FIX: PASS") or ln.startswith("EDGE_FIX: FAIL") for ln in lines), failed=len(bad))
 
 def sweep(args, root: Path) -> int:
     """Run this tool once per seed in a child process; one row per seed from each run's summary."""

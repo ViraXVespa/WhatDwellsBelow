@@ -75,7 +75,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
                   Q0, "After the answers, `slice.py start --handoff`; fill and validate the task, then stop. build-handoff.md owns this procedure."]
     else:
         label = "ORDER (handoff)" if mode == "handoff" else "ORDER"
-        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`; read the task and the route's code/docs, then state the outcome and unresolved questions. Continue in this session."]
+        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`. Read session-plan.md (this start writes it for a named door or job), then the task file once on a new session. Use find.py only for a gap the plan does not cover. In that same turn, trim the gathered half to this unit and write the four sections above the marker. Continue in this session."]
         if mode == "handoff":
             lines.append("Restore only the saved survey edits and inspect its listed baselines; do not repeat the survey. Keep prior answers unless new evidence changes them.")
         if screen:
@@ -83,10 +83,12 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         else:
             lines.append("NO PLAY CAMERA: no invented shot flow, play-camera baseline or --visual gate. Use the task's check; a keyed still uses `media.py rekey-preview` against its source plate. A rejected image is not an accepted reference.")
         lines += [Q0,
-                  "CYCLE: understand outcome and cause; prepare missing evidence; implement; final verification; finish. CHANGE: `python tools/gate.py gd-load` once the edits are complete. Context breaks follow build-job-cycle.md: save state at a good stopping point and resume in this same session, not at a fixed verification milestone. Do not `/fork`.",
-                  "VERIFY: relevant checks, the unit's flow/UI load check if visual, then `gate.py build --batch`. One small corrective edit and one rerun; still red, report the log. Read each result/summary. build-job-cycle.md and prove.md own verification.",
+                  "CYCLE: understand outcome and cause; prepare missing evidence; implement; final verification; finish. CHANGE: `python tools/gate.py gd-load` once the edits are complete. Context breaks follow build-job-cycle.md: stop when a compact would be safe, before Prove and before a follow-up Gather or Change, then resume in this same session. Do not `/fork`.",
+                  "COMPACT: a planned stop is mandatory. session-plan.md is already trimmed and its four sections already match the turn. Then stop and wait for the User to compact or say continue. Do not write the plan for the first time at the stop, and do not keep working until an automatic compact.",
+                  "VERIFY: relevant checks, the unit's flow/UI load check if visual, then `gate.py build --batch`. One small corrective edit and one rerun; still red, report the log. Read each result with `session.py summary JOB`. build-job-cycle.md and prove.md own verification.",
                   "FINISH: update docs/task; --unit-done for a queue; revoke temporary reference grants; `slice.py commit`, plain push to the week branch, then the done notice. Record red/skipped gates honestly. Finish the whole request in this session when it fits; save unfinished work in the task."]
-    lines += ["EVERY ASK has its own message first: current result, relevant paths/descriptions, proposed change and unknowns. Option labels are not the message. Use `shots.py show PATH=description ...` when the User should see images; before/after of one area share a sheet.",
+    lines += ["NAMES: function inventories are `find.py scripts --names` or `--all-names` (one `--path`). Do not xref `^func` to list functions. RESULTS: `session.py summary JOB` (JOB is the `_logs/<job>/` folder). Never open `_logs/` with a file read.",
+              "EVERY ASK has its own message first: current result, relevant paths/descriptions, proposed change and unknowns. Option labels are not the message. Use `shots.py show PATH=description ...` when the User should see images; before/after of one area share a sheet.",
               "DID NOT WORK: put `Did not work: COMMAND REASON` first. `slice.py start --failed` supplies failed tool results since the last ask; paste them first, not from memory. ASK BEFORE THE CODE for unsettled design or behavior, even with always-allow access.",
               "IMAGES: isolated review by default; necessary direct visual references use `slice.py references grant` (build-references.md). OCR-first is for text. A reference grant does not authorize generation or change host permissions.",
               f"FILES: temporary scripts under `{(root / '_logs/agent-py').as_posix()}` use `session.py py`; reusable scripts belong in tools/ with a catalog row. Commit message: `{(root / '_logs/commit-msg.txt').as_posix()}`. Disclose assumptions, shared effects and outside-worktree writes; do not claim none without checking.",
@@ -186,7 +188,8 @@ def selftest(script: list[str]) -> int:
         for need in ("This tool is the first command", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
                      "DID NOT WORK", "shots.py show", "commit-msg.txt", "slice.py start --failed", "ASK BEFORE THE CODE",
                      "slice.py commit", "Do not `/fork`", "resume in this same session", "final verification",
-                     "gate.py gd-load` once the edits are complete", "whole request in this session", "references grant"):
+                     "gate.py gd-load` once the edits are complete", "whole request in this session", "references grant",
+                     "find.py scripts --names", "session.py summary JOB", "Never open `_logs/`"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):

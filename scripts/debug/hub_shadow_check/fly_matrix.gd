@@ -58,10 +58,11 @@ static func probe(body: Node3D, cam: Camera3D, lay: bool = true) -> Dictionary:
 	var lit: Node = body.get_node("ActorLit")
 	if lay:
 		lit._process(1.0 / 60.0)
-	var m: MeshInstance3D = lit.marks[0]
+	# A glow body returns its node to the pool, so an empty slot is the hidden mark.
+	var m: MeshInstance3D = lit.marks[0] as MeshInstance3D
 	var out := {"why": ""}
 	var rule: String = Emis.rule_of(body)
-	if not m.visible or m.mesh == null:
+	if m == null or not m.visible or m.mesh == null:
 		out.why = "hidden"
 		return out
 	var spr: Sprite3D = lit.spr

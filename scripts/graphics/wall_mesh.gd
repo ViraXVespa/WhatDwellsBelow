@@ -32,7 +32,7 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	for run in ortho:
 		Faces._mark_faces(run, faced)
 		Faces._mark_cells(run, cells)
-	Span._close_ribbon_corners(ribbons, verts, norms, uvs, indices)
+	Span._weld_joins(ribbons, verts, norms, uvs, indices)
 	for run in ribbons:
 		Span._push_span(run, verts, norms, uvs, indices)
 	if ribbons.is_empty():

@@ -5,7 +5,7 @@ import worker, { RATE } from "../src/worker.js";
 import { hmacHex } from "../src/util.js";
 import { unsubToken, classify } from "../src/hooks.js";
 import { scrub, spamReason, category } from "../src/report.js";
-import { parseDoors, render, renderGd, ROUTES, OUT, GD_OUT } from "../gen-doors.mjs";
+import { parseDoors, render, renderGd, renderJson, pickerData, docHead, ROUTES, OUT, GD_OUT, JSON_OUT } from "../gen-doors.mjs";
 import { fakeD1, fakeKV } from "./fakes.mjs";
 
 const EMAIL = "Player.One+wdb@Example.com";
@@ -41,6 +41,25 @@ async function hook(env, event, payload, delivery = String(Math.random()), secre
 test("doors.js matches design/routes.yaml", () => {
   assert.equal(readFileSync(OUT, "utf8"), render(parseDoors(readFileSync(ROUTES, "utf8"))));
   assert.equal(readFileSync(GD_OUT, "utf8"), renderGd(parseDoors(readFileSync(ROUTES, "utf8"))));
+  assert.equal(readFileSync(JSON_OUT, "utf8"), renderJson(pickerData(readFileSync(ROUTES, "utf8"))));
+});
+
+test("picker data: every routes.yaml door and job, names and descriptions from the docs", () => {
+  const text = readFileSync(ROUTES, "utf8");
+  const doors = parseDoors(text);
+  const data = pickerData(text);
+  assert.deepEqual(data.doors.map((d) => d.key), Object.keys(doors));
+  for (const d of data.doors) {
+    assert.deepEqual(d.jobs.map((j) => j.key), doors[d.key]);
+    assert.ok(d.name && d.about, "door " + d.key);
+    for (const j of d.jobs) assert.ok(j.name && j.about, "job " + d.key + "." + j.key);
+  }
+  const fake = "doors:\n  a_b:\n    file: x.md\n    read_when: \"door line\"\n    jobs:\n      c: y.md\n      d: gone.md\n";
+  const docs = { "x.md": "# Alpha door\nRead when: x line\n", "y.md": "# Job c\n\nRead when: job line  \n" };
+  const got = pickerData(fake, (f) => { if (!(f in docs)) throw new Error("missing"); return docs[f]; });
+  assert.deepEqual(got.doors, [{ key: "a_b", name: "Alpha door", about: "door line",
+    jobs: [{ key: "c", name: "Job c", about: "job line" }, { key: "d", name: "D", about: "" }] }]);
+  assert.deepEqual(docHead(() => "", "", "gear_ui"), { name: "Gear ui", about: "" });
 });
 
 test("health", async () => {

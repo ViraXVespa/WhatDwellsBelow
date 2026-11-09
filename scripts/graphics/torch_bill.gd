@@ -138,22 +138,6 @@ func _ready() -> void:
 	add_child(_flame)
 	_set_facing_once()
 
-## Sweep only. Off leaves the flame yaw untimed.
-static var torch_on: bool = false
-static var torch_us: int = 0
-
-static func arm_torch() -> void:
-	torch_on = true
-	torch_us = 0
-
-static func disarm_torch() -> void:
-	torch_on = false
-
-static func torch_ms() -> float:
-	if not torch_on:
-		return -1.0
-	return float(torch_us) / 1000.0
-
 func _front_cell() -> Rect2:
 	# Wall normal against the fixed south camera. Quad stays put; only the flame yaws.
 	var q: int = int(round(atan2(float(_nx), float(_nz)) / (PI * 0.5)))

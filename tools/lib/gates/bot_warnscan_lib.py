@@ -20,6 +20,11 @@ BENIGN = re.compile(r"^(P\d+|LOAD|MAP|WARNSCAN|Godot Engine v)\b")
 KIND_RULES = [
     # Real-renderer runs on xvfb/software GL only; the project never sets vsync. Reported, never fails the gate.
     ("env-artifact", re.compile(r"Could not set V-Sync mode")),
+    # The gitignored Godot AI addon is not installed in this checkout (`gate.py bot-smokes --setup` installs it).
+    # Only file-absent lines; a present but broken addon still reports parse/script errors.
+    ("env-artifact", re.compile(r"res://addons/godot_ai/\S*' resulted in error 'File not found'"
+                                r"|Failed loading resource: res://addons/godot_ai/"
+                                r"|Failed to instantiate an autoload, can't load from path: res://addons/godot_ai/")),
     ("leak", re.compile(r"leaked at exit|Cannot get path of node as it is not in a scene tree|RID allocations .* leaked|RIDs? of type .* leaked|resources? still in use")),
     ("script-error", re.compile(r"^SCRIPT ERROR|^USER SCRIPT")),
     ("shader", re.compile(r"^SHADER|(?i:shader)")),

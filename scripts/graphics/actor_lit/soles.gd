@@ -3,7 +3,7 @@ extends Object
 ## Baked actor soles. Play looks up scripts/data/actor_soles.json. The pixel scan runs only in the bake.
 
 const Scan := preload("res://scripts/graphics/actor_lit/soles_scan.gd")
-const SOLE_BAKE_STAMP := "934132e15a2707c5"
+const SOLE_BAKE_STAMP := "69e1e86544b5a793"
 const BAKE_PATH := "res://scripts/data/actor_soles.json"
 
 static var _spans: Dictionary = {}

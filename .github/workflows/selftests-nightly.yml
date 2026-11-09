@@ -1,6 +1,8 @@
 name: selftests-nightly
 
 # Every tool selftest on every branch head (python3 tools/check.py selftests), nightly and on demand.
+# Plus the advisory dead-code sweep (python3 tools/lint.py unused, report mode): findings never fail the run
+# (counts + JSON are in the artifact); a sweep crash or missing RESULT line counts as a failure in the issue.
 # Read-only on the repo: no commits, no pushes. One open issue labeled tooling-selftests tracks failures; all green closes it.
 on:
   schedule:
@@ -83,6 +85,22 @@ jobs:
           fi
           python3 tools/check.py selftests --timeout 600 2>&1 | tee /tmp/out/result.txt
 
+      - name: Unused sweep (advisory)
+        id: sweep
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/out
+          if [ ! -f tools/lib/lint/unused_graph.py ]; then
+            echo "SKIP no graph sweep on this branch" | tee /tmp/out/sweep.txt
+            exit 0
+          fi
+          python3 tools/lint.py unused --limit 40 2>&1 | tee /tmp/out/sweep.txt
+          grep -q '^RESULT ' /tmp/out/sweep.txt
+          cp _logs/unused-funcs/unused-funcs.json /tmp/out/ 2>/dev/null || true
+
       - name: Record result
         if: always()
         shell: bash
@@ -90,10 +108,12 @@ jobs:
           BRANCH: ${{ matrix.head.branch }}
           SHA: ${{ matrix.head.sha }}
           OUTCOME: ${{ steps.run.outcome }}
+          SWEEP: ${{ steps.sweep.outcome }}
         run: |
           mkdir -p /tmp/out
-          touch /tmp/out/result.txt
-          { echo "branch=$BRANCH"; echo "sha=$SHA"; echo "outcome=$OUTCOME"; grep -E '^(FAIL|RESULT)' /tmp/out/result.txt | head -40; } > /tmp/out/summary.txt
+          touch /tmp/out/result.txt /tmp/out/sweep.txt
+          { echo "branch=$BRANCH"; echo "sha=$SHA"; echo "outcome=$OUTCOME"; echo "sweep=$SWEEP"; grep -E '^(FAIL|RESULT)' /tmp/out/result.txt | head -40
+            echo "sweep: $(grep -E '^(RESULT|SKIP)' /tmp/out/sweep.txt | tail -1 || echo 'no RESULT line (crash)')"; } > /tmp/out/summary.txt
           echo "key=$(echo "$BRANCH" | tr '/' '_')" >> "$GITHUB_ENV"
 
       - name: Upload result
@@ -101,7 +121,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: selftests-${{ env.key }}
-          path: /tmp/out/summary.txt
+          path: |
+            /tmp/out/summary.txt
+            /tmp/out/sweep.txt
+            /tmp/out/unused-funcs.json
 
   report:
     needs: selftests
@@ -126,10 +149,10 @@ jobs:
           fails=0
           echo "Nightly \`python3 tools/check.py selftests\` ([run]($RUN_URL))." > "$body"
           for f in results/*/summary.txt; do
-            if ! grep -q '^outcome=success' "$f"; then
+            if ! grep -q '^outcome=success' "$f" || ! grep -qE '^sweep=(success|skipped)$' "$f"; then
               fails=$((fails+1))
               b=$(sed -n 's/^branch=//p' "$f"); s=$(sed -n 's/^sha=//p' "$f")
-              { echo; echo "### \`$b\` @ \`${s:0:8}\`"; echo '```'; grep -E '^(FAIL|RESULT)' "$f" || echo "(no result lines; see the run)"; echo '```'; } >> "$body"
+              { echo; echo "### \`$b\` @ \`${s:0:8}\`"; echo '```'; grep -E '^(FAIL|RESULT|sweep)' "$f" || echo "(no result lines; see the run)"; echo '```'; } >> "$body"
             fi
           done
           gh label create tooling-selftests -R "$R" --color B60205 --description "Nightly tool selftests" 2>/dev/null || true

@@ -55,14 +55,5 @@ func _layout() -> void:
 func _draw_pad() -> void:
 	Draw.draw_pad(self)
 
-func _knob(c: Vector2, r: float) -> void:
-	Draw.knob(self, c, r)
-
-func _drag(idx: int, pos: Vector2) -> void:
-	PadInput.drag(self, idx, pos)
-
 func _dungeon() -> Node:
 	return PadInput.dungeon()
-
-func _now() -> float:
-	return PadInput.now()

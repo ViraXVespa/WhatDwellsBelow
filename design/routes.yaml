@@ -292,6 +292,7 @@ doors:
     jobs:
       menu: design/debug-menu.md
       playtest: design/debug-playtest.md
+      bench: design/debug-bench.md
       anim_browser: design/debug-anim-browser.md
       smokes: design/debug-smokes.md
   audio_visual:
@@ -338,11 +339,11 @@ doors:
       ui: design/archives-ui.md
 
 job_read_when:
-  input.platforms_gamepad: "face buttons, rumble pulses"
+  input.platforms_gamepad: "face buttons, Xbox layout"
   input.rebind_prompts: "rebind prompts, remap grid"
-  input.kb_mouse: "WASD walk, click point"
-  input.web_touch: "canvas thumbs, virtual nubs"
-  input.input_live: "desktop defaults, chromium-pad capture"
+  input.kb_mouse: "WASD walk, LMB, Alt display toggle"
+  input.web_touch: "canvas thumbs, touch-HUD"
+  input.input_live: "desktop defaults, navigator gamepads"
   inventory.bag: "pouch tiles, ration versus flask"
   inventory.gear: "item level, duplicate rule, white baseline"
   inventory.meta: "set bonuses, shopkeep restock"
@@ -364,6 +365,7 @@ job_read_when:
   ui.receptionist: "talk cycle, ask topics"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
+  debug.bench: "scored legs, continuous sweep"
   debug.anim_browser: "timeline scrubber, review queue"
   debug.smokes: "phase assertions, runner summary"
   art_pipeline.i2v: "seed unit, spoken cue"
@@ -376,7 +378,7 @@ job_read_when:
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
-  gear_ui.chrome: "Analyze Forge bumpers, verbs, deferred teardown, script map"
+  gear_ui.chrome: "Analyze Forge bumpers, verbs, deferred teardown, background focus"
   hub.crystal: "consciousness-transfer VFX, Dispel wake-up, deepest row"
   hub.benches: "ore-for-gold stall, dumpster flavor, plaza_tarp host"
   hub.guild: "receptionist bust, notice errands, welcome cloth"
@@ -388,7 +390,7 @@ job_read_when:
   dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance"
   graphics.env: "hearth-warm hole-cold Environment, abyss-plinth, caller redirect"
   graphics.ground: "hashed field albedo, shared spatial shader, turf quilts, carved planes"
-  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon"
+  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, welded mass, provided ribbon"
   graphics.buffer: "four-texel radiance buffer, disc blobs, fine occupancy"
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
@@ -569,6 +571,15 @@ conflicts_with:
     - player
     - enemies
     - interactables
+  # shared-write files: stream_emit.gd (skin vs body), light_rt.gd (buffer vs hub bake)
+  dungeon.stream:
+    - graphics.volume
+  graphics.volume:
+    - dungeon.stream
+  hub.bake:
+    - graphics.buffer
+  graphics.buffer:
+    - hub.bake
 
 boot_max:
   web:

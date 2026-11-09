@@ -1,11 +1,10 @@
 extends Object
 
-## Dungeon stream mesh emit: wall mesh, floors, floor lip, ribbon boxes. Owns the shared floor plane.
+## Dungeon stream mesh emit: one shell per chunk, plus no-outline interior floors.
 
 const T := preload("res://scripts/data/tunables.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 const Commit := preload("res://scripts/graphics/mesh_commit.gd")
-const Clip := preload("res://scripts/world/dungeon_geo/stream_clip.gd")
 
 static var _floor_mesh: PlaneMesh
 
@@ -14,25 +13,72 @@ static func ensure_meshes() -> void:
 		_floor_mesh = PlaneMesh.new()
 		_floor_mesh.size = Vector2(T.TILE, T.TILE)
 
-static func _ensure_wall_mesh(host: Node, runs: Array = [], fine_m: float = 1.0) -> MeshInstance3D:
-	if runs.is_empty():
-		return null
+static func _emit_shell(host: Node, runs: Array, pieces: Array, fine_m: float) -> MeshInstance3D:
 	var typed: Array[Dictionary] = []
 	for item in runs:
 		if item is Dictionary:
 			typed.append(item)
-	if typed.is_empty():
+	var mesh: ArrayMesh = ArrayMesh.new()
+	var has_wall: bool = false
+	if not typed.is_empty():
+		mesh = WallMesh.from_faces(typed)
+		has_wall = mesh.get_surface_count() > 0
+	if not pieces.is_empty():
+		_add_lip_surface(mesh, pieces, fine_m)
+	if mesh.get_surface_count() == 0:
 		return null
 	var wall_inst: MeshInstance3D = MeshInstance3D.new()
 	wall_inst.name = "WallRibbons"
-	wall_inst.mesh = WallMesh.from_faces(typed)
+	wall_inst.mesh = mesh
 	var scale_m: float = fine_m
 	if scale_m < 0.2:
 		scale_m = 1.0
 	wall_inst.scale = Vector3(scale_m, 1.0, scale_m)
-	wall_inst.material_override = host.wall_mat
 	wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if has_wall:
+		wall_inst.set_surface_override_material(0, host.wall_mat)
+		if mesh.get_surface_count() > 1:
+			wall_inst.set_surface_override_material(1, host.floor_mat)
+		_add_wall_body(wall_inst, mesh)
+	else:
+		wall_inst.set_surface_override_material(0, host.floor_mat)
 	return wall_inst
+
+static func _add_lip_surface(mesh: ArrayMesh, pieces: Array, fine_m: float) -> void:
+	var built: ArrayMesh = _loop_mesh(pieces, fine_m)
+	if built.get_surface_count() < 1:
+		return
+	var arrays: Array = built.surface_get_arrays(0)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+
+static func _add_wall_body(inst: MeshInstance3D, mesh: ArrayMesh) -> void:
+	var tris: PackedVector3Array = _surface_tris(mesh)
+	if tris.is_empty():
+		return
+	var body: StaticBody3D = StaticBody3D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var shape: ConcavePolygonShape3D = ConcavePolygonShape3D.new()
+	shape.data = tris
+	var cs: CollisionShape3D = CollisionShape3D.new()
+	cs.shape = shape
+	body.add_child(cs)
+	inst.add_child(body)
+
+static func _surface_tris(mesh: ArrayMesh) -> PackedVector3Array:
+	var out: PackedVector3Array = PackedVector3Array()
+	if mesh.get_surface_count() < 1:
+		return out
+	var arrays: Array = mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var i: int = 0
+	while i + 2 < indices.size():
+		out.append(verts[indices[i]])
+		out.append(verts[indices[i + 1]])
+		out.append(verts[indices[i + 2]])
+		i += 3
+	return out
 static func _mask(host: Node) -> Dictionary:
 	var w: int = int(host.data.w)
 	var h: int = int(host.data.h)
@@ -67,15 +113,7 @@ static func _emit_floors(rects: Array[Rect2i], fine_m: float, mat: Material) -> 
 		inst.material_override = mat
 	return inst
 
-static func _first_mm(node: Node) -> MultiMeshInstance3D:
-	for child in node.get_children():
-		if child is MultiMeshInstance3D:
-			return child as MultiMeshInstance3D
-	return null
-
-static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fine_m: float, mat: Material) -> Node3D:
-	var holder: Node3D = Node3D.new()
-	holder.name = "Floors"
+static func _lip_pieces(spans: Array, x0: int, y0: int, x1: int, y1: int) -> Array:
 	var loops: Array = spans
 	var box: PackedVector2Array = PackedVector2Array()
 	var grow: float = 1.0
@@ -93,14 +131,7 @@ static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fi
 			var poly: PackedVector2Array = poly_v
 			if poly.size() >= 3:
 				pieces.append(poly)
-	if not pieces.is_empty():
-		var inst: MeshInstance3D = MeshInstance3D.new()
-		inst.mesh = _loop_mesh(pieces, fine_m)
-		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		if mat:
-			inst.material_override = mat
-		holder.add_child(inst)
-	return holder
+	return pieces
 
 static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 	var verts: PackedVector3Array = PackedVector3Array()
@@ -120,53 +151,9 @@ static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 		var base: int = verts.size()
 		for i in poly.size():
 			var p: Vector2 = poly[i]
-			var x: float = p.x * fine_m
-			var z: float = p.y * fine_m
-			verts.append(Vector3(x, T.FLOOR_Y, z))
+			verts.append(Vector3(p.x, T.FLOOR_Y, p.y))
 			norms.append(Vector3.UP)
-			uvs.append(Vector2(x, z))
+			uvs.append(Vector2(p.x * fine_m, p.y * fine_m))
 		for k in tris.size():
 			indices.append(base + int(tris[k]))
 	return Commit.commit(verts, norms, uvs, indices)
-
-static func _seg_dist(p: Vector2, o: Vector2, d: Vector2) -> float:
-	var l2: float = d.length_squared()
-	if l2 < 0.0001:
-		return p.distance_to(o)
-	var t: float = clampf((p - o).dot(d) / l2, 0.0, 1.0)
-	return p.distance_to(o + d * t)
-
-static func _add_ribbon_boxes(root: Node3D, spans: Array, fine_m: float) -> void:
-	if spans.is_empty():
-		return
-	var body: StaticBody3D = StaticBody3D.new()
-	body.collision_layer = 1
-	body.collision_mask = 0
-	root.add_child(body)
-	for run: Dictionary in Clip._runs(spans):
-		var o: Vector2 = run["origin"] as Vector2
-		var d: Vector2 = run["delta"] as Vector2
-		var span_l: float = d.length()
-		if span_l < 0.2:
-			continue
-		var tangent: Vector2 = d / span_l
-		var left: Vector2 = Vector2(-tangent.y, tangent.x)
-		var inward: Vector2 = left
-		var nrm: Vector2 = run["normal"] as Vector2
-		if nrm.length_squared() < 0.0001:
-			nrm = left
-		else:
-			nrm = nrm.normalized()
-		if inward.dot(nrm) < 0.0:
-			inward = -inward
-		var thick: float = float(run.get("thick", 0.25))
-		if thick <= 0.0 or thick > 0.3:
-			thick = 0.25
-		var mid: Vector2 = o + d * 0.5 - inward * (thick * 0.5)
-		var basis: Basis = Basis(Vector3(tangent.x, 0.0, tangent.y), Vector3.UP, Vector3(left.x, 0.0, left.y))
-		var box: BoxShape3D = BoxShape3D.new()
-		box.size = Vector3(span_l * fine_m, T.WALL_H, thick * fine_m)
-		var cs: CollisionShape3D = CollisionShape3D.new()
-		cs.shape = box
-		cs.transform = Transform3D(basis, Vector3(mid.x * fine_m, T.WALL_H * 0.5, mid.y * fine_m))
-		body.add_child(cs)

@@ -19,7 +19,7 @@ DOCS = (
 
 def check(root: Path) -> list[str]:
     bad = []
-    old = re.compile(r"before the first prove|120[–-]150|compact once before|one compact.*before prove", re.I)
+    old = re.compile(r"before the first prove|120[–-]150|compact once before|one compact.*before prove|guided compact", re.I)
     for rel in DOCS:
         text = (root / rel).read_text(encoding="utf-8")
         if old.search(text):
@@ -28,9 +28,12 @@ def check(root: Path) -> list[str]:
     if "Default workflow for every Grok Build task" not in skill_meta:
         bad.append("pc-offload metadata must make the repository Build default explicit")
     canonical = (root / "design/build-job-cycle.md").read_text()
-    for phrase in ("context is above 120K", "next good stopping point", "same session"):
+    for phrase in ("compact would be safe", "before Prove", "follow-up Gather or Change", "same session",
+                   "Stop and wait", "session-plan.md"):
         if phrase not in canonical:
             bad.append("canonical context rule missing: " + phrase)
+    if "session-plan.md" not in (root / "design/grok-build.md").read_text(encoding="utf-8"):
+        bad.append("grok-build.md must name session-plan.md")
     if "--fork-session" in (root / "design/tasks/ui-png-art.md").read_text() or "--fork-session" in (root / "design/tasks/perf-sweep.md").read_text():
         bad.append("task resume must not direct an implementation-session fork")
     for rel, limit in (("design/grok-build.md", 4000), ("design/build-job-cycle.md", 8000),

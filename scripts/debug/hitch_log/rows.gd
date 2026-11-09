@@ -2,7 +2,6 @@ extends Object
 
 ## Split from hitch_log.gd: _hitch_row, _session_row, _sample_proc....
 
-const Ctx := preload("res://scripts/debug/hitch_log/ctx.gd")
 const Present := preload("res://scripts/debug/hitch_log/log_present.gd")
 const Web := preload("res://scripts/debug/hitch_log/log_web.gd")
 
@@ -21,7 +20,7 @@ static var _script_ms: float = -1.0
 static var _queue_ms: float = -1.0
 static var _tail_ms: float = -1.0
 ## Sweep only. bench_ms is the hub bench _process. lit_ms is every ActorLit _process.
-## sample_ms is LightRt.sample_xz (inside tint_ms). foot_ms and quad_ms sit inside sync_ms.
+## sample_ms is LightRt.sample_xz. Actor tint does not call it. foot_ms and quad_ms sit inside sync_ms.
 ## -1 leaves the keys off the row.
 static var _bench_ms: float = -1.0
 static var _lit_ms: float = -1.0
@@ -61,10 +60,9 @@ static var _wake_ms: float = -1.0
 static var _phys_span_ms: float = -1.0
 static var _post_phys_ms: float = -1.0
 static var _head_ms: float = -1.0
-## Sweep only. Dungeon process_floor, torch flame yaw, and hp-bar _process.
+## Sweep only. Dungeon process_floor and hp-bar _process.
 ## -1 leaves the keys off the row.
 static var _floor_ms: float = -1.0
-static var _torch_ms: float = -1.0
 static var _bar_ms: float = -1.0
 ## Sweep layer window. Those frames are not in fps_pct.
 static var _unscored: bool = false
@@ -159,9 +157,8 @@ static func note_phys_head() -> void:
 static func note_phys_tail() -> void:
 	_phys_tail_us = Time.get_ticks_usec()
 
-static func set_idle_ms(floor_ms: float, torch_ms: float, bar_ms: float) -> void:
+static func set_idle_ms(floor_ms: float, bar_ms: float) -> void:
 	_floor_ms = floor_ms
-	_torch_ms = torch_ms
 	_bar_ms = bar_ms
 
 static func set_head_ms(ms: float) -> void:

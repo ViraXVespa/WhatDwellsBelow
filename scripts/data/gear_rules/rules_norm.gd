@@ -145,6 +145,8 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 		p.potion_bonus_id = bonus_id
 		p.potion_bonus_amt = float(it.get("bonus_amt", 0.0))
 		p.potion_bonus_t = bonus_secs
+		if bonus_id == "hp":
+			p._refresh_player_hp()
 	var cd: float = float(it.get("cooldown", 0.0))
 	if cd <= 0.0 and App.bal:
 		cd = float(App.bal.get("potion_cooldown"))

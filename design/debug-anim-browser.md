@@ -11,7 +11,7 @@ Purpose: let the User review player and enemy animation states so art and facing
 **Phase rule**
 
 - Phase 7: the Animation Browser control MUST exist in the secret debug menu. It MUST be labeled, gamepad-focusable, and reachable with the same tab/page navigation as other debug pages. A stub panel (“Animation Browser — implemented in Phase 9”) is acceptable.
-- Phase 9 / Demo-Complete: the full viewer MUST ship. This is a vital development tool in the final product. It is deliberately *not* part of early build logic so sprite pipelines and combat can land first.
+- Phase 9 / Demo-Complete: the full viewer MUST be in every debug build. This is a vital development tool. It lives in `scripts/debug/`, which the release presets (`Web`, `Linux`) exclude, so release and the public demo do not carry it (debug door, Release vs debug builds). It is deliberately *not* part of early build logic so sprite pipelines and combat can land first.
 
 **Layout**
 The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-first, and MUST open with valid initial focus.

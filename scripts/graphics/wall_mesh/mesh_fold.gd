@@ -210,7 +210,8 @@ static func _merge_opposite(runs: Array[Dictionary]) -> Array[Dictionary]:
 				continue
 			var rel: Vector2 = (bo + bd * 0.5) - ao
 			var lateral: Vector2 = rel - at * rel.dot(at)
-			if lateral.length() > 1.35:
+			# Same edge only. A one-cell jog is a second wall (spawn seed 2145774397).
+			if lateral.length() > 0.35:
 				continue
 			if bl > al:
 				drop[i] = 1

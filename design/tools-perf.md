@@ -8,11 +8,11 @@ Read when: measuring performance or reading a benchmark
 ## Choose and run
 
 1. Choose a command below; use its `--help` for flags. Confirm the task permits a runtime before launching one.
-2. For hub, dungeon or sweep, choose `--leg desktop`, `web` or `both`. The runners manage the fresh save, cold web export, browser and logs. Do not substitute a headless result for FPS or disable browser pacing. Detailed window, cache, scoring and timing-field contracts belong to `debug-playtest.md`.
+2. For hub, dungeon or sweep, choose `--leg desktop`, `web` or `both`. The runners manage the fresh save, cold web export, browser and logs. Do not substitute a headless result for FPS or disable browser pacing. Detailed window, cache, scoring and timing-field contracts belong to `debug-bench.md`.
 3. Read the printed summary path. `perf.py hub|dungeon|sweep --report HITCH.jsonl` reprints an existing run without another benchmark. Numeric timings appear as `*_med` in summaries, including `script_med`, `queue_med`, `tail_med`, `bench_med`, `sample_med` and `sample_n_med`; `lit_who` stays on hitch rows.
 4. For the continuous sweep, check overall and all four `place` bars: `hub1`, `dungeon1`, `hub2`, `dungeon2`. Each must be present and at least 99%. `pair hub` and `pair dungeon` compare warm minus cold. Two cold web passes require two separate runs; task acceptance may also require a desktop run.
 
-Layer probes diagnose a cause, not a performance pass. Hub `--layers` stands at the dummy; `--walk-layers` measures during the fill. `--fill-aba` compares normal/hidden/normal; retain it only when initial submit stays near 40 ms. Dungeon `--walk-layers` retains its probe only at 30–45 ms initial submit and at least 20 frames. Sweep layer rows require base submit >=45 ms and at least 20 frames (`keep=1`). Probe windows do not count toward the 99% score. Full layer names and field meanings are in `debug-playtest.md`.
+Layer probes diagnose a cause, not a performance pass. Hub `--layers` stands at the dummy; `--walk-layers` measures during the fill. `--fill-aba` compares normal/hidden/normal; retain it only when initial submit stays near 40 ms. Dungeon `--walk-layers` retains its probe only at 30–45 ms initial submit and at least 20 frames. Sweep layer rows require base submit >=45 ms and at least 20 frames (`keep=1`). Probe windows do not count toward the 99% score. Full layer names and field meanings are in `debug-bench.md`.
 
 ## Catalog
 

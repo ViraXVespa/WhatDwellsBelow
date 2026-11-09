@@ -16,9 +16,6 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 static func stock_extract_shot(p: Object) -> void:
 	Extract.stock_extract_shot(p)
 
-static func withdraw_bank_consumables(p: Object) -> void:
-	Extract.withdraw_bank_consumables(p)
-
 static func analyze_destroy(p: Object, row: Dictionary) -> Dictionary:
 	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
 	if it.is_empty():

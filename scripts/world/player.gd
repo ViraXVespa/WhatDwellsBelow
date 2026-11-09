@@ -102,9 +102,6 @@ func play_exit(cond: String, killer := "") -> void:
 func start_gather(node: Node) -> void:
 	_script_at("res://scripts/world/player/player_act.gd").start_gather(self, node)
 
-func stop_gather() -> void:
-	_script_at("res://scripts/world/player/player_act.gd").stop_gather(self)
-
 func _ai_just(action: String) -> bool:
 	return _script_at("res://scripts/world/player/player_lock.gd").ai_just(self, action)
 
@@ -134,9 +131,6 @@ func _apply_basic() -> void:
 
 func _apply_special() -> void:
 	_script_at("res://scripts/combat/player_hit.gd").apply_special(self)
-
-func _trail(delta: float) -> void:
-	_script_at("res://scripts/combat/player_hit.gd").trail(self, delta)
 
 func _weapon_reach() -> float:
 	return _script_at("res://scripts/world/player/player_combat.gd").weapon_reach()

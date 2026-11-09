@@ -41,3 +41,10 @@ Long runs happen on Vira's own dedicated PC. She launches them herself with one 
 
 ## Hold
 Vira said go on 2026-11-03. The set-and-forget command is `python tools/local-ai-tuner.py loop`. Each campaign process runs until the delve ends in death, then the loop trains. Export and import move the policy file between PCs. Status stays open until a live run on her PC reports the held-out rates and a recommended config that beats the current one across repeat seeds.
+
+## Status
+The loop stopped after five gathers because each headless campaign stalled at `gate_no_dungeon`. The dungeon enter cover waited on `RenderingServer.frame_post_draw`. The headless renderer does not emit that signal, so the dive never started and no decide rows were saved. `wait_painted` now yields one process frame on a headless display. A gather counts decide rows that were not already in the spool, so a journal prune cannot hide a new row.
+
+A headless campaign on this PC wrote 1924 new decide rows before a 10 minute cap stopped that check. The dive was still open. `python tools/local-ai-tuner.py train` fit a bot policy from those rows: held-out 199/383, scripted ladder 22/383. That is imitation of the scripted journal. The labels were heavy on door and wander.
+
+Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach. The current setup was testing and found to not be working (still not progressing floors) prior to the Grok Build usage quota. Further investigation is still required.

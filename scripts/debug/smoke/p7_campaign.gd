@@ -7,6 +7,9 @@ const PlaytestDb := preload("res://scripts/debug/playtest_db.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
 const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 const Store := preload("res://scripts/data/save_store.gd")
+const Policy := preload("res://scripts/debug/playtest_ai/ai_policy.gd")
+const Misc := preload("res://scripts/debug/playtest_ai/ai_misc.gd")
+const Near := preload("res://scripts/world/player/near_interact.gd")
 
 static func campaign_check() -> void:
 	if OS.has_feature("web"):
@@ -29,6 +32,12 @@ static func campaign_check() -> void:
 
 static func _campaign_body() -> bool:
 	if App.debug == null or App.debug.play == null:
+		return false
+	var depth_ok: bool = Policy.yields_for_depth("campaign", true) and not Policy.yields_for_depth("campaign", false) and not Policy.yields_for_depth("fresh", true)
+	var reach_ok: bool = is_equal_approx(Misc.press_at(1.7), 1.7) and is_equal_approx(Misc.press_at(0.4), 1.18)
+	var aim_ok: bool = _aim_press_ok()
+	if not depth_ok or not reach_ok or not aim_ok:
+		printerr("P7: campaign_depth=%s reach=%s aim=%s" % [str(depth_ok), str(reach_ok), str(aim_ok)])
 		return false
 	if not App.debug.play.has_method("queue_campaign"):
 		return false
@@ -93,6 +102,40 @@ static func _campaign_body() -> bool:
 	if not ok:
 		printerr("P7: campaign_skill=%s gold=%s gear=%d weapon=%s seed=%s floor=%s limit=%s skip=%s done=%s start=%s gather=%s until=%s" % [str(skill_ok), str(gold_ok), gear_n, picked, seeded, str(floor_ok), str(limit_ok), str(skip_ok), str(done_ok), str(start_ok), str(gather_ok), str(until_ok)])
 	return ok
+
+static func _aim_press_ok() -> bool:
+	var pt: Node = App.playtest as Node
+	if pt == null or pt.get_tree() == null:
+		return false
+	var root: Node = pt.get_tree().root
+	var host: Node3D = Node3D.new()
+	var door_s: GDScript = load("res://scripts/world/boss_door.gd") as GDScript
+	var door: Node3D = door_s.new() as Node3D
+	var stair_s: GDScript = load("res://scripts/world/interact.gd") as GDScript
+	var stairs: Node3D = stair_s.new() as Node3D
+	root.add_child(host)
+	root.add_child(door)
+	root.add_child(stairs)
+	host.global_position = Vector3(800.0, 0.0, 800.0)
+	door.global_position = Vector3(801.6, 0.0, 800.0)
+	stairs.global_position = Vector3(801.0, 0.0, 800.0)
+	var prev_on: bool = bool(pt.get("ai_on"))
+	var prev_goal: Variant = pt.get("path_goal")
+	pt.set("ai_on", true)
+	pt.set("path_goal", door)
+	var far_door: Node = Near.aimed(host, 1.25)
+	pt.set("path_goal", stairs)
+	var stair_hit: Node = Near.aimed(host, 1.25)
+	stairs.global_position = Vector3(802.0, 0.0, 800.0)
+	var stair_far: Node = Near.aimed(host, 1.25)
+	pt.set("ai_on", false)
+	var off_hit: Node = Near.aimed(host, 1.25)
+	pt.set("ai_on", prev_on)
+	pt.set("path_goal", prev_goal)
+	host.free()
+	door.free()
+	stairs.free()
+	return far_door == door and stair_hit == stairs and stair_far == null and off_hit == null
 
 static func _one_file_snap(path: String) -> Dictionary:
 	var had: bool = FileAccess.file_exists(path)

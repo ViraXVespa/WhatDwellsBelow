@@ -21,10 +21,6 @@ Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full P
 - Debug camp shots re-apply pose in `_arm_capture` (`capture.gd`) after settle. Zoom `0.69` is the roof-judge crop. It MUST NOT write `App.cam_zoom` for play. The player never keeps that view.
  Extract-wake does not run this.
 
-## Archives
-
-Title-only Archives browser and its rules: archives.
-
 ## Renderer
 
 Prefer the Compatibility renderer for the final shippable build if it does not compromise the web export. Mobile renderer is acceptable only if required for web stability.

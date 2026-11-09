@@ -71,30 +71,3 @@ static func use_food(p: Object) -> String:
 
 static func tick_food(p: Object, delta: float) -> void:
 	Use.tick_food(p, delta)
-
-static func dmg(p: Object) -> int:
-	return Use.dmg(p)
-
-static func def(p: Object) -> int:
-	return Use.def(p)
-
-static func hp(p: Object) -> int:
-	return Use.hp(p)
-
-static func stat(p: Object, key: String) -> float:
-	return Use.stat(p, key)
-
-static func tool_quality(p: Object) -> float:
-	return Use.tool_quality(p)
-
-static func set_counts(p: Object) -> Dictionary:
-	return Use.set_counts(p)
-
-static func set_stats(p: Object) -> Dictionary:
-	return Use.set_stats(p)
-
-static func set_bonus_text(p: Object, sid: String) -> String:
-	return Use.set_bonus_text(p, sid)
-
-static func sync_artifacts(p: Object) -> void:
-	Use.sync_artifacts(p)

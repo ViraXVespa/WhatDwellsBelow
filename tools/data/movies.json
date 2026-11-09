@@ -1,5 +1,5 @@
 {
- "_about": "shots.py movie: named scenarios (shot-flow header keys + setup steps, or {flow, state} = that flow cut at its state shot) and movies (scenario + input timeline, recorded between the start/end marks). Timeline op camera frames a point or node (zoom, glide); a movie's regions name frame boxes [x,y,w,h] in fractions for media.py clip crop --box NAME --movie NAME. design/tools-media.md. views: stills (scenario + steps, {flow, state}, or kind full-map with overlays) for shots.py movie --refs; sets: named scenario groups to compare. Views and helpers normal play cannot show live in scripts/debug/shot_views.gd (script:debug/shot_views).",
+ "_about": "shots.py movie: named scenarios (shot-flow header keys + setup steps, or {flow, state} = that flow cut at its state shot) and movies (scenario + input timeline, recorded between the start/end marks). Timeline op camera frames a point or node (zoom, glide); a movie's regions name frame boxes [x,y,w,h] in fractions for media.py clip crop --box NAME --movie NAME. design/tools-media.md. views: stills (scenario + steps, {flow, state}, or kind full-map with overlays; viewport names a tools/data/text-size.json size such as phone-l) for shots.py movie --refs; sets: named scenario groups to compare. Views and helpers normal play cannot show live in scripts/debug/shot_views.gd (script:debug/shot_views).",
  "scenarios": {
   "camp-spawn": {
    "about": "Placeholdia, player at the floor crystal spawn, HUD off, close camera",
@@ -162,6 +162,41 @@
      "ms": 400
     }
    ]
+  },
+  "f1-entrance-hud": {
+   "about": "floor 1 entrance with the HUD on (dungeon-hud-states@hud-default)",
+   "flow": "dungeon-hud-states",
+   "state": "hud-default"
+  },
+  "camp-recap-death": {
+   "about": "Placeholdia, death recap just opened (drain not skipped)",
+   "scene": "camp",
+   "hud": 0,
+   "settle_ms": 800,
+   "steps": [
+    {
+     "op": "device",
+     "kind": "pad"
+    },
+    {
+     "op": "call",
+     "target": "App.recap",
+     "method": "play",
+     "args": [
+      "death"
+     ]
+    }
+   ]
+  },
+  "quest-board-open": {
+   "about": "Placeholdia, quest board open with three offers (camp-npc-panels@quest-board)",
+   "flow": "camp-npc-panels",
+   "state": "quest-board"
+  },
+  "title-dismissed": {
+   "about": "title menu after the Updates overlay is dismissed (title-menu@title-after-dismiss)",
+   "flow": "title-menu",
+   "state": "title-after-dismiss"
   }
  },
  "movies": {
@@ -381,13 +416,196 @@
      "ms": 300
     }
    ]
+  },
+  "combat-special": {
+   "about": "special (20 mana) held 0.1 s through App.playtest (ai_on, special); a second press inside the 1.5 s recovery does nothing, a third after it lands",
+   "scenario": "f1-entrance-hud",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "set",
+     "target": "App.playtest.ai_on",
+     "value": true
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "set",
+     "target": "App.playtest.special",
+     "value": true
+    },
+    {
+     "op": "wait",
+     "ms": 100
+    },
+    {
+     "op": "set",
+     "target": "App.playtest.special",
+     "value": false
+    },
+    {
+     "op": "wait",
+     "ms": 500
+    },
+    {
+     "op": "set",
+     "target": "App.playtest.special",
+     "value": true
+    },
+    {
+     "op": "wait",
+     "ms": 100
+    },
+    {
+     "op": "set",
+     "target": "App.playtest.special",
+     "value": false
+    },
+    {
+     "op": "wait",
+     "ms": 1400
+    },
+    {
+     "op": "set",
+     "target": "App.playtest.special",
+     "value": true
+    },
+    {
+     "op": "wait",
+     "ms": 100
+    },
+    {
+     "op": "set",
+     "target": "App.playtest.special",
+     "value": false
+    },
+    {
+     "op": "wait",
+     "ms": 1000
+    }
+   ]
+  },
+  "recap-drain": {
+   "about": "death recap opens and the drain runs, then _focus moves pad focus into the sheet (pressing Continue changes scene, which restarts a shot flow, so the movie stops before it)",
+   "scenario": "camp-recap-death",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "wait",
+     "ms": 4000
+    },
+    {
+     "op": "call",
+     "target": "App.recap",
+     "method": "_focus"
+    },
+    {
+     "op": "wait",
+     "ms": 1000
+    }
+   ]
+  },
+  "quest-take": {
+   "about": "take the first quest poster at the board, then open pause on the Quest tab where the poster now sits",
+   "scenario": "quest-board-open",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "wait",
+     "ms": 500
+    },
+    {
+     "op": "press",
+     "pad": "A"
+    },
+    {
+     "op": "wait",
+     "ms": 700
+    },
+    {
+     "op": "press",
+     "pad": "B"
+    },
+    {
+     "op": "wait",
+     "ms": 300
+    },
+    {
+     "op": "call",
+     "target": "App.pause_menu",
+     "method": "show_menu"
+    },
+    {
+     "op": "set",
+     "target": "App.pause_menu.tab",
+     "value": "quest"
+    },
+    {
+     "op": "call",
+     "target": "App.pause_menu",
+     "method": "_rebuild"
+    },
+    {
+     "op": "wait",
+     "ms": 1200
+    }
+   ]
+  },
+  "title-nav": {
+   "about": "title menu focus moving down and back up with the d-pad (focus highlight as hover)",
+   "scenario": "title-dismissed",
+   "fps": 30,
+   "timeline": [
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "press",
+     "pad": "DOWN"
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "press",
+     "pad": "DOWN"
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "press",
+     "pad": "DOWN"
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "press",
+     "pad": "UP"
+    },
+    {
+     "op": "wait",
+     "ms": 400
+    },
+    {
+     "op": "press",
+     "pad": "UP"
+    },
+    {
+     "op": "wait",
+     "ms": 600
+    }
+   ]
   }
  },
  "views": {
-  "hub-overhead": {
-   "about": "still of the whole hub yard from above",
-   "scenario": "hub-overhead"
-  },
   "guild-roof-wide": {
    "about": "still of the whole guild roof: tile bond across the ridge, eaves, awning joins",
    "scenario": "guild-roof-wide"
@@ -468,11 +686,142 @@
    "about": "pause Settings > Report Bug page with the form open",
    "flow": "camp-pause-pages",
    "state": "settings-report-open"
+  },
+  "hub-overhead-still": {
+   "about": "still of the whole hub yard from above",
+   "scenario": "hub-overhead"
+  },
+  "pause-quest": {
+   "about": "pause menu Quest tab with a taken kill quest",
+   "flow": "camp-pause-pages",
+   "state": "pause-quest"
+  },
+  "recap": {
+   "about": "death recap panel after the drain (Continue focused)",
+   "flow": "camp-recap",
+   "state": "recap"
+  },
+  "receptionist-talk": {
+   "about": "receptionist Talk line",
+   "flow": "camp-receptionist-menu",
+   "state": "talk-line"
+  },
+  "receptionist-ask": {
+   "about": "receptionist Ask? list open",
+   "flow": "camp-receptionist-menu",
+   "state": "ask-open"
+  },
+  "receptionist-forging": {
+   "about": "receptionist Ask? > Forging page",
+   "flow": "camp-receptionist-menu",
+   "state": "page-forging"
+  },
+  "anvil-tip": {
+   "about": "anvil gear tooltip",
+   "flow": "camp-gear-popups",
+   "state": "anvil-tip"
+  },
+  "anvil-forge-pick": {
+   "about": "anvil Forge picker open",
+   "flow": "camp-gear-popups",
+   "state": "anvil-forge-pick"
+  },
+  "loadout-pick": {
+   "about": "loadout crystal picker open",
+   "flow": "camp-gear-popups",
+   "state": "loadout-pick"
+  },
+  "loadout-panel": {
+   "about": "loadout crystal panel in Placeholdia",
+   "flow": "camp-npc-panels",
+   "state": "loadout"
+  },
+  "crystal-root": {
+   "about": "floor crystal map at the root page",
+   "flow": "dungeon-map-crystal",
+   "state": "crystal-root"
+  },
+  "billboard-controls": {
+   "about": "Controls billboard page in the yard",
+   "flow": "camp-billboard-controls",
+   "state": "controls"
+  },
+  "ghost-shop": {
+   "about": "extract gate ghost shop with the focus ring on the stall",
+   "flow": "dungeon-gate-shop",
+   "state": "shop"
+  },
+  "title-card": {
+   "about": "title first-launch card (choose a delver)",
+   "flow": "title-menu",
+   "state": "title-card"
+  },
+  "title-updates": {
+   "about": "title Updates overlay",
+   "flow": "title-menu",
+   "state": "title-updates"
+  },
+  "stall-overhead": {
+   "about": "vendor stall from above (player behind the counter line)",
+   "flow": "vendor-stall",
+   "state": "overhead"
+  },
+  "stall-low-front": {
+   "about": "vendor stall low front",
+   "flow": "vendor-stall",
+   "state": "low-front"
+  },
+  "stall-side-post": {
+   "about": "vendor stall side post",
+   "flow": "vendor-stall",
+   "state": "side-post"
+  },
+  "welcome-banner": {
+   "about": "welcome banner close-up over the yard's south edge",
+   "scenario": "camp-spawn",
+   "steps": [
+    {
+     "op": "camera",
+     "at": [
+      16.5,
+      21.4
+     ],
+     "zoom": 3.0
+    },
+    {
+     "op": "wait",
+     "ms": 600
+    }
+   ]
+  },
+  "hud-low-mana": {
+   "about": "dungeon HUD with low mana",
+   "flow": "dungeon-hud-states",
+   "state": "hud-low-mana"
+  },
+  "phone-hud": {
+   "about": "dungeon HUD at floor 1 on a landscape phone (844x390 CSS, dpr 3)",
+   "flow": "dungeon-hud-states",
+   "state": "hud-default",
+   "viewport": "phone-l"
+  },
+  "phone-pause-inventory": {
+   "about": "pause Inventory tab on a landscape phone (844x390 CSS, dpr 3)",
+   "flow": "camp-pause-pages",
+   "state": "pause-inventory",
+   "viewport": "phone-l"
+  },
+  "phone-title": {
+   "about": "title first-launch card on a portrait phone (390x844 CSS, dpr 3)",
+   "flow": "title-menu",
+   "state": "title-card",
+   "viewport": "phone-p"
   }
  },
  "sets": {
   "dungeon-fight": [
-   "f1-fight"
+   "f1-fight",
+   "combat-special"
   ],
   "hub-ui": [
    "hub-walk",
@@ -497,6 +846,40 @@
    "f1-lighting",
    "f1-drop-roll",
    "f1-flythrough"
+  ],
+  "ui-flows": [
+   "recap-drain",
+   "quest-take",
+   "title-nav"
+  ],
+  "ui-views": [
+   "pause-quest",
+   "recap",
+   "receptionist-talk",
+   "receptionist-ask",
+   "receptionist-forging",
+   "anvil-tip",
+   "anvil-forge-pick",
+   "loadout-pick",
+   "loadout-panel",
+   "crystal-root",
+   "billboard-controls",
+   "ghost-shop",
+   "title-card",
+   "title-updates",
+   "hud-low-mana"
+  ],
+  "hub-props": [
+   "hub-overhead-still",
+   "stall-overhead",
+   "stall-low-front",
+   "stall-side-post",
+   "welcome-banner"
+  ],
+  "phone": [
+   "phone-hud",
+   "phone-pause-inventory",
+   "phone-title"
   ]
  }
 }

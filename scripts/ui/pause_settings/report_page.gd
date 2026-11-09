@@ -1,8 +1,9 @@
 extends Object
 
-## Pause > Settings > Report Bug page (design/tasks/bug-report-relay.md). Gamepad-first: area and "what happened"
-## cycle on A, so a report can go without typing; details and email are optional text fields. The form lives in
-## static vars so a rebuild (cycle, send result) keeps it. Sending goes through bug_send.gd.
+## Pause > Settings > Report Bug page (tools/relay/README.md). Gamepad-first: an optional one-line summary
+## (the issue title), then Door and Job comboboxes (report_pick.gd) with the highlighted one's description, and a
+## "what happened" cycle on A, so a report can go without typing; details and email are optional text fields. The
+## form lives in static vars so a rebuild (cycle, send result) keeps it. Sending goes through bug_send.gd.
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
@@ -10,13 +11,22 @@ const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Send := preload("res://scripts/app/bug_report/bug_send.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
+const Pick := preload("res://scripts/ui/pause_settings/report_pick.gd")
 
-static var form := {"area": 0, "kind": 0, "details": "", "email": "", "opt_in": false, "shot": true, "crash": true}
+static var form := {"summary": "", "door": "", "job": "", "kind": 0, "details": "", "email": "", "opt_in": false, "shot": true, "crash": true}
 static var status := ""
 static var busy := false
 
 static func build(host: Node) -> void:
-	_cycle(host, "bug_report.area", Send.AREAS[int(form.area)][0], "area", Send.AREAS.size())
+	var sm := LineEdit.new()
+	sm.name = "report_summary"
+	sm.placeholder_text = App.tr("bug_report.summary_hint")
+	sm.text = str(form.summary)
+	sm.max_length = 80
+	sm.text_changed.connect(func(t: String) -> void: form.summary = t)
+	guard_backspace(sm)
+	_field(host, sm)
+	Pick.build(host, form, func(c: Control) -> void: _field(host, c))
 	_cycle(host, "bug_report.kind", Send.KINDS[int(form.kind)], "kind", Send.KINDS.size())
 	var te := TextEdit.new()
 	te.placeholder_text = App.tr("bug_report.details_hint")
@@ -31,6 +41,7 @@ static func build(host: Node) -> void:
 	em.text = str(form.email)
 	em.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
 	em.text_changed.connect(func(t: String) -> void: form.email = t)
+	guard_backspace(em)
 	_field(host, em)
 	_toggle(host, "bug_report.opt_in", "opt_in")
 	_toggle(host, "bug_report.shot", "shot")
@@ -62,6 +73,7 @@ static func send(host: Node, dry_run: bool = false) -> void:
 		busy = false
 		if code == 201:
 			form.details = ""
+			form.summary = ""
 		_done(host, Send.status_text(code, data))
 	)
 
@@ -89,6 +101,21 @@ static func _cycle(host: Node, key: String, val_key: String, field: String, n: i
 		if i < host.info_btns.size():
 			(host.info_btns[i] as Control).grab_focus()
 	))
+
+## Backspace is also ui_cancel (binds/table.gd MENU), and LineEdit checks ui_cancel first, so it stopped editing
+## instead of deleting. The gui_input signal runs before LineEdit's own handler: delete here and accept the key.
+static func guard_backspace(le: LineEdit) -> void:
+	le.gui_input.connect(func(e: InputEvent) -> void:
+		var k := e as InputEventKey
+		if k == null or not k.pressed or k.keycode != KEY_BACKSPACE or not le.is_editing():
+			return
+		if le.has_selection():
+			le.delete_text(le.get_selection_from_column(), le.get_selection_to_column())
+		elif le.caret_column > 0:
+			le.delete_text(le.caret_column - 1, le.caret_column)
+		le.text_changed.emit(le.text)
+		le.accept_event()
+	)
 
 static func _toggle(host: Node, key: String, field: String) -> void:
 	Pages._add_check_centered(host, Pages._check(App.tr(key), bool(form[field]), func(on: bool) -> void: form[field] = on))

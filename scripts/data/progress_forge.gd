@@ -68,9 +68,6 @@ static func forge_hold(p: Object, slot: String, type_id: String, rarity: String,
 	var it: Dictionary = make_forged(p, slot, type_id, rarity, ilvl, locked)
 	return add_hold(p, it)
 
-static func to_meta(p: Object) -> Dictionary:
-	return Act.to_meta(p)
-
 static func from_meta(p: Object, d: Dictionary) -> void:
 	Act.from_meta(p, d)
 

@@ -55,6 +55,8 @@ static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	p.food_left = total
 	p.food_bonus_id = str(it.get("bonus_id", ""))
 	p.food_bonus_amt = float(it.get("bonus_amt", 0.0))
+	if p.food_bonus_id == Affix.ID_HP:
+		p._refresh_player_hp()
 	p.add_mana(p.food_mana(fid))
 	App.sfx("food")
 	App.toast(App.tr("gear_use.food_healing_over_time"))
@@ -82,9 +84,12 @@ static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
 static func tick_food(p: Object, delta: float) -> void:
 	p.potion_cd = maxf(0.0, p.potion_cd - delta)
 	p.potion_bonus_t = maxf(0.0, p.potion_bonus_t - delta)
-	if p.potion_bonus_t <= 0.0:
+	if p.potion_bonus_t <= 0.0 and p.potion_bonus_id != "":
+		var was_hp: bool = p.potion_bonus_id == Affix.ID_HP
 		p.potion_bonus_id = ""
 		p.potion_bonus_amt = 0.0
+		if was_hp:
+			p._refresh_player_hp()
 	if p.potion_hot_t > 0.0:
 		var pot_pl: CharacterBody3D = p._player()
 		var pot_step: float = p.potion_hot_left * delta / maxf(0.1, p.potion_hot_t)
@@ -107,56 +112,3 @@ static func tick_food(p: Object, delta: float) -> void:
 		pl.heal(step)
 	if p.food_t <= 0.0 or p.food_left <= 0.0:
 		p.clear_food()
-
-static func dmg(p: Object) -> int:
-	return int(stat(p, "dmg"))
-
-static func def(p: Object) -> int:
-	return int(stat(p, "def"))
-
-static func hp(p: Object) -> int:
-	return int(stat(p, "hp"))
-
-static func stat(p: Object, key: String) -> float:
-	var n := 0.0
-	for s: String in Affix.FORGE_SLOTS:
-		var it: Dictionary = p.slots.get(s, {})
-		if it.is_empty():
-			continue
-		n += float(it.get(key, 0.0))
-		if key == "crit_chance":
-			n += float(it.get("crit", 0.0))
-		var raw: Variant = it.get("affixes", [])
-		if raw is Array:
-			for row: Variant in raw:
-				if row is Dictionary and str(row.get("id", "")) == key:
-					n += float(row.get("value", 0.0))
-	var sets: Dictionary = set_stats(p)
-	if key == "crit_chance":
-		n += float(sets.get("crit", 0.0))
-	elif key == "move_spd":
-		n += float(sets.get("spd", 0.0))
-	elif key == "gather_spd" or key == "yield_chance":
-		n += float(sets.get("gather", 0.0))
-	elif sets.has(key):
-		n += float(sets.get(key, 0.0))
-	if p.food_t > 0.0 and str(p.food_bonus_id) == key:
-		n += float(p.food_bonus_amt)
-	if p.potion_bonus_t > 0.0 and str(p.potion_bonus_id) == key:
-		n += float(p.potion_bonus_amt)
-	return n
-
-static func tool_quality(p: Object) -> float:
-	return load("res://scripts/data/progress_combat.gd").tool_quality(p)
-
-static func set_counts(p: Object) -> Dictionary:
-	return load("res://scripts/data/progress_combat.gd").set_counts(p)
-
-static func set_stats(p: Object) -> Dictionary:
-	return load("res://scripts/data/progress_combat.gd").set_stats(p)
-
-static func set_bonus_text(p: Object, sid: String) -> String:
-	return load("res://scripts/data/progress_combat.gd").set_bonus_text(p, sid)
-
-static func sync_artifacts(p: Object) -> void:
-	load("res://scripts/data/progress_combat.gd").sync_artifacts(p)

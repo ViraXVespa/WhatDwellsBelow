@@ -59,10 +59,6 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 
 	return Host.slot_btn(ui, slot)
 
-static func bag_grid(ui: CanvasLayer) -> void:
-
-	Host.bag_grid(ui)
-
 static func find_sel(ui: CanvasLayer) -> Control:
 
 	return Host.find_sel(ui)

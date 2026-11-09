@@ -17,6 +17,8 @@ const TURN_RATE := 20.0
 const EASE_RATE := 12.0
 const HIDE_A := 0.03
 const MARK_N := 3
+## Shared mark nodes. A light volume checks one out; the pool grows only when it is empty.
+const POOL_N := 6
 ## Hub point lights (crystal, face lanterns) cast a player mark within this reach (m).
 const HUB_POINT_REACH := 2.2
 ## The baked full shade reads a little above the floor (soft edge, fill): the sun mark is gone by floor + SUN_SOFT.
@@ -57,13 +59,33 @@ uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 uniform float floor_l = 0.46;
 varying vec3 wpos;
+// Sun-baked quads stay VERTEX (live_shear 0) so hub debug readers see the sheared ground.
+// Other slots rebuild the head run from UV2.x (height) and these uniforms.
+uniform float live_shear = 0.0;
+uniform vec2 aim = vec2(0.406138, 0.913811);
+uniform float stretch = 0.72;
+uniform float elev = 0.45;
+uniform vec2 bake_aim = vec2(0.406138, 0.913811);
+uniform float bake_stretch = 0.72;
+uniform float bake_elev = 0.45;
 """ + Hulls.GLSL + """
 
+float reach_of(float h, float st, float el) {
+	return min(h * max(st, 0.15) / max(el, 0.001), h * clamp(0.55 + st * 0.45, 0.45, 1.35));
+}
+
 void vertex() {
-	vec4 clip = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
+	vec3 p = VERTEX;
+	if (live_shear > 0.5) {
+		float h = max(UV2.x, 0.0);
+		float baked = reach_of(h, bake_stretch, bake_elev);
+		vec2 base = p.xz - bake_aim * baked;
+		p.xz = base + aim * reach_of(h, stretch, elev);
+	}
+	vec4 clip = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(p, 1.0);
 	clip.z += 0.003 * clip.w;
 	POSITION = clip;
-	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	wpos = (MODEL_MATRIX * vec4(p, 1.0)).xyz;
 	sole_v = UV2.y > 0.0 ? UV2.y : 1.0;
 }
 
@@ -111,3 +133,44 @@ void fragment() {
 ## CPU twin of the shader's sun_cancel: the sun mark's share left at ground light l (0 in full shade).
 static func sun_left(l: float, floor_l: float) -> float:
 	return clampf((l - floor_l - SUN_SOFT) / (1.0 - floor_l - SUN_SOFT), 0.0, 1.0)
+
+## Y-billboard matches BaseMaterial3D BILLBOARD_FIXED_Y with keep-scale (Godot 4.7 Sprite3D).
+## One light tap at feet_xz, the ground shader's textureLod uv. Vertex COLOR is the sprite modulate.
+const SPRITE := """
+shader_type spatial;
+render_mode unshaded, cull_disabled, depth_prepass_alpha;
+uniform sampler2D light_tex : source_color, filter_linear, repeat_disable;
+uniform vec2 light_origin = vec2(0.0);
+uniform vec2 light_span = vec2(1.0);
+uniform vec2 feet_xz = vec2(0.0);
+uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
+uniform float cut = 0.1;
+varying vec4 mod_col;
+
+void vertex() {
+	// Billboard Mode: Y-Billboard (scene/resources/material.cpp, keep scale).
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+			vec4(normalize(cross(vec3(0.0, 1.0, 0.0), MAIN_CAM_INV_VIEW_MATRIX[2].xyz)), 0.0),
+			vec4(0.0, 1.0, 0.0, 0.0),
+			vec4(normalize(cross(MAIN_CAM_INV_VIEW_MATRIX[0].xyz, vec3(0.0, 1.0, 0.0))), 0.0),
+			MODEL_MATRIX[3]);
+	MODELVIEW_MATRIX = MODELVIEW_MATRIX * mat4(
+			vec4(length(MODEL_MATRIX[0].xyz), 0.0, 0.0, 0.0),
+			vec4(0.0, length(MODEL_MATRIX[1].xyz), 0.0, 0.0),
+			vec4(0.0, 0.0, length(MODEL_MATRIX[2].xyz), 0.0),
+			vec4(0.0, 0.0, 0.0, 1.0));
+	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
+	mod_col = COLOR;
+}
+
+void fragment() {
+	vec4 alb = texture(albedo_tex, UV);
+	vec2 xz = feet_xz;
+	vec2 span = max(light_span, vec2(0.001));
+	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
+	vec3 s = textureLod(light_tex, luv, 0.0).rgb;
+	ALBEDO = alb.rgb * mod_col.rgb * s;
+	ALPHA = alb.a * mod_col.a;
+	ALPHA_SCISSOR_THRESHOLD = cut;
+}
+"""

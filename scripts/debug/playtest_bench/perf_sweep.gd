@@ -12,7 +12,7 @@ extends Node
 ## submit_ms is the pre-draw to post-draw window. The same post-draw stamps
 ## obj/prim/draw for the visible, shadow, and canvas passes.
 ## script_ms further splits into bench_ms (hub bench _process), lit_ms (ActorLit),
-## and sample_ms (LightRt.sample_xz, also counted inside tint_ms).
+## and sample_ms (LightRt.sample_xz; actor tint does not call it).
 ## lit_ms further splits into tint_ms, drive_ms, geo_ms, sync_ms, and shade_ms.
 ## foot_ms, quad_ms, albedo_ms, and contact_ms sit inside sync_ms.
 ## sole_ms and pin_ms sit inside geo_ms. sync_rest_ms, geo_rest_ms, and lit_rest_ms
@@ -22,7 +22,7 @@ extends Node
 ## wake_ms, phys_span_ms, and post_phys_ms split the gap from post-draw to the
 ## hitch tick (App._process, where dt is measured). head_ms is that tick until
 ## this node's _process. phys_ms stays the engine monitor.
-## floor_ms, torch_ms, and bar_ms are armed here and copied at post-draw.
+## floor_ms and bar_ms are armed here and copied at post-draw.
 ## phys_obj, phys_pairs, and phys_islands are read on the hitch row when wake_ms is set.
 
 const FLAG := "--wdb-perf-sweep"
@@ -32,7 +32,6 @@ const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const DungeonBoot := preload("res://scripts/world/dungeon/dungeon_boot.gd")
-const TorchBill := preload("res://scripts/graphics/torch_bill.gd")
 const HpBar := preload("res://scripts/combat/hp_bar.gd")
 
 const Draw := preload("res://scripts/debug/playtest_bench/perf_sweep/sweep_draw.gd")
@@ -76,7 +75,7 @@ static func start() -> void:
 static func claim_hub(_host: Node, miss: String) -> bool:
 	if _inst == null or not is_instance_valid(_inst):
 		return false
-	return _inst._claim_hub(miss)
+	return Journey._claim_hub(_inst, miss)
 
 var _state: int = ST_HUB
 var _act_limit: float = 30.0
@@ -132,7 +131,6 @@ func _process(delta: float) -> void:
 		ActorLit.mark_off()
 		LightRt.mark_off()
 		DungeonBoot.disarm_floor()
-		TorchBill.disarm_torch()
 		HpBar.disarm_bar()
 		return
 	var now: int = Time.get_ticks_usec()
@@ -150,7 +148,6 @@ func _process(delta: float) -> void:
 	ActorLit.arm_mark()
 	LightRt.arm_mark()
 	DungeonBoot.arm_floor()
-	TorchBill.arm_torch()
 	HpBar.arm_bar()
 	_post_t += delta
 	if _post_t >= 0.5:

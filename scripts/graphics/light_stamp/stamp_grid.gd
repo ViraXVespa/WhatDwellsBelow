@@ -58,7 +58,7 @@ static func _blit_range(
 			if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
 				continue
 			var ni: int = npy * iw + npx
-			if walk[ni] != 0:
+			if walk[ni] != 2:
 				continue
 			var no: int = ni * 4
 			_rgba[no] = int(minf(rr[ni], 1.0) * 255.0 + 0.5)
@@ -96,18 +96,32 @@ static func _walk_rows(
 	while py < p1:
 		var row: int = py * iw
 		var fy: int = z0 * n + int((py * n) / float(K.SUB))
-		if fy >= 0 and fy < sh:
-			var srow: int = fy * sw
-			var px: int = 0
-			while px < iw:
-				var fx: int = x0 * n + int((px * n) / float(K.SUB))
-				if fx >= 0 and fx < sw and solid[srow + fx] != 0:
-					var i: int = row + px
-					_walk_buf[i] = 1
-					_floor_ix[_floor_n] = i
-					_floor_n += 1
-				px += 1
+		var px: int = 0
+		while px < iw:
+			var fx: int = x0 * n + int((px * n) / float(K.SUB))
+			var i: int = row + px
+			if _open_cell(solid, sw, sh, fx, fy):
+				_walk_buf[i] = 1
+				_floor_ix[_floor_n] = i
+				_floor_n += 1
+			elif _band(solid, sw, sh, fx, fy):
+				_walk_buf[i] = 2
+			px += 1
 		py += 1
+
+static func _open_cell(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int) -> bool:
+	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
+		return false
+	return solid[fy * sw + fx] != 0
+
+static func _band(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int) -> bool:
+	if _open_cell(solid, sw, sh, fx - 1, fy):
+		return true
+	if _open_cell(solid, sw, sh, fx + 1, fy):
+		return true
+	if _open_cell(solid, sw, sh, fx, fy - 1):
+		return true
+	return _open_cell(solid, sw, sh, fx, fy + 1)
 
 static func _lift_floor(
 	rr: PackedFloat32Array,
@@ -159,7 +173,7 @@ static func _walls(
 			if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
 				continue
 			var ni: int = npy * iw + npx
-			if walk[ni] != 0:
+			if walk[ni] != 2:
 				continue
 			rr[ni] = maxf(rr[ni], rr[i])
 			gg[ni] = maxf(gg[ni], gg[i])

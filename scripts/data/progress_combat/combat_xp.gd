@@ -16,6 +16,15 @@ static func gear_stat(p, key: String) -> float:
 		n += float(sets.get("spd", 0.0))
 	if key == Affix.ID_GATHER_SPD or key == Affix.ID_YIELD:
 		n += float(sets.get("gather", 0.0))
+	return n + consumable_bonus(p, key)
+
+## Timed food / potion bonus on one affix id (inventory.bag): food while it still heals, potion while its bonus timer runs.
+static func consumable_bonus(p, key: String) -> float:
+	var n := 0.0
+	if p.food_t > 0.0 and p.food_bonus_id == key:
+		n += p.food_bonus_amt
+	if p.potion_bonus_t > 0.0 and p.potion_bonus_id == key:
+		n += p.potion_bonus_amt
 	return n
 
 static func refresh_player_hp(p) -> void:

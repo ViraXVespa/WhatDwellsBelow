@@ -147,6 +147,3 @@ static func _shelf_row(line: String, tex: Texture2D, on_press: Callable) -> Butt
 	b.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	b.pressed.connect(on_press)
 	return b
-
-static func vend_sell(ui) -> void:
-	Vendor.vend_sell(ui)

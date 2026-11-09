@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -371,13 +372,21 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     out_log, err_log = run_log_lib.run_path(out_dir, JOB, "out.log"), run_log_lib.run_path(out_dir, JOB, "err.log")
     # Resolve the Godot executable, then launch so we have the PID for the watcher.
     exe = godot_lib.godot_exe()
-    cmd = [str(exe)] + godot_args
+    cmd, env = [str(exe)] + godot_args, None
+    # Same display pick as godot_lib.run_godot(gui=True): $DISPLAY, a live X socket, else xvfb-run (CI has no X).
+    dkind, disp = godot_lib.pick_display()
+    if dkind == "xvfb":
+        cmd = ["xvfb-run", "-a", "-s", godot_lib.XVFB_SCREEN] + cmd
+    elif disp:
+        env = dict(os.environ, DISPLAY=disp)
     slot = godot_slots.acquire(" ".join(godot_args)[:160], str(root))  # box-wide Godot cap
     proc = subprocess.Popen(
         cmd,
         cwd=root,
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        start_new_session=os.name != "nt",
     )
     stop_event = threading.Event()
     hide_thread = threading.Thread(target=_hide_godot_window, args=(stop_event, proc.pid), daemon=True)
@@ -388,7 +397,14 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
         err_log.write_bytes(stderr or b"")
         run = {"status": f"EXIT={proc.returncode}", "ms": 0, "timed_out": False}
     except subprocess.TimeoutExpired:
+        if os.name != "nt":
+            import signal
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)  # xvfb-run wrapper + Godot, our own group only
+            except ProcessLookupError:
+                pass
         proc.kill()
+        proc.communicate()
         run = {"status": "TIMEOUT", "ms": args.timeout_sec * 1000, "timed_out": True}
     finally:
         stop_event.set()

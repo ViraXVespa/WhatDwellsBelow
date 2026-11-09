@@ -10,5 +10,3 @@ Tasks link them with a relative path and a short caption.
 Layout:
 - `design/refs/<task-id>/<name>.jpg` (or .png)
 - One folder per task that needs refs.
-
-The quest-board reference is at `design/refs/ui-quest-board-posters/quest-board.jpg`.

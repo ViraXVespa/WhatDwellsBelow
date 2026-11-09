@@ -28,7 +28,6 @@ var map_tex: ImageTexture
 var map_rect: TextureRect
 var frame_acc := 0.0
 var frame_n := 0
-var walls: StaticBody3D
 var _cleared := false
 var groups: Dictionary = {}
 var next_group := 1
@@ -65,9 +64,6 @@ func _process(delta: float) -> void:
 
 func _world() -> void:
 	DungeonGeo.world(self)
-
-func _collision_walls() -> void:
-	DungeonGeo.collision_walls(self)
 
 func _build_visuals() -> void:
 	DungeonGeo.build_visuals(self)
@@ -221,10 +217,6 @@ func _note(k: String) -> void:
 
 func _center_room(r: Dictionary) -> Vector2i:
 	return DungeonCells.center_room(r)
-
-func _tick_plates() -> void:
-	# Area3D enter/exit on plate objects now drives plate_held; no per-frame walk.
-	pass
 
 func toggle_map() -> void:
 	DungeonBoot.toggle_map(self)

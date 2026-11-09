@@ -1,29 +1,28 @@
 extends Object
 
-## Wall ribbon spans, corner closes, and corner posts.
+## Wall ribbon spans. Shared ends miter on the solid side; a long or parallel join bevels.
 
 const T := preload("res://scripts/data/tunables.gd")
 const Fold := preload("res://scripts/graphics/wall_mesh/mesh_fold.gd")
 const Quad := preload("res://scripts/graphics/wall_mesh/mesh_quad.gd")
 
+const Join := preload("res://scripts/graphics/wall_mesh/mesh_span_join.gd")
+const Bevel := preload("res://scripts/graphics/wall_mesh/mesh_span_bevel.gd")
 static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var o: Vector2 = run["origin"] as Vector2
 	var d: Vector2 = run["delta"] as Vector2
 	if d.length_squared() < 0.04:
 		return
-	var n2: Vector2 = run["normal"] as Vector2
-	if n2.length_squared() < 0.0001:
-		n2 = Vector2(-d.y, d.x)
-	n2 = n2.normalized()
-	var thick: float = float(run.get("thick", 0.25))
-	if thick <= 0.0 or thick > 1.5:
-		thick = 0.25
-	thick = minf(thick, 0.3)
-	var v: Vector2 = n2 * -thick
+	var n2: Vector2 = _span_normal(run)
+	var thick: float = _span_thick(run)
 	var a: Vector2 = o
 	var b: Vector2 = o + d
-	var a2: Vector2 = a + v
-	var b2: Vector2 = b + v
+	var a2: Vector2 = a - n2 * thick
+	var b2: Vector2 = b - n2 * thick
+	if run.has("back_a"):
+		a2 = run["back_a"] as Vector2
+	if run.has("back_b"):
+		b2 = run["back_b"] as Vector2
 	var h: float = T.WALL_H
 	var run_len: float = d.length()
 	var nf: Vector3 = Vector3(n2.x, 0.0, n2.y)
@@ -74,85 +73,60 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 		var n_end: Vector3 = Vector3(d.x, 0.0, d.y).normalized()
 		Quad._quad(e1, n_end, verts, norms, uvs, indices)
 		Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(thick, 0.0), Vector2(thick, h), Vector2(0.0, h))
-static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
+static func _span_normal(run: Dictionary) -> Vector2:
+	var d: Vector2 = run["delta"] as Vector2
+	var n2: Vector2 = run["normal"] as Vector2
+	if n2.length_squared() < 0.0001:
+		n2 = Vector2(-d.y, d.x)
+	if n2.length_squared() < 0.0001:
+		return Vector2.DOWN
+	return n2.normalized()
+
+static func _span_thick(run: Dictionary) -> float:
+	var thick: float = float(run.get("thick", 0.25))
+	if thick <= 0.0 or thick > 1.5:
+		thick = 0.25
+	return minf(thick, 0.3)
+
+## Degree 2 shares a back-edge miter. Longer than about 4× thick, or parallel, bevels instead.
+static func _weld_joins(runs: Array[Dictionary], verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var pts: Dictionary = {}
 	var i: int = 0
 	while i < runs.size():
 		var run: Dictionary = runs[i]
-		var o: Vector2 = run["origin"] as Vector2
 		var d: Vector2 = run["delta"] as Vector2
-		var b: Vector2 = o + d
-		var ka: Vector2i = Fold._pt_key(o)
-		var kb: Vector2i = Fold._pt_key(b)
-		if not pts.has(ka):
-			pts[ka] = []
-		if not pts.has(kb):
-			pts[kb] = []
-		(pts[ka] as Array).append({"i": i, "end": "a", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 0.25)), "p": o})
-		(pts[kb] as Array).append({"i": i, "end": "b", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 0.25)), "p": b})
+		if d.length_squared() < 0.04:
+			i += 1
+			continue
+		var o: Vector2 = run["origin"] as Vector2
+		var n2: Vector2 = _span_normal(run)
+		var thick: float = _span_thick(run)
+		_note_end(pts, run, o, "a", n2, d, thick)
+		_note_end(pts, run, o + d, "b", n2, d, thick)
 		i += 1
 	for key in pts.keys():
 		var hits: Array = pts[key]
 		if hits.size() < 2:
 			continue
-		var nsum: Vector2 = Vector2.ZERO
-		var thick: float = 0.25
-		var p: Vector2 = (hits[0] as Dictionary)["p"]
-		for raw in hits:
-			var hit: Dictionary = raw
-			var ri: int = int(hit["i"])
-			var run2: Dictionary = runs[ri]
-			if str(hit["end"]) == "a":
-				run2["cap_a"] = false
-			else:
-				run2["cap_b"] = false
-			nsum += hit["n"] as Vector2
-			thick = maxf(thick, float(hit["thick"]))
-			p = hit["p"] as Vector2
-		if nsum.length_squared() < 0.0001:
-			nsum = Vector2.DOWN
-		_corner_post(p, nsum.normalized(), thick, T.WALL_H, verts, norms, uvs, indices)
-## Corner post faces: corners as (x, y, z) picks of (min, max) per axis, then the face normal. Bottom stays open.
-const _POST_FACES: Array = [
-	[[Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 1, 1), Vector3i(0, 1, 0)], Vector3.LEFT],
-	[[Vector3i(1, 0, 1), Vector3i(1, 0, 0), Vector3i(1, 1, 0), Vector3i(1, 1, 1)], Vector3.RIGHT],
-	[[Vector3i(0, 0, 1), Vector3i(1, 0, 1), Vector3i(1, 1, 1), Vector3i(0, 1, 1)], Vector3.FORWARD],
-	[[Vector3i(1, 0, 0), Vector3i(0, 0, 0), Vector3i(0, 1, 0), Vector3i(1, 1, 0)], Vector3.BACK],
-	[[Vector3i(0, 1, 0), Vector3i(0, 1, 1), Vector3i(1, 1, 1), Vector3i(1, 1, 0)], Vector3.UP],
-]
+		if hits.size() == 2:
+			Join._join_two(hits[0] as Dictionary, hits[1] as Dictionary, T.WALL_H, verts, norms, uvs, indices)
+		else:
+			Join._join_many(hits, T.WALL_H, verts, norms, uvs, indices)
 
-static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
-	var t: float = clampf(thick, 0.2, 0.3)
-	var nx: float = 0.0
-	var nz: float = 0.0
-	if absf(n2.x) >= 0.01:
-		nx = -t if n2.x > 0.0 else t
-	if absf(n2.y) >= 0.01:
-		nz = -t if n2.y > 0.0 else t
-	if absf(nx) < 0.01 and absf(nz) < 0.01:
-		nx = -t
-		nz = -t
-	var x0: float = p.x if nx >= 0.0 else p.x + nx
-	var x1: float = p.x + nx if nx >= 0.0 else p.x
-	var z0: float = p.y if nz >= 0.0 else p.y + nz
-	var z1: float = p.y + nz if nz >= 0.0 else p.y
-	if x1 < x0:
-		var sx: float = x0
-		x0 = x1
-		x1 = sx
-	if z1 < z0:
-		var sz: float = z0
-		z0 = z1
-		z1 = sz
-	var y0: float = 0.0
-	var y1: float = h
-	var xs: Array[float] = [x0, x1]
-	var ys: Array[float] = [y0, y1]
-	var zs: Array[float] = [z0, z1]
-	for f: Array in _POST_FACES:
-		var q: PackedVector3Array = PackedVector3Array()
-		for c: Vector3i in f[0]:
-			q.append(Vector3(xs[c.x], ys[c.y], zs[c.z]))
-		Quad._quad(q, f[1], verts, norms, uvs, indices)
-		var v: float = t if f[1] == Vector3.UP else h
-		Quad._uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, v), Vector2(0.0, v))
+static func _note_end(pts: Dictionary, run: Dictionary, p: Vector2, end: String, n2: Vector2, d: Vector2, thick: float) -> void:
+	var key: Vector2i = Fold._pt_key(p)
+	if not pts.has(key):
+		pts[key] = []
+	var back: Vector2 = p - n2 * thick
+	var hit: Dictionary = {
+		"run": run,
+		"end": end,
+		"p": p,
+		"n": n2,
+		"d": d,
+		"thick": thick,
+		"back": back,
+		"ang": atan2(back.y - p.y, back.x - p.x),
+		"fang": atan2(n2.y, n2.x),
+	}
+	(pts[key] as Array).append(hit)

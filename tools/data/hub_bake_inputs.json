@@ -20,7 +20,7 @@
   "scripts/graphics/light_rt/hub_bake.gd": "29b279881f5ec929",
   "scripts/graphics/light_rt/hub_blur.gd": "ea7041a728f59aee",
   "scripts/graphics/light_rt/hub_cast.gd": "ba84fb543b764bcb",
-  "scripts/graphics/light_rt/hub_hulls.gd": "f3555342dfd90efa",
+  "scripts/graphics/light_rt/hub_hulls.gd": "c7fb61717279aee9",
   "scripts/graphics/light_rt/hub_props.gd": "df72a5ed082fa73b",
   "scripts/graphics/light_rt/hub_roof.gd": "e9a52e5ebf5242cc",
   "scripts/graphics/light_rt/hub_shadow.gd": "94ad540d21b937b1",

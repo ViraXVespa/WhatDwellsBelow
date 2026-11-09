@@ -122,40 +122,6 @@ static func add_hold(p: Object, it: Dictionary) -> String:
 	App.save_now()
 	return App.tr("common.forged_into_a_hold") % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
-static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
-	if a is Dictionary:
-		var it_a: Dictionary = a
-		var idx: int = int(b)
-		var slot_a := str(it_a.get("slot", ""))
-		var type_a := type_of(it_a)
-		var drop_uid := 0
-		var arr: Array = p.holds.get(slot_a, [])
-		if idx >= 0 and idx < arr.size() and arr[idx] is Dictionary:
-			drop_uid = int(arr[idx].get("uid", 0))
-		return replace_hold(p, slot_a, type_a, drop_uid, it_a)
-	var slot := str(a)
-	var type_id := str(b)
-	var drop_uid2: int = int(c)
-	var it: Dictionary = d if d is Dictionary else {}
-	var h: Array = p.holds.get(slot, [])
-	if drop_uid2 != 0:
-		for i: int in h.size():
-			if int(h[i].get("uid", 0)) == drop_uid2 and type_of(h[i]) == type_id:
-				h.remove_at(i)
-				break
-	if holds_of(p, slot, type_id).size() >= HOLD_CAP:
-		return App.tr("common.holds_full")
-	h.append(it)
-	p.holds[slot] = h
-	p.forge_count += 1
-	p.add_perm_xp("smith", Balance.f("xp_smith", 12.0))
-	App.save_now()
-	return App.tr("common.forged_into_a_hold") % [holds_of(p, slot, type_id).size(), HOLD_CAP]
-
-static func to_meta(p: Object) -> Dictionary:
-	var Book = load("res://scripts/data/progress_forge/book.gd")
-	return {"forge_book": Book.book(p)}
-
 static func from_meta(p: Object, d: Dictionary) -> void:
 	var Book = load("res://scripts/data/progress_forge/book.gd")
 	var raw: Variant = d.get("forge_book", {})

@@ -1,7 +1,6 @@
 @tool
 extends Node3D
 
-const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 const Dbg := preload("res://scripts/app/dbg.gd")
 const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -172,7 +171,6 @@ func _step_spot_vendor() -> void:
 	var v: Node3D = Spot._new_spot(self, "vendor", _layout.spot_pos("Vendor"))
 	if v:
 		v.global_position.y = -0.02  # world FLOOR_Y
-		ActorLit.bind(v, v.get("spr") as Sprite3D)
 	Dbg.hitch("hub_spot_vendor")
 
 func _step_spot_dumpster() -> void:

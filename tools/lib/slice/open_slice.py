@@ -17,6 +17,10 @@ note (creating the flow is the first job step, not a stop) and the launch contin
 slice.py start inside the worktree.
 --task ID reads design/tasks/ID.md (AREA defaults to its `resume:` line): with no prompt given it writes a short first message (`slice.py start --job|--door AREA --task ID`, or `--door D --from-task ID` for a handoff, then `docs.py task show ID`; read that file whole).
 `_src` is in the repo, so the worktree already has it. `needs-local` is retired: a task that still sets it fails loudly and nothing is linked.
+`addons/` is gitignored (the Godot AI plugin from the Asset Library). After the worktree exists, this tool junctions
+`worktree/addons` to this checkout's `addons/` so the new checkout loads the same install. A copy is only the fallback when
+that junction cannot be created. Remove worktrees with `grok worktree rm` or `git worktree remove` (those drop the junction
+and leave the checkout install). Do not recursively delete the worktree folder in PowerShell 5.1.
 This is the only tool that launches grok for a Build slice (the isolated-media runner is the other launcher, under its own gate).
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
 """
@@ -53,6 +57,55 @@ def session_argv(grok: str, wt: str, prompt: str) -> list[str]:
     """Trust this folder. `grok --worktree --trust` trusts the source checkout, not the new one."""
     return [grok, "--cwd", wt, "--trust"] + ([prompt] if prompt else [])
 
+def _reparse(path: Path) -> bool:
+    """True for a symlink or a Windows directory junction. os.path.islink does not see junctions."""
+    if path.is_symlink():
+        return True
+    if os.name != "nt" or not os.path.lexists(path):
+        return False
+    import ctypes
+
+    get_attrs = ctypes.windll.kernel32.GetFileAttributesW
+    get_attrs.argtypes = [ctypes.c_wchar_p]
+    get_attrs.restype = ctypes.c_uint32
+    attrs = get_attrs(str(path))
+    return attrs != 0xFFFFFFFF and bool(attrs & 0x400)
+
+def link_addons(src: Path, wt: Path) -> str:
+    """Point wt/addons at src/addons. Junction on Windows, symlink elsewhere. Copy only if that cannot be created."""
+    src_addons = src / "addons"
+    dest = wt / "addons"
+    if not src_addons.is_dir():
+        return ("ADDONS MISSING: this checkout has no addons/ (godot_ai is a local Asset Library install and is gitignored). "
+                "The worktree will not load the Godot AI plugin.")
+    if os.path.lexists(dest):
+        if _reparse(dest):
+            return "addons: worktree addons/ already points at an install; left it."
+        return "ADDONS PRESENT: worktree addons/ is a real directory; left it in place."
+    warn = "" if (src_addons / "godot_ai" / "plugin.cfg").is_file() else " WARN: addons/godot_ai/plugin.cfg is not in the checkout install."
+    err = "junction failed"
+    if os.name == "nt":
+        proc = subprocess.run(["cmd", "/c", "mklink", "/J", str(dest), str(src_addons)],
+                              capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if proc.returncode == 0 and dest.exists():
+            return "addons: junction worktree/addons -> checkout addons/ (shared gitignored install)." + warn
+        tail = (proc.stderr or proc.stdout or err).strip().splitlines()
+        err = (tail[-1] if tail else err)[:180]
+    else:
+        try:
+            dest.symlink_to(src_addons, target_is_directory=True)
+            return "addons: symlink worktree/addons -> checkout addons/ (shared gitignored install)." + warn
+        except OSError as exc:
+            err = str(exc)[:180]
+    try:
+        shutil.copytree(src_addons, dest)
+    except OSError as exc:
+        return f"ADDONS FAILED: could not junction or copy addons/ ({err}; copy {exc})."
+    return f"ADDONS COPIED: junction was not created ({err}). This copy will not follow later edits in the checkout addons/."
+
+ADDONS_NOTE = ("addons: after create, junction worktree/addons to this checkout's addons/ "
+               "(gitignored godot_ai install; copy only if the junction cannot be created).")
+
 def task_prompt(tid: str, path: str, area: str, t: dict | None = None) -> str:
     """First message for --task: a committed handoff (it has `from:`) restarts with --from-task; any other task with --task."""
     t = t or {}
@@ -60,7 +113,9 @@ def task_prompt(tid: str, path: str, area: str, t: dict | None = None) -> str:
         start = handoff_lib.from_task_cmd(t["door"], tid, t.get("job", "")) + f", then python tools/docs.py task show {tid}"
     else:
         start = f"python tools/slice.py start {task_lib.start_flag(area)} {area} --task {tid}, then python tools/docs.py task show {tid}"
-    return f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole."
+    return (f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole. "
+            "The start command writes session-plan.md; read that next and do not re-gather what it holds. "
+            "In that same turn, trim its gathered half to this unit and write the four sections above the marker as facts land.")
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Start grok in a new worktree from the week branch (user-run launcher).", writes=True)
@@ -138,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     warn = slice_lib.area_warning(root, area) if area else ""
     lines.append(f"prompt: {len(prompt)} chars, starts {prompt[:60]!r}, sha256 {hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:12]}" if prompt else "prompt: none (a blank session)")
     lines += [hand_note] if hand_note else []
+    lines.append(ADDONS_NOTE)
     lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/slice.py start --door <door>` (the card; a later run says where the slice stands).")
     if dry:
@@ -149,7 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     if p.returncode != 0 or not str(wt) or not wt.is_dir():
         return end("\n".join(lines + [f"WORKTREE CREATE FAILED (exit {p.returncode}): {(p.stdout + p.stderr).strip()[:400]}"]), "FAIL", route="create-failed")
     cmd = session_argv(exe, str(wt), prompt)
-    end("\n".join(lines + [f"worktree {wt}", f"SESSION: {show(cmd)}", "Starting grok now (this terminal is handed over)."]), "PASS", route="launch")
+    addon_line = link_addons(Path(root), wt)
+    end("\n".join(lines + [addon_line, f"worktree {wt}", f"SESSION: {show(cmd)}", "Starting grok now (this terminal is handed over)."]), "PASS", route="launch")
     sys.stdout.flush()
     try:
         if os.name == "nt":
@@ -238,6 +295,30 @@ def selftest(script: list[str]) -> int:
         code, out = run(clone, "--dry-run")
         if code == 0 or "IN A WORKTREE" not in out:
             bad.append("inside a Grok clone worktree (.git is a directory) it must refuse")
+        src = root / "addons" / "godot_ai"
+        src.mkdir(parents=True)
+        (src / "plugin.cfg").write_text("[plugin]\n", encoding="utf-8")
+        linked = Path(td) / "linked-wt"
+        linked.mkdir()
+        line = link_addons(root, linked)
+        seen = linked / "addons" / "godot_ai" / "plugin.cfg"
+        if not seen.is_file() or ("junction" not in line and "symlink" not in line and "ADDONS COPIED" not in line):
+            bad.append(f"addons must be visible in the worktree through a junction, symlink, or copy ({line})")
+        if _reparse(linked / "addons") and os.name == "nt":
+            subprocess.run(["cmd", "/c", "rmdir", str(linked / "addons")], check=False)
+        elif _reparse(linked / "addons"):
+            (linked / "addons").unlink()  # a symlink off Windows: drops the link, not the install
+        elif (linked / "addons").exists():
+            shutil.rmtree(linked / "addons")
+        if not (src / "plugin.cfg").is_file():
+            bad.append("removing the worktree addons entry must keep the checkout install")
+        missing = Path(td) / "no-addons-src"
+        missing.mkdir()
+        (missing / "keep.txt").write_text("x", encoding="utf-8")
+        bare = Path(td) / "bare-wt"
+        bare.mkdir()
+        if not link_addons(missing, bare).startswith("ADDONS MISSING"):
+            bad.append("a checkout with no addons/ must say ADDONS MISSING")
     return agent_log.selftest_result(bad)
 
 if __name__ == "__main__":

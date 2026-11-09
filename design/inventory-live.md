@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: catalog sets or required slots  
+Code: `scripts/data/gear_rules/rules_norm.gd` (`Norm`), `scripts/data/gear_rules/rules_kit.gd` (`Kit`), `scripts/data/catalog.gd`
 
 ## Catalog sets
 
@@ -24,4 +25,4 @@ Pause inventory uses a 7-column bag grid and shows gold / ore / wood / cap.
 
 `Gear.ensure_required_slots` runs after new-progress `reset_meta`, save `from_meta`, and recap `lose_unextracted`. An empty or invalid weapon or tool slot takes the selected hold when `hold_pick` is in range for that slot; otherwise it takes the current starter (`pick_weapon` / `tool_type`). Head, body, legs, potion, and food are not filled by this path. `begin_run_loadout` uses the same weapon/tool rule so hub and dungeon match.
 
-Forge ledger lives on `App.prog.forge_book`, keyed `slot:type:rarity`. Legacy `analyzed` remnants migrate into that book once and then clear. Load also runs `Rules.normalize_prog` so pre-affix saves pick up item level, Finish, Fortune, and capped affix rows.
+Forge ledger lives on `App.prog.forge_book`, keyed `slot:type:rarity`. Legacy `analyzed` remnants migrate into that book once and then clear. Load also runs `Norm.normalize_prog` (`scripts/data/gear_rules/rules_norm.gd`, from `store_data.gd`) so pre-affix saves pick up item level, Finish, Fortune, and capped affix rows.

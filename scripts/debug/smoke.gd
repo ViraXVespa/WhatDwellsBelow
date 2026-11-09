@@ -25,8 +25,6 @@ const PerfSweep := preload("res://scripts/debug/playtest_bench/perf_sweep.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
-static var enter_flag: bool = false
-
 static func args() -> PackedStringArray:
 	# Prefer user args (after --). Fall back to full cmdline so Steam/redirected
 	# launches still see --wdb-phaseN-smoke when user-args arrive empty.
@@ -147,18 +145,18 @@ static func attach_dungeon(host: Node) -> void:
 	if phase(9):
 		Late.p9(host)
 
+static var _p6_ran := false
+
 static func attach_camp(host: Node) -> void:
 	if HubBench.active():
 		HubBench.attach(host)
 	if ShotTool.active():
 		ShotTool.attach_dungeon(host)
-	if phase(6):
+	if phase(6) and not _p6_ran:
+		_p6_ran = true  # the P6 deep sweep enters the dungeon and comes back; the new camp must not restart it
 		Late.p6(host)
 	if phase(8):
 		Late.p8(host)
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
-static func quit_in(host: Node, sec: float) -> void:
-	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())

@@ -75,7 +75,6 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		"post_phys_ms": rt._post_phys_ms,
 		"head_ms": rt._head_ms,
 		"floor_ms": rt._floor_ms,
-		"torch_ms": rt._torch_ms,
 		"bar_ms": rt._bar_ms
 	}
 	for key: String in timings:

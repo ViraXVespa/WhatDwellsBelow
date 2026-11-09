@@ -10,6 +10,15 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Restyle = edit a token (or a skin script), rebuild, shoot. No live skin switching, no autoload.
 - On purpose separate: HUD draw alphas (`touch_hud/hud_draw.gd` builds on tokens), the title / splash / fs-gate / loader / prompt / hud local label twins. Merge one only on her word.
 
+## Shared helpers
+Small scripts callers preload directly; a change here reaches every screen that loads them.
+- `scripts/ui/plate_chrome.gd` (`Plate`: dim, plate, edge, overlay): dungeon overlay plate tokens and ColorRect helpers.
+- `scripts/ui/scroll_cue.gd` (`ScrollCue`: attach, more): the more-below cue on scroll boxes.
+- `scripts/ui/tip_place.gd` (`TipPlace`: defer_next_frame, clamp_pos, near): tooltip placement.
+- `scripts/ui/wipe_children.gd` (`WipeChildren`: wipe): child teardown before a rebuild.
+- `scripts/ui/ui_session.gd` (`UiSession`: status, open, close): pause the tree and set `App.ui_open` (optional prompt footer) when a full-screen UI opens or closes.
+- `scripts/ui/skill_row_view.gd` (`SkillRow`: hl, skill_lab, make_track, single_fill, row_single): shared skill label and single-fill XP track.
+
 ## Control skins (`scripts/ui/btn_skin.gd`)
 - Outside the pause journal, buttons, tabs and gear slots wear a skin from `ui_tokens.gd` `SKINS`: `neutral` (hub cream-plate menus, ghost shop, anvil), `title` (title card, news, archives: also turns ink labels and plates dark), `crystal` (loadout crystal, dungeon floor crystal, extraction gate). Death recap uses the pause Skills journal (two sheets, `SKILLS_LEFT`) and leaves `btn_skin` unset, so its buttons stay paper.
 - A host names its skin with meta `btn_skin` or a `btn_skin()` method; the progress panel asks its open frame (`BTN_SKIN` const on the frame script, else `neutral`). No skin found = paper (the journal).

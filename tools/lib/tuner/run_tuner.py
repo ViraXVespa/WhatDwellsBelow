@@ -13,6 +13,7 @@ import random
 import socket
 import struct
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -147,22 +148,31 @@ def load_rows(db: Path) -> list[dict]:
     return dedupe(rows)
 
 
+def row_key(row: dict) -> tuple:
+    return (
+        str(row.get("run_id", "")),
+        str(row.get("t", "")),
+        str(row.get("goal", "")),
+        str(row.get("why", "")),
+        str(row.get("source", "")),
+    )
+
+
 def dedupe(rows: list[dict]) -> list[dict]:
     seen = set()
     out = []
     for row in rows:
-        key = (
-            str(row.get("run_id", "")),
-            str(row.get("t", "")),
-            str(row.get("goal", "")),
-            str(row.get("why", "")),
-            str(row.get("source", "")),
-        )
+        key = row_key(row)
         if key in seen:
             continue
         seen.add(key)
         out.append(row)
     return out
+
+
+def new_count(before: list[dict], fresh: list[dict]) -> int:
+    old = {row_key(row) for row in before}
+    return len({row_key(row) for row in fresh} - old)
 
 
 def label_of(row: dict) -> str:
@@ -464,14 +474,36 @@ def score_frames(folder: str) -> str:
     return f"frames={len(files)} frame_flags={n_flag}"
 
 
-def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
+def open_frame_map(tag: str):
+    """Fixed-size named frame region (design/tasks/local-ai-tuner.md). Windows: a named file mapping (`tagname`,
+    Windows-only in Python). Elsewhere: a same-named file in /dev/shm (else the temp dir), opened by both sides."""
     import mmap
+    if os.name == "nt":
+        return mmap.mmap(-1, MMAP_SIZE, tagname=tag)
+    base = Path("/dev/shm") if Path("/dev/shm").is_dir() else Path(tempfile.gettempdir())
+    fd = os.open(base / tag, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        if os.fstat(fd).st_size != MMAP_SIZE:
+            os.ftruncate(fd, MMAP_SIZE)
+        return mmap.mmap(fd, MMAP_SIZE)
+    finally:
+        os.close(fd)
+
+
+def close_frame_map(tag: str) -> None:
+    if os.name != "nt":
+        for base in (Path("/dev/shm"), Path(tempfile.gettempdir())):
+            (base / tag).unlink(missing_ok=True)
+
+
+def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
     if MMAP_SIZE != 230464:
         return "size"
+    tag = f"{tag}-{os.getpid()}"
     width, height, stride = 4, 2, 16
     pix = bytes([7, 8, 9, 10]) * (width * height)
     try:
-        writer = mmap.mmap(-1, MMAP_SIZE, tagname=tag)
+        writer = open_frame_map(tag)
     except TypeError:
         return "tagname"
     except OSError:
@@ -485,7 +517,7 @@ def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
         writer.write(pix)
         writer.seek(20)
         writer.write(struct.pack("<I", 3))
-        reader = mmap.mmap(-1, MMAP_SIZE, tagname=tag)
+        reader = open_frame_map(tag)
         try:
             reader.seek(0)
             magic = reader.read(4)
@@ -498,6 +530,7 @@ def mmap_roundtrip(tag: str = "wdb-tuner-selftest") -> str:
             reader.close()
     finally:
         writer.close()
+        close_frame_map(tag)
     return ""
 
 
@@ -1158,10 +1191,10 @@ def do_loop(args, root: Path) -> int:
     try:
         while True:
             cycle += 1
-            before = len(load_rows(db))
+            before_rows = load_rows(db)
             work = Path(tempfile.mkdtemp(prefix="wdb-tuner-loop-"))
             try:
-                _text, res = launch_smoke(
+                text, res = launch_smoke(
                     root, loop_flags(int(args.rows)), float(args.wait), work, timeout=int(args.wait)
                 )
             except Exception as exc:
@@ -1171,8 +1204,10 @@ def do_loop(args, root: Path) -> int:
                 raise
             status = str(res.get("status", ""))
             fresh = load_rows(db)
-            added = len(fresh) - before
-            note(f"cycle={cycle} godot={status} added={added} labeled={len(labeled(fresh))}")
+            added = new_count(before_rows, fresh)
+            stop = parse_pt(text).get("campaign_stop", "")
+            tail = f" stop={stop}" if stop else ""
+            note(f"cycle={cycle} godot={status} added={added} labeled={len(labeled(fresh))}{tail}")
             if status.startswith("COMPILE"):
                 note("Godot reported a compile error. The loop stopped.")
                 return finish(args, root, lines, "FAIL", cmd="loop")
@@ -1273,6 +1308,14 @@ def transfer_selftest() -> list[str]:
         bad.append("loop flags row cap")
     if "--wdb-pt-gather=200" not in loop_flags(200):
         bad.append("loop flags keep cap")
+    old_row = {"ev": "decide", "run_id": "a", "t": 1, "goal": "hunt", "why": "near"}
+    new_row = {"ev": "decide", "run_id": "b", "t": 1, "goal": "door", "why": "stairs"}
+    if new_count([old_row], [new_row]) != 1:
+        bad.append("new decide hidden by a shorter spool")
+    if new_count([old_row], []) != 0:
+        bad.append("pruned spool counted as new")
+    if new_count([old_row], [old_row]) != 0:
+        bad.append("same spool counted as new")
     return bad
 
 

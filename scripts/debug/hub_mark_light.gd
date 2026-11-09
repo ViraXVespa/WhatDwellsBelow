@@ -9,7 +9,6 @@ extends RefCounted
 ## must FAIL double. Both getters return "" when fine, else the numbers.
 
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
-const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const MIN_DOT := 0.9

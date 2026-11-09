@@ -95,12 +95,6 @@ var bank_wood: int = Def.bank_wood:
 		bank_wood = v
 		bank_changed.emit()
 var bank_root: int = Def.bank_root
-var mine_lv := 1
-var wood_lv := 1
-var mine_xp := 0.0
-var wood_xp := 0.0
-var pickaxe_q := 1
-var hatchet_q := 1
 var run_artifacts: Array[String] = []
 var shrine_t := 0.0
 var toast_msg := ""
@@ -383,9 +377,3 @@ func pause_just() -> bool:
 
 func swallow_close_pad() -> void:
 	Pad.swallow_close()
-
-func note_bank() -> void:
-	bank_changed.emit()
-
-func note_prompt() -> void:
-	prompt_changed.emit()

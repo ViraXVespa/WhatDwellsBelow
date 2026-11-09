@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: artifacts/collections, extraction mailing, vendor restock  
+Code: `scripts/data/progress_quest/restock.gd`, `scripts/data/progress/extract.gd`
 
 ## Artifacts and collections
 

@@ -28,7 +28,7 @@ import week_pin
 TOOLS = Path(__file__).resolve().parents[2]
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, catch-up pins, gc, clean. A seed-commit failure returns before gc and clean.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Week start (Build, main checkout, on main): seed version, week branch, catch-up pins, gc, clean. Off main, stop with reason=not-main. A seed-commit failure returns before gc and clean.", writes=True, json_out=True)
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = args.dry_run
@@ -59,11 +59,14 @@ def main(argv: list[str] | None = None) -> int:
     branch = f"grok-build-w{new_series}"
     # 0. where we are: the seed commit goes on the new branch, cut from an up-to-date main
     cur = repo_lib.run_git(root, "rev-parse", "--abbrev-ref", "HEAD")[1].strip()
-    behind = repo_lib.run_git(root, "rev-list", "--count", "HEAD..origin/main")[1].strip()
     if cur != "main":
-        say(f"WARN on branch {cur}, not main: run from main (git switch main; git pull)")
-        if not dry:
-            agent_log.fail(f"on branch {cur}: run release.py week-start from main (git switch main; git pull)")
+        say("STOP check out main and resume at step 1 of design/build-week-start.md. Do not read this branch to diagnose the failure.")
+        say(f"branch={cur}")
+        return agent_log.finish(
+            "week-start", root, "\n".join(out), "FAIL", args=args, echo="",
+            reason="not-main", branch=cur, dry_run=dry,
+        )
+    behind = repo_lib.run_git(root, "rev-list", "--count", "HEAD..origin/main")[1].strip()
     if behind.isdigit() and int(behind) > 0:
         say(f"WARN main is {behind} commit(s) behind origin/main: git pull first so the branch starts after CI's stamp and archive commits")
     if repo_lib.run_git(root, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}")[0] == 0:
