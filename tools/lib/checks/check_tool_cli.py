@@ -42,6 +42,9 @@ MEDIA_IMPORTS = ("PIL", "numpy", "cv2", "wave", "scipy")
 PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "read_summary"}
 NO_ROOT: set[str] = set()
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
+# staged JSON hooks: stdin event in, one {"decision": ...} line out, no argv CLI. They get the
+# hook probe instead of the CLI probes: bad stdin must fail closed (exit 2 + a JSON "deny").
+HOOKS = {"review_hook"}
 WRITERS = {
     "doc_patch", "code_map", "tunables", "build_changelog",
     "week_pin", "list_unused_funcs", "task", "split_funcs", "facade_requal",
@@ -207,6 +210,8 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int], cmd:
     except SyntaxError as exc:
         bad.append(f"COMPILE {path.name}: {exc.msg} line {exc.lineno}")
         return
+    if name in HOOKS:
+        return  # JSON hook, not a CLI: smoke_run's hook_probe checks it fails closed
     if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         bad.append(f"ARGS    {path.name}: no argparse (use agent_log.std_parser)")
     if kind == "ops" and name not in PRINTERS:
@@ -265,6 +270,19 @@ def make_sandbox(root: Path) -> Path:
     for cmd in (["init", "-q"], ["add", "-A"], ["commit", "-qm", "base"]):
         subprocess.run(git + cmd, cwd=sb, capture_output=True)
     return sb
+
+def hook_probe(sb: Path, unit: tuple, bad: list[str], table: list[str]) -> None:
+    """A staged JSON hook must deny (exit 2, one JSON object with decision=deny) on empty or junk stdin."""
+    for label, feed in (("(empty stdin)", ""), ("(junk stdin)", "not json")):
+        proc = subprocess.run(unit[1], cwd=sb, input=feed, capture_output=True, text=True, timeout=60,
+                              env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+        table.append(f"{unit[2]:28} rc={proc.returncode} hook {label}")
+        try:
+            got = json.loads(proc.stdout)
+        except ValueError:
+            got = None
+        if "Traceback" in proc.stderr or proc.returncode != 2 or not isinstance(got, dict) or got.get("decision") != "deny":
+            bad.append(f"HOOK    {unit[2]} {label}: want exit 2 + one JSON object with decision=deny, got exit {proc.returncode}")
 
 def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], table: list[str], unit: tuple) -> None:
     args, ok_codes = (case[0], case[1]) if isinstance(case, tuple) else (case, (0, 1))
@@ -336,6 +354,9 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
             src = unit[0].read_text(encoding="utf-8-sig")
             if (only and stem not in only) or stem.endswith("_lib") or "__main__" not in src or src.lstrip("#!/usr/bin/env python3\n ").startswith('"""Shim'):
                 return 0, 0, local_bad, local_table
+            if stem in HOOKS:
+                hook_probe(sb, unit, local_bad, local_table)
+                return 1, 2, local_bad, local_table
             cases = [["--nope"]]
             helptext = subprocess.run([*unit[1], "--help"], cwd=sb,
                                       capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60).stdout
