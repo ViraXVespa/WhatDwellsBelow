@@ -6,7 +6,7 @@ status: active
 done-when: Pause-menu Report Bug opens a GitHub issue on ViraXVespa/WhatDwellsBelow through the relay (no player GitHub account, no token in any build), with rate limit and spam filter live.
 resume: Vira names this task in a web session, which reads this file whole.
 
-Vira approved 2026-10-25 (t601u). Server side is live; game side built (2026-10-25). Desktop live UI proven 2026-11-09 (#81, #82); a live web-build send remains.
+Vira approved 2026-10-25 (t601u). Server side is live; game side built (2026-10-25). Desktop live UI proven 2026-11-09 (#81, #82); Vira accepted the desktop proof on 2026-11-09, so no live web-build send is required.
 
 ## Decisions (Vira, 2026-10-25)
 - Report Bug shows in **all** builds (web, desktop; release and debug).
@@ -27,19 +27,19 @@ Worker `wdb-bug-relay` at `https://wdb-bug-relay.viraxvespa.workers.dev` on Vira
 | `GET\|POST /unsubscribe?r=&t=` | signed link in every email; turns opt-in off and drops queued mail |
 
 ## Game side (built)
-- Pause > Settings > **Report Bug** page, every build (`scripts/ui/pause_settings/report_page.gd`): Area and What happened cycle on A (a pad-only player can send without typing), optional Details and Email fields, "Email me about this report", Attach a screenshot (menu hidden for two frames, JPEG <=1280 px), Send Report. Typed keys go to the field, not the tab binds (`menu_pad.typing`).
+- Pause > Settings > **Report Bug** page, every build (`scripts/ui/pause_settings/report_page.gd`): optional Summary (the issue title), Door then Job comboboxes (`report_pick.gd`; Job disabled until a door is picked, reset on a door change; no door = triage, door alone = door) with the highlighted item's description under them, What happened (cycles on A, so a pad-only player can send without typing), optional Details and Email fields, "Email me about this report", Attach a screenshot (menu hidden for two frames, JPEG <=1280 px), Send Report. Typed keys go to the field, not the tab binds (`menu_pad.typing`).
 - `scripts/app/bug_report/`: `bug_send.gd` (`RELAY_URL`, install id in `user://install_id.txt`, payload, HTTPRequest POST under App), `bug_state.gd` (state report, the relay's keys only: version label + week-open commit, platform, build, scene, floor, seed, pos, loadout, recent, perf, settings, run, uptime), `crash_mark.gd` (session marker; an unclean exit offers the scrubbed tail of the previous `user://logs` file; off on web and in smokes).
-- Areas map to doors; `scripts/data/bug_doors.gd` is generated with `src/doors.js` by `gen-doors.mjs` (the relay test fails when either is stale). Smoke: P1 `bug_report_ok` (`scripts/debug/smoke/bug_report_check.gd`). Shots: `camp-pause-pages` `settings-report`, `settings-report-open`.
+- Doors/jobs: `gen-doors.mjs` generates `src/doors.js`, `scripts/data/bug_doors.gd` and `scripts/data/bug_doors.json` (picker names and descriptions from routes.yaml and the docs' H1 / Read when lines; the relay test fails when any is stale). Smoke: P1 `bug_report_ok` (`scripts/debug/smoke/bug_report_check.gd`). Shots: `camp-pause-pages` `settings-report`, `settings-report-open`, `settings-report-door-open`, `settings-report-job-open`, `settings-report-picked`.
 - Live dry run (stores nothing; counts toward the 10/h IP limit): a `--script` SceneTree that waits two frames, `load()`s `bug_send.gd` and calls `post(payload(form, "", true), cb)`; desktop 2026-10-25 returned 200 with labels `bug-report, door:ui, build:dev, platform:linux` and no email in the response.
 
 ## Left
 - **Desktop UI proof:** done 2026-11-09. Vira sent live in-game reports from a Windows dev build (`0.11.0 @cffcfb69`) through Pause > Settings > Report Bug: [#81](https://github.com/ViraXVespa/WhatDwellsBelow/issues/81) and [#82](https://github.com/ViraXVespa/WhatDwellsBelow/issues/82), each labelled `bug-report, door:dungeon, build:dev, platform:windows`, with screenshot and state report and no email in the issue.
-- **Web proof:** dry run only (2026-10-31: `release.py export-web --debug --out DIR`, then `perf.py web --site DIR --flow bug-dry` returned 200 with labels `bug-report, door:triage, build:debug, platform:web`, email `none`; no GitHub token string in the export). A live web-build submission is the one item "Proves it" still lacks. It is Vira's to send; the Bot does not create reports.
+- **Web proof:** dry run only (2026-10-31: `release.py export-web --debug --out DIR`, then `perf.py web --site DIR --flow bug-dry` returned 200 with labels `bug-report, door:triage, build:debug, platform:web`, email `none`; no GitHub token string in the export). Vira accepted the desktop proof on 2026-11-09 (t760u); no live web-build send is required.
 - **Email sending:** live Resend delivery verified 2026-11-07 for [#78](https://github.com/ViraXVespa/WhatDwellsBelow/issues/78) (provider delivery, not inbox placement). See `tools/relay/README.md`. Player replies to `/ask` are a separate, unimplemented capability.
 - **Abuse protection:** rate limits and spam filter live; mocked tests cover refusal. No live burst test is required.
 - **Webhook:** live (id 703111592, issues + issue_comment, ping 200).
 - **Backspace in the email field:** fixed 2026-11-09 (`report_page.gd` `guard_backspace`; Backspace is also `ui_cancel`, which LineEdit checked first). P1 `bug_report_ok` now covers it.
-- **Vira's follow-ups (notes/wdb_todo_list.txt, not started):** Area as a combobox instead of a click toggle; separate door and job pickers with descriptions pulled from the design docs, ideally auto-populated; a summary input above the selector. These are new UI, for Build.
+- **Vira's follow-ups (notes/wdb_todo_list.txt):** done 2026-11-09 on grok-build-w11 (8761c294): Area removed for Door and Job comboboxes, descriptions auto-generated from routes.yaml and the doc headers, Summary input above the pickers. src/doors.js unchanged, no relay redeploy.
 
 ## Intent
 Players report bugs from inside the game without a GitHub account. Logged 2026-10-24.
@@ -55,4 +55,4 @@ Players report bugs from inside the game without a GitHub account. Logged 2026-1
 Source: `scripts/ui/pause_menu/` (`menu_flow.gd`, `pause_menu_view.gd`), crash-log capture must not live under `scripts/debug/` (release exports drop it). Docs: `design/ui-pause.md`, `design/versioning.md`.
 
 ## Proves it
-An actual Report Bug submission from the web build and a desktop build opens a labelled issue with the approved payload; automated tests retain rate-limit/spam refusal coverage; the shipped export contains no token. Record actual UI evidence separately from dry runs and provider-delivery evidence. Do not close this task on email delivery alone.
+An actual Report Bug submission from a desktop build (Vira accepted desktop proof for web on 2026-11-09) opens a labelled issue with the approved payload; automated tests retain rate-limit/spam refusal coverage; the shipped export contains no token. Record actual UI evidence separately from dry runs and provider-delivery evidence. Do not close this task on email delivery alone.
