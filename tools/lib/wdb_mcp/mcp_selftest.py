@@ -59,6 +59,8 @@ def cases(bad: list[str], state: Path) -> None:
     capped = t.check("load_graph")
     if not capped.startswith("STATUS: FAIL") or "rule 10" not in capped:
         bad.append("a fourth run of the same check (third rerun) must be refused: " + capped[:120])
+    if not mcp_tools.Tools(ROOT, "D", True, state, rerun_limit=False).check("load_graph").startswith("STATUS: PASS"):
+        bad.append("a non-Build server (explicit --surface) skips the rerun limit")
     if not t.lookup("task").startswith("STATUS:") or not t.lookup("stat", path="_logs/x").startswith("STATUS: FAIL"):
         bad.append("simple lookup actions with no query must answer (not raise); a _logs path argument is refused")
     if not t.lookup("more", handle="zz9").startswith("STATUS: FAIL"):

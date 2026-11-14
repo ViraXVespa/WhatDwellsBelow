@@ -9,7 +9,7 @@ Entry: `wdb_mcp.py`; code: `tools/lib/wdb_mcp/`. A read-only, progressive front-
 
 - A first response starts `STATUS: PASS` or `STATUS: FAIL (N)`, then `handle:` and `next:`; `shown:` when paged, `summary:` on a FAIL. `lookup` and `protocol` add one page (about 20 lines); `check` answers with the header only.
 - The command runs once. A follow-up passes the handle (`action=more` the next page only, `full`, `failures`, `files`) and never re-runs it.
-- Handles last 2 hours, one file each in `_logs/gather/mcp/` (safe for several servers on one checkout); an expired one answers `STATUS: FAIL (1)` and names the call to repeat. A check runs at most 3 times per target per worktree.
+- Handles last 2 hours, one file each in `_logs/gather/mcp/` (safe for several servers on one checkout); an expired one answers `STATUS: FAIL (1)` and names the call to repeat. In Build a check runs at most 3 times per target per worktree; an explicit `--surface` (Grok Bot) skips that limit.
 - Refused: commands off the caller's catalog surface (Surf; Build is D), `_logs/` paths (use `action=summary`), images, `notes/`. No tool writes repo files.
 
 ## Catalog

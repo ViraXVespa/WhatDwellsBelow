@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """stdio MCP server `wdb` for Grok Build: tools lookup, check, protocol (tools/lib/wdb_mcp/mcp_tools.py).
 
-    python tools/wdb_mcp.py serve [--root DIR] [--surface D]       (Grok Build runs this from .grok/config.toml)
+    python tools/wdb_mcp.py serve [--root DIR] [--surface D|B]     (Grok Build: no --surface, from .grok/config.toml)
     python tools/wdb_mcp.py serve --selftest
 Needs the `mcp` package (pip install -r tools/requirements-mcp.txt). Every first response starts with
 `STATUS: PASS` or `STATUS: FAIL (N)`, then `handle:` and `next:`; follow-ups pass the handle. Catalog: design/tools-mcp.md.
@@ -33,10 +33,10 @@ PROTOCOL_DOC = """What should I do or use right now? action=now (default): slice
 action=doc situation=NAME: the canonical doc section (boot, understand, implement, compact-stop, questions, verify,
 finish, references, pick-a-tool); action=suggest query=TEXT: best rows of the tools table; action=packet; action=list."""
 
-def build_server(root: Path, surface: str):
+def build_server(root: Path, surface: str, rerun_limit: bool = True):
     from mcp.server.mcpserver import MCPServer  # mcp>=2: FastMCP was renamed MCPServer
 
-    tools = mcp_tools.Tools(root, surface)
+    tools = mcp_tools.Tools(root, surface, rerun_limit=rerun_limit)
     srv = MCPServer("wdb")
 
     @srv.tool(description=LOOKUP_DOC)
@@ -57,7 +57,7 @@ def build_server(root: Path, surface: str):
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("stdio MCP server wdb (lookup, check, protocol) for Grok Build.")
-    ap.add_argument("--surface", default="D", help="Catalog surface letter the caller has (D Build, B Bot); commands off it are refused.")
+    ap.add_argument("--surface", default="", help="Catalog surface letter (D, B) for a non-Build caller such as a Grok Bot agent; commands off it are refused, and the Build check rerun limit is off. Default: Build (D, limit on).")
     ap.add_argument("--selftest", action="store_true", help="Tool functions in a throwaway repo, then an in-process MCP client when mcp is installed.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         return mcp_selftest.run()
     root = agent_log.resolve_root(args)
     try:
-        srv, _ = build_server(root, args.surface)
+        srv, _ = build_server(root, args.surface or "D", rerun_limit=not args.surface)
     except ModuleNotFoundError as exc:
         print(f"error: {exc}. Install it: pip install -r tools/requirements-mcp.txt", file=sys.stderr)
         return 2

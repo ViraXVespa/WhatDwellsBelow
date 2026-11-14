@@ -44,10 +44,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run one wdb MCP tool call (lookup, check, protocol) from a shell.")
     ap.add_argument("tool", choices=("lookup", "check", "protocol"), help="Which MCP tool.")
     ap.add_argument("kv", nargs="*", help="key=value arguments, as the MCP tool takes them.")
-    ap.add_argument("--surface", default="D", help="Catalog surface letter (D Build, B Bot).")
+    ap.add_argument("--surface", default="", help="Catalog surface letter for a non-Build caller (D, B); also turns the Build rerun limit off.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
-    tools = mcp_tools.Tools(root, args.surface)
+    tools = mcp_tools.Tools(root, args.surface or "D", rerun_limit=not args.surface)
     text = getattr(tools, args.tool)(**parse(args.kv))
     status = "PASS" if text.startswith("STATUS: PASS") else "FAIL"
     first = text.splitlines()[1].split(": ", 1)[-1] if len(text.splitlines()) > 1 else "-"

@@ -15,7 +15,7 @@ import mcp_core as core
 
 PATH_RE = re.compile(r"(?<![\w/.-])((?:scripts|scenes|tools|design|assets|_out)/[\w./-]+\.\w+)")
 FAIL_RE = re.compile(r"\b(FAIL|ERROR|DRIFT|STALE|MISSING|UNMAPPED|SCRIPT ERROR)\b|^error:", re.M)
-MAX_CHECK_RUNS = 3  # one run + 2 reruns per target and args (tools.md rule 10); the store keeps the count for the worktree
+MAX_CHECK_RUNS = 3  # Build only: one run + 2 reruns per target and args (tools.md rule 10), counted per worktree
 CHECKS = {  # target -> (catalog command, argv builder)
     "tool_cli": ("check.py tool-cli", lambda a: ["check.py", "tool-cli"] + (["--only", a["stem"]] if a.get("stem") else [])),
     "tool_docs": ("check.py tool-docs", lambda a: ["check.py", "tool-docs"]),
@@ -35,8 +35,8 @@ def _surfaces(root: Path) -> dict[str, str]:
     return out
 
 class Tools:
-    def __init__(self, root: Path, surface: str = "D", persist: bool = True, state: Path | None = None):
-        self.root, self.surface = root, surface
+    def __init__(self, root: Path, surface: str = "D", persist: bool = True, state: Path | None = None, rerun_limit: bool = True):
+        self.root, self.surface, self.rerun_limit = root, surface, rerun_limit
         self.store = core.Store(root, persist, state)
         self.surf = _surfaces(root)
 
@@ -178,7 +178,7 @@ class Tools:
         cmd, build = CHECKS[target]
         key = " ".join([target, stem, *sorted(files or [])]).strip()
         runs = self.store.check_runs().get(key, [])
-        if len(runs) >= MAX_CHECK_RUNS:
+        if self.rerun_limit and len(runs) >= MAX_CHECK_RUNS:
             return "\n".join(core.header("FAIL", runs[-1], "read the last handle (failures | full | files); stop and report",
                                           summary=f"{key} already ran {len(runs)} times (a run + {MAX_CHECK_RUNS - 1} reruns, tools.md rule 10); not re-run", fails=1))
         res = self._run(build({"stem": stem, "files": files or []}), cmd)
