@@ -167,7 +167,7 @@ static func _bump() -> int:
     "scripts/debug/shots.gd": "static func still() -> void:\n\tpass\n",
     "scripts/debug/cli.gd": "extends SceneTree\nfunc _initialize() -> void:\n\tgo()\n\nfunc go() -> void:\n\tquit()\n",
     "tools/lib/lint/list_unused_funcs.py": "# example: lint_only_fn is named only in the linter source\n",
-    "design/notes.md": "dead_a and helper are named only in a design doc.\ndoc_only_var is unused except here.\n`CMod.dead_a` was a leftover facade name.\n",
+    "design/notes.md": "dead_a and helper are named only in a design doc.\ndoc_only_var is unused except here.\n`CMod.dead_a` was a leftover facade name.\n- `CMod.dead_b` was its twin.\n",
     "tools/data/flow-extra.json": '{"note": "shadowed_flow and json_named_var appear in shot-flow adjacent data"}\n',
     "scripts/data/balance/vars_fix.gd": """extends RefCounted
 const Schema := preload("res://scripts/data/balance/schema_fix.gd")
@@ -401,6 +401,8 @@ def run() -> list[str]:
             bad.append(f"apply: stale_docs missing qualified CMod.dead_a ({blob.get('stale_docs')})")
         if not any(s["name"] == "dead_a" and s["rel"] == "design/notes.md" for s in blob.get("stale_docs", [])):
             bad.append(f"apply: stale_docs missing bare dead_a ({blob.get('stale_docs')})")
+        if "`CMod.dead_b`" in (root / "design/notes.md").read_text(encoding="utf-8") or not any(d["name"] == "CMod.dead_b" for d in blob.get("doc_fixes", [])):
+            bad.append(f"apply: exact stale bullet `CMod.dead_b` not auto-removed ({blob.get('doc_fixes')})")
         if any(s["name"] == "helper" for s in blob.get("stale_docs", [])):
             bad.append("apply: stale_docs flagged helper which still has a live def")
     return bad

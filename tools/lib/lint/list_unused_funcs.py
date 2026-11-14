@@ -705,7 +705,7 @@ def _count_blob(rows: dict, legacy: dict, plan: list, refused: list, applied: li
     counts |= {"apply_ready": len(plan), "apply_refused": len(refused), "applied": len(applied)}
     return counts
 
-def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: list, applied: list, elapsed: float, passes: list | None = None, stale_docs: list | None = None) -> tuple[Path, Path]:
+def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: list, applied: list, elapsed: float, passes: list | None = None, stale_docs: list | None = None, doc_fixes: list | None = None) -> tuple[Path, Path]:
 
     out = ["# lint.py unused: categories (conf: high = no resolvable or plain-string reference; medium = a plain string or",
            "# non-GDScript word could name it; low = only untyped/ambiguous references; info = live but debug-only)"]
@@ -720,6 +720,8 @@ def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: l
     for r in refused:
         out.append(f"apply_refused\t{r['kind']}\t{r['rel']}:{r['line']}\t{r['name']}\t{r['refuse']}")
     out.extend(applied)
+    for s in doc_fixes or []:
+        out.append(f"doc_fixed\t{s['rel']}:{s['line']}\t{s['name']}\t{s['why']}")
     for s in stale_docs or []:
         out.append(f"stale_doc\t{s['rel']}:{s['line']}\t{s['name']}\t{s['why']}")
     for rec in passes or []:
@@ -728,14 +730,14 @@ def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: l
         extra = ("\t" + ",".join(names)) if rec.get("phase") != "fixed_point" and names else ""
         out.append(f"apply_pass\t{rec.get("n", 0)}\t{rec.get('phase', '')}\tapply_ready={rec.get('apply_ready', 0)}\tapplied={len(rec.get('deleted', []))}{extra}")
     counts = _count_blob(rows, legacy, plan, refused, applied)
-    counts |= {"stale_docs": len(stale_docs or []), "apply_passes": len(passes or [])}
+    counts |= {"stale_docs": len(stale_docs or []), "doc_fixed": len(doc_fixes or []), "apply_passes": len(passes or [])}
     out += [f"{k}_count={v}" for k, v in counts.items()] + ["seconds=%.2f" % elapsed]
     txt = agent_log.write_summary("unused-funcs", root, "\n".join(out), "INFO", " ".join(f"{k}={v}" for k, v in counts.items() if v))
     js = txt.parent / "unused-funcs.json"
     blob = dict(counts=counts, rows={k: rows.get(k, []) for k in REPORT},
                 legacy={k: [dict(rel=a, line=b, name=c) for a, b, c, _d in legacy.get(k, [])] for k in LEGACY},
                 apply_ready=plan, apply_refused=refused, applied=applied,
-                passes=passes or [], stale_docs=stale_docs or [])
+                passes=passes or [], stale_docs=stale_docs or [], doc_fixes=doc_fixes or [])
     js.write_text(json.dumps(blob, indent=1, default=list) + "\n", encoding="utf-8")
     return txt, js
 
@@ -747,11 +749,12 @@ def _sweep(root: Path):
     legacy = {"decl": decls, "maybe": maybe, "facade_auto": facade_auto(root), "dynamic": dynamic}
     return g, rows, unused, maybe, dynamic, decls, plan, refused, legacy
 
-def run(root: Path, apply: bool, limit: int, quiet: bool = False) -> int:
+def run(root: Path, apply: bool, limit: int, quiet: bool = False, chunk: dict | None = None) -> int:
     started = time.perf_counter()
     applied: list[str] = []
     passes: list[dict] = []
     stale_docs: list[dict] = []
+    doc_fixes: list[dict] = []
     if apply:
         for i in range(APPLY_MAX_PASSES):
             _g, rows, unused, maybe, dynamic, decls, plan, refused, legacy = _sweep(root)
@@ -773,17 +776,19 @@ def run(root: Path, apply: bool, limit: int, quiet: bool = False) -> int:
                                apply_ready=len(plan),
                                apply_ready_names=[f"{r['rel']}:{r['name']}" for r in plan],
                                deleted=[]))
-        stale_docs = report_stale_docs(root, applied)
+        import unused_docfix
+        doc_fixes, stale_docs = unused_docfix.fix(root, _applied_items(applied), report_stale_docs(root, applied))
     else:
         _g, rows, unused, maybe, dynamic, decls, plan, refused, legacy = _sweep(root)
         passes.append(dict(n=0, phase="report", counts=_count_blob(rows, legacy, plan, refused, applied),
                            apply_ready=len(plan), apply_ready_names=[f"{r['rel']}:{r['name']}" for r in plan],
                            deleted=[]))
     txt, js = write_summaries(root, rows, legacy, plan, refused, applied, time.perf_counter() - started,
-                              passes=passes, stale_docs=stale_docs)
-    shown = []
-    for line in applied:
-        shown.append(line)
+                              passes=passes, stale_docs=stale_docs, doc_fixes=doc_fixes)
+    if chunk is not None and not quiet:
+        import unused_chunk
+        return unused_chunk.cli(root, _g, js, chunk, limit, txt)
+    shown = list(applied) + [f"doc_fixed\t{d['rel']}:{d['line']}\t{d['name']}" for d in doc_fixes]
     for kind in ("orphan_file", "unused", "shadowed", "dead_chain", "arity_mismatch", "unused_var", "init_only_var"):
         for r in rows.get(kind, []):
             if r["conf"] in ("high", "medium") or kind in ("init_only_var", "arity_mismatch"):
@@ -798,7 +803,8 @@ def run(root: Path, apply: bool, limit: int, quiet: bool = False) -> int:
     counts = {k: len(rows.get(k, [])) for k in REPORT}
     return agent_log.emit_result("PASS", summary=agent_log.rel(root, txt), **counts, decl=len(decls),
                                  facade_auto=len(legacy["facade_auto"]), apply_ready=len(plan), refused=len(refused),
-                                 applied=len(applied), stale_docs=len(stale_docs), apply_passes=len(passes))
+                                 applied=len(applied), stale_docs=len(stale_docs), doc_fixed=len(doc_fixes), apply_passes=len(passes))
+
 
 def main() -> int:
     parser = agent_log.std_parser(
@@ -816,15 +822,35 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=24, help="Max rows on stdout (default 24; the summary has all).")
     parser.add_argument("--apply", action="store_true", help="DELETE verified (apply_ready) items only; ambiguous stay warnings.")
     parser.add_argument("--selftest", action="store_true", help="Run the fixture cases in a throwaway root.")
+    ch = parser.add_argument_group("chunk view (unused_chunk.py)")
+    ch.add_argument("--paths", nargs="+", default=[], help="Chunk globs (`dir/**`, `dir/x*.gd`; a bare dir = everything under it): print only "
+                    "in-chunk rows by kind with counts, a reach tag per ambiguous/debug_only row (strong, type_here: untyped site in "
+                    "the chunk, cascade: only via a weak edge from an out-of-chunk caller, named) and the reason each row stays. "
+                    "Writes _logs/unused-funcs/unused-chunk.json.")
+    ch.add_argument("--why", metavar="[FILE:]FUNC", help="Reach path from the roots with each edge kind, and weak callers (in/out of --paths).")
+    ch.add_argument("--save-baseline", metavar="FILE", help="With --paths: save the chunk JSON as a baseline.")
+    ch.add_argument("--baseline", metavar="FILE", help="With --paths: diff counts and rows against a saved baseline.")
+    ch.add_argument("--plan-md", action="store_true", help="With --paths: print the plan markdown block (tip, counts, leftovers and why).")
+    ch.add_argument("--plan-out", metavar="PATH", help="With --paths --chunk N: write/replace that block in a plan file (never commits).")
+    ch.add_argument("--chunk", metavar="N", help="Chunk number/label for the plan block markers.")
     ns = parser.parse_args()
     if ns.selftest:
         import unused_selftest
-        return agent_log.selftest_result(unused_selftest.run())
+        import unused_selftest_chunk
+        return agent_log.selftest_result(unused_selftest.run() + unused_selftest_chunk.run())
     root = agent_log.resolve_root(ns)
     if ns.apply and ns.dry_run:
         print("dry-run: --apply skipped; apply_ready rows are the plan")
         ns.apply = False
-    return run(root, ns.apply, ns.limit)
+    if (ns.baseline or ns.save_baseline or ns.plan_md or ns.plan_out) and not ns.paths:
+        parser.error("--baseline/--save-baseline/--plan-md/--plan-out need --paths")
+    if ns.plan_out and not ns.chunk:
+        parser.error("--plan-out needs --chunk N")
+    chunk = None
+    if ns.paths or ns.why:
+        chunk = dict(paths=agent_log.split_list(ns.paths), why=ns.why, baseline=ns.baseline, save_baseline=ns.save_baseline,
+                     plan_md=ns.plan_md, plan_out=ns.plan_out, chunk=ns.chunk, json=ns.json)
+    return run(root, ns.apply, ns.limit, chunk=chunk)
 
 if __name__ == "__main__":
     sys.exit(main())
