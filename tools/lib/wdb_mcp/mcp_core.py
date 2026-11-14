@@ -45,7 +45,7 @@ def denied(rel: str) -> str:
     while low.startswith("./"):
         low = low[2:]
     if low.startswith("_logs/") or "/_logs/" in low:
-        return "reading _logs/ is denied: use lookup action=summary job=JOB"
+        return "reading _logs/ is denied: use lookup action=summary query=JOB"
     if low.startswith("notes/"):
         return "notes/ is never opened"
     if low.endswith(IMAGE_EXT):
@@ -158,30 +158,55 @@ def cut(lines: list[str], pos: int, budget: int) -> int:
             return j
     return end
 
-def header(status: str, h: str, nxt: str, shown: str = "", summary: str = "", fails: int = 0) -> list[str]:
-    head = [f"STATUS: {status}" + (f" ({fails or 1})" if status == "FAIL" else ""), f"handle: {h}", f"next: {nxt}"]
-    if shown:
-        head.append(f"shown: {shown}")
-    if summary:
-        head.append(f"summary: {summary}")
-    return head
+def header(status: str, *lines: str, fails: int = 0) -> list[str]:
+    """`STATUS: PASS` or `STATUS: FAIL (N)`, then only the non-empty extra lines (page, handle, summary, error)."""
+    return [f"STATUS: {status}" + (f" ({fails or 1})" if status == "FAIL" else "")] + [ln for ln in lines if ln]
+
+def fail(why: str) -> str:
+    return "\n".join(header("FAIL", f"error: {why}", fails=1))
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+META_KEYS = {"root", "path", "pattern", "mode", "include", "scope", "facade", "stem", "dir", "maxNodes", "name", "count",
+             "scanned", "rows_scanned", "matches", "siblings", "files", "top_funcs", "hits", "truncated", "scenes"}
+BANNER_RE = re.compile(r"^(?:measure=|show_func |[\w -]+ \d{4}-\d\d-\d\dT\S+$|file-stat$)")
+
+def clean(lines: list[str], banners: bool = False) -> list[str]:
+    """Trailing whitespace and ANSI off, runs of blank lines to one, no leading/trailing blanks. banners: also drop a
+    wrapped CLI's echo/legend lines (key=value lines of argument echoes and counts, `measure=`, a title with a timestamp)."""
+    out: list[str] = []
+    for raw in lines:
+        ln = ANSI_RE.sub("", raw).rstrip()
+        if banners:
+            toks = ln.split()
+            if BANNER_RE.match(ln) or (toks and all("=" in t and t.split("=", 1)[0] in META_KEYS for t in toks)
+                                       and "truncated=True" not in toks):
+                continue
+        if not ln and (not out or not out[-1]):
+            continue
+        out.append(ln)
+    while out and not out[-1]:
+        out.pop()
+    return out
 
 def page(store: Store, h: str, budget: int = 0, status: str = "PASS", summary: str = "", first: bool = False) -> str:
-    """Next page of handle h (first page when first). `more` sends only what this handle has not paged out yet."""
+    """One page of handle h. A reply that fits is just STATUS (+ summary) and the body; a cut one adds
+    `page: A-B of N; more: handle=H` and `more` sends only the rest."""
     rec = store.get(h)
     if rec is None:
-        return "\n".join(header("FAIL", h, "rerun the original call", summary="expired or unknown handle", fails=1))
+        return fail(f"expired or unknown handle {h}; rerun the original call")
     lines = rec["lines"]
     pos = 0 if first else rec["pos"]
     if not first and pos >= len(lines):
-        return "\n".join(header(status, h, "done", summary="nothing left on this handle"))
+        return "\n".join(header(status, f"page: end (handle {h} has nothing left)"))
     budget = budget or rec.get("budget") or PAGE_LINES
     end = cut(lines, pos, budget)
     rec["pos"] = end
     store.put(h, rec)
-    nxt = "more" if end < len(lines) else "done"
-    shown = f"{pos + 1}-{end} of {len(lines)}" if len(lines) > budget or pos else ""
+    pg = ""
+    if end < len(lines) or pos:
+        pg = f"page: {pos + 1}-{end} of {len(lines)}" + (f"; more: handle={h}" if end < len(lines) else " (end)")
     body = lines[pos:end]
-    if not first and pos and body:
-        body = [f"... continues at line {pos + 1}"] + body
-    return "\n".join(header(status, h, nxt, shown, summary) + ([""] + body if body else []))
+    while body and not body[0].strip():
+        body = body[1:]
+    return "\n".join(header(status, pg, f"summary: {summary}" if summary else "",
+                             fails=1) + ([""] + body if body else []))

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import tempfile
 from pathlib import Path
 
@@ -20,25 +21,32 @@ ROOT = Path(__file__).resolve().parents[3]
 def _head(text: str) -> list[str]:
     return text.splitlines()
 
+def _handle(text: str) -> str:
+    m = re.search(r"(?:more: handle=|^handle: )([a-z][0-9a-f]{6})", text, re.M)
+    return m.group(1) if m else ""
+
+def _body(text: str) -> list[str]:
+    return text.split("\n\n", 1)[1].splitlines() if "\n\n" in text else []
+
 def cases(bad: list[str], state: Path) -> None:
     t = mcp_tools.Tools(ROOT, "D", True, state)
     first = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
     lines = _head(first)
-    if lines[0] != "STATUS: PASS" or not lines[1].startswith("handle: f") or not lines[2].startswith("next: more"):
-        bad.append("func first call: STATUS / handle / next header: " + " | ".join(lines[:3]))
-    if len(lines) > 27:
+    if lines[0] != "STATUS: PASS" or not re.match(r"page: 1-\d+ of \d+; more: handle=f", lines[1]):
+        bad.append("func first call: STATUS / page+more header: " + " | ".join(lines[:2]))
+    if len(lines) > 24:
         bad.append(f"first page must stay short (got {len(lines)} lines)")
-    h = lines[1].split(": ")[1]
+    h = _handle(first)
     runs = t.store.runs
     second = t.lookup("more", handle=h)
     if t.store.runs != runs:
         bad.append("a follow-up re-ran the command")
-    page1 = set(lines[6:]) - {""}
-    page2 = [ln for ln in _head(second)[5:] if ln.strip() and not ln.startswith("...")]
+    page1 = set(_body(first)) - {""}
+    page2 = [ln for ln in _body(second) if ln.strip()]
     if not page2 or any(ln in page1 for ln in page2 if len(ln.strip()) > 12):
         bad.append("more must return only the next page, no overlap")
     again = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
-    if _head(again)[6:] != lines[6:] or _head(again)[1] == lines[1]:
+    if _body(again) != _body(first) or _handle(again) == h:
         bad.append("a repeat call is a new handle with the same first page (no shown-line tracking)")
     for path in ("_logs/x.txt", "notes/a.md", "assets/x.png", "../../../../etc/passwd", "./../x.md", "/etc/passwd"):
         if not t.lookup("lines", path=path).startswith("STATUS: FAIL"):
@@ -48,12 +56,12 @@ def cases(bad: list[str], state: Path) -> None:
     if "Bot-only" not in t.check("prove"):
         bad.append("check target prove must be refused")
     chk = t.check("load_graph")
-    if not chk.startswith("STATUS: PASS") or len(_head(chk)) > 5:
-        bad.append("check first call: status header only: " + chk[:120])
-    ch = _head(chk)[1].split(": ")[1]
+    if not chk.startswith("STATUS: PASS") or len(_head(chk)) > 3 or "RESULT" in chk or "summary=" in chk:
+        bad.append("check first call: STATUS, summary, handle only: " + chk[:120])
+    ch = _handle(chk)
     runs = t.store.runs
     full = t.check(handle=ch, action="full")
-    if t.store.runs != runs or "RESULT" in full.split("\n", 5)[-1][:0]:
+    if t.store.runs != runs or not _body(full):
         bad.append("check follow-up must not re-run")
     t.check("load_graph"), t.check("load_graph")
     capped = t.check("load_graph")
@@ -65,6 +73,9 @@ def cases(bad: list[str], state: Path) -> None:
         bad.append("simple lookup actions with no query must answer (not raise); a _logs path argument is refused")
     if not t.lookup("more", handle="zz9").startswith("STATUS: FAIL"):
         bad.append("an unknown handle must FAIL")
+    short = t.lookup("names", path="tools/lib/wdb_mcp/mcp_selftest.py")
+    if "handle" in short or "\x1b[" in short or any(ln != ln.rstrip() for ln in short.splitlines()):
+        bad.append("a reply that fits has no handle, ANSI codes or trailing spaces")
     data = json.loads((ROOT / "tools/data/mcp_protocol.json").read_text(encoding="utf-8"))
     for sit in data["situations"]:
         if not t.protocol("doc", situation=sit).startswith("STATUS: PASS"):
@@ -115,7 +126,9 @@ def client(bad: list[str], notes: list[str], state: Path) -> None:
             text = res.content[0].text if res.content else ""
             if not text.startswith("STATUS: PASS"):
                 bad.append("MCP lookup over the client: " + text[:120])
-            h = text.splitlines()[1].split(": ")[1]
+            h = _handle(text)
+            if res.structured_content or any(t.output_schema for t in (await c.list_tools()).tools):
+                bad.append("replies are text only (no structured duplicate or output schema)")
             res2 = await c.call_tool("lookup", {"handle": h, "action": "full"})
             if "STATUS:" not in (res2.content[0].text if res2.content else ""):
                 bad.append("MCP follow-up by handle failed")

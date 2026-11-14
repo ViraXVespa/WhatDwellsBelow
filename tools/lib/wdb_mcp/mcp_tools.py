@@ -55,7 +55,7 @@ class Tools:
         return core.run_tool(self.root, argv)
 
     def _refuse(self, why: str) -> str:
-        return "\n".join(core.header("FAIL", "-", "fix the call", summary=why, fails=1))
+        return core.fail(why)
 
     @staticmethod
     def _strip(text: str) -> list[str]:
@@ -64,7 +64,7 @@ class Tools:
     def _follow(self, handle: str, action: str, budget: int) -> str:
         rec = self.store.get(handle)
         if rec is None:
-            return "\n".join(core.header("FAIL", handle, "rerun the original call", summary="expired or unknown handle", fails=1))
+            return core.fail(f"expired or unknown handle {handle}; rerun the original call")
         if action in ("failures", "files"):
             rows = rec.get(action) or []
             h = self.store.new("v", rows or [f"(no {action})"], status=rec.get("status", "PASS"))
@@ -95,10 +95,12 @@ class Tools:
         res = self._run(argv, cmd)
         if res["status"] == "DENIED":
             return self._refuse(res["text"])
-        body = self._strip(res["text"])
+        body = core.clean(self._strip(res["text"]), banners=action != "packet")
+        if action == "packet":
+            body = core.clean([ln for ln in body if not ln.startswith("# Session context (generated") and not ln.endswith(": (none)")])
         status = "FAIL" if res["status"] == "FAIL" else "PASS"
-        h = self.store.new("l", body, status=status, files=sorted(set(PATH_RE.findall(res["text"]))))
-        return core.page(self.store, h, budget, status, "" if status == "PASS" else (body[-1] if body else res["result"]), first=True)
+        h = self.store.new("l", body or [res["result"]], status=status, files=sorted(set(PATH_RE.findall(res["text"]))))
+        return core.page(self.store, h, budget, status, first=True)
 
     def _lookup_argv(self, action, path, name, pattern, door, job, query, regex, expand) -> tuple[list[str], str]:
         if action == "xref":
@@ -137,14 +139,13 @@ class Tools:
             m = core.LINES_RE.search(res["text"])
             if res["status"] != "PASS" or not m:
                 status, fails = "FAIL", fails + 1
-                note = [f"## {rel}:{nm} not found"] + lines[-2:]
-                body += note
+                body += [f"## {rel}:{nm}"] + [ln for ln in core.clean(lines[-2:], banners=True) if ln]
                 continue
             a, b = int(m.group(1)), int(m.group(2))
             src = lines[lines.index(m.group(0)) + 3:] if m.group(0) in lines else []
             body += [f"## {rel}:{nm} L{a}-{b}"] + src
         h = self.store.new("f", body, status=status)
-        return core.page(self.store, h, budget, status, f"{fails} of {len(items)} not found" if fails else "", first=True)
+        return core.page(self.store, h, budget, status, f"{fails} of {len(items)} not found" if fails and len(items) > 1 else "", first=True)
 
     def _read(self, action: str, path: str, start: int, end: int, budget: int) -> str:
         rel, _, heading = path.partition("#")
@@ -165,7 +166,7 @@ class Tools:
             a, b = span
         else:
             a, b = max(1, start or 1), min(len(lines), end or len(lines))
-        h = self.store.new("r", [f"## {path} L{a}-{b} of {len(lines)}"] + lines[a - 1:b])
+        h = self.store.new("r", [f"## {rel} L{a}-{b} of {len(lines)}"] + lines[a - 1:b])
         return core.page(self.store, h, budget, "PASS", first=True)
 
     # check
@@ -179,19 +180,19 @@ class Tools:
         key = " ".join([target, stem, *sorted(files or [])]).strip()
         runs = self.store.check_runs().get(key, [])
         if self.rerun_limit and len(runs) >= MAX_CHECK_RUNS:
-            return "\n".join(core.header("FAIL", runs[-1], "read the last handle (failures | full | files); stop and report",
-                                          summary=f"{key} already ran {len(runs)} times (a run + {MAX_CHECK_RUNS - 1} reruns, tools.md rule 10); not re-run", fails=1))
+            return core.fail(f"{key} already ran {len(runs)} times (tools.md rule 10): not re-run; read handle={runs[-1]}, then stop and report")
         res = self._run(build({"stem": stem, "files": files or []}), cmd)
         if res["status"] == "DENIED":
             return self._refuse(res["text"])
-        lines = self._strip(res["text"])
+        lines = core.clean(self._strip(res["text"]))
         failures = [ln for ln in lines if FAIL_RE.search(ln)] if res["status"] == "FAIL" else []
         status = "FAIL" if res["status"] == "FAIL" else "PASS"
         h = self.store.new("c", lines, status=status, failures=failures, files=sorted(set(PATH_RE.findall(res["text"]))))
         self.store.add_check_run(key, h)
-        summary = res["result"] or (failures[0] if failures else "")
-        return "\n".join(core.header(status, h, "failures | full | files" if status == "FAIL" else "full | files",
-                                     summary=summary[:200], fails=len(failures) or 1))
+        summary = core.SUMMARY_RE.sub("", re.sub(r"^RESULT \w+ ?", "", res["result"])).strip() or (failures[0] if failures else "")
+        nxt = "failures | full | files" if status == "FAIL" else "full | files"
+        return "\n".join(core.header(status, f"summary: {summary[:200]}" if summary else "", f"handle: {h} ({nxt})",
+                                     fails=len(failures) or 1))
 
     # protocol
     def protocol(self, action: str = "now", situation: str = "", query: str = "", handle: str = "", budget: int = 0) -> str:
@@ -213,9 +214,8 @@ class Tools:
             return core.page(self.store, h, budget, "PASS", first=True)
         phase, ident = current_phase(self.root)
         rows = [f"slice: {ident}", f"phase: {phase}", "next actions:"] + [f"- {a}" for a in data["phases"].get(phase, [])]
-        rows.append("situations: " + ", ".join(data["situations"]))
         h = self.store.new("p", rows)
-        return core.page(self.store, h, budget, "PASS", f"phase={phase}", first=True)
+        return core.page(self.store, h, budget, "PASS", first=True)
 
     def _suggest(self, query: str, budget: int) -> str:
         words = {w for w in re.findall(r"[a-z]{3,}", query.lower())}
