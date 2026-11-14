@@ -5,12 +5,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const SplitView := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 
-static func rebuild(host: Node) -> void:
-	SplitView.rebuild_list(host)
-	rebuild_info(host)
-	apply_col(host)
-	host.call_deferred("_focus_col")
-
 static func rebuild_info(host: Node) -> void:
 	for c: Node in host.info_box.get_children():
 		c.queue_free()

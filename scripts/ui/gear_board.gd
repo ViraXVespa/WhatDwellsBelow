@@ -70,9 +70,6 @@ static func refresh(ui: CanvasLayer) -> void:
 static func selected(ui: CanvasLayer) -> Dictionary:
 	return Text.selected(ui)
 
-static func selected_slot(ui: CanvasLayer) -> String:
-	return Text.selected_slot(ui)
-
 static func clear_sub(ui: CanvasLayer) -> void:
 	var old: Node = ui.get_node_or_null("gear_sub_panel")
 	while old:

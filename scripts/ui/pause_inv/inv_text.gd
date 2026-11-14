@@ -12,9 +12,6 @@ static func selected(ui: CanvasLayer) -> Dictionary:
 				return raw
 	return {}
 
-static func from_bag(ui: CanvasLayer) -> bool:
-	return ui.inv_sel.begins_with("bag:")
-
 static func find_sel(ui: CanvasLayer) -> Control:
 	if ui.inv_sel == "":
 		return null
@@ -22,21 +19,3 @@ static func find_sel(ui: CanvasLayer) -> Control:
 		if str(n.get_meta("inv_key", "")) == ui.inv_sel:
 			return n as Control
 	return null
-
-static func can_use_item(it: Dictionary) -> bool:
-	if it.is_empty():
-		return false
-	var k: String = str(it.get("kind", ""))
-	return k == "potion" or k == "food"
-
-static func can_equip_item(ui: CanvasLayer, it: Dictionary) -> bool:
-	if it.is_empty() or not from_bag(ui):
-		return false
-	var slot: String = str(it.get("slot", ""))
-	if App.prog.SLOTS.find(slot) < 0:
-		return false
-	if slot == "tool":
-		var t: String = str(it.get("tool", ""))
-		if t != "" and t != App.prog.tool_type:
-			return false
-	return true

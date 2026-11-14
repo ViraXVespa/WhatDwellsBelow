@@ -317,7 +317,6 @@
 "scripts/ui/loader.gd": "123456789",
 "scripts/ui/loader_weights.gd": "123456789",
 "scripts/ui/menu_pad.gd": "123456789",
-"scripts/ui/pause_inv/inv_act.gd": "",
 "scripts/ui/pause_inv/inv_text.gd": "123456789",
 "scripts/ui/pause_inv/inv_view.gd": "123456789",
 "scripts/ui/pause_menu.gd": "123456789",
