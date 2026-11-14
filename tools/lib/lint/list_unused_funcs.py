@@ -425,6 +425,11 @@ def multiline_decl(lines: list[str], idx: int) -> bool:
     nxt = lines[idx + 1] if idx + 1 < len(lines) else ""
     return head.endswith(("(", "[", "{", ",", "\\", ":")) or bool(nxt.strip() and nxt[:1].isspace())
 
+def _is_design_md(rel: str) -> bool:
+    """True when the only mention is a design doc (not a live call, shot-flow, or tool runner)."""
+    p = rel.replace("\\", "/")
+    return p.startswith("design/") and p.endswith(".md")
+
 def plan_of(root: Path, g, rows: dict, decls: list) -> tuple[list[dict], list[dict]]:
     """Verified removals (unused_graph.verified + var/decl side-effect checks) and refusals, each with evidence."""
     import unused_graph
@@ -435,8 +440,20 @@ def plan_of(root: Path, g, rows: dict, decls: list) -> tuple[list[dict], list[di
         if (r["rel"], r["name"]) in unused_graph.load_hold(root):
             continue
         seen = [w for w in words.get(r["name"], []) if w != r["rel"]] if r["kind"] != "orphan_file" else []
-        if seen:
-            refused.append(dict(r, refuse="name appears in non-GDScript text: " + ", ".join(sorted(seen)[:3])))
+        # 0c: a design/*.md word-hit alone must not block high-confidence shadowed/dead_chain.
+        # 0d: the same doc-only mention must not block a high unused_var (JSON, tools, and other
+        # docs still hold). Unused funcs + any doc mention stay refused (documented_fn).
+        if r["kind"] in ("shadowed", "dead_chain"):
+            hold_hits = [w for w in seen if not _is_design_md(w)]
+        elif r["kind"] == "unused_var":
+            if r["rel"].replace("\\", "/").startswith("scripts/data/balance/"):
+                refused.append(dict(r, refuse="balance unused_var is not auto-promoted"))
+                continue
+            hold_hits = [w for w in seen if not _is_design_md(w)]
+        else:
+            hold_hits = seen
+        if hold_hits:
+            refused.append(dict(r, refuse="name appears in non-GDScript text: " + ", ".join(sorted(hold_hits)[:3])))
             continue
         if r["kind"] == "decl" and r["rel"] in g.scripts and multiline_decl(g.scripts[r["rel"]].lines, r["line"] - 1):
             refused.append(dict(r, refuse="multi-line declaration"))

@@ -28,8 +28,16 @@ var prop_never: int:
 var wo := 0
 var built: Node
 
+const SkinSet := preload("res://scripts/skins/skin_set.gd")
+const PlayHostScr := preload("res://scripts/play_host.gd")
+const Bal := preload("res://scripts/data/balance/vars_fix.gd")
+var doc_only_var := 1
+var json_named_var := 1
+var ui: PlayHost
+
 func _ready() -> void:
 	B.helper()
+	B.shadowed_flow()
 	wo = 5
 	built = Node.new()
 	built.name = "x"
@@ -43,6 +51,12 @@ func _ready() -> void:
 	untyped(null)
 	C.live_c()
 	ML.live_ml()
+	SkinSet.apply(self)
+	Bal.new()
+	typed_pt(PlayHost.new())
+	node_pt(PlayHost.new())
+	ui = PlayHost.new()
+	ui.ui_fn()
 
 func smoke_attach(what: String) -> void:
 	call("attach_" + what)
@@ -58,9 +72,15 @@ func _on_hit(_n: int) -> void:
 
 func untyped(x) -> void:
 	x.maybe_fn(1)
+
+func typed_pt(pt: PlayHost) -> void:
+	pt.typed_fn()
+
+func node_pt(x: Node) -> void:
+	x.node_only_fn()
 """,
     "scripts/main.gd": "extends Node\nfunc _on_scene_pressed() -> void:\n\tpass\n",
-    "scripts/b.gd": "static func helper() -> void:\n\tpass\n",
+    "scripts/b.gd": "static func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n",
     "scripts/c.gd": """static func live_c() -> void:
 	pass
 
@@ -83,6 +103,9 @@ static func documented_fn() -> void:
 	pass
 
 static func held_fn() -> void:
+	pass
+
+static func shadowed_flow() -> void:
 	pass
 """,
     "scripts/ml.gd": '''static func live_ml() -> String:
@@ -133,6 +156,60 @@ static func _bump() -> int:
     "scripts/debug/probe.gd": "static func ping() -> void:\n\tpass\n",
     "scripts/debug/shots.gd": "static func still() -> void:\n\tpass\n",
     "scripts/debug/cli.gd": "extends SceneTree\nfunc _initialize() -> void:\n\tgo()\n\nfunc go() -> void:\n\tquit()\n",
+    "design/notes.md": "dead_a and helper are named only in a design doc.\ndoc_only_var is unused except here.\n",
+    "tools/data/flow-extra.json": '{"note": "shadowed_flow and json_named_var appear in shot-flow adjacent data"}\n',
+    "scripts/data/balance/vars_fix.gd": "extends RefCounted\nvar balance_only_var := 1\n",
+    "scripts/play_host.gd": """class_name PlayHost
+extends Node
+
+func typed_fn() -> void:
+	pass
+
+func ui_fn() -> void:
+	pass
+
+func node_only_fn() -> void:
+	pass
+""",
+    "scripts/skins/skin_a.gd": """static func spec() -> Dictionary:
+	return {}
+
+static func build(_c) -> void:
+	pass
+
+static func unused_skin_fn() -> void:
+	pass
+
+static func only_string_skin() -> void:
+	pass
+""",
+    "scripts/skins/skin_b.gd": """static func spec() -> Dictionary:
+	return {}
+
+static func build(_c) -> void:
+	pass
+""",
+    "scripts/skins/skin_base.gd": """static func apply(host, skins: Array) -> void:
+	for skin: GDScript in skins:
+		mount(host, skin)
+
+static func mount(host, skin: GDScript) -> void:
+	skin.build(host)
+""",
+    "scripts/skins/skin_set.gd": """const SkinA := preload("res://scripts/skins/skin_a.gd")
+const SkinB := preload("res://scripts/skins/skin_b.gd")
+const SkinBase := preload("res://scripts/skins/skin_base.gd")
+const SKINS: Array = [
+	SkinA,
+	SkinB,
+]
+
+static func apply(host) -> void:
+	for skin: GDScript in SKINS:
+		skin.spec()
+	SkinBase.apply(host, SKINS)
+	call("only_string_skin")
+""",
 }
 
 def _write(root: Path) -> None:
@@ -161,13 +238,21 @@ def run() -> list[str]:
             ("c.gd", "leaf"): "dead_chain", ("c.gd", "dead_root"): "unused", ("orphan.gd", "orphan.gd"): "orphan_file",
             ("app.gd", "never_used"): "unused_var", ("app.gd", "wo"): "write_only_var", ("app.gd", "built"): "init_only_var",
             ("d.gd", "maybe_fn"): "ambiguous",
+            ("play_host.gd", "node_only_fn"): "ambiguous",
+            ("skin_a.gd", "unused_skin_fn"): "unused",
+            ("c.gd", "shadowed_flow"): "shadowed",
+            ("app.gd", "doc_only_var"): "unused_var",
+            ("app.gd", "json_named_var"): "unused_var",
+            ("vars_fix.gd", "balance_only_var"): "unused_var",
         }
         for key, kind in want.items():
             if cat.get(key) != kind:
                 bad.append(f"report: {key} expected {kind}, got {cat.get(key)}")
         live = [("b.gd", "helper"), ("c.gd", "live_c"), ("app.gd", "attach_x"), ("app.gd", "_tab_a"), ("app.gd", "_on_hit"),
                 ("probe.gd", "ping"), ("shots.gd", "still"), ("child.gd", "hook"), ("base.gd", "hook"), ("cli.gd", "go"),
-                ("main.gd", "_on_scene_pressed")]
+                ("main.gd", "_on_scene_pressed"), ("skin_a.gd", "spec"), ("skin_a.gd", "build"),
+                ("skin_b.gd", "spec"), ("skin_b.gd", "build"), ("skin_a.gd", "only_string_skin"),
+                ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")
@@ -192,7 +277,7 @@ def run() -> list[str]:
         app_text = (root / "scripts/app.gd").read_text(encoding="utf-8")
         for gone in ("func helper", "func dead_a", "func dead_b", "func dead_root", "func leaf"):
             if gone in c_text:
-                bad.append(f"apply: c.gd still has {gone}")
+                bad.append(f"apply: c.gd still has {gone} (design.md-only mention must not hold shadowed/dead_chain)")
         if "var prop_never: int:" not in app_text or "\tget:\n\t\treturn 1" not in app_text:
             bad.append("apply: property block prop_never touched (must be refused whole)")
         if "never_used" in app_text:
@@ -200,11 +285,24 @@ def run() -> list[str]:
         if (root / "scripts/orphan.gd").exists():
             bad.append("apply: orphan.gd not deleted")
         for kept, text in (("func live_c", c_text), ("func documented_fn", c_text), ("func held_fn", c_text),
-                           ("var wo", app_text), ("var built", app_text), ("func attach_x", app_text), ("func _tab_a", app_text)):
+                           ("func shadowed_flow", c_text),
+                           ("var wo", app_text), ("var built", app_text), ("func attach_x", app_text), ("func _tab_a", app_text),
+                           ("var json_named_var", app_text)):
             if kept not in text:
                 bad.append(f"apply: removed {kept} (must be refused/kept)")
+        if "doc_only_var" in app_text:
+            bad.append("apply: unused var doc_only_var kept (design.md-only mention must not hold unused_var)")
         if "func maybe_fn" not in (root / "scripts/d.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed ambiguous maybe_fn")
+        if "func node_only_fn" not in (root / "scripts/play_host.gd").read_text(encoding="utf-8"):
+            bad.append("apply: removed ambiguous node_only_fn (Node-typed receiver must stay a warning)")
+        if "func unused_skin_fn" in (root / "scripts/skins/skin_a.gd").read_text(encoding="utf-8"):
+            bad.append("apply: unused_skin_fn kept")
+        for kept in ("func spec", "func build", "func only_string_skin"):
+            if kept not in (root / "scripts/skins/skin_a.gd").read_text(encoding="utf-8"):
+                bad.append(f"apply: removed live skin_a {kept}")
+        if "var balance_only_var" not in (root / "scripts/data/balance/vars_fix.gd").read_text(encoding="utf-8"):
+            bad.append("apply: removed balance_only_var (balance unused_var must not be auto-promoted)")
         if "func helper" not in (root / "scripts/b.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed live same-name b.helper")
         ml = (root / "scripts/ml.gd").read_text(encoding="utf-8")
@@ -222,6 +320,11 @@ def run() -> list[str]:
             bad.append(f"apply: held_fn refusal missing ({refused.get('held_fn')})")
         if "non-GDScript" not in refused.get("documented_fn", ""):
             bad.append(f"apply: documented_fn refusal missing ({refused.get('documented_fn')})")
+        flow_refuse = refused.get("shadowed_flow", "")
+        if "non-GDScript" not in flow_refuse and "confidence" not in flow_refuse:
+            bad.append(f"apply: shadowed_flow (shot-flow/JSON word) refusal missing ({flow_refuse})")
+        if "balance" not in refused.get("balance_only_var", ""):
+            bad.append(f"apply: balance_only_var refusal missing ({refused.get('balance_only_var')})")
         if not blob["applied"]:
             bad.append("apply: nothing recorded in applied")
     return bad
