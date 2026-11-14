@@ -69,6 +69,7 @@ LOAD_CALL_RE = re.compile(r"\b(?:pre)?load[ \t]*\([ \t]*\"res://([^\"]+\.gd)\"[ 
 FOR_LOAD_LIST_RE = re.compile(r"\bfor[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?in[ \t]+\(?[ \t]*(?:pre)?load\([ \t]*(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))[ \t]*\)"
                               r"(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*get\([ \t]*\"([A-Za-z_]\w*)\"[ \t]*\)")
 NEW_INIT_RE = re.compile(r"\bvar[ \t]+([A-Za-z_]\w*)[ \t]*:[ \t]*\w+[ \t]*=[ \t]*([A-Z]\w*)\.new\(")
+WRAP_LOAD_RE = re.compile(r"\([ \t]*(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)[ \t]+as[ \t]+GDScript[ \t]*\)$")  # `(load("res://x.gd") as GDScript).fn(..)`
 SELF_NEW_RE = re.compile(r"^[ \t]+var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*new\(")  # `var ui := new()`: own script
 PATH_CONST_RE = re.compile(r"^const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*String[ \t]*)?:?=[ \t]*\"res://([^\"]+\.gd)\"[ \t]*$")
 # `skin.callv("dress", ..)` on a receiver bound to a known script union: the method on each member that defines it.
@@ -843,7 +844,7 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                 q -= 1
             if q < 0 or not (code[q].isalnum() or code[q] == "_"):
                 if q >= 0 and code[q] == ")":
-                    m = CALL_RES_RE.search(raw[:q + 1])
+                    m = CALL_RES_RE.search(raw[:q + 1]) or WRAP_LOAD_RE.search(raw[:q + 1])
                     if m:
                         return ["@" + m.group(1)] + chain
                     m = re.search(r"(?<![\w.])([A-Za-z_]\w*)[ \t]*\.[ \t]*new\([^()]*\)$", code[:q + 1])
