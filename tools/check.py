@@ -19,6 +19,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("load-audit",  "checks/bot_load_audit",         "Audit one Grok Build session's reads before its first ask"),
     ("docs-size",   "checks/list_oversize_docs",     "Bot-only doc size sweep (--boot, --dupes)"),
     ("selftests",   "checks/check_selftests",        "Every tool selftest, whatever changed (timeouts; missing exe/module is SKIP)"),
+    ("chunk-finish", "checks/chunk_finish",          "Unused-sweep chunk verify: selftest/sweep/caps/code-map/gd-load/prove as needed, one rerun"),
 ]
 
 if __name__ == "__main__":
