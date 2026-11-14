@@ -57,6 +57,8 @@ HOSTS = frozenset({"host", "_host", "h", "fac", "_fac", "p", "pt", "ui", "_ui", 
 TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 USE_RE = re.compile(r"(?:([A-Za-z_]\w*)[ \t]*\.[ \t]*|(\.)[ \t]*)?\b([A-Za-z_]\w*)\b")
 IDENT = re.compile(r"[A-Za-z_]\w*")
+SCHEMA_KEY_RE = re.compile(r'\[\s*["\']([A-Za-z_]\w*)["\']\s*,')
+DYN_PROP_RE = re.compile(r"(?:\b(?:host|self)\.)?get\s*\(\s*name\s*\)|\b(?:host|self)\.set\s*\(\s*name\s*,")
 STR_RE = re.compile(r"\"([^\"\\\n]*(?:\\.[^\"\\\n]*)*)\"|'([^'\\\n]*(?:\\.[^'\\\n]*)*)'")
 CALLISH = re.compile(r"\b(?:call|call_deferred|callv|Callable|has_method|connect|emit_signal|method|bind|callback|rpc)\b")
 PREFIX_RE = re.compile(r"[\"']([A-Za-z_]\w*_)[\"'][ \t]*\+")
@@ -683,7 +685,51 @@ class Graph:
             kind = "dynamic" if len({n for _r, n in hits}) <= 8 else "dynamic_ambiguous"
             self.edges[(src_rel, src_fn)].extend((r, n, kind, ln) for r, n in hits)
 
-    def _unresolved(self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int = -1) -> tuple[list[str], str]:
+        self._mark_schema_uses()
+
+    def _schema_keys(self, rel: str, depth: int = 0, seen: set | None = None) -> set[str]:
+        """String keys from `["name", ...]` rows in this script and its preload aliases (schema facades)."""
+        seen = seen if seen is not None else set()
+        if not rel or rel in seen or rel not in self.scripts or depth > 3:
+            return set()
+        seen.add(rel)
+        s = self.scripts[rel]
+        keys = {m.group(1) for raw in s.lines for m in SCHEMA_KEY_RE.finditer(raw)}
+        for tgt in s.aliases.values():
+            keys |= self._schema_keys(tgt, depth + 1, seen)
+        return keys
+
+    def _has_dyn_prop(self, rel: str) -> bool:
+        """True when this script reads or writes a property by a `name` variable (`host.get(name)` / `get(name)`)."""
+        if rel not in self.scripts:
+            return False
+        return any(DYN_PROP_RE.search(code_of(raw)) for raw in self.scripts[rel].lines)
+
+    def _mark_schema_uses(self) -> None:
+        """Vars listed as schema row keys are live when a host getv/get(name) (or a preloaded Access helper) reads them.
+
+        This is the Balance / App.bal.getv / snapshot path: keys live in schema_*.gd, values on the vars_*.gd
+        chain, and Access.getv does host.get(name). Without this, those vars look unused even though the
+        debug menu, telemetry, and Balance.f/getv all go through the schema.
+        """
+        for rel, s in self.scripts.items():
+            keys = self._schema_keys(rel)
+            dyn = self._has_dyn_prop(rel) or any(self._has_dyn_prop(t) for t in s.aliases.values())
+            if not keys or not dyn:
+                continue
+            src_ln = next((i + 1 for i, raw in enumerate(s.lines) if DYN_PROP_RE.search(code_of(raw))), 1)
+            helper = next((t for t in s.aliases.values() if self._has_dyn_prop(t)), rel)
+            if helper in self.scripts:
+                src_ln = next((i + 1 for i, raw in enumerate(self.scripts[helper].lines) if DYN_PROP_RE.search(code_of(raw))), src_ln)
+            for r in self.chain(rel):
+                for v in self.scripts[r].vars:
+                    if v in keys:
+                        self.var_uses[(r, v)].append((helper, src_ln, "r", "dynamic", "<schema>", False))
+            # also mark vars on scripts this one extends *from* already in chain; children that extend H:
+            # Balance is the host; vars live on parent files in chain. Good.
+
+    def _unresolved(
+self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int = -1) -> tuple[list[str], str]:
         cands = list(self.defs[name]) if is_fn else []
         if nargs >= 0 and cands:
             fit = [c for c in cands if self.scripts[c].arity[name][0] <= nargs <= self.scripts[c].arity[name][1]]

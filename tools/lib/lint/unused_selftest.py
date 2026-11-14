@@ -53,7 +53,7 @@ func _ready() -> void:
 	C.live_c()
 	ML.live_ml()
 	SkinSet.apply(self)
-	Bal.new()
+	Bal.new().tick()
 	typed_pt(PlayHost.new())
 	node_pt(PlayHost.new())
 	ui = PlayHost.new()
@@ -169,7 +169,33 @@ static func _bump() -> int:
     "tools/lib/lint/list_unused_funcs.py": "# example: lint_only_fn is named only in the linter source\n",
     "design/notes.md": "dead_a and helper are named only in a design doc.\ndoc_only_var is unused except here.\n`CMod.dead_a` was a leftover facade name.\n",
     "tools/data/flow-extra.json": '{"note": "shadowed_flow and json_named_var appear in shot-flow adjacent data"}\n',
-    "scripts/data/balance/vars_fix.gd": "extends RefCounted\nvar balance_only_var := 1\n",
+    "scripts/data/balance/vars_fix.gd": """extends RefCounted
+const Schema := preload("res://scripts/data/balance/schema_fix.gd")
+const Access := preload("res://scripts/data/balance/access_fix.gd")
+var schema_live := 1.0
+var also_keyed := 2.0
+var balance_only_var := 1
+
+func schema() -> Array:
+	return Schema.rows()
+
+func getv(name: String) -> float:
+	return Access.getv(self, name)
+
+func tick() -> void:
+	for row in schema():
+		getv(str(row[0]))
+""",
+    "scripts/data/balance/schema_fix.gd": """static func rows() -> Array:
+	return [
+		["schema_live", 0.0, 1.0, 0.1],
+		["also_keyed", 0.0, 2.0, 0.1],
+	]
+""",
+    "scripts/data/balance/access_fix.gd": """static func getv(host, name: String) -> float:
+	var v: Variant = host.get(name)
+	return 0.0 if v == null else float(v)
+""",
     "scripts/play_host.gd": """class_name PlayHost
 extends Node
 
@@ -263,7 +289,8 @@ def run() -> list[str]:
                 ("probe.gd", "ping"), ("shots.gd", "still"), ("child.gd", "hook"), ("base.gd", "hook"), ("cli.gd", "go"),
                 ("main.gd", "_on_scene_pressed"), ("skin_a.gd", "spec"), ("skin_a.gd", "build"),
                 ("skin_b.gd", "spec"), ("skin_b.gd", "build"), ("skin_a.gd", "only_string_skin"),
-                ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn")]
+                ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
+                ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")
@@ -314,6 +341,10 @@ def run() -> list[str]:
                 bad.append(f"apply: removed live skin_a {kept}")
         if "var balance_only_var" not in (root / "scripts/data/balance/vars_fix.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed balance_only_var (balance unused_var must not be auto-promoted)")
+        fix_text = (root / "scripts/data/balance/vars_fix.gd").read_text(encoding="utf-8")
+        for kept in ("var schema_live", "var also_keyed"):
+            if kept not in fix_text:
+                bad.append(f"apply: removed {kept} (schema-key vars read via host.get(name)/getv are live)")
         if "func helper" not in (root / "scripts/b.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed live same-name b.helper")
         if "func lint_only_fn" in c_text:
