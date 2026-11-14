@@ -822,17 +822,8 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=24, help="Max rows on stdout (default 24; the summary has all).")
     parser.add_argument("--apply", action="store_true", help="DELETE verified (apply_ready) items only; ambiguous stay warnings.")
     parser.add_argument("--selftest", action="store_true", help="Run the fixture cases in a throwaway root.")
-    ch = parser.add_argument_group("chunk view (unused_chunk.py)")
-    ch.add_argument("--paths", nargs="+", default=[], help="Chunk globs (`dir/**`, `dir/x*.gd`; a bare dir = everything under it): print only "
-                    "in-chunk rows by kind with counts, a reach tag per ambiguous/debug_only row (strong, type_here: untyped site in "
-                    "the chunk, cascade: only via a weak edge from an out-of-chunk caller, named) and the reason each row stays. "
-                    "Writes _logs/unused-funcs/unused-chunk.json.")
-    ch.add_argument("--why", metavar="[FILE:]FUNC", help="Reach path from the roots with each edge kind, and weak callers (in/out of --paths).")
-    ch.add_argument("--save-baseline", metavar="FILE", help="With --paths: save the chunk JSON as a baseline.")
-    ch.add_argument("--baseline", metavar="FILE", help="With --paths: diff counts and rows against a saved baseline.")
-    ch.add_argument("--plan-md", action="store_true", help="With --paths: print the plan markdown block (tip, counts, leftovers and why).")
-    ch.add_argument("--plan-out", metavar="PATH", help="With --paths --chunk N: write/replace that block in a plan file (never commits).")
-    ch.add_argument("--chunk", metavar="N", help="Chunk number/label for the plan block markers.")
+    import unused_chunk
+    unused_chunk.add_args(parser.add_argument_group("chunk view (unused_chunk.py)"), view=True)
     ns = parser.parse_args()
     if ns.selftest:
         import unused_selftest

@@ -7,8 +7,8 @@ Phases (changed set = git diff BASE..worktree plus untracked):
   script-cap check.py script-cap --bot --path <changed>   when live scripts/**/*.gd changed
   code-map   docs.py code-map check                       when scripts/ changed
   gd-load    gate.py gd-load --files <changed .gd>        when live .gd still on disk changed
-  prove      check.py prove --base BASE                   unless --no-prove
-A failing phase reruns once (known flake: smokes P5 chest_ok=false) before it counts; the fatal line is printed.
+  prove      check.py prove --base BASE
+The no-prove flag skips prove for a quick loop. A failing phase reruns once (known flake: smokes P5 chest_ok=false) before it counts; the fatal line is printed.
 With --plan-out PATH --chunk N and every phase green, the sweep's plan block is written there. Never commits."""
 from __future__ import annotations
 
@@ -95,11 +95,9 @@ def selftest() -> list[str]:
 
 def main() -> int:
     ap = agent_log.std_parser(__doc__.split("\n")[0])
-    ap.add_argument("--paths", nargs="+", default=[], help="Chunk globs, passed to lint.py unused --paths.")
+    import unused_chunk
+    unused_chunk.add_args(ap, view=False)
     ap.add_argument("--base", default=None, help="Diff base (default: origin/<branch>, as check.py prove).")
-    ap.add_argument("--baseline", metavar="FILE", help="Chunk baseline from lint.py unused --save-baseline (before/after diff).")
-    ap.add_argument("--plan-out", metavar="PATH", help="With --chunk N and all phases green: write the chunk's plan block there.")
-    ap.add_argument("--chunk", metavar="N", help="Chunk label for --plan-out.")
     ap.add_argument("--no-prove", action="store_true", help="Skip prove (quick loop; the final finish must include it).")
     ap.add_argument("--selftest", action="store_true", help="Phase selection and fatal-line picking on fixtures.")
     ns = ap.parse_args()

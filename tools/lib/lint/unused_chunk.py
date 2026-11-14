@@ -253,8 +253,23 @@ def write_plan(path: Path, block: str, chunk_no: str) -> str:
 def save(path: Path, ch: dict) -> None:
     path.write_text(json.dumps(ch, indent=1) + "\n", encoding="utf-8")
 
+def add_args(ap, view: bool) -> None:
+    """Chunk flags shared by lint.py unused (view=True) and check.py chunk-finish."""
+    ap.add_argument("--paths", nargs="+", default=[], help="Chunk globs (`dir/**`, `dir/x*.gd`; a bare dir or `x*` = everything under it)"
+                    + (": print only in-chunk rows by kind, a reach tag per ambiguous/debug_only row (strong; type_here: weak site in the "
+                       "chunk; cascade: only via a weak edge from an out-of-chunk caller, named) and why each row stays. "
+                       "Writes _logs/unused-funcs/unused-chunk.json." if view else "."))
+    ap.add_argument("--baseline", metavar="FILE", help="Diff chunk counts and rows against a file saved by lint.py unused --save-baseline.")
+    ap.add_argument("--plan-out", metavar="PATH", help="With --chunk N: write/replace the chunk's marked plan block in PATH (never commits)"
+                    + ("." if view else "; only when every phase is green."))
+    ap.add_argument("--chunk", metavar="N", help="Chunk number/label for the plan block markers.")
+    if view:
+        ap.add_argument("--why", metavar="[FILE:]FUNC", help="Reach path from the roots with each edge kind, and weak callers (in/out of --paths).")
+        ap.add_argument("--save-baseline", metavar="FILE", help="With --paths: save the chunk JSON as a baseline.")
+        ap.add_argument("--plan-md", action="store_true", help="With --paths: print the plan markdown block (tip, counts, leftovers and why).")
+
 def cli(root: Path, g, js: Path, opt: dict, limit: int, txt: Path) -> int:
-    """lint.py unused --paths / --why / --baseline / --plan-*: print this view instead of the repo-wide rows."""
+    """lint.py unused with --paths or --why: print this view instead of the repo-wide rows."""
     blob = json.loads(js.read_text(encoding="utf-8"))
     if opt.get("why"):
         for line in why_lines(g, blob, opt["why"], opt["paths"]):
