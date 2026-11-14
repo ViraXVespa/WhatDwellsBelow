@@ -154,6 +154,8 @@ def link_addons(src: Path, wt: Path) -> str:
 def prepare(wt: Path, flows: str, run=subprocess.run) -> list[str]:
     """In a new or reused worktree, before any edit: the Godot setup (addon + import; a fresh worktree fails Godot checks
     without it), then the before shots of the slice's flows (prove names them; no scratch worktree later). Never fatal."""
+    if os.environ.get("WDB_OPEN_NO_PREPARE") == "1":  # the selftest's real (non-dry) opens: no Godot download, no shots
+        return ["prepare: skipped (WDB_OPEN_NO_PREPARE=1)"]
     py, out = gather_agent.py(), []
     for label, argv, fix in (("setup", [py, "tools/gate.py", "bot-smokes", "--setup"], "python tools/gate.py bot-smokes --setup"),
                              ("before shots", [py, "tools/shots.py", "flow", "--flow", flows, "--before"],
@@ -368,7 +370,7 @@ def selftest(script: list[str]) -> int:
 
     def run(root: Path, *a: str, env: dict | None = None) -> tuple[int, str]:
         p = subprocess.run([*script, "--root", str(root), *a], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           env=env or os.environ)
+                           env={**(env or os.environ), "WDB_OPEN_NO_PREPARE": "1"})
         return p.returncode, p.stdout + p.stderr
 
     git = repo_lib.git_test

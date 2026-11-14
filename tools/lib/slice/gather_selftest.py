@@ -74,7 +74,7 @@ def run(script: list[str], td: Path) -> list[str]:
     def go(mode: str, *a: str) -> tuple[int, str, list[dict]]:
         logf = td / f"log-{len(list(td.glob('log-*')))}.jsonl"
         env = dict(os.environ, WDB_GROK=str(td / "stub.py"), STUB_LOG=str(logf), STUB_WTS=str(td / "wts"), STUB_MODE=mode,
-                   STUB_TOOLS=str(real), STUB_FILES=str(td / "files.txt"))
+                   STUB_TOOLS=str(real), STUB_FILES=str(td / "files.txt"), WDB_OPEN_NO_PREPARE="1")  # no Godot download
         env.pop("WDB_ROLE", None)
         p = subprocess.run([*script, "--root", str(root), *a], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
         calls = [json.loads(x) for x in logf.read_text(encoding="utf-8").splitlines()] if logf.is_file() else []
