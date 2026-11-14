@@ -1,0 +1,25 @@
+{
+  "name": "camp-archives-docs",
+  "about": "Placeholdia: archives document list and a document read view. Opens the browser, selects Full 3D Pass (catalog index 2, a snapshot that has docs), opens the docs list, then the first document.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "smoke": true,
+  "covers": ["archives:docs", "archives:read"],
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "App.archives_ui", "method": "show_browser"},
+    {"op": "assert", "target": "App.archives_ui.open", "equals": true},
+    {"op": "call", "target": "App.archives_ui", "method": "_on_list_pressed", "args": [2]},
+    {"op": "call", "target": "App.archives_ui", "method": "_on_docs"},
+    {"op": "assert", "target": "App.archives_ui.mode", "equals": "docs"},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "archives-docs", "texts": true},
+    {"op": "call", "target": "App.archives_ui", "method": "_open_read", "args": [0]},
+    {"op": "assert", "target": "App.archives_ui.mode", "equals": "read"},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "archives-read", "texts": true},
+    {"op": "call", "target": "App.archives_ui", "method": "hide_browser"},
+    {"op": "assert", "target": "App.archives_ui.open", "equals": false}
+  ]
+}
