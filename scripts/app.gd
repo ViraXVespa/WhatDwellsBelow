@@ -306,9 +306,6 @@ func set_sprite_mip_sharp(on: bool) -> void:
 func set_sprite_mip_bias(v: float) -> void:
 	AppSet.set_sprite_mip_bias(self, v)
 
-func set_web_fullscreen(on: bool) -> void:
-	AppSet.set_web_fullscreen(self, on)
-
 func on_kill() -> void:
 	AppRun.on_kill(self)
 

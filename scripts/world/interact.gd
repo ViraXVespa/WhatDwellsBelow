@@ -86,9 +86,6 @@ func hide_as_secret() -> void:
 func mark_spent() -> void:
 	_act().mark_spent(self)
 
-func _ui() -> Node:
-	return _act().ui_node(self)
-
 func set_open(v: bool) -> void:
 	_act().set_open(self, v)
 

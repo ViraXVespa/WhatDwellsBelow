@@ -73,9 +73,6 @@ static func desktop_label() -> String:
 		return App.tr("display_mode.display_true_fullscreen")
 	return App.tr("display_mode.display_borderless_fullscreen")
 
-static func set_web_fullscreen(on: bool, persist: bool = true) -> void:
-	Web.set_web_fullscreen(on, persist)
-
 static func toggle_web_fullscreen() -> void:
 	var on: bool = not bool(App.web_fullscreen)
 	if is_web():

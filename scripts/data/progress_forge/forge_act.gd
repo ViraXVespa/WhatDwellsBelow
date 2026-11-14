@@ -122,15 +122,6 @@ static func add_hold(p: Object, it: Dictionary) -> String:
 	App.save_now()
 	return App.tr("common.forged_into_a_hold") % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
-static func from_meta(p: Object, d: Dictionary) -> void:
-	var Book = load("res://scripts/data/progress_forge/book.gd")
-	var raw: Variant = d.get("forge_book", {})
-	if raw is Dictionary:
-		p.set("forge_book", raw)
-	else:
-		p.set("forge_book", {})
-	Book.migrate(p)
-
 static func type_of(it: Dictionary) -> String:
 	return Affix.type_of(it)
 
