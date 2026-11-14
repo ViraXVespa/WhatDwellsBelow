@@ -23,6 +23,7 @@ const ML := preload("res://scripts/ml.gd")
 const LRun := preload("res://scripts/debug/lrun.gd")
 const LOther := preload("res://scripts/debug/lother.gd")
 const LHelp := preload("res://scripts/debug/lhelp.gd")
+const SelfNew := preload("res://scripts/debug/selfnew.gd")
 const TABS := ["_tab_a"]
 var never_used := 3
 var prop_never: int:
@@ -59,6 +60,7 @@ func _ready() -> void:
 	LRun.go(self)
 	LOther.other_live()
 	LHelp.go()
+	SelfNew.make()
 	SkinSet.apply(self)
 	SkinBake.bake()
 	Bal.new().tick()
@@ -167,7 +169,7 @@ static func _bump() -> int:
 	return 1
 ''',
     "scripts/ghost.gd": "static func boo() -> void:\n\tpass\n",
-    "scripts/d.gd": "static func maybe_fn(_v: int) -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n",
+    "scripts/d.gd": "static func maybe_fn(_v: int) -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n\nfunc own_live() -> void:\n\tpass\n",
     "scripts/base.gd": "extends Node\nfunc run() -> void:\n\thook()\n\nfunc hook() -> void:\n\tpass\n",
     "scripts/child.gd": 'extends "res://scripts/base.gd"\nfunc hook() -> void:\n\tpass\n',
     "scripts/orphan.gd": "static func lonely() -> void:\n\tpass\n",
@@ -280,7 +282,8 @@ var not_in_flow := 1
     "scripts/debug/lstep.gd": "static func run(_h) -> void:\n\tpass\n\nstatic func lstep_unused() -> void:\n\tpass\n",
     "scripts/debug/lother.gd": "static func other_live() -> void:\n\tpass\n\nstatic func run(_h) -> void:\n\tpass\n",
     "scripts/debug/lhelp.gd": 'static func _util():\n\treturn load("res://scripts/debug/hutil.gd")\n\nstatic func go() -> void:\n\tvar U = _util()\n\tU.h_live()\n\tvar W = _other()\n\tW.h_dead()\n\nstatic func _other():\n\treturn null\n',
-    "scripts/debug/hutil.gd": "static func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
+    "scripts/debug/selfnew.gd": 'extends Node\nstatic func make() -> void:\n\tvar n := new()\n\tn.own_live()\n\tload("res://scripts/debug/lhelp.gd")._util().h_chain()\n\nfunc own_live() -> void:\n\tpass\n',
+    "scripts/debug/hutil.gd": "static func h_chain() -> void:\n\tpass\n\nstatic func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
     "tools/data/shot-flows/vis.json": '{ "steps": [ { "op": "assert", "target": "script:debug/vis_check.plant_x" } ] }\n',
     "tools/data/shot-flows/node.json": '{ "steps": [ {"op": "call", "target": "host.ui", "method": "flow_node_fn"}, {"op": "call", "target": "host", "method": "twin_flow"} ] }\n',
 
@@ -321,7 +324,7 @@ def run() -> list[str]:
             ("vis_check.gd", "not_in_flow"): "unused_var",
             ("hutil.gd", "h_dead"): "ambiguous", ("hutil.gd", "h_never"): "unused",
             ("lstep.gd", "lstep_unused"): "unused", ("lother.gd", "run"): "shadowed",
-            ("not_skin.gd", "dress"): "unused", ("b.gd", "twin_flow"): "unused", ("d.gd", "twin_flow"): "unused",
+            ("not_skin.gd", "dress"): "unused", ("b.gd", "twin_flow"): "unused", ("d.gd", "twin_flow"): "unused", ("d.gd", "own_live"): "shadowed",
         }
         for key, kind in want.items():
             if cat.get(key) != kind:
@@ -333,7 +336,7 @@ def run() -> list[str]:
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
                 ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
                 ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live"),
-                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn")]
+                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn"), ("selfnew.gd", "own_live"), ("hutil.gd", "h_chain")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")

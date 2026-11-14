@@ -68,6 +68,7 @@ LOAD_CALL_RE = re.compile(r"\b(?:pre)?load[ \t]*\([ \t]*\"res://([^\"]+\.gd)\"[ 
 # `for skin in (load(FRAME_SET) as GDScript).get("SKINS")`: the loop var walks that script's preload list.
 FOR_LOAD_LIST_RE = re.compile(r"\bfor[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?in[ \t]+\(?[ \t]*(?:pre)?load\([ \t]*(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))[ \t]*\)"
                               r"(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*get\([ \t]*\"([A-Za-z_]\w*)\"[ \t]*\)")
+SELF_NEW_RE = re.compile(r"^[ \t]+var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*new\(")  # `var ui := new()`: own script
 PATH_CONST_RE = re.compile(r"^const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*String[ \t]*)?:?=[ \t]*\"res://([^\"]+\.gd)\"[ \t]*$")
 # `skin.callv("dress", ..)` on a receiver bound to a known script union: the method on each member that defines it.
 RECV_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)[ \t]*\.[ \t]*(?:call|call_deferred|callv)[ \t]*\([ \t]*\"(\w+)\"")
@@ -362,6 +363,9 @@ class Script:
             m = FOR_IN_RE.search(head)
             if m:
                 pend.append((i, "list", m.group(1), m.group(2)))
+            m = SELF_NEW_RE.match(head)
+            if m:
+                pend.append((i, "alias", m.group(1), rel))
             m = FOR_LOAD_LIST_RE.search(head)
             if m:
                 pend.append((i, "loadlist", m.group(1), f"{m.group(2) or '@' + m.group(3)}|{m.group(4)}"))
@@ -834,6 +838,10 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                     m = re.search(r"(?<![\w.])([A-Za-z_]\w*)\(\s*\)$", code[:q + 1])
                     if m:
                         return ["#" + m.group(1)] + chain
+                    # `load("res://x.gd")._helper().fn(..)`: whatever x.gd's `_helper()` returns (`return load(..)`).
+                    m = re.search(r"\b(?:pre)?load\([ \t]*\"res://([^\"]+\.gd)\"[ \t]*\)[ \t]*\.[ \t]*([A-Za-z_]\w*)\([ \t]*\)$", raw[:q + 1])
+                    if m:
+                        return ["&" + m.group(1) + "::" + m.group(2)] + chain
                 return ["?"] + chain if q >= 0 and code[q] in ")]\"'" else (chain or ["?"])
             k -= 1
             while k >= 0 and toks[k][1] != q + 1:
@@ -1092,6 +1100,12 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
         cur = None
         if head.startswith("@"):
             cur = head[1:]
+        elif head.startswith("&"):
+            path, f = head[1:].split("::")
+            own = self.find(path, f) if path in self.scripts else ""
+            cur = self.scripts[own].func_ret.get(f, "") if own else ""
+            if not cur:
+                return ""
         elif head.startswith("#"):
             own = self.find(rel, head[1:])
             cur = self.scripts[own].func_ret.get(head[1:], "") if own else ""
