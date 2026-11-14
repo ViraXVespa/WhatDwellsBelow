@@ -13,7 +13,7 @@ Web / chat writes that file in a Phase 4 emit. The Bot clears the completed Brie
 
 If `design/reuse-map.md` is missing the how-to header only, or the body under the how-to is the empty template (no brief), stop and report empty. Do not invent work.
 
-Still refactor-shaped unless a row the User wrote is explicit and legal. No invented skills, rarities, hub upgrades, meta-progression, co-op, or tunables. No `Entity.gd` / UI framework / ECS. Touched live scripts ship under 10KB (`design/refactor.md`, recipe only). Do not keep splitting toward 5KB in this flow.
+Still refactor-shaped unless a row the User wrote is explicit and legal. No invented skills, rarities, hub upgrades, meta-progression, co-op, or tunables. No `Entity.gd` / UI framework / ECS. Touched live scripts ship under 10000 bytes (`design/refactor.md`, recipe only). Do not keep splitting toward 5KB in this flow.
 
 ## Read set
 

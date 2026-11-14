@@ -9,7 +9,7 @@ For **Grok Bot** extract sessions only. This is not the staged reuse-map PR (the
 
 Move near-identical control flow (renamed locals OK) to one owner. No behavior change. No new game systems.
 
-Owner choice (new shared module vs existing owner) and the near-identical test: `refactor.md` (New shared modules and reuse). An existing owner must stay under 10KB after the calls land. Do not keep splitting toward 5KB in this flow.
+Owner choice (new shared module vs existing owner) and the near-identical test: `refactor.md` (New shared modules and reuse). An existing owner must stay under 10000 bytes after the calls land. Do not keep splitting toward 5KB in this flow.
 
 ## Read set
 
