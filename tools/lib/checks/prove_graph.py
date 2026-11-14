@@ -210,13 +210,47 @@ LIVE_KINDS = ("routes", "job-table", "task", "skill", "ci", "hook", "shot-flow",
 
 @dataclass
 class Gone:
-    what: str     # path | command | flag | def | node | key | sig
+    what: str     # path | command | flag | def | node | key | sig (ctx ['compatible']: only optional params added)
     symbol: str   # what to look for
     owner: str    # the changed file it came from
     ctx: list[str] = field(default_factory=list)  # flag: a line must also name one of these (the tool)
 
 def _defs(rx: re.Pattern, src: str) -> dict[str, str]:
     return {m.group(1): re.sub(r"\s+", "", m.group(2)) for m in rx.finditer(src)}
+
+def _params(sig: str) -> list[str]:
+    """Top-level comma split of a whitespace-free parameter list (brackets and quotes kept whole)."""
+    out, depth, cur, quote = [], 0, "", ""
+    for ch in sig:
+        if quote:
+            quote = "" if ch == quote else quote
+        elif ch in "'\"":
+            quote = ch
+        elif ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            out.append(cur)
+            cur = ""
+            continue
+        cur += ch
+    return [p for p in out + [cur] if p]
+
+def sig_compatible(old: str, new: str) -> bool:
+    """True when every old caller still works: the old parameters stay, unchanged and in order, and each added one is
+    optional (a default, *args, **kw or the bare `*`), with any added positional one after every old positional one."""
+    o, n = _params(old), _params(new)
+    if [p for p in n if p in o] != o:
+        return False
+    star = next((i for i, p in enumerate(n) if p.startswith("*")), len(n))
+    last_old_pos = max((i for i, p in enumerate(n[:star]) if p in o), default=-1)
+    for i, p in enumerate(n):
+        if p in o:
+            continue
+        if not (p.startswith("*") or "=" in p) or (i < star and i < last_old_pos):
+            return False
+    return True
 
 def _keys(src: str) -> set[str]:
     import json
@@ -287,7 +321,7 @@ def gone(c: Change, old: Tree, new: Tree, ents_new: dict, basenames_new: dict) -
                     out.append(Gone("def", name, c.path))
             for name in sorted(set(do) & set(dn)):
                 if do[name] != dn[name] and not name.startswith("_"):
-                    out.append(Gone("sig", name, c.path))
+                    out.append(Gone("sig", name, c.path, ["compatible"] if sig_compatible(do[name], dn[name]) else []))
     if c.path.endswith(".gd"):  # a dropped const/var/signal (an old *_REV const): docs and dependents that still name it
         for name in sorted(set(GD_MEMBER.findall(o)) - set(GD_MEMBER.findall(n)) - head_members(new)):
             if len(name) >= 5 and "_" in name.strip("_"):

@@ -14,7 +14,7 @@ script, data consumers, shot flows. Checks: tools/data/prove_rules.json maps tou
 checks. Each chosen check prints with why. Fails: DRIFT (a path, subcommand, flag, function, node, group or data key
 the diff removed that a file still names), CLAIM (a new comment naming a tool module this diff did not touch),
 STALE (an untouched dependent's line, in a paragraph naming a tool whose docstring changed, repeating a token of the
-new docstring). REVIEW (advisory): a changed signature with callers outside the diff, a tool whose docstring changed
+new docstring). REVIEW (advisory): a changed signature with callers outside the diff (one grouped line when it only gained optional params), a tool whose docstring changed
 while a dependent that describes it did not.
 --base main = the whole branch. --plan prints the plan and drift and runs nothing (a --head replay is always --plan).
 --all runs every rule only when the diff touches a shared lighting/bake input (SHARED) or a path no rule or graph edge
@@ -109,6 +109,7 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
             want.setdefault(f"{g.what}:{g.symbol}", []).append(g)
             hits[f"{g.what}:{g.symbol}"] = rows
     drift, review, shown = [], [], set()
+    compat: dict[tuple[str, str], set[str]] = {}
     for sym, gs in want.items():
         for g in gs:
             if g.what == "path" and g.symbol in new.set:
@@ -130,7 +131,9 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
                     continue
                 if g.what in ("def", "sig"):
                     if g.what == "sig":
-                        if f not in changed:
+                        if f not in changed and g.ctx:  # only optional params added: old calls still work, one grouped line
+                            compat.setdefault((g.symbol, g.owner), set()).add(f)
+                        elif f not in changed:
                             review.append(f"REVIEW  signature of {g.symbol}() changed in {g.owner}; caller {where}")
                         continue
                 label = {"path": "removed path", "command": "removed subcommand", "flag": "removed flag",
@@ -139,6 +142,9 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
                 if (label, g.symbol, where) not in shown:  # one row per site, not per file that dropped the name
                     shown.add((label, g.symbol, where))
                     drift.append(f"DRIFT   {label} {g.symbol} ({g.owner}) still named at {where}: {line[:90]}")
+    for (sym, own), fs in sorted(compat.items()):
+        review.append(f"REVIEW  signature of {sym}() in {own} only gained optional params (old calls still work); "
+                      f"{len(fs)} untouched caller file(s), e.g. {', '.join(sorted(fs)[:2])}")
     # a tool whose docstring or help text changed: dependents that describe it but were not touched
     stems = {Path(f).stem for f in new.files if f.endswith((".py", ".gd"))}
     for c in changes:
@@ -147,12 +153,19 @@ def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str]
         at = pg.doc_changed(c, old.text(c.old) or "", new.text(c.path) or "")
         src = new.text(c.path) or ""
         prose = [ln for i, ln in enumerate(c.added) if pg.is_prose(c, i, src) or "help=" in ln] if at else []
+        named: dict[str, list[str]] = {"tool": [], "doc": []}
         for f in sorted(deps.get(c.path, set()) - changed) if at else []:
             stale = pg.stale_lines(c.path, names_by.get(c.path, []), prose, f, new.text(f) or "", stems)
             for no, line in stale:
                 drift.append(f"STALE   {c.path} docstring/help changed (line {at}); {f}:{no} [{pg.kind_of(f)}] (untouched) repeats it: {line[:90]}")
             if not stale and pg.kind_of(f) in DOC_KINDS:
-                review.append(f"REVIEW  {c.path} docstring/help changed (line {at}); {f} names it and is untouched")
+                named["tool" if pg.kind_of(f) == "tool" else "doc"].append(f)
+        for kind, fs in named.items():  # one line per changed tool and kind (importing tools, describing docs)
+            if len(fs) == 1:
+                review.append(f"REVIEW  {c.path} docstring/help changed (line {at}); {fs[0]} names it and is untouched")
+            elif fs:
+                review.append(f"REVIEW  {c.path} docstring/help changed (line {at}); {len(fs)} untouched {kind}s name it: "
+                              f"{', '.join(fs[:6])}{f' +{len(fs) - 6}' if len(fs) > 6 else ''}")
     return drift, review
 
 def _claims(changes, new, changed) -> list[str]:
