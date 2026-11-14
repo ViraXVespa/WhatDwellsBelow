@@ -25,7 +25,7 @@ import agent_log
 import gd_lib
 
 SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git"}
-DEFAULT_PATHS = ["scripts", "scenes", "tools", "design"]
+DEFAULT_PATHS = ["scripts", "scenes", "tools", "design", "project.godot", "export_presets.cfg"]  # settings hold platform causes
 
 def BOT_DOCS(rel: str) -> bool:
     """The Bot's own docs are not Build's search scope."""
@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Text search over scripts/scenes/tools/design.", json_out=True)
     ap.add_argument("pattern_pos", nargs="?", default="", help="Pattern (same as --pattern).")
     ap.add_argument("--pattern", default="", help="Text to find (or pass it as the argument).")
-    ap.add_argument("--path", nargs="+", action="extend", default=None, help="Files or dirs to search; repeat the flag or list several (default scripts scenes tools design).")
+    ap.add_argument("--path", nargs="+", action="extend", default=None, help="Files or dirs to search; repeat the flag or list several (default scripts scenes tools design project.godot export_presets.cfg).")
     ap.add_argument("--include", default="*", help="Filename glob, e.g. *.gd")
     ap.add_argument("--max-hits", type=int, default=30, help=argparse.SUPPRESS)
     ap.add_argument("--max-files", type=int, default=20, help=argparse.SUPPRESS)
@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
     if not pattern:
         agent_log.fail("pass --pattern TEXT")
     rx = re.compile(pattern if args.regex else re.escape(pattern), re.IGNORECASE)
-    paths = list(dict.fromkeys(agent_log.split_list(args.path or DEFAULT_PATHS)))
+    paths = list(dict.fromkeys(agent_log.split_list(args.path or [d for d in DEFAULT_PATHS if (root / d).exists()])))
     missing = [p for p in paths if not (Path(p) if Path(p).is_absolute() else root / p).exists()]
     if not args.all:  # the index and --expand need whole counts; --max-hits / --max-files shape only the flat --all list
         args.max_hits, args.max_files = max(args.max_hits, 3000), max(args.max_files, 600)
@@ -129,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     elif not hits and args.texts:
         echo += "\nnext: no match in the shot-flow text dumps" + ("" if (root / "_logs" / "shot-flow").is_dir() else " (none yet: run `python tools/shots.py flow --flow NAME` first)")
     elif not hits:
-        echo += "\nnext: no match; try a shorter pattern or --regex (search is case-insensitive over scripts scenes tools design)"
+        echo += "\nnext: no match; try a shorter pattern or --regex (search is case-insensitive over scripts scenes tools design and the project/export settings)"
     return agent_log.finish("xref", root, "\n".join(body), "INFO", args=args, echo=echo, files=len(files_hit),
                             hits=len(hits), scanned=scanned, truncated=trunc)
 
@@ -154,8 +154,10 @@ def selftest() -> int:
             out = run(*form)
             if "scripts/a.gd:1" not in out or "scripts/b.gd:1" not in out or "design/c.md" in out:
                 bad.append(f"--path accumulates ({' '.join(form)}): {out[-200:]}")
-        if "design/c.md:1" not in run():
-            bad.append("no --path searches the default folders")
+        (root / "export_presets.cfg").write_text("html/needle=true\n", encoding="utf-8")
+        out = run()
+        if "design/c.md:1" not in out or "export_presets.cfg:1" not in out or "WARN" in out:
+            bad.append("no --path searches the default folders and the export settings, with no WARN for an absent default")
         if "WARN: no such path: nope.gd" not in run("--path", "nope.gd", "--path", "scripts/a.gd"):
             bad.append("a missing --path is named in a WARN")
     return agent_log.selftest_result(bad)
