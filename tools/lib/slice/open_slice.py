@@ -151,6 +151,33 @@ def link_addons(src: Path, wt: Path) -> str:
         return f"ADDONS FAILED: could not junction or copy addons/ ({err}; copy {exc})."
     return f"ADDONS COPIED: junction was not created ({err}). This copy will not follow later edits in the checkout addons/."
 
+def prepare(wt: Path, flows: str, run=subprocess.run) -> list[str]:
+    """In a new or reused worktree, before any edit: the Godot setup (addon + import; a fresh worktree fails Godot checks
+    without it), then the before shots of the slice's flows (prove names them; no scratch worktree later). Never fatal."""
+    py, out = gather_agent.py(), []
+    for label, argv, fix in (("setup", [py, "tools/gate.py", "bot-smokes", "--setup"], "python tools/gate.py bot-smokes --setup"),
+                             ("before shots", [py, "tools/shots.py", "flow", "--flow", flows, "--before"],
+                              f"python tools/shots.py flow --flow {flows} --before (before the first edit)")):
+        if label == "before shots" and not flows:
+            out.append("before shots: none (no shot flow mapped to this slice)")
+            continue
+        if label == "before shots":
+            st = run(["git", "status", "--porcelain", "-uno"], cwd=wt, capture_output=True, text=True, encoding="utf-8", errors="replace")
+            edited = [ln[3:] for ln in (st.stdout or "").splitlines() if len(ln) > 3 and not ln[3:].startswith("_logs/")]
+            if (wt / "_logs/before-shots/before.json").is_file() or edited:
+                why = "kept: _logs/before-shots/before.json exists" if not edited else f"skipped: {len(edited)} tracked path(s) already edited, so they would not be before shots"
+                out.append(f"before shots: {why}")
+                continue
+        try:
+            p = run(argv, cwd=wt, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900)
+            code, text = p.returncode, (p.stdout or "") + (p.stderr or "")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            code, text = 1, str(exc)
+        res = next((ln for ln in reversed(text.splitlines()) if ln.startswith("RESULT ")), text.strip().splitlines()[-1:] or ["no output"])
+        res = res if isinstance(res, str) else res[0]
+        out.append(f"{label}: {res[:160]}" if code == 0 else f"{label.upper()} FAILED (exit {code}): {res[:160]}. In the worktree run: {fix}")
+    return out
+
 ADDONS_NOTE = ("addons: after create, junction worktree/addons to this checkout's addons/ "
                "(gitignored godot_ai install; copy only if the junction cannot be created).")
 
@@ -199,9 +226,9 @@ def main(argv: list[str] | None = None) -> int:
         return end("NO WEEK BRANCH: no grok-build-w* branch exists and no --ref was given, so nothing is started (main is never the fallback). "
                    "A new week starts in a Build session in the repo root told it is a new week (design/build-week-start.md); or pass --ref REF.", "FAIL", route="no-week-branch")
     area = args.area.strip()
-    note = door = job = ""
+    note = door = job = flows = ""
     if area:
-        door, job, _, note = slice_lib.slice_check(root, area)
+        door, job, flows, note = slice_lib.slice_check(root, area)
     prompt = args.prompt
     if args.prompt_file:
         try:
@@ -219,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
             area = task_lib.resume_area(t)
             if not area:
                 return end(f"NO AREA for task {args.task}: its `resume:` line names no door or door.job (`python tools/docs.py task check`).", "FAIL", route="no-area")
-            door, job, _, note = slice_lib.slice_check(root, area)
+            door, job, flows, note = slice_lib.slice_check(root, area)
     gather = bool(door or job) and not prompt.startswith("# Handoff:")
     if args.seed_only and not gather:
         return end("SEED-ONLY NEEDS A DOOR OR JOB: pass AREA (door or door.job) or a --task that resolves to one.", "FAIL", route="bad-seed-only")
@@ -272,6 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     lines.append(f"prompt: {len(prompt)} chars, starts {prompt[:60]!r}, sha256 {hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:12]}" if prompt else "prompt: none (a blank session)")
     lines += [hand_note] if hand_note else []
     lines.append(ADDONS_NOTE)
+    lines.append(f"prepare: in the worktree, before any edit: gate.py bot-smokes --setup" + (f", then shots.py flow --flow {flows} --before" if flows else "") + ".")
     lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/slice.py start --door <door>` (the card; a later run says where the slice stands).")
     if dry:
@@ -287,6 +315,7 @@ def main(argv: list[str] | None = None) -> int:
         if p.returncode != 0 or not str(wt) or not wt.is_dir():
             return end("\n".join(lines + [f"WORKTREE CREATE FAILED (exit {p.returncode}): {(p.stdout + p.stderr).strip()[:400]}"]), "FAIL", route="create-failed")
         addon_line = link_addons(Path(root), wt)
+    addon_line = "\n".join([addon_line, *prepare(wt, flows)])
     if gather:
         code, out = gather_agent.start(wt, sargv, sid, tid, extra)
         if code != 0:
@@ -308,6 +337,30 @@ def main(argv: list[str] | None = None) -> int:
     cmd = session_argv(exe, str(wt), prompt)
     end("\n".join(lines + [addon_line, f"worktree {wt}", f"SESSION: {show(cmd)}", "Starting grok now (this terminal is handed over)."]), "PASS", route="launch")
     return launch(exe, cmd, wt)
+
+def _prepare_selftest(td: Path) -> list[str]:
+    """prepare(): setup then before shots in a clean worktree; skipped when edited or already shot; failures say the fix."""
+    bad, seen = [], []
+    wt = td / "prep-wt"
+    wt.mkdir()
+
+    def fake(status: str = "", rc: int = 0):
+        def run(argv, **_kw):
+            seen.append(" ".join(argv[1:]))
+            out = status if argv[0] == "git" else f"RESULT {'PASS' if rc == 0 else 'FAIL'} x=1\n"
+            return subprocess.CompletedProcess(argv, 0 if argv[0] == "git" else rc, out, "")
+        return run
+    lines = prepare(wt, "camp-pause-pages", fake())
+    if not any("bot-smokes --setup" in a for a in seen) or not any("flow --flow camp-pause-pages --before" in a for a in seen) \
+            or lines != ["setup: RESULT PASS x=1", "before shots: RESULT PASS x=1"]:
+        bad.append(f"prepare must run the setup, then the before shots of the slice flows: {lines} {seen}")
+    if "skipped: 1 tracked path(s) already edited" not in " ".join(prepare(wt, "f", fake(" M scripts/a.gd\n"))):
+        bad.append("prepare must not shoot before shots in an edited worktree")
+    if prepare(wt, "", fake())[-1] != "before shots: none (no shot flow mapped to this slice)":
+        bad.append("prepare with no flow must say so")
+    if not prepare(wt, "f", fake(rc=1))[0].startswith("SETUP FAILED (exit 1)"):
+        bad.append("a failed setup must say so and print the fix")
+    return bad
 
 def selftest(script: list[str]) -> int:
     """Dry-run cases in a throwaway repo; the one non-dry case runs with an empty PATH, so grok cannot start."""
@@ -410,6 +463,7 @@ def selftest(script: list[str]) -> int:
         bare.mkdir()
         if not link_addons(missing, bare).startswith("ADDONS MISSING"):
             bad.append("a checkout with no addons/ must say ADDONS MISSING")
+        bad += _prepare_selftest(Path(td))
         import gather_selftest
 
         bad += gather_selftest.run(script, Path(td))

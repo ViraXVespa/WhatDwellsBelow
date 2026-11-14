@@ -152,6 +152,35 @@ def unit_done(root: Path, args) -> int:
            + "Complete this unit now: slice.py commit, then plain push. The done notice follows the last unit this session does.")
     return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, route="unit-done")
 
+
+def before_line(root: Path, flows: str) -> list[str]:
+    """The card's before-shots line for a slice with shot flows: recorded (prove diffs against them) or the command to run first."""
+    if not flows:
+        return []
+    import prove_scope
+    meta = prove_scope.before_meta(root)
+    if meta:
+        return [f"before={prove_scope.BEFORE_DIR}/ ({str(meta.get('sha', ''))[:8]}, flows {','.join(meta.get('flows', []))}): "
+                f"after the change, python tools/shots.py flow --flow {flows} --baseline {prove_scope.BEFORE_DIR}"]
+    return [f"before=none: before the first edit run python tools/shots.py flow --flow {flows} --before (check.py prove names them)"]
+
+
+def _before_selftest() -> list[str]:
+    import json
+    import tempfile
+    bad = []
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        if before_line(root, ""):
+            bad.append("no flow: no before line")
+        if "--flow f1 --before" not in before_line(root, "f1")[0]:
+            bad.append("flows and no before shots: the card names the --before command")
+        (root / "_logs/before-shots").mkdir(parents=True)
+        (root / "_logs/before-shots/before.json").write_text(json.dumps({"sha": "abcdef1234", "flows": ["f1"]}), encoding="utf-8")
+        if "abcdef12, flows f1" not in before_line(root, "f1")[0] or "--baseline _logs/before-shots" not in before_line(root, "f1")[0]:
+            bad.append("recorded before shots: the card names them and the --baseline diff")
+    return bad
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Resolve a route and print the grok commands that open a Build slice (never starts grok).", writes=True)
     ap.add_argument("--door", default="", help="routes.yaml door to start from.")
@@ -169,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     if args.selftest:
         code = slice_lib.selftest(boot.cmd("start_build_slice"))
-        extra = handoff_lib.selftest(boot.cmd("start_build_slice"))
+        extra = handoff_lib.selftest(boot.cmd("start_build_slice")) + _before_selftest()
         for b in extra:
             print("FAIL " + b)
         return code if not extra else agent_log.emit_result("FAIL", None, cmd="selftest", problems=len(extra))
@@ -298,6 +327,7 @@ def main(argv: list[str] | None = None) -> int:
     card = [f"door={sdoor} job={args.job} area={args.area.strip() or args.job.strip() or sdoor} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/gate.py smokes --door/--job; add or update asserts for new systems)",
             f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/shots.py flow --job J, one boot; UI states: tools/shots.py gaps --changed)",
+            *before_line(root, flows),
             "cycle=Understand > Prepare > Implement > Verify > Finish; context breaks follow build-job-cycle.md, not a fixed pre-prove step",
             slice_lib.merge_back_text(here or week or ref)]
     if tunits:

@@ -20,6 +20,9 @@ while a dependent that describes it did not.
 --all runs every rule only when the diff touches a shared lighting/bake input (SHARED) or a path no rule or graph edge
 covers (unknown); otherwise it is left to the nightly run (--force-all runs every rule anyway). Each check is capped at
 STEP_CAP seconds (rc=124, FAIL).
+Visual review: one plain line says whether it is requested (an art path: the _logs/visual-review gate; a UI, scene or
+theme path: before/after of the slice's shot flows) and which shots, naming the before shots when `shots.py flow
+--before` recorded them (prove_scope.visual_request); RESULT carries visual=requested|no.
 RESULT PASS = every chosen check exit 0 and no DRIFT. Summary: _logs/prove/.
 """
 from __future__ import annotations
@@ -318,8 +321,10 @@ def main() -> int:
     body = list(lines)
     body += [f"  {own} <- {f}:{no} [{kind}] {name}{tag}" for own, f, kind, name, no, tag in sorted(set(a["edges"]))]
     chosen = [f"RUN  {cmd}   # {why}" for _, cmd, why in steps]
-    lines += chosen
-    body += chosen
+    import bot_smokes
+    need = bot_smokes.setup_needed(root) if steps else ""  # a fresh worktree: Godot checks and selftests fail until set up
+    lines += chosen + ([need] if need else [])
+    body += chosen + ([need] if need else [])
     ran = []
     if not (args.plan or args.head):
         ran = run(root, steps)
@@ -330,11 +335,18 @@ def main() -> int:
         rows = sorted(dict.fromkeys(rows))
         lines += agent_log.fold(rows, args.verbose, keep=6, limit=8)
         body += rows
+    import prove_scope
+    visual = prove_scope.visual_request(root, sorted({c.path for c in a["changes"]}))  # always one plain answer
+    lines += visual
+    body += visual
     failed = sum(1 for r in ran if r[0] != 0)
+    if failed and need:
+        lines.append(f"{failed} check(s) failed in a checkout that is not set up for Godot: run {bot_smokes.SETUP_CMD}, then prove again")
     status = "FAIL" if failed or a["drift"] else "PASS"
     return agent_log.finish("prove", root, "\n".join(body), status, args=args, echo="\n".join(lines),
                             changed=len(a["changes"]), deps=sum(len(v) for v in a["deps"].values()), chose=len(steps),
-                            ran=len(ran), failed=failed, drift=len(set(a["drift"])), review=len(set(a["review"])), sec=round(time.time() - t0))
+                            ran=len(ran), failed=failed, drift=len(set(a["drift"])), review=len(set(a["review"])),
+                            visual="requested" if "REQUESTED" in visual[0] else "no", sec=round(time.time() - t0))
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
