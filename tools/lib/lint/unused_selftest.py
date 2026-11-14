@@ -282,8 +282,8 @@ var not_in_flow := 1
     "scripts/debug/lstep.gd": "static func run(_h) -> void:\n\tpass\n\nstatic func lstep_unused() -> void:\n\tpass\n",
     "scripts/debug/lother.gd": "static func other_live() -> void:\n\tpass\n\nstatic func run(_h) -> void:\n\tpass\n",
     "scripts/debug/lhelp.gd": 'static func _util():\n\treturn load("res://scripts/debug/hutil.gd")\n\nstatic func go() -> void:\n\tvar U = _util()\n\tU.h_live()\n\tvar W = _other()\n\tW.h_dead()\n\nstatic func _other():\n\treturn null\n',
-    "scripts/debug/selfnew.gd": 'extends Node\nstatic func make() -> void:\n\tvar n := new()\n\tn.own_live()\n\tload("res://scripts/debug/lhelp.gd")._util().h_chain()\n\nfunc own_live() -> void:\n\tpass\n',
-    "scripts/debug/hutil.gd": "static func h_chain() -> void:\n\tpass\n\nstatic func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
+    "scripts/debug/selfnew.gd": 'extends Node\nstatic func make() -> void:\n\tvar n := new()\n\tn.own_live()\n\tload("res://scripts/debug/lhelp.gd")._util().h_chain()\n\tvar S: GDScript = load("res://scripts/debug/hutil.gd") as GDScript\n\tvar m: Object = S.new()\n\tm.h_local_new()\n\nfunc own_live() -> void:\n\tpass\n',
+    "scripts/debug/hutil.gd": "func h_local_new() -> void:\n\tpass\n\nstatic func h_chain() -> void:\n\tpass\n\nstatic func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
     "tools/data/shot-flows/vis.json": '{ "steps": [ { "op": "assert", "target": "script:debug/vis_check.plant_x" } ] }\n',
     "tools/data/shot-flows/node.json": '{ "steps": [ {"op": "call", "target": "host.ui", "method": "flow_node_fn"}, {"op": "call", "target": "host", "method": "twin_flow"} ] }\n',
 
@@ -336,7 +336,7 @@ def run() -> list[str]:
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
                 ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
                 ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live"),
-                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn"), ("selfnew.gd", "own_live"), ("hutil.gd", "h_chain")]
+                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn"), ("selfnew.gd", "own_live"), ("hutil.gd", "h_chain"), ("hutil.gd", "h_local_new")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")

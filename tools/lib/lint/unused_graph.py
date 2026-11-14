@@ -68,6 +68,7 @@ LOAD_CALL_RE = re.compile(r"\b(?:pre)?load[ \t]*\([ \t]*\"res://([^\"]+\.gd)\"[ 
 # `for skin in (load(FRAME_SET) as GDScript).get("SKINS")`: the loop var walks that script's preload list.
 FOR_LOAD_LIST_RE = re.compile(r"\bfor[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?in[ \t]+\(?[ \t]*(?:pre)?load\([ \t]*(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))[ \t]*\)"
                               r"(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*get\([ \t]*\"([A-Za-z_]\w*)\"[ \t]*\)")
+NEW_INIT_RE = re.compile(r"\bvar[ \t]+([A-Za-z_]\w*)[ \t]*:[ \t]*\w+[ \t]*=[ \t]*([A-Z]\w*)\.new\(")
 SELF_NEW_RE = re.compile(r"^[ \t]+var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*new\(")  # `var ui := new()`: own script
 PATH_CONST_RE = re.compile(r"^const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*String[ \t]*)?:?=[ \t]*\"res://([^\"]+\.gd)\"[ \t]*$")
 # `skin.callv("dress", ..)` on a receiver bound to a known script union: the method on each member that defines it.
@@ -342,6 +343,12 @@ class Script:
             # Func signatures are parsed into fn_scope after spans are known; do not leak params
             # into file-level var_type (a `pt: Node` parameter must not type every `pt` in the file).
             if not is_func:
+                m = NEW_INIT_RE.search(head)  # `var g: Node3D = PickupS.new()`: the instance is PickupS, not just Node3D
+                if m:
+                    if inner:
+                        pend.append((i, "type", m.group(1), m.group(2)))
+                    else:
+                        self.var_type.setdefault(m.group(1), m.group(2))
                 for m in TYPE_RE.finditer(head):
                     if inner:
                         pend.append((i, "type", m.group(1), m.group(2) or m.group(3)))
@@ -1121,7 +1128,7 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                 cur = f"scripts/debug/{sc['dbg'][head]}.gd"
             elif head in sc.get("type", {}):
                 t = sc["type"][head]
-                cur = s.aliases.get(t) or self.klass.get(t) or self._typed(rel, t, depth) or ""
+                cur = sc.get("alias", {}).get(t) or s.aliases.get(t) or self.klass.get(t) or self._typed(rel, t, depth) or ""
             elif head in sc.get("ret", {}):
                 path, f = sc["ret"][head].split("::")
                 own = self.find(path, f) if path in self.scripts else ""
