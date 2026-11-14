@@ -57,6 +57,7 @@ from load_routes import (  # noqa: E402
     skill_files,
 )
 
+SLICE_MD = ("session-plan.md", "session-context.md")  # gitignored slice files (slice.py plan / expand), never routed
 CHANGELOG_PREFIX = "design/changelog/"
 TASKS_PREFIX = "design/tasks/"
 CITE_RE = re.compile(
@@ -169,8 +170,8 @@ def scanned_md_files(root: Path) -> list[Path]:
     if skills_root.is_dir():
         for path in sorted(skills_root.rglob("*.md")):
             out.append(path)
-    # every root .md except the gitignored slice plan: a new one must be routed (or listed under human:)
-    out.extend(p for p in sorted(root.glob("*.md")) if p.name != "session-plan.md")
+    # every root .md except the gitignored slice plan and its packet: a new one must be routed (or listed under human:)
+    out.extend(p for p in sorted(root.glob("*.md")) if p.name not in SLICE_MD)
     return out
 
 def citations(text: str) -> list[str]:
@@ -688,7 +689,7 @@ def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 def unclassified(root: Path, routes: dict) -> list[str]:
-    """Markdown on disk (design/, skills, every root .md except session-plan.md) that routes.yaml does not list, and listed files that are gone."""
+    """Markdown on disk (design/, skills, every root .md except SLICE_MD) that routes.yaml does not list, and listed files that are gone."""
     known = all_route_files(routes)
     on_disk = {rel(p, root) for p in scanned_md_files(root)}
     fails = [f"unclassified markdown: {p}" for p in sorted(on_disk - known) if p != "design/routes.yaml"]
@@ -705,7 +706,8 @@ def selftest() -> int:
         (t / "design").mkdir()
         for name in ("AGENTS.md", "BOT.md", "README.md"):
             (t / name).write_text("# x\n", encoding="utf-8")
-        (t / "session-plan.md").write_text("# Session plan\n", encoding="utf-8")
+        for name in SLICE_MD:
+            (t / name).write_text("# Session plan\n", encoding="utf-8")
         if unclassified(t, routes):
             bad.append(f"routed root docs: got {unclassified(t, routes)}, want []")
         (t / "NEW.md").write_text("# new\n", encoding="utf-8")
