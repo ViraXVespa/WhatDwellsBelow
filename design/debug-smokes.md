@@ -47,6 +47,16 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 | p8 | Hub spots, building depth, save backup on the smoke slot, archive catalog |
 | p9 | Audio, archive catalog, anim models, playtest hook |
 
+### Godot 4.7.2 quirks in UI checks
+
+Each cost a smoke round on the Report Bug picker (`bug_report_pick_check.gd`):
+- GDScript cannot call `get_screen_rect()` or `PopupMenu.activate_item()`; use `get_screen_position()` + `size`, and real input.
+- An OptionButton's popup stays open after a pick only with `hide_on_checkable_item_selection` off; `hide_on_item_selection` has no effect there.
+- A popup `max_size` narrower than the list's minimum width is ignored whole: `report_pick.gd` gives it the view width and caps only the height.
+- Headless, layout positions are not valid until a frame has run; read `position` / `size` after one.
+- A simulated click is `Viewport.push_input(event, true)` with the position in that viewport's local coordinates.
+- Name each failed step in the `SMOKE FAIL` line (append to a faults list), not one line for the whole check.
+
 ## A named smoke-coverage task
 
 Ordinary Build tasks run their mapped phases and add or update relevant assertions. A dedicated coverage task stays within the phase/helper the User named:
