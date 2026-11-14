@@ -37,7 +37,7 @@ This copies the selected full sheet and current `walk_DIRECTION_N.png` frames, a
 
 Vira confirmed on 2026-11-07 that Blender and Godot MCPs are available in her Build environment. This is not a claim that a Bot, isolated child or other environment has those connectors.
 
-Prefer existing repository commands. Use an MCP only when the User/task specifies it, or when an identified capability gap is covered by that MCP. First inspect the current environment's tool list and the relevant live schema; do not invent names, arguments or permissions.
+Prefer existing repository commands. The repo `wdb` MCP (`tools-mcp.md`) is one of them, not a capability-gap MCP. Use another MCP only when the User/task specifies it, or when an identified capability gap is covered by that MCP. First inspect the current environment's tool list and the relevant live schema; do not invent names, arguments or permissions.
 
 - The modular voxel walk task specifies Blender MCP for modeling. The reference exporter is not a Blender runner, and the Imagine/I2V runner is not a substitute.
 - In a perf task, Godot MCP may supply live scene information missing from existing summaries. Keep the repository perf runner and comparable artifacts for timing; scene inspection is not a benchmark or a performance pass.

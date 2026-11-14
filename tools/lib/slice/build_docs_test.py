@@ -32,8 +32,9 @@ def check(root: Path) -> list[str]:
                    "Stop and wait", "session-plan.md"):
         if phrase not in canonical:
             bad.append("canonical context rule missing: " + phrase)
-    if "session-plan.md" not in (root / "design/grok-build.md").read_text(encoding="utf-8"):
-        bad.append("grok-build.md must name session-plan.md")
+    for phrase in ("session-plan.md", "session-context.md", "slice.py adjust"):
+        if phrase not in (root / "design/grok-build.md").read_text(encoding="utf-8"):
+            bad.append("grok-build.md must name " + phrase)
     if "--fork-session" in (root / "design/tasks/ui-png-art.md").read_text() or "--fork-session" in (root / "design/tasks/perf-sweep.md").read_text():
         bad.append("task resume must not direct an implementation-session fork")
     for rel, limit in (("design/grok-build.md", 4000), ("design/build-job-cycle.md", 8000),

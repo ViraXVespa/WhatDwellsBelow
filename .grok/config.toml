@@ -1,0 +1,9 @@
+# Grok Build project config: the repo's own read-only MCP (design/tools-mcp.md). Folder trust (`slice.py open` passes --trust) loads it.
+[mcp_servers.wdb]
+command = "python"
+args = ["tools/wdb_mcp.py", "serve"]
+startup_timeout_sec = 30
+tool_timeouts = { check = 1800 }
+
+[permission]
+allow = ["MCPTool(wdb__*)"]

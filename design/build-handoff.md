@@ -14,12 +14,12 @@ A normal task continues in its current session. Context breaks resume there too.
 
 ## Resume
 
-The opening prompt supplies `slice.py start --door D --from-handoff PATH` for a saved survey or `--from-task ID` for its committed task. Run that first. It restores the saved survey edits when appropriate, writes `session-plan.md` when that file is missing, and lists the references to inspect; it does not repeat the survey. Existing design answers stand unless new evidence changes them. The worktree plan is continuity for later turns in that same worktree. It does not replace this handoff or the task file.
+For a committed handoff task, `slice.py open --task ID` runs `slice.py start --door D --from-task ID` itself; a saved survey's prompt names `--from-handoff PATH` to run first. That start restores the saved survey edits when appropriate, writes `session-plan.md` when that file is missing, and lists the references to inspect; it does not repeat the survey. Existing design answers stand unless new evidence changes them. The worktree plan is continuity for later turns in that same worktree. It does not replace this handoff or the task file.
 
-Commit the task with the first implementation unit. Its `resume:` line remains the User's launcher from the main checkout. The agent's first command is `slice.py start`, not that launcher.
+Commit the task with the first implementation unit. Its `resume:` line remains the User's launcher from the main checkout. The agent never runs that launcher.
 
 ## Unit queues and unfinished work
 
 A task's `units:` and `done:` fields record progress. For a route-defined queue start with `--door`; for task-defined units pass `--task ID`. At completion, `slice.py start --unit-done` updates progress and compacts completed task notes, preserving decisions and open work.
 
-Continue the remaining named units in the same session when they fit. Otherwise save the current task status, commit/push, and let the User open the next session. Include the next first command, exact remaining work and result paths; do not save stale session-fork commands as instructions. Keep assignment notes in the task. `session-plan.md` is only the same-worktree compact resume, not a second pickup system for a User-opened session.
+Continue the remaining named units in the same session when they fit; a next unit gets the mechanical seed only (`slice.py plan --refresh --clean`), no gather agent. Otherwise save the current task status, commit/push, and let the User open the next session. Include the next first command, exact remaining work and result paths; do not save stale session-fork commands as instructions. Keep assignment notes in the task. `session-plan.md` is only the same-worktree compact resume, not a second pickup system for a User-opened session.

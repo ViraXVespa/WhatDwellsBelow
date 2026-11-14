@@ -30,6 +30,7 @@ perf-sweep | build | open | Perf sweep - one continuous hub/dungeon run at 60+ F
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
+build-gather-mcp | bot | open | Build gather agent and wdb MCP: live verification (P6) and rollout | -
 hub-bake-checks | bot | open | Hub light leak + dumpster shadow, bake/shadow checks with planted faults | -
 local-ai-tuner | bot | open | Local AI: two models, a playtester and a balance tuner (recommend-only, runs on Vira's PC) | -
 <!-- tasks:end -->

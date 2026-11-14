@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 20 lines)."""
+"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 20 lines; --full for all)."""
 from __future__ import annotations
 
 import re
@@ -47,8 +47,9 @@ def looks_like_path(s: str) -> bool:
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Extract one GDScript or Python declaration.", json_out=True)
     p.add_argument("pos", nargs="*", metavar="PATH NAME", help="Same as --path and --name")
-    p.add_argument("--path", default="", help="Repo-relative .gd or .py path")
-    p.add_argument("--name", default="", help="func / const / var / def name")
+    for flag, text in (("--path", "Repo-relative .gd or .py path"), ("--name", "func / const / var / def name")):
+        p.add_argument(flag, default="", help=text)
+    p.add_argument("--full", action="store_true", help="Print the whole declaration (default: the first 20 lines). The wdb MCP pages it.")
     args = p.parse_args(argv)
     if len(args.pos) > 2:
         agent_log.fail("pass at most PATH NAME (example: find.py func scripts/app.gd _ready)")
@@ -80,8 +81,9 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish("show-func", root, "\n".join(head), "FAIL", args=args, error="not_found")
     start, end = span
     chunk = body[start:end]
-    truncated = len(chunk) > MAX_LINES
-    chunk = chunk[:MAX_LINES]
+    cap = len(chunk) if args.full else MAX_LINES
+    truncated = len(chunk) > cap
+    chunk = chunk[:cap]
     out = head + [f"lines={start + 1}-{start + len(chunk)} of {len(body)}", f"truncated={truncated}", ""] + chunk
     return agent_log.finish("show-func", root, "\n".join(out), "PASS", args=args,
                             lines=len(chunk), truncated=truncated)

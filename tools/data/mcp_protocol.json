@@ -1,0 +1,20 @@
+{
+  "_doc": "wdb MCP protocol tool: situation -> canonical doc#Heading (served as a slice; no rule text lives here). Phases -> next actions.",
+  "situations": {
+    "boot": "design/grok-build.md#Start or resume",
+    "understand": "design/build-job-cycle.md#1. Understand",
+    "implement": "design/build-job-cycle.md#2. Prepare and implement",
+    "compact-stop": "design/build-job-cycle.md#Context breaks (authoritative rule)",
+    "questions": "design/build-job-cycle.md#Permissions and questions",
+    "verify": "design/build-job-cycle.md#3. Verify",
+    "finish": "design/build-job-cycle.md#4. Finish",
+    "references": "design/build-references.md#Choose the reference path",
+    "pick-a-tool": "design/tools.md#Which tool for which job"
+  },
+  "phases": {
+    "understand": ["lookup action=packet (core bodies; candidates with conditions)", "lookup action=func|xref|names for a gap", "slice.py adjust promote|rem|add-func when the working set moves", "protocol action=doc situation=questions"],
+    "implement": ["lookup action=func|lines", "check target=gd_load files=...", "protocol action=doc situation=compact-stop"],
+    "verify": ["check target=gd_load", "gate.py build --batch (CLI, once)", "protocol action=doc situation=verify"],
+    "finish": ["protocol action=doc situation=finish", "slice.py commit, then plain git push"]
+  }
+}

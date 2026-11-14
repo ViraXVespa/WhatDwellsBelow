@@ -1,0 +1,3 @@
+# Optional install for the wdb MCP server (tools/wdb_mcp.py serve; Grok Build starts it from .grok/config.toml).
+# Needs Python >= 3.10. Smokes and `wdb_mcp.py call` run without it; serve --selftest skips the in-process client.
+mcp>=2.3,<3
