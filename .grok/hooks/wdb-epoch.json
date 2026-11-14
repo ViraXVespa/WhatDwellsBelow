@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .grok/hooks/bin/wdb-epoch.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .grok/hooks/bin/wdb-epoch.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

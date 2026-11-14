@@ -152,6 +152,9 @@ gates:
   doc_library:
     file: design/doc-library.md
     when: doc_edit_tool
+  tools_mcp:
+    file: design/tools-mcp.md
+    when: build_mcp_lookup_check_or_protocol
   tools_build:
     file: design/tools-build.md
     when: windows_runner_or_release_tool

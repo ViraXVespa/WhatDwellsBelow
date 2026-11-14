@@ -41,7 +41,7 @@ MEDIA_IMPORTS = ("PIL", "numpy", "cv2", "wave", "scipy")
 # printers: stdout is the payload (prompt text to copy), so no RESULT line, no --root
 PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "read_summary"}
 NO_ROOT: set[str] = set()
-EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
+EXEMPT_RESULT = {"agent_log", "wdb_scratch_server", "mcp_serve"}  # run helper itself; long-running HTTP server
 # staged JSON hooks: stdin event in, one {"decision": ...} line out, no argv CLI. They get the
 # hook probe instead of the CLI probes: bad stdin must fail closed (exit 2 + a JSON "deny").
 HOOKS = {"review_hook"}
@@ -118,7 +118,7 @@ TRACKED_GDIGNORE = ("_cache", "_logs", "_old", "_out", "_pages", "_src")  # root
 SMOKE_LINES: dict[str, int] = {}  # per-tool budget override; prefer agent_log.fold + --verbose to raising a budget
 # Output-path flags must be `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); these names may only be aliases.
 OUT_NAMES = {"--output", "--outdir", "--out-dir", "--dest", "--md", "--png", "--json-out", "--findings-md", "--report-out"}
-SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
+SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server", "mcp_serve"}
 NOISE_PAT = re.compile(r"^(DEBUG|debug:|TRACE)|\r|\d+%\|| ={5,}|^-{10,}$")  # debug prints, progress bars, banners
 STDERR_OK = {"agent_log"}  # stems whose stderr on success is expected
 
