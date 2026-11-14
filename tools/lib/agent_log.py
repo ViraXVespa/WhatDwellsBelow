@@ -248,13 +248,14 @@ def finish(
     write: bool = True,
     echo: str | None = None,
     retry: tuple[str, list[str]] | None = None,
+    json_extra: dict | None = None,
     **kv: object,
 ) -> int:
     """Write this run's summary file, print body + legacy line + final RESULT, return the exit code.
 
     echo: print this instead of body on stdout (body still goes to the summary file).
     retry: (prove name, red lines) of a Build prove; on FAIL the paste-ready RETRY block is added (retry_lib.py).
-    With --json (args.json) prints one JSON object and nothing else.
+    With --json (args.json) prints one JSON object and nothing else; json_extra (lists, details) joins only that object.
     """
     summary_rel = None
     path = None
@@ -277,8 +278,9 @@ def finish(
     else:
         res = result_line(status, None, **kv)
     if getattr(args, "json", False) is True:
-        if not _json_print({"status": status, "summary": summary_rel, **kv}):
-            print(json.dumps({"status": status, "summary": summary_rel, **kv}, sort_keys=False))
+        obj = {"status": status, "summary": summary_rel, **kv, **(json_extra or {})}
+        if not _json_print(obj):
+            print(json.dumps(obj, sort_keys=False))
     else:
         shown = body if echo is None else echo
         if shown:

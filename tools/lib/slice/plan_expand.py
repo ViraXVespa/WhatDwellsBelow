@@ -89,9 +89,8 @@ def main(argv: list[str] | None = None) -> int:
     idx = load(root)
     if args.check:
         bad = check(root, idx)
-        body = "\n".join(agent_log.fold(bad, keep=12, limit=20)) if bad else f"index ok: {len(idx.items)} items resolve"
-        return agent_log.finish("plan-expand", root, "\n".join(bad) or body, "FAIL" if bad else "PASS", args=args, echo=body,
-                                check=1, unresolved=len(bad))
+        body = "\n".join(bad) if bad else f"index ok: {len(idx.items)} items resolve"  # problems are never folded
+        return agent_log.finish("plan-expand", root, body, "FAIL" if bad else "PASS", args=args, check=1, unresolved=len(bad))
     text, skipped = packet(root, idx, agent_log.split_list([args.only]), args.budget)
     status = "FAIL" if "UNRESOLVED:" in text or "UNKNOWN id/ref:" in text else "PASS"
     echo = f"packet: {len(text.splitlines())} lines, {len(text)} chars" + (f"; over budget, listed only: {' '.join(skipped)}" if skipped else "")

@@ -5,7 +5,8 @@
     python tools/slice.py adjust add-file PATH [--lines A-B] | add-doc PATH[#Heading] | add-doc PATH --lines A-B | add-names PATH
                                                          (same flags; one path may hold several --lines ranges)
     python tools/slice.py adjust rem ID|REF   (aliases rem-func PATH NAME, rem-file PATH, rem-doc REF)
-    python tools/slice.py adjust promote ID [--why TEXT] | demote ID --when TEXT | set-condition ID TEXT
+    python tools/slice.py adjust promote ID [--why TEXT] | demote ID TEXT | set-condition ID TEXT
+                                                         (demote and set-condition also take --when TEXT instead)
     python tools/slice.py adjust batch FILE|- | batch --op "OP ARGS" [--op ...]   one op per line or per --op (# comments)
     python tools/slice.py adjust report --text "judgment" [--halt REASON]
 New items are core unless --cand (a candidate needs --when). Ops run by the gather agent (WDB_ROLE=gather) set the
@@ -13,9 +14,13 @@ index identity to `gather: agent`. Every op appends one line to _logs/gather/del
 (by = $WDB_ROLE or build; reason optional, default "(none)"); `slice.py plan --refresh` replays them after a re-seed.
 `report` writes _logs/gather/report.md (delta summary + the text) and with --halt also _logs/gather/halt, which makes
 `slice.py open` refuse to launch the main session. Format: plan_index.py. --selftest runs the cases in a temp repo.
+Output: applied ops fold after 12 (--verbose prints all); errors always print in full, also under --dry-run, and
+--json carries them (`error_text`) with the applied list (`done`).
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import shlex
@@ -34,6 +39,21 @@ PLAN = "session-plan.md"
 GATHER = "_logs/gather"
 OPS = ("add-func", "add-file", "add-doc", "add-names", "rem", "rem-func", "rem-file", "rem-doc", "promote", "demote",
        "set-condition", "batch", "report")
+USAGE = {  # one line per op; --help prints them and errors quote them
+    "add-func": "add-func PATH NAME [--cand --when TEXT] [--why TEXT] [--reason R]",
+    "add-file": "add-file PATH [--lines A-B] [--cand --when TEXT] [--why TEXT]",
+    "add-doc": "add-doc PATH[#Heading] | add-doc PATH --lines A-B (same flags as add-file)",
+    "add-names": "add-names PATH (same flags as add-file)",
+    "rem": "rem ID|REF (or rem-func PATH NAME, rem-file PATH, rem-doc REF)",
+    "rem-func": "rem-func PATH NAME", "rem-file": "rem-file PATH", "rem-doc": "rem-doc REF",
+    "promote": "promote ID [--why TEXT]",
+    "demote": "demote ID TEXT  or  demote ID --when TEXT",
+    "set-condition": "set-condition ID TEXT  or  set-condition ID --when TEXT",
+    "batch": "batch FILE|-  or  batch --op 'OP ARGS' [--op ...] (one op per line or --op; # comments)",
+    "report": "report --text TEXT [--halt REASON]",
+}
+EPILOG = "ops:\n" + "\n".join(f"  {u}" for k, u in USAGE.items() if not k.startswith("rem-")) + (
+    "\nIn a batch line or --op string each op takes the same arguments and flags as on the command line.")
 
 def gather_dir(root: Path) -> Path:
     d = root / GATHER
@@ -66,14 +86,17 @@ def apply(idx: pi.Index, words: list[str]) -> tuple[str, str]:
     ap.add_argument("--why", default="", help="Core note: why it is in context.")
     ap.add_argument("--lines", default="", help="add-file range A-B.")
     ap.add_argument("--reason", default="", help="Optional reason (logged).")
+    err = io.StringIO()
     try:
-        a = ap.parse_args(words)
+        with contextlib.redirect_stderr(err):
+            a = ap.parse_args(words)
     except SystemExit as exc:
-        raise ValueError(f"bad op: {' '.join(words)}") from exc
+        why = next((ln for ln in reversed(err.getvalue().splitlines()) if ln.strip()), "")
+        raise ValueError(f"bad op: {shlex.join(words)} ({why.split('error: ', 1)[-1] or 'usage'})") from exc
     op, args = a.op, a.args
-    need = {"add-func": 2, "rem-func": 2, "set-condition": 2}.get(op, 1)
+    need = {"add-func": 2, "rem-func": 2}.get(op, 1)
     if len(args) < need:
-        raise ValueError(f"{op} needs {need} argument(s)")
+        raise ValueError(f"{op} needs {need} argument(s): {USAGE.get(op, op)}")
     if op.startswith("add-"):
         kind = op[4:]
         ref = f"{args[0]}:{args[1]}" if kind == "func" else args[0]
@@ -100,12 +123,16 @@ def apply(idx: pi.Index, words: list[str]) -> tuple[str, str]:
         idx.items.remove(it)
     elif op == "promote":
         it.core, it.note = True, a.why or it.note
-    elif op == "demote":
-        if not a.when:
-            raise ValueError("demote needs --when")
-        it.core, it.note = False, a.when
-    elif op == "set-condition":
-        it.note = " ".join(args[1:])
+    elif op in ("demote", "set-condition"):  # the condition: positional TEXT or --when TEXT (not both)
+        when = " ".join(args[1:]).strip()
+        if when and a.when:
+            raise ValueError(f"{op}: give the condition once, as TEXT or --when TEXT ({USAGE[op]})")
+        when = when or a.when.strip()
+        if not when:
+            raise ValueError(f"{op} needs a condition: {USAGE[op]}")
+        it.note = when
+        if op == "demote":
+            it.core = False
     return it.id, it.ref
 
 def log(root: Path, words: list[str], iid: str, ref: str, reason: str) -> None:
@@ -174,11 +201,13 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if "--selftest" in argv:
         return selftest()
-    ap = agent_log.std_parser("Adjust the session-plan context index; every change is logged in _logs/gather/delta.jsonl.", writes=True)
+    ap = agent_log.std_parser("Adjust the session-plan context index; every change is logged in _logs/gather/delta.jsonl.",
+                              writes=True, verbose=True)
+    ap.epilog = EPILOG
     ap.add_argument("op", choices=OPS, help="add-func|add-file|add-doc|add-names|rem|rem-func|rem-file|rem-doc|promote|demote|set-condition|batch|report")
-    ap.add_argument("args", nargs="*", help="Op arguments (see the module docstring).")
+    ap.add_argument("args", nargs="*", help="Op arguments (the ops list below).")
     ap.add_argument("--cand", action="store_true", help="Add as a candidate (needs --when).")
-    ap.add_argument("--when", default="", help="Candidate condition (read if / read when).")
+    ap.add_argument("--when", default="", help="Condition (read if / read when): a candidate's, or demote / set-condition's.")
     ap.add_argument("--why", default="", help="Why a core item is in context.")
     ap.add_argument("--lines", default="", help="add-file / add-doc line range A-B.")
     ap.add_argument("--reason", default="", help="Optional reason, logged with the op.")
@@ -201,9 +230,11 @@ def main(argv: list[str] | None = None) -> int:
                 words += [f"--{flag}", getattr(args, flag)]
         ops = [words]
     done, errs = run_ops(root, ops, args.dry_run)
-    lines = done + [f"error: {e}" for e in errs]
-    return agent_log.finish("plan-adjust", root, "\n".join(agent_log.fold(lines, keep=12, limit=20)), "FAIL" if errs else "PASS",
-                            args=args, write=not args.dry_run, applied=len(done), errors=len(errs))
+    shown = done if args.verbose or len(done) <= 20 else done[:12] + [f"... {len(done) - 12} more applied (--verbose prints them)"]
+    lines = shown + [f"error: {e}" for e in errs]  # errors are never folded
+    return agent_log.finish("plan-adjust", root, "\n".join(lines), "FAIL" if errs else "PASS", args=args,
+                            write=not args.dry_run, json_extra={"done": done, "error_text": errs},
+                            applied=len(done), errors=len(errs), dry_run=True if args.dry_run else None)
 
 def selftest() -> int:
     import subprocess
@@ -259,6 +290,30 @@ def selftest() -> int:
             bad.append("batch --op: one file holds several --lines ranges; add-doc PATH --lines A-B: " + out)
         if run("add-doc", "design/demo.md#Rules", "--lines", "1-2")[0] == 0 or run("add-file", "x.gd", "--lines", "a-b")[0] == 0:
             bad.append("--lines refuses a #Heading doc and a malformed range")
+        code, out = run("set-condition", "K4", "--when", "flag form")
+        code2, out2 = run("batch", "--op", "demote K2 positional text", "--op", "set-condition K4 --when 'op flag form'")
+        flagged = pi.parse(pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[1])
+        if code or code2 or flagged.find("K4").note != "op flag form" or flagged.find("K2").core or flagged.find("K2").note != "positional text":
+            bad.append("set-condition and demote take TEXT positionally or --when TEXT, top level and in batch: " + out + out2)
+        if run("set-condition", "K4", "a", "--when", "b")[0] == 0 or "set-condition ID --when TEXT" not in run("--help")[1]:
+            bad.append("set-condition refuses TEXT plus --when, and --help lists every op's arguments")
+        many = [f"promote K4 --why n{i}" for i in range(24)] + ["set-condition K4", "rem nosuch"]
+        code, out = run("batch", "--dry-run", *sum((["--op", o] for o in many), []))
+        if code == 0 or "more applied (--verbose prints them)" not in out or "set-condition needs a condition" not in out \
+                or "no index item 'nosuch'" not in out:
+            bad.append("a long --dry-run batch folds applied ops but prints every error: " + out[-300:])
+        code, out = run("batch", "--dry-run", "--verbose", *sum((["--op", o] for o in many), []))
+        if out.count("promote K4") != 24:
+            bad.append("--verbose prints every applied op")
+        code, out = run("batch", "--dry-run", "--json", "--op", "rem nosuch", "--op", "promote K4")
+        try:
+            js = json.loads(out.strip().splitlines()[-1])
+        except (ValueError, IndexError):
+            js = {}
+        if js.get("errors") != 1 or "nosuch" not in " ".join(js.get("error_text", [])) or js.get("done") != ["promote K4 design/demo.md#Rules"]:
+            bad.append("--json carries error_text and done: " + out[-200:])
+        if "nosuch" in (root / GATHER / "delta.jsonl").read_text(encoding="utf-8"):
+            bad.append("--dry-run writes no delta rows")
         code, out = run("report", "--text", "door ok", "--halt", "task is ambiguous")
         rep = (root / GATHER / "report.md").read_text(encoding="utf-8")
         if code == 0 or not (root / GATHER / "halt").is_file() or "door ok" not in rep or "add-func=1" not in rep:
