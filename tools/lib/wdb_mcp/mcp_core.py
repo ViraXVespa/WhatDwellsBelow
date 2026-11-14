@@ -183,7 +183,7 @@ def cut(lines: list[str], pos: int, budget: int) -> int:
     return end
 
 def header(status: str, h: str, nxt: str, shown: str = "", summary: str = "", fails: int = 0) -> list[str]:
-    head = [f"STATUS: {status}" + (f" ({fails})" if status == "FAIL" else ""), f"handle: {h}", f"next: {nxt}"]
+    head = [f"STATUS: {status}" + (f" ({fails or 1})" if status == "FAIL" else ""), f"handle: {h}", f"next: {nxt}"]
     if shown:
         head.append(f"shown: {shown}")
     if summary:
