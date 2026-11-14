@@ -141,6 +141,9 @@ def selftest() -> int:
         code, out = run("--budget", "10")
         if "over budget" not in agent_log.agent_summary_path("plan-expand", root).read_text(encoding="utf-8"):
             bad.append("core past --budget is listed, not pasted")
+        err, body = pi.resolve(root, pi.Item("C9", "doc", "design/demo.md", True, "range", (5, 5)))
+        if err or body != ["(L5-5)", "Rule text."]:
+            bad.append(f"a doc item with a line range resolves to those lines only: {err or body}")
         idx.items.append(pi.Item("C4", "func", "scripts/demo.gd:gone", True, "x"))
         plan.write_text("# Session plan\n\n" + pi.MARKER + "\n\n" + pi.render(idx), encoding="utf-8")
         (root / "session-context.md").unlink()

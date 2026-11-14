@@ -7,8 +7,8 @@ The md is the single source of truth (no JSON copy). Shape:
     ### Candidates          - K1 doc `design/x.md#Heading` - when: condition     (listed with the condition, opened on demand)
     ### Card                route card text (verbatim)
 
-Kinds: func (`path:name`), file (`path`, optional `(La-b)`), doc (`path` or `path#Heading`), names (`path`: the
-script's declared names). Ids are stable for delta replay: a promoted K or demoted C keeps its id; the section says
+Kinds: func (`path:name`), file (`path`, optional `(La-b)`), doc (`path`, `path#Heading` or `path` `(La-b)`), names (`path`: the
+script's declared names). One path may appear with several ranges. Ids are stable for delta replay: a promoted K or demoted C keeps its id; the section says
 which it is now. `parse(render(x)) == x`; `render(parse(t)) == t` for any text this module wrote.
 `slice.py adjust` mutates it (with `_logs/gather/delta.jsonl`); `slice.py expand` turns it into the packet.
 """
@@ -52,9 +52,13 @@ class Index:
                 return
         self.identity.append((key, value))
 
-    def find(self, token: str) -> Item | None:
-        """By id (C3, K1) or by ref (`path:name`, `path`, `path#Heading`)."""
-        return next((it for it in self.items if token in (it.id, it.ref)), None)
+    def find(self, token: str, lines: tuple[int, int] | None = None) -> Item | None:
+        """By id (C3, K1) or by ref (`path:name`, `path`, `path#Heading`); with lines, the item for that range of the ref."""
+        by_id = next((it for it in self.items if it.id == token), None)
+        if by_id or lines is not None:
+            return by_id or next((it for it in self.items if it.ref == token and it.lines == lines), None)
+        return next((it for it in self.items if it.ref == token and it.lines is None), None) or \
+            next((it for it in self.items if it.ref == token), None)
 
     def next_id(self, core: bool) -> str:
         nums = [int(it.id[1:]) for it in self.items] or [0]
