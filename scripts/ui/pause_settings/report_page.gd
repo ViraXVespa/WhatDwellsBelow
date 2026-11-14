@@ -40,10 +40,15 @@ static func build(host: Node) -> void:
 	em.placeholder_text = App.tr("bug_report.email_hint")
 	em.text = str(form.email)
 	em.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
-	em.text_changed.connect(func(t: String) -> void: form.email = t)
 	guard_backspace(em)
 	_field(host, em)
-	_toggle(host, "bug_report.opt_in", "opt_in")
+	var opt: CheckBox = _toggle(host, "bug_report.opt_in", "opt_in")
+	gate_opt(form, opt, false)
+	em.text_changed.connect(func(t: String) -> void:
+		form.email = t
+		gate_opt(form, opt, true)
+		View.wire_vert(host.info_btns)  # a disabled opt-in is out of the pad ring
+	)
 	_toggle(host, "bug_report.shot", "shot")
 	if Crash.crashed_log != "":
 		_toggle(host, "bug_report.crash", "crash")
@@ -117,8 +122,21 @@ static func guard_backspace(le: LineEdit) -> void:
 		le.accept_event()
 	)
 
-static func _toggle(host: Node, key: String, field: String) -> void:
-	Pages._add_check_centered(host, Pages._check(App.tr(key), bool(form[field]), func(on: bool) -> void: form[field] = on))
+static func _toggle(host: Node, key: String, field: String) -> CheckBox:
+	var b: CheckBox = Pages._check(App.tr(key), bool(form[field]), func(on: bool) -> void: form[field] = on)
+	Pages._add_check_centered(host, b)
+	return b
+
+## Email updates need an email: the opt-in is off and disabled until a valid one is entered, then typing it checks the
+## box once (the player can still clear it); emptying the email turns it off again.
+static func gate_opt(f: Dictionary, opt: CheckBox, typed: bool) -> void:
+	var s: String = str(f.get("email", "")).strip_edges()
+	var on: bool = s != "" and Send.email_ok(s)
+	if not on or (typed and opt.disabled):
+		opt.button_pressed = on
+		f.opt_in = on
+	opt.disabled = not on
+	opt.focus_mode = Control.FOCUS_ALL if on else Control.FOCUS_NONE
 
 static func _field(host: Node, c: Control) -> void:
 	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
