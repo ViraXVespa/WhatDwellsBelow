@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run one wdb MCP tool call from a shell, with the same handles and no-repeat state as `serve` (_logs/gather/).
+"""Run one wdb MCP tool call from a shell, with the same handle files as `serve` (_logs/gather/mcp/).
 
     python tools/wdb_mcp.py call lookup action=func path=scripts/app.gd name=_ready
-    python tools/wdb_mcp.py call lookup handle=f3                       (next page of that handle)
+    python tools/wdb_mcp.py call lookup handle=f3a9c1                      (next page of that handle)
     python tools/wdb_mcp.py call check target=load_graph
     python tools/wdb_mcp.py call protocol action=doc situation=finish
 Values: key=value; lists as comma lists (files=a.gd,b.gd; pairs=path:name,path:name); true/false; integers.
@@ -20,7 +20,7 @@ import agent_log
 import mcp_tools
 
 INTS = {"start", "end", "budget"}
-BOOLS = {"regex", "fresh"}
+BOOLS = {"regex"}
 
 def parse(pairs: list[str]) -> dict:
     out: dict = {}

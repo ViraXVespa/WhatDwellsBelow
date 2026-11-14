@@ -13,7 +13,7 @@ metadata:
 
 # list_xref
 
-Run from repo root. Do not use grep/rg on scripts/, design/, tools/, or scenes/. `wdb__lookup action=xref` runs the same search, paged and never re-sent.
+Run from repo root. Do not use grep/rg on scripts/, design/, tools/, or scenes/. `wdb__lookup action=xref` runs the same search, paged.
 
 Preferred shapes (copy these; do not invent flag combinations):
 

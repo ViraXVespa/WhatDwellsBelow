@@ -1,7 +1,7 @@
 """Selftest for the wdb MCP (`python tools/wdb_mcp.py serve --selftest`). No CLI of its own.
 
 Runs the tool functions against this checkout with state in a temp dir (read-only for the repo; tool runs write only
-their gitignored _logs summaries), a temp repo for edited-file cases, then an in-process MCP client when `mcp` is
+their gitignored _logs summaries), two stores on one state dir for the shared-handle case, then an in-process MCP client when `mcp` is
 installed (skipped with a note otherwise).
 """
 from __future__ import annotations
@@ -38,12 +38,8 @@ def cases(bad: list[str], state: Path) -> None:
     if not page2 or any(ln in page1 for ln in page2 if len(ln.strip()) > 12):
         bad.append("more must return only the next page, no overlap")
     again = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
-    if "unchanged, already shown" not in again:
-        bad.append("a repeat read in the same epoch must elide shown lines")
-    core.bump_epoch(ROOT, state)
-    fresh = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
-    if "already shown" in fresh:
-        bad.append("a new epoch (after compact) must resend")
+    if _head(again)[6:] != lines[6:] or _head(again)[1] == lines[1]:
+        bad.append("a repeat call is a new handle with the same first page (no shown-line tracking)")
     for path in ("_logs/x.txt", "notes/a.md", "assets/x.png", "../../../../etc/passwd", "./../x.md", "/etc/passwd"):
         if not t.lookup("lines", path=path).startswith("STATUS: FAIL"):
             bad.append(f"{path} must be refused")
@@ -76,21 +72,27 @@ def cases(bad: list[str], state: Path) -> None:
     if "find.py" not in t.protocol("suggest", query="find a function code"):
         bad.append("protocol suggest must use the tools table")
 
-def edited(bad: list[str]) -> None:
+def shared(bad: list[str]) -> None:
+    """Two servers on one checkout: separate handle files, neither overwrites the other; expiry; rerun counts."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
-        (root / "design").mkdir()
-        src = root / "a.gd"
-        src.write_text("\n".join(f"var v{i} = {i}" for i in range(30)) + "\n", encoding="utf-8")
-        t = mcp_tools.Tools(root, "D", False)
-        t.lookup("lines", path="a.gd", start=1, end=30, budget=40)
-        src.write_text("\n".join(f"var v{i} = {i * (2 if i == 15 else 1)}" for i in range(30)) + "\n", encoding="utf-8")
-        out = t.lookup("lines", path="a.gd", start=1, end=30, budget=40)
-        body = [ln for ln in _head(out)[4:] if ln.startswith("var ")]
-        if body != ["var v15 = 30"] and "var v15 = 30" not in body:
-            bad.append("after an edit only the changed lines are re-sent: " + " | ".join(body))
-        if len(body) > 3:
-            bad.append(f"after an edit, unchanged lines must stay elided (sent {len(body)})")
+        one, two = core.Store(ROOT, True, Path(td)), core.Store(ROOT, True, Path(td))
+        ha = one.new("l", [f"a{i}" for i in range(50)])
+        hb = two.new("l", [f"b{i}" for i in range(50)])
+        core.page(one, ha, first=True), core.page(two, hb, first=True)
+        pa, pb = core.page(two, ha), core.page(one, hb)
+        if "a20" not in pa or "b20" not in pb or "b" in pa.split("\n\n", 1)[1][:3]:
+            bad.append("handles from two stores on one checkout must both page (each its own file)")
+        rec = json.loads((Path(td) / f"{ha}.json").read_text(encoding="utf-8"))
+        rec["t"] = 0
+        (Path(td) / f"{ha}.json").write_text(json.dumps(rec), encoding="utf-8")
+        if one.get(ha) is not None or one.get("../x") is not None:
+            bad.append("an expired or malformed handle must not load")
+        one.add_check_run("load_graph", "c000001")
+        two.add_check_run("load_graph", "c000002")
+        if one.check_runs().get("load_graph") != ["c000001", "c000002"]:
+            bad.append("check rerun counts are shared per worktree")
+        if list(Path(td).glob(".tmp-*")):
+            bad.append("atomic writes must leave no temp files")
 
 def client(bad: list[str], notes: list[str], state: Path) -> None:
     try:
@@ -124,7 +126,7 @@ def run() -> int:
     notes: list[str] = []
     with tempfile.TemporaryDirectory() as td:
         cases(bad, Path(td))
-        edited(bad)
+        shared(bad)
         client(bad, notes, Path(td))
     for n in notes:
         print(n)

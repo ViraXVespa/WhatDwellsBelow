@@ -1,49 +1,43 @@
-"""Handle store, paging and no-repeat ledger for the wdb MCP (tools/wdb_mcp.py serve). No CLI of its own.
+"""Handle store and paging for the wdb MCP (tools/wdb_mcp.py serve). No CLI of its own.
 
 Every tool call runs the real repository command once (`run_tool`), keeps its full result under a short handle and
-answers with a STATUS header plus at most one page. Follow-ups page the cached text; they never re-run the command.
-Shown source lines are remembered per file for the current epoch: a later read that overlaps them elides the unchanged
-lines and sends only what is new or changed. `_logs/gather/epoch` (bumped by the PostCompact / resume hook) starts a
-new epoch, because the model no longer holds what was shown before the compact. State persists in
-`_logs/gather/mcp-handles.json` so a server restart keeps it. Handles expire after TTL seconds (MAX_HANDLES kept).
+answers with a STATUS header plus at most one page; `more` sends only the rest of that handle. Follow-ups never re-run
+the command. Each handle is its own file in `_logs/gather/mcp/` (atomic temp + rename), so several servers on one
+checkout (Build, its subagents, the gather agent, Grok Bot agents) never overwrite each other. Handles expire after
+TTL seconds. Check rerun counts (`check-runs.json`, same atomic write) are per worktree.
 """
 from __future__ import annotations
 
-import difflib
-import hashlib
 import json
+import os
 import re
+import secrets
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 PAGE_LINES = 20
 TTL = 2 * 3600
-MAX_HANDLES = 64
-STATE_REL = "_logs/gather/mcp-handles.json"
-EPOCH_REL = "_logs/gather/epoch"
+MAX_HANDLES = 256
+STATE_REL = "_logs/gather/mcp"
+HANDLE_RE = re.compile(r"^[a-z][0-9a-f]{6}$")
 RESULT_RE = re.compile(r"^RESULT (PASS|FAIL|INFO|SKIP)\b(.*)$", re.M)
 SUMMARY_RE = re.compile(r"\bsummary=(\S+)")
 LINES_RE = re.compile(r"^lines=(\d+)-(\d+) of (\d+)$", re.M)
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 
-def read_epoch(root: Path, state: Path | None = None) -> str:
-    try:
-        return ((state / "epoch") if state else (root / EPOCH_REL)).read_text(encoding="utf-8").strip() or "0"
-    except OSError:
-        return "0"
-
-def bump_epoch(root: Path, state: Path | None = None) -> str:
-    """Start a new epoch (the hook calls this after a compact or a resume)."""
-    path = (state / "epoch") if state else (root / EPOCH_REL)
+def write_atomic(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".tmp-")
     try:
-        n = int(read_epoch(root, state)) + 1
-    except ValueError:
-        n = 1
-    path.write_text(str(n), encoding="utf-8")
-    return str(n)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
 
 def denied(rel: str) -> str:
     """Reason a path may not be read through the MCP ('' when allowed). Mirrors the Build hook's read rules."""
@@ -83,92 +77,74 @@ def run_tool(root: Path, argv: list[str], timeout: int = 900) -> dict:
     return {"status": status, "code": code, "result": f"RESULT {status}{tail}" if m else "", "text": text.rstrip("\n"),
             "argv": " ".join(["python", "tools/" + argv[0], *argv[1:]])}
 
-def file_sha(path: Path) -> str:
-    try:
-        return hashlib.sha1(path.read_bytes()).hexdigest()[:12]
-    except OSError:
-        return ""
-
 class Store:
+    """Handles: one JSON file each under the state dir (persist) or a dict (selftests with persist=False)."""
+
     def __init__(self, root: Path, persist: bool = True, state: Path | None = None):
         self.root = root
-        self.state = state  # None: root/_logs/gather (selftests pass a temp dir)
+        self.dir = state or root / STATE_REL
         self.persist = persist
-        self.handles: dict[str, dict] = {}
-        self.seen: dict[str, list[str]] = {}  # path -> source lines shown this epoch (file order)
-        self.epoch = read_epoch(root, state)
-        self.n = 0
+        self.mem: dict[str, dict] = {}
         self.runs = 0  # real commands started (selftest: a follow-up must not raise it)
-        self.check_runs: dict[str, list[str]] = {}  # check target+args -> handles of its runs (rerun cap)
-        self._load()
 
-    # persistence
-    def _path(self) -> Path:
-        return (self.state / "mcp-handles.json") if self.state else self.root / STATE_REL
-
-    def _load(self) -> None:
-        if not self.persist:
-            return
-        try:
-            data = json.loads(self._path().read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return
-        self.handles, self.n = data.get("handles", {}), int(data.get("n", 0))
-        self.check_runs = data.get("check_runs", {})
-        self.seen = data.get("seen", {}) if data.get("epoch") == self.epoch else {}
-
-    def save(self) -> None:
-        if not self.persist:
-            return
-        self._path().parent.mkdir(parents=True, exist_ok=True)
-        self._path().write_text(json.dumps({"epoch": self.epoch, "n": self.n, "handles": self.handles, "seen": self.seen, "check_runs": self.check_runs}), encoding="utf-8")
+    def _file(self, h: str) -> Path:
+        return self.dir / f"{h}.json"
 
     def tick(self) -> None:
-        """New epoch: forget shown lines. Drop expired and surplus handles."""
-        ep = read_epoch(self.root, self.state)
-        if ep != self.epoch:
-            self.epoch, self.seen = ep, {}
+        """Drop expired handles and the oldest beyond MAX_HANDLES."""
         now = time.time()
-        for h in [h for h, v in self.handles.items() if now - v.get("t", 0) > TTL]:
-            del self.handles[h]
-        while len(self.handles) > MAX_HANDLES:
-            del self.handles[min(self.handles, key=lambda k: self.handles[k].get("t", 0))]
+        if not self.persist:
+            for h in [h for h, v in self.mem.items() if now - v.get("t", 0) > TTL]:
+                del self.mem[h]
+            return
+        try:
+            files = sorted(self.dir.glob("[a-z]" + "[0-9a-f]" * 6 + ".json"), key=lambda f: f.stat().st_mtime)
+        except OSError:
+            return
+        for i, f in enumerate(files):
+            try:
+                if i < len(files) - MAX_HANDLES or now - f.stat().st_mtime > TTL:
+                    f.unlink(missing_ok=True)
+            except OSError:
+                pass
 
     def new(self, prefix: str, body: list[str], **meta: object) -> str:
-        self.n += 1
-        h = f"{prefix}{self.n}"
-        self.handles[h] = {"t": time.time(), "lines": body, "pos": 0, **meta}
+        h = prefix[:1] + secrets.token_hex(3)
+        self.put(h, {"t": time.time(), "lines": body, "pos": 0, **meta})
         return h
 
     def get(self, h: str) -> dict | None:
-        return self.handles.get(h)
+        if not HANDLE_RE.match(h or ""):
+            return None
+        if not self.persist:
+            return self.mem.get(h)
+        try:
+            rec = json.loads(self._file(h).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        return rec if time.time() - rec.get("t", 0) <= TTL else None
 
-    # no-repeat
-    def elide(self, rel: str, start: int, lines: list[str], fresh: bool = False) -> tuple[list[str], list[str]]:
-        """Source lines numbered from `start`: runs of 3+ lines already paged out this epoch collapse to one note.
-        Returns (body, src): src[i] is `rel` for a source line (marked as seen once it is paged out), '' for a note."""
-        old = self.seen.get(rel, [])
-        if fresh or not old:
-            return list(lines), [rel] * len(lines)
-        out: list[str] = []
-        src: list[str] = []
-        i = 0
-        for blk in difflib.SequenceMatcher(a=old, b=lines, autojunk=False).get_matching_blocks():
-            if blk.size < 3:
-                continue
-            out += lines[i:blk.b]
-            src += [rel] * (blk.b - i)
-            out.append(f"... L{start + blk.b}-{start + blk.b + blk.size - 1} unchanged, already shown")
-            src.append("")
-            i = blk.b + blk.size
-        out += lines[i:]
-        src += [rel] * (len(lines) - i)
-        return out, src
+    def put(self, h: str, rec: dict) -> None:
+        rec["t"] = time.time()
+        if self.persist:
+            write_atomic(self._file(h), json.dumps(rec))
+        else:
+            self.mem[h] = rec
 
-    def mark(self, rel: str, lines: list[str]) -> None:
-        """Remember source lines the model has now been sent (this epoch)."""
-        old = self.seen.get(rel, [])
-        self.seen[rel] = (old + ["\x00"] + lines)[-4000:] if old else list(lines)
+    # check rerun counts (per worktree)
+    def check_runs(self) -> dict[str, list[str]]:
+        if not self.persist:
+            return self.mem.setdefault("__runs__", {})
+        try:
+            return json.loads((self.dir / "check-runs.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+
+    def add_check_run(self, key: str, h: str) -> None:
+        runs = self.check_runs()
+        runs[key] = runs.get(key, []) + [h]
+        if self.persist:
+            write_atomic(self.dir / "check-runs.json", json.dumps(runs))
 
 def cut(lines: list[str], pos: int, budget: int) -> int:
     """End index for a page from pos: at most `budget` lines, ending at a blank line or dedent in the last quarter when one exists."""
@@ -191,7 +167,7 @@ def header(status: str, h: str, nxt: str, shown: str = "", summary: str = "", fa
     return head
 
 def page(store: Store, h: str, budget: int = 0, status: str = "PASS", summary: str = "", first: bool = False) -> str:
-    """Next page of handle h (first page when first). Never re-sends lines already paged out of this handle."""
+    """Next page of handle h (first page when first). `more` sends only what this handle has not paged out yet."""
     rec = store.get(h)
     if rec is None:
         return "\n".join(header("FAIL", h, "rerun the original call", summary="expired or unknown handle", fails=1))
@@ -201,15 +177,11 @@ def page(store: Store, h: str, budget: int = 0, status: str = "PASS", summary: s
         return "\n".join(header(status, h, "done", summary="nothing left on this handle"))
     budget = budget or rec.get("budget") or PAGE_LINES
     end = cut(lines, pos, budget)
-    rec["pos"], rec["t"] = end, time.time()
-    more = end < len(lines)
-    nxt = (rec.get("next_more") or "more") if more else (rec.get("next_done") or "done")
+    rec["pos"] = end
+    store.put(h, rec)
+    nxt = "more" if end < len(lines) else "done"
     shown = f"{pos + 1}-{end} of {len(lines)}" if len(lines) > budget or pos else ""
     body = lines[pos:end]
-    src = rec.get("src") or []
-    for rel in {r for r in src[pos:end] if r}:
-        store.mark(rel, [ln for ln, r in zip(body, src[pos:end]) if r == rel])
     if not first and pos and body:
         body = [f"... continues at line {pos + 1}"] + body
-    store.save()
     return "\n".join(header(status, h, nxt, shown, summary) + ([""] + body if body else []))

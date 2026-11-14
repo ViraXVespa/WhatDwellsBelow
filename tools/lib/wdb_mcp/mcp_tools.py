@@ -2,7 +2,7 @@
 
 Thin wrappers: each first call runs the real `find.py` / `docs.py` / `session.py` / `slice.py expand` /
 `check.py` / `gate.py gd-load` command once and caches its full result under a handle; follow-ups page or filter that
-cache and never re-run it. Commands outside the caller's catalog surface (Surf column, `design/tools*.md`) are refused.
+cache (`more` sends only the rest) and never re-run it. Commands outside the caller's catalog surface (Surf column, `design/tools*.md`) are refused.
 Read-only: nothing here writes repo files (state lives in `_logs/gather/`).
 """
 from __future__ import annotations
@@ -77,15 +77,15 @@ class Tools:
     # lookup
     def lookup(self, action: str, handle: str = "", path: str = "", name: str = "", pattern: str = "",
                pairs: list | None = None, start: int = 0, end: int = 0, door: str = "", job: str = "",
-               query: str = "", regex: bool = False, expand: str = "", budget: int = 0, fresh: bool = False) -> str:
+               query: str = "", regex: bool = False, expand: str = "", budget: int = 0) -> str:
         self.store.tick()
         if handle or action in ("more", "full"):
             return self._follow(handle, action or "more", budget)
         if action == "func":
             items = [tuple(p) for p in (pairs or [])] or [(path, name)]
-            return self._funcs(items, budget, fresh)
+            return self._funcs(items, budget)
         if action in ("lines", "doc"):
-            return self._read(action, path, start, end, budget, fresh)
+            return self._read(action, path, start, end, budget)
         why = next((w for w in (core.denied(x) for x in (path.split() + [expand])) if w), "")
         if why:
             return self._refuse(why)
@@ -123,9 +123,8 @@ class Tools:
             return [], f"unknown lookup action {action!r} (func xref names all_names lines doc route scenes facade stat changed code_map task summary packet more full)"
         return simple[action]
 
-    def _funcs(self, items: list[tuple], budget: int, fresh: bool) -> str:
+    def _funcs(self, items: list[tuple], budget: int) -> str:
         body: list[str] = []
-        srcs: list[str] = []
         status, fails = "PASS", 0
         for rel, nm in items:
             why = core.denied(rel)
@@ -140,17 +139,14 @@ class Tools:
                 status, fails = "FAIL", fails + 1
                 note = [f"## {rel}:{nm} not found"] + lines[-2:]
                 body += note
-                srcs += [""] * len(note)
                 continue
             a, b = int(m.group(1)), int(m.group(2))
             src = lines[lines.index(m.group(0)) + 3:] if m.group(0) in lines else []
-            part, psrc = self.store.elide(rel, a, src, fresh)
-            body += [f"## {rel}:{nm} L{a}-{b}"] + part
-            srcs += [""] + psrc
-        h = self.store.new("f", body, status=status, src=srcs)
+            body += [f"## {rel}:{nm} L{a}-{b}"] + src
+        h = self.store.new("f", body, status=status)
         return core.page(self.store, h, budget, status, f"{fails} of {len(items)} not found" if fails else "", first=True)
 
-    def _read(self, action: str, path: str, start: int, end: int, budget: int, fresh: bool) -> str:
+    def _read(self, action: str, path: str, start: int, end: int, budget: int) -> str:
         rel, _, heading = path.partition("#")
         why = core.denied(rel)
         if why:
@@ -169,8 +165,7 @@ class Tools:
             a, b = span
         else:
             a, b = max(1, start or 1), min(len(lines), end or len(lines))
-        part, psrc = self.store.elide(rel, a, lines[a - 1:b], fresh)
-        h = self.store.new("r", [f"## {path} L{a}-{b} of {len(lines)}"] + part, src=[""] + psrc)
+        h = self.store.new("r", [f"## {path} L{a}-{b} of {len(lines)}"] + lines[a - 1:b])
         return core.page(self.store, h, budget, "PASS", first=True)
 
     # check
@@ -182,7 +177,7 @@ class Tools:
             return self._refuse(f"unknown check target {target!r} (choose: {', '.join(CHECKS)}); prove, selftests and docs-size are Bot-only")
         cmd, build = CHECKS[target]
         key = " ".join([target, stem, *sorted(files or [])]).strip()
-        runs = self.store.check_runs.get(key, [])
+        runs = self.store.check_runs().get(key, [])
         if len(runs) >= MAX_CHECK_RUNS:
             return "\n".join(core.header("FAIL", runs[-1], "read the last handle (failures | full | files); stop and report",
                                           summary=f"{key} already ran {len(runs)} times (a run + {MAX_CHECK_RUNS - 1} reruns, tools.md rule 10); not re-run", fails=1))
@@ -193,8 +188,7 @@ class Tools:
         failures = [ln for ln in lines if FAIL_RE.search(ln)] if res["status"] == "FAIL" else []
         status = "FAIL" if res["status"] == "FAIL" else "PASS"
         h = self.store.new("c", lines, status=status, failures=failures, files=sorted(set(PATH_RE.findall(res["text"]))))
-        self.store.check_runs[key] = runs + [h]
-        self.store.save()
+        self.store.add_check_run(key, h)
         summary = res["result"] or (failures[0] if failures else "")
         return "\n".join(core.header(status, h, "failures | full | files" if status == "FAIL" else "full | files",
                                      summary=summary[:200], fails=len(failures) or 1))
@@ -209,7 +203,7 @@ class Tools:
             ref = data["situations"].get(situation)
             if not ref:
                 return self._refuse(f"unknown situation {situation!r} (choose: {', '.join(data['situations'])})")
-            return self._read("doc", ref, 0, 0, budget, False)
+            return self._read("doc", ref, 0, 0, budget)
         if action == "packet":
             return self.lookup("packet", query=query, budget=budget)
         if action == "suggest":

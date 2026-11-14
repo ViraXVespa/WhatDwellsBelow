@@ -19,9 +19,9 @@ import boot  # noqa: E402,F401
 import agent_log
 import mcp_tools
 
-LOOKUP_DOC = """Read repo code/docs progressively (thin wrapper over find.py / docs.py / session.py / slice.py plan expand).
+LOOKUP_DOC = """Read repo code/docs progressively (thin wrapper over find.py / docs.py / session.py / slice.py expand).
 First call runs the command once and returns STATUS, handle, next and the first page; pass handle (action=more) for the
-next page only, action=full for all. Lines already shown this session are elided unless fresh=true.
+next page only (the rest of that reply), action=full for all.
 actions: func (path+name, or pairs=[[path,name],...]), xref (pattern, path, regex, expand=FILE), names / all_names (path),
 lines (path, start, end), doc (path='design/x.md#Heading'), route (door|job), scenes, facade, stat (path), changed
 (query=REV, path='DOC SCRIPT' for history), code_map (path), task (query=ID), summary (query=JOB, pattern=MATCH),
@@ -42,8 +42,8 @@ def build_server(root: Path, surface: str):
     @srv.tool(description=LOOKUP_DOC)
     def lookup(action: str = "more", handle: str = "", path: str = "", name: str = "", pattern: str = "",
                pairs: list[list[str]] | None = None, start: int = 0, end: int = 0, door: str = "", job: str = "",
-               query: str = "", regex: bool = False, expand: str = "", budget: int = 0, fresh: bool = False) -> str:
-        return tools.lookup(action, handle, path, name, pattern, pairs, start, end, door, job, query, regex, expand, budget, fresh)
+               query: str = "", regex: bool = False, expand: str = "", budget: int = 0) -> str:
+        return tools.lookup(action, handle, path, name, pattern, pairs, start, end, door, job, query, regex, expand, budget)
 
     @srv.tool(description=CHECK_DOC)
     def check(target: str = "", handle: str = "", action: str = "", stem: str = "", files: list[str] | None = None, budget: int = 0) -> str:
