@@ -48,6 +48,7 @@ INTRO = (
 )
 CODE_RE = re.compile(r"^Code:\s*(.+)$", re.M)
 TICK_RE = re.compile(r"`([^`]+)`")
+NAMED_RE = re.compile(r"`([^`\s]+?\.gd)`(?:\s*\(([^)]{0,200})\))?")
 FACADE_RE = re.compile(r"`([^`]+?\.gd)`\s*\(([^)]{0,600})\)")
 
 
@@ -189,6 +190,20 @@ def _key_scripts(root: Path, door_text: str, job_text: str, rows: list, prefer: 
                 return resolved[:MAX_SCRIPTS], missing
     return resolved[:MAX_SCRIPTS], missing
 
+def _named_scripts(root: Path, text: str, rows: list, prefer: list, skip: list[str]) -> list[tuple[str, str]]:
+    """(.gd path, condition) for every script the doc names in backticks outside its Code: lines, in doc order; the
+    parenthetical after a name (its functions) goes into the condition."""
+    out: list[tuple[str, str]] = []
+    for line in (text or "").splitlines():
+        if CODE_RE.match(line):
+            continue
+        for m in NAMED_RE.finditer(line):
+            path = _resolve(root, m.group(1), rows, prefer)
+            if path and path not in skip and path not in [p for p, _ in out]:
+                funcs = (m.group(2) or "").strip()
+                out.append((path, f"the change reaches it (job doc: {funcs})" if funcs else "the change reaches it (named in the job doc)"))
+    return out[:MAX_SCRIPTS]
+
 def _systems(rows: list, door: str, job: str, scripts: list[str]) -> list:
     chosen = []
     for needle in _needles(door, job):
@@ -227,7 +242,8 @@ def _unit_specs(data: dict, door: str, job: str, key: str) -> list[str]:
 
 def seed(root: Path, door: str, job: str, area: str, mode: str, task: str, route_lines: list[str] | None) -> pi.Index:
     """The mechanical seed: identity, core (job doc, unit docs/files, key scripts' names, task file) and candidates
-    (door doc when a job is named, other code-map paths), plus the route card. Deterministic for one commit."""
+    (door doc when a job is named; the scripts the job doc names in its text, else the system's code-map paths), plus
+    the route card. Deterministic for one commit."""
     door, job = _door_job(door, job)
     door_file, job_file, door_text = _docs(root, door, job)
     job_text = _read(root, job_file) if job_file else ""
@@ -240,7 +256,7 @@ def seed(root: Path, door: str, job: str, area: str, mode: str, task: str, route
     except (OSError, ValueError):
         data = {}
     idx = pi.Index(identity=[("door", door or "(none)"), ("job", job or "(none)"), ("task", task or "(none)"),
-                             ("area", area or "(none)"), ("mode", mode or "(none)"),
+                             ("area", area or job or door or "(none)"), ("mode", mode or "(none)"),
                              ("systems", ", ".join(r.system for r in systems) or "(none matched)"),
                              ("seed", _git_head(root)), ("gather", "seed")])
     seen: set[str] = set()
@@ -272,7 +288,10 @@ def seed(root: Path, door: str, job: str, area: str, mode: str, task: str, route
             add("doc", door_file, True, "door doc")
     for rel in scripts:
         add("names", rel, True, "key script (declared names)")
-    for row in systems:
+    named = _named_scripts(root, job_text or door_text, rows, prefer or rows, scripts)
+    for rel, cond in named:
+        add("names", rel, False, cond)
+    for row in [] if named else systems:  # a doc that names its scripts beats the whole system row
         for rel in [x for x in row.listed if x.endswith(".gd") and (root / x).is_file()][:MAX_CANDS]:
             add("names", rel, False, f"the change reaches {row.system} code")
     if missing:
@@ -384,6 +403,20 @@ def selftest(script: list[str]) -> int:
                 bad.append(f"seed missing {need!r}")
         if "Unique door sentence." in text or "func alpha" in text:
             bad.append("the seed is an index: no pasted doc or code bodies")
+        (root / "scripts" / "other.gd").write_text("extends Node\n", encoding="utf-8")
+        (root / "scripts" / "noise.gd").write_text("extends Node\n", encoding="utf-8")
+        cmap = (root / "design" / "code-map.md").read_text(encoding="utf-8")
+        (root / "design" / "code-map.md").write_text(cmap.replace("(facade) |", "(facade), `scripts/noise.gd` |"), encoding="utf-8")
+        named = render(root, "", "demo", "demo.part", "", "implement", "", [])
+        if "noise.gd" not in render(root, "", "demo", "demo.part", "", "implement", "", []) or "area: demo.part" not in named:
+            bad.append("seed: with no scripts named in the job text, the system row gives candidates; area defaults to the job")
+        (root / "design" / "demo-part.md").write_text("# Part\n\nForm code: `scripts/other.gd` (build, send).\n", encoding="utf-8")
+        named = pi.parse(pi.split_plan(render(root, "", "demo", "demo.part", "", "implement", "", []))[1])
+        other = named.find("scripts/other.gd")
+        if not (other and not other.core and "build, send" in other.note) or named.find("scripts/noise.gd"):
+            bad.append("seed: a script the job doc names in its text is a candidate (with its functions); the system row is then left out")
+        (root / "design" / "demo-part.md").write_text("# Part\n\nJob sentence.\n", encoding="utf-8")
+        (root / "design" / "code-map.md").write_text(cmap, encoding="utf-8")
         if pi.render(idx) != pi.split_plan(text)[1]:
             bad.append("seed must round-trip through plan_index")
         path = plan_path(root)
