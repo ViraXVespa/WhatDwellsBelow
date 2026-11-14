@@ -54,6 +54,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/docs/task_lib.py` | Task header/lifecycle/index validation and dependency updates. |
 | `lib/docs/task_compact.py` | Collapse completed units while preserving owner decisions and open work; fixture selftest. |
 | `lib/slice/slice_lib.py` | Startup card and fixture tests for main/worktree, survey/job, saved progress, other-session detection, retries and queues. |
+| `lib/slice/plan_index.py` | session-plan.md context index: parse/render (md is the source of truth), item resolve for `slice.py expand`. |
 | `lib/slice/slice_state.py` | Local slice progress/session/task state and concise resume instructions; this is observed state, not a claim of completed proof. |
 | `lib/session/session_lib.py` | Find Build session facts and failed tool results since the last question; used by startup and failed-step reporting. |
 | `lib/slice/handoff_lib.py` | Build task skeleton/validation, saved survey edits and resume summary; launch validation for a survey handoff. |

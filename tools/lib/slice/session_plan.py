@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Opening gather for a named door or job, written to session-plan.md in the worktree root.
+"""Mechanical seed of the context index for a named door or job, written to session-plan.md in the worktree root.
 
-    python tools/slice.py plan [--door D | --job door.job] [--task ID] [--refresh] [--dry-run]
-The file is gitignored. It is the same-worktree continuity note across a compact. It does not replace
-the task file or a survey handoff. `slice.py start` writes it when it is missing. Build trims the gathered
-half to the working set; `--refresh` replaces that half and erases the trim. It keeps Outcome, Open questions,
-Changed files, and Latest results.
+    python tools/slice.py plan [--door D | --job door.job] [--task ID] [--refresh [--clean]] [--dry-run]
+The file is gitignored: the same-worktree continuity note and the single source of truth for what belongs in context.
+It does not replace the task file or a survey handoff. `slice.py open` (or `start`) writes it when it is missing; the
+gather agent then refines the index below the marker with `slice.py adjust` (format: plan_index.py). `--refresh`
+re-seeds the index and replays the logged adjustments; `--clean` drops them. The four sections above the marker
+(Outcome, Open questions, Changed files, Latest results) are always kept.
 
 --selftest builds a throwaway repo and checks the gather, the refresh keep, and the worktree guard.
 """
@@ -21,16 +22,18 @@ import boot  # noqa: E402,F401
 
 import agent_log
 import code_map_lib as cm
-import gd_lib
 import load_routes
 import md_format_lib as md
+import plan_adjust
+import plan_index as pi
 import slice_lib
 import slice_state
 
 REL = "session-plan.md"
-MARKER = "<!-- gathered -->"
+MARKER = pi.MARKER
 MAX_SCRIPTS = 12
 MAX_PATHS = 30
+MAX_CANDS = 12  # code-map candidates per system; the gather agent prunes or adds
 KEPT_HEADS = (
     ("## Outcome", "(one line: what will be observably different, and how to measure it)"),
     ("## Open questions", "- none yet"),
@@ -40,9 +43,8 @@ KEPT_HEADS = (
 INTRO = (
     "# Session plan\n\n"
     "Same-worktree continuity after a compact. Not a task file and not a survey handoff.\n"
-    "Write the four sections above the marker in the same turn a fact lands. Trim the gathered half to this unit once the working set is known, before the first edit.\n"
-    "`python tools/slice.py plan --refresh` rebuilds the gathered half and erases that trim. Use it only when the gather is stale.\n"
-    "On a post-compact turn, read this file first. Do not re-run the lookups it still holds.\n"
+    "Write the four sections above the marker in the same turn a fact lands.\n"
+    "Below the marker is the context index: change it with `python tools/slice.py adjust`, never by hand; `python tools/slice.py expand` builds the packet.\n"
 )
 CODE_RE = re.compile(r"^Code:\s*(.+)$", re.M)
 TICK_RE = re.compile(r"`([^`]+)`")
@@ -199,14 +201,6 @@ def _systems(rows: list, door: str, job: str, scripts: list[str]) -> list:
                 chosen.append(row)
     return chosen[:4]
 
-def _names(path: Path) -> str:
-    try:
-        text = path.read_text(encoding="utf-8-sig")
-    except (OSError, UnicodeError) as exc:
-        return f"(unreadable: {exc})"
-    names = [item[0] for item in gd_lib.funcs_of(text)]
-    return ", ".join(names) if names else "(none)"
-
 def _card(root: Path, door: str, job: str, route_lines: list[str] | None) -> str:
     if route_lines is not None:
         lines = [ln for ln in route_lines if ln and not ln.startswith("RESULT ")]
@@ -219,74 +213,79 @@ def _card(root: Path, door: str, job: str, route_lines: list[str] | None) -> str
         lines.insert(0, f"(route exit {proc.returncode})")
     return "\n".join(lines) if lines else "(no card)"
 
-def render(root: Path, existing: str, door: str, job: str, area: str, mode: str, task: str,
-           route_lines: list[str] | None) -> str:
+def _git_head(root: Path) -> str:
+    proc = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=root, capture_output=True, text=True)
+    return proc.stdout.strip() if proc.returncode == 0 else "(no git)"
+
+def _unit_specs(data: dict, door: str, job: str, key: str) -> list[str]:
+    raw = data.get(key) if isinstance(data.get(key), dict) else {}
+    out: list[str] = []
+    for k in (door, job):
+        if k and raw.get(k):
+            out += [x.strip() for x in str(raw[k]).split(";") if x.strip()]
+    return out
+
+def seed(root: Path, door: str, job: str, area: str, mode: str, task: str, route_lines: list[str] | None) -> pi.Index:
+    """The mechanical seed: identity, core (job doc, unit docs/files, key scripts' names, task file) and candidates
+    (door doc when a job is named, other code-map paths), plus the route card. Deterministic for one commit."""
     door, job = _door_job(door, job)
     door_file, job_file, door_text = _docs(root, door, job)
-    if not door_text and door_file:
-        door_text = f"(missing {door_file})"
     job_text = _read(root, job_file) if job_file else ""
-    if job_file and not job_text:
-        job_text = f"(missing {job_file})"
     rows = _rows(root)
-    prefer = []
-    if rows:
-        for needle in _needles(door, job):
-            row = cm.find_system(rows, needle)
-            if row is not None and row not in prefer:
-                prefer.append(row)
+    prefer = [r for r in (cm.find_system(rows, n) for n in _needles(door, job)) if r is not None] if rows else []
     scripts, missing = _key_scripts(root, door_text, job_text, rows, prefer or rows)
     systems = _systems(rows, door, job, scripts) if rows else []
-    lines = [
-        "### Identity",
-        "",
-        f"- door: {door or '(none)'}",
-        f"- job: {job or '(none)'}",
-        f"- task: {task or '(none)'}",
-        f"- area: {area or '(none)'}",
-        f"- mode: {mode or '(none)'}",
-        f"- systems: {', '.join(row.system for row in systems) if systems else '(none matched)'}",
-        f"- primary doc: {door_file or '(none)'}",
-        f"- job doc: {job_file or '(none)'}",
-        "",
-        "### Card",
-        "",
-        _card(root, door, job, route_lines),
-        "",
-        "### Systems",
-        "",
-    ]
-    if not (root / "design" / "code-map.md").is_file():
-        lines.append("MISSING design/code-map.md")
-        lines.append("")
-    elif not systems:
-        lines.append("(no code-map row matched this door)")
-        lines.append("")
-    for row in systems:
-        paths = [item for item in row.listed if item.endswith(".gd")]
-        lines.append(f"#### {row.system}")
-        lines.append("")
-        shown = paths[:MAX_PATHS]
-        lines.extend(f"- `{item}`" for item in shown)
-        if len(paths) > len(shown):
-            lines.append(f"- (+{len(paths) - len(shown)} more .gd paths on this row)")
-        lines.append("")
-    lines += ["### Functions", ""]
-    if not scripts:
-        lines.append("(no key scripts resolved)")
-    for rel in scripts:
-        lines.append(f"- `{rel}`: {_names(root / rel)}")
-    if missing:
-        lines.append("- unresolved: " + ", ".join(f"`{item}`" for item in missing))
-    lines.append("")
-    lines += ["### Door doc", "", door_text.strip() or "(none)", ""]
+    try:
+        data = load_routes.load_routes(root)
+    except (OSError, ValueError):
+        data = {}
+    idx = pi.Index(identity=[("door", door or "(none)"), ("job", job or "(none)"), ("task", task or "(none)"),
+                             ("area", area or "(none)"), ("mode", mode or "(none)"),
+                             ("systems", ", ".join(r.system for r in systems) or "(none matched)"),
+                             ("seed", _git_head(root)), ("gather", "seed")])
+    seen: set[str] = set()
+
+    def add(kind: str, ref: str, core: bool, note: str) -> None:
+        if ref in seen or not ref:
+            return
+        seen.add(ref)
+        idx.items.append(pi.Item(idx.next_id(core), kind, ref, core, note))
+
+    tid = task.strip()
+    if tid and (root / "design" / "tasks" / f"{tid}.md").is_file():
+        add("doc", f"design/tasks/{tid}.md", True, "the assignment")
     if job_file:
-        lines += ["### Job doc", "", job_text.strip() or "(none)", ""]
-    gathered = "\n".join(lines).rstrip() + "\n"
-    return kept_block(existing) + MARKER + "\n\n" + gathered
+        add("doc", job_file, True, "job doc")
+    for spec in _unit_specs(data, door, job, "unit_docs"):
+        add("doc", spec, True, "unit doc section")
+    for spec in _unit_specs(data, door, job, "unit_files"):
+        path, _, names = spec.partition(":")
+        funcs = [n.strip() for n in names.split(",") if n.strip()]
+        for name in funcs:
+            add("func", f"{path.strip()}:{name}", True, "unit file")
+        if not funcs:
+            add("names", path.strip(), True, "unit file")
+    if door_file:
+        if job_file:
+            add("doc", door_file, False, "the change touches door-wide rules or a sibling job")
+        else:
+            add("doc", door_file, True, "door doc")
+    for rel in scripts:
+        add("names", rel, True, "key script (declared names)")
+    for row in systems:
+        for rel in [x for x in row.listed if x.endswith(".gd") and (root / x).is_file()][:MAX_CANDS]:
+            add("names", rel, False, f"the change reaches {row.system} code")
+    if missing:
+        idx.set("unresolved", ", ".join(missing))
+    idx.card = _card(root, door, job, route_lines)
+    return idx
+
+def render(root: Path, existing: str, door: str, job: str, area: str, mode: str, task: str,
+           route_lines: list[str] | None) -> str:
+    return pi.join_plan(kept_block(existing), seed(root, door, job, area, mode, task, route_lines))
 
 def ensure(root: Path, door: str, job: str, area: str = "", mode: str = "", task: str = "",
-           route_lines: list[str] | None = None, refresh: bool = False) -> str:
+           route_lines: list[str] | None = None, refresh: bool = False, clean: bool = False) -> str:
     """Write session-plan.md when missing, or when refresh replaces the gathered half. '' when left as it is."""
     door, job = _door_job(door, job)
     if not door and not job:
@@ -297,8 +296,12 @@ def ensure(root: Path, door: str, job: str, area: str = "", mode: str = "", task
     existing = md.read_text(path) if path.is_file() else ""
     md.write_text(path, render(root, existing, door, job, area, mode, task, route_lines))
     if refresh and existing:
-        return "session-plan.md refreshed (gathered half replaced; outcome, questions, changed files, and results kept). Read it next."
-    return "session-plan.md written. Read it next. Use find.py only for a gap it does not cover, then trim the gathered half to this unit in that same turn and write the four sections above the marker. --refresh erases a trim."
+        if clean:
+            plan_adjust.clear_delta(root)
+            return "session-plan.md refreshed clean (index re-seeded; adjustments dropped; the four sections kept)."
+        n = plan_adjust.replay(root)
+        return f"session-plan.md refreshed (index re-seeded, {n} logged adjustments replayed; the four sections kept)."
+    return "session-plan.md written (mechanical seed)."
 
 def _from_state(root: Path, door: str, job: str, area: str, task: str) -> tuple[str, str, str, str, str]:
     st = slice_state.load(root)
@@ -314,7 +317,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--job", default="", help="routes.yaml door.job. Default: this worktree's slice state.")
     ap.add_argument("--area", default="", help="Slice area label stored in the plan (default: slice state).")
     ap.add_argument("--task", default="", metavar="ID", help="Task id stored in the plan. The task file stays the assignment.")
-    ap.add_argument("--refresh", action="store_true", help="Replace the gathered half. Keeps Outcome, Open questions, Changed files, and Latest results.")
+    ap.add_argument("--refresh", action="store_true", help="Re-seed the index and replay the logged adjustments (_logs/gather/delta.jsonl). Keeps the four sections.")
+    ap.add_argument("--clean", action="store_true", help="With --refresh: drop the logged adjustments instead of replaying them.")
     ap.add_argument("--selftest", action="store_true", help="Run the gather cases in a throwaway repo.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -334,9 +338,9 @@ def main(argv: list[str] | None = None) -> int:
                                 door=door, plan_job=job)
     path = plan_path(root)
     existed = path.is_file()
-    line = ensure(root, door, job, area, mode, task, None, refresh=args.refresh)
+    line = ensure(root, door, job, area, mode, task, None, refresh=args.refresh, clean=args.clean)
     if not line:
-        line = "session-plan.md present. Read it. Pass --refresh only when the gathered half is stale. A refresh erases a trim."
+        line = "session-plan.md present. Pass --refresh only when the index is stale (adjustments are replayed)."
     return agent_log.finish("session-plan", root, line, "PASS", args=args, write=not args.dry_run, echo=line,
                             door=door, plan_job=job, refreshed=bool(args.refresh and existed))
 
@@ -371,22 +375,30 @@ def selftest(script: list[str]) -> int:
         if code != 0 or "not written" not in out or (root / REL).exists():
             bad.append(f"dry-run must not write session-plan.md (code={code} exists={(root / REL).exists()})")
         text = render(root, "", "demo", "demo.part", "demo", "implement", "demo-task", ["card line"])
-        for need in ("Unique door sentence.", "Job sentence.", "alpha, beta", "scripts/demo.gd", "demo-task", "card line", "nope.gd", "## Outcome"):
+        idx = pi.parse(pi.split_plan(text)[1])
+        job, door, key = idx.find("design/demo-part.md"), idx.find("design/demo.md"), idx.find("scripts/demo.gd")
+        if not (job and job.core) or not (door and not door.core and door.note) or not (key and key.core):
+            bad.append("seed: job doc and key script core; door doc a candidate with a condition when a job is named")
+        for need in ("task: demo-task", "card line", "unresolved: nope.gd", "systems: Demo", "## Outcome"):
             if need not in text:
-                bad.append(f"gather missing {need!r}")
-        if "#### Demo" not in text:
-            bad.append("the matching code-map system must be named")
+                bad.append(f"seed missing {need!r}")
+        if "Unique door sentence." in text or "func alpha" in text:
+            bad.append("the seed is an index: no pasted doc or code bodies")
+        if pi.render(idx) != pi.split_plan(text)[1]:
+            bad.append("seed must round-trip through plan_index")
         path = plan_path(root)
-        md.write_text(path, text)
-        edited = md.read_text(path).replace(KEPT_HEADS[0][1], "the marker is visible")
-        md.write_text(path, edited)
-        (root / "design" / "demo.md").write_text("# Demo\n\nCode: `scripts/demo.gd`\n\nChanged body.\n", encoding="utf-8")
+        md.write_text(path, text.replace(KEPT_HEADS[0][1], "the marker is visible"))
+        env_root = str(root)
+        proc = subprocess.run([*boot.cmd("plan_adjust"), "--root", env_root, "rem", "design/demo.md"], capture_output=True, text=True)
         again = ensure(root, "demo", "demo.part", "demo", "implement", "demo-task", ["card line"], refresh=True)
         got = md.read_text(path)
-        if "the marker is visible" not in got or "Changed body." not in got or "Unique door sentence." in got:
-            bad.append(f"refresh must keep the outcome and replace the doc ({again})")
+        if "the marker is visible" not in got or "design/demo.md`" in got or proc.returncode:
+            bad.append(f"refresh must keep the outcome and replay the logged rem ({again}; {proc.stdout[-200:]})")
         if got.count(MARKER) != 1:
             bad.append("the plan must keep one gathered marker")
+        ensure(root, "demo", "demo.part", "demo", "implement", "demo-task", ["card line"], refresh=True, clean=True)
+        if "design/demo.md`" not in md.read_text(path):
+            bad.append("refresh --clean must drop the logged adjustments")
     return agent_log.selftest_result(bad)
 
 if __name__ == "__main__":

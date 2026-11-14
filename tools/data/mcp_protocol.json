@@ -12,7 +12,7 @@
     "pick-a-tool": "design/tools.md#Which tool for which job"
   },
   "phases": {
-    "understand": ["lookup action=packet (core bodies; candidates with conditions)", "lookup action=func|xref|names for a gap", "slice.py plan promote/rem-* when the working set moves", "protocol action=doc situation=questions"],
+    "understand": ["lookup action=packet (core bodies; candidates with conditions)", "lookup action=func|xref|names for a gap", "slice.py adjust promote|rem|add-func when the working set moves", "protocol action=doc situation=questions"],
     "implement": ["lookup action=func|lines (unchanged lines are elided)", "check target=gd_load files=...", "protocol action=doc situation=compact-stop"],
     "verify": ["check target=gd_load", "gate.py build --batch (CLI, once)", "protocol action=doc situation=verify"],
     "finish": ["protocol action=doc situation=finish", "slice.py commit, then plain git push"]

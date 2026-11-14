@@ -75,7 +75,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
                   Q0, "After the answers, `slice.py start --handoff`; fill and validate the task, then stop. build-handoff.md owns this procedure."]
     else:
         label = "ORDER (handoff)" if mode == "handoff" else "ORDER"
-        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`. Read session-plan.md (this start writes it for a named door or job), then the task file once on a new session. Use find.py only for a gap the plan does not cover. In that same turn, trim the gathered half to this unit and write the four sections above the marker. Continue in this session."]
+        lines += [f"{label}: for game work run `python tools/gate.py gd-load` and `python tools/gate.py import`. Read session-plan.md (this start writes it for a named door or job), then the task file once on a new session. Use find.py only for a gap the plan does not cover; change its index only with `slice.py adjust`, and write the four sections above the marker. Continue in this session."]
         if mode == "handoff":
             lines.append("Restore only the saved survey edits and inspect its listed baselines; do not repeat the survey. Keep prior answers unless new evidence changes them.")
         if screen:

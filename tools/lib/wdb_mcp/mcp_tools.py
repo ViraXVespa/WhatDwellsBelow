@@ -1,6 +1,6 @@
 """The three wdb MCP tools, as plain functions over mcp_core.Store: lookup, check, protocol. No CLI of its own.
 
-Thin wrappers: each first call runs the real `find.py` / `docs.py` / `session.py` / `slice.py plan expand` /
+Thin wrappers: each first call runs the real `find.py` / `docs.py` / `session.py` / `slice.py expand` /
 `check.py` / `gate.py gd-load` command once and caches its full result under a handle; follow-ups page or filter that
 cache and never re-run it. Commands outside the caller's catalog surface (Surf column, `design/tools*.md`) are refused.
 Read-only: nothing here writes repo files (state lives in `_logs/gather/`).
@@ -113,7 +113,7 @@ class Tools:
             "code_map": (["docs.py", "code-map", "row", "--path", path], "docs.py code-map"),
             "task": (["docs.py", "task", "show", query or name], "docs.py task"),
             "summary": (["session.py", "summary", query or name] + (["--match", pattern] if pattern else []), "session.py summary"),
-            "packet": (["slice.py", "plan", "expand", "--stdout"] + (["--only", query] if query else []), "slice.py plan"),
+            "packet": (["slice.py", "expand"] + (["--only", query] if query else []), "slice.py expand"),
         }
         if action not in simple:
             return [], f"unknown lookup action {action!r} (func xref names all_names lines doc route scenes facade stat changed code_map task summary packet more full)"

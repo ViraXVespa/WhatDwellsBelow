@@ -22,7 +22,7 @@ def _head(text: str) -> list[str]:
 
 def cases(bad: list[str], state: Path) -> None:
     t = mcp_tools.Tools(ROOT, "D", True, state)
-    first = t.lookup("func", path="tools/lib/slice/session_plan.py", name="render")
+    first = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
     lines = _head(first)
     if lines[0] != "STATUS: PASS" or not lines[1].startswith("handle: f") or not lines[2].startswith("next: more"):
         bad.append("func first call: STATUS / handle / next header: " + " | ".join(lines[:3]))
@@ -37,11 +37,11 @@ def cases(bad: list[str], state: Path) -> None:
     page2 = [ln for ln in _head(second)[5:] if ln.strip() and not ln.startswith("...")]
     if not page2 or any(ln in page1 for ln in page2 if len(ln.strip()) > 12):
         bad.append("more must return only the next page, no overlap")
-    again = t.lookup("func", path="tools/lib/slice/session_plan.py", name="render")
+    again = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
     if "unchanged, already shown" not in again:
         bad.append("a repeat read in the same epoch must elide shown lines")
     core.bump_epoch(ROOT, state)
-    fresh = t.lookup("func", path="tools/lib/slice/session_plan.py", name="render")
+    fresh = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
     if "already shown" in fresh:
         bad.append("a new epoch (after compact) must resend")
     for path in ("_logs/x.txt", "notes/a.md", "assets/x.png"):
