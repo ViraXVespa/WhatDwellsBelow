@@ -1,3 +1,4 @@
+class_name ProgressUI
 extends CanvasLayer
 
 const WipeChildren := preload("res://scripts/ui/wipe_children.gd")
