@@ -85,26 +85,26 @@ class Tools:
         self.store.tick()
         budget = core.ALL if whole else budget
         if reads or action == "batch":
-            return self._batch(reads or [], budget, whole)
+            return self._batch(reads or [], budget)
         if handle or action in ("more", "full"):
             return self._follow(handle, action or "more", budget)
         kw = dict(path=path, name=name, pattern=pattern, pairs=pairs, start=start, end=end, door=door, job=job,
                   query=query, regex=regex, expand=expand)
         try:
-            status, body, files, summary = self._one(action, whole, **kw)
+            status, body, files, summary = self._one(action, **kw)
         except core.Refused as exc:
             return self._refuse(str(exc))
         h = self.store.new({"func": "f", "lines": "r", "doc": "r"}.get(action, "l"), body, status=status, files=files)
         return core.page(self.store, h, budget, status, summary, first=True)
 
-    def _one(self, action: str, whole: bool, path: str = "", name: str = "", pattern: str = "", pairs: list | None = None,
+    def _one(self, action: str, path: str = "", name: str = "", pattern: str = "", pairs: list | None = None,
              start: int = 0, end: int = 0, door: str = "", job: str = "", query: str = "", regex: bool = False,
              expand: str = "") -> tuple[str, list[str], list[str], str]:
         """(status, body, files, summary) for one lookup read; raises core.Refused."""
         if action == "func":
             return self._funcs([tuple(p) for p in (pairs or [])] or [(path, name)])
         if action in ("lines", "doc") or (action in ("names", "all_names") and path.endswith(".py")):
-            return "PASS", mcp_read.read(self.root, action, path, start, end, whole), [], ""
+            return "PASS", mcp_read.read(self.root, action, path, start, end), [], ""
         why = next((w for w in (core.denied(x) for x in (path.split() + [expand])) if w), "")
         if why:
             raise core.Refused(why)
@@ -120,10 +120,12 @@ class Tools:
         status = "FAIL" if res["status"] == "FAIL" else "PASS"
         return status, body or [res["result"]], sorted(set(PATH_RE.findall(res["text"]))), ""
 
-    def _batch(self, reads: list, budget: int, whole: bool) -> str:
+    def _batch(self, reads: list, budget: int) -> str:
         """Several independent reads (any lookup action but more/full/batch) answered in one reply, in order."""
         if not reads or not all(isinstance(r, dict) and r.get("action") for r in reads):
             return self._refuse("batch needs reads=[{action, ...}, ...] (each a lookup call's arguments)")
+        uniq = list({json.dumps(r, sort_keys=True): r for r in reads}.values())  # an identical read is answered once
+        dropped, reads = len(reads) - len(uniq), uniq
         body: list[str] = []
         files: set[str] = set()
         fails = 0
@@ -134,7 +136,7 @@ class Tools:
             try:
                 if act in ("more", "full", "batch"):
                     raise core.Refused(f"{act} is not a batch read")
-                status, lines, fl, summary = self._one(act, whole or bool(r.get("all")), **kw)
+                status, lines, fl, summary = self._one(act, **kw)
             except core.Refused as exc:
                 status, lines, fl, summary = "FAIL", [f"error: {exc}"], [], ""
             fails += status == "FAIL"
@@ -143,8 +145,8 @@ class Tools:
             body += ([""] if body else []) + head + ([f"summary: {summary}"] if summary else []) + lines
         status = "FAIL" if fails else "PASS"
         h = self.store.new("b", body, status=status, files=sorted(files))
-        return core.page(self.store, h, budget, status, f"{fails} of {len(reads)} reads failed" if fails else "", first=True,
-                         fails=fails)
+        notes = [f"{fails} of {len(reads)} reads failed" if fails else "", f"{dropped} duplicate read(s) skipped" if dropped else ""]
+        return core.page(self.store, h, budget, status, "; ".join(n for n in notes if n), first=True, fails=fails)
 
     def _lookup_argv(self, action, path, name, pattern, door, job, query, regex, expand) -> tuple[list[str], str]:
         if action == "xref":
@@ -192,7 +194,7 @@ class Tools:
 
     def _read(self, action: str, path: str, budget: int) -> str:
         try:
-            body = mcp_read.read(self.root, action, path, 0, 0, False)
+            body = mcp_read.read(self.root, action, path, 0, 0)
         except core.Refused as exc:
             return self._refuse(str(exc))
         return core.page(self.store, self.store.new("r", body), budget, "PASS", first=True)

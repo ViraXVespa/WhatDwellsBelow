@@ -48,8 +48,9 @@ def outline(lines: list[str], rel: str) -> list[str]:
                 rows.append(f"  L{i}: {ln.strip()[:72]}")
     return rows
 
-def read(root: Path, action: str, path: str, start: int, end: int, whole: bool) -> list[str]:
-    """Body lines for lookup lines / doc / names of a .py. doc: `path#Heading` a section; no heading: the outline (whole: the file)."""
+def read(root: Path, action: str, path: str, start: int, end: int) -> list[str]:
+    """Body lines for lookup lines / doc / names of a .py. doc: `path#Heading` the full section; no heading: always the
+    outline (all=true only stops it paging; the whole file is `lines` with no start/end)."""
     rel, _, heading = path.partition("#")
     why = core.denied(rel)
     if why:
@@ -70,7 +71,7 @@ def read(root: Path, action: str, path: str, start: int, end: int, whole: bool) 
             titles = list(dict.fromkeys(t for _, _, t in _headings(lines)))[:20]
             raise core.Refused(f"no heading {heading!r} in {rel}; headings: " + " | ".join(titles))
         a, b = span
-    elif action == "doc" and not whole:
+    elif action == "doc":
         return outline(lines, rel)
     else:
         a, b = max(1, start or 1), min(len(lines), end or len(lines))

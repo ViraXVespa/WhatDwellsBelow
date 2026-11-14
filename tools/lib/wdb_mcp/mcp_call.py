@@ -11,6 +11,7 @@ Prints the tool's text answer, then the RESULT line. Does not need the `mcp` pac
 """
 from __future__ import annotations
 
+import inspect
 import json
 import re
 import sys
@@ -48,8 +49,21 @@ def parse(pairs: list[str]) -> dict:
             out[key] = val
     return out
 
+def tool_help() -> str:
+    """Each tool's arguments (from mcp_tools.Tools, `whole` shown as `all`) and its MCP description, for --help."""
+    import mcp_serve
+
+    docs = {"lookup": mcp_serve.LOOKUP_DOC, "check": mcp_serve.CHECK_DOC, "protocol": mcp_serve.PROTOCOL_DOC}
+    out = ["tools (key=value; the same arguments and replies as the MCP; values: true/false, integers, files=a.gd,b.gd,",
+           "  pairs=path:name,path:name, reads='[{...},...]' as JSON):"]
+    for name, doc in docs.items():
+        args = ["all" if a == "whole" else a for a in inspect.signature(getattr(mcp_tools.Tools, name)).parameters if a != "self"]
+        out += [f"  {name}: {' '.join(args)}"] + [f"    {ln}" for ln in doc.splitlines()]
+    return "\n".join(out)
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run one wdb MCP tool call (lookup, check, protocol) from a shell.")
+    ap.epilog = tool_help()
     ap.add_argument("tool", choices=("lookup", "check", "protocol"), help="Which MCP tool.")
     ap.add_argument("kv", nargs="*", help="key=value arguments, as the MCP tool takes them.")
     ap.add_argument("--surface", default="", help="Catalog surface letter for a non-Build caller (D, B); also turns the Build rerun limit off.")

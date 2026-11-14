@@ -109,8 +109,14 @@ def names_cases(bad: list[str], t: mcp_tools.Tools) -> None:
     outline = t.lookup("doc", path="design/tools-mcp.md")
     if not outline.startswith("STATUS: PASS") or "outline" not in outline or not re.search(r"^L\d+-\d+ ## Contract$", outline, re.M):
         bad.append("doc with no #Heading returns the outline with line spans: " + outline[:160])
-    if "Replies start" not in t.lookup("doc", path="design/tools-mcp.md", whole=True):
-        bad.append("doc with no #Heading and all=true returns the whole file")
+    whole_outline = t.lookup("doc", path="design/tools-mcp.md", whole=True)
+    if "outline" not in whole_outline or "Replies start" in whole_outline or "page:" in whole_outline:
+        bad.append("doc with no #Heading and all=true still returns the outline, unpaged: " + whole_outline[:160])
+    section = t.lookup("doc", path="design/tools-mcp.md#Contract", whole=True)
+    if "Replies start" not in section or "## Catalog" in section:
+        bad.append("doc path#Heading returns that full section only: " + section[:160])
+    if "## Catalog" not in t.lookup("lines", path="design/tools-mcp.md", whole=True):
+        bad.append("lines with no start/end returns the whole file")
     nope = t.lookup("doc", path="design/tools-mcp.md#Nope")
     if not nope.startswith("STATUS: FAIL") or nope.count("Contract") != 1:
         bad.append("an unknown heading fails and lists each heading once: " + nope[:160])
@@ -129,6 +135,11 @@ def batch_cases(bad: list[str], t: mcp_tools.Tools) -> None:
         bad.append("batch: every read answered in order, one failed read counted: " + got[:200])
     if any(ln.startswith("page:") for ln in _head(got)[:3]) or t.store.runs - runs != 2:
         bad.append(f"batch all=true: one reply, and only command-backed reads run a command ({t.store.runs - runs} runs)")
+    runs = t.store.runs
+    dup = t.lookup(reads=[{"action": "func", "path": "tools/lib/wdb_mcp/mcp_core.py", "name": "fail"},
+                          {"name": "fail", "action": "func", "path": "tools/lib/wdb_mcp/mcp_core.py"}], whole=True)
+    if dup.count("mcp_core.py:fail") != 1 or "1 duplicate read(s) skipped" not in dup or t.store.runs - runs != 1:
+        bad.append("identical batch reads are answered once and the skip is noted: " + dup[:200])
     if not t.lookup(reads=[{"path": "x"}]).startswith("STATUS: FAIL"):
         bad.append("a batch read without an action is refused")
 
@@ -181,7 +192,7 @@ def client(bad: list[str], notes: list[str], state: Path) -> None:
             if "STATUS:" not in (res2.content[0].text if res2.content else ""):
                 bad.append("MCP follow-up by handle failed")
             res3 = await c.call_tool("lookup", {"all": True, "reads": [{"action": "names", "path": "scripts/app.gd"},
-                                                                     {"action": "doc", "path": "design/tools-mcp.md"}]})
+                                                                     {"action": "doc", "path": "design/tools-mcp.md#Contract"}]})
             text3 = res3.content[0].text if res3.content else ""
             if not text3.startswith("STATUS: PASS") or "## [1] names" not in text3 or "Replies start" not in text3:
                 bad.append("MCP lookup all=true reads=[...] over the client: " + text3[:120])
@@ -189,9 +200,22 @@ def client(bad: list[str], notes: list[str], state: Path) -> None:
     asyncio.run(go())
     notes.append("in-process MCP client: 3 tools, call + handle follow-up + all=true batch")
 
+def call_help(bad: list[str]) -> None:
+    """`wdb_mcp.py call --help` lists every tool's arguments, so a shell caller needs no extra round to learn them."""
+    import subprocess
+
+    import boot
+
+    out = subprocess.run([*boot.cmd("mcp_call"), "--help"], capture_output=True, text=True).stdout
+    for want in ("lookup: action handle path", " reads", "check: target handle action stem files budget all",
+                 "protocol: action situation query handle budget all", "reads='[{...},...]' as JSON"):
+        if want not in out:
+            bad.append(f"call --help lists each tool's arguments; missing {want!r}")
+
 def run() -> int:
     bad: list[str] = []
     notes: list[str] = []
+    call_help(bad)
     with tempfile.TemporaryDirectory() as td:
         cases(bad, Path(td))
         shared(bad)
