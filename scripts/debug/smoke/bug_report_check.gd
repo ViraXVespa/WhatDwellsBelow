@@ -60,6 +60,12 @@ static func run(_host: Node) -> void:
 		fails.append("Door/Job comboboxes do not walk with the pad")
 	if not _backspace_ok(_host):
 		fails.append("Backspace in the email field does not delete")
+	fails.append_array(_opt_faults())
+	var cfg := ConfigFile.new()
+	if cfg.load("res://export_presets.cfg") == OK:
+		for sec: String in cfg.get_sections():
+			if str(cfg.get_value(sec, "platform", "")) == "Web" and not bool(cfg.get_value(sec + ".options", "html/experimental_virtual_keyboard", false)):
+				fails.append("no web virtual keyboard " + sec)
 	printerr("P1: bug_report payload_keys=" + ",".join(PackedStringArray(body.keys())) + " state_keys=" + str(st.size()))
 	printerr("P1: bug_report_ok=" + str(fails.is_empty()))
 	if fails.size():
@@ -103,8 +109,9 @@ static func _picker_faults() -> PackedStringArray:
 			out.append("text " + k)
 	return out
 
-## Pad only: A opens Door, down twice and A picks the 2nd door (Job enables, the description follows the highlight),
-## then Job: A, down, A picks that door's first job. Changing the door again resets the job.
+## Pad: A opens Door, down twice and A picks the 2nd door (Job enables, the description follows the highlight),
+## then Job: A, down, A picks that door's first job. Changing the door again resets the job. Lists open under their
+## button, below the description, capped (they scroll). Then two taps on a Door row.
 static func _pad_pick_ok(host: Node) -> bool:
 	if host == null or not host.is_inside_tree():
 		return true
@@ -124,11 +131,15 @@ static func _pad_pick_ok(host: Node) -> bool:
 	var desc: Label = h.find_child("report_about", true, false)
 	var ok: bool = job.disabled and h.info_btns.size() == 2
 	var vp: Viewport = host.get_viewport()
+	h.position.y = vp.get_visible_rect().end.y - 300.0  # near the bottom: the Door list must cap
 	dob.grab_focus()
 	for a: String in ["ui_accept", "ui_down", "ui_down"]:
 		_tap(vp, a)
 	var d2: Dictionary = Pick.doors()[1]
-	ok = ok and dob.get_popup().visible and desc.text == str(d2.about)
+	var pop: PopupMenu = dob.get_popup()
+	var top: float = dob.get_screen_position().y + dob.size.y
+	ok = ok and pop.visible and desc.text == str(d2.about) and desc.get_index() < dob.get_parent().get_index()
+	ok = ok and pop.position.y >= top - 1.0 and pop.position.y + pop.size.y <= vp.get_visible_rect().end.y + 1.0 and pop.size.y < 300
 	_tap(vp, "ui_accept")
 	ok = ok and form.door == str(d2.key) and not job.disabled and not dob.get_popup().visible
 	var withjobs: Array = Pick.doors().filter(func(d: Dictionary) -> bool: return (d.jobs as Array).size() > 0)
@@ -147,8 +158,53 @@ static func _pad_pick_ok(host: Node) -> bool:
 	dob.select(0)
 	dob.item_selected.emit(0)
 	ok = ok and form.door == "" and form.job == "" and job.disabled
+	# A touch tap arrives as a click: the 1st picks + describes, the 2nd closes.
+	dob.show_popup()
+	_click(vp, pop, 3)
+	ok = ok and pop.visible and form.door == str(Pick.doors()[2].key) and desc.text == str(Pick.doors()[2].about)
+	_click(vp, pop, 3)
+	ok = ok and not pop.visible and form.door == str(Pick.doors()[2].key)
 	h.queue_free()
 	return ok
+
+## Opt-in: off and disabled with no valid email, checks itself once one is typed, a cleared box stays cleared.
+static func _opt_faults() -> PackedStringArray:
+	var out: PackedStringArray = []
+	var cb := CheckBox.new()
+	var f := {"email": "", "opt_in": true}
+	Page.gate_opt(f, cb, false)
+	if not cb.disabled or cb.button_pressed or bool(f.opt_in):
+		out.append("opt-in on without an email")
+	for t: String in ["a@b", "a@b.co"]:
+		f.email = t
+		Page.gate_opt(f, cb, true)
+	if cb.disabled or not cb.button_pressed or not bool(f.opt_in):
+		out.append("email does not check the opt-in")
+	cb.button_pressed = false
+	f.opt_in = false
+	f.email = "a@b.com"
+	Page.gate_opt(f, cb, true)
+	if cb.button_pressed:
+		out.append("opt-in re-checked")
+	f.email = ""
+	Page.gate_opt(f, cb, true)
+	if not cb.disabled or bool(f.opt_in):
+		out.append("opt-in kept, no email")
+	if App.tr("bug_report.privacy").find("never sold") < 0:
+		out.append("privacy: never sold")
+	cb.free()
+	return out
+
+static func _click(vp: Viewport, pop: PopupMenu, i: int) -> void:
+	var row_h: float = pop.get_theme_font("font").get_height(pop.get_theme_font_size("font_size")) + pop.get_theme_constant("v_separation")
+	var top: float = pop.get_theme_stylebox("panel").get_margin(SIDE_TOP)
+	var at: Vector2 = Vector2(pop.position) + Vector2(24.0, top + (i + 0.5) * row_h) * pop.content_scale_factor
+	for down: bool in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.position = at
+		e.pressed = down
+		vp.push_input(e, true)
 
 static func _tap(vp: Viewport, action: String) -> void:
 	for down: bool in [true, false]:
