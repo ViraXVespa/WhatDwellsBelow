@@ -32,6 +32,7 @@ var wo := 0
 var built: Node
 
 const SkinSet := preload("res://scripts/skins/skin_set.gd")
+const SkinBake := preload("res://scripts/skins/skin_bake.gd")
 const PlayHostScr := preload("res://scripts/play_host.gd")
 const Bal := preload("res://scripts/data/balance/vars_fix.gd")
 var doc_only_var := 1
@@ -59,6 +60,7 @@ func _ready() -> void:
 	LOther.other_live()
 	LHelp.go()
 	SkinSet.apply(self)
+	SkinBake.bake()
 	Bal.new().tick()
 	typed_pt(PlayHost.new())
 	node_pt(PlayHost.new())
@@ -223,6 +225,9 @@ static func build(_c) -> void:
 static func unused_skin_fn() -> void:
 	pass
 
+static func dress(_b) -> void:
+	pass
+
 static func only_string_skin() -> void:
 	pass
 """,
@@ -253,6 +258,18 @@ static func apply(host) -> void:
 	SkinBase.apply(host, SKINS)
 	call("only_string_skin")
 """,
+    "scripts/skins/skin_bake.gd": """const SET := "res://scripts/skins/skin_set.gd"
+const NotSkin := preload("res://scripts/skins/not_skin.gd")
+
+static func bake() -> void:
+	NotSkin.live()
+	for skin: GDScript in (load(SET) as GDScript).get("SKINS"):
+		dress_all(skin)
+
+static func dress_all(skin: GDScript) -> void:
+	skin.callv("dress", [null])
+""",
+    "scripts/skins/not_skin.gd": "static func live() -> void:\n\tpass\n\nstatic func dress(_b) -> void:\n\tpass\n",
     "scripts/debug/vis_check.gd": """extends RefCounted
 var plant_x: String:
 	get:
@@ -303,6 +320,7 @@ def run() -> list[str]:
             ("vis_check.gd", "not_in_flow"): "unused_var",
             ("hutil.gd", "h_dead"): "ambiguous", ("hutil.gd", "h_never"): "unused",
             ("lstep.gd", "lstep_unused"): "unused", ("lother.gd", "run"): "shadowed",
+            ("not_skin.gd", "dress"): "unused",
         }
         for key, kind in want.items():
             if cat.get(key) != kind:
@@ -313,7 +331,8 @@ def run() -> list[str]:
                 ("skin_b.gd", "spec"), ("skin_b.gd", "build"), ("skin_a.gd", "only_string_skin"),
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
                 ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
-                ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live")]
+                ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live"),
+                ("skin_a.gd", "dress")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")

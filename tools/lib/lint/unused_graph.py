@@ -65,6 +65,12 @@ STR_RE = re.compile(r"\"([^\"\\\n]*(?:\\.[^\"\\\n]*)*)\"|'([^'\\\n]*(?:\\.[^'\\\
 # `(load("res://x.gd") as GDScript).call("fn", ..)`: a literal method on a literal-path script resolves to that script.
 LOAD_CALL_RE = re.compile(r"\b(?:pre)?load[ \t]*\([ \t]*\"res://([^\"]+\.gd)\"[ \t]*\)(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*"
                           r"(?:call|call_deferred|callv)[ \t]*\([ \t]*[\"'](\w+)[\"']")
+# `for skin in (load(FRAME_SET) as GDScript).get("SKINS")`: the loop var walks that script's preload list.
+FOR_LOAD_LIST_RE = re.compile(r"\bfor[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?in[ \t]+\(?[ \t]*(?:pre)?load\([ \t]*(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))[ \t]*\)"
+                              r"(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*get\([ \t]*\"([A-Za-z_]\w*)\"[ \t]*\)")
+PATH_CONST_RE = re.compile(r"^const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*String[ \t]*)?:?=[ \t]*\"res://([^\"]+\.gd)\"[ \t]*$")
+# `skin.callv("dress", ..)` on a receiver bound to a known script union: the method on each member that defines it.
+RECV_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)[ \t]*\.[ \t]*(?:call|call_deferred|callv)[ \t]*\([ \t]*\"(\w+)\"")
 CALLISH = re.compile(r"\b(?:call|call_deferred|callv|Callable|has_method|connect|emit_signal|method|bind|callback|rpc)\b")
 PREFIX_RE = re.compile(r"[\"']([A-Za-z_]\w*_)[\"'][ \t]*\+")
 SUFFIX_RE = re.compile(r"\+[ \t]*[\"'](_\w+)[\"']")
@@ -74,7 +80,7 @@ FLOW_PROP_RE = re.compile(r"script:([\w/]+)\.(\w+)")  # shot-flow script:debug/f
 METHOD_RE = re.compile(r"(?:\bmethod\s*=\s*|\"method\"\s*:\s*)\"(\w+)\"")
 WRITE_AFTER = re.compile(r"[ \t]*(?:[-+*/%|&^]|<<|>>)?=(?!=)")
 SKIP_PARTS = frozenset({"node_modules", "__pycache__", ".godot", ".git", "_logs", ".archive_worktrees", ".archive_export_cache", "retired"})
-STRONG = ("call", "self", "alias", "super", "override", "host", "hook", "scene", "flow", "dynamic", "file", "load_call")
+STRONG = ("call", "self", "alias", "super", "override", "host", "hook", "scene", "flow", "dynamic", "file", "load_call", "recv_call")
 WEAK = ("unresolved", "dynamic_ambiguous", "arity_mismatch")
 
 def code_of(raw: str) -> str:
@@ -293,6 +299,7 @@ class Script:
         self.alias_targets: set[str] = set()
         self.dbg_targets: set[str] = set()
         self.list_idents: dict[str, list[str]] = {}
+        self.path_consts: dict[str, str] = {}
         self.fn_scope: dict[str, dict[str, dict[str, str]]] = {}
         pend = []
         starts = []
@@ -353,6 +360,12 @@ class Script:
             m = FOR_IN_RE.search(head)
             if m:
                 pend.append((i, "list", m.group(1), m.group(2)))
+            m = FOR_LOAD_LIST_RE.search(head)
+            if m:
+                pend.append((i, "loadlist", m.group(1), f"{m.group(2) or '@' + m.group(3)}|{m.group(4)}"))
+            m = PATH_CONST_RE.match(head)
+            if m:
+                self.path_consts[m.group(1)] = m.group(2)
             for m in DBG_ALIAS_RE.finditer(head):
                 self.dbg_targets.add(m.group(2))
                 if inner:
@@ -487,6 +500,7 @@ class Graph:
                 self.defs[name].append(rel)
         self._build_files()
         self._resolve_lists()
+        self._bind_load_lists()
         self._bind_params()
         self._build_edges()
 
@@ -607,6 +621,12 @@ class Graph:
                 callish = CALLISH.search(code) is not None
                 mpos = {x for m in METHOD_POS_RE.finditer(raw) for x in m.groups() if x} if callish else set()
                 lcall = {m.group(2): m.group(1) for m in LOAD_CALL_RE.finditer(raw)} if callish else {}
+                rcall: dict[str, list[str]] = {}
+                for m in (RECV_CALL_RE.finditer(raw) if callish else ()):
+                    union = self.resolve_all(rel, [m.group(1)], 0, src[1]) if m.group(1) not in ("self", "load", "preload") else None
+                    hits = [t for t in (self.find(p, m.group(2)) for p in union or ()) if t]
+                    if hits:
+                        rcall[m.group(2)] = hits
                 for lit in strings_of(raw):
                     if IDENT.fullmatch(lit) and lit in var_owners and lit not in all_names:
                         self.weak_strings[lit].append(f"{rel}:{idx + 1}")
@@ -615,6 +635,8 @@ class Graph:
                         if own and not callish:
                             # a literal naming a func of its own script (dispatch table, e.g. TABS [..., "_inv"])
                             self.edges[src].append((own, lit, "dynamic", idx + 1))
+                        elif callish and lit in rcall:
+                            self.edges[src].extend((t, lit, "recv_call", idx + 1) for t in rcall[lit])
                         elif callish and lit in lcall and lcall[lit] in self.scripts and self.find(lcall[lit], lit):
                             self.edges[src].append((self.find(lcall[lit], lit), lit, "load_call", idx + 1))
                         elif callish and (not mpos or lit in mpos):
@@ -842,6 +864,17 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                     out[name] = paths
             self.script_lists[rel] = out
 
+    def _bind_load_lists(self) -> None:
+        """`for x in (load(P) as GDScript).get("L")`: bind x to P's resolved preload list L (else leave it unknown)."""
+        for rel, s in self.scripts.items():
+            for sc in s.fn_scope.values():
+                for var, spec in sc.get("loadlist", {}).items():
+                    path, lname = spec.split("|", 1)
+                    path = s.path_consts.get(path[1:], "") if path.startswith("@") else path
+                    paths = self.script_lists.get(path, {}).get(lname)
+                    if paths:
+                        sc.setdefault("scripts", {}).setdefault(var, list(paths))
+
     def _arg_scripts(self, rel: str, fn: str, expr: str):
         """Scripts an argument names, or None if the value cannot be typed (taints the callee param)."""
         expr = expr.strip()
@@ -865,13 +898,13 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
             path = self.scripts[rel].aliases.get(expr) or self.klass.get(expr) or self.autoload.get(expr) or ""
             if path in self.scripts:
                 return {path}
+            bound = sc.get("scripts", {}).get(expr)
+            if bound:
+                return set(bound)
             typ = sc.get("type", {}).get(expr) or self.scripts[rel].var_type.get(expr) or ""
             if typ:
                 path = self.scripts[rel].aliases.get(typ) or self.klass.get(typ) or self.autoload.get(typ) or ""
                 return {path} if path in self.scripts else None
-            bound = sc.get("scripts", {}).get(expr)
-            if bound:
-                return set(bound)
             return None
         m = re.match(r"([A-Z]\w+)\.new\s*\(", expr)
         if m:
