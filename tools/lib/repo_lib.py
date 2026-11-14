@@ -75,6 +75,12 @@ def branch_kind(name: str) -> str:
         return "main"
     return "detached" if name in ("", "HEAD") else "bot"
 
+def current_branch(root: Path) -> str:
+    """The checked-out branch name, '' when HEAD is detached (or no git)."""
+    code, out = run_git(root, "rev-parse", "--abbrev-ref", "HEAD")
+    name = out.strip() if code == 0 else ""
+    return "" if name in ("", "HEAD") else name
+
 def head_kind(root: Path) -> str:
     """branch_kind of the checked-out branch. Detached: build in a Build slice worktree (open_slice.py detaches
     wdb-<area>-<stamp> at the week branch; slice.py start writes _logs/slice-state.json), else bot."""

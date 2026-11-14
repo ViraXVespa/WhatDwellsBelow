@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--door", default="", help="routes.yaml door to start from.")
     ap.add_argument("--job", default="", help="routes.yaml door.job to start from.")
     ap.add_argument("--area", default="", help="Slice name for the worktree slug (default: job, else door).")
-    ap.add_argument("--ref", default="", help="Base ref for the retry diff (recorded on the first run) and the merge-back line (default: the week branch grok-build-w{series}).")
+    ap.add_argument("--ref", default="", help="Base ref for the retry diff (recorded on the first run) and the merge-back line (default: the checked-out branch, else the week branch grok-build-w{series}).")
     ap.add_argument("--full", action="store_true", help="Reprint the whole start card in a slice that already started (a later run prints where the slice stands).")
     ap.add_argument("--failed", action="store_true", help="Print the `Did not work:` lines built from this session's failed tool results since your last ask.")
     ap.add_argument("--handoff", action="store_true", help="Survey session, after her answers to the first ask: write the handoff skeleton, or validate the filled one and print the open_slice command.")
@@ -266,8 +266,9 @@ def main(argv: list[str] | None = None) -> int:
             near = ""
     note = slice_lib.step0_note(args.door, args.job, args.area, flows, near)
     week = repo_lib.week_branch(root)
-    ref = args.ref or week
-    ref_note = "--ref given" if args.ref else f"week branch {week or 'none found'}"
+    here = repo_lib.current_branch(root)
+    ref = args.ref or here or week
+    ref_note = "--ref given" if args.ref else f"checked-out branch {here}" if here else f"week branch {week or 'none found'}"
     survey = slice_lib.is_survey(root, args.door, args.job, args.area, bool(args.from_handoff))
     mode = "handoff" if args.from_handoff else "survey" if survey else "implement"
     sdir = session_lib.session_dir()
@@ -293,11 +294,12 @@ def main(argv: list[str] | None = None) -> int:
             if local.is_file():
                 task_lib.ensure_head(local, "resume", handoff_lib.launch_cmd(args.door.strip(), tid, args.job.strip()))
         slice_state.save(root, first)
-    card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
+    sdoor = args.door.strip() or (args.job.split(".", 1)[0] if "." in args.job else "")
+    card = [f"door={sdoor} job={args.job} area={args.area.strip() or args.job.strip() or sdoor} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/gate.py smokes --door/--job; add or update asserts for new systems)",
             f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/shots.py flow --job J, one boot; UI states: tools/shots.py gaps --changed)",
             "cycle=Understand > Prepare > Implement > Verify > Finish; context breaks follow build-job-cycle.md, not a fixed pre-prove step",
-            slice_lib.merge_back_text(week or ref)]
+            slice_lib.merge_back_text(here or week or ref)]
     if tunits:
         unit_line = (f"unit={tcur} ({tunits.index(tcur) + 1} of {len(tunits)}, task {args.task.strip()}); done: {', '.join(tdone) or 'none'}. "
                      "Work this unit only; at Complete, before slice.py commit: `python tools/slice.py start --unit-done`.")
@@ -317,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
             args.task.strip() or tid or (st.get("task", "") if st else ""), route_lines)
     if plan_line:
         body.append(plan_line)
-    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref)}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "") + (f"\n{plan_line}" if plan_line else "")
+    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(here or week or ref)}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "") + (f"\n{plan_line}" if plan_line else "")
     return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
                             args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)
 
