@@ -77,6 +77,8 @@ SUFFIX_RE = re.compile(r"\+[ \t]*[\"'](_\w+)[\"']")
 FMT_RE = re.compile(r"[\"'](\w*)%s(\w*)[\"']")
 FLOW_RE = re.compile(r"\"target\"\s*:\s*\"script:([\w/]+)\"[^{}]*?\"method\"\s*:\s*\"(\w+)\"|\"method\"\s*:\s*\"(\w+)\"[^{}]*?\"target\"\s*:\s*\"script:([\w/]+)\"")
 FLOW_PROP_RE = re.compile(r"script:([\w/]+)\.(\w+)")  # shot-flow script:debug/foo.plant_x property get
+# shot-flow `{"op": "call", "target": "host.ui", "method": "m"}` (a node, not script:): live when m has one def.
+FLOW_OBJ_RE = re.compile(r"\{[^{}]*\"method\"\s*:\s*\"(\w+)\"[^{}]*\}")
 METHOD_RE = re.compile(r"(?:\bmethod\s*=\s*|\"method\"\s*:\s*)\"(\w+)\"")
 WRITE_AFTER = re.compile(r"[ \t]*(?:[-+*/%|&^]|<<|>>)?=(?!=)")
 SKIP_PARTS = frozenset({"node_modules", "__pycache__", ".godot", ".git", "_logs", ".archive_worktrees", ".archive_export_cache", "retired"})
@@ -1196,6 +1198,11 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                         f = self.find(t, meth)
                         if f:
                             out.append(((f, meth), "flow"))
+                if rel.startswith("tools/data/shot-flows/"):
+                    for m in FLOW_OBJ_RE.finditer(text):
+                        defs = self.defs.get(m.group(1), [])
+                        if "script:" not in m.group(0) and len(defs) == 1 and defs[0] in files:
+                            out.append(((defs[0], m.group(1)), "flow"))
         return out
 
     def reach(self, files: set[str], kinds: tuple[str, ...]) -> dict[tuple[str, str], tuple]:

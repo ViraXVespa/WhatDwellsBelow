@@ -89,7 +89,7 @@ func node_pt(x: Node) -> void:
 	x.node_only_fn()
 """,
     "scripts/main.gd": "extends Node\nfunc _on_scene_pressed() -> void:\n\tpass\n",
-    "scripts/b.gd": "static func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n\nstatic func lint_only_fn() -> void:\n\tpass\n",
+    "scripts/b.gd": "static func flow_node_fn() -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n\nstatic func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n\nstatic func lint_only_fn() -> void:\n\tpass\n",
     "scripts/c.gd": """class_name CMod
 
 static var only_in_dead := 1
@@ -167,7 +167,7 @@ static func _bump() -> int:
 	return 1
 ''',
     "scripts/ghost.gd": "static func boo() -> void:\n\tpass\n",
-    "scripts/d.gd": "static func maybe_fn(_v: int) -> void:\n\tpass\n",
+    "scripts/d.gd": "static func maybe_fn(_v: int) -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n",
     "scripts/base.gd": "extends Node\nfunc run() -> void:\n\thook()\n\nfunc hook() -> void:\n\tpass\n",
     "scripts/child.gd": 'extends "res://scripts/base.gd"\nfunc hook() -> void:\n\tpass\n',
     "scripts/orphan.gd": "static func lonely() -> void:\n\tpass\n",
@@ -282,6 +282,7 @@ var not_in_flow := 1
     "scripts/debug/lhelp.gd": 'static func _util():\n\treturn load("res://scripts/debug/hutil.gd")\n\nstatic func go() -> void:\n\tvar U = _util()\n\tU.h_live()\n\tvar W = _other()\n\tW.h_dead()\n\nstatic func _other():\n\treturn null\n',
     "scripts/debug/hutil.gd": "static func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
     "tools/data/shot-flows/vis.json": '{ "steps": [ { "op": "assert", "target": "script:debug/vis_check.plant_x" } ] }\n',
+    "tools/data/shot-flows/node.json": '{ "steps": [ {"op": "call", "target": "host.ui", "method": "flow_node_fn"}, {"op": "call", "target": "host", "method": "twin_flow"} ] }\n',
 
 }
 
@@ -320,7 +321,7 @@ def run() -> list[str]:
             ("vis_check.gd", "not_in_flow"): "unused_var",
             ("hutil.gd", "h_dead"): "ambiguous", ("hutil.gd", "h_never"): "unused",
             ("lstep.gd", "lstep_unused"): "unused", ("lother.gd", "run"): "shadowed",
-            ("not_skin.gd", "dress"): "unused",
+            ("not_skin.gd", "dress"): "unused", ("b.gd", "twin_flow"): "unused", ("d.gd", "twin_flow"): "unused",
         }
         for key, kind in want.items():
             if cat.get(key) != kind:
@@ -332,7 +333,7 @@ def run() -> list[str]:
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
                 ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
                 ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live"),
-                ("skin_a.gd", "dress")]
+                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")
