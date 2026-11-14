@@ -103,4 +103,13 @@ def run() -> list[str]:
             bad.append(f"docfix: warnings left {[(s['line'], s['name']) for s in left]}, expected lines 3, 4, 5")
         if len(fixed) != 3:
             bad.append(f"docfix: expected 3 fixes (2 lines + 1 tick), got {len(fixed)}")
+    import argparse
+
+    import agent_log
+    import unused_chunk
+    ap = argparse.ArgumentParser()
+    unused_chunk.add_args(ap, True)
+    got = agent_log.split_list(ap.parse_args(["--paths", "a/**", "--paths", "b/x*.gd,c", "d"]).paths)
+    if got != ["a/**", "b/x*.gd", "c", "d"]:
+        bad.append(f"--paths must accumulate repeats, space and comma lists, got {got}")
     return bad

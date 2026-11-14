@@ -255,7 +255,7 @@ def save(path: Path, ch: dict) -> None:
 
 def add_args(ap, view: bool) -> None:
     """Chunk flags shared by lint.py unused (view=True) and check.py chunk-finish."""
-    ap.add_argument("--paths", nargs="+", default=[], help="Chunk globs (`dir/**`, `dir/x*.gd`; a bare dir or `x*` = everything under it)"
+    ap.add_argument("--paths", nargs="+", action="extend", default=None, help="Chunk globs, repeat the flag or comma or space separated (`dir/**`, `dir/x*.gd`; a bare dir or `x*` = everything under it)"
                     + (": print only in-chunk rows by kind, a reach tag per ambiguous/debug_only row (strong; type_here: weak site in the "
                        "chunk; cascade: only via a weak edge from an out-of-chunk caller, named) and why each row stays. "
                        "Writes _logs/unused-funcs/unused-chunk.json." if view else "."))

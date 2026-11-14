@@ -34,8 +34,8 @@ def _in_scope(rel: str, scope: list[str]) -> bool:
 
 
 def _scope(root: Path, args: argparse.Namespace) -> list[str]:
-    scope = [s.replace("\\", "/").strip("/") for s in agent_log.split_list(args.scope)]
-    nope = [] if args.scope is DEFAULT_SCOPE else [s for s in scope if not (root / s).exists()]
+    scope = [s.replace("\\", "/").strip("/") for s in agent_log.split_list(args.scope or DEFAULT_SCOPE)]
+    nope = [s for s in scope if not (root / s).exists()] if args.scope else []
     if nope:
         agent_log.fail(f"--scope {', '.join(nope)}: not a repo path (scope = path prefixes, example: --scope scripts tools)")
     return scope
@@ -154,22 +154,36 @@ def _selftest() -> int:
                 later = {rel for _n, _s, rel in _diff_rows(root, seeds[0][0], "HEAD", DEFAULT_SCOPE)}
                 if later != {"scripts/c.gd"}:
                     bad.append("--since the current seed must list scripts/c.gd only, got " + ",".join(sorted(later)))
+            (root / "scripts" / "d.gd").write_text("d\n", encoding="utf-8")
+            (root / "AGENTS.md").write_text("agents 2\n", encoding="utf-8")
+            (root / "tools").mkdir(exist_ok=True)
+            (root / "tools" / "t.py").write_text("t\n", encoding="utf-8")
+            for form in (["--scope", "scripts", "--scope", "AGENTS.md"], ["--scope", "scripts", "AGENTS.md"], ["--scope", "scripts,AGENTS.md"]):
+                ns = parser().parse_args(form)
+                if _scope(root, ns) != ["scripts", "AGENTS.md"]:
+                    bad.append(f"--scope must accumulate ({' '.join(form)}), got {_scope(root, ns)}")
+            if _scope(root, argparse.Namespace(scope=None)) != DEFAULT_SCOPE:
+                bad.append("no --scope must use the default scope")
     except Exception as exc:
         bad.append("changed selftest fixture failed: " + type(exc).__name__)
     return agent_log.selftest_result(bad)
 
 
-def main(argv: list[str] | None = None) -> int:
+def parser() -> argparse.ArgumentParser:
     ap = agent_log.std_parser("List git-changed paths in scope with sizes.", json_out=True)
-    ap.add_argument("--scope", nargs="+", default=DEFAULT_SCOPE, help="Path prefixes, comma or space separated. Default includes AGENTS.md and BOT.md.")
+    ap.add_argument("--scope", nargs="+", action="extend", default=None, help="Path prefixes: repeat the flag, or comma or space separated. Default includes AGENTS.md and BOT.md.")
     ap.add_argument("--head", action="store_true", help="Print the HEAD sha and the recent log. On a clean tree this is the log only.")
     ap.add_argument("--log-count", type=int, default=10, help="Log lines shown with --head (default 10).")
     ap.add_argument("--since", default="", help="Committed paths that differ from this commit to HEAD. Not the worktree.")
     ap.add_argument("--prior-week", action="store_true", help="Paths that differ between the previous Grok Build Week seed and this week's seed.")
-    ap.add_argument("--history", nargs="+", metavar="PATH", default=[], help="Compare the change history of these paths (a doc and its code): latest commits each, and which changed last.")
+    ap.add_argument("--history", nargs="+", action="extend", metavar="PATH", default=None, help="Repeat, or comma or space separated: compare the change history of these paths (a doc and its code): latest commits each, and which changed last.")
     ap.add_argument("--per-path", type=int, default=5, help="With --history: commits listed per path (default 5).")
-    ap.add_argument("--selftest", action="store_true", help="Check default scope and prior-week range on a temp repo.")
-    args = ap.parse_args(argv)
+    ap.add_argument("--selftest", action="store_true", help="Check default scope, --scope repeats and prior-week range on a temp repo.")
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parser().parse_args(argv)
     if args.selftest:
         return _selftest()
     root, where = agent_log.cwd_scan_root(args)

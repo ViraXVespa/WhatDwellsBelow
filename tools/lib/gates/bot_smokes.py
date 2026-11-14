@@ -142,6 +142,16 @@ def _selftest() -> int:
                              (["scripts/world/new.gd"], ["p3", "p5", "p9", "dungeon-load-timing", "static"], "an unrecorded file uses the folder map")]:
         if changed_areas(files, loads) != want:
             bad.append(f"{why}: got {changed_areas(files, loads)}")
+    import contextlib
+    import io
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        try:
+            main(["--root", str(_TOOLS.parent), "--for", "nope/a1.gd", "--for", "nope/b2.gd,nope/c3.gd"])
+        except SystemExit:
+            pass
+    if not all(f in err.getvalue() for f in ("nope/a1.gd", "nope/b2.gd", "nope/c3.gd")):
+        bad.append("--for must accumulate repeats and comma lists: " + err.getvalue().strip()[:160])
     for ln in bad:
         print(f"selftest miss\t{ln}")
     return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(red) + len(green) + 1)
@@ -224,8 +234,8 @@ def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
-    p.add_argument("--for", dest="for_files", nargs="+", default=[], metavar="FILE",
-                   help="Repo file(s): print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
+    p.add_argument("--for", dest="for_files", nargs="+", action="extend", default=None, metavar="FILE",
+                   help="Repo file(s), repeat the flag or space or comma list: print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
     p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
     p.add_argument("--setup", action="store_true", help=f"Download the official {VERSION} Linux binary if the pin is missing, then exit.")
     p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
@@ -247,7 +257,7 @@ def main(argv: list[str] | None = None) -> int:
         return _selftest()
     root = agent_log.resolve_root(ns)
     if ns.for_files:
-        files = [f.replace("\\", "/") for f in ns.for_files]
+        files = [f.replace("\\", "/") for f in agent_log.split_list(ns.for_files)]
         gone = [f for f in files if not (root / f).exists()]
         if gone:
             agent_log.fail(f"{', '.join(gone)}: no such file (give repo-relative paths, example: --for scripts/world/player.gd)")
