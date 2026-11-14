@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 STUB = r'''
@@ -46,6 +48,7 @@ if "-m" in a:
 '''
 
 def run(script: list[str], td: Path) -> list[str]:
+    import gather_agent
     import repo_lib
 
     bad: list[str] = []
@@ -103,6 +106,13 @@ def run(script: list[str], td: Path) -> list[str]:
         ctx = (wt / "session-context.md").read_text(encoding="utf-8") if (wt / "session-context.md").is_file() else ""
         if "the stub says so" not in ctx or "session-context.md" not in ma[-1] or "stub judgment" not in out:
             bad.append("the packet must hold the agent's index and the first message must name session-context.md; open prints the report")
+        if "gather: agent" not in ctx or "area: demo.part" not in ctx or "door: demo" not in ctx:
+            bad.append("the packet identity says `gather: agent` after the agent adjusted it, with door and area from the job")
+        prompt = (wt / "_logs" / "gather" / "prompt.md").read_text(encoding="utf-8")
+        if "Slice: area=demo.part door=demo job=demo.part\n" not in prompt or "task" in prompt.split("Slice:", 1)[1].split("\n", 1)[0] \
+                or "docs.py task show" in prompt or re.search(r"\{\w+\}", prompt) or f"{gather_agent.py()} tools/slice.py adjust" not in prompt \
+                or "The User's request" in prompt or str(gather_agent.MAX_TURNS) not in prompt:
+            bad.append("gather prompt: one consistent slice line, no task line without a task, this interpreter's name, no request block without one")
     code, out, calls = go("halt", "demo.part")
     if code == 0 or "HALT: stub halt" not in out or main_call(calls):
         bad.append(f"a halt must refuse the launch: {out[-200:]}")
@@ -124,5 +134,39 @@ def run(script: list[str], td: Path) -> list[str]:
     code, out, calls = go("ok", "demo.part", "--no-gather")
     if code or any("-m" in c["argv"] for c in calls) or not main_call(calls):
         bad.append(f"--no-gather skips the agent and launches on the seed ({code}): {out[-300:]}")
+    code, out, calls = go("ok", "demo.part", "--prompt", "Fix the stub keyboard.")
+    agent = next((c for c in calls if "-m" in c["argv"]), {})
+    req = Path(agent.get("cwd", td / "none")) / "_logs" / "gather" / "prompt.md"
+    if code or not req.is_file() or "The User's request:\n\nFix the stub keyboard." not in req.read_text(encoding="utf-8"):
+        bad.append("the User's request (open's prompt) reaches the gather agent's prompt")
+    bad += seed_only(go, main_call, td, root)
+    return bad
+
+def seed_only(go, main_call, td: Path, root: Path) -> list[str]:
+    """--seed-only stops after the seed; a hand gather then `--launch WT --review` writes the packet; --in reuses a worktree."""
+    bad: list[str] = []
+    code, out, calls = go("ok", "demo.part", "--seed-only")
+    wt = Path(next((ln.split(" ", 1)[1] for ln in out.splitlines() if ln.startswith("worktree ")), str(td / "none")))
+    if code or any("-m" in c["argv"] for c in calls) or main_call(calls) or "seed-only" not in out \
+            or not (wt / "session-plan.md").is_file() or (wt / "session-context.md").exists():
+        bad.append(f"--seed-only: start and seed only (no agent, packet or launch): {out[-300:]}")
+        return bad
+    subprocess.run([sys.executable, "tools/slice.py", "adjust", "add-names", "scripts/demo.gd", "--cand", "--when", "by hand",
+                    "--root", str(wt)], cwd=wt, capture_output=True, env=dict(os.environ, WDB_ROLE="gather"))
+    code, out, calls = go("ok", "--launch", str(wt), "--review")
+    ctx = (wt / "session-context.md").read_text(encoding="utf-8") if (wt / "session-context.md").is_file() else ""
+    meta = json.loads((wt / "_logs" / "gather" / "open.json").read_text(encoding="utf-8"))
+    if code or main_call(calls) or "by hand" not in ctx or "gather: agent" not in ctx or not meta.get("agent_ok"):
+        bad.append(f"--launch WT --review after a hand gather: packet + report, agent_ok, no launch: {out[-300:]}")
+    env = dict(os.environ, STUB_LOG=str(td / "in.jsonl"), STUB_WTS=str(td / "wts"), STUB_TOOLS=str(Path(__file__).resolve().parents[3]),
+               STUB_FILES=str(td / "files.txt"))
+    made = subprocess.run([sys.executable, str(td / "stub.py"), "worktree", "create", "wdb-in", "--ref", "grok-build-w9"],
+                          cwd=root, capture_output=True, text=True, env=env).stdout.strip().splitlines()[-1:]
+    if not made:
+        return bad + ["--in: the stub could not make a worktree to reuse"]
+    code, out, calls = go("ok", "demo.part", "--in", made[0], "--no-gather", "--review")
+    if code or any(c["argv"][:2] == ["worktree", "create"] for c in calls) or main_call(calls) \
+            or not (Path(made[0]) / "session-context.md").is_file():
+        bad.append(f"--in WT: no worktree create; start, seed and packet in that worktree: {out[-300:]}")
     return bad
 

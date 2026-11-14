@@ -22,7 +22,7 @@ from pathlib import Path
 
 MODEL = "grok-build-0.1"
 TIMEOUT = 300
-MAX_TURNS = 12
+MAX_TURNS = 30  # runaway cap, not a working budget: a turn is one model round (parallel tool calls count once)
 DATA = Path(__file__).resolve().parents[2] / "data" / "gather"
 GATHER = "_logs/gather"
 
@@ -80,11 +80,25 @@ def agent_argv(grok: str, wt: Path, prompt_file: Path) -> list[str]:
             "--max-turns", str(MAX_TURNS), "--effort", "low", "--output-format", "json", "--no-subagents",
             "--disable-web-search", "--no-memory"]
 
+def py() -> str:
+    """The interpreter name to print in commands: python on Windows, python3 where only that exists (the Linux box)."""
+    name = Path(sys.executable).stem.lower()
+    return "python3" if name.startswith("python3") else "python"
+
 def render(template: str, **kv: str) -> str:
     text = (DATA / template).read_text(encoding="utf-8")
-    for k, v in kv.items():
+    for k, v in {"py": py(), **kv}.items():
         text = text.replace("{" + k + "}", v)
     return text
+
+def ident(area: str, door: str, job: str) -> tuple[str, str, str]:
+    """(area, door, job) as the seed, the start card and the prompt show them: door from a door.job, area defaults to the job."""
+    door = door or (job.split(".", 1)[0] if "." in job else "")
+    return area or job or door, door, job
+
+def slice_line(area: str, door: str, job: str, tid: str) -> str:
+    area, door, job = ident(area, door, job)
+    return " ".join(f"{k}={v}" for k, v in (("area", area), ("door", door), ("job", job), ("task", tid)) if v)
 
 def usage(out: str) -> str:
     """'turns=N tokens=in/out cost=$X session=ID' from grok's JSON output (last JSON object), or ''."""
@@ -99,11 +113,17 @@ def usage(out: str) -> str:
                     f"cost=${d.get('total_cost_usd', '?')} session={d.get('sessionId') or d.get('session_id') or '?'}")
     return ""
 
-def agent(grok: str, wt: Path, area: str, door: str, job: str, tid: str) -> tuple[bool, str]:
+def prompt_text(area: str, door: str, job: str, tid: str, request: str = "") -> str:
+    """The gather prompt: no task line without a task; the User's request (open's prompt) appended when there is one."""
+    text = render("gather-prompt.md", slice=slice_line(area, door, job, tid), max_turns=str(MAX_TURNS),
+                  task_step=f", then the task once: `{py()} tools/docs.py task show {tid}`" if tid else "",
+                  request_step=", and the User's request at the end of this prompt" if request.strip() else "")
+    return text.rstrip() + ("\n\nThe User's request:\n\n" + request.strip() + "\n" if request.strip() else "\n")
+
+def agent(grok: str, wt: Path, area: str, door: str, job: str, tid: str, request: str = "") -> tuple[bool, str]:
     """(ok, one line). Runs the cheap model once; never raises."""
     prompt = wt / GATHER / "prompt.md"
-    prompt.write_text(render("gather-prompt.md", area=area, door=door or "(none)", job=job or "(none)",
-                             task=tid or "(none)", max_turns=str(MAX_TURNS)), encoding="utf-8")
+    prompt.write_text(prompt_text(area, door, job, tid, request), encoding="utf-8")
     code, out = _run(agent_argv(grok, wt, prompt), wt, env=dict(os.environ, WDB_ROLE="gather"), timeout=TIMEOUT)
     (wt / GATHER / "agent.txt").write_text(out, encoding="utf-8")
     use = usage(out)
@@ -123,9 +143,19 @@ def finish(wt: Path, restore: bool) -> tuple[bool, list[str]]:
     if code != 0:
         bad = [ln for ln in out.splitlines() if ln.strip() and not ln.startswith("RESULT")][:8]
         return False, ["INDEX FAILED `slice.py expand --check`; not launched:"] + bad + [
-            f"Fix it in {wt} with `python tools/slice.py adjust ...` (or `plan --refresh --clean` for the seed), then: python tools/slice.py open --launch {wt}"]
+            f"Fix it in {wt} with `{py()} tools/slice.py adjust ...` (or `plan --refresh --clean` for the seed), then: {py()} tools/slice.py open --launch {wt}"]
     py("expand", "--out", "session-context.md")
     return True, []
+
+def gathered(wt: Path) -> bool:
+    """True when the index identity says the gather agent refined the seed (`gather: agent`, set by slice.py adjust)."""
+    import plan_index as pi
+
+    try:
+        text = (wt / "session-plan.md").read_text(encoding="utf-8-sig")
+    except OSError:
+        return False
+    return pi.parse(pi.split_plan(text)[1]).get("gather") == "agent"
 
 def halted(wt: Path) -> str:
     f = wt / GATHER / "halt"
@@ -136,7 +166,7 @@ def report(wt: Path) -> str:
     return f.read_text(encoding="utf-8").strip() if f.is_file() else "(the gather agent wrote no report)"
 
 def first_message(start_argv: list[str], tid: str, warn: list[str], extra: str = "") -> str:
-    shown = "python " + " ".join(start_argv[1:])
-    task_line = f", then the task file once (`python tools/docs.py task show {tid}`)" if tid else ""
+    shown = py() + " " + " ".join(start_argv[1:])
+    task_line = f", then the task file once (`{py()} tools/docs.py task show {tid}`)" if tid else ""
     text = render("build-first.md", start=shown, task_line=task_line, warn="\n".join(warn)).strip()
     return text + ("\n\n" + extra.strip() if extra.strip() else "")
