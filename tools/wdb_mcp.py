@@ -13,7 +13,7 @@ import boot  # noqa: E402
 
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("serve", "wdb_mcp/mcp_serve", "stdio MCP server (Grok Build starts it from .grok/config.toml); --selftest"),
-    ("call",  "wdb_mcp/mcp_call",  "Run one MCP tool call from a shell: TOOL key=value ... (same handles and state as serve)"),
+    ("call",  "wdb_mcp/mcp_call",  "Run one MCP tool call from a shell: TOOL key=value ... (all=true, reads=JSON; same handles and state as serve)"),
 ]
 
 if __name__ == "__main__":
