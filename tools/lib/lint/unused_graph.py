@@ -1125,7 +1125,7 @@ class Graph:
                     tokens[w] += 1
         other_words = defaultdict(list)
         for rel, text in self.other.items():
-            if rel.endswith(".uid") or rel == "tools/data/unused_hold.json":
+            if rel.endswith(".uid") or rel == "tools/data/unused_hold.json" or rel.startswith("tools/lib/lint/"):
                 continue
             for w in set(IDENT.findall(text)):
                 other_words[w].append(rel)

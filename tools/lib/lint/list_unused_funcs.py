@@ -489,6 +489,10 @@ def text_words(root: Path) -> dict[str, list[str]]:
             except (OSError, UnicodeDecodeError):
                 continue
             rel = p.relative_to(root).as_posix()
+            # The unused linter's own sources mention symbol names in docs and fixtures;
+            # those are not live calls and must not hold --apply.
+            if rel.startswith("tools/lib/lint/"):
+                continue
             for w in set(IDENT.findall(text)):
                 idx[w].add(rel)
         _WORDS[key] = {k: sorted(v) for k, v in idx.items()}
@@ -543,7 +547,166 @@ def apply_plan(root: Path, plan: list[dict]) -> list[str]:
         path.write_text(collapse_blanks(lines), encoding="utf-8", newline=chr(10))
     return done
 
-def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: list, applied: list, elapsed: float) -> tuple[Path, Path]:
+
+MEMBER_RE = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
+CLASS_RE = re.compile(r"^class_name[ \t]+(\w+)", re.M)
+PRELOAD_ALIAS_RE = re.compile(
+    r"""(?:const|var)[ \t]+([A-Za-z_]\w*)[ \t]*(?::[^=]*)?:?=[ \t]*[\w.]*\([ \t]*["']res://([^"']+\.gd)["']""",
+    re.M,
+)
+EXTENDS_RES_RE = re.compile(r'^extends\s+"res://([^"]+\.gd)"', re.M)
+APPLY_MAX_PASSES = 16
+
+def _pascal_stem(rel: str) -> str:
+    return "".join(p.title() for p in Path(rel).stem.replace("-", "_").split("_"))
+
+def _gd_text(root: Path, rel: str) -> str:
+    p = root / rel
+    return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+
+def _members_of(root: Path, rel: str, seen: tuple[str, ...] = ()) -> set[str]:
+    """Declared members of rel, including an extends "res://..." chain."""
+    if not rel or rel in seen:
+        return set()
+    text = _gd_text(root, rel)
+    out = set(MEMBER_RE.findall(text))
+    m = EXTENDS_RES_RE.search(text)
+    if m:
+        out |= _members_of(root, m.group(1), seen + (rel,))
+    return out
+
+def _aliases_for(root: Path, rel: str) -> set[str]:
+    """class_name, unique preload alias, and conventional PascalCase file stem for a script."""
+    names = {_pascal_stem(rel)}
+    text = _gd_text(root, rel)
+    m = CLASS_RE.search(text)
+    if m:
+        names.add(m.group(1))
+    targets: dict[str, set[str]] = {}
+    for p in root.rglob("*.gd"):
+        try:
+            rel_p = p.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        if "node_modules" in rel_p or ".godot" in rel_p:
+            continue
+        for alias, path in PRELOAD_ALIAS_RE.findall(p.read_text(encoding="utf-8", errors="replace")):
+            targets.setdefault(alias, set()).add(path)
+    for alias, paths in targets.items():
+        if paths == {rel}:
+            names.add(alias)
+    return names
+
+def _all_defs(root: Path) -> set[str]:
+    out: set[str] = set()
+    for p in root.rglob("*.gd"):
+        rel = p.as_posix()
+        if any(part in rel for part in ("/node_modules/", "/.godot/", "/retired/")):
+            continue
+        out.update(MEMBER_RE.findall(p.read_text(encoding="utf-8", errors="replace")))
+    return out
+
+def _applied_items(applied: list[str]) -> list[tuple[str, str, str]]:
+    """(kind, rel, name) parsed from apply_plan lines; files use the path as the name."""
+    out = []
+    for line in applied:
+        parts = line.split("\t")
+        if not parts or not parts[0].startswith("deleted_"):
+            continue
+        kind = parts[0][len("deleted_"):]
+        if kind == "file":
+            rel = parts[1] if len(parts) > 1 else ""
+            out.append((kind, rel, Path(rel).name))
+            continue
+        rel = parts[1].split(":")[0] if len(parts) > 1 else ""
+        name = parts[2] if len(parts) > 2 else ""
+        if rel and name:
+            out.append((kind, rel, name))
+    return out
+
+def report_stale_docs(root: Path, applied: list[str]) -> list[dict]:
+    """Design/doc lines that still name a symbol --apply just removed, when the qualified
+    Class.member is now gone from that script, or the bare name has no remaining GDScript def.
+
+    Does not edit docs; the cleanup commit should update or drop those lines. A design mention of
+    a name that still has another live def (e.g. `LiveMod.helper` after a facade deletion)
+    is not stale.
+    """
+    items = _applied_items(applied)
+    if not items:
+        return []
+    defs = _all_defs(root)
+    docs: list[Path] = []
+    for folder, glob in ((root / "design", "*.md"), (root, "*.md")):
+        if folder.is_dir():
+            docs.extend(sorted(folder.glob(glob)))
+    # unique
+    seen_p: set[Path] = set()
+    uniq = []
+    for p in docs:
+        if p.resolve() in seen_p or "changelog" in p.parts:
+            continue
+        seen_p.add(p.resolve())
+        uniq.append(p)
+    stale: list[dict] = []
+    ident_re = re.compile(r"`([A-Z]\w+)\.(\w+)(?:\([^`]*)?`")
+    word_re = re.compile(r"\b([A-Za-z_]\w*)\b")
+    # qualified: aliases of the deleted file no longer have the member
+    qual_keys: dict[tuple[str, str], tuple[str, str]] = {}
+    bare_dead: set[str] = set()
+    for kind, rel, name in items:
+        if name not in defs:
+            bare_dead.add(name)
+        if kind == "file" or not (root / rel).exists() and kind == "file":
+            continue
+        if not name:
+            continue
+        members = _members_of(root, rel)
+        if name in members:
+            continue
+        for alias in _aliases_for(root, rel):
+            qual_keys[(alias, name)] = (rel, name)
+        # if the whole file was deleted, still flag Alias.name
+        if not (root / rel).exists():
+            for alias in {_pascal_stem(rel)}:
+                qual_keys[(alias, name)] = (rel, name)
+    for p in uniq:
+        try:
+            rel_doc = p.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        for no, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            for m in ident_re.finditer(line):
+                key = (m.group(1), m.group(2))
+                if key in qual_keys:
+                    rel, name = qual_keys[key]
+                    stale.append(dict(rel=rel_doc, line=no, name=f"{m.group(1)}.{m.group(2)}",
+                                      why=f"qualified member removed from {rel}"))
+            if bare_dead:
+                # skip if already recorded as qualified on this line
+                already = {s["name"] for s in stale if s["rel"] == rel_doc and s["line"] == no}
+                for w in set(word_re.findall(line)):
+                    if w in bare_dead and w not in already and not any(a.endswith("." + w) for a in already):
+                        stale.append(dict(rel=rel_doc, line=no, name=w,
+                                          why="no remaining GDScript def"))
+    # unique (rel, line, name)
+    uniq_s = []
+    seen = set()
+    for s in stale:
+        k = (s["rel"], s["line"], s["name"])
+        if k in seen:
+            continue
+        seen.add(k)
+        uniq_s.append(s)
+    return uniq_s
+
+def _count_blob(rows: dict, legacy: dict, plan: list, refused: list, applied: list) -> dict:
+    counts = {k: len(rows.get(k, [])) for k in REPORT} | {k: len(legacy.get(k, [])) for k in LEGACY}
+    counts |= {"apply_ready": len(plan), "apply_refused": len(refused), "applied": len(applied)}
+    return counts
+
+def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: list, applied: list, elapsed: float, passes: list | None = None, stale_docs: list | None = None) -> tuple[Path, Path]:
+
     out = ["# lint.py unused: categories (conf: high = no resolvable or plain-string reference; medium = a plain string or",
            "# non-GDScript word could name it; low = only untyped/ambiguous references; info = live but debug-only)"]
     for kind in REPORT:
@@ -557,35 +720,67 @@ def write_summaries(root: Path, rows: dict, legacy: dict, plan: list, refused: l
     for r in refused:
         out.append(f"apply_refused\t{r['kind']}\t{r['rel']}:{r['line']}\t{r['name']}\t{r['refuse']}")
     out.extend(applied)
-    counts = {k: len(rows.get(k, [])) for k in REPORT} | {k: len(legacy.get(k, [])) for k in LEGACY}
-    counts |= {"apply_ready": len(plan), "apply_refused": len(refused), "applied": len(applied)}
+    for s in stale_docs or []:
+        out.append(f"stale_doc\t{s['rel']}:{s['line']}\t{s['name']}\t{s['why']}")
+    for rec in passes or []:
+        c = rec.get("counts", {})
+        names = rec.get("apply_ready_names", [])[:12]
+        extra = ("\t" + ",".join(names)) if rec.get("phase") != "fixed_point" and names else ""
+        out.append(f"apply_pass\t{rec.get("n", 0)}\t{rec.get('phase', '')}\tapply_ready={rec.get('apply_ready', 0)}\tapplied={len(rec.get('deleted', []))}{extra}")
+    counts = _count_blob(rows, legacy, plan, refused, applied)
+    counts |= {"stale_docs": len(stale_docs or []), "apply_passes": len(passes or [])}
     out += [f"{k}_count={v}" for k, v in counts.items()] + ["seconds=%.2f" % elapsed]
     txt = agent_log.write_summary("unused-funcs", root, "\n".join(out), "INFO", " ".join(f"{k}={v}" for k, v in counts.items() if v))
     js = txt.parent / "unused-funcs.json"
     blob = dict(counts=counts, rows={k: rows.get(k, []) for k in REPORT},
                 legacy={k: [dict(rel=a, line=b, name=c) for a, b, c, _d in legacy.get(k, [])] for k in LEGACY},
-                apply_ready=plan, apply_refused=refused, applied=applied)
+                apply_ready=plan, apply_refused=refused, applied=applied,
+                passes=passes or [], stale_docs=stale_docs or [])
     js.write_text(json.dumps(blob, indent=1, default=list) + "\n", encoding="utf-8")
     return txt, js
+
+def _sweep(root: Path):
+    g, rows = analyse(root)
+    unused, maybe, _defs, dynamic, decls = collect(root)
+    decls = decls + dead_aliases(root, decls)
+    plan, refused = plan_of(root, g, rows, decls)
+    legacy = {"decl": decls, "maybe": maybe, "facade_auto": facade_auto(root), "dynamic": dynamic}
+    return g, rows, unused, maybe, dynamic, decls, plan, refused, legacy
 
 def run(root: Path, apply: bool, limit: int, quiet: bool = False) -> int:
     started = time.perf_counter()
     applied: list[str] = []
-    for _pass in range(6 if apply else 1):
-        g, rows = analyse(root)
-        unused, maybe, _defs, dynamic, decls = collect(root)
-        decls = decls + dead_aliases(root, decls)
-        plan, refused = plan_of(root, g, rows, decls)
-        if not apply or not plan:
-            break
-        applied += apply_plan(root, plan)
+    passes: list[dict] = []
+    stale_docs: list[dict] = []
     if apply:
-        g, rows = analyse(root)
-        unused, maybe, _defs, dynamic, decls = collect(root)
-        decls = decls + dead_aliases(root, decls)
-        plan, refused = plan_of(root, g, rows, decls)
-    legacy = {"decl": decls, "maybe": maybe, "facade_auto": facade_auto(root), "dynamic": dynamic}
-    txt, js = write_summaries(root, rows, legacy, plan, refused, applied, time.perf_counter() - started)
+        for i in range(APPLY_MAX_PASSES):
+            _g, rows, unused, maybe, dynamic, decls, plan, refused, legacy = _sweep(root)
+            rec = dict(n=i, counts=_count_blob(rows, legacy, plan, refused, applied),
+                       apply_ready=len(plan), apply_ready_names=[f"{r['rel']}:{r['name']}" for r in plan],
+                       deleted=[])
+            if not plan:
+                rec["phase"] = "fixed_point"
+                passes.append(rec)
+                break
+            rec["deleted"] = apply_plan(root, plan)
+            rec["phase"] = "applied"
+            applied += rec["deleted"]
+            passes.append(rec)
+        else:
+            _g, rows, unused, maybe, dynamic, decls, plan, refused, legacy = _sweep(root)
+            passes.append(dict(n=APPLY_MAX_PASSES, phase="capped",
+                               counts=_count_blob(rows, legacy, plan, refused, applied),
+                               apply_ready=len(plan),
+                               apply_ready_names=[f"{r['rel']}:{r['name']}" for r in plan],
+                               deleted=[]))
+        stale_docs = report_stale_docs(root, applied)
+    else:
+        _g, rows, unused, maybe, dynamic, decls, plan, refused, legacy = _sweep(root)
+        passes.append(dict(n=0, phase="report", counts=_count_blob(rows, legacy, plan, refused, applied),
+                           apply_ready=len(plan), apply_ready_names=[f"{r['rel']}:{r['name']}" for r in plan],
+                           deleted=[]))
+    txt, js = write_summaries(root, rows, legacy, plan, refused, applied, time.perf_counter() - started,
+                              passes=passes, stale_docs=stale_docs)
     shown = []
     for line in applied:
         shown.append(line)
@@ -602,7 +797,8 @@ def run(root: Path, apply: bool, limit: int, quiet: bool = False) -> int:
     print(f"json: {agent_log.rel(root, js)}")
     counts = {k: len(rows.get(k, [])) for k in REPORT}
     return agent_log.emit_result("PASS", summary=agent_log.rel(root, txt), **counts, decl=len(decls),
-                                 facade_auto=len(legacy["facade_auto"]), apply_ready=len(plan), refused=len(refused), applied=len(applied))
+                                 facade_auto=len(legacy["facade_auto"]), apply_ready=len(plan), refused=len(refused),
+                                 applied=len(applied), stale_docs=len(stale_docs), apply_passes=len(passes))
 
 def main() -> int:
     parser = agent_log.std_parser(

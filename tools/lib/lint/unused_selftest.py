@@ -38,6 +38,7 @@ var ui: PlayHost
 func _ready() -> void:
 	B.helper()
 	B.shadowed_flow()
+	B.lint_only_fn()
 	wo = 5
 	built = Node.new()
 	built.name = "x"
@@ -80,8 +81,12 @@ func node_pt(x: Node) -> void:
 	x.node_only_fn()
 """,
     "scripts/main.gd": "extends Node\nfunc _on_scene_pressed() -> void:\n\tpass\n",
-    "scripts/b.gd": "static func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n",
-    "scripts/c.gd": """static func live_c() -> void:
+    "scripts/b.gd": "static func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n\nstatic func lint_only_fn() -> void:\n\tpass\n",
+    "scripts/c.gd": """class_name CMod
+
+static var only_in_dead := 1
+
+static func live_c() -> void:
 	pass
 
 static func helper() -> void:
@@ -95,6 +100,8 @@ static func dead_b() -> void:
 
 static func dead_root() -> void:
 	leaf()
+	if only_in_dead > 0:
+		pass
 
 static func leaf() -> void:
 	pass
@@ -106,6 +113,9 @@ static func held_fn() -> void:
 	pass
 
 static func shadowed_flow() -> void:
+	pass
+
+static func lint_only_fn() -> void:
 	pass
 """,
     "scripts/ml.gd": '''static func live_ml() -> String:
@@ -156,7 +166,8 @@ static func _bump() -> int:
     "scripts/debug/probe.gd": "static func ping() -> void:\n\tpass\n",
     "scripts/debug/shots.gd": "static func still() -> void:\n\tpass\n",
     "scripts/debug/cli.gd": "extends SceneTree\nfunc _initialize() -> void:\n\tgo()\n\nfunc go() -> void:\n\tquit()\n",
-    "design/notes.md": "dead_a and helper are named only in a design doc.\ndoc_only_var is unused except here.\n",
+    "tools/lib/lint/list_unused_funcs.py": "# example: lint_only_fn is named only in the linter source\n",
+    "design/notes.md": "dead_a and helper are named only in a design doc.\ndoc_only_var is unused except here.\n`CMod.dead_a` was a leftover facade name.\n",
     "tools/data/flow-extra.json": '{"note": "shadowed_flow and json_named_var appear in shot-flow adjacent data"}\n',
     "scripts/data/balance/vars_fix.gd": "extends RefCounted\nvar balance_only_var := 1\n",
     "scripts/play_host.gd": """class_name PlayHost
@@ -240,7 +251,7 @@ def run() -> list[str]:
             ("d.gd", "maybe_fn"): "ambiguous",
             ("play_host.gd", "node_only_fn"): "ambiguous",
             ("skin_a.gd", "unused_skin_fn"): "unused",
-            ("c.gd", "shadowed_flow"): "shadowed",
+            ("c.gd", "shadowed_flow"): "shadowed", ("c.gd", "lint_only_fn"): "shadowed",
             ("app.gd", "doc_only_var"): "unused_var",
             ("app.gd", "json_named_var"): "unused_var",
             ("vars_fix.gd", "balance_only_var"): "unused_var",
@@ -252,7 +263,7 @@ def run() -> list[str]:
                 ("probe.gd", "ping"), ("shots.gd", "still"), ("child.gd", "hook"), ("base.gd", "hook"), ("cli.gd", "go"),
                 ("main.gd", "_on_scene_pressed"), ("skin_a.gd", "spec"), ("skin_a.gd", "build"),
                 ("skin_b.gd", "spec"), ("skin_b.gd", "build"), ("skin_a.gd", "only_string_skin"),
-                ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow")]
+                ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")
@@ -305,6 +316,10 @@ def run() -> list[str]:
             bad.append("apply: removed balance_only_var (balance unused_var must not be auto-promoted)")
         if "func helper" not in (root / "scripts/b.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed live same-name b.helper")
+        if "func lint_only_fn" in c_text:
+            bad.append("apply: c.lint_only_fn kept (a mention only in tools/lib/lint must not hold shadowed)")
+        if "func lint_only_fn" not in (root / "scripts/b.gd").read_text(encoding="utf-8"):
+            bad.append("apply: removed live same-name b.lint_only_fn")
         ml = (root / "scripts/ml.gd").read_text(encoding="utf-8")
         if "func dead_ml" in ml or "static func after" in ml:
             bad.append("apply: dead_ml (with its multi-line string) not removed whole")
@@ -327,4 +342,21 @@ def run() -> list[str]:
             bad.append(f"apply: balance_only_var refusal missing ({refused.get('balance_only_var')})")
         if not blob["applied"]:
             bad.append("apply: nothing recorded in applied")
+        if "only_in_dead" in c_text:
+            bad.append("apply: only_in_dead kept (cascade: var only used by deleted dead_root must be removed on a later pass)")
+        applied_names = {line.split("\t")[2] for line in blob["applied"] if line.startswith("deleted_") and line.count("\t") >= 2}
+        if "only_in_dead" not in applied_names:
+            bad.append(f"apply: only_in_dead not in applied ({applied_names})")
+        phases = [p.get("phase") for p in blob.get("passes", [])]
+        if "applied" not in phases or "fixed_point" not in phases:
+            bad.append(f"apply: passes did not record a cascade then a fixed point: {phases}")
+        if phases.count("applied") < 2:
+            bad.append(f"apply: expected at least 2 apply passes for the dead_root -> only_in_dead cascade, got {phases}")
+        stale = {(s["name"], s["rel"]) for s in blob.get("stale_docs", [])}
+        if ("CMod.dead_a", "design/notes.md") not in stale:
+            bad.append(f"apply: stale_docs missing qualified CMod.dead_a ({blob.get('stale_docs')})")
+        if not any(s["name"] == "dead_a" and s["rel"] == "design/notes.md" for s in blob.get("stale_docs", [])):
+            bad.append(f"apply: stale_docs missing bare dead_a ({blob.get('stale_docs')})")
+        if any(s["name"] == "helper" for s in blob.get("stale_docs", [])):
+            bad.append("apply: stale_docs flagged helper which still has a live def")
     return bad
