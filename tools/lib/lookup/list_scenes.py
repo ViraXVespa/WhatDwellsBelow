@@ -21,11 +21,11 @@ SCRIPT = re.compile(r'^script\s*=\s*ExtResource\("([^"]+)"\)')
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List .tscn nodes + scripts (headers only).", json_out=True)
-    ap.add_argument("--path", nargs="+", default=["scenes"], help="Scene file(s) or dir(s).")
+    ap.add_argument("--path", nargs="+", action="extend", default=None, help="Scene file(s) or dir(s); repeat the flag or list several (default scenes).")
     ap.add_argument("--max-nodes", type=int, default=200, help="Max nodes listed per scene (default 200).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
-    paths = agent_log.split_list(args.path)
+    paths = agent_log.split_list(args.path or ["scenes"])
     scenes: list[Path] = []
     for raw in paths:
         p = Path(raw)
@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
             scenes += [s for s in p.rglob("*.tscn") if not set(gd_lib.SKIP_PARTS) & set(s.parts)]
         elif p.suffix.lower() == ".tscn" and p.is_file():
             scenes.append(p)
+    scenes = list(dict.fromkeys(scenes))  # overlapping --path dirs list a scene once
     if not scenes:
         agent_log.fail(f"no .tscn found under {', '.join(paths)} (give scene files or folders, default: scenes)")
     body = [f"root=. path={','.join(paths)} scenes={len(scenes)} maxNodes={args.max_nodes}",
