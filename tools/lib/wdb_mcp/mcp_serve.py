@@ -4,7 +4,7 @@
     python tools/wdb_mcp.py serve [--root DIR] [--surface D|B]     (Grok Build: no --surface, from .grok/config.toml)
     python tools/wdb_mcp.py serve --selftest
 Needs the `mcp` package (pip install -r tools/requirements-mcp.txt). Every first response starts with
-`STATUS: PASS` or `STATUS: FAIL (N)`, then `handle:` and `next:`; follow-ups pass the handle. Catalog: design/tools-mcp.md.
+`STATUS: PASS` or `STATUS: FAIL (N)`; a cut one says `more: handle=H`. Catalog: design/tools-mcp.md.
 --selftest runs the tool functions against a throwaway repo, then (when `mcp` is installed) an in-process MCP client.
 Long-running server: no RESULT line, and nothing but the protocol may reach stdout.
 """
@@ -19,19 +19,32 @@ import boot  # noqa: E402,F401
 import agent_log
 import mcp_tools
 
-LOOKUP_DOC = """Read repo code/docs progressively (thin wrapper over find.py / docs.py / session.py / slice.py expand).
-First call runs the command once and returns STATUS, handle, next and the first page; pass handle (action=more) for the
-next page only (the rest of that reply), action=full for all.
-actions: func (path+name, or pairs=[[path,name],...]), xref (pattern, path, regex, expand=FILE), names / all_names (path),
-lines (path, start, end), doc (path='design/x.md#Heading'), route (door|job), scenes, facade, stat (path), changed
-(query=REV, path='DOC SCRIPT' for history), code_map (path), task (query=ID), summary (query=JOB, pattern=MATCH),
-packet (the session-plan context packet; query='K1,K2' expands only those candidates)."""
-CHECK_DOC = """Run one check once and cache it (check.py tool-cli|tool-docs|script-cap|load-graph, gate.py gd-load).
-First call: STATUS: PASS or STATUS: FAIL (N) + handle + summary only. Follow-up: handle + action=failures|full|files.
+LOOKUP_DOC = """Read repo code/docs. A cut reply ends its header with `more: handle=H`; pass handle (action=more) for the
+rest, action=full for all. actions: func (path+name, or pairs=[[path,name],...]), xref (pattern, path, regex,
+expand=FILE), names / all_names (path), lines (path, start, end), doc (path='design/x.md#Heading'), route (door|job),
+scenes, facade, stat (path), changed (query=REV; path='DOC SCRIPT' for history), code_map (path), task (query=ID),
+summary (query=JOB, pattern=MATCH), packet (session context; query='K1,K2' expands those)."""
+CHECK_DOC = """Run a check once; replies STATUS + summary + handle. Follow up with handle + action=failures|full|files.
 targets: tool_cli (stem), tool_docs, script_cap (files), load_graph, gd_load (files)."""
-PROTOCOL_DOC = """What should I do or use right now? action=now (default): slice identity, current phase and next actions;
-action=doc situation=NAME: the canonical doc section (boot, understand, implement, compact-stop, questions, verify,
-finish, references, pick-a-tool); action=suggest query=TEXT: best rows of the tools table; action=packet; action=list."""
+PROTOCOL_DOC = """What to do now. action=now (default): slice, phase, next actions; doc situation=NAME: that doc section
+(action=list names them); suggest query=TEXT: best tools-table rows; packet."""
+
+def _trim_schemas(srv) -> None:
+    """Published input schemas without pydantic titles or empty defaults (fewer tokens per list_tools)."""
+    try:
+        tools = srv._tool_manager.list_tools()  # private in mcp 2.x; skip trimming if it moves
+    except AttributeError:
+        return
+    for t in tools:
+        sch = t.parameters
+        sch.pop("title", None)
+        for prop in sch.get("properties", {}).values():
+            prop.pop("title", None)
+            if prop.get("default", 1) in ("", 0, False, None) and not isinstance(prop.get("default"), list):
+                prop.pop("default", None)
+            if "anyOf" in prop:  # list[...] | None -> the list schema
+                kinds = [k for k in prop.pop("anyOf") if k.get("type") != "null"]
+                prop.update(kinds[0] if kinds else {})
 
 def build_server(root: Path, surface: str, rerun_limit: bool = True):
     from mcp.server.mcpserver import MCPServer  # mcp>=2: FastMCP was renamed MCPServer
@@ -39,20 +52,21 @@ def build_server(root: Path, surface: str, rerun_limit: bool = True):
     tools = mcp_tools.Tools(root, surface, rerun_limit=rerun_limit)
     srv = MCPServer("wdb")
 
-    @srv.tool(description=LOOKUP_DOC)
+    @srv.tool(description=LOOKUP_DOC, structured_output=False)
     def lookup(action: str = "more", handle: str = "", path: str = "", name: str = "", pattern: str = "",
                pairs: list[list[str]] | None = None, start: int = 0, end: int = 0, door: str = "", job: str = "",
                query: str = "", regex: bool = False, expand: str = "", budget: int = 0) -> str:
         return tools.lookup(action, handle, path, name, pattern, pairs, start, end, door, job, query, regex, expand, budget)
 
-    @srv.tool(description=CHECK_DOC)
+    @srv.tool(description=CHECK_DOC, structured_output=False)
     def check(target: str = "", handle: str = "", action: str = "", stem: str = "", files: list[str] | None = None, budget: int = 0) -> str:
         return tools.check(target, handle, action, stem, files, budget)
 
-    @srv.tool(description=PROTOCOL_DOC)
+    @srv.tool(description=PROTOCOL_DOC, structured_output=False)
     def protocol(action: str = "now", situation: str = "", query: str = "", handle: str = "", budget: int = 0) -> str:
         return tools.protocol(action, situation, query, handle, budget)
 
+    _trim_schemas(srv)
     return srv, tools
 
 def main(argv: list[str] | None = None) -> int:
