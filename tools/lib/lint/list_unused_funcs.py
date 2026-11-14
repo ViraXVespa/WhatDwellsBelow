@@ -810,7 +810,7 @@ def main() -> int:
     parser = agent_log.std_parser(
         "Dead-code sweep over live GDScript. Roots: project.godot (main scene, autoloads), scenes, tool/flow `res://` and "
         "`script:` targets, engine hooks (_ready, _initialize, ...), scene `method=`, shot-flow methods. Edges resolve per file: "
-        "preload/load aliases (const, var, helper `_gd(\"res://..\")`, `load(..)._fn()` returns), class_name, autoloads, extends, "
+        "preload/load aliases (const, var, helper `_gd(\"res://..\")`, `load(..)._fn()` returns, `var U = _fn()` locals), class_name, autoloads, extends, "
         "Dbg.script names, typed vars, host calls (weak when untyped), connect/Callable/call strings, literal-path load(..).call(\"fn\") and assembled name prefixes. "
         "Categories: orphan_file, unused, shadowed (name used, every use resolves elsewhere), dead_chain (only called from dead code; "
         "cycles named), unused_var, write_only_var, init_only_var (built in its initializer, never consumed), arity_mismatch, "

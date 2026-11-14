@@ -22,6 +22,7 @@ const Child := preload("res://scripts/child.gd")
 const ML := preload("res://scripts/ml.gd")
 const LRun := preload("res://scripts/debug/lrun.gd")
 const LOther := preload("res://scripts/debug/lother.gd")
+const LHelp := preload("res://scripts/debug/lhelp.gd")
 const TABS := ["_tab_a"]
 var never_used := 3
 var prop_never: int:
@@ -56,6 +57,7 @@ func _ready() -> void:
 	ML.live_ml()
 	LRun.go(self)
 	LOther.other_live()
+	LHelp.go()
 	SkinSet.apply(self)
 	Bal.new().tick()
 	typed_pt(PlayHost.new())
@@ -260,6 +262,8 @@ var not_in_flow := 1
     "scripts/debug/lrun.gd": 'static func go(host) -> void:\n\t(load("res://scripts/debug/lstep.gd") as GDScript).call("run", host)\n',
     "scripts/debug/lstep.gd": "static func run(_h) -> void:\n\tpass\n\nstatic func lstep_unused() -> void:\n\tpass\n",
     "scripts/debug/lother.gd": "static func other_live() -> void:\n\tpass\n\nstatic func run(_h) -> void:\n\tpass\n",
+    "scripts/debug/lhelp.gd": 'static func _util():\n\treturn load("res://scripts/debug/hutil.gd")\n\nstatic func go() -> void:\n\tvar U = _util()\n\tU.h_live()\n\tvar W = _other()\n\tW.h_dead()\n\nstatic func _other():\n\treturn null\n',
+    "scripts/debug/hutil.gd": "static func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
     "tools/data/shot-flows/vis.json": '{ "steps": [ { "op": "assert", "target": "script:debug/vis_check.plant_x" } ] }\n',
 
 }
@@ -297,6 +301,7 @@ def run() -> list[str]:
             ("app.gd", "json_named_var"): "unused_var",
             ("vars_fix.gd", "balance_only_var"): "unused_var",
             ("vis_check.gd", "not_in_flow"): "unused_var",
+            ("hutil.gd", "h_dead"): "ambiguous", ("hutil.gd", "h_never"): "unused",
             ("lstep.gd", "lstep_unused"): "unused", ("lother.gd", "run"): "shadowed",
         }
         for key, kind in want.items():
@@ -308,7 +313,7 @@ def run() -> list[str]:
                 ("skin_b.gd", "spec"), ("skin_b.gd", "build"), ("skin_a.gd", "only_string_skin"),
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
                 ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
-                ("vis_check.gd", "plant_x"), ("lstep.gd", "run")]
+                ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")

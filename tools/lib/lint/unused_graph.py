@@ -45,6 +45,8 @@ RETCALL_RE = re.compile(r"(?:const|var)[ \t]+([A-Za-z_]\w*)[ \t]*(?::[^=]*)?:?=[
 INNER_RE = re.compile(r"^class[ \t]+([A-Za-z_]\w*)")
 INNER_DECL_RE = re.compile(r"^[ \t]+(?:static[ \t]+)?(?:func|var|const|signal)[ \t]+([A-Za-z_]\w*)", re.M)
 LOCAL_RE = re.compile(r"\b(?:var|const|for)[ \t]+([A-Za-z_]\w*)")
+# `var U = _util()` in a func body: U is whatever script `_util()` returns (`return load("res://..")`).
+LOCAL_HELPER_RE = re.compile(r"^[ \t]+var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*([A-Za-z_]\w*)\([ \t]*\)[ \t]*$")
 RET_LOAD_RE = re.compile(r"return[ \t]+(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)(?:[ \t]+as[ \t]+\w+)?$")
 METHOD_POS_RE = re.compile(r"\b(?:call|call_deferred|callv|has_method|connect|disconnect|is_connected|rpc|rpc_id|emit_signal|tween_method)[ \t]*\([ \t]*[\"'](\w+)[\"']|\bCallable[ \t]*\([^,()]+,[ \t]*[\"'](\w+)[\"']|[\"']method[\"'][ \t]*:[ \t]*[\"'](\w+)[\"']")
 CHAIN_RE = re.compile(r"[ \t]*(?:static[ \t]+)?var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+)[ \t]*$")
@@ -345,6 +347,9 @@ class Script:
                     m = REBIND_ALIAS_RE.match(head)
                     if m and inner:
                         pend.append((i, "type", m.group(1), m.group(2)))
+            m = LOCAL_HELPER_RE.match(head) if inner else None
+            if m:
+                pend.append((i, "helper", m.group(1), m.group(2)))
             m = FOR_IN_RE.search(head)
             if m:
                 pend.append((i, "list", m.group(1), m.group(2)))
@@ -1072,6 +1077,9 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                 path, f = sc["ret"][head].split("::")
                 own = self.find(path, f) if path in self.scripts else ""
                 cur = self.scripts[own].func_ret.get(f, "") if own else ""
+            elif head in sc.get("helper", {}):
+                own = self.find(rel, sc["helper"][head])
+                cur = self.scripts[own].func_ret.get(sc["helper"][head], "") if own else ""
             elif head in sc.get("chain", {}) and depth < 3:
                 cur = self.resolve(rel, sc["chain"][head].split("."), depth + 1, fn) or ""
             if not cur:
