@@ -13,6 +13,7 @@ const Settings := preload("res://scripts/ui/pause_settings.gd")
 const Page := preload("res://scripts/ui/pause_settings/report_page.gd")
 const Pick := preload("res://scripts/ui/pause_settings/report_pick.gd")
 const Doors := preload("res://scripts/data/bug_doors.gd")
+const PickCheck := preload("res://scripts/debug/smoke/bug_report_pick_check.gd")
 
 static func run(_host: Node) -> void:
 	var fails: PackedStringArray = []
@@ -56,8 +57,7 @@ static func run(_host: Node) -> void:
 	var cats: Array = [Send.category({}), Send.category({"door": "ui", "job": "hud"}), Send.category({"door": "", "job": "hud"})]
 	if cats != ["", "ui.hud", ""] or str(Send.payload({"door": "nope"}, "", true).category) != "":
 		fails.append("door/job category " + str(cats))
-	if not _pad_pick_ok(_host):
-		fails.append("Door/Job comboboxes do not walk with the pad")
+	fails.append_array(PickCheck.faults(_host))
 	if not _backspace_ok(_host):
 		fails.append("Backspace in the email field does not delete")
 	fails.append_array(_opt_faults())
@@ -109,64 +109,6 @@ static func _picker_faults() -> PackedStringArray:
 			out.append("text " + k)
 	return out
 
-## Pad: A opens Door, down twice and A picks the 2nd door (Job enables, the description follows the highlight),
-## then Job: A, down, A picks that door's first job. Changing the door again resets the job. Lists open under their
-## button, below the description, capped (they scroll). Then two taps on a Door row.
-static func _pad_pick_ok(host: Node) -> bool:
-	if host == null or not host.is_inside_tree():
-		return true
-	var gs := GDScript.new()
-	gs.source_code = "extends VBoxContainer\nvar info_box: VBoxContainer\nvar info_btns: Array = []\n"
-	gs.reload()
-	var h: VBoxContainer = gs.new()
-	h.info_box = h
-	host.add_child(h)
-	var form := {"door": "", "job": ""}
-	var obs: Array = Pick.build(h, form, func(c: Control) -> void:
-		h.add_child(c)
-		h.info_btns.append(c)
-	)
-	var dob: OptionButton = obs[0]
-	var job: OptionButton = obs[1]
-	var desc: Label = h.find_child("report_about", true, false)
-	var ok: bool = job.disabled and h.info_btns.size() == 2
-	var vp: Viewport = host.get_viewport()
-	h.position.y = vp.get_visible_rect().end.y - 300.0  # near the bottom: the Door list must cap
-	dob.grab_focus()
-	for a: String in ["ui_accept", "ui_down", "ui_down"]:
-		_tap(vp, a)
-	var d2: Dictionary = Pick.doors()[1]
-	var pop: PopupMenu = dob.get_popup()
-	var top: float = dob.get_screen_position().y + dob.size.y
-	ok = ok and pop.visible and desc.text == str(d2.about) and desc.get_index() < dob.get_parent().get_index()
-	ok = ok and pop.position.y >= top - 1.0 and pop.position.y + pop.size.y <= vp.get_visible_rect().end.y + 1.0 and pop.size.y < 300
-	_tap(vp, "ui_accept")
-	ok = ok and form.door == str(d2.key) and not job.disabled and not dob.get_popup().visible
-	var withjobs: Array = Pick.doors().filter(func(d: Dictionary) -> bool: return (d.jobs as Array).size() > 0)
-	if ok and not (d2.jobs as Array).is_empty():
-		job.grab_focus()
-		for a: String in ["ui_accept", "ui_down", "ui_accept"]:
-			_tap(vp, a)
-		ok = form.job == str(d2.jobs[0].key)
-	elif ok and withjobs.size() > 0:
-		dob.select(Pick.doors().find(withjobs[0]) + 1)
-		dob.item_selected.emit(dob.selected)
-		job.grab_focus()
-		for a: String in ["ui_accept", "ui_down", "ui_accept"]:
-			_tap(vp, a)
-		ok = form.job == str(withjobs[0].jobs[0].key) and Send.category(form) == str(withjobs[0].key) + "." + form.job
-	dob.select(0)
-	dob.item_selected.emit(0)
-	ok = ok and form.door == "" and form.job == "" and job.disabled
-	# A touch tap arrives as a click: the 1st picks + describes, the 2nd closes.
-	dob.show_popup()
-	_click(vp, pop, 3)
-	ok = ok and pop.visible and form.door == str(Pick.doors()[2].key) and desc.text == str(Pick.doors()[2].about)
-	_click(vp, pop, 3)
-	ok = ok and not pop.visible and form.door == str(Pick.doors()[2].key)
-	h.queue_free()
-	return ok
-
 ## Opt-in: off and disabled with no valid email, checks itself once one is typed, a cleared box stays cleared.
 static func _opt_faults() -> PackedStringArray:
 	var out: PackedStringArray = []
@@ -194,21 +136,3 @@ static func _opt_faults() -> PackedStringArray:
 		out.append("privacy: never sold")
 	cb.free()
 	return out
-
-static func _click(vp: Viewport, pop: PopupMenu, i: int) -> void:
-	var row_h: float = pop.get_theme_font("font").get_height(pop.get_theme_font_size("font_size")) + pop.get_theme_constant("v_separation")
-	var top: float = pop.get_theme_stylebox("panel").get_margin(SIDE_TOP)
-	var at: Vector2 = Vector2(pop.position) + Vector2(24.0, top + (i + 0.5) * row_h) * pop.content_scale_factor
-	for down: bool in [true, false]:
-		var e := InputEventMouseButton.new()
-		e.button_index = MOUSE_BUTTON_LEFT
-		e.position = at
-		e.pressed = down
-		vp.push_input(e, true)
-
-static func _tap(vp: Viewport, action: String) -> void:
-	for down: bool in [true, false]:
-		var e := InputEventAction.new()
-		e.action = action
-		e.pressed = down
-		vp.push_input(e)
