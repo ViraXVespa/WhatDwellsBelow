@@ -65,6 +65,7 @@ PREFIX_RE = re.compile(r"[\"']([A-Za-z_]\w*_)[\"'][ \t]*\+")
 SUFFIX_RE = re.compile(r"\+[ \t]*[\"'](_\w+)[\"']")
 FMT_RE = re.compile(r"[\"'](\w*)%s(\w*)[\"']")
 FLOW_RE = re.compile(r"\"target\"\s*:\s*\"script:([\w/]+)\"[^{}]*?\"method\"\s*:\s*\"(\w+)\"|\"method\"\s*:\s*\"(\w+)\"[^{}]*?\"target\"\s*:\s*\"script:([\w/]+)\"")
+FLOW_PROP_RE = re.compile(r"script:([\w/]+)\.(\w+)")  # shot-flow script:debug/foo.plant_x property get
 METHOD_RE = re.compile(r"(?:\bmethod\s*=\s*|\"method\"\s*:\s*)\"(\w+)\"")
 WRITE_AFTER = re.compile(r"[ \t]*(?:[-+*/%|&^]|<<|>>)?=(?!=)")
 SKIP_PARTS = frozenset({"node_modules", "__pycache__", ".godot", ".git", "_logs", ".archive_worktrees", ".archive_export_cache", "retired"})
@@ -686,6 +687,26 @@ class Graph:
             self.edges[(src_rel, src_fn)].extend((r, n, kind, ln) for r, n in hits)
 
         self._mark_schema_uses()
+        self._mark_flow_props()
+
+    def _mark_flow_props(self) -> None:
+        """Shot-flow `script:debug/foo.plant_x` reads property `plant_x` on scripts/debug/foo.gd (shot_tool get()).
+
+        These are live visual-check getters; without this they look like unused_var even though the flow
+        instantiates the script and reads the property (and the getter has side effects).
+        """
+        for rel, text in self.other.items():
+            for ln, line in enumerate(text.splitlines(), 1):
+                for m in FLOW_PROP_RE.finditer(line):
+                    gd = f"scripts/{m.group(1)}.gd"
+                    name = m.group(2)
+                    t = self.find(gd, name) if gd in self.scripts else ""
+                    if not t:
+                        continue
+                    if name in self.scripts[t].vars:
+                        self.var_uses[(t, name)].append((rel, ln, "r", "flow", "<flow>", False))
+                    elif name in self.scripts[t].funcs:
+                        self.edges[(rel, "<file>")].append((t, name, "flow", ln))
 
     def _schema_keys(self, rel: str, depth: int = 0, seen: set | None = None) -> set[str]:
         """String keys from `["name", ...]` rows in this script and its preload aliases (schema facades)."""

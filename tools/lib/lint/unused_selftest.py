@@ -247,6 +247,14 @@ static func apply(host) -> void:
 	SkinBase.apply(host, SKINS)
 	call("only_string_skin")
 """,
+    "scripts/debug/vis_check.gd": """extends RefCounted
+var plant_x: String:
+	get:
+		return "ok"
+var not_in_flow := 1
+""",
+    "tools/data/shot-flows/vis.json": '{ "steps": [ { "op": "assert", "target": "script:debug/vis_check.plant_x" } ] }\n',
+
 }
 
 def _write(root: Path) -> None:
@@ -281,6 +289,7 @@ def run() -> list[str]:
             ("app.gd", "doc_only_var"): "unused_var",
             ("app.gd", "json_named_var"): "unused_var",
             ("vars_fix.gd", "balance_only_var"): "unused_var",
+            ("vis_check.gd", "not_in_flow"): "unused_var",
         }
         for key, kind in want.items():
             if cat.get(key) != kind:
@@ -290,7 +299,8 @@ def run() -> list[str]:
                 ("main.gd", "_on_scene_pressed"), ("skin_a.gd", "spec"), ("skin_a.gd", "build"),
                 ("skin_b.gd", "spec"), ("skin_b.gd", "build"), ("skin_a.gd", "only_string_skin"),
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
-                ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed")]
+                ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
+                ("vis_check.gd", "plant_x")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")
@@ -345,6 +355,9 @@ def run() -> list[str]:
         for kept in ("var schema_live", "var also_keyed"):
             if kept not in fix_text:
                 bad.append(f"apply: removed {kept} (schema-key vars read via host.get(name)/getv are live)")
+        vis_text = (root / "scripts/debug/vis_check.gd").read_text(encoding="utf-8")
+        if "var plant_x" not in vis_text:
+            bad.append("apply: removed plant_x (shot-flow script:path.member is a live property read)")
         if "func helper" not in (root / "scripts/b.gd").read_text(encoding="utf-8"):
             bad.append("apply: removed live same-name b.helper")
         if "func lint_only_fn" in c_text:
