@@ -3,7 +3,7 @@
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 
-static func page_playtest(host) -> void:
+static func page_playtest(host: DebugMenu) -> void:
 	host.status.text = "Live AI. Queue closes this menu so the avatar can move. Logs go to user://playtest/runs/. Rows go to user://playtest/db/."
 	host.root_box.add_child(host._btn("Queue full-target batch (6 live runs)", func(): host._start_play(host.play.queue_batch())))
 	host.root_box.add_child(host._btn("Queue 1 live — fresh Great Axe", func(): host.play.enqueue({"save": "fresh", "weapon": "great_axe", "tool": "pickaxe", "gender": "male", "scale": App.bal.playtest_scale, "limit": App.bal.playtest_limit, "cfg": {}}); host._start_play("Queued 1.")))

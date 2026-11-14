@@ -122,7 +122,7 @@ static func pawn_slot(ui, slot: String) -> void:
 static func rebuild_vendor(ui) -> void:
 	Vendor.rebuild_vendor(ui)
 
-static func open_stocked(ui: Node) -> void:
+static func open_stocked(ui: ProgressUI) -> void:
 	var spot: Node = (load("res://scripts/world/interact.gd") as GDScript).new() as Node
 	var rows: Array = [
 		{"id": "cinder_coil", "set": "cinder"},

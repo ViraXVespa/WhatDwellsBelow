@@ -89,7 +89,46 @@ def gd_classes(root: Path, tracked: set[str]) -> dict[str, set[str]]:
             classes[m.group(1)] = members(g)
     return classes
 
-def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
+DEL_MEMBER = re.compile(r"^-(?:static\s+)?(?:func|var|const)\s+(\w+)")
+
+def deleted_members_since(root: Path, base: str) -> list[tuple[str, str]]:
+    """(rel, name) for func/var/const lines removed in git diff vs base."""
+    if not base:
+        return []
+    r = subprocess.run(["git", "diff", "-U0", base, "--", "*.gd"], cwd=root, capture_output=True, text=True)
+    rel = ""
+    out: list[tuple[str, str]] = []
+    for ln in (r.stdout or "").splitlines():
+        if ln.startswith("diff --git "):
+            m = re.search(r" b/(.+\.gd)$", ln)
+            rel = m.group(1) if m else ""
+            continue
+        if not rel or not ln.startswith("-") or ln.startswith("---"):
+            continue
+        m = DEL_MEMBER.match(ln)
+        if m:
+            out.append((rel, m.group(1)))
+    return out
+
+def stale_deleted_member_docs(root: Path, base: str) -> list[str]:
+    """Qualified design/doc refs to members this diff deleted (the --apply leftover case).
+
+    Uses the same Class.member / bare-name rules as unused --apply report_stale_docs, so a
+    mention of a name that still has a live def is not stale. File stems are only used for
+    the script that lost the member, not as a global class table (avoids App.tr false hits).
+    """
+    items = deleted_members_since(root, base)
+    if not items:
+        return []
+    import sys as _sys
+    lint = Path(__file__).resolve().parents[1] / "lint"
+    if str(lint) not in _sys.path:
+        _sys.path.insert(0, str(lint))
+    import list_unused_funcs as luf
+    applied = [f"deleted_fn\t{rel}:0\t{name}" for rel, name in items]
+    return [f"IDENT   {r['rel']}:{r['line']}: {r['name']}" for r in luf.report_stale_docs(root, applied) if "." in r.get("name", "")]
+
+def stale_refs(root: Path, narration: bool, since: str = "") -> tuple[list[str], list[str]]:
     git = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split("\n")
     tracked = {g for g in git if g and (root / g).exists()}  # a tracked file deleted in the working tree is gone
     names = {g.rsplit("/", 1)[-1] for g in tracked}
@@ -134,6 +173,11 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
         if f.is_file() and f.is_relative_to(root):
             for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
                 bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
+    if not since:
+        mb = subprocess.run(["git", "merge-base", "origin/main", "HEAD"], cwd=root, capture_output=True, text=True)
+        since = (mb.stdout or "").strip()
+    if since:
+        bad += stale_deleted_member_docs(root, since)
     return bad + stale_cmds.scan(root, tracked) + stale_cmds.branch_scan(root, tracked) + stale_cmds.grok_scan(root, tracked), narr
 
 def main(argv: list[str] | None = None) -> int:
@@ -162,6 +206,25 @@ def main(argv: list[str] | None = None) -> int:
             got = gd_classes(t, {"k.gd", "s.gd", "a.gd", "b.gd"})
             if got.get("Stamp") != {"SUB", "bake"} or "Two" in got:
                 bad.append(f"stale-refs classes {got}: want Stamp = s.gd + inherited SUB, no two-target alias Two")
+        with tempfile.TemporaryDirectory() as tmp2:
+            t2 = Path(tmp2)
+            (t2 / "scripts").mkdir()
+            (t2 / "design").mkdir()
+            (t2 / "scripts/c.gd").write_text("class_name CMod\nfunc live():\n\tpass\nfunc dead_a():\n\tpass\nfunc helper():\n\tpass\n", encoding="utf-8")
+            (t2 / "design/notes.md").write_text("`CMod.dead_a` leftover.\n`CMod.helper` stays live.\n", encoding="utf-8")
+            git = lambda *a: subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=t2, capture_output=True, text=True)
+            git("init", "-q")
+            git("add", "-A")
+            git("commit", "-qm", "0")
+            base = git("rev-parse", "HEAD").stdout.strip()
+            (t2 / "scripts/c.gd").write_text("class_name CMod\nfunc live():\n\tpass\nfunc helper():\n\tpass\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "1")
+            got = stale_deleted_member_docs(t2, base)
+            if not any("CMod.dead_a" in x for x in got):
+                bad.append(f"stale deleted member docs missed CMod.dead_a: {got}")
+            if any("helper" in x for x in got):
+                bad.append(f"stale deleted member docs flagged live CMod.helper: {got}")
         return agent_log.finish("tool-docs-selftest", root, "\n".join(bad + [f"selftest: fail={len(bad)}"]), "FAIL" if bad else "PASS", args=args, legacy=False)
     if args.stale_refs:
         bad, narr = stale_refs(root, args.narration)

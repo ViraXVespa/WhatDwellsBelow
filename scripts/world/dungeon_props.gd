@@ -66,9 +66,6 @@ static func puzzle_cells(src: Variant) -> Array[Vector2i]:
 		out.append(src)
 	return out
 
-static func spawn_puzzle(host: Node, r: Dictionary) -> void:
-	Place.spawn_puzzle(host, r)
-
 static func place_one(host: Node, kind: String, prefer: Dictionary) -> Vector2i:
 	var cell: Vector2i = host._free_cell_world(prefer)
 	if host._near_spawn(cell):

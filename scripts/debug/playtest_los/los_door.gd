@@ -4,7 +4,7 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const Util := preload("res://scripts/debug/playtest_los/los_util.gd")
 const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 
-static func has_wide_los(pt: Node, a: Node, b: Node) -> bool:
+static func has_wide_los(pt: PlayHost, a: Node, b: Node) -> bool:
 	if pt._door_between(a, b):
 		return false
 	if not pt._has_los(a, b):
@@ -26,7 +26,7 @@ static func has_wide_los(pt: Node, a: Node, b: Node) -> bool:
 		return false
 	return true
 
-static func dir_open(pt: Node, p: Node, dir: Vector2) -> bool:
+static func dir_open(pt: PlayHost, p: Node, dir: Vector2) -> bool:
 	if dir.length() < 0.01:
 		return true
 	var n: Vector2 = dir.normalized()
@@ -38,7 +38,7 @@ static func dir_open(pt: Node, p: Node, dir: Vector2) -> bool:
 	Cache.dir_put(n, ok)
 	return ok
 
-static func _dir_open(pt: Node, p: Node, n: Vector2) -> bool:
+static func _dir_open(pt: PlayHost, p: Node, n: Vector2) -> bool:
 	if pt._dir_hits_door(p, n):
 		return false
 	var pos: Vector3 = (p as Node3D).global_position
@@ -53,7 +53,7 @@ static func _dir_open(pt: Node, p: Node, n: Vector2) -> bool:
 			return false
 	return true
 
-static func dir_hits_door(pt: Node, p: Node, dir: Vector2) -> bool:
+static func dir_hits_door(pt: PlayHost, p: Node, dir: Vector2) -> bool:
 	if dir.length() < 0.05:
 		return false
 	var from: Vector3 = (p as Node3D).global_position

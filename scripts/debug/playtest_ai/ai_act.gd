@@ -5,7 +5,7 @@ const Util := preload("res://scripts/debug/playtest_ai/ai_util.gd")
 const SEE := 28.0
 const Human := preload("res://scripts/debug/playtest_ai/ai_human.gd")
 
-static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
+static func approach_boss(pt: PlayHost, p: Node, boss: Node) -> void:
 	if boss == null or not is_instance_valid(boss) or pt._dist(p, boss) > SEE:
 		pt.move = Vector2.ZERO
 		return
@@ -28,7 +28,7 @@ static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
 		return
 	pt.move = Vector2.ZERO
 
-static func fight(pt: Node, p: Node, enemy: Node) -> void:
+static func fight(pt: PlayHost, p: Node, enemy: Node) -> void:
 	if enemy == null or not is_instance_valid(enemy):
 		pt.move = Vector2.ZERO
 		pt.attack = false
@@ -96,7 +96,7 @@ static func fight(pt: Node, p: Node, enemy: Node) -> void:
 		Human.flip_strafe(pt)
 	pt._lock_aim(p, enemy)
 
-static func _hold_shot(pt: Node, p: Node, enemy: Node, d: float, too_close: float, boss: bool) -> void:
+static func _hold_shot(pt: PlayHost, p: Node, enemy: Node, d: float, too_close: float, boss: bool) -> void:
 	pt.path.clear()
 	pt.path_goal = null
 	if pt._is_staff():

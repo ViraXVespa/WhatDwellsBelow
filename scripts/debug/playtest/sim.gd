@@ -11,10 +11,10 @@ const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 const Finish := preload("res://scripts/debug/playtest/sim_finish.gd")
 const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
-static func reset_ai_state(pt: Node) -> void:
+static func reset_ai_state(pt: PlayHost) -> void:
 	Finish.reset_ai_state(pt)
 
-static func start_next(pt: Node) -> void:
+static func start_next(pt: PlayHost) -> void:
 	if pt.interrupted or pt.queue.is_empty():
 		pt._stop_live()
 		return
@@ -80,7 +80,7 @@ static func start_next(pt: Node) -> void:
 		return
 	App.begin_run()
 
-static func prep_slot(pt: Node) -> void:
+static func prep_slot(pt: PlayHost) -> void:
 	if pt.slot == "campaign":
 		if Store.load_slot("campaign") == "fresh":
 			Campaign.reset()
@@ -138,13 +138,13 @@ static func _affix_sum(it: Dictionary) -> float:
 			total += float((one as Dictionary).get("value", 0.0))
 	return total
 
-static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
+static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 	Finish.finish_job(pt, cond, force_end)
 
-static func stop_live(pt: Node) -> void:
+static func stop_live(pt: PlayHost) -> void:
 	Finish.stop_live(pt)
 
-static func sim_save(pt: Node, kind: String, progressed: bool) -> void:
+static func sim_save(pt: PlayHost, kind: String, progressed: bool) -> void:
 	var weapons: PackedStringArray = PackedStringArray(Kit.BUILTIN_WEAPONS)
 	var tweaks: Array = [
 		{},
@@ -160,13 +160,13 @@ static func sim_save(pt: Node, kind: String, progressed: bool) -> void:
 				return
 			pt._one_run(kind, progressed, w, tw)
 
-static func one_run(pt: Node, kind: String, progressed: bool, wpn: String, tw: Dictionary) -> void:
+static func one_run(pt: PlayHost, kind: String, progressed: bool, wpn: String, tw: Dictionary) -> void:
 	Finish.one_run(pt, kind, progressed, wpn, tw)
 
-static func compute_coefs(pt: Node) -> void:
+static func compute_coefs(pt: PlayHost) -> void:
 	Recs.compute_coefs(pt)
 
-static func weapon_aware_nudge(pt: Node) -> void:
+static func weapon_aware_nudge(pt: PlayHost) -> void:
 	Recs.weapon_aware_nudge(pt)
 
 static func cfg_proxy(key: String, row: Dictionary) -> float:
@@ -175,7 +175,7 @@ static func cfg_proxy(key: String, row: Dictionary) -> float:
 static func corr(xs: Array, ys: Array) -> float:
 	return Recs.corr(xs, ys)
 
-static func build_recs(pt: Node) -> void:
+static func build_recs(pt: PlayHost) -> void:
 	Recs.build_recs(pt)
 
 static func merge(base: Dictionary, extra: Dictionary) -> Dictionary:
@@ -187,20 +187,20 @@ static func snap_bal() -> Dictionary:
 static func restore_bal(d: Dictionary) -> void:
 	Recs.restore_bal(d)
 
-static func format_summary(pt: Node) -> String:
+static func format_summary(pt: PlayHost) -> String:
 	return Recs.format_summary(pt)
 
-static func success_report(pt: Node) -> String:
+static func success_report(pt: PlayHost) -> String:
 	return Recs.success_report(pt)
 
-static func save_history(pt: Node) -> void:
+static func save_history(pt: PlayHost) -> void:
 	Recs.save_history(pt)
 
-static func load_history(pt: Node) -> void:
+static func load_history(pt: PlayHost) -> void:
 	Recs.load_history(pt)
 
-static func save_coefs(pt: Node) -> void:
+static func save_coefs(pt: PlayHost) -> void:
 	Recs.save_coefs(pt)
 
-static func load_coefs(pt: Node) -> void:
+static func load_coefs(pt: PlayHost) -> void:
 	Recs.load_coefs(pt)

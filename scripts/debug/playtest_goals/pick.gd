@@ -3,7 +3,7 @@ extends Object
 ## Nearest valid node of a group under `radius` (strict <, first wins) that passes `ok(n) -> bool`.
 ## Playtest AI picker shared by goals_best, goals_near and util_move.
 
-static func nearest(pt: Node, p: Node, group: String, radius: float, ok: Callable) -> Node:
+static func nearest(pt: PlayHost, p: Node, group: String, radius: float, ok: Callable) -> Node:
 	var best: Node = null
 	var best_d: float = radius
 	var tree: SceneTree = pt.get_tree()

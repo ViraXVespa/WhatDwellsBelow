@@ -3,6 +3,9 @@ extends Node3D
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
 const BreakWalk := preload("res://scripts/combat/player_hit/break_walk.gd")
+const PlayerS := preload("res://scripts/world/player.gd")
+const EnemyS := preload("res://scripts/combat/enemy.gd")
+const DummyS := preload("res://scripts/combat/dummy.gd")
 
 var dir := Vector2.DOWN
 var speed := 14.0
@@ -124,11 +127,11 @@ func _strike(delta: float) -> bool:
 	if hurt_player:
 		var tree := get_tree()
 		if tree:
-			var pnode := tree.get_first_node_in_group("player")
-			if pnode is Node3D and pnode.has_method("take_hit"):
-				var cov := _cov_at(pnode)
+			var player: PlayerS = tree.get_first_node_in_group("player") as PlayerS
+			if player != null:
+				var cov := _cov_at(player)
 				if Cover.connected(cov):
-					pnode.take_hit(live_dmg * Cover.dmg_mult(cov), dir, crit and Cover.crit_ok(cov), source, hit_lv)
+					player.take_hit(live_dmg * Cover.dmg_mult(cov), dir, crit and Cover.crit_ok(cov), source, hit_lv)
 					queue_free()
 					return true
 		return false
@@ -205,7 +208,12 @@ func _hit(e: Node, cov: float) -> void:
 	if grant_xp:
 		App.prog.skill_grant_hit(false)
 	var dealt: float = live_dmg * Cover.dmg_mult(cov)
-	if e.has_method("take_hit"):
-		e.take_hit(dealt, dir, crit and Cover.crit_ok(cov))
+	var enemy: EnemyS = e as EnemyS
+	if enemy != null:
+		enemy.take_hit(dealt, dir, crit and Cover.crit_ok(cov))
+	else:
+		var dummy: DummyS = e as DummyS
+		if dummy != null:
+			dummy.take_hit(dealt, dir, crit and Cover.crit_ok(cov))
 	if grant_xp and App.tel:
 		App.tel.note_damage_dealt(dealt if not (crit and Cover.crit_ok(cov)) else dealt * (App.bal.crit_mult + App.gear("crit_dmg")), crit and Cover.crit_ok(cov))

@@ -46,7 +46,8 @@ static func report(d: Dictionary) -> void:
 		return
 	for k: String in ["end_cond", "kills", "crits", "dmg_dealt", "dmg_taken", "dash_n", "spec_n", "combat_t", "near_death", "duration", "deepest"]:
 		printerr("PT: %s=%s" % [k, str(snappedf(float(d[k]), 0.01)) if d.get(k) is float else str(d.get(k))])
-	var perf: Dictionary = App.playtest.perf_report()
+	var pt: PlayHost = App.playtest
+	var perf: Dictionary = pt.perf_report()
 	for k: String in perf:
 		printerr("PT: %s=%s" % [k, str(perf[k])])
 	printerr("PT: stuck_t=%.1f seed=%d moved=%s" % [App.playtest.stuck_t, App.run_seed, str(App.playtest.moved)])

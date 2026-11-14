@@ -11,7 +11,7 @@ const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 const WebHook := preload("res://scripts/debug/web_hook.gd")
 const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
 
-static func one_run(pt: Node, kind: String, progressed: bool, wpn: String, tw: Dictionary) -> void:
+static func one_run(pt: PlayHost, kind: String, progressed: bool, wpn: String, tw: Dictionary) -> void:
 	var snap: Dictionary = pt._snap_bal()
 	for k: Variant in tw.keys():
 		App.bal.setv(str(k), float(tw[k]))
@@ -70,7 +70,7 @@ static func one_run(pt: Node, kind: String, progressed: bool, wpn: String, tw: D
 	pt.history.append(App.tel.to_dict())
 	pt._restore_bal(snap)
 
-static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
+static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 	if not pt.live_running:
 		return
 	if force_end and App.tel and App.tel.end_cond == "":
@@ -132,7 +132,7 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 		return
 	pt._start_next()
 
-static func stop_live(pt: Node) -> void:
+static func stop_live(pt: PlayHost) -> void:
 	reset_ai_state(pt)
 	pt.live_running = false
 	pt.running = false
@@ -151,7 +151,7 @@ static func stop_live(pt: Node) -> void:
 	for pth: String in bundle:
 		pt.last_summary += "\nBatch: " + pth
 
-static func _campaign_follow(pt: Node) -> Dictionary:
+static func _campaign_follow(pt: PlayHost) -> Dictionary:
 	var wpn: String = Campaign.next_weapon()
 	if wpn == "":
 		return {}
@@ -172,7 +172,7 @@ static func _campaign_follow(pt: Node) -> Dictionary:
 		"cfg": cfg,
 	}
 
-static func reset_ai_state(pt: Node) -> void:
+static func reset_ai_state(pt: PlayHost) -> void:
 	pt.ai_on = false
 	pt.campaign_enter = false
 	pt.sim_t = 0.0

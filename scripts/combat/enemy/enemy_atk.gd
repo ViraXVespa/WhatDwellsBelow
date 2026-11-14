@@ -5,7 +5,7 @@ const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 
-static func begin_windup(host: Node) -> void:
+static func begin_windup(host: EnemyHost) -> void:
 	host.state = host.ST_WIND
 	host.wind_t = 0.0
 	host.locked_aim = host.aim if host.aim.length_squared() > 0.0001 else Vector2.DOWN
@@ -25,7 +25,7 @@ static func begin_windup(host: Node) -> void:
 		host.wind_dur += 0.12
 	draw_tele(host, false)
 
-static func do_attack(host: Node, delta: float) -> void:
+static func do_attack(host: EnemyHost, delta: float) -> void:
 	if host.state == host.ST_WIND:
 		host.velocity = Vector3.ZERO
 		host.wind_t += delta
@@ -57,7 +57,7 @@ static func do_attack(host: Node, delta: float) -> void:
 			if host.telegraph:
 				host.telegraph.hide_now()
 
-static func draw_tele(host: Node, active: bool) -> void:
+static func draw_tele(host: EnemyHost, active: bool) -> void:
 	if host.telegraph == null:
 		return
 	var wind_col: Color = Color(1.0, 0.82, 0.28, 0.42)
@@ -76,7 +76,7 @@ static func draw_tele(host: Node, active: bool) -> void:
 		return
 	host.telegraph.show_arc(host.global_position, host.locked_aim, host.atk_range, host.arc_deg, col)
 
-static func strike(host: Node) -> void:
+static func strike(host: EnemyHost) -> void:
 	var player: Node = host._player() as Node
 	if host.role == "ranged":
 		var n: int = 3 if host.is_named else 1
@@ -119,7 +119,7 @@ static func strike(host: Node) -> void:
 		if Cover.connected(nc):
 			hit_player(host, player, 0.45, nc)
 
-static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: float = 1.0) -> void:
+static func hit_player(host: EnemyHost, player: Node, mult: float = 1.0, coverage: float = 1.0) -> void:
 	if player == null or not player.has_method("take_hit"):
 		return
 	var dmg: float = host.damage * mult * Threat.dealt_mult(host.combat_lv) * Cover.dmg_mult(coverage)
@@ -130,7 +130,7 @@ static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: fl
 	player.set("last_glance", glance)
 	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag(), int(host.combat_lv))
 
-static func spawn_shot(host: Node, dir: Vector2) -> void:
+static func spawn_shot(host: EnemyHost, dir: Vector2) -> void:
 	var p: Node3D = ProjS.new()
 	var parent: Node = host.get_parent()
 	if parent:

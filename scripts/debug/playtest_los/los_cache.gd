@@ -17,7 +17,7 @@ static var foe_n: Array = []
 static var foe_d: PackedFloat32Array = PackedFloat32Array()
 static var foe_boss: PackedByteArray = PackedByteArray()
 
-static func fresh(pt: Node) -> void:
+static func fresh(pt: PlayHost) -> void:
 	var f: int = Engine.get_physics_frames()
 	if f == _frame:
 		return
@@ -54,7 +54,7 @@ static func fresh(pt: Node) -> void:
 		if n2 and is_instance_valid(n2):
 			_prop[pt._cell_of_node(n2)] = true
 
-static func door_blocks(pt: Node, c: Vector2i) -> bool:
+static func door_blocks(pt: PlayHost, c: Vector2i) -> bool:
 	fresh(pt)
 	for d: Node in _doors:
 		if d.has_method("occupies_cell") and d.occupies_cell(c):
@@ -64,26 +64,26 @@ static func door_blocks(pt: Node, c: Vector2i) -> bool:
 				return true
 	return false
 
-static func grid_floor(pt: Node, c: Vector2i) -> bool:
+static func grid_floor(pt: PlayHost, c: Vector2i) -> bool:
 	fresh(pt)
 	if _dims.is_empty() or c.x < 0 or c.y < 0 or c.x >= int(_dims.w) or c.y >= int(_dims.h):
 		return false
 	return (_dims.grid as PackedByteArray)[c.y * int(_dims.w) + c.x] == 1
 
-static func steer_floor(pt: Node, c: Vector2i) -> bool:
+static func steer_floor(pt: PlayHost, c: Vector2i) -> bool:
 	return grid_floor(pt, c) and not _obst.has(c) and not door_blocks(pt, c)
 
-static func floor_cell(pt: Node, c: Vector2i) -> bool:
+static func floor_cell(pt: PlayHost, c: Vector2i) -> bool:
 	return steer_floor(pt, c) and not _prop.has(c)
 
-static func dir_get(pt: Node, dir: Vector2) -> Variant:
+static func dir_get(pt: PlayHost, dir: Vector2) -> Variant:
 	fresh(pt)
 	return _dirs.get(dir)
 
 static func dir_put(dir: Vector2, ok: bool) -> void:
 	_dirs[dir] = ok
 
-static func foes(pt: Node, p: Node) -> void:
+static func foes(pt: PlayHost, p: Node) -> void:
 	# Alive enemies in group order with their XZ distance to p and boss flag (fills foe_n / foe_d / foe_boss), once per physics frame.
 	var f: int = Engine.get_physics_frames()
 	var pid: int = p.get_instance_id() if p != null else 0
@@ -106,22 +106,22 @@ static func foes(pt: Node, p: Node) -> void:
 		foe_d.append(Vector2(pa.x - pb.x, pa.z - pb.z).length())
 		foe_boss.append(1 if pt._is_boss(n) else 0)
 
-static func dims(pt: Node) -> Dictionary:
+static func dims(pt: PlayHost) -> Dictionary:
 	fresh(pt)
 	return _dims
 
-static func doors(pt: Node) -> Array:
+static func doors(pt: PlayHost) -> Array:
 	fresh(pt)
 	return _doors
 
-static func prop(pt: Node, c: Vector2i) -> bool:
+static func prop(pt: PlayHost, c: Vector2i) -> bool:
 	fresh(pt)
 	return _prop.has(c)
 
-static func path_get(pt: Node, key: Variant) -> Variant:
+static func path_get(pt: PlayHost, key: Variant) -> Variant:
 	fresh(pt)
 	return _paths.get(key)
 
-static func path_put(pt: Node, key: Variant, val: Variant) -> void:
+static func path_put(pt: PlayHost, key: Variant, val: Variant) -> void:
 	fresh(pt)
 	_paths[key] = val

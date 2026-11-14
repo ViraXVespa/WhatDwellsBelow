@@ -41,7 +41,7 @@ static func off() -> bool:
 	# No journal on web (IndexedDB writes + event building cost frames) or with --wdb-pt-nolog; telemetry and the web hook still report.
 	return OS.has_feature("web") or CliArgs.has("--wdb-pt-nolog")
 
-static func begin(pt: Node) -> void:
+static func begin(pt: PlayHost) -> void:
 	if off():
 		Core.events = []
 		Core.started = true
@@ -49,7 +49,7 @@ static func begin(pt: Node) -> void:
 		return
 	Core.begin(pt)
 
-static func wait(pt: Node, reason: String) -> void:
+static func wait(pt: PlayHost, reason: String) -> void:
 	if off():
 		return
 	if Core.events.size() > 0:
@@ -64,7 +64,7 @@ static func wait(pt: Node, reason: String) -> void:
 		"ui_open": App.get("ui_open") == true,
 	})
 
-static func goal(pt: Node, p: Node, name: String, extra: Dictionary = {}) -> void:
+static func goal(pt: PlayHost, p: Node, name: String, extra: Dictionary = {}) -> void:
 	if off():
 		return
 	if name == Core.last_goal and extra.is_empty():
@@ -81,7 +81,7 @@ static func goal(pt: Node, p: Node, name: String, extra: Dictionary = {}) -> voi
 		ev.merge(extra)
 	Core.events.append(ev)
 
-static func act(pt: Node, p: Node) -> void:
+static func act(pt: PlayHost, p: Node) -> void:
 	if off():
 		return
 	if not pt.dash and not pt.special and not pt.potion and not pt.interact:
@@ -102,12 +102,12 @@ static func act(pt: Node, p: Node) -> void:
 		ev.merge(PlaytestLogUtil._use_fields(pt, p))
 	Core.events.append(ev)
 
-static func beat(pt: Node, p: Node) -> void:
+static func beat(pt: PlayHost, p: Node) -> void:
 	if off():
 		return
 	Core.beat(pt, p)
 
-static func _check_combat(pt: Node) -> void:
+static func _check_combat(pt: PlayHost) -> void:
 	var result: Dictionary = PlaytestLogUtil._maybe_combat(pt, Core.last_combat_kills, Core.last_combat_dealt, Core.last_combat_taken)
 	if result.get("changed", false):
 		Core.events.append(result.event)
@@ -145,17 +145,17 @@ static func _scan_dists(near: Array) -> Dictionary:
 			clerk_d = d
 	return {"gather_d": gather_d, "gather_k": gather_k, "clerk_d": clerk_d}
 
-static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
+static func decide(pt: PlayHost, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
 	if off():
 		return
 	Core.decide(pt, p, name, why, extra)
 
-static func step(pt: Node, p: Node) -> void:
+static func step(pt: PlayHost, p: Node) -> void:
 	if off():
 		return
 	Core.step(pt, p)
 
-static func finish(pt: Node, cond: String, fail: String = "") -> void:
+static func finish(pt: PlayHost, cond: String, fail: String = "") -> void:
 	if Core.ended:
 		return
 	Core.ended = true
@@ -181,7 +181,7 @@ static func finish(pt: Node, cond: String, fail: String = "") -> void:
 	_flush(pt)
 	Core.started = false
 
-static func _flush(pt: Node) -> void:
+static func _flush(pt: PlayHost) -> void:
 	if off():
 		return
 	if Core.file_name == "":

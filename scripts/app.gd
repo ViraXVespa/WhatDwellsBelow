@@ -117,8 +117,8 @@ var prog: ProgressS
 var bal: BalanceS
 var sfx_node: Node
 var debug
-var pause_menu
-var recap
+var pause_menu: PauseS
+var recap: RecapS
 var present
 var music
 var anim_browser
@@ -305,9 +305,6 @@ func set_sprite_mip_sharp(on: bool) -> void:
 
 func set_sprite_mip_bias(v: float) -> void:
 	AppSet.set_sprite_mip_bias(self, v)
-
-func set_web_fullscreen(on: bool) -> void:
-	AppSet.set_web_fullscreen(self, on)
 
 func on_kill() -> void:
 	AppRun.on_kill(self)

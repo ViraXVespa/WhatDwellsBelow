@@ -75,10 +75,17 @@ def analyse(root: Path, base: str, head: str | None) -> dict:
         names_by.setdefault(own, []).append(n)
     drift, review = _drift(gones, changes, old, new, deps, changed, names_by)
     drift += _claims(changes, new, changed)
+    drift += _stale_apply_docs(root, base)
     cosmetic = {c.path for c in changes if c.status == "M" and c.path.endswith(".gd")
                 and pg.gd_code(old.text(c.old) or "") == pg.gd_code(new.text(c.path) or "")}
     return {"changes": changes, "deps": deps, "edges": edges, "drift": drift, "review": review, "new": new, "ents": ents_new,
             "cosmetic": cosmetic}
+
+
+def _stale_apply_docs(root: Path, base: str) -> list[str]:
+    """FAIL prove when a deleted GDScript member is still named as a qualified doc ref (leftover after unused --apply)."""
+    import check_tool_docs as ctd
+    return [f"DRIFT   stale qualified doc after a deletion: {ln}" for ln in ctd.stale_deleted_member_docs(root, base)]
 
 def _drift(gones, changes, old, new, deps, changed, names_by) -> tuple[list[str], list[str]]:
     allow = set(json.loads(RULES.read_text(encoding="utf-8")).get("drift_allow", []))

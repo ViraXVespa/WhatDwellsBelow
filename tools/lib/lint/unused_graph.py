@@ -45,23 +45,47 @@ RETCALL_RE = re.compile(r"(?:const|var)[ \t]+([A-Za-z_]\w*)[ \t]*(?::[^=]*)?:?=[
 INNER_RE = re.compile(r"^class[ \t]+([A-Za-z_]\w*)")
 INNER_DECL_RE = re.compile(r"^[ \t]+(?:static[ \t]+)?(?:func|var|const|signal)[ \t]+([A-Za-z_]\w*)", re.M)
 LOCAL_RE = re.compile(r"\b(?:var|const|for)[ \t]+([A-Za-z_]\w*)")
+# `var U = _util()` in a func body: U is whatever script `_util()` returns (`return load("res://..")`).
+LOCAL_HELPER_RE = re.compile(r"^[ \t]+var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*([A-Za-z_]\w*)\([ \t]*\)[ \t]*$")
 RET_LOAD_RE = re.compile(r"return[ \t]+(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)(?:[ \t]+as[ \t]+\w+)?$")
 METHOD_POS_RE = re.compile(r"\b(?:call|call_deferred|callv|has_method|connect|disconnect|is_connected|rpc|rpc_id|emit_signal|tween_method)[ \t]*\([ \t]*[\"'](\w+)[\"']|\bCallable[ \t]*\([^,()]+,[ \t]*[\"'](\w+)[\"']|[\"']method[\"'][ \t]*:[ \t]*[\"'](\w+)[\"']")
 CHAIN_RE = re.compile(r"[ \t]*(?:static[ \t]+)?var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+)[ \t]*$")
+LIST_HEAD_RE = re.compile(r"^[ \t]*(?:const|var)[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*[^=]+)?=?[ \t]*\[(.*)$")
+FOR_IN_RE = re.compile(r"\bfor[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*[A-Za-z_]\w+[ \t]*)?in[ \t]+([A-Za-z_]\w*)\b")
+ASSIGN_ALIAS_RE = re.compile(r"\b(?:const|var)[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*[A-Z]\w+[ \t]*)?:?=[ \t]*([A-Z]\w+)[ \t]*(?:\.new\s*\(|$|[;#])")
+REBIND_ALIAS_RE = re.compile(r"^[ \t]*([A-Za-z_]\w*)[ \t]*:?=[ \t]*([A-Z]\w+)[ \t]*(?:\.new\s*\(|$|[;#])")
+IDENT_ONLY_RE = re.compile(r"^[A-Za-z_]\w*$")
 HOSTS = frozenset({"host", "_host", "h", "fac", "_fac", "p", "pt", "ui", "_ui", "owner_host"})
 TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 USE_RE = re.compile(r"(?:([A-Za-z_]\w*)[ \t]*\.[ \t]*|(\.)[ \t]*)?\b([A-Za-z_]\w*)\b")
 IDENT = re.compile(r"[A-Za-z_]\w*")
+SCHEMA_KEY_RE = re.compile(r'\[\s*["\']([A-Za-z_]\w*)["\']\s*,')
+DYN_PROP_RE = re.compile(r"(?:\b(?:host|self)\.)?get\s*\(\s*name\s*\)|\b(?:host|self)\.set\s*\(\s*name\s*,")
 STR_RE = re.compile(r"\"([^\"\\\n]*(?:\\.[^\"\\\n]*)*)\"|'([^'\\\n]*(?:\\.[^'\\\n]*)*)'")
+# `(load("res://x.gd") as GDScript).call("fn", ..)`: a literal method on a literal-path script resolves to that script.
+LOAD_CALL_RE = re.compile(r"\b(?:pre)?load[ \t]*\([ \t]*\"res://([^\"]+\.gd)\"[ \t]*\)(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*"
+                          r"(?:call|call_deferred|callv)[ \t]*\([ \t]*[\"'](\w+)[\"']")
+# `for skin in (load(FRAME_SET) as GDScript).get("SKINS")`: the loop var walks that script's preload list.
+FOR_LOAD_LIST_RE = re.compile(r"\bfor[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?in[ \t]+\(?[ \t]*(?:pre)?load\([ \t]*(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))[ \t]*\)"
+                              r"(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*get\([ \t]*\"([A-Za-z_]\w*)\"[ \t]*\)")
+NEW_INIT_RE = re.compile(r"\bvar[ \t]+([A-Za-z_]\w*)[ \t]*:[ \t]*\w+[ \t]*=[ \t]*([A-Z]\w*)\.new\(")
+WRAP_LOAD_RE = re.compile(r"\([ \t]*(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)[ \t]+as[ \t]+GDScript[ \t]*\)$")  # `(load("res://x.gd") as GDScript).fn(..)`
+SELF_NEW_RE = re.compile(r"^[ \t]+var[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*\w+[ \t]*)?:?=[ \t]*new\(")  # `var ui := new()`: own script
+PATH_CONST_RE = re.compile(r"^const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[ \t]*String[ \t]*)?:?=[ \t]*\"res://([^\"]+\.gd)\"[ \t]*$")
+# `skin.callv("dress", ..)` on a receiver bound to a known script union: the method on each member that defines it.
+RECV_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)[ \t]*\.[ \t]*(?:call|call_deferred|callv)[ \t]*\([ \t]*\"(\w+)\"")
 CALLISH = re.compile(r"\b(?:call|call_deferred|callv|Callable|has_method|connect|emit_signal|method|bind|callback|rpc)\b")
 PREFIX_RE = re.compile(r"[\"']([A-Za-z_]\w*_)[\"'][ \t]*\+")
 SUFFIX_RE = re.compile(r"\+[ \t]*[\"'](_\w+)[\"']")
 FMT_RE = re.compile(r"[\"'](\w*)%s(\w*)[\"']")
 FLOW_RE = re.compile(r"\"target\"\s*:\s*\"script:([\w/]+)\"[^{}]*?\"method\"\s*:\s*\"(\w+)\"|\"method\"\s*:\s*\"(\w+)\"[^{}]*?\"target\"\s*:\s*\"script:([\w/]+)\"")
+FLOW_PROP_RE = re.compile(r"script:([\w/]+)\.(\w+)")  # shot-flow script:debug/foo.plant_x property get
+# shot-flow `{"op": "call", "target": "host.ui", "method": "m"}` (a node, not script:): live when m has one def.
+FLOW_OBJ_RE = re.compile(r"\{[^{}]*\"method\"\s*:\s*\"(\w+)\"[^{}]*\}")
 METHOD_RE = re.compile(r"(?:\bmethod\s*=\s*|\"method\"\s*:\s*)\"(\w+)\"")
 WRITE_AFTER = re.compile(r"[ \t]*(?:[-+*/%|&^]|<<|>>)?=(?!=)")
 SKIP_PARTS = frozenset({"node_modules", "__pycache__", ".godot", ".git", "_logs", ".archive_worktrees", ".archive_export_cache", "retired"})
-STRONG = ("call", "self", "alias", "super", "override", "host", "hook", "scene", "flow", "dynamic", "file")
+STRONG = ("call", "self", "alias", "super", "override", "host", "hook", "scene", "flow", "dynamic", "file", "load_call", "recv_call")
 WEAK = ("unresolved", "dynamic_ambiguous", "arity_mismatch")
 
 def code_of(raw: str) -> str:
@@ -192,6 +216,59 @@ def _call_args(code: str, at: int) -> int:
                 return len(_split_top(code[j + 1:k]))
     return -2
 
+def _paren_text(lines: list[str], start_idx: int, start_col: int):
+    """Inner text of the '(' at lines[start_idx][start_col], across lines. None if unclosed."""
+    depth, inner, i, col = 0, [], start_idx, start_col
+    while i < len(lines):
+        code = code_of(lines[i])
+        j = col if i == start_idx else 0
+        while j < len(code):
+            ch = code[j]
+            if ch in "([{":
+                depth += 1
+                if depth > 1 or ch != "(":
+                    inner.append(ch)
+            elif ch in ")]}":
+                depth -= 1
+                if depth == 0:
+                    return i, j + 1, "".join(inner)
+                inner.append(ch)
+            elif depth:
+                inner.append(ch)
+            j += 1
+        if depth:
+            inner.append("\n")
+        i += 1
+        col = 0
+    return None
+
+def _bindable_param_type(typ: str) -> bool:
+    """True for params call-site unions may type: GDScript, Array, or Array[T] of those."""
+    t = typ.strip()
+    if t in ("GDScript", "Array"):
+        return True
+    if t.startswith("Array[") and t.endswith("]"):
+        inner = t[6:-1].strip()
+        return inner in ("GDScript", "Array", "")
+    return False
+
+def _param_parts(inner: str) -> list[tuple[str, str]]:
+    """(name, type-or-empty) for each parameter in a func signature inner string."""
+    out = []
+    for raw in _split_top(inner):
+        bit = raw.strip().lstrip(".")
+        if bit.startswith("..."):
+            bit = bit[3:].lstrip()
+        if not bit or bit in ("self", "cls"):
+            continue
+        name = bit.split(":")[0].split("=")[0].strip()
+        typ = ""
+        if ":" in bit:
+            typ = bit.split(":", 1)[1].split("=")[0].strip().split()[0] if bit.split(":", 1)[1].split("=")[0].strip() else ""
+        if name and IDENT_ONLY_RE.match(name):
+            out.append((name, typ))
+    return out
+
 def listing(root: Path) -> list[Path]:
     """Every tracked or untracked-but-not-ignored file (git), else a walk that skips vendor/cache folders.
     Directories named like files (node_modules/sql.js) are never returned."""
@@ -226,6 +303,8 @@ class Script:
         self.var_chain: dict[str, str] = {}
         self.alias_targets: set[str] = set()
         self.dbg_targets: set[str] = set()
+        self.list_idents: dict[str, list[str]] = {}
+        self.path_consts: dict[str, str] = {}
         self.fn_scope: dict[str, dict[str, dict[str, str]]] = {}
         pend = []
         starts = []
@@ -234,6 +313,7 @@ class Script:
             m = FUNC_RE.match(head)
             if m:
                 starts.append((i, m.group(1)))
+            is_func = bool(m)
             m = VAR_RE.match(head)
             if m and not raw[:1].isspace():
                 self.vars.setdefault(m.group(1), i + 1)
@@ -261,11 +341,45 @@ class Script:
                     pend.append((i, "chain", m.group(1), m.group(2)))
                 else:
                     self.var_chain.setdefault(m.group(1), m.group(2))
-            for m in TYPE_RE.finditer(head):
-                if inner:
-                    pend.append((i, "type", m.group(1), m.group(2) or m.group(3)))
-                else:
-                    self.var_type.setdefault(m.group(1), m.group(2) or m.group(3))
+            # Func signatures are parsed into fn_scope after spans are known; do not leak params
+            # into file-level var_type (a `pt: Node` parameter must not type every `pt` in the file).
+            if not is_func:
+                m = NEW_INIT_RE.search(head)  # `var g: Node3D = PickupS.new()`: the instance is PickupS, not just Node3D
+                if m:
+                    if inner:
+                        pend.append((i, "type", m.group(1), m.group(2)))
+                    else:
+                        self.var_type.setdefault(m.group(1), m.group(2))
+                for m in TYPE_RE.finditer(head):
+                    if inner:
+                        pend.append((i, "type", m.group(1), m.group(2) or m.group(3)))
+                    else:
+                        self.var_type.setdefault(m.group(1), m.group(2) or m.group(3))
+                m = ASSIGN_ALIAS_RE.search(head)
+                if m:
+                    if inner:
+                        pend.append((i, "type", m.group(1), m.group(2)))
+                    else:
+                        self.var_type.setdefault(m.group(1), m.group(2))
+                elif not head.lstrip().startswith(("const", "var", "for")):
+                    m = REBIND_ALIAS_RE.match(head)
+                    if m and inner:
+                        pend.append((i, "type", m.group(1), m.group(2)))
+            m = LOCAL_HELPER_RE.match(head) if inner else None
+            if m:
+                pend.append((i, "helper", m.group(1), m.group(2)))
+            m = FOR_IN_RE.search(head)
+            if m:
+                pend.append((i, "list", m.group(1), m.group(2)))
+            m = SELF_NEW_RE.match(head)
+            if m:
+                pend.append((i, "alias", m.group(1), rel))
+            m = FOR_LOAD_LIST_RE.search(head)
+            if m:
+                pend.append((i, "loadlist", m.group(1), f"{m.group(2) or '@' + m.group(3)}|{m.group(4)}"))
+            m = PATH_CONST_RE.match(head)
+            if m:
+                self.path_consts[m.group(1)] = m.group(2)
             for m in DBG_ALIAS_RE.finditer(head):
                 self.dbg_targets.add(m.group(2))
                 if inner:
@@ -300,15 +414,22 @@ class Script:
                     break
                 end += 1
             self.funcs.setdefault(name, (i + 1, i, end))
+        self._parse_list_idents()
         for i, kind, name, val in pend:
-            sc = self.fn_scope.setdefault(self.owner_of(i), {"alias": {}, "chain": {}, "type": {}, "dbg": {}, "ret": {}})
-            sc[kind].setdefault(name, val)
+            sc = self.fn_scope.setdefault(self.owner_of(i), {"alias": {}, "chain": {}, "type": {}, "dbg": {}, "ret": {}, "list": {}, "scripts": {}})
+            sc.setdefault(kind, {}).setdefault(name, val)
         self.locals: dict[str, set[str]] = {}
         self.func_ret: dict[str, str] = {}
         for name, (_ln, a, e) in self.funcs.items():
             head = code_of(self.lines[a])
-            pa, pb = head.find("("), head.rfind(")")
-            names = {x.split(":")[0].split("=")[0].strip().lstrip(".") for x in _split_top(head[pa + 1:pb])} if 0 <= pa < pb else set()
+            pa = head.find("(")
+            got = _paren_text(self.lines, a, pa) if pa >= 0 else None
+            inner = got[2] if got else (head[pa + 1:head.rfind(")")] if 0 <= pa < head.rfind(")") else "")
+            names = {n for n, _t in _param_parts(inner)}
+            sc = self.fn_scope.setdefault(name, {"alias": {}, "chain": {}, "type": {}, "dbg": {}, "ret": {}, "list": {}, "scripts": {}})
+            for pname, ptyp in _param_parts(inner):
+                if ptyp:
+                    sc["type"].setdefault(pname, ptyp)
             body = [code_of(x) for x in self.lines[a + 1:e]]
             for ln in body:
                 names.update(LOCAL_RE.findall(ln))
@@ -318,6 +439,48 @@ class Script:
                 m = RET_LOAD_RE.match(self.lines[a + 1 + body.index(next(x for x in body if x.strip()))].strip())
                 if m:
                     self.func_ret[name] = m.group(1)
+            elif real and re.fullmatch(r"return[ \t]+([A-Za-z_]\w*)", real[-1]):
+                # lazy cache: `if _s == null: _s = load("res://x.gd")` ... `return _s` (one literal path only)
+                var = real[-1].split()[-1]
+                raws = [self.lines[a + 1 + k] for k, x in enumerate(body) if x.strip()]
+                paths = {m.group(1) for r in raws for m in re.finditer(r"\b" + re.escape(var) + r"[ \t]*=[ \t]*(?:pre)?load\([ \t]*\"res://([^\"]+\.gd)\"", r)}
+                if len(paths) == 1 and not any(re.search(r"\b" + re.escape(var) + r"[ \t]*=(?!=)", x) and "load(" not in x for x in real):
+                    self.func_ret[name] = paths.pop()
+
+    def _parse_list_idents(self) -> None:
+        """Record const/var arrays whose every element is a bare identifier (preload/class aliases later)."""
+        i, n = 0, len(self.lines)
+        while i < n:
+            head = code_of(self.lines[i])
+            m = LIST_HEAD_RE.match(head)
+            if not m:
+                i += 1
+                continue
+            name, rest = m.group(1), m.group(2)
+            depth = 1
+            for ch in rest:
+                if ch == "[":
+                    depth += 1
+                elif ch == "]":
+                    depth -= 1
+            buf, j = rest, i
+            while depth > 0 and j + 1 < n:
+                j += 1
+                nxt = code_of(self.lines[j])
+                buf += " " + nxt
+                for ch in nxt:
+                    if ch == "[":
+                        depth += 1
+                    elif ch == "]":
+                        depth -= 1
+            if depth != 0 or "]" not in buf:
+                i += 1
+                continue
+            inner = buf[:buf.rfind("]")]
+            elems = [x.strip() for x in _split_top(inner)]
+            if elems and all(IDENT_ONLY_RE.match(e) for e in elems):
+                self.list_idents.setdefault(name, elems)
+            i = j + 1
 
     def inner_at(self, idx: int):
         return next((c for c in self.inner if c[1] <= idx < c[2]), None)
@@ -357,6 +520,9 @@ class Graph:
             for name in s.funcs:
                 self.defs[name].append(rel)
         self._build_files()
+        self._resolve_lists()
+        self._bind_load_lists()
+        self._bind_params()
         self._build_edges()
 
     # ---- files -------------------------------------------------------------------------------------------
@@ -475,6 +641,13 @@ class Graph:
                 code = code_of(raw)
                 callish = CALLISH.search(code) is not None
                 mpos = {x for m in METHOD_POS_RE.finditer(raw) for x in m.groups() if x} if callish else set()
+                lcall = {m.group(2): m.group(1) for m in LOAD_CALL_RE.finditer(raw)} if callish else {}
+                rcall: dict[str, list[str]] = {}
+                for m in (RECV_CALL_RE.finditer(raw) if callish else ()):
+                    union = self.resolve_all(rel, [m.group(1)], 0, src[1]) if m.group(1) not in ("self", "load", "preload") else None
+                    hits = [t for t in (self.find(p, m.group(2)) for p in union or ()) if t]
+                    if hits:
+                        rcall[m.group(2)] = hits
                 for lit in strings_of(raw):
                     if IDENT.fullmatch(lit) and lit in var_owners and lit not in all_names:
                         self.weak_strings[lit].append(f"{rel}:{idx + 1}")
@@ -483,6 +656,10 @@ class Graph:
                         if own and not callish:
                             # a literal naming a func of its own script (dispatch table, e.g. TABS [..., "_inv"])
                             self.edges[src].append((own, lit, "dynamic", idx + 1))
+                        elif callish and lit in rcall:
+                            self.edges[src].extend((t, lit, "recv_call", idx + 1) for t in rcall[lit])
+                        elif callish and lit in lcall and lcall[lit] in self.scripts and self.find(lcall[lit], lit):
+                            self.edges[src].append((self.find(lcall[lit], lit), lit, "load_call", idx + 1))
                         elif callish and (not mpos or lit in mpos):
                             own = self.find(rel, lit)
                             if own:
@@ -528,11 +705,14 @@ class Graph:
                         t = self.find(p, name) if p else ""
                         targets, kind = ([t], "super") if t else ([], "")
                     else:
-                        base = self.resolve(rel, recv, 0, src[1])
-                        if base:
-                            t = self.find(base, name)
-                            targets, kind = ([t], "alias") if t else ([], "")
-                        elif base == "":
+                        bases = self.resolve_all(rel, recv, 0, src[1])
+                        if bases:
+                            targets = [t for t in (self.find(base, name) for base in bases) if t]
+                            kind = "alias"
+                        elif bases is False:
+                            targets, kind = [], ""
+                        elif bases is None:
+                            base = ""
                             nargs = _call_args(code, b)
                             if nargs == -1 and re.match(r"[ \t]*\.[ \t]*(?!(?:bind|unbind|call|call_deferred|callv|get_method|is_valid|get_object)\b)\w", code[b:]):
                                 chained = True
@@ -560,7 +740,71 @@ class Graph:
             kind = "dynamic" if len({n for _r, n in hits}) <= 8 else "dynamic_ambiguous"
             self.edges[(src_rel, src_fn)].extend((r, n, kind, ln) for r, n in hits)
 
-    def _unresolved(self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int = -1) -> tuple[list[str], str]:
+        self._mark_schema_uses()
+        self._mark_flow_props()
+
+    def _mark_flow_props(self) -> None:
+        """Shot-flow `script:debug/foo.plant_x` reads property `plant_x` on scripts/debug/foo.gd (shot_tool get()).
+
+        These are live visual-check getters; without this they look like unused_var even though the flow
+        instantiates the script and reads the property (and the getter has side effects).
+        """
+        for rel, text in self.other.items():
+            for ln, line in enumerate(text.splitlines(), 1):
+                for m in FLOW_PROP_RE.finditer(line):
+                    gd = f"scripts/{m.group(1)}.gd"
+                    name = m.group(2)
+                    t = self.find(gd, name) if gd in self.scripts else ""
+                    if not t:
+                        continue
+                    if name in self.scripts[t].vars:
+                        self.var_uses[(t, name)].append((rel, ln, "r", "flow", "<flow>", False))
+                    elif name in self.scripts[t].funcs:
+                        self.edges[(rel, "<file>")].append((t, name, "flow", ln))
+
+    def _schema_keys(self, rel: str, depth: int = 0, seen: set | None = None) -> set[str]:
+        """String keys from `["name", ...]` rows in this script and its preload aliases (schema facades)."""
+        seen = seen if seen is not None else set()
+        if not rel or rel in seen or rel not in self.scripts or depth > 3:
+            return set()
+        seen.add(rel)
+        s = self.scripts[rel]
+        keys = {m.group(1) for raw in s.lines for m in SCHEMA_KEY_RE.finditer(raw)}
+        for tgt in s.aliases.values():
+            keys |= self._schema_keys(tgt, depth + 1, seen)
+        return keys
+
+    def _has_dyn_prop(self, rel: str) -> bool:
+        """True when this script reads or writes a property by a `name` variable (`host.get(name)` / `get(name)`)."""
+        if rel not in self.scripts:
+            return False
+        return any(DYN_PROP_RE.search(code_of(raw)) for raw in self.scripts[rel].lines)
+
+    def _mark_schema_uses(self) -> None:
+        """Vars listed as schema row keys are live when a host getv/get(name) (or a preloaded Access helper) reads them.
+
+        This is the Balance / App.bal.getv / snapshot path: keys live in schema_*.gd, values on the vars_*.gd
+        chain, and Access.getv does host.get(name). Without this, those vars look unused even though the
+        debug menu, telemetry, and Balance.f/getv all go through the schema.
+        """
+        for rel, s in self.scripts.items():
+            keys = self._schema_keys(rel)
+            dyn = self._has_dyn_prop(rel) or any(self._has_dyn_prop(t) for t in s.aliases.values())
+            if not keys or not dyn:
+                continue
+            src_ln = next((i + 1 for i, raw in enumerate(s.lines) if DYN_PROP_RE.search(code_of(raw))), 1)
+            helper = next((t for t in s.aliases.values() if self._has_dyn_prop(t)), rel)
+            if helper in self.scripts:
+                src_ln = next((i + 1 for i, raw in enumerate(self.scripts[helper].lines) if DYN_PROP_RE.search(code_of(raw))), src_ln)
+            for r in self.chain(rel):
+                for v in self.scripts[r].vars:
+                    if v in keys:
+                        self.var_uses[(r, v)].append((helper, src_ln, "r", "dynamic", "<schema>", False))
+            # also mark vars on scripts this one extends *from* already in chain; children that extend H:
+            # Balance is the host; vars live on parent files in chain. Good.
+
+    def _unresolved(
+self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int = -1) -> tuple[list[str], str]:
         cands = list(self.defs[name]) if is_fn else []
         if nargs >= 0 and cands:
             fit = [c for c in cands if self.scripts[c].arity[name][0] <= nargs <= self.scripts[c].arity[name][1]]
@@ -600,7 +844,7 @@ class Graph:
                 q -= 1
             if q < 0 or not (code[q].isalnum() or code[q] == "_"):
                 if q >= 0 and code[q] == ")":
-                    m = CALL_RES_RE.search(raw[:q + 1])
+                    m = CALL_RES_RE.search(raw[:q + 1]) or WRAP_LOAD_RE.search(raw[:q + 1])
                     if m:
                         return ["@" + m.group(1)] + chain
                     m = re.search(r"(?<![\w.])([A-Za-z_]\w*)[ \t]*\.[ \t]*new\([^()]*\)$", code[:q + 1])
@@ -609,6 +853,10 @@ class Graph:
                     m = re.search(r"(?<![\w.])([A-Za-z_]\w*)\(\s*\)$", code[:q + 1])
                     if m:
                         return ["#" + m.group(1)] + chain
+                    # `load("res://x.gd")._helper().fn(..)`: whatever x.gd's `_helper()` returns (`return load(..)`).
+                    m = re.search(r"\b(?:pre)?load\([ \t]*\"res://([^\"]+\.gd)\"[ \t]*\)[ \t]*\.[ \t]*([A-Za-z_]\w*)\([ \t]*\)$", raw[:q + 1])
+                    if m:
+                        return ["&" + m.group(1) + "::" + m.group(2)] + chain
                 return ["?"] + chain if q >= 0 and code[q] in ")]\"'" else (chain or ["?"])
             k -= 1
             while k >= 0 and toks[k][1] != q + 1:
@@ -623,6 +871,241 @@ class Graph:
                 return chain
             pos = p
 
+    def _resolve_lists(self) -> None:
+        """Turn identifier arrays into unions of script paths when every element is a known alias/class/autoload."""
+        self.script_lists: dict[str, dict[str, list[str]]] = {}
+        for rel, s in self.scripts.items():
+            out: dict[str, list[str]] = {}
+            for name, idents in s.list_idents.items():
+                paths = []
+                ok = True
+                for ident in idents:
+                    path = s.aliases.get(ident) or self.klass.get(ident) or self.autoload.get(ident) or ""
+                    if not path or path not in self.scripts:
+                        ok = False
+                        break
+                    paths.append(path)
+                if ok and paths:
+                    out[name] = paths
+            self.script_lists[rel] = out
+
+    def _bind_load_lists(self) -> None:
+        """`for x in (load(P) as GDScript).get("L")`: bind x to P's resolved preload list L (else leave it unknown)."""
+        for rel, s in self.scripts.items():
+            for sc in s.fn_scope.values():
+                for var, spec in sc.get("loadlist", {}).items():
+                    path, lname = spec.split("|", 1)
+                    path = s.path_consts.get(path[1:], "") if path.startswith("@") else path
+                    paths = self.script_lists.get(path, {}).get(lname)
+                    if paths:
+                        sc.setdefault("scripts", {}).setdefault(var, list(paths))
+
+    def _arg_scripts(self, rel: str, fn: str, expr: str):
+        """Scripts an argument names, or None if the value cannot be typed (taints the callee param)."""
+        expr = expr.strip()
+        if not expr:
+            return set()
+        m = re.match(r"(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"'][ \t]*\)", expr)
+        if m:
+            return {m.group(1)} if m.group(1) in self.scripts else None
+        if IDENT_ONLY_RE.match(expr):
+            if expr == "self":
+                return {rel}
+            paths = self.script_lists.get(rel, {}).get(expr)
+            if paths:
+                return set(paths)
+            sc = self.scripts[rel].fn_scope.get(fn, {})
+            lname = sc.get("list", {}).get(expr)
+            if lname:
+                paths = self.script_lists.get(rel, {}).get(lname) or sc.get("scripts", {}).get(lname)
+                if paths:
+                    return set(paths)
+            path = self.scripts[rel].aliases.get(expr) or self.klass.get(expr) or self.autoload.get(expr) or ""
+            if path in self.scripts:
+                return {path}
+            bound = sc.get("scripts", {}).get(expr)
+            if bound:
+                return set(bound)
+            typ = sc.get("type", {}).get(expr) or self.scripts[rel].var_type.get(expr) or ""
+            if typ:
+                path = self.scripts[rel].aliases.get(typ) or self.klass.get(typ) or self.autoload.get(typ) or ""
+                return {path} if path in self.scripts else None
+            return None
+        m = re.match(r"([A-Z]\w+)\.new\s*\(", expr)
+        if m:
+            path = self.scripts[rel].aliases.get(m.group(1)) or self.klass.get(m.group(1)) or ""
+            return {path} if path in self.scripts else None
+        return None
+
+    def _bind_params(self) -> None:
+        """Bind a GDScript/Array parameter to a script union only when every seen call site passes a resolved script/list value.
+
+        An untyped or string/`call("name")` site for the same function name taints every def: better to leave
+        the param unresolved than to treat a real dynamic callee as a known list member. List-valued arguments
+        and `for x in list` bindings propagate until stable so `apply(host, SKINS)` can type `skin`.
+        """
+        sources: dict[tuple[str, str, str], set[str]] = {}
+        tainted: set[tuple[str, str, str]] = set()
+        sites: list[tuple[str, str, str, str, str, str]] = []
+        dyn = set()
+        for rel, s in self.scripts.items():
+            for raw in s.lines:
+                for hit in strings_of(raw):
+                    if hit in self.defs and CALLISH.search(code_of(raw)):
+                        dyn.add(hit)
+        for rel, s in self.scripts.items():
+            i, n = 0, len(s.lines)
+            while i < n:
+                code = code_of(s.lines[i])
+                owner = s.owner_of(i)
+                if FUNC_RE.match(code.split("#", 1)[0]):
+                    i += 1
+                    continue
+                for m in re.finditer(r"(?:(?P<recv>[A-Za-z_]\w*)[ \t]*\.[ \t]*)?(?P<fn>[A-Za-z_]\w*)[ \t]*\(", code):
+                    fname = m.group("fn")
+                    if fname not in self.defs or fname in ("if", "elif", "while", "for", "match", "when", "func"):
+                        continue
+                    paren = _paren_text(s.lines, i, m.end() - 1)
+                    if not paren:
+                        continue
+                    args = _split_top(paren[2])
+                    recv_name = m.group("recv")
+                    callees: list[tuple[str, str]] = []
+                    fn_owner = owner if owner != "<file>" else ""
+                    if recv_name:
+                        base = self.resolve(rel, [recv_name], 0, fn_owner)
+                        if base:
+                            callees = [(base, fname)] if fname in self.scripts[base].funcs else []
+                        elif base == "":
+                            for t in self.defs[fname]:
+                                for pname in self.scripts[t].locals.get(fname, ()):
+                                    tainted.add((t, fname, pname))
+                            continue
+                        else:
+                            continue
+                    else:
+                        t = self.find(rel, fname)
+                        callees = [(t, fname)] if t else []
+                    if fname in dyn:
+                        for t, fn in (callees or [(d, fname) for d in self.defs[fname]]):
+                            for pname in self.scripts[t].locals.get(fn, ()):
+                                tainted.add((t, fn, pname))
+                    for t, fn in callees:
+                        head = code_of(self.scripts[t].lines[self.scripts[t].funcs[fn][1]])
+                        pa = head.find("(")
+                        got = _paren_text(self.scripts[t].lines, self.scripts[t].funcs[fn][1], pa) if pa >= 0 else None
+                        # Call-site unions are only for GDScript/Array params (preload skin lists).
+                        # A `pt: Node` annotation stays unresolved even if every visible site passes a script value.
+                        parts = _param_parts(got[2] if got else "")
+                        for idx, arg in enumerate(args):
+                            if idx >= len(parts):
+                                break
+                            pname, ptyp = parts[idx]
+                            if not _bindable_param_type(ptyp):
+                                continue
+                            sites.append((rel, fn_owner, t, fn, pname, arg))
+                i += 1
+
+        def lookup(rel: str, fn: str, expr: str):
+            got = self._arg_scripts(rel, fn, expr)
+            if got is not None:
+                return got
+            name = expr.strip()
+            if not IDENT_ONLY_RE.match(name):
+                return None
+            sc = self.scripts[rel].fn_scope.get(fn, {}) if fn else {}
+            keys = []
+            if fn:
+                keys.append((rel, fn, name))
+                lname = sc.get("list", {}).get(name)
+                if lname:
+                    keys.append((rel, fn, lname))
+            acc: set[str] = set()
+            wait = False
+            for key in keys:
+                if key in tainted:
+                    return None
+                if key in sources:
+                    acc.update(sources[key])
+                elif key[2] in self.script_lists.get(rel, {}):
+                    acc.update(self.script_lists[rel][key[2]])
+                else:
+                    wait = True
+            if acc:
+                return acc
+            return "pending" if wait else None
+
+        def propagate() -> bool:
+            changed = False
+            for rel, s in self.scripts.items():
+                for fn, sc in s.fn_scope.items():
+                    for local, lname in sc.get("list", {}).items():
+                        src, dst = (rel, fn, lname), (rel, fn, local)
+                        if src in tainted:
+                            if dst not in tainted:
+                                tainted.add(dst)
+                                changed = True
+                            continue
+                        acc = set(sources.get(src, ()))
+                        acc.update(self.script_lists.get(rel, {}).get(lname, ()))
+                        if not acc:
+                            continue
+                        before = len(sources.get(dst, ()))
+                        sources.setdefault(dst, set()).update(acc)
+                        if len(sources[dst]) > before:
+                            changed = True
+            return changed
+
+        changed = True
+        while changed:
+            changed = propagate()
+            for rel, owner, t, fn, pname, arg in sites:
+                key = (t, fn, pname)
+                if key in tainted:
+                    continue
+                got = lookup(rel, owner, arg)
+                if got == "pending":
+                    continue
+                if got is None:
+                    tainted.add(key)
+                    changed = True
+                elif got:
+                    before = len(sources.get(key, ()))
+                    sources.setdefault(key, set()).update(got)
+                    if len(sources[key]) > before:
+                        changed = True
+            if propagate():
+                changed = True
+
+        for (t, fn, pname), acc in sources.items():
+            if (t, fn, pname) in tainted or not acc:
+                continue
+            sc = self.scripts[t].fn_scope.setdefault(fn, {"alias": {}, "chain": {}, "type": {}, "dbg": {}, "ret": {}, "list": {}, "scripts": {}})
+            sc.setdefault("scripts", {})[pname] = sorted(p for p in acc if p in self.scripts)
+
+    def resolve_all(self, rel: str, recv: list[str], depth: int = 0, fn: str = ""):
+        """Scripts a receiver may name: a list of paths, None if unknown, False if a known non-script."""
+        if not recv or recv[0] == "?":
+            return None
+        s = self.scripts[rel]
+        head = recv[0]
+        if fn and head in s.locals.get(fn, ()) and len(recv) == 1:
+            sc = s.fn_scope.get(fn, {})
+            union = sc.get("scripts", {}).get(head)
+            if union:
+                return [p for p in union if p in self.scripts]
+            lname = sc.get("list", {}).get(head)
+            if lname:
+                paths = self.script_lists.get(rel, {}).get(lname) or sc.get("scripts", {}).get(lname)
+                if paths:
+                    return [p for p in paths if p in self.scripts]
+        one = self.resolve(rel, recv, depth, fn)
+        if one:
+            return [one]
+        if one is None:
+            return False
+        return None
+
     def resolve(self, rel: str, recv: list[str], depth: int = 0, fn: str = ""):
         """Script a receiver chain names: '' = unknown (untyped), None = known non-script (engine/global)."""
         if not recv or recv[0] == "?":
@@ -632,6 +1115,12 @@ class Graph:
         cur = None
         if head.startswith("@"):
             cur = head[1:]
+        elif head.startswith("&"):
+            path, f = head[1:].split("::")
+            own = self.find(path, f) if path in self.scripts else ""
+            cur = self.scripts[own].func_ret.get(f, "") if own else ""
+            if not cur:
+                return ""
         elif head.startswith("#"):
             own = self.find(rel, head[1:])
             cur = self.scripts[own].func_ret.get(head[1:], "") if own else ""
@@ -647,11 +1136,14 @@ class Graph:
                 cur = f"scripts/debug/{sc['dbg'][head]}.gd"
             elif head in sc.get("type", {}):
                 t = sc["type"][head]
-                cur = s.aliases.get(t) or self.klass.get(t) or self._typed(rel, t, depth) or ""
+                cur = sc.get("alias", {}).get(t) or s.aliases.get(t) or self.klass.get(t) or self._typed(rel, t, depth) or ""
             elif head in sc.get("ret", {}):
                 path, f = sc["ret"][head].split("::")
                 own = self.find(path, f) if path in self.scripts else ""
                 cur = self.scripts[own].func_ret.get(f, "") if own else ""
+            elif head in sc.get("helper", {}):
+                own = self.find(rel, sc["helper"][head])
+                cur = self.scripts[own].func_ret.get(sc["helper"][head], "") if own else ""
             elif head in sc.get("chain", {}) and depth < 3:
                 cur = self.resolve(rel, sc["chain"][head].split("."), depth + 1, fn) or ""
             if not cur:
@@ -735,6 +1227,19 @@ class Graph:
                         f = self.find(t, meth)
                         if f:
                             out.append(((f, meth), "flow"))
+                if rel.startswith("tools/data/shot-flows/"):
+                    for m in FLOW_OBJ_RE.finditer(text):
+                        defs = self.defs.get(m.group(1), [])
+                        tm = re.search(r"\"target\"\s*:\s*\"([A-Za-z_]\w*)((?:\.[A-Za-z_]\w*)*)\"", m.group(0))
+                        if tm and tm.group(1) in self.autoload and self.autoload[tm.group(1)] in self.scripts:
+                            # `"target": "App.prog"`: the autoload's typed var chain names the script
+                            t = self.resolve(self.autoload[tm.group(1)], ["self"] + [x for x in tm.group(2).split(".") if x])
+                            f = self.find(t, m.group(1)) if t else ""
+                            if f and f in files:
+                                out.append(((f, m.group(1)), "flow"))
+                                continue
+                        if "script:" not in m.group(0) and len(defs) == 1 and defs[0] in files:
+                            out.append(((defs[0], m.group(1)), "flow"))
         return out
 
     def reach(self, files: set[str], kinds: tuple[str, ...]) -> dict[tuple[str, str], tuple]:
@@ -778,7 +1283,7 @@ class Graph:
                     tokens[w] += 1
         other_words = defaultdict(list)
         for rel, text in self.other.items():
-            if rel.endswith(".uid") or rel == "tools/data/unused_hold.json":
+            if rel.endswith(".uid") or rel == "tools/data/unused_hold.json" or rel.startswith("tools/lib/lint/"):
                 continue
             for w in set(IDENT.findall(text)):
                 other_words[w].append(rel)

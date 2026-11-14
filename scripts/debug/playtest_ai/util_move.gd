@@ -2,10 +2,10 @@ extends Object
 
 const Pick := preload("res://scripts/debug/playtest_goals/pick.gd")
 
-static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
+static func _near_prop(pt: PlayHost, p: Node, lim: float) -> Node:
 	return Pick.nearest(pt, p, "interact", lim, func(n: Node) -> bool: return _prop_ok(pt, n))
 
-static func _prop_ok(pt: Node, n: Node) -> bool:
+static func _prop_ok(pt: PlayHost, n: Node) -> bool:
 	var util: GDScript = load("res://scripts/debug/playtest_ai/ai_util.gd")
 	if util._banned(pt, n):
 		return false
@@ -16,7 +16,7 @@ static func _prop_ok(pt: Node, n: Node) -> bool:
 		return false
 	return not ((k == "mine" or k == "wood") and not util.tool_ok(n))
 
-static func tick_motion(pt: Node, p: Node, delta: float) -> void:
+static func tick_motion(pt: PlayHost, p: Node, delta: float) -> void:
 	var pos: Vector3 = (p as Node3D).global_position
 	if pt.last_pos.distance_to(pos) > 0.08:
 		pt.moved = true
@@ -38,7 +38,7 @@ static func tick_motion(pt: Node, p: Node, delta: float) -> void:
 	pt.set_meta("wander_hold", maxf(0.0, load("res://scripts/debug/playtest_ai/ai_util.gd")._meta_f(pt, "wander_hold", 0.0) - delta))
 	pt.set_meta("dash_cd", maxf(0.0, load("res://scripts/debug/playtest_ai/ai_util.gd")._meta_f(pt, "dash_cd", 0.0) - delta))
 
-static func do_unstick(pt: Node) -> void:
+static func do_unstick(pt: PlayHost) -> void:
 	if pt.get("perf") is Dictionary:
 		pt.perf["unstick_n"] = int(pt.perf.get("unstick_n", 0)) + 1
 		pt.perf["stuck_max"] = maxf(float(pt.perf.get("stuck_max", 0.0)), pt.stuck_t)
@@ -57,7 +57,7 @@ static func do_unstick(pt: Node) -> void:
 	pt.stuck_t = 0.0
 	load("res://scripts/debug/playtest_ai/ai_util.gd").want_dash(pt)
 
-static func _pick_front(pt: Node, here: Vector2i, last: Vector2) -> Vector2i:
+static func _pick_front(pt: PlayHost, here: Vector2i, last: Vector2) -> Vector2i:
 	var seen: Dictionary = load("res://scripts/debug/playtest_ai/ai_util.gd")._seen(pt)
 	var recent: Array = load("res://scripts/debug/playtest_ai/ai_util.gd")._recent(pt)
 	var best: Vector2i = here
@@ -89,7 +89,7 @@ static func _pick_front(pt: Node, here: Vector2i, last: Vector2) -> Vector2i:
 				best = c
 	return best
 
-static func wander(pt: Node, p: Node, _delta: float = 0.0) -> void:
+static func wander(pt: PlayHost, p: Node, _delta: float = 0.0) -> void:
 	var here: Vector2i = pt._cell_of_node(p)
 	load("res://scripts/debug/playtest_ai/ai_util.gd")._mark(pt, here)
 	load("res://scripts/debug/playtest_ai/ai_util.gd")._trail(pt, here)

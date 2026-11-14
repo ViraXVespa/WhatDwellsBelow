@@ -3,7 +3,7 @@ extends Object
 const Util := preload("res://scripts/debug/playtest_path/path_util.gd")
 const REACH := 36
 
-static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
+static func follow_or_direct(pt: PlayHost, p: Node, dest: Node) -> Vector2:
 	var _fac = load("res://scripts/debug/playtest_path.gd")
 	if pt._dist(p, dest) < 1.55:
 		pt.path.clear()
@@ -53,7 +53,7 @@ static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 		return pt._step_dir(p, step)
 	return step.normalized()
 
-static func los_reposition(pt: Node, p: Node, target: Node) -> Vector2:
+static func los_reposition(pt: PlayHost, p: Node, target: Node) -> Vector2:
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
 	var best: Vector2i = Vector2i(-999, -999)
 	var best_score: float = -9999.0
@@ -88,7 +88,7 @@ static func los_reposition(pt: Node, p: Node, target: Node) -> Vector2:
 		return Vector2.ZERO
 	return v.normalized()
 
-static func step_dir(pt: Node, p: Node, desired: Vector2) -> Vector2:
+static func step_dir(pt: PlayHost, p: Node, desired: Vector2) -> Vector2:
 	if desired.length() < 0.001:
 		return pt._steer(p, Vector2.ZERO)
 	desired = desired.normalized()

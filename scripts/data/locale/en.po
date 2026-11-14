@@ -1133,9 +1133,6 @@ msgstr "Send Item"
 msgid "inv.text"
 msgstr "%s %d/%d%s"
 
-msgid "inv_act.can_t_use_that"
-msgstr "Can't use that."
-
 msgid "item.ash_bell.desc"
 msgstr "Rings without sound. +defense."
 

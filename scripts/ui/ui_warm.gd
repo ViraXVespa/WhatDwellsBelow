@@ -12,6 +12,8 @@ extends Object
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const PauseFlow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
 const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
+const PauseMenu := preload("res://scripts/ui/pause_menu.gd")
+const Recap := preload("res://scripts/ui/recap.gd")
 const HOST_PATH := "res://scripts/ui/progress_ui.gd"
 const FRAME_SET := "res://scripts/ui/progress_ui/frame_set.gd"
 
@@ -68,8 +70,8 @@ static func finish(scene: Node) -> void:
 	var ui: CanvasLayer = scene.get("ui")
 	var was_open: bool = App.ui_open
 	var was_paused: bool = scene.get_tree().paused
-	var pm: CanvasLayer = App.pause_menu
-	var rc: CanvasLayer = App.recap
+	var pm: PauseMenu = App.pause_menu
+	var rc: Recap = App.recap
 	ui.open_anvil()
 	if pm:
 		pm.show_menu()

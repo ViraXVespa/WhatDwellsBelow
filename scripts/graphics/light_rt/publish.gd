@@ -4,6 +4,7 @@ extends Object
 
 const Dbg := preload("res://scripts/app/dbg.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")
+const StampJob := preload("res://scripts/graphics/light_stamp/stamp_job.gd")
 const Plan := preload("res://scripts/graphics/torch_plan.gd")
 const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
@@ -47,7 +48,7 @@ static func maintain(host: Node) -> void:
 		Dbg.lt_dnote("light_kind", "stamp")
 		rt._rect = rect
 		rt._knob = key
-		var job: RefCounted = _begin_dungeon(host, rect)
+		var job: StampJob = _begin_dungeon(host, rect)
 		if entering:
 			job.step(-1)
 			_commit(job)
@@ -92,13 +93,13 @@ static func _begin_dungeon(host: Node, rect: Rect2i) -> RefCounted:
 
 static func _advance() -> void:
 	var rt: Variant = load(RT_PATH)
-	var job: RefCounted = rt._job
+	var job: StampJob = rt._job
 	if job.step(STAGE_US):
 		rt._job = null
 		_commit(job)
 
 ## Swap the finished stamp in: image, origin, span and solid together, then one upload.
-static func _commit(job: RefCounted) -> void:
+static func _commit(job: StampJob) -> void:
 	var rt: Variant = load(RT_PATH)
 	rt._img = job.image()
 	rt.origin = Vector2(float(job.x0), float(job.z0))

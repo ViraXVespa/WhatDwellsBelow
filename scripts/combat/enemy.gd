@@ -1,3 +1,4 @@
+class_name EnemyHost
 extends CharacterBody3D
 
 const EnemySetup := preload("res://scripts/combat/enemy/enemy_setup.gd")

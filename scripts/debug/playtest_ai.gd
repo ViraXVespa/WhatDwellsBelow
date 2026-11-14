@@ -18,19 +18,19 @@ static func is_boss(n: Node) -> bool:
 static func alive_enemy(n: Node) -> bool:
 	return Util.alive_enemy(n)
 
-static func notice_range(pt: Node) -> float:
+static func notice_range(pt: PlayHost) -> float:
 	return Util.notice_range(pt)
 
-static func fight(pt: Node, p: Node, enemy: Node) -> void:
+static func fight(pt: PlayHost, p: Node, enemy: Node) -> void:
 	Act.fight(pt, p, enemy)
 
-static func wander(pt: Node, p: Node, delta: float) -> void:
+static func wander(pt: PlayHost, p: Node, delta: float) -> void:
 	Util.wander(pt, p, delta)
 
-static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> void:
+static func use_prop(pt: PlayHost, p: Node, dest: Node, _reach: float = 1.18) -> void:
 	Misc.use_prop(pt, p, dest, _reach)
 
-static func _mark_pad(pt: Node, n: Node, w: int = 1) -> void:
+static func _mark_pad(pt: PlayHost, n: Node, w: int = 1) -> void:
 	if n == null or not is_instance_valid(n):
 		return
 	var c: Vector2i = pt._cell_of_node(n)
@@ -41,5 +41,5 @@ static func _mark_pad(pt: Node, n: Node, w: int = 1) -> void:
 			m[k] = int(m.get(k, 0)) + w
 	pt.set_meta("seen_map", m)
 
-static func think(pt: Node, p: Node, delta: float) -> void:
+static func think(pt: PlayHost, p: Node, delta: float) -> void:
 	Core.think(pt, p, delta)

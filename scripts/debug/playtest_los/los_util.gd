@@ -2,16 +2,16 @@
 
 const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 
-static func world3(pt: Node) -> World3D:
+static func world3(pt: PlayHost) -> World3D:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null or tree.root == null:
 		return null
 	return tree.root.get_viewport().world_3d
 
-static func grid_dims(pt: Node) -> Dictionary:
+static func grid_dims(pt: PlayHost) -> Dictionary:
 	return Cache.dims(pt)
 
-static func door_cells(pt: Node, door: Node) -> Array:
+static func door_cells(pt: PlayHost, door: Node) -> Array:
 	var out: Array = []
 	if door == null:
 		return out
@@ -23,10 +23,10 @@ static func door_cells(pt: Node, door: Node) -> Array:
 	out.append(pt._cell_of_node(door))
 	return out
 
-static func prop_cell(pt: Node, c: Vector2i) -> bool:
+static func prop_cell(pt: PlayHost, c: Vector2i) -> bool:
 	if pt.get_tree() == null:
 		return false
 	return Cache.prop(pt, c)
 
-static func closed_doors(pt: Node) -> Array:
+static func closed_doors(pt: PlayHost) -> Array:
 	return Cache.doors(pt).duplicate()

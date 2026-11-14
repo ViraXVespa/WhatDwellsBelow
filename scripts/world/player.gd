@@ -3,6 +3,7 @@ extends CharacterBody3D
 const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
 const Setup := preload("res://scripts/world/player/player_setup.gd")
 const Tick := preload("res://scripts/world/player/player_tick.gd")
+const Act := preload("res://scripts/world/player/player_act.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -91,7 +92,7 @@ func _script_at(path: String) -> GDScript:
 	return Tick._gd(path)
 
 func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "", hit_lv := -1) -> void:
-	_script_at("res://scripts/world/player/player_act.gd").take_hit(self, raw, from_dir, crit, src, hit_lv)
+	Act.take_hit(self, raw, from_dir, crit, src, hit_lv)
 
 func heal(amount: float) -> void:
 	_script_at("res://scripts/world/player/player_act.gd").heal(self, amount)
