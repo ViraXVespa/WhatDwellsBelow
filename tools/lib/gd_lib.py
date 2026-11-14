@@ -108,16 +108,22 @@ def func_span(text: str, name: str) -> tuple[int, int]:
     return start, end
 
 def decl_span(lines: list[str], name: str) -> tuple[int, int] | None:
-    """[start, end) of the first func/const/var/enum named `name` up to the next same-indent decl."""
+    """[start, end) of the first func/const/var/enum named `name` up to the next same-indent decl (a column-0 func also stops
+    at column-0 code); trailing blank lines and comments at or left of its indent are left to what follows."""
     for i, line in enumerate(lines):
         m = DECL.match(line)
         if m and m.group("name") == name:
             indent = m.group("indent")
+            func = bool(re.match(r"\t*(?:static\s+)?func\b", line))
             end = len(lines)
             for j in range(i + 1, len(lines)):
                 n = DECL.match(lines[j])
-                if n and n.group("indent") == indent:
+                code0 = func and not indent and lines[j].strip() and not lines[j][0].isspace() and not lines[j].startswith("#")
+                if (n and n.group("indent") == indent) or code0:  # a func also ends at column-0 code (@export var, signal, class)
                     end = j
                     break
+            while end > i + 1 and (not lines[end - 1].strip() or lines[end - 1].strip().startswith("#") and
+                                   len(lines[end - 1]) - len(lines[end - 1].lstrip("\t")) <= len(indent)):
+                end -= 1  # trailing blanks and the next declaration's leading ## comment are not part of this one
             return i, end
     return None
