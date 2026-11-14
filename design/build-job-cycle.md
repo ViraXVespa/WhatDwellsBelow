@@ -7,11 +7,11 @@ A **slice** is the User-opened worktree/session; a **unit** is one piece of its 
 
 ## 1. Understand
 
-A named door or job begins with one gather. `python tools/slice.py start` writes `session-plan.md` in the worktree root (gitignored). Read that file. Do not re-read what it holds.
+A named door or job begins with one gather: `slice.py open` seeds the gitignored `session-plan.md` index, refines it and writes `session-context.md`. Read the packet. Do not re-read what it holds.
 
 On a new session, read the named task file once. It stays the assignment. The plan does not replace it or a survey handoff.
 
-Use `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names` only for a gap the plan does not cover. In that same turn, trim the half under `<!-- gathered -->` to paths and names this unit will open again, and replace the four sections above it. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
+Use `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names` only for a gap the packet does not cover. When the working set moves, `slice.py adjust` (add, rem, promote, demote) changes the index below `<!-- gathered -->`; replace the four sections above it. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
 
 For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
 
@@ -31,9 +31,9 @@ A planned compact stop is mandatory. Stop and wait. Do not continue into the nex
 
 Stop when a compact would be safe. Finish the operation already in progress; do not interrupt a mutation, test, or tool call. A compact is safe before Prove, and before a follow-up Gather or Change. Do not stop in the middle of the first Gather or the Change that follows it.
 
-Before the stop, those four sections and the trim must already match the turn. Write them when the fact lands, not for the first time at the stop. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
+Before the stop, those four sections and the index must already match the turn. Write them when the fact lands, not for the first time at the stop. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
 
-On any post-compact turn, the first action is to read `session-plan.md`. Do not re-walk the repo or re-run the same lookups unless that file is missing or clearly stale. `python tools/slice.py plan --refresh` rebuilds the gathered half and erases a trim; use it only when that half is stale. Keep the four sections current as facts land, and again before the next planned stop.
+On any post-compact turn, the first action is to read `session-plan.md`, then `session-context.md`. Do not re-walk the repo or re-run the same lookups unless they are missing or stale (`slice.py plan --refresh` re-seeds and replays adjustments). Keep the four sections current as facts land, and again before the next planned stop.
 
 ## Permissions and questions
 
