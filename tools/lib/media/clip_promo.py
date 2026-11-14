@@ -131,7 +131,9 @@ def wipe(before: Path, after: Path, out: Path, labels=("BEFORE", "AFTER"), subs=
         if end:
             card(end[0], end[1], font, w, h, T / "e.png")
             pngs.append(T / "e.png")
-            fc += (f"[cmp];[cmp]fps={fps},settb=1/{fps},split[cA][cB];[cB]trim=start={clip - 1 / fps:.3f},setpts=PTS-STARTPTS,"
+            # Last-frame trim two frames before EOF: clip-1/fps rounded to .3f can sit past the
+            # last PTS (ffmpeg 6.1 drops a frame at settb), leaving the end card empty so xfade stops at offset.
+            fc += (f"[cmp];[cmp]fps={fps},settb=1/{fps},split[cA][cB];[cB]trim=start={max(0.0, clip - 2 / fps):.3f},setpts=PTS-STARTPTS,"
                    f"tpad=stop_mode=clone:stop_duration={end_sec:.2f},trim=duration={end_sec:.3f},gblur=sigma={14 * h / 720:.1f},eq=brightness=-0.18:saturation=0.8[eb];"
                    f"[5:v]fps={fps},trim=duration={end_sec:.3f},format=rgba,fade=t=in:st=0.15:d=0.45:alpha=1[ec];[eb][ec]overlay=0:0,fps={fps},settb=1/{fps}[en];"
                    f"[cA][en]xfade=transition=fade:duration=0.4:offset={clip - 0.4:.3f}")
