@@ -117,8 +117,8 @@ var prog: ProgressS
 var bal: BalanceS
 var sfx_node: Node
 var debug
-var pause_menu
-var recap
+var pause_menu: PauseS
+var recap: RecapS
 var present
 var music
 var anim_browser
