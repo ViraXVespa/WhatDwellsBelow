@@ -438,6 +438,13 @@ class Script:
                 m = RET_LOAD_RE.match(self.lines[a + 1 + body.index(next(x for x in body if x.strip()))].strip())
                 if m:
                     self.func_ret[name] = m.group(1)
+            elif real and re.fullmatch(r"return[ \t]+([A-Za-z_]\w*)", real[-1]):
+                # lazy cache: `if _s == null: _s = load("res://x.gd")` ... `return _s` (one literal path only)
+                var = real[-1].split()[-1]
+                raws = [self.lines[a + 1 + k] for k, x in enumerate(body) if x.strip()]
+                paths = {m.group(1) for r in raws for m in re.finditer(r"\b" + re.escape(var) + r"[ \t]*=[ \t]*(?:pre)?load\([ \t]*\"res://([^\"]+\.gd)\"", r)}
+                if len(paths) == 1 and not any(re.search(r"\b" + re.escape(var) + r"[ \t]*=(?!=)", x) and "load(" not in x for x in real):
+                    self.func_ret[name] = paths.pop()
 
     def _parse_list_idents(self) -> None:
         """Record const/var arrays whose every element is a bare identifier (preload/class aliases later)."""
