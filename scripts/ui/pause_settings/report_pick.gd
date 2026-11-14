@@ -4,6 +4,10 @@ extends Object
 ## them. Names and one-line descriptions come from scripts/data/bug_doors.json (tools/relay/gen-doors.mjs, from
 ## design/routes.yaml doors and their docs). Door first: Job lists that door's jobs and stays disabled until a door
 ## is picked; a new door resets the job. Both optional: no door is triage, a door with no job files under the door.
+## Two-tap lists (touch never highlights, so a tap went straight to pick-and-close): a tap or click on a row picks it and
+## shows its description while the list stays open; a second tap on that row closes it. The pad highlight shows the
+## description and A on it closes in one press. The description sits above the rows and each list is capped to the
+## space under its button, so an open list scrolls instead of covering the description.
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
@@ -66,13 +70,38 @@ static func build(host: Node, form: Dictionary, field: Callable) -> Array[Option
 		form.job = "" if i <= 0 or i > js.size() else str(js[i - 1].get("key", ""))
 		tell.call(job, i)
 	)
+	host.info_box.add_child(desc)
 	for ob: OptionButton in [dob, job]:
-		ob.get_popup().id_focused.connect(func(id: int) -> void: tell.call(ob, ob.get_item_index(id)))
+		var pop: PopupMenu = ob.get_popup()
+		pop.hide_on_checkable_item_selection = false  # OptionButton rows are radio items
+		var hot := [-1]  # the row a second tap / A confirms: the pad highlight or the last tapped row
+		pop.about_to_popup.connect(func() -> void:
+			hot[0] = pop.get_focused_item()
+			fit(ob)
+		)
+		pop.id_focused.connect(func(id: int) -> void:
+			hot[0] = ob.get_item_index(id)
+			tell.call(ob, hot[0])
+		)
+		pop.index_pressed.connect(func(i: int) -> void:
+			if i == hot[0]:
+				pop.hide()
+				return
+			hot[0] = i
+			pop.set_focused_item(i)
+			tell.call(ob, i)
+		)
 		ob.focus_entered.connect(func() -> void: tell.call(ob, ob.selected))
 		_row(host, App.tr("bug_report.door" if ob == dob else "bug_report.job"), ob, field)
 	tell.call(dob, dob.selected)
-	host.info_box.add_child(desc)
 	return [dob, job]
+
+## Caps the list to the room under its button (at least three rows) so it opens downward and scrolls.
+static func fit(ob: OptionButton) -> void:
+	var bottom: float = ob.get_screen_position().y + ob.size.y * ob.get_global_transform_with_canvas().get_scale().y
+	var vis: Rect2 = ob.get_viewport().get_visible_rect()
+	# Width is the whole view: a max_size narrower than the list's min width is ignored (Window._validate_limit_size).
+	ob.get_popup().max_size = Vector2i(int(vis.size.x), int(maxf(vis.end.y - bottom - 8.0, ob.size.y * 3.0)))
 
 static func _fill_jobs(job: OptionButton, door_key: String, pick: String) -> void:
 	job.clear()
