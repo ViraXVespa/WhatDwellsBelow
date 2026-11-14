@@ -2,10 +2,13 @@
 """PreToolUse hook. Deny default tools the pc-offload skill replaces.
 
 Grep of one file stays allowed. gate.py build and reading a file under edit stay allowed.
+WDB_ROLE=gather (the `slice.py open` gather agent): no edits or writes, shell only the GATHER_CMD tools, MCP only
+wdb__lookup / wdb__protocol; everything else as below.
 """
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import re
 import sys
@@ -247,7 +250,25 @@ def managed_image_command(cmd: str, repo: Path, cwd: Path | None) -> bool:
         return False
 
 
+GATHER_CMD = re.compile(r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools[/\\](?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b[^;&|<>`$\n\r]*$", re.I)
+WRITE_TOOLS = {"write", "write_file", "writefile", "edit", "edit_file", "search_replace", "multiedit", "notebookedit", "delete_file"}
+
+def gather_reason(name: str, inp: dict) -> str:
+    low = name.lower()
+    if "__" in name or low.startswith("mcp"):
+        return "" if re.search(r"wdb__(?:lookup|protocol)\b", name) else "gather role: MCP is wdb__lookup / wdb__protocol only."
+    if low in WRITE_TOOLS:
+        return "gather role: no edits. Change the index with python tools/slice.py adjust."
+    cmd = shell_command(name, inp)
+    if cmd and not GATHER_CMD.match(cmd.strip()):
+        return "gather role: shell is python tools/{find,docs,session}.py or tools/slice.py plan|adjust|expand only (no chaining)."
+    return ""
+
 def decide(event: dict) -> tuple[str, str]:
+    if os.environ.get("WDB_ROLE") == "gather":
+        reason = gather_reason(*tool_blob(event))
+        if reason:
+            return "deny", reason
     cwd = as_path(event.get("cwd") or event.get("workspaceRoot"))
     workspace = as_path(event.get("workspaceRoot") or event.get("cwd"))
     repo = find_repo(cwd) or find_repo(workspace)
@@ -367,7 +388,26 @@ def selftest() -> int:
         (ev("image_gen", {"prompt": "x"}), "deny"),
         (ev("image_gen", {"prompt": "x"}, cwd=outside), "allow"),
     ]
+    gather = [
+        (ev("edit_file", {"target_file": "design/ui.md"}), "deny"),
+        (ev("run_terminal_command", {"command": "python tools/slice.py adjust promote K3"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py func --path a.gd --name b"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/slice.py commit"}), "deny"),
+        (ev("run_terminal_command", {"command": "python tools/find.py route; git push"}), "deny"),
+        (ev("run_terminal_command", {"command": "python tools/gate.py build"}), "deny"),
+        (ev("wdb__lookup", {"action": "func"}), "allow"),
+        (ev("wdb__check", {"target": "gd_load"}), "deny"),
+        (ev("read_file", {"target_file": "design/ui.md"}), "allow"),
+        (ev("read_file", {"target_file": "_logs/x.txt"}), "deny"),
+    ]
     failed = 0
+    os.environ["WDB_ROLE"] = "gather"
+    for event, want in gather:
+        got, reason = decide(event)
+        if got != want:
+            failed += 1
+            print(f"FAIL gather {event['toolName']} {event['toolInput']} want={want} got={got} reason={reason}", file=sys.stderr)
+    os.environ.pop("WDB_ROLE")
     for event, want in cases:
         got, reason = decide(event)
         if got != want:
@@ -377,7 +417,7 @@ def selftest() -> int:
     if failed:
         print(f"selftest: {failed} failed", file=sys.stderr)
         return 1
-    print(f"selftest: {len(cases)} passed")
+    print(f"selftest: {len(cases) + len(gather)} passed")
     return 0
 
 if __name__ == "__main__":

@@ -8,7 +8,8 @@ The md is the single source of truth (no JSON copy). Shape:
     ### Card                route card text (verbatim)
 
 Kinds: func (`path:name`), file (`path`, optional `(La-b)`), doc (`path` or `path#Heading`), names (`path`: the
-script's declared names). `parse(render(x)) == x`; `render(parse(t)) == t` for any text this module wrote.
+script's declared names). Ids are stable for delta replay: a promoted K or demoted C keeps its id; the section says
+which it is now. `parse(render(x)) == x`; `render(parse(t)) == t` for any text this module wrote.
 `slice.py adjust` mutates it (with `_logs/gather/delta.jsonl`); `slice.py expand` turns it into the packet.
 """
 from __future__ import annotations
