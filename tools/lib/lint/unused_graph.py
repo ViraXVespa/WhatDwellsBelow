@@ -60,6 +60,9 @@ IDENT = re.compile(r"[A-Za-z_]\w*")
 SCHEMA_KEY_RE = re.compile(r'\[\s*["\']([A-Za-z_]\w*)["\']\s*,')
 DYN_PROP_RE = re.compile(r"(?:\b(?:host|self)\.)?get\s*\(\s*name\s*\)|\b(?:host|self)\.set\s*\(\s*name\s*,")
 STR_RE = re.compile(r"\"([^\"\\\n]*(?:\\.[^\"\\\n]*)*)\"|'([^'\\\n]*(?:\\.[^'\\\n]*)*)'")
+# `(load("res://x.gd") as GDScript).call("fn", ..)`: a literal method on a literal-path script resolves to that script.
+LOAD_CALL_RE = re.compile(r"\b(?:pre)?load[ \t]*\([ \t]*\"res://([^\"]+\.gd)\"[ \t]*\)(?:[ \t]+as[ \t]+GDScript)?[ \t]*\)?[ \t]*\.[ \t]*"
+                          r"(?:call|call_deferred|callv)[ \t]*\([ \t]*[\"'](\w+)[\"']")
 CALLISH = re.compile(r"\b(?:call|call_deferred|callv|Callable|has_method|connect|emit_signal|method|bind|callback|rpc)\b")
 PREFIX_RE = re.compile(r"[\"']([A-Za-z_]\w*_)[\"'][ \t]*\+")
 SUFFIX_RE = re.compile(r"\+[ \t]*[\"'](_\w+)[\"']")
@@ -69,7 +72,7 @@ FLOW_PROP_RE = re.compile(r"script:([\w/]+)\.(\w+)")  # shot-flow script:debug/f
 METHOD_RE = re.compile(r"(?:\bmethod\s*=\s*|\"method\"\s*:\s*)\"(\w+)\"")
 WRITE_AFTER = re.compile(r"[ \t]*(?:[-+*/%|&^]|<<|>>)?=(?!=)")
 SKIP_PARTS = frozenset({"node_modules", "__pycache__", ".godot", ".git", "_logs", ".archive_worktrees", ".archive_export_cache", "retired"})
-STRONG = ("call", "self", "alias", "super", "override", "host", "hook", "scene", "flow", "dynamic", "file")
+STRONG = ("call", "self", "alias", "super", "override", "host", "hook", "scene", "flow", "dynamic", "file", "load_call")
 WEAK = ("unresolved", "dynamic_ambiguous", "arity_mismatch")
 
 def code_of(raw: str) -> str:
@@ -598,6 +601,7 @@ class Graph:
                 code = code_of(raw)
                 callish = CALLISH.search(code) is not None
                 mpos = {x for m in METHOD_POS_RE.finditer(raw) for x in m.groups() if x} if callish else set()
+                lcall = {m.group(2): m.group(1) for m in LOAD_CALL_RE.finditer(raw)} if callish else {}
                 for lit in strings_of(raw):
                     if IDENT.fullmatch(lit) and lit in var_owners and lit not in all_names:
                         self.weak_strings[lit].append(f"{rel}:{idx + 1}")
@@ -606,6 +610,8 @@ class Graph:
                         if own and not callish:
                             # a literal naming a func of its own script (dispatch table, e.g. TABS [..., "_inv"])
                             self.edges[src].append((own, lit, "dynamic", idx + 1))
+                        elif callish and lit in lcall and lcall[lit] in self.scripts and self.find(lcall[lit], lit):
+                            self.edges[src].append((self.find(lcall[lit], lit), lit, "load_call", idx + 1))
                         elif callish and (not mpos or lit in mpos):
                             own = self.find(rel, lit)
                             if own:
