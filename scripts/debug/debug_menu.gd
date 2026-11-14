@@ -1,3 +1,4 @@
+class_name DebugMenu
 extends CanvasLayer
 
 ## Secret debug. Default engine controls allowed.
@@ -14,7 +15,7 @@ var chrome_box: VBoxContainer
 var root_box: VBoxContainer
 var scroll: ScrollContainer
 var spins: Dictionary = {}
-var play
+var play: PlayHost
 var status: Label
 var anim_btn: Button
 var fly: Label
