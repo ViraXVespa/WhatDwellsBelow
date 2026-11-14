@@ -89,10 +89,68 @@ def review_text(text: str, root: Path) -> list[str]:
             bad.append(f"answer {i} empty or bare ({ans[:30]!r}): name what you saw" + (" and which areas/objects you scanned" if i == 7 else ""))
     return bad
 
-def review_faults(root: Path, changed: list[str]) -> list[str]:
-    """[] when the branch touches no VISUAL path, or a valid review exists for HEAD or an ancestor with no visual change since."""
+def _diff_base(root: Path) -> str:
+    """Merge-base with origin/main, else HEAD's parent (selftest repos have no origin)."""
+    mb = _git(root, "merge-base", "origin/main", "HEAD").strip()
+    if mb:
+        return mb.splitlines()[-1]
+    parent = _git(root, "rev-parse", "HEAD^").strip()
+    return parent or "HEAD"
+
+def script_diff_is_deletion_only(root: Path, rel: str, base: str) -> bool:
+    """True when rel's diff vs base only removes code (no added non-comment lines)."""
+    raw = _git(root, "diff", "-U0", base, "--", rel)
+    if not raw.strip():
+        return False
+    added, removed = [], []
+    for ln in raw.splitlines():
+        if ln.startswith(("+++", "---", "@@", "diff", "index")):
+            continue
+        if ln.startswith("+"):
+            added.append(ln[1:])
+        elif ln.startswith("-"):
+            removed.append(ln[1:])
+    if not removed:
+        return False
+    def noise(s: str) -> bool:
+        t = s.strip()
+        return not t or t.startswith("#")
+    return not any(not noise(s) for s in added)
+
+def unused_only_visual(root: Path, changed: list[str], base: str | None = None) -> list[str]:
+    """VISUAL-glob script paths whose diffs are unused-only deletions. Empty if any visual path is not that."""
+    vis = hits(changed, VISUAL)
+    if not vis or any(not p.endswith(".gd") for p in vis):
+        return []
+    b = base or _diff_base(root)
+    return vis if all(script_diff_is_deletion_only(root, p, b) for p in vis) else []
+
+def _run_gd_load(root: Path, files: list[str]) -> list[str]:
+    """Headless autoload compile of the affected scripts. [] when gd-load passes."""
+    if not files:
+        return []
+    cmd = [sys.executable, str(Path(__file__).resolve().parents[2] / "gate.py"), "gd-load", "--files", *files]
+    try:
+        r = subprocess.run(cmd, cwd=root, capture_output=True, text=True, timeout=180)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return [f"unused-only visual script deletion: load check did not run ({e})"]
+    if r.returncode == 0:
+        return []
+    lines = [ln for ln in (r.stdout + "\n" + r.stderr).splitlines() if ln.strip()]
+    tail = lines[-1] if lines else "gd-load FAIL"
+    return [f"unused-only visual script deletion needs a passing load check (gate.py gd-load): {tail}"]
+
+def review_faults(root: Path, changed: list[str], base: str | None = None) -> list[str]:
+    """[] when the branch touches no VISUAL path, or a valid review exists for HEAD or an ancestor with no visual change since.
+
+    Unused-only deletions under dungeon/hub/actor globs (script-only, no added code) do not skip the gate:
+    they require a passing headless load/compile of the affected scripts instead of a shot review.
+    """
     if not hits(changed, VISUAL):
         return []
+    only = unused_only_visual(root, changed, base)
+    if only:
+        return _run_gd_load(root, only)
     d = root / REVIEW_DIR
     for f in sorted(d.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True) if d.is_dir() else []:
         sha = f.stem
@@ -237,6 +295,30 @@ def selftest() -> int:
         _git(r, "commit", "-qam", "2")
         if not review_faults(r, ["assets/sprites/a.png"]):
             bad.append("a sprite change after the reviewed sha must need a new review")
+        (r / "scripts/world").mkdir(parents=True, exist_ok=True)
+        (r / "scripts/world/dungeon_props.gd").write_text("extends Node\nfunc live() -> void:\n\tpass\nfunc spawn_puzzle() -> void:\n\tpass\n")
+        _git(r, "add", "-A")
+        _git(r, "commit", "-qm", "3")
+        (r / "scripts/world/dungeon_props.gd").write_text("extends Node\nfunc live() -> void:\n\tpass\n")
+        _git(r, "add", "-A")
+        _git(r, "commit", "-qm", "4")
+        base4 = _git(r, "rev-parse", "HEAD^").strip()
+        only = unused_only_visual(r, ["scripts/world/dungeon_props.gd"], base4)
+        if only != ["scripts/world/dungeon_props.gd"]:
+            bad.append(f"unused-only deletion of dungeon_props.spawn_puzzle must classify: {only}")
+        import sys as _sys
+        _mod = _sys.modules[__name__]
+        _orig_load = _mod._run_gd_load
+        _mod._run_gd_load = lambda _root, _files: []
+        if review_faults(r, ["scripts/world/dungeon_props.gd"], base4):
+            bad.append("unused-only dungeon deletion with a passing load check must not need a shot review")
+        _mod._run_gd_load = lambda _root, _files: ["load failed"]
+        if not review_faults(r, ["scripts/world/dungeon_props.gd"], base4):
+            bad.append("unused-only dungeon deletion must fail when the load check fails")
+        (r / "scripts/world/dungeon_props.gd").write_text("extends Node\nfunc live() -> void:\n\tpass\nfunc extra() -> void:\n\tpass\n")
+        if unused_only_visual(r, ["scripts/world/dungeon_props.gd"], base4):
+            bad.append("adding a function under a visual glob must still require a shot review, not the load-check path")
+        _mod._run_gd_load = _orig_load
     for b in bad:
         print("FAIL " + b)
     return bad
