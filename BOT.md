@@ -56,7 +56,7 @@ Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `des
 ## Smokes
 
 When a cluster needs a headless prove: `python tools/gate.py bot-smokes --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
-New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets docs icon.svg.import` (the import also rewrites those `.import` files; a fresh worktree needs this import once before any smoke, else P1 fails with no marker), and commit the `.uid` files only.
+Fresh checkout or `git worktree add` (does not inherit gitignored `addons/` or `.godot/`): `python3 tools/gate.py bot-smokes --setup` installs the pinned Godot Asset Library Godot AI addon (v3.2.5, sha256-checked; `addons/` stays untracked) and imports when `.godot/imported` is stale. New `.gd` files need `.uid` sidecars: `gate.py import`, then `git checkout -- assets docs icon.svg.import`, and commit the `.uid` files only.
 No editor playtest, no routine that launches Godot.
 Shots and light bakes are not headless: `shots.py capture`, `shots.py flow`, `bake.py camp` pick the box display themselves (`python tools/lib/godot_lib.py --display`). Menu/NPC proof: `gate.py bot-smokes --door D --flows`, `shot-flows.md`. `shots.py gaps --changed` (run by `gate.py bot-smokes` unless `--no-gaps`, and by `gate.py build --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/data/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
 
