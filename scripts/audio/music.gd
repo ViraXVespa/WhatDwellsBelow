@@ -9,7 +9,7 @@ var kind := ""
 var passed_intro := false
 var _dungeon_stream: Resource = null
 ## On the web the browser plays the music (scripts/audio/web_music.gd); null on desktop.
-var web: RefCounted = null
+var web: WebMusic = null
 const WebMusic := preload("res://scripts/audio/web_music.gd")
 const WEB_DUNGEON := "music_dungeon.mp3"
 const WEB_HUB := "music_hub.wav"
