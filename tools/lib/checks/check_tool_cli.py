@@ -8,7 +8,7 @@ names exists, bare run and --help list the subcommands, an unknown subcommand ex
 Per tool: python3 shebang, argparse, main guard, `--help` exits 0 and writes
 nothing, ASCII print strings, --root on ops tools, --dry-run on writers, RESULT
 via agent_log, help text on every option, output paths named `--out` / `--out-<kind>`
-(OUT_NAMES), `--verbose` (agent_log.std_parser(verbose=True)) rather than a raised line budget. Libs (`*_lib.py`, agent_log's siblings without a main guard) are skipped.
+(OUT_NAMES), `--verbose` (agent_log.std_parser(verbose=True)) rather than a raised line budget, and on any tool that folds rows. Libs (`*_lib.py`, agent_log's siblings without a main guard) are skipped.
 
 `--smoke-run` also executes every tool in a throwaway copy of the repo (never the live tree): bad flag and bad
 `--root` must exit 2 with an `error:` line, and each SMOKE case (read-only or `--dry-run` args) must not crash,
@@ -237,6 +237,8 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int], cmd:
             bad.append(f"HELPTXT {path.name}: {names[0] if names else '?'} (line {node.lineno}) has no help= text")
         if names and names[0] in OUT_NAMES:
             bad.append(f"OUTFLAG {path.name}: {names[0]} (line {node.lineno}) must be --out or --out-<kind>; keep {names[0]} as an alias after it")
+    if re.search(r"\bfold\(", src) and '"--verbose"' not in src and "verbose=True" not in src:
+        bad.append(f"VERBOSE {path.name}: folds rows with agent_log.fold (its count line says --verbose prints them) but has no --verbose")
     if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         return  # never execute a tool that cannot parse --help
     before = snapshot(root)

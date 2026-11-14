@@ -54,6 +54,10 @@ def main() -> int:
             return (sc / rel).read_text(encoding="utf-8-sig")
 
         ok("diff clean on a copy", _run(sc, "diff")[0] == 0)
+        rc, out = _run(sc, "list")
+        rc_v, out_v = _run(sc, "list", "--verbose")
+        ok("list --verbose prints every row the fold hid", rc == 0 and rc_v == 0 and "--verbose prints them" in out
+           and "--verbose prints them" not in out_v and len(out_v.splitlines()) > len(out.splitlines()))
         rc, _ = _run(sc, "set", "special_mana", "30")
         ok("set float -> vars_combat", rc == 0 and "var special_mana := 30.0" in txt(f"{bs.BAL}/vars_combat.gd"))
         ok("set keeps diff clean (doc row follows)", _run(sc, "diff")[0] == 0)

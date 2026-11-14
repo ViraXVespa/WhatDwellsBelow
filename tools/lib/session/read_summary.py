@@ -410,7 +410,8 @@ def _finish_query(root: Path, args, lines: list[str], status: str = "INFO") -> i
     body_lines = lines[:_BODY_CAP]
     if len(lines) > _BODY_CAP:
         body_lines.append("... %d more lines not stored" % (len(lines) - _BODY_CAP))
-    echo_lines = agent_log.fold(body_lines, verbose=bool(getattr(args, "verbose", False)), keep=12, limit=30)
+    # --match hits are the answer (already capped by --max): never fold them away behind --verbose
+    echo_lines = agent_log.fold(body_lines, verbose=bool(getattr(args, "verbose", False) or getattr(args, "match", "")), keep=12, limit=30)
     return agent_log.finish(
         _QUERY_JOB,
         root,
@@ -461,7 +462,25 @@ def _plain_selftest() -> int:
     if _plain_summary([], "small\nRESULT PASS") != ["small", "RESULT PASS"]:
         bad.append("small summaries must stay unchanged")
     bad.extend(_files_selftest())
+    bad.extend(_match_selftest())
     return agent_log.selftest_result(bad)
+
+
+def _match_selftest() -> list[str]:
+    """--match hits print up to --max even without --verbose (the fold must not hide them)."""
+    import contextlib
+    import io
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "project.godot").write_text("", encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            agent_log.finish("demo", root, "\n".join("hit %d" % i for i in range(35)), "INFO", echo="")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            main(["--root", td, "demo", "--match", "hit"])
+    text = out.getvalue()
+    return [] if "hit 34" in text and "--verbose prints them" not in text else ["--match hits must not fold behind --verbose: " + text[-160:]]
 
 
 def _files_selftest() -> list[str]:

@@ -144,6 +144,7 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("list", help="Code defaults: key, value, type, slider, system, category.")
     s.add_argument("key_pos", nargs="?", default="", metavar="PREFIX", help="Key prefix filter")
     s.add_argument("--system", default="", help="main|combat|world|economy|enemy")
+    s.add_argument("--verbose", "-v", action="store_true", help="Print every row (default: the first 40 and a count; the summary file has all).")
     s = sub.add_parser("diff", help="Drift between code defaults, slider rows and doc Live cells (FAIL on any).")
     s = sub.add_parser("range", help="Change a slider row (min max [step]); every default it covers must stay inside.")
     s.add_argument("key_pos", metavar="KEY", help="Key (e_<id>_<stat> or e_*_<stat>: the shared enemy stat row)")
