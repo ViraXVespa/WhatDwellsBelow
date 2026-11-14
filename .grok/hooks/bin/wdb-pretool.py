@@ -250,7 +250,7 @@ def managed_image_command(cmd: str, repo: Path, cwd: Path | None) -> bool:
         return False
 
 
-GATHER_CMD = re.compile(r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools[/\\](?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b[^;&|<>`$\n\r]*$", re.I)
+GATHER_CMD = re.compile(r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools(?:/|\\)(?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b[^;&|<>`$\n\r]*$", re.I)
 WRITE_TOOLS = {"write", "write_file", "writefile", "edit", "edit_file", "search_replace", "multiedit", "notebookedit", "delete_file"}
 
 def gather_reason(name: str, inp: dict) -> str:
