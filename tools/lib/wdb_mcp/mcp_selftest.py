@@ -44,7 +44,7 @@ def cases(bad: list[str], state: Path) -> None:
     fresh = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed")
     if "already shown" in fresh:
         bad.append("a new epoch (after compact) must resend")
-    for path in ("_logs/x.txt", "notes/a.md", "assets/x.png"):
+    for path in ("_logs/x.txt", "notes/a.md", "assets/x.png", "../../../../etc/passwd", "./../x.md", "/etc/passwd"):
         if not t.lookup("lines", path=path).startswith("STATUS: FAIL"):
             bad.append(f"{path} must be refused")
     if not t._allowed("check.py prove"):
@@ -59,6 +59,12 @@ def cases(bad: list[str], state: Path) -> None:
     full = t.check(handle=ch, action="full")
     if t.store.runs != runs or "RESULT" in full.split("\n", 5)[-1][:0]:
         bad.append("check follow-up must not re-run")
+    t.check("load_graph"), t.check("load_graph")
+    capped = t.check("load_graph")
+    if not capped.startswith("STATUS: FAIL") or "rule 10" not in capped:
+        bad.append("a fourth run of the same check (third rerun) must be refused: " + capped[:120])
+    if not t.lookup("task").startswith("STATUS:") or not t.lookup("stat", path="_logs/x").startswith("STATUS: FAIL"):
+        bad.append("simple lookup actions with no query must answer (not raise); a _logs path argument is refused")
     if not t.lookup("more", handle="zz9").startswith("STATUS: FAIL"):
         bad.append("an unknown handle must FAIL")
     data = json.loads((ROOT / "tools/data/mcp_protocol.json").read_text(encoding="utf-8"))

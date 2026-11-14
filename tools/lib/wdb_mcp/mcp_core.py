@@ -47,14 +47,16 @@ def bump_epoch(root: Path, state: Path | None = None) -> str:
 
 def denied(rel: str) -> str:
     """Reason a path may not be read through the MCP ('' when allowed). Mirrors the Build hook's read rules."""
-    low = rel.replace("\\", "/").lstrip("./").lower()
+    low = rel.replace("\\", "/").lower()
+    while low.startswith("./"):
+        low = low[2:]
     if low.startswith("_logs/") or "/_logs/" in low:
         return "reading _logs/ is denied: use lookup action=summary job=JOB"
     if low.startswith("notes/"):
         return "notes/ is never opened"
     if low.endswith(IMAGE_EXT):
         return "images are not read through the MCP: use isolated shots.py review, or a reference grant and a direct read"
-    if ".." in Path(low).parts:
+    if ".." in Path(low).parts or low.startswith("/") or ":" in low.split("/", 1)[0]:
         return "path leaves the repo"
     return ""
 
@@ -97,6 +99,7 @@ class Store:
         self.epoch = read_epoch(root, state)
         self.n = 0
         self.runs = 0  # real commands started (selftest: a follow-up must not raise it)
+        self.check_runs: dict[str, list[str]] = {}  # check target+args -> handles of its runs (rerun cap)
         self._load()
 
     # persistence
@@ -111,13 +114,14 @@ class Store:
         except (OSError, ValueError):
             return
         self.handles, self.n = data.get("handles", {}), int(data.get("n", 0))
+        self.check_runs = data.get("check_runs", {})
         self.seen = data.get("seen", {}) if data.get("epoch") == self.epoch else {}
 
     def save(self) -> None:
         if not self.persist:
             return
         self._path().parent.mkdir(parents=True, exist_ok=True)
-        self._path().write_text(json.dumps({"epoch": self.epoch, "n": self.n, "handles": self.handles, "seen": self.seen}), encoding="utf-8")
+        self._path().write_text(json.dumps({"epoch": self.epoch, "n": self.n, "handles": self.handles, "seen": self.seen, "check_runs": self.check_runs}), encoding="utf-8")
 
     def tick(self) -> None:
         """New epoch: forget shown lines. Drop expired and surplus handles."""

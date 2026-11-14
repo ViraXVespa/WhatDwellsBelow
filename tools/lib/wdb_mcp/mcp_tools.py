@@ -15,6 +15,7 @@ import mcp_core as core
 
 PATH_RE = re.compile(r"(?<![\w/.-])((?:scripts|scenes|tools|design|assets|_out)/[\w./-]+\.\w+)")
 FAIL_RE = re.compile(r"\b(FAIL|ERROR|DRIFT|STALE|MISSING|UNMAPPED|SCRIPT ERROR)\b|^error:", re.M)
+MAX_CHECK_RUNS = 3  # one run + 2 reruns per target and args (tools.md rule 10); the store keeps the count for the worktree
 CHECKS = {  # target -> (catalog command, argv builder)
     "tool_cli": ("check.py tool-cli", lambda a: ["check.py", "tool-cli"] + (["--only", a["stem"]] if a.get("stem") else [])),
     "tool_docs": ("check.py tool-docs", lambda a: ["check.py", "tool-docs"]),
@@ -85,7 +86,10 @@ class Tools:
             return self._funcs(items, budget, fresh)
         if action in ("lines", "doc"):
             return self._read(action, path, start, end, budget, fresh)
-        argv, cmd = self._lookup_argv(action, path, pattern, door, job, query, regex, expand)
+        why = next((w for w in (core.denied(x) for x in (path.split() + [expand])) if w), "")
+        if why:
+            return self._refuse(why)
+        argv, cmd = self._lookup_argv(action, path, name, pattern, door, job, query, regex, expand)
         if not argv:
             return self._refuse(cmd)
         res = self._run(argv, cmd)
@@ -96,7 +100,7 @@ class Tools:
         h = self.store.new("l", body, status=status, files=sorted(set(PATH_RE.findall(res["text"]))))
         return core.page(self.store, h, budget, status, "" if status == "PASS" else (body[-1] if body else res["result"]), first=True)
 
-    def _lookup_argv(self, action, path, pattern, door, job, query, regex, expand) -> tuple[list[str], str]:
+    def _lookup_argv(self, action, path, name, pattern, door, job, query, regex, expand) -> tuple[list[str], str]:
         if action == "xref":
             if not pattern:
                 return [], "xref needs pattern"
@@ -152,6 +156,8 @@ class Tools:
         if why:
             return self._refuse(why)
         src = self.root / rel
+        if not src.resolve().is_relative_to(self.root.resolve()):
+            return self._refuse("path leaves the repo")
         if not src.is_file():
             return self._refuse(f"{rel} is not a file under the repo root")
         lines = src.read_text(encoding="utf-8-sig", errors="replace").splitlines()
@@ -175,6 +181,11 @@ class Tools:
         if target not in CHECKS:
             return self._refuse(f"unknown check target {target!r} (choose: {', '.join(CHECKS)}); prove, selftests and docs-size are Bot-only")
         cmd, build = CHECKS[target]
+        key = " ".join([target, stem, *sorted(files or [])]).strip()
+        runs = self.store.check_runs.get(key, [])
+        if len(runs) >= MAX_CHECK_RUNS:
+            return "\n".join(core.header("FAIL", runs[-1], "read the last handle (failures | full | files); stop and report",
+                                          summary=f"{key} already ran {len(runs)} times (a run + {MAX_CHECK_RUNS - 1} reruns, tools.md rule 10); not re-run", fails=1))
         res = self._run(build({"stem": stem, "files": files or []}), cmd)
         if res["status"] == "DENIED":
             return self._refuse(res["text"])
@@ -182,6 +193,7 @@ class Tools:
         failures = [ln for ln in lines if FAIL_RE.search(ln)] if res["status"] == "FAIL" else []
         status = "FAIL" if res["status"] == "FAIL" else "PASS"
         h = self.store.new("c", lines, status=status, failures=failures, files=sorted(set(PATH_RE.findall(res["text"]))))
+        self.store.check_runs[key] = runs + [h]
         self.store.save()
         summary = res["result"] or (failures[0] if failures else "")
         return "\n".join(core.header(status, h, "failures | full | files" if status == "FAIL" else "full | files",
