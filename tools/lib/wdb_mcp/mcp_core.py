@@ -18,7 +18,8 @@ import tempfile
 import time
 from pathlib import Path
 
-PAGE_LINES = 20
+PAGE_LINES = 60
+ALL = 1_000_000  # budget for all=true: the whole result in one reply
 TTL = 2 * 3600
 MAX_HANDLES = 256
 STATE_REL = "_logs/gather/mcp"
@@ -27,6 +28,9 @@ RESULT_RE = re.compile(r"^RESULT (PASS|FAIL|INFO|SKIP)\b(.*)$", re.M)
 SUMMARY_RE = re.compile(r"\bsummary=(\S+)")
 LINES_RE = re.compile(r"^lines=(\d+)-(\d+) of (\d+)$", re.M)
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+class Refused(Exception):
+    """A read or command the caller may not have; the message is the reason."""
 
 def write_atomic(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -188,7 +192,8 @@ def clean(lines: list[str], banners: bool = False) -> list[str]:
         out.pop()
     return out
 
-def page(store: Store, h: str, budget: int = 0, status: str = "PASS", summary: str = "", first: bool = False) -> str:
+def page(store: Store, h: str, budget: int = 0, status: str = "PASS", summary: str = "", first: bool = False,
+         fails: int = 1) -> str:
     """One page of handle h. A reply that fits is just STATUS (+ summary) and the body; a cut one adds
     `page: A-B of N; more: handle=H` and `more` sends only the rest."""
     rec = store.get(h)
@@ -209,4 +214,4 @@ def page(store: Store, h: str, budget: int = 0, status: str = "PASS", summary: s
     while body and not body[0].strip():
         body = body[1:]
     return "\n".join(header(status, pg, f"summary: {summary}" if summary else "",
-                             fails=1) + ([""] + body if body else []))
+                             fails=fails) + ([""] + body if body else []))

@@ -19,13 +19,17 @@ import boot  # noqa: E402,F401
 import agent_log
 import mcp_tools
 
-LOOKUP_DOC = """Read repo code/docs. A cut reply ends its header with `more: handle=H`; pass handle (action=more) for the
-rest, action=full for all. actions: func (path+name, or pairs=[[path,name],...]), xref (pattern, path, regex,
-expand=FILE), names / all_names (path), lines (path, start, end), doc (path='design/x.md#Heading'), route (door|job),
-scenes, facade, stat (path), changed (query=REV; path='DOC SCRIPT' for history), code_map (path), task (query=ID),
-summary (query=JOB, pattern=MATCH), packet (session context; query='K1,K2' expands those)."""
-CHECK_DOC = """Run a check once; replies STATUS + summary + handle. Follow up with handle + action=failures|full|files.
-targets: tool_cli (stem), tool_docs, script_cap (files), load_graph, gd_load (files)."""
+LOOKUP_DOC = """Read repo code/docs. all=true returns the whole result in this one reply (use it whenever you will need
+all of it); else a reply of about 60 lines (budget=N lines), and a cut one ends its header with `more: handle=H` (pass handle for the
+next page, action=full for the rest at once). reads=[{action, path, ...}, ...] answers several independent reads in one
+reply (each item takes this tool's arguments; all=true applies to all). actions: func (path+name, or
+pairs=[[path,name],...]), xref (pattern, path, regex, expand=FILE), names (path: every declared function), lines (path,
+start, end), doc (path='design/x.md#Heading' one section; no #Heading: outline with line spans, all=true the whole
+file), route (door|job), scenes, facade, stat (path), changed (query=REV; path='DOC SCRIPT' for history), code_map
+(path), task (query=ID), summary (query=JOB, pattern=MATCH), packet (session context; query='K1,K2' expands those)."""
+CHECK_DOC = """Run a check once; replies STATUS + summary + handle, or with all=true STATUS + summary + the whole output.
+Follow up with handle + action=failures|full|files. targets: tool_cli (stem), tool_docs, script_cap (files), load_graph,
+gd_load (files)."""
 PROTOCOL_DOC = """What to do now. action=now (default): slice, phase, next actions; doc situation=NAME: that doc section
 (action=list names them); suggest query=TEXT: best tools-table rows; packet."""
 
@@ -55,12 +59,15 @@ def build_server(root: Path, surface: str, rerun_limit: bool = True):
     @srv.tool(description=LOOKUP_DOC, structured_output=False)
     def lookup(action: str = "more", handle: str = "", path: str = "", name: str = "", pattern: str = "",
                pairs: list[list[str]] | None = None, start: int = 0, end: int = 0, door: str = "", job: str = "",
-               query: str = "", regex: bool = False, expand: str = "", budget: int = 0) -> str:
-        return tools.lookup(action, handle, path, name, pattern, pairs, start, end, door, job, query, regex, expand, budget)
+               query: str = "", regex: bool = False, expand: str = "", budget: int = 0, all: bool = False,
+               reads: list[dict] | None = None) -> str:
+        return tools.lookup(action, handle, path, name, pattern, pairs, start, end, door, job, query, regex, expand, budget,
+                            whole=all, reads=reads)
 
     @srv.tool(description=CHECK_DOC, structured_output=False)
-    def check(target: str = "", handle: str = "", action: str = "", stem: str = "", files: list[str] | None = None, budget: int = 0) -> str:
-        return tools.check(target, handle, action, stem, files, budget)
+    def check(target: str = "", handle: str = "", action: str = "", stem: str = "", files: list[str] | None = None,
+              budget: int = 0, all: bool = False) -> str:
+        return tools.check(target, handle, action, stem, files, budget, whole=all)
 
     @srv.tool(description=PROTOCOL_DOC, structured_output=False)
     def protocol(action: str = "now", situation: str = "", query: str = "", handle: str = "", budget: int = 0) -> str:

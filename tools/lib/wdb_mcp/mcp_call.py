@@ -5,11 +5,14 @@
     python tools/wdb_mcp.py call lookup handle=f3a9c1                      (next page of that handle)
     python tools/wdb_mcp.py call check target=load_graph
     python tools/wdb_mcp.py call protocol action=doc situation=finish
-Values: key=value; lists as comma lists (files=a.gd,b.gd; pairs=path:name,path:name); true/false; integers.
+    python tools/wdb_mcp.py call lookup all=true reads='[{"action":"names","path":"scripts/app.gd"},{"action":"doc","path":"design/ui.md"}]'
+Values: key=value; lists as comma lists (files=a.gd,b.gd; pairs=path:name,path:name); reads as JSON; true/false; integers.
 Prints the tool's text answer, then the RESULT line. Does not need the `mcp` package.
 """
 from __future__ import annotations
 
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -20,7 +23,7 @@ import agent_log
 import mcp_tools
 
 INTS = {"start", "end", "budget"}
-BOOLS = {"regex"}
+BOOLS = {"regex", "all"}
 
 def parse(pairs: list[str]) -> dict:
     out: dict = {}
@@ -34,6 +37,11 @@ def parse(pairs: list[str]) -> dict:
             out[key] = val.lower() in ("1", "true", "yes")
         elif key == "files":
             out[key] = [v for v in val.split(",") if v]
+        elif key == "reads":
+            try:
+                out[key] = json.loads(val)
+            except ValueError:
+                agent_log.fail(f"reads must be a JSON list of objects, got {val[:60]!r}")
         elif key == "pairs":
             out[key] = [v.split(":", 1) for v in val.split(",") if ":" in v]
         else:
@@ -48,10 +56,13 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     tools = mcp_tools.Tools(root, args.surface or "D", rerun_limit=not args.surface)
-    text = getattr(tools, args.tool)(**parse(args.kv))
+    kw = parse(args.kv)
+    if "all" in kw:
+        kw["whole"] = kw.pop("all")
+    text = getattr(tools, args.tool)(**kw)
     status = "PASS" if text.startswith("STATUS: PASS") else "FAIL"
-    first = text.splitlines()[1].split(": ", 1)[-1] if len(text.splitlines()) > 1 else "-"
-    return agent_log.finish("mcp-call", root, text, status, args=args, tool=args.tool, handle=first)
+    m = re.search(r"(?:more: handle=|^handle: )([a-z][0-9a-f]{6})", text, re.M)
+    return agent_log.finish("mcp-call", root, text, status, args=args, tool=args.tool, handle=m.group(1) if m else None)
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
