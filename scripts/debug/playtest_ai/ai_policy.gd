@@ -15,19 +15,19 @@ const GATHER := 9.0
 const POLICY_PATH := "user://playtest/tuner/policy.json"
 const ACTIONS: PackedStringArray = ["threat", "hunt", "gather", "clerk", "door", "wander"]
 
-static func steer(pt: Node, p: Node, delta: float) -> bool:
+static func steer(pt: PlayHost, p: Node, delta: float) -> bool:
 	var goal: String = _goal(pt, p)
 	if goal == "":
 		return false
 	return _apply(pt, p, delta, goal)
 
-static func features(pt: Node, p: Node) -> PackedFloat32Array:
+static func features(pt: PlayHost, p: Node) -> PackedFloat32Array:
 	return _pack(pt, p, false)
 
-static func human_dists(pt: Node, p: Node) -> Vector3:
+static func human_dists(pt: PlayHost, p: Node) -> Vector3:
 	return _dists(pt, p, true)
 
-static func _goal(pt: Node, p: Node) -> String:
+static func _goal(pt: PlayHost, p: Node) -> String:
 	if CliArgs.has("--wdb-pt-rl"):
 		if pt.has_meta("rl_goal"):
 			var rl: String = str(pt.get_meta("rl_goal"))
@@ -41,7 +41,7 @@ static func _goal(pt: Node, p: Node) -> String:
 		return ""
 	return _argmax(model, _pack(pt, p, false))
 
-static func _model(pt: Node) -> Dictionary:
+static func _model(pt: PlayHost) -> Dictionary:
 	if pt.has_meta("policy_model"):
 		var cached: Variant = pt.get_meta("policy_model")
 		if cached is Dictionary:
@@ -70,7 +70,7 @@ static func _valid(d: Dictionary) -> bool:
 			return false
 	return true
 
-static func _pack(pt: Node, p: Node, fresh_threat: bool) -> PackedFloat32Array:
+static func _pack(pt: PlayHost, p: Node, fresh_threat: bool) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	out.resize(7)
 	if p == null or not is_instance_valid(p):
@@ -96,7 +96,7 @@ static func _pack(pt: Node, p: Node, fresh_threat: bool) -> PackedFloat32Array:
 	out[6] = clampf(cargo / 20.0, 0.0, 1.0)
 	return out
 
-static func _dists(pt: Node, p: Node, fresh_threat: bool) -> Vector3:
+static func _dists(pt: PlayHost, p: Node, fresh_threat: bool) -> Vector3:
 	var threat: float = 99.0
 	if not fresh_threat and pt.has_meta("log_threat_d"):
 		threat = float(pt.get_meta("log_threat_d"))
@@ -147,7 +147,7 @@ static func _argmax(model: Dictionary, feat: PackedFloat32Array) -> String:
 		return ACTIONS[best_i]
 	return ""
 
-static func _apply(pt: Node, p: Node, delta: float, goal: String) -> bool:
+static func _apply(pt: PlayHost, p: Node, delta: float, goal: String) -> bool:
 	if goal == "threat":
 		var foe: Node = G.nearest_foe(pt, p)
 		if foe != null and is_instance_valid(foe):
@@ -215,7 +215,7 @@ static func yields_for_depth(slot_name: String, depth_open: bool) -> bool:
 	return slot_name == "campaign" and depth_open
 
 
-static func _depth_open(pt: Node, p: Node) -> bool:
+static func _depth_open(pt: PlayHost, p: Node) -> bool:
 	if Misc._living_boss(pt, p) != null:
 		return true
 	return Misc._floor_stairs(pt) != null

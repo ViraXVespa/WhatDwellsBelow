@@ -13,7 +13,7 @@ static func press_at(reach: float) -> float:
 	return reach
 
 
-static func use_prop(pt: Node, p: Node, dest: Node, reach: float = 1.18) -> void:
+static func use_prop(pt: PlayHost, p: Node, dest: Node, reach: float = 1.18) -> void:
 	if dest == null or not is_instance_valid(dest):
 		pt.move = Vector2.ZERO
 		pt.path_goal = null
@@ -40,7 +40,7 @@ static func use_prop(pt: Node, p: Node, dest: Node, reach: float = 1.18) -> void
 		return
 	pt._follow_goal(p, dest)
 
-static func _wants_clerk(pt: Node, n: Node) -> bool:
+static func _wants_clerk(pt: PlayHost, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or U._banned(pt, n):
 		return false
 	if (n.get("used") == true):
@@ -52,7 +52,7 @@ static func _wants_clerk(pt: Node, n: Node) -> bool:
 		return int(pt._gather_cargo()) > 0
 	return int(App.gold) > 0 or int(pt._gather_cargo()) > 0 or int(pt._misc_cargo()) > 0
 
-static func _is_junk(pt: Node, n: Node) -> bool:
+static func _is_junk(pt: PlayHost, n: Node) -> bool:
 	if n == null or not is_instance_valid(n):
 		return true
 	var k: String = str(n.get("kind"))
@@ -68,7 +68,7 @@ static func _is_junk(pt: Node, n: Node) -> bool:
 		return true
 	return false
 
-static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
+static func _usable_local(pt: PlayHost, p: Node, lim: float) -> Node:
 	var _fac = load("res://scripts/debug/playtest_ai.gd")
 	var guard: int = 0
 	while guard < 8:
@@ -83,7 +83,7 @@ static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
 		return n
 	return null
 
-static func _mail_if_close(pt: Node, p: Node, clerk: Node) -> bool:
+static func _mail_if_close(pt: PlayHost, p: Node, clerk: Node) -> bool:
 	if clerk == null or not is_instance_valid(clerk) or not _wants_clerk(pt, clerk):
 		return false
 	if pt._dist(p, clerk) > 1.6:
@@ -96,7 +96,7 @@ static func _mail_if_close(pt: Node, p: Node, clerk: Node) -> bool:
 	pt.just["interact"] = true
 	return true
 
-static func _leave_crystal(pt: Node, p: Node, crystal: Node) -> void:
+static func _leave_crystal(pt: PlayHost, p: Node, crystal: Node) -> void:
 	var _fac = load("res://scripts/debug/playtest_ai.gd")
 	pt.set_meta("flee_c", true)
 	pt.set_meta("flee_t", 6.0)
@@ -112,7 +112,7 @@ static func _leave_crystal(pt: Node, p: Node, crystal: Node) -> void:
 	pt.wander_dir = flee_c
 	pt.aim = flee_c
 
-static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
+static func _engage(pt: PlayHost, p: Node, foe: Node, why: String) -> void:
 	U.stop_gather(p)
 	U.note_threat(pt, p, foe)
 	_clear_lock(pt)
@@ -129,7 +129,7 @@ static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
 	Human.dodge(pt, p, foe, d)
 	Human.blur_aim(pt, d)
 
-static func _done_with_clerk(pt: Node, n: Node) -> void:
+static func _done_with_clerk(pt: PlayHost, n: Node) -> void:
 	var _fac = load("res://scripts/debug/playtest_ai.gd")
 	if n == null or not is_instance_valid(n):
 		return
@@ -139,12 +139,12 @@ static func _done_with_clerk(pt: Node, n: Node) -> void:
 	pt.path.clear()
 	pt.path_goal = null
 
-static func _clear_lock(pt: Node) -> void:
+static func _clear_lock(pt: PlayHost) -> void:
 	if pt.has_meta("lock_n"):
 		pt.remove_meta("lock_n")
 	pt.set_meta("lock_t", 0.0)
 
-static func campaign_depth(pt: Node, p: Node, delta: float) -> bool:
+static func campaign_depth(pt: PlayHost, p: Node, delta: float) -> bool:
 	if str(pt.slot) != "campaign":
 		return false
 	var goal: Node = _living_boss(pt, p)
@@ -192,7 +192,7 @@ static func campaign_depth(pt: Node, p: Node, delta: float) -> bool:
 	use_prop(pt, p, stairs)
 	return true
 
-static func _tight(pt: Node, p: Node, delta: float) -> bool:
+static func _tight(pt: PlayHost, p: Node, delta: float) -> bool:
 	var here: Vector2i = pt._cell_of_node(p)
 	var ax: int = here.x
 	var ay: int = here.y
@@ -208,7 +208,7 @@ static func _tight(pt: Node, p: Node, delta: float) -> bool:
 	pt.set_meta("campaign_hold", hold)
 	return hold > 2.0
 
-static func _slip_side(pt: Node, p: Node, goal: Node) -> Vector2:
+static func _slip_side(pt: PlayHost, p: Node, goal: Node) -> Vector2:
 	var to_goal: Vector2 = pt._xz_to(p, goal)
 	var side: Vector2 = Vector2(-to_goal.y, to_goal.x)
 	if side.length_squared() < 0.0001:
@@ -222,7 +222,7 @@ static func _slip_side(pt: Node, p: Node, goal: Node) -> Vector2:
 		return pt._any_open(p)
 	return side
 
-static func _living_boss(pt: Node, p: Node) -> Node:
+static func _living_boss(pt: PlayHost, p: Node) -> Node:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -237,7 +237,7 @@ static func _living_boss(pt: Node, p: Node) -> Node:
 			best_d = dist
 	return best
 
-static func _floor_stairs(pt: Node) -> Node:
+static func _floor_stairs(pt: PlayHost) -> Node:
 	var dungeon: Node = pt._dungeon()
 	if dungeon == null:
 		return null

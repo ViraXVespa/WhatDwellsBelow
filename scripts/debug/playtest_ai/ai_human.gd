@@ -9,12 +9,12 @@ const RETARGET := Vector2(0.06, 0.14)  # s when switching to another foe mid-fig
 const DWELL := 0.9  # s a strafe side is kept before it may flip
 const NEAR_NOW := 2.6  # a foe this close is answered at once
 
-static func _seed(pt: Node) -> void:
+static func _seed(pt: PlayHost) -> void:
 	if int(pt.hum.get("seed", -1)) != int(App.run_seed):
 		pt.hum["seed"] = int(App.run_seed)
 		pt.rng.seed = int(App.run_seed) * 7919 + 17
 
-static func reacting(pt: Node, foe: Node, d: float) -> bool:
+static func reacting(pt: PlayHost, foe: Node, d: float) -> bool:
 	_seed(pt)
 	var h: Dictionary = pt.hum
 	var id: int = foe.get_instance_id()
@@ -26,7 +26,7 @@ static func reacting(pt: Node, foe: Node, d: float) -> bool:
 	h["seen_t"] = pt.sim_t
 	return pt.sim_t < float(h.get("until", 0.0)) and d > NEAR_NOW
 
-static func blur_aim(pt: Node, d: float) -> void:
+static func blur_aim(pt: PlayHost, d: float) -> void:
 	# Up to ~3 deg up close, ~4 deg at range, a new wobble every 0.45 s (not per-frame noise).
 	var h: Dictionary = pt.hum
 	if pt.sim_t >= float(h.get("aim_t", 0.0)):
@@ -34,12 +34,12 @@ static func blur_aim(pt: Node, d: float) -> void:
 		h["aim_err"] = pt.rng.randf_range(-1.0, 1.0)
 	pt.aim = pt.aim.rotated(deg_to_rad((2.5 + minf(d, 8.0) * 0.2) * float(h.get("aim_err", 0.0))))
 
-static func flip_strafe(pt: Node) -> void:
+static func flip_strafe(pt: PlayHost) -> void:
 	if pt.sim_t - float(pt.hum.get("flip_t", -9.0)) >= DWELL:
 		pt.hum["flip_t"] = pt.sim_t
 		pt.strafe_sign *= -1.0
 
-static func dodge(pt: Node, p: Node, foe: Node, d: float) -> void:
+static func dodge(pt: PlayHost, p: Node, foe: Node, d: float) -> void:
 	# A hit just landed with the foe on top of us: step away with a dash (cooldown shared with the unstick/crowd dashes).
 	var hp: float = float(p.hp) if p.get("hp") != null else 0.0
 	var fresh: bool = pt.sim_t - float(pt.hum.get("hp_t", -9.0)) < 0.4

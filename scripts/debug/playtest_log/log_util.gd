@@ -4,12 +4,12 @@ extends Object
 
 const Fmt := preload("res://scripts/debug/playtest_log/fmt.gd")
 
-static func _t(pt: Node) -> float:
+static func _t(pt: PlayHost) -> float:
 	if pt.get("sim_t") == null:
 		return 0.0
 	return snappedf(float(pt.sim_t), 0.1)
 
-static func _xy(pt: Node, n: Node) -> Array:
+static func _xy(pt: PlayHost, n: Node) -> Array:
 	if n == null or not is_instance_valid(n):
 		return [0, 0]
 	var c: Vector2i = pt._cell_of_node(n)
@@ -20,7 +20,7 @@ static func _dir() -> String:
 	DirAccess.make_dir_recursive_absolute(d)
 	return d
 
-static func _stamp(pt: Node) -> String:
+static func _stamp(pt: PlayHost) -> String:
 	var now: Dictionary = Time.get_datetime_dict_from_system()
 	var save: String = "fresh"
 	if pt.get("job") is Dictionary:
@@ -62,30 +62,30 @@ static func _kind_tool_ok(k: String) -> bool:
 		return tool == "pickaxe"
 	return true
 
-static func _banned_n(pt: Node, n: Node) -> bool:
+static func _banned_n(pt: PlayHost, n: Node) -> bool:
 	if n == null or not pt.has_meta("skip_list"):
 		return false
 	var a: Variant = pt.get_meta("skip_list")
 	return a is Array and (a as Array).has(n)
 
-static func _near(pt: Node, p: Node, lim: float = 40.0) -> Array:
+static func _near(pt: PlayHost, p: Node, lim: float = 40.0) -> Array:
 	return Fmt.near(pt, p, lim)
 
-static func _skip_hint(pt: Node, p: Node) -> String:
+static func _skip_hint(pt: PlayHost, p: Node) -> String:
 	return Fmt.skip_hint(pt, p)
 
-static func _lock_fields(pt: Node, p: Node) -> Dictionary:
+static func _lock_fields(pt: PlayHost, p: Node) -> Dictionary:
 	return Fmt.lock_fields(pt, p)
 
-static func _path_fields(pt: Node) -> Dictionary:
+static func _path_fields(pt: PlayHost) -> Dictionary:
 	return Fmt.path_fields(pt)
 
-static func _wd(pt: Node) -> String:
+static func _wd(pt: PlayHost) -> String:
 	if pt.get("wander_dir") == null:
 		return ""
 	return _cmd(pt.wander_dir)
 
-static func _seen_n(pt: Node) -> int:
+static func _seen_n(pt: PlayHost) -> int:
 	if not pt.has_meta("seen_map"):
 		return 0
 	var m: Variant = pt.get_meta("seen_map")
@@ -93,7 +93,7 @@ static func _seen_n(pt: Node) -> int:
 		return (m as Dictionary).size()
 	return 0
 
-static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
+static func _tgt_cell(pt: PlayHost, extra: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	if extra.has("tgt_c"):
 		return out
@@ -107,7 +107,7 @@ static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
 		out["tgt_c"] = _xy(pt, n)
 	return out
 
-static func _use_fields(pt: Node, _p: Node) -> Dictionary:
+static func _use_fields(pt: PlayHost, _p: Node) -> Dictionary:
 	var out: Dictionary = {}
 	if not pt.interact:
 		return out
@@ -147,7 +147,7 @@ static func _relabel(why: String, clerk_d: float, gather_d: float, cargo: int) -
 		return "no_gather"
 	return "gather_far" if gather_d > 16.0 else why
 
-static func _card_open(pt: Node, p: Node) -> Dictionary:
+static func _card_open(pt: PlayHost, p: Node) -> Dictionary:
 	var keys: Array[String] = ["e", "w", "n", "s"]
 	var vecs: Array[Vector2] = [Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN]
 	var grid: Dictionary = {}
@@ -167,7 +167,7 @@ static func _card_open(pt: Node, p: Node) -> Dictionary:
 		test[card] = not blocked
 	return {"grid": grid, "open": open, "test": test}
 
-static func _maybe_combat(pt: Node, last_combat_kills: int, last_combat_dealt: float, last_combat_taken: float) -> Dictionary:
+static func _maybe_combat(pt: PlayHost, last_combat_kills: int, last_combat_dealt: float, last_combat_taken: float) -> Dictionary:
 	if App.tel == null:
 		return {"changed": false}
 	var kills: int = int(App.tel.kills)

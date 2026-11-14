@@ -3,7 +3,7 @@ extends Object
 const REACH := 36
 const Nav := preload("res://scripts/debug/playtest_path/path_nav.gd")
 
-static func door_bypass(pt: Node, p: Node, boss: Node) -> Vector2:
+static func door_bypass(pt: PlayHost, p: Node, boss: Node) -> Vector2:
 	var door: Node = pt._closed_door()
 	if door == null:
 		return Vector2.ZERO
@@ -35,7 +35,7 @@ static func door_bypass(pt: Node, p: Node, boss: Node) -> Vector2:
 			return pt._door_away(p)
 	return v.normalized()
 
-static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
+static func follow_goal(pt: PlayHost, p: Node, dest: Node) -> void:
 	if dest == null:
 		pt.move = pt._steer(p, Vector2.ZERO)
 		return
@@ -70,7 +70,7 @@ static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
 	if step != Vector2.ZERO:
 		pt.aim = step
 
-static func wall_sep(pt: Node, p: Node) -> Vector2:
+static func wall_sep(pt: PlayHost, p: Node) -> Vector2:
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
 	var pos: Vector3 = (p as Node3D).global_position
 	var center: Vector2 = Vector2(float(here.x) + 0.5, float(here.y) + 0.5)

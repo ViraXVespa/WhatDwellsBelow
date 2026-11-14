@@ -18,34 +18,34 @@ static func alive_enemy(n: Node) -> bool:
 		return false
 	return not (n.has_method("is_alive") and not n.is_alive())
 
-static func notice_range(pt: Node) -> float:
+static func notice_range(pt: PlayHost) -> float:
 	if pt._is_staff():
 		return maxf(6.2, float(App.bal.staff_special_radius) + 4.0)
 	if pt._is_bow():
 		return maxf(6.0, float(App.bal.bow_range) + 0.4)
 	return maxf(4.4, pt._weapon_range() + 1.6)
 
-static func _spec(pt: Node, cd: float) -> void:
+static func _spec(pt: PlayHost, cd: float) -> void:
 	pt.special = true
 	pt.just["special"] = true
 	pt.spec_cd = cd
 
-static func try_staff_special(pt: Node, d: float, los: bool) -> void:
+static func try_staff_special(pt: PlayHost, d: float, los: bool) -> void:
 	if los and pt.spec_cd <= 0.0 and d >= 1.45 and d <= pt._staff_hold() + 1.8:
 		_spec(pt, 1.15)
 
-static func try_bow_special(pt: Node, d: float, los: bool) -> void:
+static func try_bow_special(pt: PlayHost, d: float, los: bool) -> void:
 	if pt._is_bow() and los and pt.spec_cd <= 0.0 and d <= pt._weapon_range() + 0.2:
 		_spec(pt, 1.2)
 
-static func try_axe_special(pt: Node, d: float, los: bool, enemy: Node) -> void:
+static func try_axe_special(pt: PlayHost, d: float, los: bool, enemy: Node) -> void:
 	if not pt._is_axe() or not los or pt.spec_cd > 0.0:
 		return
 	var slam: float = float(App.bal.slam_radius) + 0.12
 	if d <= slam and (is_boss(enemy) or d <= slam * 0.72):
 		_spec(pt, 1.1)
 
-static func _meta_n(pt: Node, key: String) -> Node:
+static func _meta_n(pt: PlayHost, key: String) -> Node:
 	if not pt.has_meta(key):
 		return null
 	var v: Variant = pt.get_meta(key)
@@ -53,16 +53,16 @@ static func _meta_n(pt: Node, key: String) -> Node:
 		return null
 	return v
 
-static func _meta_f(pt: Node, key: String, fallback: float = 0.0) -> float:
+static func _meta_f(pt: PlayHost, key: String, fallback: float = 0.0) -> float:
 	if not pt.has_meta(key):
 		return fallback
 	return float(pt.get_meta(key))
 
-static func _lock(pt: Node, n: Node, sec: float = 3.2) -> void:
+static func _lock(pt: PlayHost, n: Node, sec: float = 3.2) -> void:
 	pt.set_meta("lock_n", n)
 	pt.set_meta("lock_t", sec)
 
-static func _locked(pt: Node, delta: float) -> Node:
+static func _locked(pt: PlayHost, delta: float) -> Node:
 	var t: float = _meta_f(pt, "lock_t", 0.0) - delta
 	pt.set_meta("lock_t", t)
 	if t <= 0.0:
@@ -71,16 +71,16 @@ static func _locked(pt: Node, delta: float) -> Node:
 		return null
 	return _meta_n(pt, "lock_n")
 
-static func _bans(pt: Node) -> Array:
+static func _bans(pt: PlayHost) -> Array:
 	if not pt.has_meta("skip_list"):
 		return []
 	var a: Variant = pt.get_meta("skip_list")
 	return a if a is Array else []
 
-static func _banned(pt: Node, n: Node) -> bool:
+static func _banned(pt: PlayHost, n: Node) -> bool:
 	return n == null or _bans(pt).has(n)
 
-static func _ban(pt: Node, n: Variant) -> void:
+static func _ban(pt: PlayHost, n: Variant) -> void:
 	if n == null:
 		return
 	var a: Array = _bans(pt)
@@ -90,13 +90,13 @@ static func _ban(pt: Node, n: Variant) -> void:
 		a.pop_front()
 	pt.set_meta("skip_list", a)
 
-static func _seen(pt: Node) -> Dictionary:
+static func _seen(pt: PlayHost) -> Dictionary:
 	if not pt.has_meta("seen_map"):
 		return {}
 	var a: Variant = pt.get_meta("seen_map")
 	return a if a is Dictionary else {}
 
-static func _mark(pt: Node, c: Vector2i) -> void:
+static func _mark(pt: PlayHost, c: Vector2i) -> void:
 	var m: Dictionary = _seen(pt)
 	m[c] = int(m.get(c, 0)) + 1
 	pt.set_meta("seen_map", m)
@@ -126,7 +126,7 @@ static func is_foe_lock(n: Node) -> bool:
 	var k: String = str(n.get("kind"))
 	return k == "" or k.begins_with("<")
 
-static func can_use(pt: Node, n: Node) -> bool:
+static func can_use(pt: PlayHost, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or _banned(pt, n):
 		return false
 	if str(n.get("kind")) == "stairs" and bool(n.get("locked")):
@@ -138,13 +138,13 @@ static func can_use(pt: Node, n: Node) -> bool:
 		return false
 	return true
 
-static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
+static func _near_prop(pt: PlayHost, p: Node, lim: float) -> Node:
 	return Move._near_prop(pt, p, lim)
 
-static func tick_motion(pt: Node, p: Node, delta: float) -> void:
+static func tick_motion(pt: PlayHost, p: Node, delta: float) -> void:
 	Move.tick_motion(pt, p, delta)
 
-static func _trail(pt: Node, c: Vector2i) -> void:
+static func _trail(pt: PlayHost, c: Vector2i) -> void:
 	var a: Array = []
 	if pt.has_meta("trail") and pt.get_meta("trail") is Array:
 		a = pt.get_meta("trail")
@@ -154,32 +154,32 @@ static func _trail(pt: Node, c: Vector2i) -> void:
 		a.pop_front()
 	pt.set_meta("trail", a)
 
-static func _recent(pt: Node) -> Array:
+static func _recent(pt: PlayHost) -> Array:
 	if pt.has_meta("trail") and pt.get_meta("trail") is Array:
 		return pt.get_meta("trail")
 	return []
 
-static func spinning(pt: Node) -> bool:
+static func spinning(pt: PlayHost) -> bool:
 	var a: Array = _recent(pt)
 	if a.size() < 4:
 		return false
 	var n: int = a.size()
 	return a[n - 1] == a[n - 3] and a[n - 2] == a[n - 4] and a[n - 1] != a[n - 2]
 
-static func at_prop(pt: Node, p: Node) -> bool:
+static func at_prop(pt: PlayHost, p: Node) -> bool:
 	var n: Node = _meta_n(pt, "lock_n")
 	if n == null:
 		n = pt.path_goal if pt.get("path_goal") else null
 	return n != null and is_instance_valid(n) and pt._dist(p, n) < 1.35
 
-static func should_unstick(pt: Node, p: Node) -> bool:
+static func should_unstick(pt: PlayHost, p: Node) -> bool:
 	if at_prop(pt, p):
 		return pt.stuck_t > 5.0
 	if spinning(pt) and pt.stuck_t > 0.4:
 		return true
 	return pt.stuck_t > 1.6 or _meta_f(pt, "cell_t", 0.0) > 1.8
 
-static func want_dash(pt: Node) -> bool:
+static func want_dash(pt: PlayHost) -> bool:
 	if _meta_f(pt, "dash_cd", 0.0) > 0.0:
 		return false
 	pt.set_meta("dash_cd", 0.85)
@@ -187,7 +187,7 @@ static func want_dash(pt: Node) -> bool:
 	pt.just["dash"] = true
 	return true
 
-static func do_unstick(pt: Node) -> void:
+static func do_unstick(pt: PlayHost) -> void:
 	Move.do_unstick(pt)
 
 static func stop_gather(p: Node) -> void:
@@ -196,18 +196,18 @@ static func stop_gather(p: Node) -> void:
 	if p.get("gathering") != null:
 		p.set("gathering", null)
 
-static func note_threat(pt: Node, p: Node, enemy: Node) -> void:
+static func note_threat(pt: PlayHost, p: Node, enemy: Node) -> void:
 	pt.set_meta("log_threat_d", pt._dist(p, enemy) if enemy != null and is_instance_valid(enemy) and p != null else 99.0)
 
 static func really_extracted() -> bool:
 	return App.extracted and App.tel != null and float(App.tel.clerk_t) >= 0.0
 
-static func _openness(pt: Node, c: Vector2i) -> int:
+static func _openness(pt: PlayHost, c: Vector2i) -> int:
 	var n: int = 0
 	for s: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 		if pt._steer_floor(c + s):
 			n += 1
 	return n
 
-static func wander(pt: Node, p: Node, _delta: float = 0.0) -> void:
+static func wander(pt: PlayHost, p: Node, _delta: float = 0.0) -> void:
 	Move.wander(pt, p, _delta)

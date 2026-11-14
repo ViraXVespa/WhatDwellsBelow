@@ -99,7 +99,7 @@ static func buy_supplies() -> Dictionary:
 		foods += 1
 	return {"potions": pots, "foods": foods}
 
-static func hub_ready(pt: Node) -> bool:
+static func hub_ready(pt: PlayHost) -> bool:
 	if not bool(pt.get("campaign_enter")) or App.in_dungeon:
 		return false
 	var scene: Node = pt.get_tree().current_scene
@@ -107,7 +107,7 @@ static func hub_ready(pt: Node) -> bool:
 		return false
 	return scene.get("build_done") == true
 
-static func hub_enter(pt: Node) -> void:
+static func hub_enter(pt: PlayHost) -> void:
 	pt.campaign_enter = false
 	var job: Dictionary = pt.job
 	if not bool(job.get("hub_forged", false)):

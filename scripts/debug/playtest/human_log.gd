@@ -10,7 +10,7 @@ const LogUtil := preload("res://scripts/debug/playtest_log/log_util.gd")
 
 const STEP := 0.5
 
-static func tick(pt: Node, delta: float) -> void:
+static func tick(pt: PlayHost, delta: float) -> void:
 	if not _on(pt):
 		return
 	if bool(pt.get("live_running")) or bool(pt.get("smoke_mode")):
@@ -38,7 +38,7 @@ static func tick(pt: Node, delta: float) -> void:
 	pt.set_meta("human_log_goal", goal)
 	Db.append_decisions("human", [_row(pt, p, goal, clock)], "")
 
-static func _on(pt: Node) -> bool:
+static func _on(pt: PlayHost) -> bool:
 	if pt.has_meta("human_log_on"):
 		return bool(pt.get_meta("human_log_on"))
 	var on: bool = CliArgs.has("--wdb-pt-human-log")
@@ -51,7 +51,7 @@ static func _speed(p: Node) -> float:
 		return Vector2(body.velocity.x, body.velocity.z).length()
 	return 0.0
 
-static func _infer(pt: Node, p: Node) -> String:
+static func _infer(pt: PlayHost, p: Node) -> String:
 	var gathering: Variant = p.get("gathering")
 	if gathering != null and is_instance_valid(gathering):
 		return "gather"
@@ -72,7 +72,7 @@ static func _infer(pt: Node, p: Node) -> String:
 		return "wander"
 	return ""
 
-static func _row(pt: Node, p: Node, goal: String, clock: float) -> Dictionary:
+static func _row(pt: PlayHost, p: Node, goal: String, clock: float) -> Dictionary:
 	var dist: Vector3 = Policy.human_dists(pt, p)
 	var hp: float = 1.0
 	if p.get("hp") != null and p.get("max_hp") != null:

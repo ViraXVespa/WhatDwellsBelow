@@ -11,7 +11,7 @@ const GATHER := 9.0
 const Misc := preload("res://scripts/debug/playtest_ai/ai_misc.gd")
 const Policy := preload("res://scripts/debug/playtest_ai/ai_policy.gd")
 
-static func think(pt: Node, p: Node, delta: float) -> void:
+static func think(pt: PlayHost, p: Node, delta: float) -> void:
 	U.tick_motion(pt, p, delta)
 	pt.set_meta("flee_t", maxf(0.0, U._meta_f(pt, "flee_t", 0.0) - delta))
 	if p.get("hp") != null and float(p.hp) / maxf(1.0, float(p.max_hp)) < 0.35:

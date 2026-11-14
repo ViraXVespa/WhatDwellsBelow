@@ -6,7 +6,7 @@ const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 const Near := preload("res://scripts/debug/playtest_goals/goals_near.gd")
 const Best := preload("res://scripts/debug/playtest_goals/goals_best.gd")
 
-static func world_ui(pt: Node) -> Node:
+static func world_ui(pt: PlayHost) -> Node:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -15,7 +15,7 @@ static func world_ui(pt: Node) -> Node:
 		return s.world_ui()
 	return null
 
-static func role_has_cargo(pt: Node, role: String) -> bool:
+static func role_has_cargo(pt: PlayHost, role: String) -> bool:
 	if role == "gather":
 		return pt._gather_cargo() > 0
 	if role == "misc":
@@ -24,25 +24,25 @@ static func role_has_cargo(pt: Node, role: String) -> bool:
 		return (pt._gather_cargo() + pt._misc_cargo()) > 0
 	return false
 
-static func dismiss_world_ui(pt: Node) -> bool:
+static func dismiss_world_ui(pt: PlayHost) -> bool:
 	return Near.dismiss_world_ui(pt)
 
-static func nearest_foe(pt: Node, p: Node) -> Node:
+static func nearest_foe(pt: PlayHost, p: Node) -> Node:
 	var seen: Node = Near.nearest_visible_threat(pt, p)
 	if seen:
 		return seen
 	return Best.nearest_room_threat(pt, p)
 
-static func nearest_hunt(pt: Node, p: Node) -> Node:
+static func nearest_hunt(pt: PlayHost, p: Node) -> Node:
 	return Near.nearest_hunt(pt, p)
 
-static func closest_kind(pt: Node, p: Node, kind: String, radius: float) -> Node:
+static func closest_kind(pt: PlayHost, p: Node, kind: String, radius: float) -> Node:
 	return Best.closest_kind(pt, p, kind, radius)
 
-static func away_open(pt: Node, p: Node, node: Node) -> Vector2:
+static func away_open(pt: PlayHost, p: Node, node: Node) -> Vector2:
 	return Best.away_open(pt, p, node)
 
-static func mail_at(pt: Node, clerk: Node) -> void:
+static func mail_at(pt: PlayHost, clerk: Node) -> void:
 	if clerk == null or pt._is_chest(clerk):
 		return
 	var role: String = pt._clerk_role(clerk)
@@ -81,22 +81,22 @@ static func misc_cargo() -> int:
 			n += 1
 	return n
 
-static func clerk_accepts(pt: Node, n: Node) -> bool:
+static func clerk_accepts(pt: PlayHost, n: Node) -> bool:
 	return role_has_cargo(pt, pt._clerk_role(n))
 
-static func best_clerk(pt: Node, p: Node) -> Node:
+static func best_clerk(pt: PlayHost, p: Node) -> Node:
 	return Near.best_clerk(pt, p)
 
-static func best_gather(pt: Node, p: Node) -> Node:
+static func best_gather(pt: PlayHost, p: Node) -> Node:
 	return Near.best_gather(pt, p)
 
-static func best_chest(pt: Node, p: Node) -> Node:
+static func best_chest(pt: PlayHost, p: Node) -> Node:
 	return Best.best_chest(pt, p)
 
-static func reachable_kind(pt: Node, p: Node, prefix: String) -> Node:
+static func reachable_kind(pt: PlayHost, p: Node, prefix: String) -> Node:
 	return Near.reachable_kind(pt, p, prefix)
 
-static func crowd(pt: Node, p: Node) -> int:
+static func crowd(pt: PlayHost, p: Node) -> int:
 	var n_hit: int = 0
 	if pt.get_tree() == null:
 		return 0
@@ -123,7 +123,7 @@ static func xz_to(a: Node, b: Node) -> Vector2:
 		return Vector2.DOWN
 	return v.normalized()
 
-static func dungeon(pt: Node) -> Node:
+static func dungeon(pt: PlayHost) -> Node:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null

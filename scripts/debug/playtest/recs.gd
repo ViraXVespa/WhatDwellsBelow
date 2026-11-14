@@ -1,6 +1,6 @@
 extends Object
 
-static func compute_coefs(pt: Node) -> void:
+static func compute_coefs(pt: PlayHost) -> void:
 	pt.coefs.clear()
 	for key: String in ["axe_damage", "staff_damage", "bow_damage", "enemy_hp_mult", "mine_chance"]:
 		var xs: Array = []
@@ -11,7 +11,7 @@ static func compute_coefs(pt: Node) -> void:
 		pt.coefs[key] = pt._corr(xs, ys)
 	pt._weapon_aware_nudge()
 
-static func weapon_aware_nudge(pt: Node) -> void:
+static func weapon_aware_nudge(pt: PlayHost) -> void:
 	var dmg: Dictionary = {"great_axe": 0.0, "staff": 0.0, "longbow": 0.0}
 	for row: Variant in pt.history:
 		var wv: Variant = row.get("wpn", {})
@@ -66,7 +66,7 @@ static func corr(xs: Array, ys: Array) -> float:
 		return 0.0
 	return clampf(num / sqrt(dx * dy), -1.0, 1.0)
 
-static func build_recs(pt: Node) -> void:
+static func build_recs(pt: PlayHost) -> void:
 	var base: Dictionary = {
 		"axe_damage": App.bal.axe_damage,
 		"staff_damage": App.bal.staff_damage,
@@ -109,7 +109,7 @@ static func restore_bal(d: Dictionary) -> void:
 	for k: Variant in d.keys():
 		App.bal.setv(str(k), float(d[k]))
 
-static func format_summary(pt: Node) -> String:
+static func format_summary(pt: PlayHost) -> String:
 	var s: String = "Playtest  ·  rows %d  ·  queue %d\n" % [pt.history.size(), pt.queue.size()]
 	s += "Coefs: "
 	for k: Variant in pt.coefs.keys():
@@ -123,7 +123,7 @@ static func format_summary(pt: Node) -> String:
 	s += "\n" + pt.success_report()
 	return s
 
-static func success_report(pt: Node) -> String:
+static func success_report(pt: PlayHost) -> String:
 	if pt.history.is_empty():
 		return "Success: no rows."
 	var extract_t: float = 9999.0
@@ -146,13 +146,13 @@ static func success_report(pt: Node) -> String:
 	var t_ok: bool = extract_t <= 600.0
 	return "SuccessCriterion extract_s=%.1f t_ok=%s recap=%s weapons_bal=%s" % [extract_t, str(t_ok), str(drain), str(bal_ok)]
 
-static func save_history(pt: Node) -> void:
+static func save_history(pt: PlayHost) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://playtest"))
 	var f: FileAccess = FileAccess.open("user://playtest/history.json", FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(pt.history))
 
-static func load_history(pt: Node) -> void:
+static func load_history(pt: PlayHost) -> void:
 	if not FileAccess.file_exists("user://playtest/history.json"):
 		return
 	var f: FileAccess = FileAccess.open("user://playtest/history.json", FileAccess.READ)
@@ -162,13 +162,13 @@ static func load_history(pt: Node) -> void:
 	if parsed is Array:
 		pt.history = parsed
 
-static func save_coefs(pt: Node) -> void:
+static func save_coefs(pt: PlayHost) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://playtest"))
 	var f: FileAccess = FileAccess.open("user://playtest/coefs.json", FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(pt.coefs))
 
-static func load_coefs(pt: Node) -> void:
+static func load_coefs(pt: PlayHost) -> void:
 	if not FileAccess.file_exists("user://playtest/coefs.json"):
 		return
 	var f: FileAccess = FileAccess.open("user://playtest/coefs.json", FileAccess.READ)

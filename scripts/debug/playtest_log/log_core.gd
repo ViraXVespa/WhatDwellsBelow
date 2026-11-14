@@ -26,7 +26,7 @@ static var ended: bool = false
 static var end_cond: String = ""
 static var end_fail: String = ""
 
-static func begin(pt: Node) -> void:
+static func begin(pt: PlayHost) -> void:
 	events = []
 	started = true
 	ended = false
@@ -73,7 +73,7 @@ static func begin(pt: Node) -> void:
 	})
 	load("res://scripts/debug/playtest_log.gd")._flush(pt)
 
-static func beat(pt: Node, p: Node) -> void:
+static func beat(pt: PlayHost, p: Node) -> void:
 	var gold: int = int(App.gold)
 	var kills: int = int(App.tel.kills) if App.tel else 0
 	var hp: float = 0.0
@@ -113,8 +113,8 @@ static func beat(pt: Node, p: Node) -> void:
 	if flush_n >= 24:
 		load("res://scripts/debug/playtest_log.gd")._flush(pt)
 
-static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
+static func decide(pt: PlayHost, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
 	Beat.decide(pt, p, name, why, extra)
 
-static func step(pt: Node, p: Node) -> void:
+static func step(pt: PlayHost, p: Node) -> void:
 	Beat.step(pt, p)

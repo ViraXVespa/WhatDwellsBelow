@@ -2,7 +2,7 @@ extends Object
 
 const PlaytestLogUtil := preload("res://scripts/debug/playtest_log/log_util.gd")
 
-static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
+static func decide(pt: PlayHost, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
 	var _fac = load("res://scripts/debug/playtest_log/log_core.gd")
 	var t: float = PlaytestLogUtil._t(pt)
 	if name == _fac.last_goal and why == str(pt.get_meta("decide_why", "")) and t - _fac.last_decide_t < 2.0:
@@ -73,7 +73,7 @@ static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictiona
 		ev.merge(extra)
 	_fac.events.append(ev)
 
-static func step(pt: Node, p: Node) -> void:
+static func step(pt: PlayHost, p: Node) -> void:
 	var _fac = load("res://scripts/debug/playtest_log/log_core.gd")
 	if p == null or not is_instance_valid(p):
 		return

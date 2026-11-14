@@ -10,7 +10,7 @@ static func _gatherable(n: Node, tool: String) -> bool:
 		return false
 	return tool == ("hatchet" if str(n.get("kind")) == "wood" else "pickaxe")
 
-static func best_gather(pt: Node, p: Node) -> Node:
+static func best_gather(pt: PlayHost, p: Node) -> Node:
 	if pt._gather_cargo() >= 8:
 		return null
 	var tool: String = str(App.prog.tool_type) if App.prog else "pickaxe"
@@ -19,7 +19,7 @@ static func best_gather(pt: Node, p: Node) -> Node:
 		return null
 	return best
 
-static func best_clerk(pt: Node, p: Node) -> Node:
+static func best_clerk(pt: PlayHost, p: Node) -> Node:
 	var best: Node = null
 	var best_d: float = SEE
 	var tree: SceneTree = pt.get_tree()
@@ -45,7 +45,7 @@ static func best_clerk(pt: Node, p: Node) -> Node:
 		return null
 	return best
 
-static func nearest_hunt(pt: Node, p: Node) -> Node:
+static func nearest_hunt(pt: PlayHost, p: Node) -> Node:
 	var best: Node = null
 	var best_d: float = 14.0
 	if pt.get_tree() == null:
@@ -73,7 +73,7 @@ static func nearest_hunt(pt: Node, p: Node) -> Node:
 		return null
 	return best
 
-static func dismiss_world_ui(pt: Node) -> bool:
+static func dismiss_world_ui(pt: PlayHost) -> bool:
 	var w: Node = pt._world_ui()
 	if w == null or not (w.get("open") == true):
 		if not App.ui_open:
@@ -98,7 +98,7 @@ static func dismiss_world_ui(pt: Node) -> bool:
 		return true
 	return false
 
-static func nearest_visible_threat(pt: Node, p: Node) -> Node:
+static func nearest_visible_threat(pt: PlayHost, p: Node) -> Node:
 	var best: Node = null
 	var best_d: float = maxf(pt._notice_range(), 8.0)
 	if pt.get_tree() == null:
@@ -119,7 +119,7 @@ static func nearest_visible_threat(pt: Node, p: Node) -> Node:
 		best = n
 	return best
 
-static func reachable_kind(pt: Node, p: Node, prefix: String) -> Node:
+static func reachable_kind(pt: PlayHost, p: Node, prefix: String) -> Node:
 	var best: Node = Pick.nearest(pt, p, "interact", SEE, func(n: Node) -> bool: return str(n.get("kind")).find(prefix) >= 0)
 	if best and not pt._has_path(p, best):
 		return null

@@ -1,4 +1,5 @@
 extends "res://scripts/debug/playtest/playtest_api.gd"
+class_name PlayHost
 
 const PlaytestNav := preload("res://scripts/debug/playtest/playtest_nav.gd")
 const PlaytestGoals2 := preload("res://scripts/debug/playtest_goals.gd")

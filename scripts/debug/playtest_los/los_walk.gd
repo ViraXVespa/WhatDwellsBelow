@@ -3,7 +3,7 @@ extends Object
 const Combat := preload("res://scripts/combat/combat.gd")
 const Util := preload("res://scripts/debug/playtest_los/los_util.gd")
 
-static func walk_clear(pt: Node, a: Node, b: Node) -> bool:
+static func walk_clear(pt: PlayHost, a: Node, b: Node) -> bool:
 	var dim: Dictionary = pt._grid_dims()
 	if dim.is_empty() or a == null or b == null:
 		return false
@@ -47,7 +47,7 @@ static func walk_clear(pt: Node, a: Node, b: Node) -> bool:
 			err += dx
 	return false
 
-static func stand_cell(pt: Node, p: Node, dest: Node) -> Vector2i:
+static func stand_cell(pt: PlayHost, p: Node, dest: Node) -> Vector2i:
 	var raw: Vector2i = pt._cell_of_node(dest)
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
 	var best: Vector2i = Vector2i(-999, -999)
@@ -71,7 +71,7 @@ static func stand_cell(pt: Node, p: Node, dest: Node) -> Vector2i:
 			return raw + n2
 	return raw
 
-static func door_between(pt: Node, a: Node, b: Node) -> bool:
+static func door_between(pt: PlayHost, a: Node, b: Node) -> bool:
 	if a == null or b == null:
 		return false
 	var av: Vector2 = Vector2((a as Node3D).global_position.x, (a as Node3D).global_position.z)
@@ -90,7 +90,7 @@ static func door_between(pt: Node, a: Node, b: Node) -> bool:
 				return true
 	return false
 
-static func pos_walkable(pt: Node, pos: Vector3) -> bool:
+static func pos_walkable(pt: PlayHost, pos: Vector3) -> bool:
 	if not pt._steer_floor(pt._cell_of_pos(pos)):
 		return false
 	var w3: World3D = Util.world3(pt)
@@ -112,7 +112,7 @@ static func pos_walkable(pt: Node, pos: Vector3) -> bool:
 		return true
 	return false
 
-static func has_los_from_wide(pt: Node, pos: Vector3, b: Node) -> bool:
+static func has_los_from_wide(pt: PlayHost, pos: Vector3, b: Node) -> bool:
 	if not pt._has_los_from(pos, b):
 		return false
 	if not pt._is_bow():

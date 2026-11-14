@@ -12,19 +12,19 @@ const GATE_MAX := 15.0  # s on a soft gate (paused / transition / loading) befor
 const HARD_MAX := 90.0  # s on a hard gate (no dungeon / no player) before the run is ended as "stalled"
 const GATE_SOFT := ["paused", "transition", "loading", "scene_not_ready"]
 
-static func reset(pt: Node) -> void:
+static func reset(pt: PlayHost) -> void:
 	pt.perf = {"think_us": 0, "think_n": 0, "think_max_us": 0, "phys_us": 0, "phys_n": 0, "gate_s": 0.0, "gate_over": 0, "scale": 1.0}
 	pt.gate_t = 0.0
 	pt.gate_why = ""
 
-static func note(pt: Node, key: String, us: int) -> void:
+static func note(pt: PlayHost, key: String, us: int) -> void:
 	var perf: Dictionary = pt.perf
 	perf[key + "_us"] = int(perf[key + "_us"]) + us
 	perf[key + "_n"] = int(perf[key + "_n"]) + 1
 	if key == "think":
 		perf["think_max_us"] = maxi(int(perf["think_max_us"]), us)
 
-static func report(pt: Node) -> Dictionary:
+static func report(pt: PlayHost) -> Dictionary:
 	# think = AI think + journal per decision; phys = whole playtest _physics_process per tick; time_scale = scale the AI ran at.
 	var perf: Dictionary = pt.perf
 	var tn: int = maxi(1, int(perf.get("think_n", 0)))
@@ -43,13 +43,13 @@ static func report(pt: Node) -> Dictionary:
 		"act_t": snappedf(pt.act_t, 0.1),
 	}
 
-static func acting_scale(pt: Node) -> float:
+static func acting_scale(pt: PlayHost) -> float:
 	# 1.0 unless --wdb-pt-fast (URL ?wdb-pt-fast) is given; then the job scale (default App.bal.playtest_scale), capped at 6.
 	if pt.smoke_mode or not CliArgs.has(FAST_FLAG):
 		return 1.0
 	return clampf(float(pt.job.get("scale", App.bal.playtest_scale)), 1.0, 6.0)
 
-static func repeat_seed(pt: Node) -> void:
+static func repeat_seed(pt: PlayHost) -> void:
 	# Opt-in (?wdb-pt-repeat). Enemy/crit rolls use the global RNG, which frame-timed systems also draw from; reseeding it per think
 	# from (run seed, think index) keeps that drift from piling up. Default runs stay random.
 	if CliArgs.has(REPEAT_FLAG):
@@ -59,7 +59,7 @@ static func set_scale(want: float) -> void:
 	if not is_equal_approx(Engine.time_scale, want):
 		Engine.time_scale = want
 
-static func not_ready(pt: Node) -> String:
+static func not_ready(pt: PlayHost) -> String:
 	if not App.in_dungeon:
 		return "no_dungeon"
 	var d: Node = Goals.dungeon(pt)
@@ -79,7 +79,7 @@ static func not_ready(pt: Node) -> String:
 		return "transition"
 	return ""
 
-static func hold(pt: Node, why: String, delta: float) -> bool:
+static func hold(pt: PlayHost, why: String, delta: float) -> bool:
 	# True when the AI must not act this tick (input zeroed, scale 1.0). Soft gates fail open after GATE_MAX s.
 	pt.ai_on = false
 	pt.move = Vector2.ZERO

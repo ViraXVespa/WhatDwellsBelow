@@ -6,7 +6,7 @@ const ASTAR_GUARD := 720
 static func _manh(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
 
-static func _toward(pt: Node, start: Vector2i, goal: Vector2i) -> Vector2i:
+static func _toward(pt: PlayHost, start: Vector2i, goal: Vector2i) -> Vector2i:
 	var md: int = _manh(start, goal)
 	if md <= REACH:
 		return goal
@@ -36,7 +36,7 @@ static func _toward(pt: Node, start: Vector2i, goal: Vector2i) -> Vector2i:
 		break
 	return cur
 
-static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:
+static func astar(pt: PlayHost, p: Node, dest: Node) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var dim: Dictionary = pt._grid_dims()
 	if dim.is_empty() or dest == null:

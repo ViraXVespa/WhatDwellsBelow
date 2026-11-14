@@ -5,16 +5,16 @@ const ROOM := 11.0
 const Pick := preload("res://scripts/debug/playtest_goals/pick.gd")
 const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 
-static func best_chest(pt: Node, p: Node) -> Node:
+static func best_chest(pt: PlayHost, p: Node) -> Node:
 	var best: Node = Pick.nearest(pt, p, "interact", 18.0, func(n: Node) -> bool: return pt._is_chest(n) and n.get("used") != true)
 	if best and not pt._has_path(p, best):
 		return null
 	return best
 
-static func closest_kind(pt: Node, p: Node, kind: String, radius: float) -> Node:
+static func closest_kind(pt: PlayHost, p: Node, kind: String, radius: float) -> Node:
 	return Pick.nearest(pt, p, "interact", radius, func(n: Node) -> bool: return str(n.get("kind")) == kind)
 
-static func nearest_room_threat(pt: Node, p: Node, radius: float = ROOM) -> Node:
+static func nearest_room_threat(pt: PlayHost, p: Node, radius: float = ROOM) -> Node:
 	var best: Node = null
 	var best_d: float = radius
 	if pt.get_tree() == null:
@@ -31,7 +31,7 @@ static func nearest_room_threat(pt: Node, p: Node, radius: float = ROOM) -> Node
 		best = n
 	return best
 
-static func away_open(pt: Node, p: Node, node: Node) -> Vector2:
+static func away_open(pt: PlayHost, p: Node, node: Node) -> Vector2:
 	var away: Vector2 = -pt._xz_to(p, node)
 	if away.length() < 0.05:
 		away = Vector2.RIGHT

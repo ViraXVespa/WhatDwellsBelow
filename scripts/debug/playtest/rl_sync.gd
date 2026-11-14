@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 	if st != StreamPeerTCP.STATUS_CONNECTED:
 		return
 	if _owe and _phase == "live":
-		var pt: Node = get_parent()
+		var pt: PlayHost = get_parent() as PlayHost
 		if pt != null and float(pt.get("sim_t")) > _mark_t:
 			_send_step(pt)
 			_owe = false
@@ -83,7 +83,7 @@ func _on_msg(msg: Dictionary) -> void:
 		_phase = "live"
 		return
 	if kind == "reset":
-		var pt: Node = get_parent()
+		var pt: PlayHost = get_parent() as PlayHost
 		if pt != null:
 			pt.set_meta("rl_goal", "")
 		_owe = false
@@ -102,7 +102,7 @@ func _on_msg(msg: Dictionary) -> void:
 
 func _take_action(msg: Dictionary) -> void:
 	var idx: int = _action_index(msg.get("action", 0))
-	var pt: Node = get_parent()
+	var pt: PlayHost = get_parent() as PlayHost
 	if pt == null:
 		return
 	pt.set_meta("rl_goal", ACTIONS[idx])
@@ -129,7 +129,7 @@ func _one_index(one: Variant) -> int:
 		return int((one as Dictionary).get("goal", 0))
 	return 0
 
-func _send_step(pt: Node) -> void:
+func _send_step(pt: PlayHost) -> void:
 	var reward: float = 0.0
 	var floor_n: int = int(App.floor_n)
 	if floor_n > _last_floor:
@@ -154,13 +154,13 @@ func _send_step(pt: Node) -> void:
 	_send({"type": "step", "obs": [_obs(pt)], "reward": [reward], "done": [done]})
 
 func _send_reset() -> void:
-	var pt: Node = get_parent()
+	var pt: PlayHost = get_parent() as PlayHost
 	_last_floor = int(App.floor_n)
 	if pt != null and pt.has_meta("rl_paid_end"):
 		pt.remove_meta("rl_paid_end")
 	_send({"type": "reset", "obs": [_obs(pt)]})
 
-func _obs(pt: Node) -> Dictionary:
+func _obs(pt: PlayHost) -> Dictionary:
 	var p: Node = null
 	var tree: SceneTree = get_tree()
 	if tree:
