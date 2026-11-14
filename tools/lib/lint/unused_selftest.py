@@ -39,6 +39,7 @@ const Bal := preload("res://scripts/data/balance/vars_fix.gd")
 var doc_only_var := 1
 var json_named_var := 1
 var ui: PlayHost
+var dsc: D
 
 func _ready() -> void:
 	B.helper()
@@ -91,7 +92,7 @@ func node_pt(x: Node) -> void:
 	x.node_only_fn()
 """,
     "scripts/main.gd": "extends Node\nfunc _on_scene_pressed() -> void:\n\tpass\n",
-    "scripts/b.gd": "static func flow_node_fn() -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n\nstatic func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n\nstatic func lint_only_fn() -> void:\n\tpass\n",
+    "scripts/b.gd": "func twin_app() -> void:\n\tpass\n\nstatic func flow_node_fn() -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n\nstatic func helper() -> void:\n\tpass\n\nstatic func shadowed_flow() -> void:\n\tpass\n\nstatic func lint_only_fn() -> void:\n\tpass\n",
     "scripts/c.gd": """class_name CMod
 
 static var only_in_dead := 1
@@ -169,7 +170,7 @@ static func _bump() -> int:
 	return 1
 ''',
     "scripts/ghost.gd": "static func boo() -> void:\n\tpass\n",
-    "scripts/d.gd": "static func maybe_fn(_v: int) -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n\nfunc own_live() -> void:\n\tpass\n",
+    "scripts/d.gd": "func twin_app() -> void:\n\tpass\n\nstatic func maybe_fn(_v: int) -> void:\n\tpass\n\nstatic func twin_flow() -> void:\n\tpass\n\nfunc own_live() -> void:\n\tpass\n",
     "scripts/base.gd": "extends Node\nfunc run() -> void:\n\thook()\n\nfunc hook() -> void:\n\tpass\n",
     "scripts/child.gd": 'extends "res://scripts/base.gd"\nfunc hook() -> void:\n\tpass\n',
     "scripts/orphan.gd": "static func lonely() -> void:\n\tpass\n",
@@ -285,7 +286,7 @@ var not_in_flow := 1
     "scripts/debug/selfnew.gd": 'extends Node\nstatic func make() -> void:\n\tvar n := new()\n\tn.own_live()\n\tload("res://scripts/debug/lhelp.gd")._util().h_chain()\n\tvar S: GDScript = load("res://scripts/debug/hutil.gd") as GDScript\n\tvar m: Object = S.new()\n\tm.h_local_new()\n\t_lazy().h_lazy()\n\nstatic var _ls: GDScript\n\nstatic func _lazy() -> GDScript:\n\tif _ls == null:\n\t\t_ls = load("res://scripts/debug/hutil.gd") as GDScript\n\treturn _ls\n\nfunc own_live() -> void:\n\tpass\n',
     "scripts/debug/hutil.gd": "static func h_lazy() -> void:\n\tpass\n\nfunc h_local_new() -> void:\n\tpass\n\nstatic func h_chain() -> void:\n\tpass\n\nstatic func h_live() -> void:\n\tpass\n\nstatic func h_dead() -> void:\n\tpass\n\nstatic func h_never() -> void:\n\tpass\n",
     "tools/data/shot-flows/vis.json": '{ "steps": [ { "op": "assert", "target": "script:debug/vis_check.plant_x" } ] }\n',
-    "tools/data/shot-flows/node.json": '{ "steps": [ {"op": "call", "target": "host.ui", "method": "flow_node_fn"}, {"op": "call", "target": "host", "method": "twin_flow"} ] }\n',
+    "tools/data/shot-flows/node.json": '{ "steps": [ {"op": "call", "target": "host.ui", "method": "flow_node_fn"}, {"op": "call", "target": "host", "method": "twin_flow"}, {"op": "call", "target": "App.dsc", "method": "twin_app"} ] }\n',
 
 }
 
@@ -324,7 +325,7 @@ def run() -> list[str]:
             ("vis_check.gd", "not_in_flow"): "unused_var",
             ("hutil.gd", "h_dead"): "ambiguous", ("hutil.gd", "h_never"): "unused",
             ("lstep.gd", "lstep_unused"): "unused", ("lother.gd", "run"): "shadowed",
-            ("not_skin.gd", "dress"): "unused", ("b.gd", "twin_flow"): "unused", ("d.gd", "twin_flow"): "unused", ("d.gd", "own_live"): "shadowed",
+            ("not_skin.gd", "dress"): "unused", ("b.gd", "twin_flow"): "unused", ("d.gd", "twin_flow"): "unused", ("d.gd", "own_live"): "shadowed", ("b.gd", "twin_app"): "unused",
         }
         for key, kind in want.items():
             if cat.get(key) != kind:
@@ -336,7 +337,7 @@ def run() -> list[str]:
                 ("play_host.gd", "typed_fn"), ("play_host.gd", "ui_fn"), ("b.gd", "shadowed_flow"), ("b.gd", "lint_only_fn"),
                 ("vars_fix.gd", "schema_live"), ("vars_fix.gd", "also_keyed"),
                 ("vis_check.gd", "plant_x"), ("lstep.gd", "run"), ("hutil.gd", "h_live"),
-                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn"), ("selfnew.gd", "own_live"), ("hutil.gd", "h_chain"), ("hutil.gd", "h_local_new"), ("hutil.gd", "h_lazy")]
+                ("skin_a.gd", "dress"), ("b.gd", "flow_node_fn"), ("selfnew.gd", "own_live"), ("hutil.gd", "h_chain"), ("hutil.gd", "h_local_new"), ("hutil.gd", "h_lazy"), ("d.gd", "twin_app")]
         for key in live:
             if key in cat:
                 bad.append(f"live: {key} reported as {cat[key]}")

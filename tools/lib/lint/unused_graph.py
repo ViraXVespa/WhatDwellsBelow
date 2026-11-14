@@ -1229,6 +1229,14 @@ self, rel: str, name: str, is_fn: bool, var_owners, recv: list[str], nargs: int 
                 if rel.startswith("tools/data/shot-flows/"):
                     for m in FLOW_OBJ_RE.finditer(text):
                         defs = self.defs.get(m.group(1), [])
+                        tm = re.search(r"\"target\"\s*:\s*\"([A-Za-z_]\w*)((?:\.[A-Za-z_]\w*)*)\"", m.group(0))
+                        if tm and tm.group(1) in self.autoload and self.autoload[tm.group(1)] in self.scripts:
+                            # `"target": "App.prog"`: the autoload's typed var chain names the script
+                            t = self.resolve(self.autoload[tm.group(1)], ["self"] + [x for x in tm.group(2).split(".") if x])
+                            f = self.find(t, m.group(1)) if t else ""
+                            if f and f in files:
+                                out.append(((f, m.group(1)), "flow"))
+                                continue
                         if "script:" not in m.group(0) and len(defs) == 1 and defs[0] in files:
                             out.append(((defs[0], m.group(1)), "flow"))
         return out
