@@ -50,7 +50,7 @@ By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it nev
 ## Contract (enforced by `check.py tool-cli`)
 
 - Entry tools: a shebang, a docstring and one `COMMANDS` table, no logic; bare / `--help` list the subcommands, an unknown one exits 2.
-- Modules: `agent_log.std_parser`, a non-mutating `--help`, ASCII output, `help=` on every option.
+- Modules: `agent_log.std_parser`, a non-mutating `--help`, ASCII output, `help=` on every option. The probe isolates that process's logs, so a concurrent `_logs` writer is not a mutation.
 - Ops tools take `--root`, writers `--dry-run`, every tool `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Stdout is a short summary, at most 30 lines (a `--list` run 60): long lists fold to the first rows plus a count (`agent_log.fold`), `--verbose` prints all. The last line is always `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`. Exempt: printers and `session.py scratch-server`.
 - Output paths are `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); older names stay only as aliases.

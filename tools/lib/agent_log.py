@@ -5,7 +5,7 @@ Contract (see design/tools.md): argparse, --root, --dry-run on writers, --json o
 reports, ASCII output, repo-relative POSIX paths, one final line
 `RESULT <PASS|FAIL|INFO> k=v ... summary=<rel>`, exit 0 ok / 1 findings / 2 usage.
 Each run writes its own `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten) and `index.txt` lists
-the newest runs first (`run_log_lib.py`). No session keys.
+the newest runs first (`run_log_lib.py`). `$WDB_LOG_ROOT`, when set, replaces the repo `_logs` parent. No session keys.
 
     python tools/lib/agent_log.py <job>     # prints dir/index for a job, makes the dir
     python tools/lib/agent_log.py --selftest   # run-log layout check in a throwaway folder
@@ -190,9 +190,12 @@ def exit_code(status: str) -> int:
     return 1 if status == "FAIL" else 0
 
 def agent_log_dir(job: str, root: Path | None = None) -> Path:
+    """`_logs/<job>` under the repo, or under `$WDB_LOG_ROOT` when that probe env is set."""
     if not _JOB_KEY.fullmatch(job):
         raise ValueError("agent_log: bad job name")
-    return (repo_root(root) / "_logs" / job).resolve()
+    override = os.environ.get("WDB_LOG_ROOT", "").strip()
+    base = Path(override) if override else repo_root(root) / "_logs"
+    return (base / job).resolve()
 
 def agent_summary_path(job: str, root: Path | None = None) -> Path:
     """The newest run's summary file of `job` (a missing summary.txt path when the job has not run)."""
