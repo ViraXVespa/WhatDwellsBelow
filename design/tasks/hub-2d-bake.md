@@ -4,7 +4,6 @@ id: hub-2d-bake
 owner: build
 status: open
 done-when: the hub’s visible geometry is replaced by baked 2D sprites or a single viewport texture that is visually identical to the current 3D hub; collision and interaction feel identical; no gameplay regressions; User confirms; gates pass
-resume: python tools/slice.py open hub --task hub-2d-bake
 
 ## Background
 The hub (`scripts/world/camp.gd` + `camp_build.gd` and helpers) is built from procedural 3D:
@@ -34,3 +33,7 @@ Under the Compatibility renderer on web this is expensive even though the scene 
 
 ## Notes
 This is independent of the actor-lighting and shader-sample work, but final lighting polish is easier if the cheap light sample is already in place. Large structural change; expect iteration on the bake resolution and collision simplification.
+
+## Next Steps (User Only)
+python tools/slice.py open hub --task hub-2d-bake
+

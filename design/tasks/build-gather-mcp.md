@@ -4,7 +4,6 @@ id: build-gather-mcp
 owner: bot
 status: open
 done-when: A real slice launched through slice.py open --review then --launch, with its main-session tokens and turns compared to recent slices
-resume: Bot: after Vira runs the P6 steps below and reports her output
 
 ## Decisions (locked, Vira 2026-11-14: defaults)
 
@@ -20,3 +19,7 @@ resume: Bot: after Vira runs the P6 steps below and reports her output
 2. `python tools/slice.py open <small task> --review`: the agent runs, the report prints, Build does not launch.
 3. `python tools/slice.py open --launch <WT>` for one real slice; compare tokens and turns. Tune `tools/data/gather/gather-prompt.md`.
 4. Rollout: the next week start.
+
+## Next Steps (User Only)
+Bot: after Vira runs the P6 steps below and reports her output
+

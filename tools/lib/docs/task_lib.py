@@ -221,11 +221,11 @@ def fails(root: Path) -> list[str]:
             out.append(f"{where}: `owner:` must be one of {', '.join(OWNERS)}")
         if t.get("status") not in STATUSES:
             out.append(f"{where}: `status:` must be one of {', '.join(STATUSES)} (a done task is deleted: `python tools/docs.py task done {tid}`)")
-        for key in ("done-when", "resume"):
+        for key in ("done-when",):
             if not t.get(key) or FILL in t.get(key, ""):
                 out.append(f"{where}: `{key}:` is empty or unfilled")
         if t.get("owner") == "build" and t.get("resume") and FILL not in t.get("resume", ""):
-            out += resume_fails(root, tid, t)
+            out += resume_fails(root, tid, t)  # optional; launch line now lives in ## Next Steps (User Only)
         for key in ("resume", "first"):
             if t.get(key) and FILL not in t[key]:
                 out += command_fails(root, where, "first command" if key == "first" else key, t[key])

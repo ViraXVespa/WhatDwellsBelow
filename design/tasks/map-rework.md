@@ -4,7 +4,6 @@ id: map-rework
 owner: build
 status: open
 done-when: the minimap base is built once when dungeon generation finishes; fog is a reveal mask; the base is redrawn only when newly revealed cells actually change it; crystals and the player marker are separate event-driven layers; no per-frame map painting remains; User confirms; gates pass
-resume: python tools/slice.py open dungeon --task map-rework
 
 ## Background
 `scripts/world/dungeon/minimap.gd` keeps a single Image. Unvisited cells are painted dark; visited cells are painted with floor/wall colors via `set_pixel`. Fog is not a separate layer—it is the pixel color. Redraws happen whenever `fog_dirty` is set or the map layer is visible, including on player movement.
@@ -21,3 +20,7 @@ This is pure CPU image work and produces hitches.
 ## Acceptance
 - Map looks correct, fog reveal feels the same or better, no per-frame `set_pixel` cost.
 - User confirms visuals and responsiveness.
+
+## Next Steps (User Only)
+python tools/slice.py open dungeon --task map-rework
+

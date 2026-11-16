@@ -4,7 +4,6 @@ id: ai-scaling
 owner: web
 status: open
 done-when: LOS rays and separation queries run only for enemies near the player, groups in the same room can share a single aggro/LOS test, behavior is unchanged for the player, gates pass
-resume: start a web session and open the ai-scaling task
 
 ## Background
 Every enemy runs a periodic physics ray (`Combat.los`) and a SepGrid separation query. On web the physics server is single-threaded; many simultaneous checks hitch. Most of those checks are redundant when enemies are far away or when a whole room should wake together.
@@ -17,3 +16,7 @@ Every enemy runs a periodic physics ray (`Combat.los`) and a SepGrid separation 
 ## Acceptance
 - No new “enemies ignore me” or “enemies see through walls” bugs.
 - Measurable reduction in physics queries when many enemies are present but distant.
+
+## Next Steps (User Only)
+start a web session and open the ai-scaling task
+

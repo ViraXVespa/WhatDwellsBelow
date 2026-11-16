@@ -4,7 +4,6 @@ id: local-ai-tuner
 owner: bot
 status: open
 done-when: Phase 1 of both parts landed (each slice meets its measure) plus the one-command runner Vira launches herself.
-resume: python tools/local-ai-tuner.py loop
 
 ## Intent
 Tooling only, approved by Vira. There are TWO separate local models.
@@ -47,4 +46,6 @@ The loop stopped after five gathers because each headless campaign stalled at `g
 
 A headless campaign on this PC wrote 1924 new decide rows before a 10 minute cap stopped that check. The dive was still open. `python tools/local-ai-tuner.py train` fit a bot policy from those rows: held-out 199/383, scripted ladder 22/383. That is imitation of the scripted journal. The labels were heavy on door and wander.
 
-Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach. The current setup was testing and found to not be working (still not progressing floors) prior to the Grok Build usage quota. Further investigation is still required.
+Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach. The current setup was tested and found to not be working (still not progressing floors). Further investigation is still required.
+
+## Next Steps (User Only)

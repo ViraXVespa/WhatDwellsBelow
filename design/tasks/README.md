@@ -40,3 +40,5 @@ Reference images that a task needs live in `design/refs/<task-id>/`, not in this
 When `python tools/docs.py task done ID` runs, also delete `design/refs/<id>/` if it exists so reference images do not outlive the task.
 
 A web session starts work by the User naming the task id (or its intent) in chat.
+
+Agents read the task file whole. The User-only launch line lives in a `## Next Steps (User Only)` section and is never an agent command.

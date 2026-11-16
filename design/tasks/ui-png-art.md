@@ -4,7 +4,6 @@ id: ui-png-art
 owner: build
 status: open
 done-when: all in-game menu locations feel polished, complete, unified, and professional.
-resume: python tools/slice.py open ui.style --task ui-png-art
 units: mockups, crystal
 done: none
 
@@ -78,3 +77,7 @@ Phone 844x390 @3 (`shots.py textsize --gate`, 10 CSS px minimum). New art and la
 - In-play HUD art (minimap bezel, camp HUD bar) also meets the gate's `cover` cap (`tools/data/text-size.json`: dungeon 0.111, camp 0.073 of the frame).
 - Portrait phones: decide whether to support them (today a rotate-to-landscape screen).
 - Allowances to remove from `tools/data/text-size.json` `allow` when the art lands: `^camp-npc-panels/(vendor|quest-board|dumpster)$` 7, `^camp-billboard-controls/` 7, `^camp-(anvil-tabs|gear-popups)/(tab|anvil-)` 9.
+
+## Next Steps (User Only)
+python tools/slice.py open ui.style --task ui-png-art
+

@@ -28,3 +28,7 @@ pc-offload logics for grok build
 generate code map from code tags and scripts instead of grok
 xp scaling at higher levels
 Create pc-offload for editing scripts.
+
+### MCP Follow Ups:
+Add visual_request selftest cases in prove_scope. The code path is covered only by the prove run.
+Fix the same repeated-option drop (F) in check_gd_load --files, run_dungeon_map --seeds, run_smokes --phases and shot_crop --probe.

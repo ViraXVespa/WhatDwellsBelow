@@ -4,7 +4,6 @@ id: hub-bake-checks
 owner: bot
 status: open
 done-when: bake.py check PASSes with the leak check and its selftest (planted rim FAILs), shots.py flow --flow camp-prop-shadows PASSes with a planted on_face fault FAILing, before/after crops reported, png rebake pushed with Vira's OK
-resume: python tools/docs.py task show hub-bake-checks, then the dumpster section
 
 ## When
 Bot session on Saturday, Oct 31, 2026 (Vira's wrap-up of Oct 25 vendor-fixes).
@@ -38,3 +37,7 @@ Not the mark and not the bake: the dumpster has no baked shadow, and its runtime
 
 ## Next
 1. Dumpster: done (cause named, selftest in the flow); a sprite repaint waits on Vira.
+
+## Next Steps (User Only)
+python tools/docs.py task show hub-bake-checks, then the dumpster section
+

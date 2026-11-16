@@ -4,7 +4,6 @@ id: perf-sweep
 owner: build
 status: open
 done-when: On Vira's machine, the continuous sweep (cold load, hub walk, dungeon walk, dispel, hub walk, dungeon walk, exit) scores fps_pct >= 99 on each of the four stretches (cold hub, cold dungeon, warm hub, warm dungeon) and overall, on desktop and on two consecutive cold web runs. Goal 100%. Docs and code-map updated if ownership or tunables changed.
-resume: python tools/slice.py open debug.bench --task perf-sweep
 
 ## Intent
 One continuous run, no exits between states: cold game load, enter the hub, hub walk test, enter the dungeon (no exit), dungeon perf walkthrough, dispel when the dungeon timer ends (no exit), hub walkthrough again, enter the dungeon again, dungeon walkthrough again, then exit. fps_pct counts every frame where the hub or dungeon is showing and the loader bar is down, scored per segment and for the whole run. Goal: 100% of frames at 60+ FPS. Pass: each of cold hub, cold dungeon, warm hub, and warm dungeon, and the whole run, at 99% on desktop and on two consecutive cold web runs (cold web window, as below). Replaces `hub-perf-fix` and `dungeon-perf` (merged 2026-10-31 at Vira's request so later states, return trips and the dispel path are covered).
@@ -194,3 +193,7 @@ The draw split stays (`tree_ms`, `submit_ms`, `after_ms` on the hitch row, `subm
 Dungeon: historical bench evidence. The runner is `python tools/perf.py dungeon`. Desktop PASS is summary `_logs/dungeon-bench/20261028-033831-dungeon-bench.txt`. First web FAIL is summary `_logs/dungeon-bench/20261028-033953-dungeon-bench.txt`. Layer keep is summary `_logs/dungeon-bench/20261028-035545-dungeon-bench.txt`. Harness web FAIL is summary `_logs/dungeon-bench/20261028-041329-dungeon-bench.txt`. Bare-split keep is summary `_logs/dungeon-bench/20261028-042812-dungeon-bench.txt`. Scale keep is summary `_logs/dungeon-bench/20261028-044236-dungeon-bench.txt`. Scored web after the Auto change is summary `_logs/dungeon-bench/20261028-044706-dungeon-bench.txt` (fps_pct 84.1). That `--walk-layers` is the old dungeon bench (50 s of acting). The live window is `perf.py sweep --leg web --walk-layers`, and the reading from it is in Next.
 
 Note from Vira: We changed a bunch of lighting stuff with Grok Bot since you last worked on the perf stuff. That may have impacted things and those newer changes may need to be optimized.
+
+## Next Steps (User Only)
+python tools/slice.py open debug.bench --task perf-sweep
+

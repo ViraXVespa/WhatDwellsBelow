@@ -77,8 +77,7 @@ def start(wt: Path, argv: list[str], sid: str, tid: str = "", extra: str = "") -
 
 def agent_argv(grok: str, wt: Path, prompt_file: Path) -> list[str]:
     return [grok, "-m", MODEL, "--prompt-file", str(prompt_file), "--cwd", str(wt), "--trust", "--always-approve",
-            "--max-turns", str(MAX_TURNS), "--effort", "low", "--output-format", "json", "--no-subagents",
-            "--disable-web-search", "--no-memory"]
+            "--max-turns", str(MAX_TURNS), "--output-format", "json"]
 
 def py() -> str:
     """The interpreter name to print in commands: python on Windows, python3 where only that exists (the Linux box)."""
@@ -116,7 +115,7 @@ def usage(out: str) -> str:
 def prompt_text(area: str, door: str, job: str, tid: str, request: str = "") -> str:
     """The gather prompt: no task line without a task; the User's request (open's prompt) appended when there is one."""
     text = render("gather-prompt.md", slice=slice_line(area, door, job, tid), max_turns=str(MAX_TURNS),
-                  task_step=f", then the task once: `{py()} tools/docs.py task show {tid}`" if tid else "",
+                  task_step=f", then the task file once: design/tasks/{tid}.md (read it whole; it is the assignment)" if tid else "",
                   request_step=", and the User's request at the end of this prompt" if request.strip() else "")
     return text.rstrip() + ("\n\nThe User's request:\n\n" + request.strip() + "\n" if request.strip() else "\n")
 
@@ -167,6 +166,6 @@ def report(wt: Path) -> str:
 
 def first_message(start_argv: list[str], tid: str, warn: list[str], extra: str = "") -> str:
     shown = py() + " " + " ".join(start_argv[1:])
-    task_line = f", then the task file once (`{py()} tools/docs.py task show {tid}`)" if tid else ""
+    task_line = f" (design/tasks/{tid}.md; read it whole; it is the assignment)" if tid else ""
     text = render("build-first.md", start=shown, task_line=task_line, warn="\n".join(warn)).strip()
     return text + ("\n\n" + extra.strip() if extra.strip() else "")

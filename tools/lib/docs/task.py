@@ -82,8 +82,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "show":
         t = tasks[args.id]
         lines = [f"{k}: {t[k]}" for k in ("title", "owner", "status", "needs", "done-when") if t.get(k)]
-        label = "resume (the User's launch line from the repo root; a session never runs it)" if t.get("owner") == "build" else "resume"
-        lines += [f"{label}: {t.get('resume', '')}", f"file: {t['path']} (read it whole; it is the task)"]
+        if t.get("resume"):
+            lines.append(f"resume: {t['resume']}")
+        lines.append(f"file: {t['path']} (read it whole; it is the task)")
         return end("\n".join(lines), "PASS", id=args.id)
     if args.cmd == "new":
         if args.id == "opt-next":

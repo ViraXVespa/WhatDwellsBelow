@@ -4,7 +4,6 @@ id: modular-voxel-walk-proof
 owner: build
 status: open
 done-when: Base body (no hair/equipment) created in Blender as a conventional modular mesh; front view matches the Bible front cell; side view produces a true 1:1 overlay against the Bible side cell (stride foot included); after approval, freely re-posed for walk; default gear later attached as modular pieces; walk animation looks good from all angles and matches current art style/feel; sprites baked with processing that preserves 2D pixel-art vibe; synced side-by-side comparison of current female walk vs new baked result produced and path reported.
-resume: python tools/slice.py open art_pipeline --task modular-voxel-walk-proof
 
 ## Goal
 Create a conventional modular 3D character in Blender (base body first, then attachable gear) that matches the current character’s look and body dimensions. The body must first match the Bible front cell, then be posed so the side view produces a true 1:1 overlay against the Bible side cell (including the stride foot). After that match is approved, freely re-pose it for animation. Animate one walk cycle that looks and feels like the existing art style. Bake to 2D sprites with processing that keeps the pixel-art vibe, then produce a side-by-side comparison. This establishes the foundation for future paper-doll equipment and customization.
@@ -79,3 +78,7 @@ What is on disk:
 2. Pose/adjust the same mesh so the side view is a true 1:1 overlay of the Bible side cell, including the stride foot.
 3. Output comparison stills and stop for approval.
 4. Only after approval: free re-pose, add modular gear, animate walk, bake with pixel-art processing, produce side-by-side.
+
+## Next Steps (User Only)
+python tools/slice.py open art_pipeline --task modular-voxel-walk-proof
+
