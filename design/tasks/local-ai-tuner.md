@@ -48,4 +48,7 @@ A headless campaign on this PC wrote 1924 new decide rows before a 10 minute cap
 
 Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach. The current setup was tested and found to not be working (still not progressing floors). Further investigation is still required.
 
+We'll also want to make sure that the Balance tuner is fully implemented and working.
+
 ## Next Steps (User Only)
+python tools/slice.py open debug.playtest --task local-ai-tuner
