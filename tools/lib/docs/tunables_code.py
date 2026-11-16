@@ -80,7 +80,7 @@ def cmd_list(root: Path, args) -> int:
         val = bs.fmt(v.type, v.value) if v.value is not None else v.expr
         lines.append(f"{k}\t{val}\t{v.type}\t{rng}\t{v.system}\t{src.category(k)}")
     return agent_log.finish("tunable-list", root, "\n".join(lines), "PASS" if lines else "FAIL", args=args,
-                            echo="\n".join(agent_log.fold(lines, keep=40, limit=40)) if lines else "matches=0", matches=len(lines))
+                            echo="\n".join(agent_log.fold(lines, bool(getattr(args, "verbose", False)), keep=40, limit=40)) if lines else "matches=0", matches=len(lines))
 
 def cmd_diff(root: Path, args) -> int:
     src = bs.Src(root)

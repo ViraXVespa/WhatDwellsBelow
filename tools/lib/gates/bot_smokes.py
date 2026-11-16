@@ -4,6 +4,8 @@
 Not a boot step. Setup downloads the official Godot 4.7.2 Linux tools
 binary only when the pin is missing, and the gitignored Godot AI addon
 (godot_lib.GODOT_AI_*) only when addons/godot_ai is missing. Editor playtest is out of scope.
+A run that needs Godot where the addon or the import cache is absent (a fresh clone or `git worktree add`)
+FAILs at once with SETUP MISSING and the setup command.
 
   python tools/gate.py bot-smokes --doctor
   python tools/gate.py bot-smokes --setup
@@ -66,6 +68,15 @@ def setup(pin: Path) -> Path:
 
 def addon_state(root: Path) -> str:
     return "present" if (root / "addons" / "godot_ai" / "plugin.cfg").is_file() else "missing"
+
+SETUP_CMD = "python3 tools/gate.py bot-smokes --setup"
+
+def setup_needed(root: Path) -> str:
+    """'' when this checkout can run Godot checks; else what is missing and the fix. Both are gitignored, so a fresh
+    clone or `git worktree add` has neither (slice.py open runs the setup in the worktrees it opens)."""
+    gone = [w for w, ok in (("addons/godot_ai", addon_state(root) == "present"),
+                            (".godot/imported", (root / ".godot" / "imported").is_dir())) if not ok]
+    return f"SETUP MISSING: {' and '.join(gone)} (gitignored; a fresh checkout or worktree has neither): run {SETUP_CMD}" if gone else ""
 
 def setup_addon(root: Path) -> None:
     """Install the pinned Godot AI addon into the gitignored addons/ when absent; never replaces an install."""
@@ -142,6 +153,26 @@ def _selftest() -> int:
                              (["scripts/world/new.gd"], ["p3", "p5", "p9", "dungeon-load-timing", "static"], "an unrecorded file uses the folder map")]:
         if changed_areas(files, loads) != want:
             bad.append(f"{why}: got {changed_areas(files, loads)}")
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        bare = Path(td)
+        if "addons/godot_ai and .godot/imported" not in setup_needed(bare) or SETUP_CMD not in setup_needed(bare):
+            bad.append("a fresh checkout must name the missing addon and import cache and the setup command")
+        (bare / "addons/godot_ai").mkdir(parents=True)
+        (bare / "addons/godot_ai/plugin.cfg").write_text("[plugin]\n")
+        (bare / ".godot/imported").mkdir(parents=True)
+        if setup_needed(bare):
+            bad.append("a set-up checkout must need no setup")
+    import contextlib
+    import io
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        try:
+            main(["--root", str(_TOOLS.parent), "--for", "nope/a1.gd", "--for", "nope/b2.gd,nope/c3.gd"])
+        except SystemExit:
+            pass
+    if not all(f in err.getvalue() for f in ("nope/a1.gd", "nope/b2.gd", "nope/c3.gd")):
+        bad.append("--for must accumulate repeats and comma lists: " + err.getvalue().strip()[:160])
     for ln in bad:
         print(f"selftest miss\t{ln}")
     return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(red) + len(green) + 1)
@@ -224,8 +255,8 @@ def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
-    p.add_argument("--for", dest="for_files", nargs="+", default=[], metavar="FILE",
-                   help="Repo file(s): print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
+    p.add_argument("--for", dest="for_files", nargs="+", action="extend", default=None, metavar="FILE",
+                   help="Repo file(s), repeat the flag or space or comma list: print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
     p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
     p.add_argument("--setup", action="store_true", help=f"Download the official {VERSION} Linux binary if the pin is missing, then exit.")
     p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
@@ -247,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
         return _selftest()
     root = agent_log.resolve_root(ns)
     if ns.for_files:
-        files = [f.replace("\\", "/") for f in ns.for_files]
+        files = [f.replace("\\", "/") for f in agent_log.split_list(ns.for_files)]
         gone = [f for f in files if not (root / f).exists()]
         if gone:
             agent_log.fail(f"{', '.join(gone)}: no such file (give repo-relative paths, example: --for scripts/world/player.gd)")
@@ -275,17 +306,22 @@ def main(argv: list[str] | None = None) -> int:
         print(f"pin={pin}")
         print(f"bin={'missing' if found is None else found}")
         print(f"addon_godot_ai={addon_state(root)}\t(gitignored; --setup installs v{GODOT_AI_VERSION})")
+        print(f"import_cache={'present' if (root / '.godot' / 'imported').is_dir() else 'missing'}\t(gitignored; --setup imports)")
         print("editor_playtest=forbidden")
         print("doctor=PASS")
         return agent_log.emit_result("PASS", mode="doctor", bin="missing" if found is None else "found")
     exe = found
-    if ns.setup or exe is None:
+    if exe is None or (ns.setup and sys.platform == "linux"):  # Windows: a found GODOT_BIN / Steam build is the setup (no pin download)
         exe = setup(pin)
     if ns.setup:
         setup_addon(root)
         # A fresh checkout (nightly CI) has no .godot/imported: import once, or fonts and textures load as missing.
         stale = godot_lib.reimport_stale(root)
         print(f"import={'ran' if stale else 'fresh'}\tstale={len(stale)}")
+    need = "" if ns.setup else setup_needed(root)
+    if need and (ns.phases or ns.release or ns.flows or ns.record_loads):
+        print(need)  # Godot would fail on missing plugin and import files; say why instead
+        return agent_log.emit_result("FAIL", mode="setup-missing")
     if ns.record_loads:
         return record_loads(exe, root, ns.timeout, ns.verbose)
     if (ns.flows or ns.release) and not ns.phases:

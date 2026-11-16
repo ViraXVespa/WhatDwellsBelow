@@ -171,6 +171,68 @@ def _reviewed(root: Path, sha: str) -> list[str]:
     behind = tip and tip != sha and not subprocess.run(["git", "merge-base", "--is-ancestor", tip, sha], cwd=root, capture_output=True).returncode
     return _git(root, "diff", "--name-only", tip if behind else f"{sha}^", sha).split()
 
+## Before shots (`shots.py flow --flow F --before`, run by `slice.py open` in the new worktree before any edit): the unchanged
+## checkout's frames as BEFORE_DIR/<flow>/NN-name.png plus before.json (sha, flows, dirty paths). prove names them.
+BEFORE_DIR = "_logs/before-shots"
+UI_EXTRA = ["*.tscn", "*.tres", "assets/ui/*"]  # plus the textsize rule's globs (UI, HUD and title scripts)
+
+def before_meta(root: Path) -> dict:
+    try:
+        d = json.loads((root / BEFORE_DIR / "before.json").read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+def save_before_meta(root: Path, flows: list[str]) -> dict:
+    """Record what the before shots show: the sha, the flows, and tracked paths already edited (should be none)."""
+    import datetime as dt
+    dirty = [ln[3:] for ln in _git(root, "status", "--porcelain", "-uno").splitlines() if len(ln) > 3 and not ln[3:].startswith("_logs/")]
+    old = before_meta(root).get("flows", [])
+    meta = {"sha": _git(root, "rev-parse", "HEAD").strip(), "flows": list(dict.fromkeys([*old, *flows])), "dirty": dirty,
+            "time": dt.datetime.now().astimezone().isoformat(timespec="seconds")}
+    (root / BEFORE_DIR).mkdir(parents=True, exist_ok=True)
+    (root / BEFORE_DIR / "before.json").write_text(json.dumps(meta, indent=1) + "\n", encoding="utf-8")
+    return meta
+
+def _slice_flows(root: Path) -> list[str]:
+    """Shot flows routes.yaml maps to this worktree's slice job (slice.py start's _logs/slice-state.json), else []."""
+    try:
+        st = json.loads((root / "_logs/slice-state.json").read_text(encoding="utf-8"))
+        from load_routes import load_routes, shot_flows
+        job = st.get("job") or ""
+        return list(shot_flows(load_routes(root), door=st.get("door") or job.split(".", 1)[0], job=job, job_only=bool(job)))
+    except Exception:
+        return []
+
+def visual_request(root: Path, changed: list[str]) -> list[str]:
+    """prove's plain answer: is a visual review requested, why, and which shots (the before shots when recorded)."""
+    art = hits(changed, VISUAL)
+    try:
+        ui_globs = globs(root, "textsize") + UI_EXTRA
+    except (OSError, ValueError, StopIteration):
+        ui_globs = UI_EXTRA
+    ui = [p for p in hits(changed, ui_globs) if not p.startswith("tools/")]
+    if not art and not ui:
+        return ["visual review: not requested (no UI, scene, theme or art path changed)"]
+    out = []
+    if art:
+        shots = [c for n, _, sh in AREAS if n in (areas(changed) or ["hub"]) for c in sh]
+        out.append(f"visual review: REQUESTED by the art gate <- {art[0]}{f' +{len(art) - 1}' if len(art) > 1 else ''}: write {REVIEW_DIR}/<tip sha>.md "
+                   f"(bot_status.py --bot --prove checks it); shots: {'; '.join(shots)}")
+    if ui:
+        meta = before_meta(root)
+        flows = meta.get("flows") or _slice_flows(root)
+        fl = ",".join(flows) or "<the job's flows: shots.py flow --list>"
+        out.append(f"visual review: REQUESTED for UI <- {ui[0]}{f' +{len(ui) - 1}' if len(ui) > 1 else ''}; flows: {fl}")
+        if meta:
+            note = f"; {len(meta.get('dirty') or [])} path(s) were already edited then" if meta.get("dirty") else ""
+            out.append(f"  before: {BEFORE_DIR}/ ({str(meta.get('sha', ''))[:8]}{note}); after + diff: python3 tools/shots.py flow --flow {fl} "
+                       f"--baseline {BEFORE_DIR}; then view the frames and show before/after together (shots.py show)")
+        else:
+            out.append(f"  before: none recorded ({BEFORE_DIR}/before.json); slice.py open shoots them at slice start, else run "
+                       f"python3 tools/shots.py flow --flow {fl} --before in an unchanged checkout before the first edit")
+    return out
+
 def review_help(changed: list[str] | None = None) -> list[str]:
     return (["review: lines 'wide: <png>' and 'close: <png>' (one or more each), then '1: ...' to '7: ...' naming what you saw.",
              "review: 1-6 are a starting point, not an exhaustive list; any ad hoc issue counts under 7. 'ok' / 'none' alone fail."]

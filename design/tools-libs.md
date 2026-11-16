@@ -14,7 +14,7 @@ Door, rules, the CLI contract and the Surf / A key: `tools.md`. New logic goes i
 
 ## Add a subcommand
 
-1. Put the module in its area dir (`agent_log.std_parser`, RESULT via `agent_log.finish`; `fold` long lists).
+1. Put the module in its area dir (`agent_log.std_parser`, RESULT via `agent_log.finish`; `fold` long lists and give the tool `--verbose`, which the fold line names).
 2. Add one `COMMANDS` row to the entry tool, and one catalog row (`entry.py sub`) to the area doc.
 3. Run `check.py tool-docs` and `check.py tool-cli --only STEM --smoke-run`.
 

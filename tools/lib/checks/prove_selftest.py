@@ -2,7 +2,7 @@
 
 Base -> head: a tool path is deleted while a task resume line still runs it, a subcommand and a flag are dropped
 while a doc names them, a data key is dropped while its reader still asks for it, a const is dropped (another moves) while a doc names both, a func and a common-word const vanish while a doc ticks them, a group is dropped while a shot
-flow and its own script still ask for it (a res:// path naming it is no node ref), a lib signature changes under an untouched importer, a docstring changes under an untouched doc
+flow and its own script still ask for it (a res:// path naming it is no node ref), a lib signature changes under an untouched importer (another only gains optional params: one grouped REVIEW), a docstring changes under an untouched doc
 (REVIEW) and under a doc line repeating its pin name (STALE), a new comment makes a claim about an untouched tool
 (CLAIM), and a UI script changes only a comment. The checks: each DRIFT / STALE / CLAIM / REVIEW line appears, the
 comment-only script is cosmetic (a `#` line in a shader string is not), and the plan picks the selftests (changed tool, importer of the changed lib),
@@ -22,8 +22,9 @@ BASE = {
     "tools/ent.py": 'COMMANDS = [("a", "x/run_a", "A"), ("b", "x/run_b", "B")]\n',
     "tools/open_x.py": '"""Old launcher."""\n',
     "tools/lib/x/run_a.py": '"""Run A: pins grok_web_wN and grok_build_wN."""\nimport lib_y\nap.add_argument("--gone", help="old")\nap.add_argument("--selftest")\nCFG = "d.json"\nv = cfg.get("oldkey")\n',
-    "tools/lib/x/run_b.py": '"""Run B."""\nimport lib_y\nlib_y.helper(1)\nap.add_argument("--selftest")\n' + MAIN,
-    "tools/lib/x/lib_y.py": '"""Lib Y."""\ndef helper(a):\n    return a\n',
+    "tools/lib/x/run_b.py": '"""Run B."""\nimport lib_y\nlib_y.helper(1)\nap.add_argument("--selftest")\nlib_y.tally(1)\n' + MAIN,
+    "tools/lib/x/run_c.py": '"""Run C."""\nimport lib_y\nlib_y.tally(2)\n',
+    "tools/lib/x/lib_y.py": '"""Lib Y."""\ndef helper(a):\n    return a\ndef tally(a, **kv):\n    return a\n',
     "tools/lib/x/week_zz.py": '"""Week ZZ."""\n',
     "tools/data/d.json": '{"keep": 1, "oldkey": 2}\n',
     "tools/data/shot-flows/f.json": '{"steps": [{"op": "click", "group": "hud_items"}]}\n',
@@ -44,7 +45,7 @@ HEAD = {
     "tools/ent.py": 'COMMANDS = [("a", "x/run_a", "A")]\n',
     "tools/open_x.py": None,
     "tools/lib/x/run_a.py": '"""Run A: pins grok_build_wN only."""\nimport lib_y\n# week_zz creates the web pin\nap.add_argument("--selftest")\nCFG = "d.json"\nv = cfg.get("oldkey")\n',
-    "tools/lib/x/lib_y.py": '"""Lib Y."""\ndef helper(a, b):\n    return a + b\n',
+    "tools/lib/x/lib_y.py": '"""Lib Y."""\ndef helper(a, b):\n    return a + b\ndef tally(a, *, big=False, **kv):\n    return a\n',
     "tools/data/d.json": '{"keep": 1}\n',
     "scripts/ui/hud.gd": 'extends Node\nconst MOVED_REV := 1\nfunc _ready():\n\tprint(get_tree().get_nodes_in_group("hud_items"))\n',
     "scripts/ui/bar.gd": 'extends Node\n',
@@ -67,6 +68,7 @@ WANT_DRIFT = ["removed path tools/open_x.py (tools/open_x.py) still named at des
               "STALE   tools/lib/x/run_a.py docstring/help changed (line 1); design/pin.md:4",
               "CLAIM   tools/lib/x/run_a.py:3 new comment names week_zz (tools/lib/x/week_zz.py)"]
 WANT_REVIEW = ["signature of helper() changed in tools/lib/x/lib_y.py; caller tools/lib/x/run_b.py:3",
+               "signature of tally() in tools/lib/x/lib_y.py only gained optional params (old calls still work); 2 untouched caller file(s)",
                "tools/lib/x/run_a.py docstring/help changed (line 1); design/doc.md names it"]
 WANT_PLAN = ["python3 tools/ent.py a --selftest", "python3 tools/lib/x/run_b.py --selftest", "python3 tools/shots.py textsize --gate",
              "python3 tools/docs.py task check"]
@@ -104,11 +106,18 @@ def main() -> int:
             bad.append(f"smokes step {smoke} should count 7 files")
         if a["cosmetic"] != {"scripts/ui/menu.gd"}:
             bad.append(f"cosmetic {sorted(a['cosmetic'])} != ['scripts/ui/menu.gd']")
+        if any("signature of tally() changed" in r for r in a["review"]):
+            bad.append("a signature that only gained optional params must be one grouped REVIEW line, not one per caller")
         if len(a["drift"]) != len(WANT_DRIFT):
             bad.append(f"drift count {len(a['drift'])} != {len(WANT_DRIFT)}: " + " | ".join(a["drift"]))
+    sc = check_prove.pg.sig_compatible
+    for o, n, want in [("a", "a,b=1", True), ("a,**kv", "a,*,big=False,**kv", True), ("a,b", "a,x=1,b", False), ("a", "a,b", False),
+                       ("a,b=2", "a,b=3", False), ("a:dict[str,int]", "a:dict[str,int],c:int=0", True), ("a,b", "b,a", False)]:
+        if sc(o, n) != want:
+            bad.append(f"sig_compatible({o!r}, {n!r}) != {want}")
     dep = "use run_a here\nap.add_argument(\"--x\", action=\"store_true\", help=\"keep\")\n"
     if check_prove.pg.stale_lines("tools/lib/x/run_a.py", [], ['ap.add_argument("--leader", action="store_true", help="chip offset")'], "tools/b.py", dep, set()):
         bad.append("stale_lines: a help= line's action=\"store_true\" counted as prose")
     for b in bad:
         print(b)
-    return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(WANT_DRIFT) + len(WANT_REVIEW) + len(WANT_PLAN) + 3, bad=len(bad))
+    return agent_log.emit_result("FAIL" if bad else "PASS", checks=len(WANT_DRIFT) + len(WANT_REVIEW) + len(WANT_PLAN) + 11, bad=len(bad))

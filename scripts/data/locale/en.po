@@ -2367,7 +2367,7 @@ msgid "bug_report.send"
 msgstr "Send Report"
 
 msgid "bug_report.privacy"
-msgstr "Sends your note and a game state report (version, area, settings). Your email is never shown publicly."
+msgstr "Sends your note and a game state report (version, area, settings). Your data is never sold and is used only for debugging and messages you authorize. Your email is never shown publicly."
 
 msgid "bug_report.sending"
 msgstr "Sending..."

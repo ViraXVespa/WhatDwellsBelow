@@ -140,10 +140,14 @@ def is_linked(root: Path) -> bool:
     return bool(worktree_kind(root))
 
 def merge_back_text(week: str) -> str:
-    """The merge-back card line: a Grok worktree is a full clone on the week branch, so a green prove ends in a plain push of it."""
+    """The merge-back card line: a Grok worktree is a full clone on the week branch, so a green prove ends in a plain push of it.
+    A worktree checked out on another named branch (a Bot or simulation branch) pushes that branch instead."""
     note = ("after the push, say whether a playtest confirmation is required (balance, audio, visuals, controls), "
             "recommended (feel, hitch, or timing the gates do not score), or not needed (a refactor, tool, doc, or test). "
             "Do not ask, and do not wait for a reply before the commit or the push")
+    if week and repo_lib.branch_kind(week) not in ("build", "detached"):
+        return (f"merge-back=this worktree is on branch {week} (not a week branch): cleanup + gate + slice.py commit + plain "
+                f"`git push origin {week}` finish first; then that notice. {note}")
     return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): "
             f"cleanup + gate + slice.py commit + plain `git push origin {week or 'grok-build-w{N}'}` finish first; then that notice. {note}")
 
@@ -159,6 +163,9 @@ def selftest(script: list[str]) -> int:
         return p.returncode, p.stdout + p.stderr
 
     git = repo_lib.git_test
+    mb = merge_back_text("bot/sim")
+    if "git push origin bot/sim" not in mb or "week branch bot/sim" in mb or "ON the week branch grok-build-w9" not in merge_back_text("grok-build-w9"):
+        bad.append("merge-back names the checked-out branch: a week branch keeps the full-clone text, a bot branch pushes itself")
 
     with tempfile.TemporaryDirectory() as td:
         root = repo_lib.selftest_repo(td, empty_commit=True)

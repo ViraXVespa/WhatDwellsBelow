@@ -21,7 +21,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 
 | Job | Open |
 |-----|------|
-| Size sweep (over 10KB, then 5KB when whole functions can move) | `design/grok-bot-size.md` |
+| Size sweep (10000+ bytes, then 5000+ when whole functions can move) | `design/grok-bot-size.md` |
 | Ad-hoc extract / existing-owner routing (User-gated; not the staged map) | `design/grok-bot-extract.md` |
 | Staged reuse-map brief as one PR | `design/grok-bot-reuse.md` |
 | Parked / named folder relocate | `design/grok-bot-relocate.md` |
@@ -47,7 +47,7 @@ Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read wi
 ## Caps (Bot-only)
 
 The Bot alone enforces size; Build and Web never measure or split. Size tools run in Bot mode (`--bot`, `WDB_BOT`). Measure with `os.path.getsize`.
-- Scripts: every live `.gd` (`scripts/**`, `tools/data/**`) under 10,000 bytes (ship floor); the 5,000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
+- Scripts: every live `.gd` (`scripts/**`, `tools/data/**`) under 10000 bytes (ship floor); the 5000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
 - Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/data/bot_budgets.json` (`check.py load-graph --bot`).
 - Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
 

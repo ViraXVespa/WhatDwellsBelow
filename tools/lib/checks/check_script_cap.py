@@ -90,6 +90,7 @@ def selftest() -> list[str]:
             ("only deleted paths pass", ["--path", "scripts/gone.gd"], 0, "checked=0"),
             ("directory path exits 2", ["--path", "scripts/a"], 2, "not a file"),
             ("Bot cap still fails next to a deleted path", ["--bot", "--path", "scripts/gone.gd", "--path", "scripts/c/big.gd"], 1, "over=1"),
+            ("the cap is stated in exact bytes", ["--bot", "--path", "scripts/c/big.gd"], 1, "limit=10000 bytes (a script FAILs at 10000 bytes or more)"),
         ]
         for name, argv, want, text in cases:
             code, out = run(*argv)
@@ -127,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
         bad = selftest()
         for b in bad:
             print(f"selftest: {b}")
-        return agent_log.emit_result("FAIL" if bad else "PASS", None, checks=6, problems=len(bad))
+        return agent_log.emit_result("FAIL" if bad else "PASS", None, checks=7, problems=len(bad))
     root = agent_log.resolve_root(args)
     bot = bot_gate_lib.enabled(args)
     if (args.sweep or args.list or args.over_kb is not None) and not bot:
@@ -143,7 +144,7 @@ def main(argv: list[str] | None = None) -> int:
         rows = gd_lib.sizes(root, limit, hi)
         under = f"{args.under_kb:g}" if hi else "none"
         body = ["root=.", f"overKb={args.over_kb:g} underKb={under} count={len(rows)}", "measure=on-disk bytes", "", "bytes\tpath"] + [f"{n}\t{r}" for n, r in rows]
-        echo = [f"{len(rows)} scripts >= {args.over_kb:g}KB" + (f" and < {args.under_kb:g}KB" if hi else "")] + agent_log.fold([f"{n:6d}  {r}" for n, r in rows], args.verbose, keep=10, limit=15)
+        echo = [f"{len(rows)} scripts >= {limit} bytes" + (f" and < {hi} bytes" if hi else "")] + agent_log.fold([f"{n:6d}  {r}" for n, r in rows], args.verbose, keep=10, limit=15)
         return agent_log.finish("script-cap", root, "\n".join(body), "INFO", args=args, echo="\n".join(echo), count=len(rows))
 
     args.path = agent_log.split_list(args.path)
@@ -184,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
 
     lines = ["script cap" if bot else "script names", "root=."]
     if bot:
-        lines += [f"overKb={args.over_kb} limit={limit}", "measure=os.path.getsize (== Get-Item Length)",
+        lines += [f"limit={limit} bytes (a script FAILs at {limit} bytes or more)", "measure=os.path.getsize (== Get-Item Length)",
                   f"checked={len(files)} over={len(over)} dupes={len(dupes)}", "", "bytes\tpath"]
         lines += [f"{size}\t{rel}" for size, rel in over]
     else:
@@ -198,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
     if stray:
         lines.append("next: STRAY = move the script under scripts/ (lint.py move); only tools/ and addons/ hold .gd elsewhere")
     if over:
-        lines.append("next: split the file (BOT.md size flow, design/refactor.md); do not raise --over-kb")
+        lines.append(f"next: split the file to under {limit} bytes (BOT.md size flow, design/refactor.md); do not raise --over-kb")
     if dupes:
         lines.append("next: DUPE = rename one file; basenames are unique repo-wide")
     kv = dict(checked=len(files), dupes=len(dupes), stray=len(stray))

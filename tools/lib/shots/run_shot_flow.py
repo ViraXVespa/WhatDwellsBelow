@@ -7,6 +7,7 @@ set state, shoot every page, assert, then diff against a baseline or publish to 
   python tools/shots.py flow --sheet NAME            # tile a flow's last frames into one sheet.png (labels; small text is not readable on it)
   python tools/shots.py flow --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
   python tools/shots.py flow --job ui.pause [--save-baseline DIR]   # every flow routes.yaml maps to the job (a door name: its door flows), one call, one summary
+  python tools/shots.py flow --job ui.pause --before   # before shots of the unchanged checkout: _logs/before-shots/<flow>/ + before.json (prove names them)
   python tools/shots.py flow --changed               # the flows whose JSON changed, plus those mapped to a job whose doc changed
   python tools/shots.py flow --flow N --state NAME   # re-shoot one state of a flow (its steps up to that shot only); prints that frame as changed or same
   python tools/shots.py flow --smoke --no-pixels        # every smoke:true flow, headless, asserts only
@@ -339,6 +340,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", "--out-dir", dest="out_dir", default="", metavar="DIR", help="Frames root (default _logs/shot-flow; old name --out-dir).")
     p.add_argument("--baseline", default="", help="directory of earlier frames (BASE/<flow>/NN-name.png) to diff against")
     p.add_argument("--save-baseline", default="", help="copy this run's frames to DIR/<flow>/ (run before the change)")
+    p.add_argument("--before", action="store_true", help="before shots: save this run's frames to _logs/before-shots/<flow>/ with before.json (sha, flows); run in the unchanged checkout before the first edit (slice.py open does), then diff later runs with --baseline _logs/before-shots")
     p.add_argument("--tol", type=int, default=0, help="per-channel diff tolerance")
     p.add_argument("--max-ratio", type=float, default=None, help="FAIL when a frame changes more than this pixel fraction")
     p.add_argument("--publish", action="store_true", help="copy frames to the flow's publish.dir (default _out/shots/<flow>; assets/ is refused) and write shots.json")
@@ -386,6 +388,13 @@ def main(argv: list[str] | None = None) -> int:
         args.state = unit_lib.job_state(load_routes(root), jobs[0])  # a unit that is one state of a shared flow (routes.yaml shot_states)
     if not (names or args.all or args.smoke):
         agent_log.fail("name a flow (--flow N), a job (--job J), or use --changed / --all / --smoke / --list / --survey")
+    import prove_scope
+    if args.before:
+        if args.save_baseline or args.no_pixels or args.state:
+            agent_log.fail("--before saves whole flows' frames itself: drop --save-baseline, --no-pixels and --state")
+        args.save_baseline = str(root / prove_scope.BEFORE_DIR)
+        for n in names if not args.dry_run else []:
+            shutil.rmtree(root / prove_scope.BEFORE_DIR / n, ignore_errors=True)  # no stale frame from an earlier before run
     out_root = Path(args.out_dir) if args.out_dir else root / "_logs" / JOB
     if args.state:
         if len(names) != 1 or args.all or args.smoke or args.changed:
@@ -433,6 +442,10 @@ def main(argv: list[str] | None = None) -> int:
             lines.append("  stale: " + sfile)
         if r.get("published"):
             lines.append("  published: %(dir)s files=%(files)d" % r["published"])
+    if args.before and not args.dry_run:
+        meta = prove_scope.save_before_meta(root, [r["flow"] for r in rows if r.get("saved_baseline")])
+        lines.append("before shots: %s/ (%s, flows %s)%s" % (prove_scope.BEFORE_DIR, meta["sha"][:8], ",".join(meta["flows"]) or "none",
+                                                           "; WARN: %d tracked path(s) already edited" % len(meta["dirty"]) if meta["dirty"] else ""))
     out_root.mkdir(parents=True, exist_ok=True)
     if status == "FAIL" and not args.dry_run:
         import retry_lib

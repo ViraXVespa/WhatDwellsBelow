@@ -89,9 +89,8 @@ def main(argv: list[str] | None = None) -> int:
     idx = load(root)
     if args.check:
         bad = check(root, idx)
-        body = "\n".join(agent_log.fold(bad, keep=12, limit=20)) if bad else f"index ok: {len(idx.items)} items resolve"
-        return agent_log.finish("plan-expand", root, "\n".join(bad) or body, "FAIL" if bad else "PASS", args=args, echo=body,
-                                check=1, unresolved=len(bad))
+        body = "\n".join(bad) if bad else f"index ok: {len(idx.items)} items resolve"  # problems are never folded
+        return agent_log.finish("plan-expand", root, body, "FAIL" if bad else "PASS", args=args, check=1, unresolved=len(bad))
     text, skipped = packet(root, idx, agent_log.split_list([args.only]), args.budget)
     status = "FAIL" if "UNRESOLVED:" in text or "UNKNOWN id/ref:" in text else "PASS"
     echo = f"packet: {len(text.splitlines())} lines, {len(text)} chars" + (f"; over budget, listed only: {' '.join(skipped)}" if skipped else "")
@@ -141,6 +140,9 @@ def selftest() -> int:
         code, out = run("--budget", "10")
         if "over budget" not in agent_log.agent_summary_path("plan-expand", root).read_text(encoding="utf-8"):
             bad.append("core past --budget is listed, not pasted")
+        err, body = pi.resolve(root, pi.Item("C9", "doc", "design/demo.md", True, "range", (5, 5)))
+        if err or body != ["(L5-5)", "Rule text."]:
+            bad.append(f"a doc item with a line range resolves to those lines only: {err or body}")
         idx.items.append(pi.Item("C4", "func", "scripts/demo.gd:gone", True, "x"))
         plan.write_text("# Session plan\n\n" + pi.MARKER + "\n\n" + pi.render(idx), encoding="utf-8")
         (root / "session-context.md").unlink()

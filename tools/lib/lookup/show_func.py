@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 20 lines; --full for all)."""
+"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 20 lines; --full for all).
+
+A declaration ends with its body: trailing blank lines and the next declaration's leading comments are not part of it,
+and a Python def stops at column-0 module code. `--selftest` checks those spans on fixtures.
+"""
 from __future__ import annotations
 
 import re
@@ -16,7 +20,8 @@ import gd_lib
 MAX_LINES = 20
 
 def py_span(lines: list[str], name: str) -> tuple[int, int] | None:
-    """[start, end) of a column-0 Python def, up to the next column-0 def or class."""
+    """[start, end) of a column-0 Python def: its signature, then the body up to the first column-0 code line (module code,
+    the next def, class or decorator). Trailing blank and column-0 comment lines belong to what follows, not to the def."""
     start = None
     for i, line in enumerate(lines):
         m = re.match(r"^(?:async\s+)?def\s+(\w+)\s*\(", line)
@@ -25,12 +30,28 @@ def py_span(lines: list[str], name: str) -> tuple[int, int] | None:
             break
     if start is None:
         return None
-    end = len(lines)
-    for j in range(start + 1, len(lines)):
-        if re.match(r"^(?:async\s+)?def\s+\w+\s*\(|^class\s+\w+", lines[j]):
-            end = j
+    j, depth = start, 0
+    while j < len(lines):  # the signature may span lines (a column-0 `) -> int:` closes it)
+        depth += lines[j].count("(") + lines[j].count("[") - lines[j].count(")") - lines[j].count("]")
+        j += 1
+        if depth <= 0 and lines[j - 1].rstrip().endswith(":"):
             break
-    return start, end
+    end, quote = len(lines), ""
+    for k in range(j, len(lines)):
+        ln = lines[k]
+        if not quote and ln.strip() and not ln[0].isspace() and not ln.startswith("#"):
+            end = k
+            break
+        for q in ('"""', "'''"):  # a docstring's dedented lines are not module code
+            if ln.count(q) % 2 and quote in ("", q):
+                quote = "" if quote else q
+    return start, trim_tail(lines, start, end)
+
+def trim_tail(lines: list[str], start: int, end: int) -> int:
+    """Drop trailing blank and column-0 comment lines (the next declaration's leading comment) from [start, end)."""
+    while end > start + 1 and (not lines[end - 1].strip() or lines[end - 1].startswith("#")):
+        end -= 1
+    return end
 
 def declared_names(lines: list[str], python: bool) -> list[str]:
     if python:
@@ -38,6 +59,23 @@ def declared_names(lines: list[str], python: bool) -> list[str]:
     else:
         found = [m.group(1) for ln in lines if (m := re.match(r"(?:static\s+)?(?:func|const|var|signal|enum)\s+(\w+)", ln))]
     return sorted(set(found))
+
+def selftest() -> int:
+    """Spans stop at the function end: no module code after a Python def, no next declaration's leading comment."""
+    py = ["def a(x,", "      y=1,", ") -> int:", '    """Doc', "dedented doc line", '    """', "    return x", "", "# next comment", "",
+          "@deco", "def b():", "    pass", "", "VALUE = b()", "print(VALUE)"]
+    gd = ["static func email_ok(e: String) -> bool:", "\tvar s := e", "\t# inner note", "\treturn s != \"\"", "",
+          "## Next one's doc.", "static func category() -> String:", "\treturn \"\"", "", "@export var x := 1", "func last() -> void:",
+          "\tpass", "", "## trailing"]
+    bad = []
+    for got, want, why in [(py_span(py, "a"), (0, 7), "a multi-line Python def ends at its body, not at the next comment"),
+                           (py_span(py, "b"), (11, 13), "a Python def ends before column-0 module code"),
+                           (gd_lib.decl_span(gd, "email_ok"), (0, 4), "a GDScript func drops the next func's ## comment"),
+                           (gd_lib.decl_span(gd, "category"), (6, 8), "a GDScript func ends before column-0 @export var"),
+                           (gd_lib.decl_span(gd, "last"), (10, 12), "a trailing ## comment is not the last func's")]:
+        if got != want:
+            bad.append(f"{why}: got {got}, want {want}")
+    return agent_log.selftest_result(bad)
 
 def looks_like_path(s: str) -> bool:
     """True if s looks like a repo path rather than a declaration name."""
@@ -50,7 +88,10 @@ def main(argv: list[str] | None = None) -> int:
     for flag, text in (("--path", "Repo-relative .gd or .py path"), ("--name", "func / const / var / def name")):
         p.add_argument(flag, default="", help=text)
     p.add_argument("--full", action="store_true", help="Print the whole declaration (default: the first 20 lines). The wdb MCP pages it.")
+    p.add_argument("--selftest", action="store_true", help="Check that spans stop at the function end (fixtures; reads no repo file).")
     args = p.parse_args(argv)
+    if args.selftest:
+        return selftest()
     if len(args.pos) > 2:
         agent_log.fail("pass at most PATH NAME (example: find.py func scripts/app.gd _ready)")
     if args.pos and not args.path:

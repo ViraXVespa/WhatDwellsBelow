@@ -8,9 +8,9 @@ resume: Bot: after Vira runs the P6 steps below and reports her output
 
 ## Decisions (locked, Vira 2026-11-14: defaults)
 
-- One read-only repo MCP, `wdb` (`tools-mcp.md`): `lookup`, `check` (incl. `gate.py gd-load`), `protocol`; thin wrappers over `find.py` / `check.py` / `docs.py` / `session.py`; first page about 20 lines inline, handles for the rest (one file each, safe across sessions); no shown-line tracking (Vira, 2026-11-14).
-- Gather in `slice.py open` (`tools-build.md`): start runs for the main session (`grok -s SID`), seed, cheap agent `grok-build-0.1` under `WDB_ROLE=gather`, open's own `expand --check`, `session-context.md`. Crash or timeout: seed only plus WARN, then launch. Halt or a failed check: no launch. `--review` / `--launch WT` / `--no-gather`.
-- `session-plan.md` is the single source of truth; `slice.py adjust` is its only writer and logs `_logs/gather/delta.jsonl`; `plan --refresh` replays it.
+- One read-only repo MCP, `wdb` (`tools-mcp.md`): `lookup`, `check` (incl. `gate.py gd-load`), `protocol`; thin wrappers over `find.py` / `check.py` / `docs.py` / `session.py`; first page about 60 lines inline (`all=true` the whole result, `lookup reads=[...]` several reads in one reply), handles for the rest (one file each, safe across sessions); no shown-line tracking (Vira, 2026-11-14).
+- Gather in `slice.py open` (`tools-build.md`): start runs for the main session (`grok -s SID`), seed, cheap agent `grok-build-0.1` under `WDB_ROLE=gather`, open's own `expand --check`, `session-context.md`. Crash or timeout: seed only plus WARN, then launch. Halt or a failed check: no launch. `--review` / `--launch WT [--review]` / `--no-gather` / `--seed-only` / `--in WT`.
+- `session-plan.md` is the single source of truth; `slice.py adjust` is its only writer (`--lines` ranges, `batch --op`) and logs `_logs/gather/delta.jsonl`; `plan --refresh` replays it.
 - A next unit in the same session uses the seed only. The `_src/wip/.../session-plan.md` copy stays.
 - Success metric: main-session tokens and turns against recent slices; the gather cost is reported apart.
 

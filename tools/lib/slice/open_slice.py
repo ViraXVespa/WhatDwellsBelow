@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Open a Build slice: the USER runs this (PowerShell on Windows). It starts grok in a NEW worktree cut from the week branch.
 
-    python tools/slice.py open [AREA_OR_NAME] [--task ID] [--prompt TEXT | --prompt-file PATH] [--ref REF] [--no-gather | --review] [--dry-run]
-    python tools/slice.py open --launch WT     (main session in a gathered worktree, after --review)
+    python tools/slice.py open [AREA_OR_NAME] [--task ID] [--prompt TEXT | --prompt-file PATH] [--ref REF | --in WT] [--no-gather | --review | --seed-only] [--dry-run]
+    python tools/slice.py open --launch WT [--review]    (main session in a gathered worktree, after --review or a hand gather)
 It prints the prompt it passes as one info line (length, first 60 characters, sha256) and logs it. --prompt-file reads a file as is; --prompt takes text. A prompt that starts `# Handoff:` is a survey handoff (slice.py start --handoff): it must be filled in, and the line `handoff:` summarizes it.
 Finds the repo from this file's location and the week branch grok-build-w{N} (none and no --ref: fails). The worktree name is
 generated (wdb-<area or slice>-<YYYYMMDD-HHMM>). It prints, then runs from the repo root with a plain args list (no shell):
@@ -26,8 +26,10 @@ Gather (an AREA or --task that resolves to a routes.yaml door or job, and no han
 `slice.py start` there for the main session (pre-assigned id, `grok -s SID`), the cheap gather agent refines the
 session-plan.md index, and `session-context.md` is written; the main session's first message is
 tools/data/gather/build-first.md (gather_agent.py has the steps and fallbacks). --no-gather skips only the agent (seed
-only). --review stops after the agent and prints the report; --launch WT then starts the main session there. A halt from
-the agent refuses the launch.
+only). --review stops after the agent and prints the report; --launch WT then starts the main session there (--launch WT
+--review: check, packet and report only). A halt from the agent refuses the launch. --seed-only stops after start and the
+seed (no agent, packet or launch) for a gather done by hand; --in WT uses an existing slice worktree instead of creating
+one (it may be run from inside that worktree; the worktree's own branch is the ref).
 This is the only tool that launches grok for a Build slice; the gather agent is its headless child, and the isolated-media runner
 is the other launcher, under its own gate.
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
@@ -89,6 +91,8 @@ def gathered_launch(root: Path, wt: Path, exe: str | None, end, lines: list[str]
     if halt:
         return end("\n".join(lines + [gather_agent.report(wt), f"HALT: {halt}. Not launched. Fix the cause, or delete {wt / gather_agent.GATHER / 'halt'}, then: python tools/slice.py open --launch {wt}"]), "FAIL", route="halt")
     ok, bad = gather_agent.finish(wt, bool(meta.get("agent_warn")))
+    if ok and not meta.get("agent_ok") and gather_agent.gathered(wt):
+        gather_agent.set_meta(wt, agent_ok=True)  # a gather outside open (seed-only, then adjust as the gather role)
     if not ok:
         return end("\n".join(lines + [gather_agent.report(wt)] + bad), "FAIL", route="invalid")
     notes = [meta["agent_warn"]] if meta.get("agent_warn") else []
@@ -147,6 +151,35 @@ def link_addons(src: Path, wt: Path) -> str:
         return f"ADDONS FAILED: could not junction or copy addons/ ({err}; copy {exc})."
     return f"ADDONS COPIED: junction was not created ({err}). This copy will not follow later edits in the checkout addons/."
 
+def prepare(wt: Path, flows: str, run=subprocess.run) -> list[str]:
+    """In a new or reused worktree, before any edit: the Godot setup (addon + import; a fresh worktree fails Godot checks
+    without it), then the before shots of the slice's flows (prove names them; no scratch worktree later). Never fatal."""
+    if os.environ.get("WDB_OPEN_NO_PREPARE") == "1":  # the selftest's real (non-dry) opens: no Godot download, no shots
+        return ["prepare: skipped (WDB_OPEN_NO_PREPARE=1)"]
+    py, out = gather_agent.py(), []
+    for label, argv, fix in (("setup", [py, "tools/gate.py", "bot-smokes", "--setup"], "python tools/gate.py bot-smokes --setup"),
+                             ("before shots", [py, "tools/shots.py", "flow", "--flow", flows, "--before"],
+                              f"python tools/shots.py flow --flow {flows} --before (before the first edit)")):
+        if label == "before shots" and not flows:
+            out.append("before shots: none (no shot flow mapped to this slice)")
+            continue
+        if label == "before shots":
+            st = run(["git", "status", "--porcelain", "-uno"], cwd=wt, capture_output=True, text=True, encoding="utf-8", errors="replace")
+            edited = [ln[3:] for ln in (st.stdout or "").splitlines() if len(ln) > 3 and not ln[3:].startswith("_logs/")]
+            if (wt / "_logs/before-shots/before.json").is_file() or edited:
+                why = "kept: _logs/before-shots/before.json exists" if not edited else f"skipped: {len(edited)} tracked path(s) already edited, so they would not be before shots"
+                out.append(f"before shots: {why}")
+                continue
+        try:
+            p = run(argv, cwd=wt, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900)
+            code, text = p.returncode, (p.stdout or "") + (p.stderr or "")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            code, text = 1, str(exc)
+        res = next((ln for ln in reversed(text.splitlines()) if ln.startswith("RESULT ")), text.strip().splitlines()[-1:] or ["no output"])
+        res = res if isinstance(res, str) else res[0]
+        out.append(f"{label}: {res[:160]}" if code == 0 else f"{label.upper()} FAILED (exit {code}): {res[:160]}. In the worktree run: {fix}")
+    return out
+
 ADDONS_NOTE = ("addons: after create, junction worktree/addons to this checkout's addons/ "
                "(gitignored godot_ai install; copy only if the junction cannot be created).")
 
@@ -170,7 +203,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--task", default="", metavar="ID", help="A design/tasks task. With no prompt, a short first message names it. needs-local is retired and fails.")
     ap.add_argument("--no-gather", dest="no_gather", action="store_true", help="Skip the gather agent; the main session gets the mechanical seed.")
     ap.add_argument("--review", action="store_true", help="Stop after the gather agent and print its report; launch later with --launch WT.")
-    ap.add_argument("--launch", default="", metavar="WT", help="Start the main session in an already-gathered worktree (after --review).")
+    ap.add_argument("--launch", default="", metavar="WT", help="Start the main session in an already-gathered worktree (after --review). With --review: validate, write session-context.md and print the report only.")
+    ap.add_argument("--in", dest="in_wt", default="", metavar="WT", help="Use this existing slice worktree (a linked git worktree or Grok clone) instead of creating one; may be run from inside it.")
+    ap.add_argument("--seed-only", dest="seed_only", action="store_true", help="Stop after start and the mechanical seed: no gather agent, no packet, no launch. Then `slice.py adjust`, and `open --launch WT --review` (or --launch WT).")
     ap.add_argument("--selftest", action="store_true", help="Run dry-run cases in a throwaway repo; never starts grok.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -182,17 +217,20 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish("open-slice", root, msg, status, args=args, write=not dry, **kv)
 
     if args.launch:
-        return gathered_launch(root, Path(args.launch).resolve(), gather_agent.grok_exe(), end, [f"launch: {args.launch}"], False, args.prompt)
-    if slice_lib.is_linked(root):
+        return gathered_launch(root, Path(args.launch).resolve(), gather_agent.grok_exe(), end, [f"launch: {args.launch}"], args.review, args.prompt)
+    into = Path(args.in_wt).resolve() if args.in_wt else None
+    if into and not (into.is_dir() and slice_lib.is_linked(into)):
+        return end(f"NOT A SLICE WORKTREE: --in {args.in_wt} is not a linked git worktree or Grok clone.", "FAIL", route="bad-in")
+    if slice_lib.is_linked(root) and not into:
         return end(f"IN A WORKTREE: {root} is already a worktree (a Grok clone under .grok/worktrees, or a linked git worktree). Run `python tools/slice.py open` from the main checkout.", "FAIL", route="in-worktree")
-    ref = args.ref or repo_lib.week_branch(root)
+    ref = args.ref or (repo_lib.current_branch(into) or "HEAD" if into else repo_lib.week_branch(root))
     if not ref:
         return end("NO WEEK BRANCH: no grok-build-w* branch exists and no --ref was given, so nothing is started (main is never the fallback). "
                    "A new week starts in a Build session in the repo root told it is a new week (design/build-week-start.md); or pass --ref REF.", "FAIL", route="no-week-branch")
     area = args.area.strip()
-    note = door = job = ""
+    note = door = job = flows = ""
     if area:
-        door, job, _, note = slice_lib.slice_check(root, area)
+        door, job, flows, note = slice_lib.slice_check(root, area)
     prompt = args.prompt
     if args.prompt_file:
         try:
@@ -210,8 +248,10 @@ def main(argv: list[str] | None = None) -> int:
             area = task_lib.resume_area(t)
             if not area:
                 return end(f"NO AREA for task {args.task}: its `resume:` line names no door or door.job (`python tools/docs.py task check`).", "FAIL", route="no-area")
-            door, job, _, note = slice_lib.slice_check(root, area)
+            door, job, flows, note = slice_lib.slice_check(root, area)
     gather = bool(door or job) and not prompt.startswith("# Handoff:")
+    if args.seed_only and not gather:
+        return end("SEED-ONLY NEEDS A DOOR OR JOB: pass AREA (door or door.job) or a --task that resolves to one.", "FAIL", route="bad-seed-only")
     if args.task:
         if not gather:
             prompt = prompt or task_prompt(args.task.strip(), t["path"], area, t)
@@ -244,10 +284,15 @@ def main(argv: list[str] | None = None) -> int:
         sargv = gather_agent.start_cmd(area, door, job, tid, t if args.task else None)
         extra, prompt = prompt, gather_agent.first_message(sargv, tid, [], prompt)
         session = session_argv(g, "PATH", prompt, sid)
-        steps = [show(create), "(in PATH) " + show(sargv)] + ([] if args.no_gather else [show(gather_agent.agent_argv(g, Path("PATH"), Path("PATH/_logs/gather/prompt.md")))]) + ["(in PATH) slice.py expand --check; expand --out session-context.md", show(session)]
+        steps = [show(create), "(in PATH) " + show(sargv)]
+        if not args.seed_only:
+            steps += ([] if args.no_gather else [show(gather_agent.agent_argv(g, Path("PATH"), Path("PATH/_logs/gather/prompt.md")))]) + ["(in PATH) slice.py expand --check; expand --out session-context.md", show(session)]
     else:
         session = session_argv(g, "PATH", prompt)
         steps = [show(create), show(session)]
+    if into:
+        steps[0], name = f"(existing worktree {into}; nothing created)", into.name
+        steps = [st.replace("PATH", str(into)) for st in steps]
     numbered = "  ".join(f"{i}) {step}" for i, step in enumerate(steps, 1))
     lines = [f"repo={root} ref={ref} worktree={name}", f"COMMANDS (run from the repo root): {numbered}"]
     import hashlib
@@ -256,27 +301,38 @@ def main(argv: list[str] | None = None) -> int:
     lines.append(f"prompt: {len(prompt)} chars, starts {prompt[:60]!r}, sha256 {hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:12]}" if prompt else "prompt: none (a blank session)")
     lines += [hand_note] if hand_note else []
     lines.append(ADDONS_NOTE)
+    lines.append(f"prepare: in the worktree, before any edit: gate.py bot-smokes --setup" + (f", then shots.py flow --flow {flows} --before" if flows else "") + ".")
     lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/slice.py start --door <door>` (the card; a later run says where the slice stands).")
     if dry:
         return end("\n".join(lines + ["dry run: grok was not started."]), "PASS", route="dry-run")
-    if not exe:
+    needs_grok = not into or not (args.seed_only or (args.no_gather and args.review))
+    if not exe and needs_grok:
         return end("\n".join(lines + ["GROK NOT FOUND on PATH. Run the COMMANDS above yourself from the repo root."]), "FAIL", route="no-grok")
-    p = subprocess.run(gather_agent.runnable(create), cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    wt = Path((p.stdout.strip().splitlines() or [""])[-1].strip())
-    if p.returncode != 0 or not str(wt) or not wt.is_dir():
-        return end("\n".join(lines + [f"WORKTREE CREATE FAILED (exit {p.returncode}): {(p.stdout + p.stderr).strip()[:400]}"]), "FAIL", route="create-failed")
-    addon_line = link_addons(Path(root), wt)
+    if into:
+        wt, addon_line = into, link_addons(Path(root), into) if Path(root).resolve() != into else "addons: --in from inside the worktree; left as it is."
+    else:
+        p = subprocess.run(gather_agent.runnable(create), cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        wt = Path((p.stdout.strip().splitlines() or [""])[-1].strip())
+        if p.returncode != 0 or not str(wt) or not wt.is_dir():
+            return end("\n".join(lines + [f"WORKTREE CREATE FAILED (exit {p.returncode}): {(p.stdout + p.stderr).strip()[:400]}"]), "FAIL", route="create-failed")
+        addon_line = link_addons(Path(root), wt)
+    addon_line = "\n".join([addon_line, *prepare(wt, flows)])
     if gather:
         code, out = gather_agent.start(wt, sargv, sid, tid, extra)
         if code != 0:
             tail = " | ".join(out.strip().splitlines()[-4:])
             return end("\n".join(lines + [addon_line, f"worktree {wt}", f"START FAILED in the worktree (exit {code}): {tail}"]), "FAIL", route="start-failed")
         lines = lines + [addon_line, f"worktree {wt}", "start: ran for the main session (" + " ".join(sargv[1:]) + ")"]
+        if args.seed_only:
+            py = gather_agent.py()
+            return end("\n".join(lines + [f"seed-only: stopped after the seed ({wt / 'session-plan.md'}). Gather with `{py} tools/slice.py adjust ...` "
+                                           f"(WDB_ROLE=gather marks the index `gather: agent`), then `{py} tools/slice.py open --launch {wt} --review` "
+                                           "(check, packet, report; no launch) or `--launch` alone to start the main session."]), "PASS", route="seed-only")
         if args.no_gather:
             lines.append("gather agent: skipped (--no-gather); the main session gets the mechanical seed.")
         else:
-            ok, line = gather_agent.agent(exe, wt, area, door, job, tid)
+            ok, line = gather_agent.agent(exe, wt, area, door, job, tid, extra)
             gather_agent.set_meta(wt, agent_ok=ok, agent_warn="" if ok else line)
             lines.append(line)
         return gathered_launch(root, wt, exe, end, lines, args.review)
@@ -284,13 +340,37 @@ def main(argv: list[str] | None = None) -> int:
     end("\n".join(lines + [addon_line, f"worktree {wt}", f"SESSION: {show(cmd)}", "Starting grok now (this terminal is handed over)."]), "PASS", route="launch")
     return launch(exe, cmd, wt)
 
+def _prepare_selftest(td: Path) -> list[str]:
+    """prepare(): setup then before shots in a clean worktree; skipped when edited or already shot; failures say the fix."""
+    bad, seen = [], []
+    wt = td / "prep-wt"
+    wt.mkdir()
+
+    def fake(status: str = "", rc: int = 0):
+        def run(argv, **_kw):
+            seen.append(" ".join(argv[1:]))
+            out = status if argv[0] == "git" else f"RESULT {'PASS' if rc == 0 else 'FAIL'} x=1\n"
+            return subprocess.CompletedProcess(argv, 0 if argv[0] == "git" else rc, out, "")
+        return run
+    lines = prepare(wt, "camp-pause-pages", fake())
+    if not any("bot-smokes --setup" in a for a in seen) or not any("flow --flow camp-pause-pages --before" in a for a in seen) \
+            or lines != ["setup: RESULT PASS x=1", "before shots: RESULT PASS x=1"]:
+        bad.append(f"prepare must run the setup, then the before shots of the slice flows: {lines} {seen}")
+    if "skipped: 1 tracked path(s) already edited" not in " ".join(prepare(wt, "f", fake(" M scripts/a.gd\n"))):
+        bad.append("prepare must not shoot before shots in an edited worktree")
+    if prepare(wt, "", fake())[-1] != "before shots: none (no shot flow mapped to this slice)":
+        bad.append("prepare with no flow must say so")
+    if not prepare(wt, "f", fake(rc=1))[0].startswith("SETUP FAILED (exit 1)"):
+        bad.append("a failed setup must say so and print the fix")
+    return bad
+
 def selftest(script: list[str]) -> int:
     """Dry-run cases in a throwaway repo; the one non-dry case runs with an empty PATH, so grok cannot start."""
     bad: list[str] = []
 
     def run(root: Path, *a: str, env: dict | None = None) -> tuple[int, str]:
         p = subprocess.run([*script, "--root", str(root), *a], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           env=env or os.environ)
+                           env={**(env or os.environ), "WDB_OPEN_NO_PREPARE": "1"})
         return p.returncode, p.stdout + p.stderr
 
     git = repo_lib.git_test
@@ -385,6 +465,7 @@ def selftest(script: list[str]) -> int:
         bare.mkdir()
         if not link_addons(missing, bare).startswith("ADDONS MISSING"):
             bad.append("a checkout with no addons/ must say ADDONS MISSING")
+        bad += _prepare_selftest(Path(td))
         import gather_selftest
 
         bad += gather_selftest.run(script, Path(td))

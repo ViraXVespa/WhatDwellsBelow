@@ -2,7 +2,8 @@
 
 Thin wrappers: each first call runs the real `find.py` / `docs.py` / `session.py` / `slice.py expand` /
 `check.py` / `gate.py gd-load` command once and caches its full result under a handle; follow-ups page or filter that
-cache (`more` sends only the rest) and never re-run it. Commands outside the caller's catalog surface (Surf column, `design/tools*.md`) are refused.
+cache (`more` sends only the rest) and never re-run it. `whole` (all=true) sends the whole result in the first reply;
+`lookup reads=[...]` answers several independent reads in one reply. File reads live in mcp_read.py. Commands outside the caller's catalog surface (Surf column, `design/tools*.md`) are refused.
 Read-only: nothing here writes repo files (state lives in `_logs/gather/`).
 """
 from __future__ import annotations
@@ -12,6 +13,7 @@ import re
 from pathlib import Path
 
 import mcp_core as core
+import mcp_read
 
 PATH_RE = re.compile(r"(?<![\w/.-])((?:scripts|scenes|tools|design|assets|_out)/[\w./-]+\.\w+)")
 FAIL_RE = re.compile(r"\b(FAIL|ERROR|DRIFT|STALE|MISSING|UNMAPPED|SCRIPT ERROR)\b|^error:", re.M)
@@ -23,6 +25,7 @@ CHECKS = {  # target -> (catalog command, argv builder)
     "load_graph": ("check.py load-graph", lambda a: ["check.py", "load-graph"]),
     "gd_load": ("gate.py gd-load", lambda a: ["gate.py", "gd-load"] + (["--files", *a["files"]] if a.get("files") else [])),
 }
+BATCH_KEYS = ("path", "name", "pattern", "pairs", "start", "end", "door", "job", "query", "regex", "expand")
 
 def _surfaces(root: Path) -> dict[str, str]:
     """`entry.py sub` -> Surf letters, from every catalog row in design/tools*.md."""
@@ -71,36 +74,79 @@ class Tools:
             return core.page(self.store, h, budget, rec.get("status", "PASS"), first=True)
         if action == "full":
             rec["pos"] = 0
-            return core.page(self.store, handle, budget or 10_000, rec.get("status", "PASS"), first=True)
+            return core.page(self.store, handle, budget or core.ALL, rec.get("status", "PASS"), first=True)
         return core.page(self.store, handle, budget, rec.get("status", "PASS"))
 
     # lookup
-    def lookup(self, action: str, handle: str = "", path: str = "", name: str = "", pattern: str = "",
+    def lookup(self, action: str = "more", handle: str = "", path: str = "", name: str = "", pattern: str = "",
                pairs: list | None = None, start: int = 0, end: int = 0, door: str = "", job: str = "",
-               query: str = "", regex: bool = False, expand: str = "", budget: int = 0) -> str:
+               query: str = "", regex: bool = False, expand: str = "", budget: int = 0, whole: bool = False,
+               reads: list | None = None) -> str:
         self.store.tick()
+        budget = core.ALL if whole else budget
+        if reads or action == "batch":
+            return self._batch(reads or [], budget)
         if handle or action in ("more", "full"):
             return self._follow(handle, action or "more", budget)
+        kw = dict(path=path, name=name, pattern=pattern, pairs=pairs, start=start, end=end, door=door, job=job,
+                  query=query, regex=regex, expand=expand)
+        try:
+            status, body, files, summary = self._one(action, **kw)
+        except core.Refused as exc:
+            return self._refuse(str(exc))
+        h = self.store.new({"func": "f", "lines": "r", "doc": "r"}.get(action, "l"), body, status=status, files=files)
+        return core.page(self.store, h, budget, status, summary, first=True)
+
+    def _one(self, action: str, path: str = "", name: str = "", pattern: str = "", pairs: list | None = None,
+             start: int = 0, end: int = 0, door: str = "", job: str = "", query: str = "", regex: bool = False,
+             expand: str = "") -> tuple[str, list[str], list[str], str]:
+        """(status, body, files, summary) for one lookup read; raises core.Refused."""
         if action == "func":
-            items = [tuple(p) for p in (pairs or [])] or [(path, name)]
-            return self._funcs(items, budget)
-        if action in ("lines", "doc"):
-            return self._read(action, path, start, end, budget)
+            return self._funcs([tuple(p) for p in (pairs or [])] or [(path, name)])
+        if action in ("lines", "doc") or (action in ("names", "all_names") and path.endswith(".py")):
+            return "PASS", mcp_read.read(self.root, action, path, start, end), [], ""
         why = next((w for w in (core.denied(x) for x in (path.split() + [expand])) if w), "")
         if why:
-            return self._refuse(why)
+            raise core.Refused(why)
         argv, cmd = self._lookup_argv(action, path, name, pattern, door, job, query, regex, expand)
         if not argv:
-            return self._refuse(cmd)
+            raise core.Refused(cmd)
         res = self._run(argv, cmd)
         if res["status"] == "DENIED":
-            return self._refuse(res["text"])
+            raise core.Refused(res["text"])
         body = core.clean(self._strip(res["text"]), banners=action != "packet")
         if action == "packet":
             body = core.clean([ln for ln in body if not ln.startswith("# Session context (generated") and not ln.endswith(": (none)")])
         status = "FAIL" if res["status"] == "FAIL" else "PASS"
-        h = self.store.new("l", body or [res["result"]], status=status, files=sorted(set(PATH_RE.findall(res["text"]))))
-        return core.page(self.store, h, budget, status, first=True)
+        return status, body or [res["result"]], sorted(set(PATH_RE.findall(res["text"]))), ""
+
+    def _batch(self, reads: list, budget: int) -> str:
+        """Several independent reads (any lookup action but more/full/batch) answered in one reply, in order."""
+        if not reads or not all(isinstance(r, dict) and r.get("action") for r in reads):
+            return self._refuse("batch needs reads=[{action, ...}, ...] (each a lookup call's arguments)")
+        uniq = list({json.dumps(r, sort_keys=True): r for r in reads}.values())  # an identical read is answered once
+        dropped, reads = len(reads) - len(uniq), uniq
+        body: list[str] = []
+        files: set[str] = set()
+        fails = 0
+        for i, r in enumerate(reads, 1):
+            kw = {k: v for k, v in r.items() if k in BATCH_KEYS}
+            act = str(r["action"])
+            label = f"## [{i}] {act} " + " ".join(str(r[k]) for k in ("path", "name", "pattern", "query") if r.get(k))
+            try:
+                if act in ("more", "full", "batch"):
+                    raise core.Refused(f"{act} is not a batch read")
+                status, lines, fl, summary = self._one(act, **kw)
+            except core.Refused as exc:
+                status, lines, fl, summary = "FAIL", [f"error: {exc}"], [], ""
+            fails += status == "FAIL"
+            files.update(fl)
+            head = [] if lines and lines[0].startswith("## ") and act in ("func", "lines", "doc") else [label.rstrip()]
+            body += ([""] if body else []) + head + ([f"summary: {summary}"] if summary else []) + lines
+        status = "FAIL" if fails else "PASS"
+        h = self.store.new("b", body, status=status, files=sorted(files))
+        notes = [f"{fails} of {len(reads)} reads failed" if fails else "", f"{dropped} duplicate read(s) skipped" if dropped else ""]
+        return core.page(self.store, h, budget, status, "; ".join(n for n in notes if n), first=True, fails=fails)
 
     def _lookup_argv(self, action, path, name, pattern, door, job, query, regex, expand) -> tuple[list[str], str]:
         if action == "xref":
@@ -108,8 +154,8 @@ class Tools:
                 return [], "xref needs pattern"
             argv = ["find.py", "xref", "--pattern", pattern] + (["--path", path] if path else []) + (["--regex"] if regex else [])
             return argv + (["--expand", expand] if expand else []), "find.py xref"
-        if action in ("names", "all_names"):
-            return (["find.py", "scripts", "--" + action.replace("_", "-"), "--path", path], "find.py scripts") if path else ([], "names needs path")
+        if action in ("names", "all_names"):  # every declared function, in source order (the CLI's --names keeps the biggest few)
+            return (["find.py", "scripts", "--all-names", "--path", path], "find.py scripts") if path else ([], "names needs path")
         simple = {
             "route": (["find.py", "route"] + (["--job", job] if job else []) + (["--door", door] if door and not job else []), "find.py route"),
             "scenes": (["find.py", "scenes", "--path", path], "find.py scenes"),
@@ -122,19 +168,19 @@ class Tools:
             "packet": (["slice.py", "expand"] + (["--only", query] if query else []), "slice.py expand"),
         }
         if action not in simple:
-            return [], f"unknown lookup action {action!r} (func xref names all_names lines doc route scenes facade stat changed code_map task summary packet more full)"
+            return [], f"unknown lookup action {action!r} (func xref names lines doc route scenes facade stat changed code_map task summary packet batch more full)"
         return simple[action]
 
-    def _funcs(self, items: list[tuple], budget: int) -> str:
+    def _funcs(self, items: list[tuple]) -> tuple[str, list[str], list[str], str]:
         body: list[str] = []
         status, fails = "PASS", 0
         for rel, nm in items:
             why = core.denied(rel)
             if why:
-                return self._refuse(why)
+                raise core.Refused(why)
             res = self._run(["find.py", "func", rel, nm, "--full"], "find.py func")
             if res["status"] == "DENIED":
-                return self._refuse(res["text"])
+                raise core.Refused(res["text"])
             lines = self._strip(res["text"])
             m = core.LINES_RE.search(res["text"])
             if res["status"] != "PASS" or not m:
@@ -144,36 +190,21 @@ class Tools:
             a, b = int(m.group(1)), int(m.group(2))
             src = lines[lines.index(m.group(0)) + 3:] if m.group(0) in lines else []
             body += [f"## {rel}:{nm} L{a}-{b}"] + src
-        h = self.store.new("f", body, status=status)
-        return core.page(self.store, h, budget, status, f"{fails} of {len(items)} not found" if fails and len(items) > 1 else "", first=True)
+        return status, body, [], f"{fails} of {len(items)} not found" if fails and len(items) > 1 else ""
 
-    def _read(self, action: str, path: str, start: int, end: int, budget: int) -> str:
-        rel, _, heading = path.partition("#")
-        why = core.denied(rel)
-        if why:
-            return self._refuse(why)
-        src = self.root / rel
-        if not src.resolve().is_relative_to(self.root.resolve()):
-            return self._refuse("path leaves the repo")
-        if not src.is_file():
-            return self._refuse(f"{rel} is not a file under the repo root")
-        lines = src.read_text(encoding="utf-8-sig", errors="replace").splitlines()
-        if action == "doc":
-            span = heading_span(lines, heading)
-            if span is None:
-                heads = [ln for ln in lines if ln.startswith("#")][:20]
-                return self._refuse(f"no heading {heading!r} in {rel}; headings: " + " | ".join(h.lstrip('# ') for h in heads))
-            a, b = span
-        else:
-            a, b = max(1, start or 1), min(len(lines), end or len(lines))
-        h = self.store.new("r", [f"## {rel} L{a}-{b} of {len(lines)}"] + lines[a - 1:b])
-        return core.page(self.store, h, budget, "PASS", first=True)
+    def _read(self, action: str, path: str, budget: int) -> str:
+        try:
+            body = mcp_read.read(self.root, action, path, 0, 0)
+        except core.Refused as exc:
+            return self._refuse(str(exc))
+        return core.page(self.store, self.store.new("r", body), budget, "PASS", first=True)
 
     # check
-    def check(self, target: str = "", handle: str = "", action: str = "", stem: str = "", files: list | None = None, budget: int = 0) -> str:
+    def check(self, target: str = "", handle: str = "", action: str = "", stem: str = "", files: list | None = None,
+              budget: int = 0, whole: bool = False) -> str:
         self.store.tick()
         if handle:
-            return self._follow(handle, action or "failures", budget)
+            return self._follow(handle, action or "failures", core.ALL if whole else budget)
         if target not in CHECKS:
             return self._refuse(f"unknown check target {target!r} (choose: {', '.join(CHECKS)}); prove, selftests and docs-size are Bot-only")
         cmd, build = CHECKS[target]
@@ -190,13 +221,17 @@ class Tools:
         h = self.store.new("c", lines, status=status, failures=failures, files=sorted(set(PATH_RE.findall(res["text"]))))
         self.store.add_check_run(key, h)
         summary = core.SUMMARY_RE.sub("", re.sub(r"^RESULT \w+ ?", "", res["result"])).strip() or (failures[0] if failures else "")
+        if whole:
+            return core.page(self.store, h, core.ALL, status, summary[:200], first=True)
         nxt = "failures | full | files" if status == "FAIL" else "full | files"
         return "\n".join(core.header(status, f"summary: {summary[:200]}" if summary else "", f"handle: {h} ({nxt})",
                                      fails=len(failures) or 1))
 
     # protocol
-    def protocol(self, action: str = "now", situation: str = "", query: str = "", handle: str = "", budget: int = 0) -> str:
+    def protocol(self, action: str = "now", situation: str = "", query: str = "", handle: str = "", budget: int = 0,
+                 whole: bool = False) -> str:
         self.store.tick()
+        budget = core.ALL if whole else budget
         if handle:
             return self._follow(handle, action or "more", budget)
         data = json.loads((self.root / "tools/data/mcp_protocol.json").read_text(encoding="utf-8"))
@@ -204,7 +239,7 @@ class Tools:
             ref = data["situations"].get(situation)
             if not ref:
                 return self._refuse(f"unknown situation {situation!r} (choose: {', '.join(data['situations'])})")
-            return self._read("doc", ref, 0, 0, budget)
+            return self._read("doc", ref, budget)
         if action == "packet":
             return self.lookup("packet", query=query, budget=budget)
         if action == "suggest":
@@ -229,20 +264,6 @@ class Tools:
         rows.sort(key=lambda r: -r[0])
         h = self.store.new("p", [r for _, r in rows[:3]] or ["(no match; protocol action=doc situation=pick-a-tool)"])
         return core.page(self.store, h, budget, "PASS", first=True)
-
-def heading_span(lines: list[str], heading: str) -> tuple[int, int] | None:
-    """1-based [a, b] of a markdown heading's section (up to the next heading of the same or higher level)."""
-    want = heading.strip().lower()
-    for i, ln in enumerate(lines):
-        m = re.match(r"^(#+)\s+(.*)$", ln)
-        if m and m.group(2).strip().lower() == want:
-            lvl = len(m.group(1))
-            for j in range(i + 1, len(lines)):
-                n = re.match(r"^(#+)\s", lines[j])
-                if n and len(n.group(1)) <= lvl:
-                    return i + 1, j
-            return i + 1, len(lines)
-    return None
 
 def current_phase(root: Path) -> tuple[str, str]:
     """Best guess from slice state and the session-plan kept half: understand, implement, verify."""
