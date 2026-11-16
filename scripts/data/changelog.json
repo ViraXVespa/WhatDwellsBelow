@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.11.4",
+			"points": [
+				{
+					"text": "Gather step now finishes the high-signal context packet on grok-build-0.1 so the main session starts clean."
+				},
+				{
+					"text": "Removed unnecessary clamps (--effort low, --no-subagents, --disable-web-search, --no-memory) from the gather agent."
+				},
+				{
+					"text": "Main session first message now points at the task file first, then session-context.md, and states that gather already ran."
+				},
+				{
+					"text": "Post-compact turns regenerate and re-read session-context.md; session-plan.md stays current via adjust and the four sections."
+				},
+				{
+					"text": "Build tasks moved the User-only launch line into a ## Next Steps (User Only) section; dropped the special-case verbose resume wording."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.11.3",
 			"points": [
 				{
