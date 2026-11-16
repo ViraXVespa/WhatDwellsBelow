@@ -91,7 +91,7 @@ def run(script: list[str], td: Path) -> list[str]:
         bad.append(f"gather ok: the agent then the main session must run ({code}): {out[-300:]}")
     else:
         aa, ma = agent["argv"], sess["argv"]
-        for need in ("grok-build-0.1", "--always-approve", "--no-subagents", "--output-format"):
+        for need in ("grok-build-0.1", "--always-approve", "--output-format"):
             if need not in aa:
                 bad.append(f"gather agent argv must carry {need}")
         if agent["role"] != "gather" or sess["role"]:
@@ -132,8 +132,16 @@ def run(script: list[str], td: Path) -> list[str]:
     if code or "WARN GATHER AGENT FAILED" not in out or not sess or not ctx.is_file() or "nothere" in ctx.read_text(encoding="utf-8") or "WARN GATHER AGENT FAILED" not in sess["argv"][-1]:
         bad.append(f"a crash falls back to the seed with a loud WARN (also in the first message) and launches: {out[-300:]}")
     code, out, calls = go("ok", "demo.part", "--no-gather")
-    if code or any("-m" in c["argv"] for c in calls) or not main_call(calls):
-        bad.append(f"--no-gather skips the agent and launches on the seed ({code}): {out[-300:]}")
+    sess = next((c for c in calls if c["argv"][:1] != ["worktree"] and "-m" not in c["argv"]), {})
+    prompt = (sess.get("argv") or [""])[-1]
+    wt = Path(sess.get("cwd", td / "none"))
+    if code or any("-m" in c["argv"] for c in calls) or not sess or "-s" in sess.get("argv", []) \
+            or "slice.py start --job demo.part" not in prompt or "separate gather" in prompt \
+            or (wt / "session-plan.md").exists() or (wt / "session-context.md").exists():
+        bad.append(f"--no-gather turns gathering off and launches the pre-gather command ({code}): {prompt[:180]!r} {out[-300:]}")
+    code, out, calls = go("ok", "demo.part", "--no-gather", "--review")
+    if code == 0 or "turns gathering off" not in out:
+        bad.append(f"--no-gather cannot combine with --review: {out[-200:]}")
     code, out, calls = go("ok", "demo.part", "--prompt", "Fix the stub keyboard.")
     agent = next((c for c in calls if "-m" in c["argv"]), {})
     req = Path(agent.get("cwd", td / "none")) / "_logs" / "gather" / "prompt.md"
@@ -164,9 +172,11 @@ def seed_only(go, main_call, td: Path, root: Path) -> list[str]:
                           cwd=root, capture_output=True, text=True, env=env).stdout.strip().splitlines()[-1:]
     if not made:
         return bad + ["--in: the stub could not make a worktree to reuse"]
-    code, out, calls = go("ok", "demo.part", "--in", made[0], "--no-gather", "--review")
-    if code or any(c["argv"][:2] == ["worktree", "create"] for c in calls) or main_call(calls) \
-            or not (Path(made[0]) / "session-context.md").is_file():
-        bad.append(f"--in WT: no worktree create; start, seed and packet in that worktree: {out[-300:]}")
+    code, out, calls = go("ok", "demo.part", "--in", made[0], "--no-gather")
+    sess = next((c for c in calls if c["argv"][:1] != ["worktree"] and "-m" not in c["argv"]), {})
+    if code or any(c["argv"][:2] == ["worktree", "create"] for c in calls) or not sess \
+            or "slice.py start" not in (sess.get("argv") or [""])[-1] \
+            or (Path(made[0]) / "session-context.md").exists():
+        bad.append(f"--in WT --no-gather: no create, pre-gather command, no packet: {out[-300:]}")
     return bad
 

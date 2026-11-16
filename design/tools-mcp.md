@@ -13,6 +13,7 @@ Entry: `wdb_mcp.py`; code: `tools/lib/wdb_mcp/`. A read-only, progressive front-
 - The command runs once; a follow-up passes the handle (`action=more` the rest, `full`, `failures`, `files`).
 - Handles last 2 hours, one file each in `_logs/gather/mcp/` (safe for several servers). Build runs a check at most 3 times per target per worktree; an explicit `--surface` (Grok Bot) has no limit.
 - Refused: commands off the caller's catalog surface (Surf; Build is D), `_logs/` paths (use `action=summary`), images, `notes/`. No tool writes repo files.
+- When this server is connected, Build uses it for these jobs. When it is not, run the catalog command the tool wraps (`find.py`, `check.py`, `docs.py`, `session.py`, `slice.py`). `--no-gather` does not change that; it only turns slice gathering off.
 
 ## Catalog
 

@@ -1,7 +1,8 @@
 ---
 name: show-func
 description: >
-  Extract one GDScript/Python declaration with tools/find.py func instead of reading whole files.
+  Extract one GDScript/Python declaration instead of reading whole files.
+  When wdb__lookup is connected, use action=func. Otherwise tools/find.py func.
   Use when you need a specific func, const, or var from a live script.
 when-to-use: >
   show a function, open a declaration, show_func, need the body of one func
@@ -13,9 +14,9 @@ metadata:
 
 # show_func
 
-Run from repo root. Prefer this over read_file of an entire live script when you only need one or a few declarations.
+Run from repo root. Prefer this over read_file of an entire live script when you only need one or a few declarations. When `wdb__lookup` is connected, use `action=func` (`pairs` for several, `all=true` for the whole declaration). When it is not, use the commands below.
 
-Preferred shapes:
+Fallback shapes:
 
 Single:
 python tools/find.py func scripts/ui/theme.gd skill_row
@@ -27,6 +28,6 @@ Rules:
 - Both PATH and NAME are required (example: find.py func scripts/app.gd _ready).
 - Positional PATH NAME is enough. --path / --name are optional.
 - Batch related funcs from the same system in one shell command.
-- Output is capped (first 20 lines of the declaration); `--full` prints all of it. `wdb__lookup action=func` pages it. Never open `_logs/` with a file read.
+- CLI output is capped (first 20 lines of the declaration); `--full` prints all of it. `wdb__lookup action=func` pages it when connected. Never open `_logs/` with a file read.
 - If you need the whole file or are about to edit it, then read_file is fine. Otherwise stay with show_func.
 - Catalog row: design/tools-lookup.md. Do not open the tool body to learn flags.

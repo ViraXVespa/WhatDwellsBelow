@@ -7,11 +7,11 @@ A **slice** is the User-opened worktree/session; a **unit** is one piece of its 
 
 ## 1. Understand
 
-A named door or job begins with one gather: `slice.py open` seeds the gitignored `session-plan.md` index, refines it and writes `session-context.md`. Read the packet. Do not re-read what it holds.
+One gather. A refined packet (`session-context.md` after the gather agent) is read, not re-gathered. `--no-gather` leaves gathering off: the first message names `slice.py start`, and this session gathers from that seed. Do not re-read a core body already included.
 
 On a new session, read the named task file once. It stays the assignment. The plan does not replace it or a survey handoff.
 
-Use `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names` only for a gap the packet does not cover. When the working set moves, `slice.py adjust` (add, rem, promote, demote) changes the index below `<!-- gathered -->`; replace the four sections above it. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
+A gap uses the connected wdb MCP, else `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names`. When the working set moves, `slice.py adjust` (add, rem, promote, demote) changes the index below `<!-- gathered -->`; replace the four sections above it. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
 
 For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
 

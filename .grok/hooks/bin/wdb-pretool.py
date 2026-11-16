@@ -206,25 +206,29 @@ def is_repo_root(text: str, repo: Path | None, cwd: Path | None) -> bool:
     except OSError:
         return False
 
+def prefer(action: str, script: str) -> str:
+    return f"Use wdb__lookup action={action} when it is connected; otherwise {script}."
+
+
 def list_reason(text: str, repo: Path | None, cwd: Path | None) -> str:
     if hits_scenes(text, repo):
-        return "Listing scenes/ is denied. Use tools/find.py scenes."
+        return "Listing scenes/ is denied. " + prefer("scenes", "python tools/find.py scenes")
     if is_repo_root(text, repo, cwd):
-        return "Listing the repo root is denied. Use tools/find.py route."
-    return "Tree list/grep over scripts|design|tools|scenes is denied. Use tools/find.py xref."
+        return "Listing the repo root is denied. " + prefer("route", "python tools/find.py route")
+    return "Tree list/grep over scripts|design|tools|scenes is denied. " + prefer("xref", "python tools/find.py xref")
 
 def shell_reason(cmd: str, repo: Path | None, cwd: Path | None) -> str:
     if GIT_INVENTORY.search(cmd):
-        return "Git status/log/diff/show is denied. Use tools/find.py changed."
+        return "Git status/log/diff/show is denied. " + prefer("changed", "python tools/find.py changed")
     if GIT_GREP.search(cmd) or SEARCH_CMD.search(cmd):
-        return "Shell search is denied. Use tools/find.py xref. Add --path site for site/."
+        return "Shell search is denied. " + prefer("xref", "python tools/find.py xref") + " Add --path site for site/."
     if PY_C.search(cmd):
-        return "python -c is denied. Use tools/find.py stat, or tools/docs.py patch write for a script body."
+        return "python -c is denied. " + prefer("stat", "python tools/find.py stat") + " Or python tools/docs.py patch write for a script body."
     if is_logs_path(cmd) and (LOG_READ.search(cmd) or LIST_CMD.search(cmd)):
-        return "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
+        return "Reading _logs/ is denied. " + prefer("summary", "python tools/session.py summary --job <name>") + " Jsonl filters: --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
     if LIST_CMD.search(cmd) and not LENGTH.search(cmd):
         if BARE_LIST.search(cmd.strip()):
-            return "Listing the repo root is denied. Use tools/find.py route."
+            return "Listing the repo root is denied. " + prefer("route", "python tools/find.py route")
         if hits_tree(cmd, repo):
             return list_reason(cmd, repo, cwd)
     return ""
@@ -291,7 +295,7 @@ def decide(event: dict) -> tuple[str, str]:
     if low_name in {"grep"} or name in GREP_TOOLS:
         path = str(inp.get("path") or inp.get("file_path") or inp.get("filePath") or "")
         if not is_one_file(path):
-            return "deny", "Repo grep of a directory is denied. Use tools/find.py xref. Add --path site for site/. Grep of one file stays allowed."
+            return "deny", "Repo grep of a directory is denied. " + prefer("xref", "python tools/find.py xref") + " Add --path site for site/. Grep of one file stays allowed."
 
     if low_name in {"listdir", "glob"} or name in LIST_TOOLS:
         text = target_text(inp) or blob
@@ -305,7 +309,7 @@ def decide(event: dict) -> tuple[str, str]:
                     continue
                 return "deny", IMAGE_READ
             if is_logs_path(item):
-                return "deny", "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
+                return "deny", "Reading _logs/ is denied. " + prefer("summary", "python tools/session.py summary --job <name>") + " Jsonl filters: --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
 
     if low_name in {"write", "write_file", "writefile", "edit", "edit_file", "search_replace"}:
         grant = reference_policy.active(repo, reference_policy.session_id(event))

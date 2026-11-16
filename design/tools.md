@@ -19,7 +19,7 @@ Run `python tools/ENTRY.py` to list commands; append `COMMAND --help` for flags 
 | Frame time, hitches, load time, web perf | `perf.py hub --leg desktop`; `perf.py dungeon --leg desktop`; `perf.py sweep --leg desktop`; `perf.py web --site DIR --flow F`; `perf.py load --leg hub` | `tools-perf.md` |
 | Playtest curve | `perf.py curve` | `tools-perf.md` |
 | Local playtester and recommend-only balance tuner | `local-ai-tuner.py` | `tools-gates.md` |
-| Find code, a function, a route, a tunable, a last run | `find.py xref TEXT`; `find.py func PATH NAME`; `find.py route --job door.job`; `docs.py tunable get KEY`; `session.py summary JOB` | `tools-lookup.md` |
+| Find code, a function, a route, a tunable, a last run | Connected: `wdb__lookup`. Else: `find.py xref TEXT`; `find.py func PATH NAME`; `find.py route --job door.job`; `docs.py tunable get KEY`; `session.py summary JOB` | `tools-lookup.md` |
 | Size, duplicates, dead code, splits, doc edits | `check.py script-cap --bot --sweep`; `lint.py dupes`; `lint.py unused`; `lint.py split FILE --list`; `docs.py patch` | `tools-lint.md` |
 | Tasks, code map, routing docs | `docs.py task list`; `docs.py code-map row --path P`; `check.py load-graph` | `tools-gates.md` |
 | Localization (keys, copy on screen) | No dedicated tool: `find.py xref KEY` (code and `en.po`), `find.py xref TEXT --texts` after a shot flow, `shots.py inspect contrast` | `tools-lookup.md` |

@@ -36,6 +36,6 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 Reading: this file + the path file + (web / Build) the plan pair + the topic doc and gates whose `when` matches. **Multi-system job:** list every system and read each one's doc and code-map row before changing anything.
 Do not fetch this file again. Routing work: `design/load-graph.md`.
 
-Earlier work: `find.py changed`; `session.py summary --job JOB` reads any tool RESULT (`JOB`: its `_logs/<job>/` folder). Never open `_logs/` with a file read. Function names missing from the plan: `find.py scripts --names` or `--all-names` with one `--path`, not an xref of `^func`. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
+Earlier work: connected wdb MCP, else `find.py changed`; `session.py summary --job JOB` reads any tool RESULT. Never open `_logs/` with a file read. Function names missing from the plan: `find.py scripts --names` or `--all-names` with one `--path`, not an xref of `^func`. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
 Imagine (Build only): `design/isolated-media.md` first; Web / chat and Grok Bot never run the isolated runner.
 Ask as many questions as the job needs, in rounds. Report when done, with rough edges (`tools.md` rule 9). Build and Web may add a helpful tool (rule 5) and tell the User.

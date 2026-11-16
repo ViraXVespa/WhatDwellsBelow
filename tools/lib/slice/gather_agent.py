@@ -164,8 +164,10 @@ def report(wt: Path) -> str:
     f = wt / GATHER / "report.md"
     return f.read_text(encoding="utf-8").strip() if f.is_file() else "(the gather agent wrote no report)"
 
-def first_message(start_argv: list[str], tid: str, warn: list[str], extra: str = "") -> str:
+def first_message(start_argv: list[str], tid: str, warn: list[str], extra: str = "", refined: bool = True) -> str:
+    """Main-session prompt after a gather. refined: the agent finished; otherwise the packet is the mechanical seed."""
     shown = py() + " " + " ".join(start_argv[1:])
     task_line = f" (design/tasks/{tid}.md; read it whole; it is the assignment)" if tid else ""
-    text = render("build-first.md", start=shown, task_line=task_line, warn="\n".join(warn)).strip()
+    packet = (DATA / ("packet-refined.md" if refined else "packet-seed.md")).read_text(encoding="utf-8").strip()
+    text = render("build-first.md", start=shown, task_line=task_line, warn="\n".join(warn), packet=packet).strip()
     return text + ("\n\n" + extra.strip() if extra.strip() else "")
