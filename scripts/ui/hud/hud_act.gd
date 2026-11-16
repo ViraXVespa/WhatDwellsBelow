@@ -11,8 +11,10 @@ const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	var lay_key: Vector3 = Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y)
-	if lay_key != host._lay_key:
+	var chrome_key: Vector2 = Vector2(float(App.mini_px), float(App.mini_opacity))
+	if lay_key != host._lay_key or chrome_key != host._chrome_key:
 		host._lay_key = lay_key
+		host._chrome_key = chrome_key
 		View.layout(host)
 		host._state.clear()
 	View.load_portrait(host)

@@ -48,7 +48,7 @@ Binding rules live in input. UI rules for this slice:
 - Mana refills over time, from mana orbs, potions and food. A special does not start when mana is short.
 - Pause Skills also shows run XP earned this descent.
 - Inventory and loadout share one board. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (not on loadout). The stats card is not in the focus chain. Pages change with Q / LT and E / RT; pause tabs with LB / RB. Default tab is Settings; the current tab uses hover-panel chrome and darker tan text.
-- Camera zoom, HUD scale, display mode and sprite filter (Mipmaps / Anisotropic checkboxes) apply without a restart. Alt+Enter also toggles display. Small windows scale HUD chrome and fonts from the saved text floor (default 14).
+- Camera zoom, display mode, and sprite filter (Mipmaps / Anisotropic checkboxes) are on Settings → Graphics and apply without a restart. HUD scale and the minimap size, opacity, zoom, and map toggle are on Settings → UI and apply without a restart. Alt+Enter also toggles display. Small windows scale HUD chrome and fonts from the saved text floor (default 14).
 - Loadout opens focused on **Enter dungeon**.
 - Confirm dialogs restore prior focus on cancel and draw Select / Back on the dialog. Prompts, tab chips and footers refresh when the input scheme flips.
 

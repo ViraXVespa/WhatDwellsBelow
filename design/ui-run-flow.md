@@ -50,12 +50,14 @@ Triggered on every death or “Dispel”.
 
 ## Minimap and large map
 
-- Small minimap on HUD shows only visited tiles + important markers (stairs, crystal, Extraction Gates, shop, player).
-- View / Back button opens a large full-screen map overlay. Gameplay continues underneath.
-- The large map starts at fit-to-frame. Zoom in with wheel, pinch, or look-mode right stick. Zoom focus: cursor / pinch midpoint on pointer and touch; player marker on gamepad.
-- When zoomed in past fit, pan with mouse drag, one-finger swipe (walk stick not claimed), or look-mode-off right stick. Clamp so the image cannot leave the frame. Zoom-out to fit recenters and disables pan.
+- The corner minimap shows revealed terrain, fog on unrevealed cells, and markers for stairs, crystals, Extraction Gates, shops, and the player. A 3px rule separates it from the world. Default side is 250px before HUD scale. Default opacity is 1.
+- Pause → Settings → UI sets HUD scale, minimap size (25–1000), opacity, zoom (1× is the whole floor, 256× is the maximum, default 8×), zoom mode, full-map opacity, and the map toggle. Size and zoom sliders are geometric about those defaults.
+- Zoom mode Minimum (default): when fitting the revealed area needs more zoom than the slider, the minimap uses that fit and centers on the revealed bounds. Otherwise it uses the slider zoom centered on the player. Fixed always uses the slider zoom on the player.
+- Map view (`map_view`, M / View / Back) is hidden, mini, or full. Mini is the default. The corner map hides while the full map is open. Gameplay continues underneath.
+- Adaptive (default) swaps full with the saved rest state, mini or hidden. A second press within 200ms of closing the full map flips that rest state. Cycle steps mini, full, hidden, mini.
+- The full map opens fitted to the revealed area, with the same 3px rule. Full Map Opacity checked (default) uses the minimap opacity. Unchecked is solid. Wheel, pinch, and look-mode right stick zoom after open. Focus is the cursor or pinch midpoint on pointer and touch, and the player marker on gamepad. Pan when zoom is above 1×: mouse drag, one-finger swipe while the walk stick is not claimed, or look-mode-off right stick. Clamp so the image cannot leave the frame. Zoom back to 1× recenters the whole floor and disables pan. Opening the map again refits the reveal.
 - Large-map zoom does not change world `App.cam_zoom`.
-- Fog of war and visited tracking follow dungeon.
+- Fog is a reveal mask. The base image is built once per floor. Crystals and the player marker update on their events. The floor tick does not paint the map.
 
 ## Toasts and floating combat text
 

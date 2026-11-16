@@ -38,7 +38,11 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `LOOK_STICK_ZOOM` | 0.9 |
 | `LOOK_STICK_HUD` | 0.35 |
 | `LOOK_STICK_PAN` | 520 |
-| `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 10.0 |
+| `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 256.0 (full map wheel and stick; high enough that opening the map can fit a spawn disk) |
+| `MINI_PX_MIN` / `MINI_PX_DEFAULT` / `MINI_PX_MAX` | 25 / 250 / 1000 (square minimap side, before HUD scale) |
+| `MINI_ZOOM_MIN` / `MINI_ZOOM_DEFAULT` / `MINI_ZOOM_MAX` | 1 / 8 / 256 (1 shows the whole floor; 8 shows one eighth on each axis) |
+| `MINI_BORDER` | 3 (px around the minimap and the full map) |
+| `MAP_DOUBLE_MS` | 200 (adaptive map toggle, second press after the full map closes) |
 | `TILE` / `PX` | 1.0 / 64 |
 | Default `sprite_filter` | 2 (nearest + mips + aniso) |
 | `sprite_mip_sharp` | false (smooth mip blend) |

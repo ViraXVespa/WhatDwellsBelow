@@ -22,7 +22,17 @@ const LOOK_STICK_ZOOM := 0.9
 const LOOK_STICK_HUD := 0.35
 const LOOK_STICK_PAN := 520.0
 const MAP_ZOOM_MIN := 1.0
-const MAP_ZOOM_MAX := 10.0
+const MAP_ZOOM_MAX := 256.0
+## Square minimap side, before HUD scale. 250 is the map that used to sit inside the 350x250 well.
+const MINI_PX_MIN := 25.0
+const MINI_PX_MAX := 1000.0
+const MINI_PX_DEFAULT := 250.0
+## 1 shows the whole floor. 8 shows one eighth on each axis. 256 is the tightest crop.
+const MINI_ZOOM_MIN := 1.0
+const MINI_ZOOM_MAX := 256.0
+const MINI_ZOOM_DEFAULT := 8.0
+const MINI_BORDER := 3.0
+const MAP_DOUBLE_MS := 200
 const MOVE_SPEED := 4.5
 const MOVE_EPS := 0.12
 const PLAYER_H := 1.55
@@ -70,6 +80,27 @@ const TOUCH_DEAD := 0.24
 
 static func archive_catalog() -> Array:
 	return load("res://scripts/data/archives/archives_catalog.gd").all()
+
+## Slider t 0, 0.5, 1 maps to lo, mid, hi. Each half is geometric, so the default sits in the middle.
+static func span_from_t(t: float, lo: float, mid: float, hi: float) -> float:
+	var u: float = clampf(t, 0.0, 1.0)
+	if u <= 0.5:
+		return lo * pow(mid / lo, u / 0.5)
+	return mid * pow(hi / mid, (u - 0.5) / 0.5)
+
+static func t_from_span(v: float, lo: float, mid: float, hi: float) -> float:
+	var x: float = clampf(v, lo, hi)
+	if x <= mid:
+		return 0.5 * clampf(log(x / lo) / log(mid / lo), 0.0, 1.0)
+	return 0.5 + 0.5 * clampf(log(x / mid) / log(hi / mid), 0.0, 1.0)
+
+static func snap_mini_zoom(v: float) -> float:
+	var z: float = clampf(v, MINI_ZOOM_MIN, MINI_ZOOM_MAX)
+	if z >= 100.0:
+		return clampf(round(z), MINI_ZOOM_MIN, MINI_ZOOM_MAX)
+	if z >= 10.0:
+		return clampf(snapped(z, 0.1), MINI_ZOOM_MIN, MINI_ZOOM_MAX)
+	return clampf(snapped(z, 0.01), MINI_ZOOM_MIN, MINI_ZOOM_MAX)
 
 ## Design size from project.godot (display/window/size): the one place code reads it.
 static func base_size() -> Vector2:

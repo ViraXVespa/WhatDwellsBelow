@@ -1388,6 +1388,9 @@ msgstr "Gameplay"
 msgid "pause_settings.graphics"
 msgstr "Graphics"
 
+msgid "pause_settings.ui"
+msgstr "UI"
+
 msgid "pause_settings.patreon"
 msgstr "Patreon"
 
@@ -1687,6 +1690,36 @@ msgstr "Fortune  %.2f"
 
 msgid "settings_pages.hud_scale"
 msgstr "HUD scale"
+
+msgid "settings_pages.minimap_size"
+msgstr "Minimap size"
+
+msgid "settings_pages.minimap_opacity"
+msgstr "Minimap opacity"
+
+msgid "settings_pages.minimap_zoom"
+msgstr "Minimap zoom"
+
+msgid "settings_pages.zoom_mode"
+msgstr "Zoom mode: %s"
+
+msgid "settings_pages.zoom_minimum"
+msgstr "Minimum"
+
+msgid "settings_pages.zoom_fixed"
+msgstr "Fixed"
+
+msgid "settings_pages.full_map_opacity"
+msgstr "Full Map Opacity"
+
+msgid "settings_pages.map_toggle"
+msgstr "Map toggle: %s"
+
+msgid "settings_pages.toggle_adaptive"
+msgstr "Adaptive"
+
+msgid "settings_pages.toggle_cycle"
+msgstr "Cycle"
 
 msgid "settings_pages.danger_gem"
 msgstr "Danger gem"

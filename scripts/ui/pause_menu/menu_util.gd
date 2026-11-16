@@ -17,14 +17,18 @@ static func slider_row(
 	on_change: Callable,
 	show_value: bool = true,
 	slider_w: float = 300.0,
+	value_text: Callable = Callable(),
 ) -> VBoxContainer:
 	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	var top := HBoxContainer.new()
 	top.add_child(cap(ui, title, 18, ThemeS.INK))
+	var value_lab: Label = null
 	if show_value:
 		top.add_spacer(false)
-		top.add_child(cap(ui, "%.2f" % value, 16, ThemeS.INK_SOFT))
+		var shown: String = str(value_text.call(value)) if value_text.is_valid() else ("%.2f" % value)
+		value_lab = cap(ui, shown, 16, ThemeS.INK_SOFT)
+		top.add_child(value_lab)
 	row.add_child(top)
 	var slider := HSlider.new()
 	slider.min_value = lo
@@ -35,6 +39,10 @@ static func slider_row(
 	slider.custom_minimum_size = Vector2(slider_w, 32.0 * ThemeS.text_scale())
 	slider.focus_mode = Control.FOCUS_ALL
 	ThemeS.skin_slider(slider)
+	if value_lab != null and value_text.is_valid():
+		slider.value_changed.connect(func(v: float) -> void:
+			value_lab.text = str(value_text.call(v))
+		)
 	slider.value_changed.connect(on_change)
 	row.add_child(slider)
 	return row

@@ -2,6 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
+const T := preload("res://scripts/data/tunables.gd")
 
 const CARD_TEX := "res://assets/ui/hud/card.png"
 const BAR_TEX := "res://assets/ui/hud/bar.png"
@@ -92,19 +93,18 @@ static func build(host: CanvasLayer) -> void:
 	host.boss_fill = meter(host.boss_wrap, Vector2(0, 18), Vector2(360, 18), Color(0.75, 0.15, 0.2), false)
 	host.boss_lab = lab(host.boss_wrap, Vector2(0, 0), Vector2(360, 20), 16, true)
 	host.mini_wrap = Control.new()
+	host.mini_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(host.mini_wrap)
 	host.mini_map = TextureRect.new()
 	host.mini_map.position = Vector2.ZERO
-	host.mini_map.size = Vector2(host.MINI_W, host.MINI_H)
 	host.mini_map.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	host.mini_map.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	host.mini_map.stretch_mode = TextureRect.STRETCH_SCALE
 	host.mini_map.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var mini_frame := ColorRect.new()
-	mini_frame.color = ThemeS.RULE
-	mini_frame.position = Vector2(-3, -3)
-	mini_frame.size = Vector2(host.MINI_W + 6, host.MINI_H + 6)
-	mini_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	host.mini_wrap.add_child(mini_frame)
+	host.mini_map.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.mini_frame = ColorRect.new()
+	host.mini_frame.color = ThemeS.RULE
+	host.mini_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.mini_wrap.add_child(host.mini_frame)
 	host.mini_wrap.add_child(host.mini_map)
 	host.fps_lab = lab(host, Vector2.ZERO, Vector2(140, 28), 16, true)
 	host.look_lab = lab(host, Vector2.ZERO, Vector2(420, 28), 16, true)
@@ -114,19 +114,26 @@ static func build(host: CanvasLayer) -> void:
 
 static func layout(host: CanvasLayer) -> void:
 	var sc: float = App.hud_scale * UiText.play_scale()
-	var vp := host.get_viewport().get_visible_rect().size
+	var vp: Vector2 = host.get_viewport().get_visible_rect().size
+	var side: float = clampf(float(App.mini_px), T.MINI_PX_MIN, T.MINI_PX_MAX)
+	var border: float = T.MINI_BORDER
 	host.strip.scale = Vector2(sc, sc)
 	host.strip.position = Vector2(host.MARGIN, 16)
+	host.mini_map.size = Vector2(side, side)
+	host.mini_frame.position = Vector2(-border, -border)
+	host.mini_frame.size = Vector2(side + border * 2.0, side + border * 2.0)
+	host.mini_wrap.modulate.a = clampf(float(App.mini_opacity), 0.0, 1.0)
 	host.mini_wrap.scale = Vector2(sc, sc)
-	host.mini_wrap.position = Vector2(vp.x - host.MARGIN - host.MINI_W * sc, 16)
+	host.mini_wrap.position = Vector2(vp.x - host.MARGIN - (side + border) * sc, 16)
 	host.toast.scale = Vector2(sc, sc)
 	host.toast.position = Vector2(host.MARGIN, 16 + host.STRIP_H * sc + 8)
 	host.boss_wrap.scale = Vector2(sc, sc)
 	host.boss_wrap.position = Vector2(host.MARGIN, host.toast.position.y + 32 * sc)
+	var under: float = host.mini_wrap.position.y + (side + border) * sc + 4.0
 	host.fps_lab.scale = Vector2(sc, sc)
-	host.fps_lab.position = Vector2(host.mini_wrap.position.x, host.mini_wrap.position.y + host.MINI_H * sc + 4)
+	host.fps_lab.position = Vector2(host.mini_wrap.position.x, under)
 	host.look_lab.scale = Vector2(sc, sc)
-	host.look_lab.position = Vector2(host.mini_wrap.position.x, host.mini_wrap.position.y + host.MINI_H * sc + 28 * sc)
+	host.look_lab.position = Vector2(host.mini_wrap.position.x, under + 24.0 * sc)
 
 static func load_portrait(host: CanvasLayer) -> void:
 	var p := "res://assets/sprites/player/%s/idle_down.png" % App.character_type

@@ -10,7 +10,7 @@ Occupancy is the maze. Carve the 1 m grid first. Rooms stay rectangles. Halls ar
 
 Publish is one-way. Gen writes hall runs. Stream instances that recipe. Volume skins provided runs. Buffer reads cleaned occupancy and hangs lights on interior faces. Outline bake lives on the gen job. Stream does not invent a lip. Volume does not extract a silhouette.
 
-Floor ready builds the map image and binds it to the HUD well. The overlay starts hidden; map_view only toggles it.
+Floor ready builds the map image and binds it to the HUD minimap. Map view is hidden, mini, or full. Mini is the default, and it hides while the full map is open.
 
 | Job | Open |
 |-----|------|

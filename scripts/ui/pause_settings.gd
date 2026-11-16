@@ -67,6 +67,7 @@ func split_rows() -> Array:
 		{"id": "gameplay", "label": tr("pause_settings.gameplay"), "kind": "page"},
 		{"id": "audio", "label": tr("pause_settings.audio"), "kind": "page"},
 		{"id": "graphics", "label": tr("pause_settings.graphics"), "kind": "page"},
+		{"id": "ui", "label": tr("pause_settings.ui"), "kind": "page"},
 		{"id": "controls", "label": tr("pause_settings.controls"), "kind": "page"},
 		{"id": "report", "label": tr("pause_settings.report_bug"), "kind": "page"},
 		{"id": "patreon", "label": tr("pause_settings.patreon"), "kind": "leaf"},
@@ -137,6 +138,8 @@ func split_build_page(id: String) -> void:
 			Pages.page_audio(self)
 		"graphics":
 			Pages.page_graphics(self)
+		"ui":
+			Pages.page_ui(self)
 		"controls":
 			BindsPage.build(self)
 		"report":

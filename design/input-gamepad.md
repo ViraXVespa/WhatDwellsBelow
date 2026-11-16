@@ -26,7 +26,7 @@ Read when: gamepad layout, look mode, or universal menus
 - D-pad Right: From gameplay only, open pause on the Inventory tab. MUST NOT jump tabs or fire inventory while any menu is already open (`App.ui_open`). In menus D-pad Right stays `ui_right`.
 - D-pad Down: Toggle look mode. World-only and large-map-only. MUST NOT fire as look-mode while pause, debug, recap, title, or any `App.ui_open` menu is up (`ui_down` stays menu navigation). Opening those menus clears look mode.
 - Menu / Start: Pause (the `pause` bind). In an open menu, also acts as back / close.
-- View / Back: Toggle large map overlay (game continues running underneath)
+- View / Back: Map (`map_view`, keyboard M). Adaptive (default) swaps the full map with mini, or with hidden after a second press within 200ms of closing the full map. Cycle, on Settings → UI, steps mini, full, hidden. The game keeps running underneath.
 - LB / RB: Cycle tabs inside any menu that has tabs. Do not invent a second bumper path.
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
@@ -44,7 +44,8 @@ World, map closed:
 
 Large map open:
 
-- Off: right stick pans the map when zoomed in past fit
+- Opens fitted to the revealed area. Zoom back to 1× shows the whole floor, recenters, and disables pan.
+- Off: right stick pans the map when zoom is above 1×
 - On: right stick zooms the map toward the player marker
 
 Keyboard / mouse: wheel up zooms in, wheel down zooms out. World camera when the map is closed; map zoom toward the cursor when the map is open. Wheel does not run while look-mode is blocked (menus / debug / recap).

@@ -113,16 +113,24 @@ def selftest(root):
     assert 'adrenaline_audio_gated=true' not in smoke and 'torch_facing_once=' not in smoke
     assert 'not a physics-overlap proof' in smoke and 'assert(not ui.is_processing())' in smoke
     minimap = read("scripts/world/dungeon/minimap.gd")
-    needs_map = function(minimap, "needs_redraw", {"Vector2i": lambda x, y: (x, y), "int": int}, "host")
-    m = NS(fog_dirty=False, player=NS(global_position=NS(x=2.0, z=3.0)), get_meta=lambda k, d: (2, 3))
-    assert not needs_map(m)
-    m.player.global_position.x = 4.0; assert needs_map(m)
-    m.fog_dirty = True; assert needs_map(m)
-    m.fog_dirty = False; m.player = None; assert not needs_map(m)
-    assert minimap.index('CrystalNet.paint(host)') < minimap.index('host.map_tex.update(host.map_img)')
+    reveal = minimap.split("static func reveal_around", 1)[1].split("static func ", 1)[0]
+    assert "map_img.set_pixel" not in reveal
+    assert "map_mask.set_pixel" in reveal
+    boot_floor = dungeon.split("static func process_floor", 1)[1].split("static func ", 1)[0]
+    assert "_redraw_map" not in boot_floor
+    assert "needs_redraw" not in boot_floor
+    assert "fog_dirty" not in boot_floor
+    assert "set_pixel" not in boot_floor
+    assert "note_player" in boot_floor
+    assert "static func needs_redraw" not in minimap
+    assert "host.map_tex.update(host.map_img)" not in minimap
+    assert "refresh_marks" in minimap
+    assert "mask_tex" in minimap
     assert 'viewport.size_changed.connect(host._redraw_map)' in minimap
     assert 'host.fog_dirty or (host.map_layer' not in dungeon
-    assert 'host.fog_dirty = true' in read("scripts/world/dungeon/dungeon_cells.gd")
+    assert "fog_dirty" not in read("scripts/world/dungeon/dungeon_cells.gd")
+    assert "fog_dirty" not in read("scripts/world/dungeon.gd")
+    assert "fog_dirty" not in read("scripts/world/crystal/net.gd")
     hud = read("scripts/ui/hud.gd")
     assert 'host._refresh_hint()' not in dungeon
     assert 'hud.refresh(player, self)' in read("scripts/world/dungeon.gd")

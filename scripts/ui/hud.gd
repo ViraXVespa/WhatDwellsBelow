@@ -13,8 +13,6 @@ const MANA_W := 280.0
 const POT_W := 120.0
 const DASH_W := 112.0
 const SPEC_W := 112.0
-const MINI_W := 350.0
-const MINI_H := 250.0
 const MARGIN := 24.0
 
 var strip: Control
@@ -42,6 +40,7 @@ var boss_lab: Label
 var prompt_row: HBoxContainer
 var toast: Label
 var mini_wrap: Control
+var mini_frame: ColorRect
 var mini_map: TextureRect
 var fps_lab: Label
 var look_lab: Label
@@ -51,6 +50,7 @@ var _state: Dictionary = {}
 var _player: Node
 var _dungeon: Node
 var _lay_key := Vector3(-1.0, -1.0, -1.0)
+var _chrome_key: Vector2 = Vector2(-1.0, -1.0)
 var _boss: Node = null
 var _boss_n := -1
 
@@ -59,8 +59,11 @@ func _ready() -> void:
 	View.build(self)
 
 func bind_map(tex: Texture2D) -> void:
-	if mini_map:
-		mini_map.texture = tex
+	if mini_map == null:
+		return
+	mini_map.texture = tex
+	if is_instance_valid(_dungeon) and _dungeon.has_method("sync_map_view"):
+		_dungeon.sync_map_view()
 
 # Continuous fractions require sampling; cached static components do not repaint.
 func _process(_delta: float) -> void:

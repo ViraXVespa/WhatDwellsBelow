@@ -38,6 +38,39 @@ static func set_zoom(host: Node, z: float) -> void:
 static func set_hud_scale(host: Node, v: float) -> void:
 	host.hud_scale = clampf(v, 0.7, 1.4)
 
+static func set_mini_px(host: Node, v: float) -> void:
+	host.mini_px = clampf(round(v), App.T.MINI_PX_MIN, App.T.MINI_PX_MAX)
+	_poke_map(host)
+
+static func set_mini_opacity(host: Node, v: float) -> void:
+	host.mini_opacity = clampf(v, 0.0, 1.0)
+	_poke_map(host)
+
+static func set_mini_zoom(host: Node, v: float) -> void:
+	host.mini_zoom = App.T.snap_mini_zoom(v)
+	_poke_map(host)
+
+static func set_mini_zoom_fit(host: Node, on: bool) -> void:
+	host.mini_zoom_fit = on
+	_poke_map(host)
+
+static func set_full_map_opacity(host: Node, on: bool) -> void:
+	host.full_map_opacity = on
+	_poke_map(host)
+
+static func set_map_toggle_adapt(host: Node, on: bool) -> void:
+	host.map_toggle_adapt = on
+
+static func set_map_rest_mini(host: Node, on: bool) -> void:
+	host.map_rest_mini = on
+
+static func _poke_map(host: Node) -> void:
+	if not host.in_dungeon:
+		return
+	var scene: Node = host.get_tree().current_scene
+	if scene and scene.has_method("sync_map_view"):
+		scene.sync_map_view()
+
 static func set_ui_text_floor(host: Node, v: float) -> void:
 	host.ui_text_floor = UiText.clamp_floor(v)
 	refresh_ui_text_scale(host)
