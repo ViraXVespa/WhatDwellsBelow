@@ -3,6 +3,33 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.11.3",
+			"points": [
+				{
+					"text": "The `wdb` MCP answers in fewer calls: `all=true` returns a whole lookup or check in one reply, `lookup reads=[...]` answers several reads at once, pages are about 60 lines, `names` lists every function, and a doc without a heading returns its outline with line numbers."
+				},
+				{
+					"text": "`slice.py open` gains `--seed-only`, `--in WT` (an existing worktree) and `--launch WT --review`; the gather agent now sees the User's request, is told to batch its reads, and stops only at a 30-round runaway cap."
+				},
+				{
+					"text": "The mechanical seed lists the scripts a job doc names (with their functions) instead of the whole system, the index can hold line ranges of files and docs, `adjust batch --op` works under the gather role, and the identity says `gather: agent` once the agent refined it."
+				},
+				{
+					"text": "Fixes from the second gather run: `adjust demote` and `set-condition` take their condition as text or `--when`, `adjust --help` lists every op, a failing op's error always prints in full (also with `--dry-run`, and in `--json`), `--verbose` exists, `find.py xref --path` accumulates repeated paths, `wdb_mcp.py call --help` lists each tool's arguments, a doc without a heading stays its outline even with `all=true`, and identical batched reads run once."
+				},
+				{
+					"text": "Report Bug on phones and tablets: tapping a text field now opens the on-screen keyboard in the web build, the Door and Job lists take two taps (the first picks a row and shows its description, the second closes the list) and scroll instead of covering the description, Email me about this report stays off and disabled until you type a valid email and then checks itself, and the privacy line now promises your data is never sold and is used only for debugging and messages you authorize."
+				},
+				{
+					"text": "The start card's ref and merge-back follow the checked-out branch; `check.py load-graph` no longer flags the slice's `session-context.md`."
+				},
+				{
+					"text": "Rough edges from the implementation run: `slice.py open` sets a new worktree up for Godot and shoots the slice's before shots before any edit (`shots.py flow --before`), and `check.py prove` says plainly whether a visual review is requested and which shots, names a missing setup, and groups signature and docstring REVIEW lines (310 to about 20 here); `find.py func` stops at the function end; `find.py xref` and the gather prompt cover `project.godot` and `export_presets.cfg`; `--scope`, `--history`, `--for` and `--paths` accumulate repeats; `--match` hits never fold; the script cap says 10000 bytes; Report Bug smoke failures name the failed step; Godot UI-check quirks are written down in debug-smokes."
+				}
+			],
+			"summary": "The Report Bug page works on touch screens (keyboard, two-tap lists, email opt-in, privacy promise); behind the scenes, the slice gather and the repo MCP waste fewer turns and scope context more tightly."
+		},
+		{
 			"label": "0.11.2",
 			"points": [
 				{
