@@ -5,14 +5,6 @@ extends RefCounted
 const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
 
 static func _apply_pose(host: Node) -> void:
-	# Shot window: borderless + exact 1920x1080 so client area is not reduced by title bar.
-	if not Args.show_window():
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
-		var sz: Vector2i = Args.win_size()
-		if sz.x <= 0 or sz.y <= 0:
-			sz = Vector2i(1920, 1080)
-		DisplayServer.window_set_size(sz)
-		DisplayServer.window_set_position(Vector2i(-32000, -32000))
 	var player: Node3D = host.get("player") as Node3D
 	if player != null and Args.has_player_pos():
 		var p: Vector3 = player.global_position

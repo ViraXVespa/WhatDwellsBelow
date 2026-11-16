@@ -50,20 +50,66 @@ static func run_seed() -> int:
 static func floor_n() -> int:
 	return Args.floor_n()
 
+static func _shot_size() -> Vector2i:
+	var shot: Vector2i = Args.win_size()
+	if shot.x <= 0 or shot.y <= 0:
+		shot = Vector2i(1920, 1080)
+	return shot
+
+
+## Called before the scene exists (smoke) and again from attach. Size the OS window to the shot so _ready lays out at that size. Do not reparent and do not park off-screen.
 static func hide_window() -> void:
 	if Args.show_window():
 		return
 	var win: Window = Engine.get_main_loop().root as Window
+	var shot: Vector2i = _shot_size()
 	if win != null:
 		win.unfocusable = true
 		win.borderless = true
 		win.mode = Window.MODE_WINDOWED
-		if Args.win_size().x > 0 and Args.win_size().y > 0:
-			win.size = Args.win_size()
+		win.size = shot
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
-	DisplayServer.window_set_position(Vector2i(-32000, -32000))
+	DisplayServer.window_set_size(shot)
 	printerr("SHOT: mark=window shown=0")
+
+
+## Move the loaded scene into a SubViewport of the exact shot size. The PNG is that texture. The OS window then drops to a small GL host; a hidden or off-screen window does not draw the child viewport.
+static func mount_capture(host: Node) -> void:
+	var shot: Vector2i = _shot_size()
+	var tree: SceneTree = host.get_tree()
+	if tree == null:
+		return
+	var win: Window = tree.root
+	if host.get_parent() != win:
+		return
+	var snap: SubViewport = SubViewport.new()
+	snap.name = "ShotCapture"
+	snap.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	snap.handle_input_locally = true
+	snap.size = shot
+	if Args.show_window():
+		var box: SubViewportContainer = SubViewportContainer.new()
+		box.name = "ShotCaptureBox"
+		box.stretch = true
+		win.borderless = true
+		win.size = shot
+		win.add_child(box)
+		box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		box.add_child(snap)
+	else:
+		win.add_child(snap)
+	win.remove_child(host)
+	snap.add_child(host)
+	tree.current_scene = host
+	snap.size = shot + Vector2i(0, 1)
+	snap.size = shot
+	if not Args.show_window():
+		win.size = Vector2i(64, 64)
+		DisplayServer.window_set_size(Vector2i(64, 64))
+	printerr("SHOT: mark=capture %dx%d" % [shot.x, shot.y])
+
+
 static func attach_dungeon(host: Node) -> void:
 	if not active():
 		return
@@ -77,6 +123,7 @@ static func attach_dungeon(host: Node) -> void:
 		Pad.mode = false
 		Touch.force_show = false
 	hide_window()
+	mount_capture(host)
 	if not Args.aim_line():
 		App.bal.aim_line_on = false  # this run only: shot saves are isolated (save_guard)
 	var method := str(ProjectSettings.get_setting("rendering/renderer/rendering_method"))

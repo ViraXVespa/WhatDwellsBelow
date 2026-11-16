@@ -26,7 +26,7 @@ reply (each item takes this tool's arguments; all=true applies to all; identical
 pairs=[[path,name],...]), xref (pattern, path, regex=true when the pattern contains `|`, expand=FILE), names (path: every declared function), lines (path,
 start, end; no start/end: the whole file), doc (path='design/x.md#Heading' that full section; no #Heading: always the
 outline with line spans, all=true only stops it paging), route (door|job), scenes, facade, stat (path), changed (query=REV; path='DOC SCRIPT' for history), code_map
-(path), task (query=ID), summary (query=JOB, pattern=MATCH), packet (session context; query='K1,K2' expands those)."""
+(path: a script path or a system name such as Dungeon), task (query=ID), summary (query=JOB, pattern=MATCH), packet (session context; query='K1,K2' expands those)."""
 CHECK_DOC = """Run a check once; replies STATUS + summary + handle, or with all=true STATUS + summary + the whole output.
 Follow up with handle + action=failures|full|files. targets: tool_cli (stem), tool_docs, script_cap (files), load_graph,
 gd_load (files)."""

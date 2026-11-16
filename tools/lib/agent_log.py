@@ -237,6 +237,21 @@ def write_run_file(root: Path, d: Path, job: str, body: str, status: str, write:
     run_log_lib.record(d, p, status, " ".join(f"{k}={v}" for k, v in kv.items() if v is not None))
     return res
 
+def safe_print(text: str, stream: object = None) -> None:
+    """Print text. A cp1252 console replaces characters it cannot encode instead of raising."""
+    out = sys.stdout if stream is None else stream
+    try:
+        print(text, file=out)
+    except UnicodeEncodeError:
+        enc = getattr(out, "encoding", None) or "utf-8"
+        data = (text + "\n").encode(enc, errors="replace")
+        buf = getattr(out, "buffer", None)
+        if buf is not None:
+            buf.write(data)
+            buf.flush()
+        else:
+            out.write(data.decode(enc, errors="replace"))
+
 def finish(
     job: str,
     root: Path,
@@ -284,10 +299,10 @@ def finish(
     else:
         shown = body if echo is None else echo
         if shown:
-            print(shown.rstrip("\n"))
+            safe_print(shown.rstrip("\n"))
         if legacy and path is not None:
-            print(f"Summary -> {path}")
-        print(res)  # always the last stdout line (and the last line of the summary file)
+            safe_print(f"Summary -> {path}")
+        safe_print(res)  # always the last stdout line (and the last line of the summary file)
     return exit_code(status)
 
 def _call(fn, args):

@@ -2,7 +2,7 @@
 """design/code-map.md CLI: check, row, patch.
 
     python tools/docs.py code-map check
-    python tools/docs.py code-map row --path scripts/foo/bar.gd
+    python tools/docs.py code-map row --path scripts/foo/bar.gd   (or a system name: Dungeon)
     python tools/docs.py code-map patch --system "Debug" --add scripts/x.gd [--remove p] [--rename old=new] [--dry-run]
 
 Logic lives in code_map_lib (rows, ticks, add/remove/rename).
@@ -51,6 +51,21 @@ def cmd_check(root: Path, args) -> int:
     return agent_log.finish("code-map-check", root, "\n".join(lines), status, args=args, echo=echo,
                             unmapped=len(unmapped), missing=len(missing), mapped=mapped, scripts=len(scripts))
 
+def _row_hits(rows: list, needle: str) -> tuple[list, list[str]]:
+    """Listed script paths win. Otherwise one system name, or the ambiguous system names."""
+    hits = [r for r in rows if cm.matches(needle, r.listed)]
+    if hits:
+        return hits, []
+    one = cm.find_system(rows, needle)
+    if one is not None:
+        return [one], []
+    n = needle.strip().lower()
+    amb = [r.system for r in rows if n and n in r.system.lower()]
+    if len(amb) > 1:
+        return [], amb
+    return [], []
+
+
 def cmd_row(root: Path, args) -> int:
     path = root / "design" / "code-map.md"
     needle = cm.posix(args.path)
@@ -58,15 +73,20 @@ def cmd_row(root: Path, args) -> int:
     if not path.is_file():
         return agent_log.finish("code-map-row", root, "\n".join(lines), "FAIL", args=args, matches=0, error="missing-code-map")
     rows = cm.parse_rows(md.read_text(path))
-    hits = [r for r in rows if cm.matches(needle, r.listed)]
+    hits, amb = _row_hits(rows, needle)
     lines += [f"rows_scanned={len(rows)} matches={len(hits)}", "measure=parse design/code-map.md table; do not read the rest of the map", ""]
+    if amb:
+        lines += ["NO_ROW", "systems=" + ", ".join(amb)]
+        print(f"error: {needle!r} matches more than one system: {', '.join(amb)}; pass a script path or a system name", file=sys.stderr)
+        return agent_log.finish("code-map-row", root, "\n".join(lines), "FAIL", args=args, matches=0,
+                                echo=f"matches=0 NO_ROW systems={', '.join(amb)}")
     if not hits:
         lines.append("NO_ROW")
-        print(f"error: no code-map row lists {needle}; run `docs.py code-map check` (UNMAPPED lists unmapped scripts) or `docs.py code-map patch --system S --add {needle}`", file=sys.stderr)
+        print(f"error: no code-map row lists {needle}; pass a script path or a system name (`docs.py code-map check` lists UNMAPPED scripts)", file=sys.stderr)
     for r in hits:
         lines += [f"system={r.system}", f"live={r.live}", ""]
     return agent_log.finish("code-map-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo="\n".join(x for x in lines[3:] if x.strip()) if hits else f"matches={len(hits)} NO_ROW (run docs.py code-map check or patch --system S --add PATH)", matches=len(hits))
+                            echo="\n".join(x for x in lines[3:] if x.strip()) if hits else f"matches={len(hits)} NO_ROW (pass a script path or a system name)", matches=len(hits))
 
 def _parse_rename(raw: str) -> tuple[str, str] | None:
     old, _, new = raw.partition("=")
@@ -191,9 +211,9 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("check", help="Diff live .gd files against code-map ticks.")
     s = sub.add_parser("sweep", help="Print coverage checklist for one system or all.")
     s.add_argument("--system", default="", help="System row name (exact or unique prefix); empty = all")
-    s = sub.add_parser("row", help="Print the system row matching a path.")
-    s.add_argument("path_pos", nargs="?", default="", metavar="PATH", help="Live script or scene path (same as --path)")
-    s.add_argument("--path", default="", help="Live script or scene path")
+    s = sub.add_parser("row", help="Print the system row for a script path or a system name.")
+    s.add_argument("path_pos", nargs="?", default="", metavar="PATH", help="Script path or system name (same as --path)")
+    s.add_argument("--path", default="", help="Script path or system name (Dungeon)")
     s = sub.add_parser("patch", help="Patch one system row.")
     s.add_argument("--system", required=True, help="System row name (exact, else unique prefix)")
     s.add_argument("--add", action="append", default=[], help="Live path to add (repeatable)")
@@ -208,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "row":
         args.path = args.path or args.path_pos
         if not args.path:
-            agent_log.fail("code_map row: pass a PATH (example: docs.py code-map row scripts/app.gd)")
+            agent_log.fail("code_map row: pass a PATH (a script path or a system name; example: docs.py code-map row scripts/app.gd)")
     args.root = getattr(args, "root_sub", None) or args.root
     args.json = args.json or getattr(args, "json_sub", False)
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)

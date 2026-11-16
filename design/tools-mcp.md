@@ -20,7 +20,7 @@ Entry: `wdb_mcp.py`; code: `tools/lib/wdb_mcp/`. A read-only, progressive front-
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `wdb_mcp.py serve` | stdio MCP server `wdb`: `lookup` (`all=true`, `reads=[...]` batch; func with `pairs`, xref, names (every declared function), lines (no range: the whole file), doc `path#Heading` or no heading for the outline with line spans (also with `all=true`), route, scenes, facade, stat, changed, code_map, task, summary, packet), `check` (`tool_cli`, `tool_docs`, `script_cap`, `load_graph`, `gd_load`; `all=true`), `protocol` (`now` phase and next actions, `doc situation=`, `suggest query=`, `packet`, `list`; situations in `tools/data/mcp_protocol.json`). `--surface`, `--selftest`. | D | `--help` | N |
+| `wdb_mcp.py serve` | stdio MCP server `wdb`: `lookup` (`all=true`, `reads=[...]` batch; func with `pairs`, xref, names (every declared function), lines (no range: the whole file), doc `path#Heading` or no heading for the outline with line spans (also with `all=true`), route, scenes, facade, stat, changed, code_map (script path or system name), task, summary, packet), `check` (`tool_cli`, `tool_docs`, `script_cap`, `load_graph`, `gd_load`; `all=true`), `protocol` (`now` phase and next actions, `doc situation=`, `suggest query=`, `packet`, `list`; situations in `tools/data/mcp_protocol.json`). `--surface`, `--selftest`. | D | `--help` | N |
 | `wdb_mcp.py call` | One tool call from a shell with the same state: `call lookup action=func path=P name=N`, `call lookup handle=f3a9c1`, `reads='[...]'` as JSON; `--help` lists each tool's arguments. No `mcp` package needed. Summary: `mcp-call`. | BD | `--help` | Y |
 
 ## Libs and data

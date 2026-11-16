@@ -41,7 +41,7 @@ OPS = ("add-func", "add-file", "add-doc", "add-names", "rem", "rem-func", "rem-f
        "set-condition", "batch", "report")
 USAGE = {  # one line per op; --help prints them and errors quote them
     "add-func": "add-func PATH NAME [--cand --when TEXT] [--why TEXT] [--reason R]",
-    "add-file": "add-file PATH [--lines A-B] [--cand --when TEXT] [--why TEXT]",
+    "add-file": "add-file PATH [--lines A-B] [--cand --when TEXT] [--why TEXT]  (.gd --lines stores each covering func)",
     "add-doc": "add-doc PATH[#Heading] | add-doc PATH --lines A-B (same flags as add-file)",
     "add-names": "add-names PATH (same flags as add-file)",
     "rem": "rem ID|REF (or rem-func PATH NAME, rem-file PATH, rem-doc REF)",
@@ -67,6 +67,83 @@ def clear_delta(root: Path) -> None:
     if delta_path(root).is_file():
         delta_path(root).unlink()
 
+# Text flags keep every following word. --op stops only at an outer flag, so an inner --why stays inside the op.
+_TEXT = ("--why", "--when", "--reason", "--text", "--halt")
+_INNER = {"--cand", "--when", "--why", "--lines", "--reason"}
+_OUTER = {"--op", "--text", "--halt", "--dry-run", "--json", "--verbose", "-v", "--selftest", "--root", "--help", "-h"}
+
+
+def _absorb(argv: list[str], i: int, stop: set[str]) -> tuple[list[str], int]:
+    """argv[i] is a flag. Join the following words until the next real flag."""
+    flag = argv[i]
+    i += 1
+    parts: list[str] = []
+    while i < len(argv) and argv[i] not in stop:
+        parts.append(argv[i])
+        i += 1
+    return [flag, " ".join(parts)], i
+
+
+def pack_cli(argv: list[str]) -> list[str]:
+    """One token for --op (until the next outer flag) and for each text flag."""
+    out: list[str] = []
+    i = 0
+    text = set(_TEXT)
+    while i < len(argv):
+        tok = argv[i]
+        if tok == "--op":
+            chunk, i = _absorb(argv, i, _OUTER)
+            out.extend(chunk)
+        elif tok in text:
+            chunk, i = _absorb(argv, i, _OUTER | _INNER | text)
+            out.extend(chunk)
+        else:
+            out.append(tok)
+            i += 1
+    return out
+
+
+def pack_op(words: list[str]) -> list[str]:
+    """After shlex splits an --op string, join --why / --when / --reason again."""
+    out: list[str] = []
+    i = 0
+    text = {"--why", "--when", "--reason"}
+    while i < len(words):
+        tok = words[i]
+        if tok in text:
+            chunk, i = _absorb(words, i, text | _INNER)
+            out.extend(chunk)
+        else:
+            out.append(tok)
+            i += 1
+    return out
+
+
+def _funcs_instead(root: Path, idx: pi.Index, ref: str, rng: tuple[int, int], parsed) -> list[tuple[str, str, list[str]]]:
+    """A line range on a .gd is the funcs that cover it. Logged as add-func so a later edit does not slide the range."""
+    path = root / ref
+    if not path.is_file():
+        raise ValueError(f"{ref} is not on disk; name the function (add-func). A line range on a script slides when the file changes")
+    import gd_lib
+    a, b = rng
+    names = [nm for nm, start, end, _n in gd_lib.funcs_of(path.read_text(encoding="utf-8")) if start <= b and end >= a]
+    if not names:
+        raise ValueError(f"no func in {ref} covers L{a}-{b}; name the function (add-func)")
+    made: list[tuple[str, str, list[str]]] = []
+    for nm in names:
+        sub = ["add-func", ref, nm]
+        if parsed.cand:
+            sub.append("--cand")
+        if parsed.when:
+            sub += ["--when", parsed.when]
+        if parsed.why:
+            sub += ["--why", parsed.why]
+        if parsed.reason:
+            sub += ["--reason", parsed.reason]
+        made.extend(apply(root, idx, sub))
+    return made
+
+
 def load(root: Path) -> tuple[str, pi.Index]:
     path = root / PLAN
     if not path.is_file():
@@ -76,8 +153,9 @@ def load(root: Path) -> tuple[str, pi.Index]:
         agent_log.fail("session-plan.md has no `<!-- gathered -->` index; `python tools/slice.py plan --refresh` rebuilds it")
     return kept, pi.parse(gathered)
 
-def apply(idx: pi.Index, words: list[str]) -> tuple[str, str]:
-    """Apply one op to idx. Returns (item id, ref). Raises ValueError with a usage message."""
+def apply(root: Path, idx: pi.Index, words: list[str]) -> list[tuple[str, str, list[str]]]:
+    """Apply one op to idx. Returns [(item id, ref, logged argv)]. Raises ValueError with a usage message."""
+    words = pack_op(words)
     ap = agent_log.std_parser("one adjust op", json_out=False)
     ap.add_argument("op", choices=[o for o in OPS if o not in ("batch", "report")], help="Operation.")
     ap.add_argument("args", nargs="*", help="Operation arguments.")
@@ -108,13 +186,15 @@ def apply(idx: pi.Index, words: list[str]) -> tuple[str, str]:
             raise ValueError(f"--lines takes A-B, got {a.lines!r}") from exc
         if rng and (len(rng) != 2 or kind not in ("file", "doc") or (kind == "doc" and "#" in ref)):
             raise ValueError("--lines A-B goes with add-file PATH or add-doc PATH (no #Heading)")
+        if op == "add-file" and rng and ref.endswith(".gd"):
+            return _funcs_instead(root, idx, ref, rng, a)
         old = next((it for it in idx.items if it.ref == ref and it.lines == rng), None)
         if old:
             old.core, old.note = not a.cand, (a.when if a.cand else a.why) or old.note
-            return old.id, ref
+            return [(old.id, ref, words)]
         it = pi.Item(idx.next_id(not a.cand), kind, ref, not a.cand, a.when if a.cand else a.why, rng)
         idx.items.append(it)
-        return it.id, ref
+        return [(it.id, ref, words)]
     token = f"{args[0]}:{args[1]}" if op == "rem-func" else args[0]
     it = idx.find(token)
     if it is None:
@@ -133,7 +213,7 @@ def apply(idx: pi.Index, words: list[str]) -> tuple[str, str]:
         it.note = when
         if op == "demote":
             it.core = False
-    return it.id, it.ref
+    return [(it.id, it.ref, words)]
 
 def log(root: Path, words: list[str], iid: str, ref: str, reason: str) -> None:
     row = {"t": time.strftime("%Y-%m-%dT%H:%M:%S"), "by": os.environ.get("WDB_ROLE") or "build", "op": words[0],
@@ -149,13 +229,14 @@ def run_ops(root: Path, ops: list[list[str]], dry: bool) -> tuple[list[str], lis
     done, errs = [], []
     for words in ops:
         try:
-            iid, ref = apply(idx, words)
+            made = apply(root, idx, words)
         except ValueError as exc:
             errs.append(str(exc))
             continue
-        done.append(f"{words[0]} {iid} {ref}")
-        if not dry:
-            log(root, words, iid, ref, _reason(words))
+        for iid, ref, argv in made:
+            done.append(f"{argv[0]} {iid} {ref}")
+            if not dry:
+                log(root, argv, iid, ref, _reason(argv))
     if not dry and done:
         if os.environ.get("WDB_ROLE") == "gather":
             idx.set("gather", "agent")  # the packet says the gather agent refined the seed
@@ -172,7 +253,7 @@ def replay(root: Path) -> int:
     for line in path.read_text(encoding="utf-8").splitlines():
         try:
             row = json.loads(line)
-            apply(idx, row["argv"])
+            apply(root, idx, row["argv"])
             n += 1
             if row.get("by") == "gather":
                 idx.set("gather", "agent")
@@ -198,7 +279,7 @@ def report(root: Path, text: str, halt: str) -> str:
     return "\n".join(body)
 
 def main(argv: list[str] | None = None) -> int:
-    argv = list(sys.argv[1:] if argv is None else argv)
+    argv = pack_cli(list(sys.argv[1:] if argv is None else argv))
     if "--selftest" in argv:
         return selftest()
     ap = agent_log.std_parser("Adjust the session-plan context index; every change is logged in _logs/gather/delta.jsonl.",
@@ -318,6 +399,32 @@ def selftest() -> int:
         rep = (root / GATHER / "report.md").read_text(encoding="utf-8")
         if code == 0 or not (root / GATHER / "halt").is_file() or "door ok" not in rep or "add-func=1" not in rep:
             bad.append("report --halt writes report.md (delta summary + text) and the halt file, exit 1")
+        code, out = run("add-func", "scripts/demo.gd", "gamma", "--why", "the", "widget", "lives", "here", "--reason", "kept")
+        noted = pi.parse(pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[1])
+        gamma = noted.find("scripts/demo.gd:gamma")
+        if code or not gamma or gamma.note != "the widget lives here":
+            bad.append("unquoted --why keeps every word until the next flag: " + out)
+        last = json.loads(delta_path(root).read_text(encoding="utf-8").splitlines()[-1])
+        if last.get("reason") != "kept":
+            bad.append("unquoted --reason stays one logged reason")
+        code, out = run("batch", "--op", "add-func", "scripts/demo.gd", "delta", "--why", "spans", "the", "note",
+                        "--op", "add-doc", "design/demo.md#Extra")
+        noted = pi.parse(pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[1])
+        delta = noted.find("scripts/demo.gd:delta")
+        if code or not delta or delta.note != "spans the note" or not noted.find("design/demo.md#Extra"):
+            bad.append("unquoted --op keeps --why words until the next --op: " + out)
+        hud = root / "scripts" / "hud_view.gd"
+        hud.parent.mkdir(parents=True, exist_ok=True)
+        hud.write_text("extends Node\n\nfunc layout() -> void:\n\tpass\n\nfunc build() -> void:\n\tpass\n", encoding="utf-8")
+        code, out = run("add-file", "scripts/hud_view.gd", "--lines", "3-4", "--why", "the", "widget")
+        noted = pi.parse(pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[1])
+        lay = noted.find("scripts/hud_view.gd:layout")
+        filed = [it for it in noted.items if it.ref == "scripts/hud_view.gd" and it.kind == "file"]
+        logged = json.loads(delta_path(root).read_text(encoding="utf-8").splitlines()[-1])["argv"]
+        if code or not lay or lay.note != "the widget" or filed or noted.find("scripts/hud_view.gd:build") or logged[:3] != ["add-func", "scripts/hud_view.gd", "layout"]:
+            bad.append("add-file --lines on a .gd stores the covering func: " + out)
+        if run("add-file", "scripts/missing_widget.gd", "--lines", "1-2")[0] == 0:
+            bad.append("add-file --lines on a missing .gd must fail")
     return agent_log.selftest_result(bad)
 
 if __name__ == "__main__":

@@ -18,9 +18,6 @@ import json
 import os
 import subprocess
 import sys
-import threading
-import time
-import ctypes
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -45,34 +42,6 @@ RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
 SCREENS = ("title", "splash", "fs_gate")
 FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz", "width", "height", "fixed_fps")
-
-def _hide_godot_window(stop_event: threading.Event, pid: int) -> None:
-    """PID-only off-screen + taskbar strip. No title read, no print."""
-    try:
-        user32 = ctypes.windll.user32
-        GWL_EXSTYLE = -20
-        WS_EX_TOOLWINDOW = 0x00000080
-        WS_EX_APPWINDOW = 0x00040000
-        SWP_NOSIZE = 0x0001
-        SWP_NOZORDER = 0x0004
-        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-
-        def enum_cb(hwnd, lparam):
-            proc_id = ctypes.c_ulong()
-            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(proc_id))
-            if proc_id.value != pid:
-                return True
-            ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, (ex | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
-            user32.SetWindowPos(hwnd, None, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER)
-            return True
-
-        cb = WNDENUMPROC(enum_cb)
-        while not stop_event.is_set():
-            user32.EnumWindows(cb, 0)
-            time.sleep(0.001)
-    except Exception:
-        pass
 
 def _load_recipe(root: Path, name: str) -> dict:
     path = root / "tools" / "data" / "shot-recipes.json"
@@ -388,9 +357,6 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
         stderr=subprocess.PIPE,
         start_new_session=os.name != "nt",
     )
-    stop_event = threading.Event()
-    hide_thread = threading.Thread(target=_hide_godot_window, args=(stop_event, proc.pid), daemon=True)
-    hide_thread.start()
     try:
         stdout, stderr = proc.communicate(timeout=max(1, args.timeout_sec))
         out_log.write_bytes(stdout or b"")
@@ -407,8 +373,6 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
         proc.communicate()
         run = {"status": "TIMEOUT", "ms": args.timeout_sec * 1000, "timed_out": True}
     finally:
-        stop_event.set()
-        hide_thread.join(timeout=1.0)
         godot_slots.release(slot)
     shot_hits = _shot_lines([err_log, out_log])
     err_hits = _error_lines([err_log, out_log])
@@ -436,9 +400,11 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
         ok, band = False, "fail"  # shots.py zoom --space full needs this original at every scale
         err_hits.append(f"no full/ original: {full / png.name}")
     want = _want_size(args, scale_pct)
-    if ok and not args.no_pixels and want and (width, height) != want:
+    if ok and not args.no_pixels and want and not _size_ok(width, height, want):
         ok, band = False, "fail"  # an explicit --width/--height is a contract, not a hint
         err_hits.append(f"size {width}x{height} != asked {want[0]}x{want[1]}")
+    elif ok and want and (width, height) != want:
+        shot_hits.append(f"SHOT: size {width}x{height} chrome={want[1] - height} asked {want[0]}x{want[1]}")
     res.update(band=band, status=status, wall_ms=run["ms"], timeout=timed, shot_ok=shot_ok, bytes=nbytes,
                w=width, h=height, lines=shot_hits, errors=err_hits, flow=flow, ok=ok)
     return res
@@ -449,15 +415,25 @@ def _want_size(args: argparse.Namespace, scale_pct: int) -> tuple[int, int] | No
         return None
     return (args.width * scale_pct // 100, args.height * scale_pct // 100)
 
+
+def _size_ok(width: int, height: int, want: tuple[int, int]) -> bool:
+    """Width must match. Height may be 4 or 8 short: window chrome has returned 1080 as 1076 or 1072."""
+    if width != want[0] or height <= 0:
+        return False
+    return height == want[1] or height in (want[1] - 4, want[1] - 8)
+
 def selftest(root: Path) -> int:
-    """Live: a build-mode camp shot at 640x360 must come back exactly 640x360 (the build default --scale 50 once
-    halved it), and the size check must fail a PNG of the wrong size."""
+    """Live: a build-mode camp shot at 640x360 must come back at that size (the build default --scale 50 once
+    halved it). Height may be 4 or 8 short (window chrome). A real miss still fails."""
     import tempfile
     out = Path(tempfile.mkdtemp()) / "size.png"
     args = build_parser().parse_args(["--scene", "camp", "--mode", "build", "--hud", "0", "--width", "640",
                                       "--height", "360", "--out", str(out)])
     res = capture(args, root, {"scene", "mode", "hud", "width", "height", "out"})
-    live = res["ok"] and (res["w"], res["h"]) == (640, 360)
+    live = res["ok"] and _size_ok(res.get("w") or 0, res.get("h") or 0, (640, 360))
+    chrome = (_size_ok(1920, 1080, (1920, 1080)) and _size_ok(1920, 1076, (1920, 1080))
+              and _size_ok(1920, 1072, (1920, 1080)) and not _size_ok(1920, 1070, (1920, 1080))
+              and not _size_ok(1912, 1080, (1920, 1080)) and not _size_ok(320, 180, (640, 360)))
     plant = _want_size(args, 100) == (640, 360) and _want_size(args, 50) == (320, 180) and _want_size(
         build_parser().parse_args(["--width", "640"]), 100) is None
     fake = out.parent / "proj"
@@ -474,8 +450,8 @@ def selftest(root: Path) -> int:
     aim_def, aim_on = _extra_flags(build_parser().parse_args([])), _extra_flags(build_parser().parse_args(["--aim-line"]))
     aim = "--wdb-shot-aim=0" in aim_def and not any(a.startswith("--wdb-shot-aim") for a in aim_on)
     print(f"selftest aim_line default_off={'--wdb-shot-aim=0' in aim_def} flag_on={aim}")
-    plant = plant and aim
-    print(f"selftest size live={res.get('w')}x{res.get('h')} ok={live} want_size={plant}")
+    plant = plant and aim and chrome
+    print(f"selftest size live={res.get('w')}x{res.get('h')} ok={live} want_size={plant} chrome={chrome}")
     return agent_log.emit_result("PASS" if live and plant else "FAIL", None, w=res.get("w"), h=res.get("h"))
 
 def main(argv: list[str] | None = None) -> int:

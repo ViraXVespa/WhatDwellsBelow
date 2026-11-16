@@ -19,10 +19,10 @@ A postcard is one play-camera screenshot, not a smoke test. Godot renders the fr
 ## Modes
 
 - web: full-res PNG plus Windows clipboard. Paste the image with the printed RESULT (the tool prints it; no scratch needed to see it).
-- build: scaled PNG (default 50 percent) under `_logs/shots/`.
+- build: scaled PNG (default 50 percent, the visual check) under `_logs/shots/`. A few-pixel mark uses the 100 percent crop.
 - user: full-res PNG and open it when done.
 
-Command: `python tools/shots.py capture --mode web|build|user`. `--help` lists camera, viewport, timing and output options; presets are in `tools/data/shot-recipes.json`. A real GL display is required; the runner selects it automatically. Defaults keep HUD on and park the window off-screen.
+Command: `python tools/shots.py capture --mode web|build|user`. `--help` lists camera, viewport, timing and output options; presets are in `tools/data/shot-recipes.json`. A real GL display is required; the runner selects it automatically. Defaults keep HUD on. The PNG is a SubViewport at the requested size; the OS window is only a small GL host.
 
 Summary: `_logs/shots/<stamp>-shots.txt` (also the `summary=` of the last line, `RESULT PASS|INFO|FAIL band=...`). The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
 
@@ -55,14 +55,14 @@ Not shown by design: player, enemies, HUD, minimap. Knobs live on the `sweep` op
 Flag `--wdb-shot` plus `--wdb-shot-seed`, `--wdb-shot-floor`, `--wdb-shot-out`, `--wdb-shot-scale`, `--wdb-shot-settle-ms`, `--wdb-shot-show`.
 Boots past splash/title through the existing CLI multiplexer, `begin_run` on that seed/floor, forces stream, settles, captures the play viewport, prints `SHOT:` marks, quits.
 Rendering method is `gl_compatibility`, driver `opengl3`, same as play. Audio is Dummy. Do not pass `--rendering-driver d3d12` (it leaves Compatibility and washes the hub through the Forward+ filmic pass) or `--headless` / `--display-driver headless` (Dummy rasterizer, no pixels).
-Default window: no-focus, borderless, popup-wm-hint, parked off the primary screen, still WINDOWED so the frame keeps drawing. `--show` leaves the window visible.
+The scene moves into a SubViewport at `--width` x `--height` (else 1920x1080); the PNG is that texture. The OS window is then a 64x64 borderless GL host, left visible so the viewport draws. `--show` shows it at the shot size.
 
 ## Bands
 
 Numbers live on `tools/shots.py capture`: `BUILD_SCALE_PCT = 50`, `SETTLE_MS = 1000`, `TIMEOUT_SEC = 180`, `WARN_BYTES = 2048`.
 good: PNG exists, `SHOT: ok=true`, bytes at or above warn floor.
 warn: PNG exists but bytes below warn floor.
-fail: timeout, nonzero Godot exit, no image, or script error.
+fail: timeout, nonzero Godot exit, no image, script error, or a width miss. Height 4 or 8 short (1080 as 1076 or 1072) passes.
 
 ## What it can stage today
 

@@ -33,7 +33,7 @@ Stop when a compact would be safe. Finish the operation already in progress; do 
 
 Before the stop, those four sections and the index must already match the turn. Write them when the fact lands, not for the first time at the stop. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
 
-On any post-compact turn, the first action is to read `session-plan.md`, then `session-context.md`. Do not re-walk the repo or re-run the same lookups unless they are missing or stale (`slice.py plan --refresh` re-seeds and replays adjustments). Keep the four sections current as facts land, and again before the next planned stop.
+On any post-compact turn, read `session-plan.md`, then the packet with `wdb__lookup action=packet` (paged; a file read stops at 1000 lines). Do not re-walk the repo or repeat lookups unless they are missing or stale (`plan --refresh` replays). Keep the four sections current as facts land before the next stop.
 
 ## Permissions and questions
 
