@@ -27,6 +27,7 @@ hub-2d-bake | build | open | Bake hub visuals to 2D sprites / viewport texture w
 map-rework | build | open | Event-driven minimap with fog reveal mask and separate layers | -
 modular-voxel-walk-proof | build | open | Modular 3D walk proof (Blender + bake) | -
 perf-sweep | build | open | Perf sweep - one continuous hub/dungeon run at 60+ FPS, desktop and web | -
+splash-platform-prompt | build | open | Start splash: platform prompt + click/tap to continue | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -

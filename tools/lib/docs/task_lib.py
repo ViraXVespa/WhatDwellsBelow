@@ -326,7 +326,10 @@ def next_opt(root: Path) -> str:
     return f"opt-{max(seen + [OPT_FLOOR]) + 1:03d}"
 
 def skeleton(tid: str, owner: str, title: str, done_when: str, resume: str, needs: list[str], body: str) -> str:
-    lines = [f"# {title}", "", f"id: {tid}", f"owner: {owner}", f"status: {'blocked' if needs else 'open'}", f"done-when: {done_when}", f"resume: {resume}"]
+    lines = [f"# {title}", "", f"id: {tid}", f"owner: {owner}", f"status: {'blocked' if needs else 'open'}", f"done-when: {done_when}"]
     if needs:
         lines.append("needs: " + ", ".join(needs))
-    return "\n".join(lines + ["", body.strip() or "## Notes\nnone yet", ""])
+    body_text = (body.strip() or "## Notes\nnone yet").rstrip()
+    if resume:
+        body_text += f"\n\n## Next Steps (User Only)\n{resume}"
+    return "\n".join(lines + ["", body_text, ""])
