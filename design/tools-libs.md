@@ -54,7 +54,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/docs/task_lib.py` | Task header/lifecycle/index validation and dependency updates. |
 | `lib/docs/task_compact.py` | Collapse completed units while preserving owner decisions and open work; fixture selftest. |
 | `lib/slice/slice_lib.py` | Startup card and fixture tests for main/worktree, survey/job, saved progress, other-session detection, retries and queues. |
-| `lib/slice/gather_agent.py` | `slice.py open` gather: start for the main session, the cheap agent, open's own validation, fallback; prompts in `data/gather/`. `lib/slice/gather_selftest.py`: its stub-grok cases. |
+| `lib/slice/gather_agent.py` | `slice.py open` gather: start for the main session, the cheap agent, open's own validation. A compact, crash, timeout, or missing report writes a halt and does not launch. It prints thoughts and tool lines while it runs. Prompts in `data/gather/`. `lib/slice/gather_selftest.py`: its stub-grok cases. |
 | `lib/slice/plan_index.py` | session-plan.md context index: parse/render (md is the source of truth), item resolve for `slice.py expand`. |
 | `lib/slice/slice_state.py` | Local slice progress/session/task state and concise resume instructions; this is observed state, not a claim of completed proof. |
 | `lib/session/session_lib.py` | Find Build session facts and failed tool results since the last question; used by startup and failed-step reporting. |

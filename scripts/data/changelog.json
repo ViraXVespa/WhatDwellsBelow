@@ -13,6 +13,9 @@
 				},
 				{
 					"text": "Added task splash-platform-prompt for the start-splash platform prompt and click/tap change (local worktree only; do not push to the Grok Build branch)."
+				},
+				{
+					"text": "The gather agent no longer stops at 30 rounds or starts the main session on the seed when it fails. It runs until it reports or the context is compacted; a compact, crash, timeout, or missing report writes a halt and does not launch. An `xref` pattern that contains `|` requires `regex=true`. `slice.py open` prints each prepare step as it runs, and the gather agent's thoughts and tool calls as they arrive."
 				}
 			],
 			"summary": ""

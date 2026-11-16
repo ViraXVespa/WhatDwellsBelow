@@ -142,6 +142,12 @@ def batch_cases(bad: list[str], t: mcp_tools.Tools) -> None:
         bad.append("identical batch reads are answered once and the skip is noted: " + dup[:200])
     if not t.lookup(reads=[{"path": "x"}]).startswith("STATUS: FAIL"):
         bad.append("a batch read without an action is refused")
+    piped = t.lookup("xref", pattern="minimap|fog", path="design", whole=True)
+    if not piped.startswith("STATUS: FAIL") or "regex=true" not in piped:
+        bad.append("xref '|' without regex must fail and name regex=true: " + piped[:180])
+    alt = t.lookup("xref", pattern="gather agent|no-such-token", path="design/build-job-cycle.md", regex=True, whole=True)
+    if not alt.startswith("STATUS: PASS") or "gather agent" not in alt:
+        bad.append("xref regex=true alternation must search: " + alt[:180])
 
 def shared(bad: list[str]) -> None:
     """Two servers on one checkout: separate handle files, neither overwrites the other; expiry; rerun counts."""

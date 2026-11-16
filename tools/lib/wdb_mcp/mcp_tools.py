@@ -152,6 +152,8 @@ class Tools:
         if action == "xref":
             if not pattern:
                 return [], "xref needs pattern"
+            if "|" in pattern and not regex:
+                return [], "xref pattern has '|'; pass regex=true for alternation, or one simple pattern per reads entry. Without regex the bar is a literal pipe."
             argv = ["find.py", "xref", "--pattern", pattern] + (["--path", path] if path else []) + (["--regex"] if regex else [])
             return argv + (["--expand", expand] if expand else []), "find.py xref"
         if action in ("names", "all_names"):  # every declared function, in source order (the CLI's --names keeps the biggest few)

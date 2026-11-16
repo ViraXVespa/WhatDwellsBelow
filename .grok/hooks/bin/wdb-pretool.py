@@ -2,7 +2,7 @@
 """PreToolUse hook. Deny default tools the pc-offload skill replaces.
 
 Grep of one file stays allowed. gate.py build and reading a file under edit stay allowed.
-WDB_ROLE=gather (the `slice.py open` gather agent): no edits or writes, shell only the GATHER_CMD tools, MCP only
+WDB_ROLE=gather (the `slice.py open` gather agent): no edits or writes, shell only the gather tools, MCP only
 wdb__lookup / wdb__protocol; everything else as below.
 """
 from __future__ import annotations
@@ -254,8 +254,19 @@ def managed_image_command(cmd: str, repo: Path, cwd: Path | None) -> bool:
         return False
 
 
-GATHER_CMD = re.compile(r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools(?:/|\\)(?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b[^;&|<>`$\n\r]*$", re.I)
+def _outside_quotes(cmd: str) -> str:
+    """Drop quoted spans so a `|` inside a pattern is not read as a shell pipe."""
+    return re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', "", cmd)
+
+GATHER_PREFIX = re.compile(
+    r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools(?:/|\\)(?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b",
+    re.I)
 WRITE_TOOLS = {"write", "write_file", "writefile", "edit", "edit_file", "search_replace", "multiedit", "notebookedit", "delete_file"}
+
+def gather_shell_ok(cmd: str) -> bool:
+    """Those tools only, and no chaining. A `|` inside quotes is a pattern character."""
+    cmd = cmd.strip()
+    return bool(GATHER_PREFIX.match(cmd)) and not re.search(r"[;&|<>`$\n\r]", _outside_quotes(cmd))
 
 def gather_reason(name: str, inp: dict) -> str:
     low = name.lower()
@@ -264,7 +275,7 @@ def gather_reason(name: str, inp: dict) -> str:
     if low in WRITE_TOOLS:
         return "gather role: no edits. Change the index with python tools/slice.py adjust."
     cmd = shell_command(name, inp)
-    if cmd and not GATHER_CMD.match(cmd.strip()):
+    if cmd and not gather_shell_ok(cmd):
         return "gather role: shell is python tools/{find,docs,session}.py or tools/slice.py plan|adjust|expand only (no chaining)."
     return ""
 
@@ -396,6 +407,8 @@ def selftest() -> int:
         (ev("edit_file", {"target_file": "design/ui.md"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/slice.py adjust promote K3"}), "allow"),
         (ev("run_terminal_command", {"command": "python tools/find.py func --path a.gd --name b"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py xref --pattern \"minimap|fog\" --path scripts/a.gd"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py xref --pattern minimap|fog"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/slice.py commit"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/find.py route; git push"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/gate.py build"}), "deny"),

@@ -9,6 +9,7 @@ Entry: `wdb_mcp.py`; code: `tools/lib/wdb_mcp/`. A read-only, progressive front-
 
 - Replies start `STATUS: PASS` or `STATUS: FAIL (N)`, plain text. A cut one adds `page: A-B of N; more: handle=H` (pages of about 60 lines, `budget=N`); `check` replies `summary:` and `handle:` only.
 - `all=true` on a first `lookup` or `check` call returns the whole result in that one reply (no handle). `lookup reads=[{action, path, ...}, ...]` answers several independent reads (any action but `more` / `full`) in one reply, in order (identical reads run once); a bad read fails only itself and `STATUS: FAIL (N)` counts them.
+- `xref` treats the pattern as literal text. A pattern that contains `|` fails unless `regex=true` (alternation). Split simple patterns across `reads` entries when each one should stay literal.
 - `doc` without `#Heading` is always the outline with line spans (`all=true` only stops it paging); `doc path#Heading` is that full section; the whole file is `lines` with no `start`/`end`.
 - The command runs once; a follow-up passes the handle (`action=more` the rest, `full`, `failures`, `files`).
 - Handles last 2 hours, one file each in `_logs/gather/mcp/` (safe for several servers). Build runs a check at most 3 times per target per worktree; an explicit `--surface` (Grok Bot) has no limit.
