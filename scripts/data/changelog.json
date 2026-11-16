@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.11.5",
+			"points": [
+				{
+					"text": "Task skeleton now places the User-only launch line in a ## Next Steps (User Only) section at the bottom of the file instead of a resume: header field."
+				},
+				{
+					"text": "docs.py task show no longer prints an empty resume line."
+				},
+				{
+					"text": "Added task splash-platform-prompt for the start-splash platform prompt and click/tap change (local worktree only; do not push to the Grok Build branch)."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.11.4",
 			"points": [
 				{
