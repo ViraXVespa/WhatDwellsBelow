@@ -21,6 +21,10 @@ This is pure CPU image work and produces hitches.
 - Map looks correct, fog reveal feels the same or better, no per-frame `set_pixel` cost.
 - User confirms visuals and responsiveness.
 
+## Notes
+- This is the first task request using the wdb MCP and using a separate Grok Build session for the Gather phase of the repo's Grok Build protocols. Please note any issues encountered with these new systems while working through this task and report any rough edges/change recommendations to the user when the task is completed.
+- Consider testing these new systems (MCP and gather agent) to be a sub-goal of this task. If they're set up correctly, there should be no issues and everything should run smoothly. If they're not set up correctly, all relevant info about the issues should be relayed to the user so the issues can be fixed.
+
 ## Next Steps (User Only)
 python tools/slice.py open dungeon --task map-rework
 
