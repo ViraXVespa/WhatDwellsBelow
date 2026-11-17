@@ -6,13 +6,16 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const View := preload("res://scripts/ui/hud/hud_view.gd")
+const Icons := preload("res://scripts/ui/gear_icons.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	var lay_key: Vector3 = Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y)
-	if lay_key != host._lay_key:
+	var chrome_key: Vector2 = Vector2(float(App.mini_px), float(App.mini_opacity))
+	if lay_key != host._lay_key or chrome_key != host._chrome_key:
 		host._lay_key = lay_key
+		host._chrome_key = chrome_key
 		View.layout(host)
 		host._state.clear()
 	View.load_portrait(host)
@@ -31,7 +34,8 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 		else:
 			spec = 1.0 - clampf(float(player.get("special_cd")) / maxf(0.05, App.bal.special_recovery), 0.0, 1.0)
 	var inner: float = View.BAR_INSET * 2.0
-	fill(host.hp_fill, host.HP_W - inner, hp / maxh)
+	var hp_frac: float = hp / maxh
+	fill(host.hp_fill, host.HP_W - inner, hp_frac)
 	var mana_now: float = float(App.prog.mana)
 	var mana_cap: float = maxf(1.0, App.prog.mana_max())
 	fill(host.mana_fill, host.MANA_W - inner, mana_now / mana_cap)
@@ -40,18 +44,18 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 		atk_now = int(player.get("atk_state"))
 	if atk_now == 0:
 		spec = minf(spec, mana_now / maxf(1.0, float(App.bal.special_mana)))
+	var locale: String = TranslationServer.get_locale()
 	var pot: Dictionary = App.prog.slots.get("potion", {})
-	var pn := int(pot.get("stack", 0))
+	var pn: int = int(pot.get("stack", 0))
 	var pcd: float = App.prog.potion_cd
 	var pmax: float = maxf(0.05, App.bal.potion_cooldown)
-	fill(host.pot_fill, host.POT_W - inner, 1.0 if pcd <= 0.0 and pn > 0 else 1.0 - clampf(pcd / pmax, 0.0, 1.0))
-	if changed(host, "potion", [pn, snappedf(pcd, 0.1), pcd > 0.0, TranslationServer.get_locale()]):
-		paint_potion(host, pn, pcd)
+	if changed(host, "potion", [pn, pot.is_empty(), locale]):
+		paint_potion(host, pot, pn)
+	paint_sweep(host.pot_timer, 0.0 if pcd <= 0.0 else pcd / pmax)
 	fill(host.dash_fill, host.DASH_W - inner, dash)
 	fill(host.spec_fill, host.SPEC_W - inner, spec)
 	var clv := App.prog.combat_lv()
 	var slv := App.prog.style_lv()
-	var locale: String = TranslationServer.get_locale()
 	if changed(host, "hp", [int(hp), int(maxh), locale]):
 		host.hp_lab.text = App.tr("hud_act.text") % [int(hp), int(maxh)]
 	if changed(host, "mana", [int(mana_now), int(mana_cap), locale]):
@@ -67,17 +71,20 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 		host.shrine_lab.visible = App.shrine_t > 0.0
 		if App.shrine_t > 0.0:
 			host.shrine_lab.text = App.tr("hud_act.shrine_s") % [int(App.bal.shrine_dmg * 100.0), ceili(App.shrine_t)]
-	if changed(host, "food", [ceili(App.prog.food_t), locale]):
-		host.food_icon.visible = App.prog.food_t > 0.0
-		host.food_lab.visible = App.prog.food_t > 0.0
-		if App.prog.food_t > 0.0:
-			host.food_lab.text = App.tr("hud_act.food_hot_s") % ceili(App.prog.food_t)
+	var food_it: Dictionary = _shown_food()
+	var food_stack: int = int(food_it.get("stack", 0))
+	var food_remain: float = float(App.prog.food_t)
+	if changed(host, "food", [food_stack, str(food_it.get("food", "")), food_it.is_empty(), locale]):
+		paint_food(host, food_it, food_stack)
+	paint_sweep(host.food_timer, 0.0 if food_remain <= 0.0 else food_remain / maxf(0.05, _food_span(food_it, food_remain)))
 	paint_prompt(host)
 	paint_gem(host, dungeon)
 	paint_look(host)
 	var toast: String = App.toast_msg if App.toast_t > 0.0 else ""
 	if changed(host, "toast", toast):
 		host.toast.text = toast
+	View.paint_wounds(host, hp_frac)
+	View.paint_border(host, hp_frac)
 	boss(host, dungeon, player)
 	if host.fps_lab and host.fps_lab.text != "":
 		host.fps_lab.text = ""
@@ -89,8 +96,54 @@ static func changed(host: CanvasLayer, key: String, value: Variant) -> bool:
 	host._state[key] = value
 	return true
 
-static func paint_potion(host: CanvasLayer, count: int, cooldown: float) -> void:
-	host.pot_lab.text = App.tr("hud_act.potion_x_s") % [count, cooldown] if cooldown > 0.0 else App.tr("hud_act.potion_x") % count
+static func paint_potion(host: CanvasLayer, it: Dictionary, count: int) -> void:
+	host.pot_icon.texture = Icons.tex_for_slot("potion", _as_slot("potion", it))
+	host.pot_icon.modulate = Color(1, 1, 1, 1) if count > 0 else Color(0.62, 0.62, 0.62, 0.9)
+	host.pot_lab.text = App.tr("hud_act.stack_x") % count if count > 0 else ""
+
+
+static func paint_food(host: CanvasLayer, it: Dictionary, count: int) -> void:
+	host.food_icon.texture = Icons.tex_for_slot("food", _as_slot("food", it))
+	host.food_icon.modulate = Color(1, 1, 1, 1) if not it.is_empty() else Color(0.62, 0.62, 0.62, 0.9)
+	host.food_lab.text = App.tr("hud_act.stack_x") % count if count > 0 else ""
+
+
+static func paint_sweep(bar: TextureProgressBar, frac: float) -> void:
+	if bar == null:
+		return
+	var on: bool = frac > 0.001
+	if bar.visible != on:
+		bar.visible = on
+	if on and not is_equal_approx(float(bar.value), frac):
+		bar.value = frac
+
+
+static func _as_slot(slot: String, it: Dictionary) -> Dictionary:
+	if it.is_empty():
+		return it
+	if str(it.get("slot", "")) == slot or str(it.get("kind", "")) == slot:
+		return it
+	var copy: Dictionary = it.duplicate()
+	copy["slot"] = slot
+	return copy
+
+
+static func _shown_food() -> Dictionary:
+	var it: Dictionary = App.prog.slots.get("food", {})
+	if not it.is_empty():
+		return it
+	if App.prog.food_t > 0.0 and str(App.prog.food_id) != "":
+		return {"slot": "food", "kind": "food", "food": App.prog.food_id}
+	return {}
+
+
+static func _food_span(it: Dictionary, remain: float) -> float:
+	var secs: float = float(App.bal.food_hot_y)
+	if str(it.get("food", "")) == str(App.prog.food_id):
+		var item_secs: float = float(it.get("heal_secs", 0.0))
+		if item_secs > 0.0:
+			secs = item_secs
+	return maxf(secs, remain)
 
 static func paint_look(host: CanvasLayer) -> void:
 	if not changed(host, "look", [Look.blocked(), Look.map_open(), Look.mode, TranslationServer.get_locale()]):
@@ -113,6 +166,7 @@ static func paint_prompt(host: CanvasLayer) -> void:
 	host.prompt_row.set_meta("prompt_tap", false)
 	if text == "":
 		PromptView.fill(host.prompt_row, [])
+		View.fit_prompt_back(host)
 		return
 	# The strip already scales by play_scale(); keep the row's own font at its pre-DPR size (16 x frame_scale()).
 	var px: int = maxi(1, int(round(16.0 * View.UiText.frame_scale() / maxf(View.UiText.applied(), 0.001))))
@@ -120,6 +174,7 @@ static func paint_prompt(host: CanvasLayer) -> void:
 		PromptView.fill(host.prompt_row, [{"text": text}], px, View.STRIP_INK)
 	else:
 		PromptView.fill(host.prompt_row, [{"action": "interact", "verb": text}], px, View.STRIP_INK)
+	View.fit_prompt_back(host)
 
 static func style_name() -> String:
 	if App.weapon == "staff":

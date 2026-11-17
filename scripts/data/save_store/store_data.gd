@@ -15,6 +15,13 @@ const DEF := {
 	"last_seen_game_ver": "",
 	"cam_zoom": 1.75,
 	"hud_scale": 1.0,
+	"mini_px": 250.0,
+	"mini_opacity": 1.0,
+	"mini_zoom": 8.0,
+	"mini_zoom_fit": true,
+	"full_map_opacity": true,
+	"map_toggle_adapt": true,
+	"map_rest_mini": true,
 	"vol_master": 1.0,
 	"vol_music": 0.7,
 	"vol_sfx": 0.85,
@@ -29,6 +36,7 @@ const DEF := {
 	"aim_line_opacity": 0.85,
 	"target_lock_pref": false,
 	"danger_gem": true,
+	"red_border_glow": true,
 	"salvage_dupes": false,
 	"salvage_finish": 0.8,
 	"salvage_fortune": 1.0,
@@ -44,6 +52,13 @@ static func apply(data: Dictionary) -> bool:
 	App.character_chosen = bool(data.get("character_chosen", DEF.character_chosen))
 	App.cam_zoom = float(data.get("cam_zoom", DEF.cam_zoom))
 	App.hud_scale = float(data.get("hud_scale", DEF.hud_scale))
+	App.mini_px = clampf(round(float(data.get("mini_px", DEF.mini_px))), App.T.MINI_PX_MIN, App.T.MINI_PX_MAX)
+	App.mini_opacity = clampf(float(data.get("mini_opacity", DEF.mini_opacity)), 0.0, 1.0)
+	App.mini_zoom = App.T.snap_mini_zoom(float(data.get("mini_zoom", DEF.mini_zoom)))
+	App.mini_zoom_fit = bool(data.get("mini_zoom_fit", DEF.mini_zoom_fit))
+	App.full_map_opacity = bool(data.get("full_map_opacity", DEF.full_map_opacity))
+	App.map_toggle_adapt = bool(data.get("map_toggle_adapt", DEF.map_toggle_adapt))
+	App.map_rest_mini = bool(data.get("map_rest_mini", DEF.map_rest_mini))
 	App.ui_text_floor = float(data.get("ui_text_floor", App.T.UI_TEXT_FLOOR))
 	App.vol_master = float(data.get("vol_master", DEF.vol_master))
 	App.vol_music = float(data.get("vol_music", DEF.vol_music))
@@ -59,6 +74,7 @@ static func apply(data: Dictionary) -> bool:
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", DEF.aim_line_opacity))
 	App.target_lock_pref = bool(data.get("target_lock_pref", DEF.target_lock_pref))
 	App.danger_gem = bool(data.get("danger_gem", DEF.danger_gem))
+	App.red_border_glow = bool(data.get("red_border_glow", DEF.red_border_glow))
 	App.salvage_dupes = bool(data.get("salvage_dupes", DEF.salvage_dupes))
 	App.salvage_finish = clampf(float(data.get("salvage_finish", DEF.salvage_finish)), 0.5, 1.0)
 	App.salvage_fortune = clampf(float(data.get("salvage_fortune", DEF.salvage_fortune)), 0.75, 1.25)
@@ -114,6 +130,13 @@ static func fresh_delver() -> void:
 	App.last_seen_game_ver = DEF.last_seen_game_ver
 	App.cam_zoom = DEF.cam_zoom
 	App.hud_scale = DEF.hud_scale
+	App.mini_px = DEF.mini_px
+	App.mini_opacity = DEF.mini_opacity
+	App.mini_zoom = DEF.mini_zoom
+	App.mini_zoom_fit = DEF.mini_zoom_fit
+	App.full_map_opacity = DEF.full_map_opacity
+	App.map_toggle_adapt = DEF.map_toggle_adapt
+	App.map_rest_mini = DEF.map_rest_mini
 	App.ui_text_floor = App.T.UI_TEXT_FLOOR
 	App.vol_master = DEF.vol_master
 	App.vol_music = DEF.vol_music
@@ -126,6 +149,7 @@ static func fresh_delver() -> void:
 	App.web_fullscreen = DEF.web_fullscreen
 	App.target_lock_pref = DEF.target_lock_pref
 	App.danger_gem = DEF.danger_gem
+	App.red_border_glow = DEF.red_border_glow
 	App.salvage_dupes = DEF.salvage_dupes
 	App.salvage_finish = DEF.salvage_finish
 	App.salvage_fortune = DEF.salvage_fortune

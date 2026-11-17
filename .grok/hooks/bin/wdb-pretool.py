@@ -2,7 +2,7 @@
 """PreToolUse hook. Deny default tools the pc-offload skill replaces.
 
 Grep of one file stays allowed. gate.py build and reading a file under edit stay allowed.
-WDB_ROLE=gather (the `slice.py open` gather agent): no edits or writes, shell only the GATHER_CMD tools, MCP only
+WDB_ROLE=gather (the `slice.py open` gather agent): no edits or writes, shell only the gather tools, MCP only
 wdb__lookup / wdb__protocol; everything else as below.
 """
 from __future__ import annotations
@@ -206,25 +206,29 @@ def is_repo_root(text: str, repo: Path | None, cwd: Path | None) -> bool:
     except OSError:
         return False
 
+def prefer(action: str, script: str) -> str:
+    return f"Use wdb__lookup action={action} when it is connected; otherwise {script}."
+
+
 def list_reason(text: str, repo: Path | None, cwd: Path | None) -> str:
     if hits_scenes(text, repo):
-        return "Listing scenes/ is denied. Use tools/find.py scenes."
+        return "Listing scenes/ is denied. " + prefer("scenes", "python tools/find.py scenes")
     if is_repo_root(text, repo, cwd):
-        return "Listing the repo root is denied. Use tools/find.py route."
-    return "Tree list/grep over scripts|design|tools|scenes is denied. Use tools/find.py xref."
+        return "Listing the repo root is denied. " + prefer("route", "python tools/find.py route")
+    return "Tree list/grep over scripts|design|tools|scenes is denied. " + prefer("xref", "python tools/find.py xref")
 
 def shell_reason(cmd: str, repo: Path | None, cwd: Path | None) -> str:
     if GIT_INVENTORY.search(cmd):
-        return "Git status/log/diff/show is denied. Use tools/find.py changed."
+        return "Git status/log/diff/show is denied. " + prefer("changed", "python tools/find.py changed")
     if GIT_GREP.search(cmd) or SEARCH_CMD.search(cmd):
-        return "Shell search is denied. Use tools/find.py xref. Add --path site for site/."
+        return "Shell search is denied. " + prefer("xref", "python tools/find.py xref") + " Add --path site for site/."
     if PY_C.search(cmd):
-        return "python -c is denied. Use tools/find.py stat, or tools/docs.py patch write for a script body."
+        return "python -c is denied. " + prefer("stat", "python tools/find.py stat") + " Or python tools/docs.py patch write for a script body."
     if is_logs_path(cmd) and (LOG_READ.search(cmd) or LIST_CMD.search(cmd)):
-        return "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
+        return "Reading _logs/ is denied. " + prefer("summary", "python tools/session.py summary --job <name>") + " Jsonl filters: --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
     if LIST_CMD.search(cmd) and not LENGTH.search(cmd):
         if BARE_LIST.search(cmd.strip()):
-            return "Listing the repo root is denied. Use tools/find.py route."
+            return "Listing the repo root is denied. " + prefer("route", "python tools/find.py route")
         if hits_tree(cmd, repo):
             return list_reason(cmd, repo, cwd)
     return ""
@@ -250,8 +254,19 @@ def managed_image_command(cmd: str, repo: Path, cwd: Path | None) -> bool:
         return False
 
 
-GATHER_CMD = re.compile(r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools(?:/|\\)(?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b[^;&|<>`$\n\r]*$", re.I)
+def _outside_quotes(cmd: str) -> str:
+    """Drop quoted spans so a `|` inside a pattern is not read as a shell pipe."""
+    return re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', "", cmd)
+
+GATHER_PREFIX = re.compile(
+    r"^(?:python(?:3)?|py)(?:\.exe)?\s+tools(?:/|\\)(?:(?:find|docs|session)\.py|slice\.py\s+(?:plan|adjust|expand))\b",
+    re.I)
 WRITE_TOOLS = {"write", "write_file", "writefile", "edit", "edit_file", "search_replace", "multiedit", "notebookedit", "delete_file"}
+
+def gather_shell_ok(cmd: str) -> bool:
+    """Those tools only, and no chaining. A `|` inside quotes is a pattern character."""
+    cmd = cmd.strip()
+    return bool(GATHER_PREFIX.match(cmd)) and not re.search(r"[;&|<>`$\n\r]", _outside_quotes(cmd))
 
 def gather_reason(name: str, inp: dict) -> str:
     low = name.lower()
@@ -260,7 +275,7 @@ def gather_reason(name: str, inp: dict) -> str:
     if low in WRITE_TOOLS:
         return "gather role: no edits. Change the index with python tools/slice.py adjust."
     cmd = shell_command(name, inp)
-    if cmd and not GATHER_CMD.match(cmd.strip()):
+    if cmd and not gather_shell_ok(cmd):
         return "gather role: shell is python tools/{find,docs,session}.py or tools/slice.py plan|adjust|expand only (no chaining)."
     return ""
 
@@ -291,7 +306,7 @@ def decide(event: dict) -> tuple[str, str]:
     if low_name in {"grep"} or name in GREP_TOOLS:
         path = str(inp.get("path") or inp.get("file_path") or inp.get("filePath") or "")
         if not is_one_file(path):
-            return "deny", "Repo grep of a directory is denied. Use tools/find.py xref. Add --path site for site/. Grep of one file stays allowed."
+            return "deny", "Repo grep of a directory is denied. " + prefer("xref", "python tools/find.py xref") + " Add --path site for site/. Grep of one file stays allowed."
 
     if low_name in {"listdir", "glob"} or name in LIST_TOOLS:
         text = target_text(inp) or blob
@@ -305,7 +320,7 @@ def decide(event: dict) -> tuple[str, str]:
                     continue
                 return "deny", IMAGE_READ
             if is_logs_path(item):
-                return "deny", "Reading _logs/ is denied. Use python tools/session.py summary --job <name>, or --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
+                return "deny", "Reading _logs/ is denied. " + prefer("summary", "python tools/session.py summary --job <name>") + " Jsonl filters: --jsonl --where key=eq:VALUE (PowerShell compares: key=ge:N, never an unquoted >)."
 
     if low_name in {"write", "write_file", "writefile", "edit", "edit_file", "search_replace"}:
         grant = reference_policy.active(repo, reference_policy.session_id(event))
@@ -392,6 +407,8 @@ def selftest() -> int:
         (ev("edit_file", {"target_file": "design/ui.md"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/slice.py adjust promote K3"}), "allow"),
         (ev("run_terminal_command", {"command": "python tools/find.py func --path a.gd --name b"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py xref --pattern \"minimap|fog\" --path scripts/a.gd"}), "allow"),
+        (ev("run_terminal_command", {"command": "python tools/find.py xref --pattern minimap|fog"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/slice.py commit"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/find.py route; git push"}), "deny"),
         (ev("run_terminal_command", {"command": "python tools/gate.py build"}), "deny"),

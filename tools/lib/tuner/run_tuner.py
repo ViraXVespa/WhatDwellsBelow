@@ -1131,12 +1131,14 @@ def consider(rows: list[dict], dest: Path, write: bool) -> list[str]:
     new_hit, new_n = held(model, rows)
     current = read_policy(dest)
     old_hit, old_n = held(current, rows) if current else (0, 0)
-    lines.append(f"candidate {new_hit}/{new_n} current {old_hit}/{old_n}")
+    new_p = (float(new_hit)/float(new_n)) * 100.0
+    old_p = (float(old_hit)/float(old_n)) * 100.0
+    lines.append(f"candidate {new_hit}/{new_n} ({new_p:.2f}%) current {old_hit}/{old_n} ({old_p:.2f}%)")
     if accept_model(new_hit, new_n, old_hit, old_n):
         write_policy(dest, model, write)
         lines.append("policy written" if write else "dry-run: policy not written")
     else:
-        lines.append("kept the current policy")
+        lines.append(f"kept the current policy ({old_p - new_p:.2f}% gap)")
     return lines
 
 
@@ -1181,7 +1183,7 @@ def do_loop(args, root: Path) -> int:
         lines.append(msg)
         append_log(log_path, msg, write)
 
-    note("loop campaign until death, then train. Ctrl+C stops.")
+    note("loop campaign, quit when a dive dies, train, then start the next one. Ctrl+C stops.")
     note(f"policy {policy}")
     cap = "none" if args.rows == 0 else str(int(args.rows))
     note(f"until_death row_cap {cap} wait_s {args.wait}")
@@ -1304,7 +1306,7 @@ def transfer_selftest() -> list[str]:
         if dest.read_text(encoding="utf-8") != frozen:
             bad.append("dry-run wrote")
     plain = loop_flags(0)
-    if "--wdb-pt-until-death" not in plain or any(item.startswith("--wdb-pt-gather=") for item in plain):
+    if "--wdb-pt-until-death" not in plain or "--wdb-pt-until-live" in plain or any(item.startswith("--wdb-pt-gather=") for item in plain):
         bad.append("loop flags row cap")
     if "--wdb-pt-gather=200" not in loop_flags(200):
         bad.append("loop flags keep cap")

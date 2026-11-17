@@ -230,6 +230,8 @@ func perf_report() -> Dictionary:
 	return PtGate.report(self)
 
 func _physics_process(delta: float) -> void:
+	if process_mode != Node.PROCESS_MODE_ALWAYS:
+		process_mode = Node.PROCESS_MODE_ALWAYS
 	if not live_running:
 		HumanLog.tick(self, delta)
 		return
@@ -240,6 +242,7 @@ func _physics_process(delta: float) -> void:
 	HitchLog.add_harness_us(us)
 
 func _tick(delta: float) -> void:
+	PtGate.release_menu(self)
 	if campaign_enter:
 		if Campaign.hub_ready(self):
 			Campaign.hub_enter(self)

@@ -69,9 +69,9 @@ static func note_event(event: InputEvent) -> void:
 	var btn := event as InputEventMouseButton
 	var step := wheel_step
 	if btn.button_index == MOUSE_BUTTON_WHEEL_UP:
-		_wheel(step, btn.position)
+		_wheel(step, btn.global_position)
 	elif btn.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-		_wheel(-step, btn.position)
+		_wheel(-step, btn.global_position)
 
 static func pinch(factor: float, focus: Vector2) -> void:
 	if blocked() or factor <= 0.0:

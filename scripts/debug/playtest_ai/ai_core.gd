@@ -11,17 +11,49 @@ const GATHER := 9.0
 const Misc := preload("res://scripts/debug/playtest_ai/ai_misc.gd")
 const Policy := preload("res://scripts/debug/playtest_ai/ai_policy.gd")
 
+static func _sip(pt: PlayHost, p: Node, delta: float) -> void:
+	var wait: float = U._meta_f(pt, "food_wait", 0.0)
+	if wait > 0.0:
+		pt.set_meta("food_wait", maxf(0.0, wait - delta))
+	if p.get("hp") == null or App.prog == null:
+		return
+	var ratio: float = float(p.hp) / maxf(1.0, float(p.max_hp))
+	if ratio <= 0.0:
+		return
+	var slots_v: Variant = App.prog.get("slots")
+	if not (slots_v is Dictionary):
+		return
+	var slots: Dictionary = slots_v
+	var line: float = 0.2
+	if App.bal != null:
+		line = float(App.bal.near_death_hp)
+	if ratio <= line and float(App.prog.potion_cd) <= 0.0:
+		var pot_v: Variant = slots.get("potion", {})
+		if pot_v is Dictionary:
+			var pot: Dictionary = pot_v
+			var charges: int = int(pot.get("charges", pot.get("stack", 0)))
+			if charges > 0:
+				pt.potion = true
+				pt.just["potion"] = true
+				return
+	if ratio < 0.55 and float(App.prog.food_t) <= 0.0 and U._meta_f(pt, "food_wait", 0.0) <= 0.0:
+		var food_v: Variant = slots.get("food", {})
+		if food_v is Dictionary:
+			var food: Dictionary = food_v
+			if int(food.get("stack", 0)) > 0:
+				pt.just["food"] = true
+				pt.set_meta("food_wait", 2.0)
+
 static func think(pt: PlayHost, p: Node, delta: float) -> void:
 	U.tick_motion(pt, p, delta)
 	pt.set_meta("flee_t", maxf(0.0, U._meta_f(pt, "flee_t", 0.0) - delta))
-	if p.get("hp") != null and float(p.hp) / maxf(1.0, float(p.max_hp)) < 0.35:
-		pt.potion = true
-		pt.just["potion"] = true
+	_sip(pt, p, delta)
 	var foe: Node = G.nearest_foe(pt, p)
 	U.note_threat(pt, p, foe)
 	if foe and is_instance_valid(foe):
-		Misc._engage(pt, p, foe, "threat")
-		return
+		if str(pt.slot) != "campaign" or Misc.must_swing(pt, p, foe):
+			Misc._engage(pt, p, foe, "threat")
+			return
 	var gathering: Variant = p.get("gathering")
 	if gathering != null and is_instance_valid(gathering):
 		L.decide(pt, p, "gathering", "busy", L.target(gathering))
@@ -35,7 +67,7 @@ static func think(pt: PlayHost, p: Node, delta: float) -> void:
 	var hold: Node = U._locked(pt, delta)
 	if hold and is_instance_valid(hold):
 		if U.is_foe_lock(hold):
-			if pt._alive_enemy(hold):
+			if pt._alive_enemy(hold) and (str(pt.slot) != "campaign" or Misc.must_swing(pt, p, hold)):
 				Misc._engage(pt, p, hold, "hold_foe")
 				return
 			Misc._clear_lock(pt)
@@ -61,6 +93,8 @@ static func think(pt: PlayHost, p: Node, delta: float) -> void:
 			Misc._mail_if_close(pt, p, hold)
 			return
 	if Policy.steer(pt, p, delta):
+		return
+	if str(pt.slot) == "campaign" and Misc.campaign_depth(pt, p, delta):
 		return
 	var hunt: Node = pt._nearest_hunt(p)
 	if hunt and is_instance_valid(hunt) and pt._dist(p, hunt) <= NEAR:

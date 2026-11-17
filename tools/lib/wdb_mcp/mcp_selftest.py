@@ -29,6 +29,16 @@ def _body(text: str) -> list[str]:
     return text.split("\n\n", 1)[1].splitlines() if "\n\n" in text else []
 
 def cases(bad: list[str], state: Path) -> None:
+    if mcp_tools.reply_budget("packet", 0, False, None) != core.ALL:
+        bad.append("action=packet with no budget is the whole packet")
+    if mcp_tools.reply_budget("func", 0, False, None) != 0:
+        bad.append("a non-packet lookup with no budget stays paged")
+    if mcp_tools.reply_budget("batch", 0, False, [{"action": "func"}, {"action": "packet"}]) != core.ALL:
+        bad.append("a batch that includes a packet read is unpaged when budget is 0")
+    if mcp_tools.reply_budget("packet", 30, False, None) != 30:
+        bad.append("an explicit packet budget is honored")
+    if mcp_tools.reply_budget("lines", 0, True, None) != core.ALL:
+        bad.append("all=true still returns the whole reply")
     t = mcp_tools.Tools(ROOT, "D", True, state)
     first = t.lookup("func", path="tools/lib/slice/session_plan.py", name="seed", budget=20)
     lines = _head(first)
@@ -142,6 +152,12 @@ def batch_cases(bad: list[str], t: mcp_tools.Tools) -> None:
         bad.append("identical batch reads are answered once and the skip is noted: " + dup[:200])
     if not t.lookup(reads=[{"path": "x"}]).startswith("STATUS: FAIL"):
         bad.append("a batch read without an action is refused")
+    piped = t.lookup("xref", pattern="minimap|fog", path="design", whole=True)
+    if not piped.startswith("STATUS: FAIL") or "regex=true" not in piped:
+        bad.append("xref '|' without regex must fail and name regex=true: " + piped[:180])
+    alt = t.lookup("xref", pattern="gather agent|no-such-token", path="design/build-job-cycle.md", regex=True, whole=True)
+    if not alt.startswith("STATUS: PASS") or "gather agent" not in alt:
+        bad.append("xref regex=true alternation must search: " + alt[:180])
 
 def shared(bad: list[str]) -> None:
     """Two servers on one checkout: separate handle files, neither overwrites the other; expiry; rerun counts."""

@@ -20,8 +20,10 @@ static func role_has_cargo(pt: PlayHost, role: String) -> bool:
 		return pt._gather_cargo() > 0
 	if role == "misc":
 		return pt._misc_cargo() > 0
-	if role == "patty" or role == "gate":
+	if role == "patty":
 		return (pt._gather_cargo() + pt._misc_cargo()) > 0
+	if role == "gate":
+		return (pt._gather_cargo() + pt._misc_cargo()) > 0 or int(App.gold) > 0
 	return false
 
 static func dismiss_world_ui(pt: PlayHost) -> bool:

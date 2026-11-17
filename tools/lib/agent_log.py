@@ -5,7 +5,7 @@ Contract (see design/tools.md): argparse, --root, --dry-run on writers, --json o
 reports, ASCII output, repo-relative POSIX paths, one final line
 `RESULT <PASS|FAIL|INFO> k=v ... summary=<rel>`, exit 0 ok / 1 findings / 2 usage.
 Each run writes its own `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten) and `index.txt` lists
-the newest runs first (`run_log_lib.py`). No session keys.
+the newest runs first (`run_log_lib.py`). `$WDB_LOG_ROOT`, when set, replaces the repo `_logs` parent. No session keys.
 
     python tools/lib/agent_log.py <job>     # prints dir/index for a job, makes the dir
     python tools/lib/agent_log.py --selftest   # run-log layout check in a throwaway folder
@@ -190,9 +190,12 @@ def exit_code(status: str) -> int:
     return 1 if status == "FAIL" else 0
 
 def agent_log_dir(job: str, root: Path | None = None) -> Path:
+    """`_logs/<job>` under the repo, or under `$WDB_LOG_ROOT` when that probe env is set."""
     if not _JOB_KEY.fullmatch(job):
         raise ValueError("agent_log: bad job name")
-    return (repo_root(root) / "_logs" / job).resolve()
+    override = os.environ.get("WDB_LOG_ROOT", "").strip()
+    base = Path(override) if override else repo_root(root) / "_logs"
+    return (base / job).resolve()
 
 def agent_summary_path(job: str, root: Path | None = None) -> Path:
     """The newest run's summary file of `job` (a missing summary.txt path when the job has not run)."""
@@ -236,6 +239,21 @@ def write_run_file(root: Path, d: Path, job: str, body: str, status: str, write:
     p.write_text((body.rstrip("\n") + "\n" if body else "") + res + "\n", encoding="utf-8")
     run_log_lib.record(d, p, status, " ".join(f"{k}={v}" for k, v in kv.items() if v is not None))
     return res
+
+def safe_print(text: str, stream: object = None) -> None:
+    """Print text. A cp1252 console replaces characters it cannot encode instead of raising."""
+    out = sys.stdout if stream is None else stream
+    try:
+        print(text, file=out)
+    except UnicodeEncodeError:
+        enc = getattr(out, "encoding", None) or "utf-8"
+        data = (text + "\n").encode(enc, errors="replace")
+        buf = getattr(out, "buffer", None)
+        if buf is not None:
+            buf.write(data)
+            buf.flush()
+        else:
+            out.write(data.decode(enc, errors="replace"))
 
 def finish(
     job: str,
@@ -284,10 +302,10 @@ def finish(
     else:
         shown = body if echo is None else echo
         if shown:
-            print(shown.rstrip("\n"))
+            safe_print(shown.rstrip("\n"))
         if legacy and path is not None:
-            print(f"Summary -> {path}")
-        print(res)  # always the last stdout line (and the last line of the summary file)
+            safe_print(f"Summary -> {path}")
+        safe_print(res)  # always the last stdout line (and the last line of the summary file)
     return exit_code(status)
 
 def _call(fn, args):

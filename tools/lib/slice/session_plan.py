@@ -5,8 +5,9 @@
 The file is gitignored: the same-worktree continuity note and the single source of truth for what belongs in context.
 It does not replace the task file or a survey handoff. `slice.py open` (or `start`) writes it when it is missing; the
 gather agent then refines the index below the marker with `slice.py adjust` (format: plan_index.py). `--refresh`
-re-seeds the index and replays the logged adjustments; `--clean` drops them. The four sections above the marker
-(Outcome, Open questions, Changed files, Latest results) are always kept.
+re-seeds the index and replays the logged adjustments; `--clean` drops them. The sections above the marker
+(Outcome, Open questions, Changed files, Latest results, Approach) are always kept. Approach is written with
+`slice.py adjust approach`, not by hand.
 
 --selftest builds a throwaway repo and checks the gather, the refresh keep, and the worktree guard.
 """
@@ -39,11 +40,13 @@ KEPT_HEADS = (
     ("## Open questions", "- none yet"),
     ("## Changed files", "- none yet"),
     ("## Latest results", "- none yet"),
+    ("## Approach", "(the edit, in the order to type it)"),
 )
 INTRO = (
     "# Session plan\n\n"
     "Same-worktree continuity after a compact. Not a task file and not a survey handoff.\n"
-    "Write the four sections above the marker in the same turn a fact lands.\n"
+    "Write Outcome, Open questions, Changed files and Latest results above the marker in the same turn a fact lands.\n"
+    "Approach is the edit in the order to type it. Write it only with `python tools/slice.py adjust approach`.\n"
     "Below the marker is the context index: change it with `python tools/slice.py adjust`, never by hand; `python tools/slice.py expand` builds the packet.\n"
 )
 CODE_RE = re.compile(r"^Code:\s*(.+)$", re.M)
@@ -317,9 +320,9 @@ def ensure(root: Path, door: str, job: str, area: str = "", mode: str = "", task
     if refresh and existing:
         if clean:
             plan_adjust.clear_delta(root)
-            return "session-plan.md refreshed clean (index re-seeded; adjustments dropped; the four sections kept)."
+            return "session-plan.md refreshed clean (index re-seeded; adjustments dropped; the sections above the marker kept)."
         n = plan_adjust.replay(root)
-        return f"session-plan.md refreshed (index re-seeded, {n} logged adjustments replayed; the four sections kept)."
+        return f"session-plan.md refreshed (index re-seeded, {n} logged adjustments replayed; the sections above the marker kept)."
     return "session-plan.md written (mechanical seed)."
 
 def _from_state(root: Path, door: str, job: str, area: str, task: str) -> tuple[str, str, str, str, str]:
@@ -336,7 +339,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--job", default="", help="routes.yaml door.job. Default: this worktree's slice state.")
     ap.add_argument("--area", default="", help="Slice area label stored in the plan (default: slice state).")
     ap.add_argument("--task", default="", metavar="ID", help="Task id stored in the plan. The task file stays the assignment.")
-    ap.add_argument("--refresh", action="store_true", help="Re-seed the index and replay the logged adjustments (_logs/gather/delta.jsonl). Keeps the four sections.")
+    ap.add_argument("--refresh", action="store_true", help="Re-seed the index and replay the logged adjustments (_logs/gather/delta.jsonl). Keeps the sections above the marker.")
     ap.add_argument("--clean", action="store_true", help="With --refresh: drop the logged adjustments instead of replaying them.")
     ap.add_argument("--selftest", action="store_true", help="Run the gather cases in a throwaway repo.")
     args = ap.parse_args(argv)

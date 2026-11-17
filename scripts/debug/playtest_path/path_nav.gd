@@ -5,11 +5,12 @@ const REACH := 36
 
 static func follow_or_direct(pt: PlayHost, p: Node, dest: Node) -> Vector2:
 	var _fac = load("res://scripts/debug/playtest_path.gd")
-	if pt._dist(p, dest) < 1.55:
+	var known_only: bool = dest != null and str(dest.name) == "CampaignSeekMark"
+	if pt._dist(p, dest) < 1.55 and not Util.seek_unreached(pt, p, dest):
 		pt.path.clear()
 		return Vector2.ZERO
 	if pt.path.is_empty() or pt.path_i >= pt.path.size():
-		pt.path = Util.astar(pt, p, dest)
+		pt.path = Util.astar(pt, p, dest, known_only)
 		pt.path_i = 0
 	if pt.path.is_empty() or pt.path.size() <= 1:
 		return _fac._cut(pt, p, dest)
@@ -21,7 +22,7 @@ static func follow_or_direct(pt: PlayHost, p: Node, dest: Node) -> Vector2:
 			break
 		i += 1
 	if pt.path.is_empty() or pt.path_i >= pt.path.size():
-		pt.path = Util.astar(pt, p, dest)
+		pt.path = Util.astar(pt, p, dest, known_only)
 		pt.path_i = 0
 	if pt.path.is_empty() or pt.path.size() <= 1:
 		return _fac._cut(pt, p, dest)
@@ -93,8 +94,24 @@ static func step_dir(pt: PlayHost, p: Node, desired: Vector2) -> Vector2:
 		return pt._steer(p, Vector2.ZERO)
 	desired = desired.normalized()
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
+	var ax: int = 0
+	var ay: int = 0
+	if absf(desired.x) >= absf(desired.y):
+		ax = 1 if desired.x > 0.0 else -1
+	else:
+		ay = 1 if desired.y > 0.0 else -1
+	var primary: Vector2 = Vector2(float(ax), float(ay))
+	var ahead: Vector2i = here + Vector2i(ax, ay)
+	var fac: GDScript = load("res://scripts/debug/playtest_path.gd") as GDScript
+	if pt._steer_floor(ahead):
+		if pt._dir_open(p, primary):
+			return pt._steer(p, primary)
+		var gap: Vector2 = fac.gap_align(pt, p, primary)
+		if gap != Vector2.ZERO:
+			return gap
+		return Vector2.ZERO
 	var best: Vector2 = Vector2.ZERO
-	var best_score: float = -999.0
+	var best_score: float = 0.2
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 	for n: Vector2i in dirs:
 		var nxt: Vector2i = here + n
@@ -104,11 +121,9 @@ static func step_dir(pt: PlayHost, p: Node, desired: Vector2) -> Vector2:
 		if not pt._dir_open(p, dir):
 			continue
 		var score: float = dir.dot(desired)
-		if n.x != 0 and n.y != 0:
-			score += 0.08
 		if score > best_score:
 			best_score = score
 			best = dir
 	if best == Vector2.ZERO:
-		return pt._steer(p, Vector2.ZERO)
+		return Vector2.ZERO
 	return pt._steer(p, best)

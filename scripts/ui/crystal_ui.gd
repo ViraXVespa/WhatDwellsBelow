@@ -94,7 +94,7 @@ func _cycle_zoom() -> void:
 
 func _aim(cell: Vector2i) -> void:
 	aim_cell = cell
-	if map_rect == null or host == null or host.map_tex == null:
+	if map_rect == null or map_clip == null or host == null or host.map_tex == null:
 		return
 	var w: int = int(host.data.w)
 	var h: int = int(host.data.h)
@@ -108,11 +108,17 @@ func _aim(cell: Vector2i) -> void:
 		y = clampi(cell.y - int(view / 2.0), 0, h - view)
 	var rw: int = mini(view, w)
 	var rh: int = mini(view, h)
-	var atlas := AtlasTexture.new()
-	atlas.atlas = host.map_tex
-	atlas.region = Rect2(x, y, rw, rh)
-	atlas.filter_clip = true
-	map_rect.texture = atlas
+	map_rect.texture = host.map_tex
+	map_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	var box: Vector2 = map_clip.size
+	var fit: float = minf(box.x / float(rw), box.y / float(rh))
+	var drawn := Vector2(float(rw) * fit, float(rh) * fit)
+	var origin: Vector2 = (box - drawn) * 0.5
+	map_rect.position = origin
+	map_rect.size = drawn
+	var MapS: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
+	var region := Rect2(float(x) / float(w), float(y) / float(h), float(rw) / float(w), float(rh) / float(h))
+	MapS.attach(host, map_rect, region)
 	Util.place_mark(self, cell, x, y, rw, rh)
 func _pick_local(cell: Vector2i) -> void:
 	if spot and Vector2i(spot.get("crystal_cell")) == cell:

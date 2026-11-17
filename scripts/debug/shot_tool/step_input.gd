@@ -38,16 +38,30 @@ static func make(spec: Dictionary, down: bool) -> InputEvent:
 		return ik
 	return null
 
+## Root keeps autoloads (pad glyphs). A scene inside ShotCapture does not see that event, so push a copy there too.
+static func _deliver(host: Node, ev: InputEvent) -> void:
+	Input.parse_input_event(ev)
+	var tree: SceneTree = host.get_tree()
+	if tree == null:
+		return
+	var vp: Viewport = host.get_viewport()
+	if vp != null and vp != tree.root:
+		vp.push_input(ev.duplicate())
+
+
 ## True when the spec names a known input. One tap = press, one frame, release, one frame.
 static func tap(host: Node, spec: Dictionary) -> bool:
 	var ev_down: InputEvent = make(spec, true)
 	if ev_down == null:
 		return false
+	var ev_up: InputEvent = make(spec, false)
+	if ev_up == null:
+		return false
 	var tree: SceneTree = host.get_tree()
-	Input.parse_input_event(ev_down)
+	_deliver(host, ev_down)
 	await tree.process_frame
 	await tree.process_frame
-	Input.parse_input_event(make(spec, false))
+	_deliver(host, ev_up)
 	await tree.process_frame
 	return true
 

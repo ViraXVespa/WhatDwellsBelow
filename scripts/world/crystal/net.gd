@@ -117,7 +117,8 @@ static func activate(spot: Node) -> void:
 		return
 	var scene: Node = tree.current_scene
 	if scene:
-		scene.fog_dirty = true
+		var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
+		Geo.refresh_marks(scene)
 		silence_near(scene, cell)
 
 static func blocks_spawn(host: Node, cell: Vector2i) -> bool:
@@ -150,14 +151,8 @@ static func silence_on(host: Node) -> void:
 		silence_near(host, Vector2i(n.get("crystal_cell")))
 
 static func paint(host: Node) -> void:
-	if host.map_img == null:
-		return
-	var Geo = load("res://scripts/world/dungeon/minimap.gd")
-	for n: Node in floor_list(host):
-		var cell: Vector2i = Vector2i(n.get("crystal_cell"))
-		var on: bool = bool(n.get("crystal_on"))
-		var col := Color(0.35, 0.95, 1.0) if on else Color(0.2, 0.45, 0.55)
-		Geo.dot(host, cell, col, true)
+	var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
+	Geo.refresh_marks(host)
 
 static func warp_local(host: Node, cell: Vector2i) -> void:
 	if host.player == null:
@@ -166,7 +161,8 @@ static func warp_local(host: Node, cell: Vector2i) -> void:
 	host.player.velocity = Vector3.ZERO
 	host._reveal_around(cell, int(App.bal.fog_radius) + 2)
 	silence_near(host, cell)
-	host.fog_dirty = true
+	var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
+	Geo.note_player(host, cell)
 	App.toast(App.tr("net.the_crystal_takes_you_across"))
 
 static func setup_volume(crystal: Node) -> void:

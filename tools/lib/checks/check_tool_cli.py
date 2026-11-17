@@ -9,6 +9,7 @@ Per tool: python3 shebang, argparse, main guard, `--help` exits 0 and writes
 nothing, ASCII print strings, --root on ops tools, --dry-run on writers, RESULT
 via agent_log, help text on every option, output paths named `--out` / `--out-<kind>`
 (OUT_NAMES), `--verbose` (agent_log.std_parser(verbose=True)) rather than a raised line budget, and on any tool that folds rows. Libs (`*_lib.py`, agent_log's siblings without a main guard) are skipped.
+The help probe points `$WDB_LOG_ROOT` at a temp dir. A concurrent writer in the repo `_logs` is not a mutation.
 
 `--smoke-run` also executes every tool in a throwaway copy of the repo (never the live tree): bad flag and bad
 `--root` must exit 2 with an `error:` line, and each SMOKE case (read-only or `--dry-run` args) must not crash,
@@ -140,9 +141,36 @@ def console_noise(stem: str, rc: int, out: str, err: str) -> list[str]:
 PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
 
 def snapshot(root: Path) -> tuple:
-    logs = root / "_logs"
-    files = sorted((p.as_posix(), p.stat().st_mtime_ns) for p in logs.rglob("*") if p.is_file()) if logs.is_dir() else []
-    return (tuple(repo_lib.git_changed(root) or ()), tuple(files))
+    """Worktree paths from git status. The repo `_logs` tree is gitignored and shared, so it is not a signal."""
+    return tuple(repo_lib.git_changed(root) or ())
+
+
+def help_mutated(before: tuple, after: tuple, log_root: Path) -> bool:
+    """True when `--help` changed the worktree or wrote a file under its own log root."""
+    if before != after:
+        return True
+    return any(p.is_file() for p in log_root.rglob("*"))
+
+
+def help_selftest() -> int:
+    """Empty log root is clean. A worktree path change or a file under the log root is a mutation."""
+    same = ("M design/tools.md",)
+    root = Path(tempfile.mkdtemp(prefix="wdb-help-"))
+    bad: list[str] = []
+    try:
+        if help_mutated(same, same, root):
+            bad.append("empty log root counted as a mutation")
+        if not help_mutated(same, same + ("M tools/x.py",), root):
+            bad.append("a worktree change was not a mutation")
+        (root / "tool-cli").mkdir()
+        (root / "tool-cli" / "x.txt").write_text("wrote", encoding="utf-8")
+        if not help_mutated(same, same, root):
+            bad.append("a log file was not a mutation")
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+    for item in bad:
+        print("FAIL " + item)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
 
 def classify(src: str) -> str:
     mods = set(re.findall(r"^\s*(?:import|from)\s+(\w+)", src, re.M))
@@ -242,21 +270,29 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int], cmd:
     if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         return  # never execute a tool that cannot parse --help
     before = snapshot(root)
+    log_root = Path(tempfile.mkdtemp(prefix="wdb-help-"))
+    env = {**os.environ, "WDB_LOG_ROOT": str(log_root), "PYTHONDONTWRITEBYTECODE": "1"}
+    wrote = False
     try:
-        proc = subprocess.run(
-            [*(cmd or [sys.executable, str(path)]), "--help"], cwd=root, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL
-        )
-    except subprocess.TimeoutExpired:
-        bad.append(f"HELP    {path.name}: --help timed out")
-        return
-    if proc.returncode != 0:
-        bad.append(f"HELP    {path.name}: --help exit {proc.returncode}")
-    elif "usage" not in proc.stdout.lower():
-        bad.append(f"HELP    {path.name}: --help printed no usage")
-    for flag in REQUIRED_HELP.get(name, ()):
-        if flag not in proc.stdout:
-            bad.append(f"FLAG    {path.name}: --help does not list {flag}")
-    if snapshot(root) != before:
+        try:
+            proc = subprocess.run(
+                [*(cmd or [sys.executable, str(path)]), "--help"], cwd=root, capture_output=True, text=True, timeout=60,
+                stdin=subprocess.DEVNULL, env=env,
+            )
+        except subprocess.TimeoutExpired:
+            bad.append(f"HELP    {path.name}: --help timed out")
+            return
+        if proc.returncode != 0:
+            bad.append(f"HELP    {path.name}: --help exit {proc.returncode}")
+        elif "usage" not in proc.stdout.lower():
+            bad.append(f"HELP    {path.name}: --help printed no usage")
+        for flag in REQUIRED_HELP.get(name, ()):
+            if flag not in proc.stdout:
+                bad.append(f"FLAG    {path.name}: --help does not list {flag}")
+        wrote = help_mutated(before, snapshot(root), log_root)
+    finally:
+        shutil.rmtree(log_root, ignore_errors=True)
+    if wrote:
         bad.append(f"MUTATE  {path.name}: --help changed files")
 
 def make_sandbox(root: Path) -> Path:
@@ -397,7 +433,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--only", action="append", default=[], help="Only these module stems or entry names (repeatable or comma separated; .py optional; an entry means all its subcommands).")
     ap.add_argument("--full", action="store_true", help="Check every tool (default: tools with uncommitted changes or in unpushed commits).")
     ap.add_argument("--smoke-run", action="store_true", help="Also run every tool's probes and SMOKE cases in a throwaway repo copy (about a minute).")
+    ap.add_argument("--selftest", action="store_true", help="Check the help-mutation predicate (empty log, worktree change, log file).")
     args = ap.parse_args(argv)
+    if args.selftest:
+        return help_selftest()
     root = agent_log.resolve_root(args)
     tools = root / "tools"
     bad: list[str] = []

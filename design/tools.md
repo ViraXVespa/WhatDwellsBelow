@@ -19,7 +19,7 @@ Run `python tools/ENTRY.py` to list commands; append `COMMAND --help` for flags 
 | Frame time, hitches, load time, web perf | `perf.py hub --leg desktop`; `perf.py dungeon --leg desktop`; `perf.py sweep --leg desktop`; `perf.py web --site DIR --flow F`; `perf.py load --leg hub` | `tools-perf.md` |
 | Playtest curve | `perf.py curve` | `tools-perf.md` |
 | Local playtester and recommend-only balance tuner | `local-ai-tuner.py` | `tools-gates.md` |
-| Find code, a function, a route, a tunable, a last run | `find.py xref TEXT`; `find.py func PATH NAME`; `find.py route --job door.job`; `docs.py tunable get KEY`; `session.py summary JOB` | `tools-lookup.md` |
+| Find code, a function, a route, a tunable, a last run | Connected: `wdb__lookup`. Else: `find.py xref TEXT`; `find.py func PATH NAME`; `find.py route --job door.job`; `docs.py tunable get KEY`; `session.py summary JOB` | `tools-lookup.md` |
 | Size, duplicates, dead code, splits, doc edits | `check.py script-cap --bot --sweep`; `lint.py dupes`; `lint.py unused`; `lint.py split FILE --list`; `docs.py patch` | `tools-lint.md` |
 | Tasks, code map, routing docs | `docs.py task list`; `docs.py code-map row --path P`; `check.py load-graph` | `tools-gates.md` |
 | Localization (keys, copy on screen) | No dedicated tool: `find.py xref KEY` (code and `en.po`), `find.py xref TEXT --texts` after a shot flow, `shots.py inspect contrast` | `tools-lookup.md` |
@@ -50,7 +50,7 @@ By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it nev
 ## Contract (enforced by `check.py tool-cli`)
 
 - Entry tools: a shebang, a docstring and one `COMMANDS` table, no logic; bare / `--help` list the subcommands, an unknown one exits 2.
-- Modules: `agent_log.std_parser`, a non-mutating `--help`, ASCII output, `help=` on every option.
+- Modules: `agent_log.std_parser`, a non-mutating `--help`, ASCII output, `help=` on every option. The probe isolates that process's logs, so a concurrent `_logs` writer is not a mutation.
 - Ops tools take `--root`, writers `--dry-run`, every tool `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Stdout is a short summary, at most 30 lines (a `--list` run 60): long lists fold to the first rows plus a count (`agent_log.fold`), `--verbose` prints all. The last line is always `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`. Exempt: printers and `session.py scratch-server`.
 - Output paths are `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); older names stay only as aliases.

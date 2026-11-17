@@ -15,7 +15,6 @@ var door: Node
 var doors: Array = []
 var stairs: Node
 var visited: PackedByteArray
-var fog_dirty := true
 var reveal_cells: Dictionary = {}
 var floor_mm: MultiMeshInstance3D
 var hint: Label
@@ -26,6 +25,18 @@ var map_layer: CanvasLayer
 var map_img: Image
 var map_tex: ImageTexture
 var map_rect: TextureRect
+var map_mask: Image
+var map_mask_tex: ImageTexture
+var map_marks: Image
+var map_mark_tex: ImageTexture
+var map_shader: Shader
+var map_shade: Control
+var map_border: ColorRect
+var map_clip: Control
+var map_state: String = "mini"
+var map_arm_ms: int = -1
+var map_seen_min: Vector2i = Vector2i(-1, -1)
+var map_seen_max: Vector2i = Vector2i(-1, -1)
 var frame_acc := 0.0
 var frame_n := 0
 var _cleared := false
@@ -109,6 +120,12 @@ func _map() -> void:
 
 func _redraw_map() -> void:
 	DungeonMinimap.redraw_map(self)
+	if map_layer and map_layer.visible:
+		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
+		MapActS.apply(self)
+
+func sync_map_view() -> void:
+	DungeonMinimap.sync_views(self)
 	if map_layer and map_layer.visible:
 		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 		MapActS.apply(self)

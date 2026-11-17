@@ -1,7 +1,7 @@
 extends Object
 
 ## --wdb-playtest-live-smoke: boots straight into one live AI run on floor 1, prints `PT:` lines, quits.
-## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it. --wdb-pt-gather=N stops it after this process has saved at least N decide rows. --wdb-pt-until-death stops it when a dive ends in death, after the slot is saved. Extraction still continues.
+## --wdb-pt-campaign: boots one campaign series on the kept slot. A dive has no acting-time end. It returns to the hub and enters again through the crystal until every weapon has cleared floor 5. Interrupt or a stall stops it. --wdb-pt-gather=N stops it after this process has saved at least N decide rows. --wdb-pt-until-death stops it when a dive ends in death, after the slot is saved. --wdb-pt-until-live saves the slot after death or dispel and starts the next dive; it stops when a dive ends any other way.
 ## Args (after --): --wdb-seed=N (run seed), --wdb-pt-weapon=great_axe|staff|longbow, --wdb-pt-sec=S (sim seconds), --wdb-pt-scale=X (time scale while acting; only with --wdb-pt-fast, else 1.0).
 ## Debug only: run `godot --headless --path . -- --wdb-playtest-live-smoke --wdb-seed=42`.
 
@@ -11,6 +11,7 @@ const FLAG := "--wdb-playtest-live-smoke"
 const CAMPAIGN_FLAG := "--wdb-pt-campaign"
 const GATHER_FLAG := "--wdb-pt-gather"
 const UNTIL_DEATH_FLAG := "--wdb-pt-until-death"
+const UNTIL_LIVE_FLAG := "--wdb-pt-until-live"
 static var gather_n: int = 0
 
 static func active() -> bool:
@@ -80,6 +81,10 @@ static func until_death() -> bool:
 	return CliArgs.has(UNTIL_DEATH_FLAG)
 
 
+static func until_live() -> bool:
+	return CliArgs.has(UNTIL_LIVE_FLAG)
+
+
 static func campaign_stop(why: String) -> void:
 	if not campaign_active():
 		return
@@ -92,6 +97,9 @@ static func campaign_stop(why: String) -> void:
 		printerr("PT: done=1")
 	elif why == "death":
 		printerr("PT: campaign_stop=death")
+		printerr("PT: done=1")
+	elif why == "lived":
+		printerr("PT: campaign_stop=lived")
 		printerr("PT: done=1")
 	else:
 		printerr("PT: campaign_stop=%s" % why)

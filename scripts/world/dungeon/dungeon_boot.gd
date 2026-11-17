@@ -105,15 +105,14 @@ static func process_floor(host: Node, delta: float) -> void:
 		if not host.reveal_cells.get(key, false):
 			host.reveal_cells[key] = true
 			grew = host._reveal_around(t, int(App.bal.fog_radius))
+		# Map one-shot: reveal writes the mask; a new cell moves the player marker. No per-frame paint.
+		var prev: Vector2i = host.get_meta("map_pc", Vector2i(-999, -999))
+		if prev != t:
+			DungeonMinimap.note_player(host, t)
 		host._tick_pressure(delta, grew)
 		DungeonStream.tick(host, delta)
 		# CrystalNet.guard removed; volumes handle safe zones
-		if grew:
-			host.fog_dirty = true
 	host._note_verge()
-	if DungeonMinimap.needs_redraw(host):
-		host._redraw_map()
-		host.fog_dirty = false
 	if t0 > 0:
 		floor_us += Time.get_ticks_usec() - t0
 
@@ -199,9 +198,35 @@ static func toggle_map(host: Node) -> void:
 		host._map()
 		if host.hud and host.hud.has_method("bind_map") and host.map_tex:
 			host.hud.bind_map(host.map_tex)
-	if host.map_layer:
-		host.map_layer.visible = not host.map_layer.visible
-		if host.map_layer.visible:
-			var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
-			MapActS.reset(host)
-			host._redraw_map()
+	if host.map_layer == null:
+		return
+	var adapt: bool = bool(App.map_toggle_adapt)
+	if not adapt:
+		host.map_arm_ms = -1
+		var nxt: String = "mini"
+		if str(host.map_state) == "mini":
+			nxt = "full"
+		elif str(host.map_state) == "full":
+			nxt = "hidden"
+		_set_map_state(host, nxt)
+		return
+	var now: int = Time.get_ticks_msec()
+	if str(host.map_state) != "full" and int(host.map_arm_ms) >= 0 and now - int(host.map_arm_ms) <= int(App.T.MAP_DOUBLE_MS):
+		host.map_arm_ms = -1
+		App.set_map_rest_mini(not bool(App.map_rest_mini))
+		_set_map_state(host, "mini" if bool(App.map_rest_mini) else "hidden")
+		return
+	host.map_arm_ms = -1
+	if str(host.map_state) == "full":
+		var rest: String = "mini" if bool(App.map_rest_mini) else "hidden"
+		_set_map_state(host, rest)
+		host.map_arm_ms = now
+		return
+	_set_map_state(host, "full")
+
+static func _set_map_state(host: Node, state: String) -> void:
+	host.map_state = state
+	if state == "full":
+		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
+		MapActS.reset(host)
+	host._redraw_map()

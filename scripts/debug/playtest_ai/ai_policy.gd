@@ -151,12 +151,16 @@ static func _apply(pt: PlayHost, p: Node, delta: float, goal: String) -> bool:
 	if goal == "threat":
 		var foe: Node = G.nearest_foe(pt, p)
 		if foe != null and is_instance_valid(foe):
+			if str(pt.slot) == "campaign" and not Misc.must_swing(pt, p, foe):
+				return false
 			Misc._engage(pt, p, foe, "policy")
 			return true
 		return false
 	if goal == "hunt":
 		var hunt: Node = pt._nearest_hunt(p)
 		if hunt != null and is_instance_valid(hunt) and pt._dist(p, hunt) <= NEAR:
+			if str(pt.slot) == "campaign" and not Misc.must_swing(pt, p, hunt):
+				return false
 			U.note_threat(pt, p, hunt)
 			U._lock(pt, hunt, 2.2)
 			L.decide(pt, p, "hunt", "policy", L.target(hunt))

@@ -10,6 +10,19 @@ import importlib.util
 import sys
 from pathlib import Path
 
+def _utf8_stdio() -> None:
+    """Windows consoles use cp1252. A result that contains an arrow must print, not raise UnicodeEncodeError."""
+    for stream in (sys.stdout, sys.stderr):
+        reconf = getattr(stream, "reconfigure", None)
+        if reconf is None:
+            continue
+        try:
+            reconf(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):
+            pass
+
+_utf8_stdio()
+
 LIB = Path(__file__).resolve().parent
 TOOLS = LIB.parent
 DATA = TOOLS / "data"

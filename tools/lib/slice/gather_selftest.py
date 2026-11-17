@@ -1,7 +1,7 @@
 """`slice.py open` gather cases with a stub grok (library for open_slice.py --selftest; no model is ever called).
 
 The stub ($WDB_GROK, a .py) creates the worktree (git worktree add + a copy of the tracked tools/), plays the gather
-agent per $STUB_MODE (ok, halt, bad, crash; crash adjusts first, so the fallback must drop that) through the real `slice.py adjust`, and records every call in $STUB_LOG.
+agent per $STUB_MODE (ok, halt, bad, crash; crash exits before the report, so open must halt and not launch) through the real `slice.py adjust`, and records every call in $STUB_LOG.
 """
 from __future__ import annotations
 
@@ -37,11 +37,22 @@ if "-m" in a:
     mode = os.environ.get("STUB_MODE", "ok")
     def adj(*w):
         subprocess.run([sys.executable, "tools/slice.py", "adjust", *w, "--root", "."], capture_output=True)
+    if mode == "compact":
+        adj("report", "--text", "partial before compact")
+        print(json.dumps({"type": "system", "subtype": "compact_boundary"}))
+        raise SystemExit(0)
     if mode == "crash":
         adj("add-func", "scripts/demo.gd", "nothere")
         raise SystemExit(3)
     if mode == "bad":
         adj("add-func", "scripts/demo.gd", "nothere")
+    if mode == "ok":
+        print(json.dumps({"type": "content_block_delta", "delta": {"type": "thinking_delta", "thinking": "stub thought"}}), flush=True)
+        print(json.dumps({"type": "content_block_stop"}), flush=True)
+        print(json.dumps({"type": "assistant", "message": {"content": [
+            {"type": "thinking", "thinking": "stub thought"},
+            {"type": "tool_use", "name": "wdb__lookup", "input": {"action": "names", "path": "scripts/demo.gd"}}
+        ]}}), flush=True)
     adj("add-names", "scripts/demo.gd", "--cand", "--when", "the stub says so")
     adj("report", "--text", "stub judgment", *(["--halt", "stub halt"] if mode == "halt" else []))
     print(json.dumps({"num_turns": 3, "usage": {"input_tokens": 10, "output_tokens": 2}, "total_cost_usd": 0, "sessionId": "gather-1"}))
@@ -52,6 +63,20 @@ def run(script: list[str], td: Path) -> list[str]:
     import repo_lib
 
     bad: list[str] = []
+    fed: list[str] = []
+    feed = gather_agent.StreamFeed(write=fed.append)
+    feed('{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"hi"}}')
+    feed('{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"hi"},{"type":"tool_use","name":"wdb__lookup","input":{"action":"names","path":"scripts/demo.gd"}}]}}')
+    shown = "".join(fed)
+    if shown.count("hi") != 1 or "gather: wdb__lookup action=names path=scripts/demo.gd" not in shown:
+        bad.append(f"a streamed thought is printed once, then the tool line: {shown!r}")
+    fed2: list[str] = []
+    feed2 = gather_agent.StreamFeed(write=fed2.append)
+    feed2('{"type":"content_block_start","content_block":{"type":"tool_use","name":"wdb__lookup"}}')
+    feed2('{"type":"content_block_delta","delta":{"type":"input_json_delta","partial_json":"{\\"action\\":\\"names\\",\\"path\\":\\"scripts/demo.gd\\"}"}}')
+    feed2('{"type":"assistant","message":{"content":[{"type":"tool_use","name":"wdb__lookup","input":{"action":"names","path":"scripts/demo.gd"}}]}}')
+    if "".join(fed2).count("gather: wdb__lookup action=names path=scripts/demo.gd") != 1:
+        bad.append(f"a tool call streamed as input_json_delta is not printed again: {''.join(fed2)!r}")
     real = Path(__file__).resolve().parents[3]
     (td / "g").mkdir()
     root = repo_lib.selftest_repo(td / "g")
@@ -91,9 +116,11 @@ def run(script: list[str], td: Path) -> list[str]:
         bad.append(f"gather ok: the agent then the main session must run ({code}): {out[-300:]}")
     else:
         aa, ma = agent["argv"], sess["argv"]
-        for need in ("grok-build-0.1", "--always-approve", "--no-subagents", "--output-format"):
+        for need in ("grok-build-0.1", "--always-approve", "--output-format", "streaming-messages-json", "--include-partial-messages"):
             if need not in aa:
                 bad.append(f"gather agent argv must carry {need}")
+        if "--max-turns" not in aa or aa[aa.index("--max-turns") + 1] != str(gather_agent.TURN_CAP):
+            bad.append("gather turn cap must stay a non-budget backstop, above a real gather")
         if agent["role"] != "gather" or sess["role"]:
             bad.append("WDB_ROLE=gather on the agent only")
         if any(b in ma for b in ("--fork-session", "--max-turns", "--prompt-file", "-p")):
@@ -111,8 +138,10 @@ def run(script: list[str], td: Path) -> list[str]:
         prompt = (wt / "_logs" / "gather" / "prompt.md").read_text(encoding="utf-8")
         if "Slice: area=demo.part door=demo job=demo.part\n" not in prompt or "task" in prompt.split("Slice:", 1)[1].split("\n", 1)[0] \
                 or "docs.py task show" in prompt or re.search(r"\{\w+\}", prompt) or f"{gather_agent.py()} tools/slice.py adjust" not in prompt \
-                or "The User's request" in prompt or str(gather_agent.MAX_TURNS) not in prompt:
+                or "The User's request" in prompt or "context is compacted" not in prompt or str(gather_agent.TURN_CAP) in prompt:
             bad.append("gather prompt: one consistent slice line, no task line without a task, this interpreter's name, no request block without one")
+        if out.count("stub thought") != 1 or "gather: wdb__lookup action=names path=scripts/demo.gd" not in out:
+            bad.append("open must print the gather thought once, as it streams, and the tool call")
     code, out, calls = go("halt", "demo.part")
     if code == 0 or "HALT: stub halt" not in out or main_call(calls):
         bad.append(f"a halt must refuse the launch: {out[-200:]}")
@@ -126,14 +155,28 @@ def run(script: list[str], td: Path) -> list[str]:
     code, out, calls = go("bad", "demo.part")
     if code == 0 or "INDEX FAILED" not in out or "nothere" not in out or main_call(calls):
         bad.append(f"an index that fails expand --check must not launch, and must name the bad item: {out[-300:]}")
+    if gather_agent._stop_kind('{"type":"system","subtype":"compact_boundary"}') != "compact" \
+            or gather_agent._stop_kind('{"type":"user","message":{"content":"mentions compact_boundary"}}') != "":
+        bad.append("only a compact_boundary event stops the run, not the same words inside a tool result")
+    code, out, calls = go("compact", "demo.part")
+    if code == 0 or "context compacted" not in out or "Not launched" not in out or main_call(calls):
+        bad.append(f"a context compact halts and does not launch: {out[-300:]}")
     code, out, calls = go("crash", "demo.part")
-    sess = main_call(calls)
-    ctx = Path(sess.get("cwd", td / "none")) / "session-context.md"
-    if code or "WARN GATHER AGENT FAILED" not in out or not sess or not ctx.is_file() or "nothere" in ctx.read_text(encoding="utf-8") or "WARN GATHER AGENT FAILED" not in sess["argv"][-1]:
-        bad.append(f"a crash falls back to the seed with a loud WARN (also in the first message) and launches: {out[-300:]}")
+    crashed = next((c for c in calls if "-m" in c["argv"]), {})
+    ctx = Path(crashed.get("cwd", td / "none")) / "session-context.md"
+    if code == 0 or "GATHER STOPPED" not in out or "Not launched" not in out or main_call(calls) or ctx.is_file():
+        bad.append(f"a crash halts and does not launch: {out[-300:]}")
     code, out, calls = go("ok", "demo.part", "--no-gather")
-    if code or any("-m" in c["argv"] for c in calls) or not main_call(calls):
-        bad.append(f"--no-gather skips the agent and launches on the seed ({code}): {out[-300:]}")
+    sess = next((c for c in calls if c["argv"][:1] != ["worktree"] and "-m" not in c["argv"]), {})
+    prompt = (sess.get("argv") or [""])[-1]
+    wt = Path(sess.get("cwd", td / "none"))
+    if code or any("-m" in c["argv"] for c in calls) or not sess or "-s" in sess.get("argv", []) \
+            or "slice.py start --job demo.part" not in prompt or "separate gather" in prompt \
+            or (wt / "session-plan.md").exists() or (wt / "session-context.md").exists():
+        bad.append(f"--no-gather turns gathering off and launches the pre-gather command ({code}): {prompt[:180]!r} {out[-300:]}")
+    code, out, calls = go("ok", "demo.part", "--no-gather", "--review")
+    if code == 0 or "turns gathering off" not in out:
+        bad.append(f"--no-gather cannot combine with --review: {out[-200:]}")
     code, out, calls = go("ok", "demo.part", "--prompt", "Fix the stub keyboard.")
     agent = next((c for c in calls if "-m" in c["argv"]), {})
     req = Path(agent.get("cwd", td / "none")) / "_logs" / "gather" / "prompt.md"
@@ -164,9 +207,11 @@ def seed_only(go, main_call, td: Path, root: Path) -> list[str]:
                           cwd=root, capture_output=True, text=True, env=env).stdout.strip().splitlines()[-1:]
     if not made:
         return bad + ["--in: the stub could not make a worktree to reuse"]
-    code, out, calls = go("ok", "demo.part", "--in", made[0], "--no-gather", "--review")
-    if code or any(c["argv"][:2] == ["worktree", "create"] for c in calls) or main_call(calls) \
-            or not (Path(made[0]) / "session-context.md").is_file():
-        bad.append(f"--in WT: no worktree create; start, seed and packet in that worktree: {out[-300:]}")
+    code, out, calls = go("ok", "demo.part", "--in", made[0], "--no-gather")
+    sess = next((c for c in calls if c["argv"][:1] != ["worktree"] and "-m" not in c["argv"]), {})
+    if code or any(c["argv"][:2] == ["worktree", "create"] for c in calls) or not sess \
+            or "slice.py start" not in (sess.get("argv") or [""])[-1] \
+            or (Path(made[0]) / "session-context.md").exists():
+        bad.append(f"--in WT --no-gather: no create, pre-gather command, no packet: {out[-300:]}")
     return bad
 

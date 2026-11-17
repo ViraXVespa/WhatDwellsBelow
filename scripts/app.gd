@@ -33,6 +33,13 @@ var last_seen_game_ver: String = Def.last_seen_game_ver
 var weapon := "great_axe"
 var cam_zoom: float = Def.cam_zoom
 var hud_scale: float = Def.hud_scale
+var mini_px: float = Def.mini_px
+var mini_opacity: float = Def.mini_opacity
+var mini_zoom: float = Def.mini_zoom
+var mini_zoom_fit: bool = Def.mini_zoom_fit
+var full_map_opacity: bool = Def.full_map_opacity
+var map_toggle_adapt: bool = Def.map_toggle_adapt
+var map_rest_mini: bool = Def.map_rest_mini
 var ui_text_floor := T.UI_TEXT_FLOOR
 var ui_text_scale := 1.0
 var vol_master: float = Def.vol_master
@@ -47,6 +54,7 @@ var web_fullscreen: bool = Def.web_fullscreen
 var render_scale: float = Def.render_scale
 var target_lock_pref: bool = Def.target_lock_pref
 var danger_gem: bool = Def.danger_gem
+var red_border_glow: bool = Def.red_border_glow
 var salvage_dupes: bool = Def.salvage_dupes
 var salvage_finish: float = Def.salvage_finish
 var salvage_fortune: float = Def.salvage_fortune
@@ -287,6 +295,27 @@ func set_zoom(z: float) -> void:
 
 func set_hud_scale(v: float) -> void:
 	AppSet.set_hud_scale(self, v)
+
+func set_mini_px(v: float) -> void:
+	AppSet.set_mini_px(self, v)
+
+func set_mini_opacity(v: float) -> void:
+	AppSet.set_mini_opacity(self, v)
+
+func set_mini_zoom(v: float) -> void:
+	AppSet.set_mini_zoom(self, v)
+
+func set_mini_zoom_fit(on: bool) -> void:
+	AppSet.set_mini_zoom_fit(self, on)
+
+func set_full_map_opacity(on: bool) -> void:
+	AppSet.set_full_map_opacity(self, on)
+
+func set_map_toggle_adapt(on: bool) -> void:
+	AppSet.set_map_toggle_adapt(self, on)
+
+func set_map_rest_mini(on: bool) -> void:
+	AppSet.set_map_rest_mini(self, on)
 
 func set_ui_text_floor(v: float) -> void:
 	AppSet.set_ui_text_floor(self, v)
