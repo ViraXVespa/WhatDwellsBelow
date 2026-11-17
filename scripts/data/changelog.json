@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.12.3",
+			"points": [
+				{
+					"text": "Campaign AI: skip local-exit door/stairs check so the Extraction Gate no longer traps the playtester in pacing."
+				},
+				{
+					"text": "Loop: train 4 times on the gathered rows each cycle to improve iteration rate."
+				},
+				{
+					"text": "Loop: 4 bootstrap training passes per cycle; keep only the best held-out policy."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.12.2",
 			"points": [
 				{
