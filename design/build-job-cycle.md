@@ -7,11 +7,11 @@ A **slice** is the User-opened worktree/session; a **unit** is one piece of its 
 
 ## 1. Understand
 
-One gather. A refined packet (`session-context.md` after the gather agent) is read, not re-gathered. `--no-gather` leaves gathering off: the first message names `slice.py start`, and this session gathers from that seed. Do not re-read a core body already included.
+One gather. A refined packet is one `wdb__lookup action=packet all=true` (Approach, core bodies, candidates). Do not page it or file-read `session-context.md`. If the Approach disagrees with the code, trust the code and `slice.py adjust approach`, then edit. Do not re-read a core body. `--no-gather`: the first message names `slice.py start`, and this session closes that seed before editing.
 
 On a new session, read the named task file once. It stays the assignment. The plan does not replace it or a survey handoff.
 
-A gap uses the connected wdb MCP, else `find.py func`, `find.py xref`, `docs.py code-map row`, or `find.py scripts --names` / `--all-names`. When the working set moves, `slice.py adjust` (add, rem, promote, demote) changes the index below `<!-- gathered -->`; replace the four sections above it. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
+A symbol the packet does not contain is one lookup of that symbol plus `slice.py adjust` (add-func, add-doc, or promote) in the same turn. When the working set moves, `slice.py adjust` changes the index below `<!-- gathered -->`. Outcome is one measurable line. Open questions lists only what is still unanswered. Changed files lists edited paths. Latest results is replaced, not appended: the decision, the next action, result or log paths, and a running job id when one is in flight. A route card or file inventory is navigation, not source review. Do not repeat unchanged lookups. Do not paste a transcript of files you read.
 
 For a bug or performance miss, distinguish a reproduction from evidence of its cause. If the cause is not identified, instrument it before attempting a fix.
 
@@ -31,9 +31,9 @@ A planned compact stop is mandatory. Stop and wait. Do not continue into the nex
 
 Stop when a compact would be safe. Finish the operation already in progress; do not interrupt a mutation, test, or tool call. A compact is safe before Prove, and before a follow-up Gather or Change. Do not stop in the middle of the first Gather or the Change that follows it.
 
-Before the stop, those four sections and the index must already match the turn. Write them when the fact lands, not for the first time at the stop. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
+Before the stop, the kept sections and the index must already match the turn. Write them when the fact lands, not for the first time at the stop. Discard raw exploratory output. Tell the User the plan is current and that you are waiting. Resume in the same session.
 
-On any post-compact turn, read `session-plan.md`, then the packet with `wdb__lookup action=packet` (paged; a file read stops at 1000 lines). Do not re-walk the repo or repeat lookups unless they are missing or stale (`plan --refresh` replays). Keep the four sections current as facts land before the next stop.
+On any post-compact turn, one `wdb__lookup action=packet all=true` from the current `session-plan.md` index. Do not re-walk the repo or repeat lookups the packet holds. Keep the kept sections current as facts land before the next stop.
 
 ## Permissions and questions
 

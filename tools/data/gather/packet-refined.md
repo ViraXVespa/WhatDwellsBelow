@@ -1,1 +1,1 @@
-A separate gather session has already refined the context packet; its card is in session-context.md. Do not re-gather what the packet already holds.
+A separate gather session has already refined the context packet; its Approach and card are in the packet from session-context.md. Do not re-gather what the packet already holds. Trust the inlined code when the Approach disagrees.

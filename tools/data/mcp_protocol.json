@@ -12,8 +12,8 @@
     "pick-a-tool": "design/tools.md#Which tool for which job"
   },
   "phases": {
-    "understand": ["lookup action=packet (core bodies; candidates with conditions)", "lookup action=func|xref|names for a gap", "slice.py adjust promote|rem|add-func when the working set moves", "protocol action=doc situation=questions"],
-    "implement": ["lookup action=func|lines", "check target=gd_load files=...", "protocol action=doc situation=compact-stop"],
+    "understand": ["lookup action=packet all=true (the whole packet: Approach, why-notes, core bodies, candidates; do not page it or file-read session-context.md)", "a symbol the packet does not contain: one lookup of that symbol plus slice.py adjust add-func|add-doc|promote in the same turn", "protocol action=doc situation=questions"],
+    "implement": ["edit from the packet; do not start with another lookup of a body it already includes", "check target=gd_load files=...", "protocol action=doc situation=compact-stop"],
     "verify": ["check target=gd_load", "gate.py build --batch (CLI, once)", "protocol action=doc situation=verify"],
     "finish": ["protocol action=doc situation=finish", "slice.py commit, then plain git push"]
   }

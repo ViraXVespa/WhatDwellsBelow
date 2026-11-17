@@ -80,8 +80,9 @@ def next_step(st: dict, s: dict) -> str:
         return "`python tools/gate.py gd-load` and `python tools/gate.py import`"
     unit = f" ({st['unit']})" if st.get("units") and st.get("unit") else ""
     if not s["forked"]:
-        return (f"Gather{unit}: read session-plan.md (same-worktree plan). On a new session, read the task file once; it stays the assignment. "
-                "Use find.py only for a gap the plan does not cover; change its index only with `slice.py adjust`, and write the four sections above the marker. "
+        return (f"Gather{unit}: one `wdb__lookup action=packet all=true` (Approach, core bodies, candidates). Do not page it or file-read session-plan.md. "
+                "On a new session, read the task file once; it stays the assignment. If this session only has the seed, close the index and write the Approach before editing. "
+                "A symbol the packet lacks is one lookup of that symbol plus `slice.py adjust` in the same turn. "
                 "Continue Prepare here; context breaks follow build-job-cycle.md and resume in this same session. Necessary visual references use the task-scoped grant")
     tail = " (`python tools/slice.py start --unit-done` updates the task's done: line)" if unit else ""
     return (f"This session is not the one that started the slice{unit}. Continue the unit in hand: "

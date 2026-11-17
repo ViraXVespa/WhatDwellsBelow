@@ -83,7 +83,7 @@ class Tools:
                query: str = "", regex: bool = False, expand: str = "", budget: int = 0, whole: bool = False,
                reads: list | None = None) -> str:
         self.store.tick()
-        budget = core.ALL if whole else budget
+        budget = reply_budget(action, budget, whole, reads)
         if reads or action == "batch":
             return self._batch(reads or [], budget)
         if handle or action in ("more", "full"):
@@ -266,6 +266,19 @@ class Tools:
         rows.sort(key=lambda r: -r[0])
         h = self.store.new("p", [r for _, r in rows[:3]] or ["(no match; protocol action=doc situation=pick-a-tool)"])
         return core.page(self.store, h, budget, "PASS", first=True)
+
+def reply_budget(action: str, budget: int, whole: bool, reads: list | None) -> int:
+    """`all=true` returns the whole reply. `action=packet` with no budget does too, so a forgotten flag is not a 60-line page.
+
+    A batch that contains a packet read is treated the same way when budget is 0. An explicit budget is kept.
+    Other actions stay paged.
+    """
+    if whole:
+        return core.ALL
+    packet = action == "packet" or any(isinstance(r, dict) and r.get("action") == "packet" for r in (reads or []))
+    if packet and not budget:
+        return core.ALL
+    return budget
 
 def current_phase(root: Path) -> tuple[str, str]:
     """Best guess from slice state and the session-plan kept half: understand, implement, verify."""

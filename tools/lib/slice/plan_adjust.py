@@ -8,8 +8,11 @@
     python tools/slice.py adjust promote ID [--why TEXT] | demote ID TEXT | set-condition ID TEXT
                                                          (demote and set-condition also take --when TEXT instead)
     python tools/slice.py adjust batch FILE|- | batch --op "OP ARGS" [--op ...]   one op per line or per --op (# comments)
+    python tools/slice.py adjust approach --text "the edit, in order" [--reason R]
     python tools/slice.py adjust report --text "judgment" [--halt REASON]
-New items are core unless --cand (a candidate needs --when). Ops run by the gather agent (WDB_ROLE=gather) set the
+New items are core unless --cand (a candidate needs --when). `approach` replaces the `## Approach` section above the
+marker (empty or over 4000 characters is refused; replay skips the row because the text already lives in that section).
+Ops run by the gather agent (WDB_ROLE=gather) set the
 index identity to `gather: agent`. Every op appends one line to _logs/gather/delta.jsonl
 (by = $WDB_ROLE or build; reason optional, default "(none)"); `slice.py plan --refresh` replays them after a re-seed.
 `report` writes _logs/gather/report.md (delta summary + the text) and with --halt also _logs/gather/halt, which makes
@@ -38,7 +41,9 @@ import plan_index as pi
 PLAN = "session-plan.md"
 GATHER = "_logs/gather"
 OPS = ("add-func", "add-file", "add-doc", "add-names", "rem", "rem-func", "rem-file", "rem-doc", "promote", "demote",
-       "set-condition", "batch", "report")
+       "set-condition", "batch", "report", "approach")
+APPROACH_CAP = 4000
+_SKIP_APPLY = ("batch", "report", "approach")  # not index mutations; replay skips them when apply rejects the op
 USAGE = {  # one line per op; --help prints them and errors quote them
     "add-func": "add-func PATH NAME [--cand --when TEXT] [--why TEXT] [--reason R]",
     "add-file": "add-file PATH [--lines A-B] [--cand --when TEXT] [--why TEXT]  (.gd --lines stores each covering func)",
@@ -51,6 +56,7 @@ USAGE = {  # one line per op; --help prints them and errors quote them
     "set-condition": "set-condition ID TEXT  or  set-condition ID --when TEXT",
     "batch": "batch FILE|-  or  batch --op 'OP ARGS' [--op ...] (one op per line or --op; # comments)",
     "report": "report --text TEXT [--halt REASON]",
+    "approach": "approach --text TEXT [--reason R]  (replaces ## Approach; max 4000 characters; no ## lines)",
 }
 EPILOG = "ops:\n" + "\n".join(f"  {u}" for k, u in USAGE.items() if not k.startswith("rem-")) + (
     "\nIn a batch line or --op string each op takes the same arguments and flags as on the command line.")
@@ -104,14 +110,16 @@ def pack_cli(argv: list[str]) -> list[str]:
 
 
 def pack_op(words: list[str]) -> list[str]:
-    """After shlex splits an --op string, join --why / --when / --reason again."""
+    """After shlex splits an --op string, join --why / --when / --reason / --text again."""
     out: list[str] = []
     i = 0
-    text = {"--why", "--when", "--reason"}
+    text = {"--why", "--when", "--reason", "--text"}
     while i < len(words):
         tok = words[i]
         if tok in text:
-            chunk, i = _absorb(words, i, text | _INNER)
+            # --text is prose (an Approach may name a flag). Stop only at the next text flag or --op.
+            stop = (text | {"--op"}) if tok == "--text" else (text | _INNER)
+            chunk, i = _absorb(words, i, stop)
             out.extend(chunk)
         else:
             out.append(tok)
@@ -157,7 +165,7 @@ def apply(root: Path, idx: pi.Index, words: list[str]) -> list[tuple[str, str, l
     """Apply one op to idx. Returns [(item id, ref, logged argv)]. Raises ValueError with a usage message."""
     words = pack_op(words)
     ap = agent_log.std_parser("one adjust op", json_out=False)
-    ap.add_argument("op", choices=[o for o in OPS if o not in ("batch", "report")], help="Operation.")
+    ap.add_argument("op", choices=[o for o in OPS if o not in _SKIP_APPLY], help="Operation.")
     ap.add_argument("args", nargs="*", help="Operation arguments.")
     ap.add_argument("--cand", action="store_true", help="Add as a candidate (needs --when).")
     ap.add_argument("--when", default="", help="Candidate condition: read if / read when.")
@@ -224,10 +232,46 @@ def log(root: Path, words: list[str], iid: str, ref: str, reason: str) -> None:
 def _reason(words: list[str]) -> str:
     return words[words.index("--reason") + 1] if "--reason" in words and words.index("--reason") + 1 < len(words) else ""
 
+def approach_text_of(words: list[str]) -> str:
+    """The --text of an approach op. Raises ValueError when it is empty, too long, or would break the plan."""
+    words = pack_op(words)
+    if not words or words[0] != "approach" or "--text" not in words:
+        raise ValueError(f"approach needs --text TEXT (max {APPROACH_CAP} characters): {USAGE['approach']}")
+    text = words[words.index("--text") + 1].strip() if words.index("--text") + 1 < len(words) else ""
+    if not text:
+        raise ValueError("approach needs --text (the edit, in the order to type it)")
+    if len(text) > APPROACH_CAP:
+        raise ValueError(f"approach --text is {len(text)} characters; the cap is {APPROACH_CAP}")
+    if any(ln.startswith("## ") for ln in text.splitlines()) or pi.MARKER in text:
+        raise ValueError("approach text cannot contain a ## heading or the gathered marker")
+    return text
+
+def set_approach(kept: str, text: str) -> str:
+    """Replace the body under `## Approach`. Append the section when an older plan does not have it yet."""
+    lines = kept.splitlines()
+    block = ["## Approach", "", text.strip(), ""]
+    start = next((i for i, ln in enumerate(lines) if ln.strip() == "## Approach"), None)
+    if start is None:
+        return kept.rstrip() + "\n\n" + "\n".join(block).rstrip() + "\n\n"
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    return "\n".join(lines[:start] + block + lines[end:]).rstrip() + "\n\n"
+
 def run_ops(root: Path, ops: list[list[str]], dry: bool) -> tuple[list[str], list[str]]:
     kept, idx = load(root)
     done, errs = [], []
+    approach: str | None = None
+    approach_rows: list[list[str]] = []
     for words in ops:
+        if words and words[0] == "approach":
+            try:
+                packed = pack_op(words)
+                approach = approach_text_of(packed)
+            except ValueError as exc:
+                errs.append(str(exc))
+                continue
+            approach_rows.append(packed)
+            done.append("approach Approach")
+            continue  # not an index op: apply does not know it, so replay skips the row
         try:
             made = apply(root, idx, words)
         except ValueError as exc:
@@ -238,13 +282,21 @@ def run_ops(root: Path, ops: list[list[str]], dry: bool) -> tuple[list[str], lis
             if not dry:
                 log(root, argv, iid, ref, _reason(argv))
     if not dry and done:
+        if approach is not None:
+            kept = set_approach(kept, approach)
+            for argv in approach_rows:
+                log(root, argv, "approach", "Approach", _reason(argv))
         if os.environ.get("WDB_ROLE") == "gather":
             idx.set("gather", "agent")  # the packet says the gather agent refined the seed
         md.write_text(root / PLAN, pi.join_plan(kept, idx))
     return done, errs
 
 def replay(root: Path) -> int:
-    """Re-apply logged ops to a freshly seeded index (slice.py plan --refresh). Ops whose target is gone are skipped."""
+    """Re-apply logged ops to a freshly seeded index (slice.py plan --refresh). Ops whose target is gone are skipped.
+
+    `approach` is not an index op. The text already sits in the kept half, so the row is not counted and not sent
+    through apply. A row the gather agent wrote still marks the identity `gather: agent`.
+    """
     path = delta_path(root)
     if not path.is_file():
         return 0
@@ -253,11 +305,19 @@ def replay(root: Path) -> int:
     for line in path.read_text(encoding="utf-8").splitlines():
         try:
             row = json.loads(line)
-            apply(root, idx, row["argv"])
+        except json.JSONDecodeError:
+            continue
+        argv = row.get("argv") or []
+        if row.get("op") == "approach" or (argv and argv[0] == "approach"):
+            if row.get("by") == "gather":
+                idx.set("gather", "agent")
+            continue
+        try:
+            apply(root, idx, argv)
             n += 1
             if row.get("by") == "gather":
                 idx.set("gather", "agent")
-        except (ValueError, KeyError, json.JSONDecodeError):
+        except (ValueError, KeyError):
             continue
     md.write_text(root / PLAN, pi.join_plan(kept, idx))
     return n
@@ -285,14 +345,14 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Adjust the session-plan context index; every change is logged in _logs/gather/delta.jsonl.",
                               writes=True, verbose=True)
     ap.epilog = EPILOG
-    ap.add_argument("op", choices=OPS, help="add-func|add-file|add-doc|add-names|rem|rem-func|rem-file|rem-doc|promote|demote|set-condition|batch|report")
+    ap.add_argument("op", choices=OPS, help="add-func|add-file|add-doc|add-names|rem|rem-func|rem-file|rem-doc|promote|demote|set-condition|batch|report|approach")
     ap.add_argument("args", nargs="*", help="Op arguments (the ops list below).")
     ap.add_argument("--cand", action="store_true", help="Add as a candidate (needs --when).")
     ap.add_argument("--when", default="", help="Condition (read if / read when): a candidate's, or demote / set-condition's.")
     ap.add_argument("--why", default="", help="Why a core item is in context.")
     ap.add_argument("--lines", default="", help="add-file / add-doc line range A-B.")
     ap.add_argument("--reason", default="", help="Optional reason, logged with the op.")
-    ap.add_argument("--text", default="", help="report: the door/job judgment and notes for the main session.")
+    ap.add_argument("--text", default="", help="report: the door/job judgment. approach: the edit, in the order to type it (max 4000 characters).")
     ap.add_argument("--halt", default="", help="report: halt reason; slice.py open then refuses to launch.")
     ap.add_argument("--op", dest="inline", action="append", default=[], help="batch: one op as a quoted string (repeat); no stdin or file needed.")
     ap.add_argument("--selftest", action="store_true", help="Run the cases in a temp repo.")
@@ -301,7 +361,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.op == "report":
         body = report(root, args.text, args.halt)
         return agent_log.finish("plan-adjust", root, body, "FAIL" if args.halt else "PASS", args=args, op="report", halted=bool(args.halt))
-    if args.op == "batch":
+    if args.op == "approach":
+        ops = [["approach", "--text", args.text] + (["--reason", args.reason] if args.reason else [])]
+    elif args.op == "batch":
         src = sys.stdin.read() if args.args[:1] == ["-"] else (root / args.args[0]).read_text(encoding="utf-8") if args.args else ""
         ops = [shlex.split(ln) for ln in [*src.splitlines(), *args.inline] if ln.strip() and not ln.lstrip().startswith("#")]
     else:
@@ -351,7 +413,7 @@ def selftest() -> int:
         if not (k2 and k2.core) or not (k4 and k4.note == "the rules section changes") or idx.find("C1"):
             bad.append("batch: promote, set-condition and rem must apply: " + out)
         if "keep me" not in plan:
-            bad.append("adjust must keep the four sections above the marker")
+            bad.append("adjust must keep the sections above the marker")
         rows = [json.loads(ln) for ln in delta_path(root).read_text(encoding="utf-8").splitlines()]
         if len(rows) != 5 or any(r["by"] != "gather" or not r["reason"] for r in rows):
             bad.append(f"every applied op logs one delta row with by and a default reason ({len(rows)})")
@@ -362,6 +424,28 @@ def selftest() -> int:
             bad.append(f"replay after a re-seed must re-apply the logged ops ({n})")
         if again.get("gather") != "agent":
             bad.append("ops by the gather role set `gather: agent` in the identity (also on replay)")
+        code, out = run("approach", "--text", "edit alpha then stop")
+        plan = (root / PLAN).read_text(encoding="utf-8")
+        kept = pi.split_plan(plan)[0]
+        if code or "edit alpha then stop" not in kept or pi.parse(pi.split_plan(plan)[1]).get("gather") != "agent":
+            bad.append("approach replaces ## Approach and a gather op sets gather: agent: " + out)
+        rows = [json.loads(ln) for ln in delta_path(root).read_text(encoding="utf-8").splitlines()]
+        if len(rows) != 6 or rows[-1].get("op") != "approach":
+            bad.append(f"approach logs one delta row after the index ops ({len(rows)})")
+        if run("approach", "--text", "  ")[0] == 0 or run("approach", "--text", "z" * 4001)[0] == 0 \
+                or run("approach", "--text", "## Nope\n\nbreak")[0] == 0:
+            bad.append("approach refuses empty text, text over 4000 characters, and a ## heading")
+        if "edit alpha then stop" not in pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[0]:
+            bad.append("a refused approach must leave the previous Approach text")
+        (root / PLAN).write_text(pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[0] + pi.MARKER + "\n\n" + text, encoding="utf-8")
+        n = replay(root)
+        kept, gathered = pi.split_plan((root / PLAN).read_text(encoding="utf-8"))
+        again = pi.parse(gathered)
+        if n != 5 or "edit alpha then stop" not in kept or again.find("C1") or not again.find("scripts/demo.gd:alpha"):
+            bad.append(f"replay skips approach, keeps its text, and still re-applies the five index ops ({n})")
+        code, out = run("batch", "--op", "approach --text from batch")
+        if code or "from batch" not in pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[0]:
+            bad.append("batch --op can set approach: " + out)
         code, out = run("batch", "--op", "add-file data/en.po --lines 3-4 --cand --when 'copy changes'",
                         "--op", "add-file data/en.po --lines 9-9 --cand --when 'opt-in copy'", "--op", "add-doc design/demo.md --lines 2-5")
         ranged = pi.parse(pi.split_plan((root / PLAN).read_text(encoding="utf-8"))[1])

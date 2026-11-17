@@ -2,7 +2,7 @@
 
 Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
-**Build slice: the first command is the one your first message names, before any memory topic or file read (`design/grok-build.md` Start or resume). A new week is not a slice: `design/build-week-start.md` only, on clean `main`, no `slice.py start`.**
+**Build slice: if the first message says gather already refined the packet, the first read is the task file (when one is named) and one `wdb__lookup action=packet all=true`, before any other code lookup (`design/grok-build.md` Start or resume). Otherwise the first command is the one that message names, before any memory topic or file read. A new week is not a slice: `design/build-week-start.md` only, on clean `main`, no `slice.py start`.**
 
 **Proof rules** (`design/prove.md`). A missing or invalid required asset fails loudly; a fallback needs the User's OK. Before changing behavior, state the intended outcome in one line and prove against it (ask if unclear). Prove against intent and a reference the User confirmed, not a prior run of the same code. Report "gates pass", never "proved"; visuals and audio stay unverified until the User confirms. Fix the bug; do not drop the improvement.
 
@@ -36,6 +36,6 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 Reading: this file + the path file + (web / Build) the plan pair + the topic doc and gates whose `when` matches. **Multi-system job:** list every system and read each one's doc and code-map row before changing anything.
 Do not fetch this file again. Routing work: `design/load-graph.md`.
 
-Earlier work: connected wdb MCP, else `find.py changed`; `session.py summary --job JOB` reads any tool RESULT. Never open `_logs/` with a file read. Function names missing from the plan: `find.py scripts --names` or `--all-names` with one `--path`, not an xref of `^func`. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
+Earlier work: connected wdb MCP, else `find.py changed`; `session.py summary --job JOB` reads any tool RESULT. Never open `_logs/` with a file read. A symbol missing from the packet: one lookup of that symbol plus `slice.py adjust` (add-func, add-doc, or promote) in the same turn. Do not xref `^func` or list names to rebuild a plan the Approach already states. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
 Imagine (Build only): `design/isolated-media.md` first; Web / chat and Grok Bot never run the isolated runner.
 Ask as many questions as the job needs, in rounds. Report when done, with rough edges (`tools.md` rule 9). Build and Web may add a helpful tool (rule 5) and tell the User.

@@ -199,8 +199,9 @@ def start_prompt(area: str) -> str:
     """Pre-gather first message for a door or job: this session runs slice.py start itself."""
     start = f"python tools/slice.py start {task_lib.start_flag(area)} {area}"
     return ("Your first command, before any file read or memory topic: " + start + ". "
-            "The start command writes session-plan.md; read that next and do not re-gather what it holds. "
-            "In that same turn, trim its gathered half to this unit and write the four sections above the marker as facts land.")
+            "The start command writes session-plan.md. Close that seed before editing: "
+            "walk the edit, fix the index with slice.py adjust, and write the Approach with slice.py adjust approach. "
+            "Do not look up as you go. Write Outcome, Open questions, Changed files and Latest results above the marker as facts land.")
 
 
 def task_prompt(tid: str, path: str, area: str, t: dict | None = None) -> str:
@@ -211,8 +212,9 @@ def task_prompt(tid: str, path: str, area: str, t: dict | None = None) -> str:
     else:
         start = f"python tools/slice.py start {task_lib.start_flag(area)} {area} --task {tid}, then python tools/docs.py task show {tid}"
     return (f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole. "
-            "The start command writes session-plan.md; read that next and do not re-gather what it holds. "
-            "In that same turn, trim its gathered half to this unit and write the four sections above the marker as facts land.")
+            "The start command writes session-plan.md. Close that seed before editing: "
+            "walk the edit, fix the index with slice.py adjust, and write the Approach with slice.py adjust approach. "
+            "Do not look up as you go. Write Outcome, Open questions, Changed files and Latest results above the marker as facts land.")
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Start grok in a new worktree from the week branch (user-run launcher).", writes=True)
