@@ -89,6 +89,7 @@ static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 		if not PlaytestLog.off():
 			LiveSmoke.note_gather(PlaytestLog.events)
 		PlaytestDb.append_finish(App.tel, "", true)
+	var campaign_stopped: bool = false
 	if str(pt.slot) == "campaign":
 		if Campaign.floor_cleared(int(App.floor_n), bool(App.boss_dead)):
 			Campaign.mark(str(App.weapon))
@@ -97,17 +98,21 @@ static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 			if LiveSmoke.until_death() and end_s == "death":
 				Store.save_slot("campaign")
 				LiveSmoke.campaign_stop("death")
+				campaign_stopped = true
 			elif LiveSmoke.until_live() and end_s != "" and end_s != "death" and end_s != "dispel":
 				Store.save_slot("campaign")
 				LiveSmoke.campaign_stop("lived")
+				campaign_stopped = true
 			elif LiveSmoke.gather_full():
 				Store.save_slot("campaign")
 				LiveSmoke.campaign_stop("gather")
+				campaign_stopped = true
 			else:
 				var follow: Dictionary = _campaign_follow(pt)
 				if str(follow.get("weapon", "")) == "":
 					Store.save_slot("campaign")
 					LiveSmoke.campaign_stop("cleared")
+					campaign_stopped = true
 				else:
 					App.prog.pick_weapon = str(follow.get("weapon", App.prog.pick_weapon))
 					var tool_id: String = str(follow.get("tool", "pickaxe"))
@@ -123,6 +128,7 @@ static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 		else:
 			Store.save_slot("campaign")
 			LiveSmoke.campaign_stop("stalled" if end_s == "stalled" else "interrupt")
+			campaign_stopped = true
 	else:
 		pt.history.append(App.tel.to_dict())
 		pt._save_history()
@@ -130,7 +136,8 @@ static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 		WebHook.publish(App.tel.to_dict())
 		LiveSmoke.report(App.tel.to_dict())
 	reset_ai_state(pt)
-	if pt.queue.is_empty() or pt.interrupted:
+	if campaign_stopped or pt.queue.is_empty() or pt.interrupted:
+		pt.queue.clear()
 		pt._stop_live()
 		return
 	pt._start_next()
