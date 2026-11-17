@@ -192,7 +192,7 @@ The draw split stays (`tree_ms`, `submit_ms`, `after_ms` on the hitch row, `subm
 
 Dungeon: historical bench evidence. The runner is `python tools/perf.py dungeon`. Desktop PASS is summary `_logs/dungeon-bench/20261028-033831-dungeon-bench.txt`. First web FAIL is summary `_logs/dungeon-bench/20261028-033953-dungeon-bench.txt`. Layer keep is summary `_logs/dungeon-bench/20261028-035545-dungeon-bench.txt`. Harness web FAIL is summary `_logs/dungeon-bench/20261028-041329-dungeon-bench.txt`. Bare-split keep is summary `_logs/dungeon-bench/20261028-042812-dungeon-bench.txt`. Scale keep is summary `_logs/dungeon-bench/20261028-044236-dungeon-bench.txt`. Scored web after the Auto change is summary `_logs/dungeon-bench/20261028-044706-dungeon-bench.txt` (fps_pct 84.1). That `--walk-layers` is the old dungeon bench (50 s of acting). The live window is `perf.py sweep --leg web --walk-layers`, and the reading from it is in Next.
 
-Note from Vira: We changed a bunch of lighting stuff with Grok Bot since you last worked on the perf stuff. That may have impacted things and those newer changes may need to be optimized.
+Note from Vira: Lots of stuff has been changed since this task was last worked on. Most importantly, there's now a Godot MCP you can use to get important runtime data for diagnosing things. Also importantly, tons of systems were changed and work was offloaded from the frame process chain. You'll need to reassess the approach accordingly.
 
 ## Next Steps (User Only)
 python tools/slice.py open debug.bench --task perf-sweep
