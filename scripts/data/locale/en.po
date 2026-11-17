@@ -932,6 +932,9 @@ msgstr "Potion x%d"
 msgid "hud_act.potion_x_s"
 msgstr "Potion x%d  %.1fs"
 
+msgid "hud_act.stack_x"
+msgstr "x%d"
+
 msgid "hud_act.shrine_s"
 msgstr "Shrine +%d%%  %ds"
 
@@ -1723,6 +1726,9 @@ msgstr "Cycle"
 
 msgid "settings_pages.danger_gem"
 msgstr "Danger gem"
+
+msgid "settings_pages.red_border_glow"
+msgstr "Red border glow"
 
 msgid "settings_pages.keep_a_copy_when"
 msgstr "Keep a copy when"

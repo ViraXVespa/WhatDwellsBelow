@@ -36,6 +36,7 @@ const DEF := {
 	"aim_line_opacity": 0.85,
 	"target_lock_pref": false,
 	"danger_gem": true,
+	"red_border_glow": true,
 	"salvage_dupes": false,
 	"salvage_finish": 0.8,
 	"salvage_fortune": 1.0,
@@ -73,6 +74,7 @@ static func apply(data: Dictionary) -> bool:
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", DEF.aim_line_opacity))
 	App.target_lock_pref = bool(data.get("target_lock_pref", DEF.target_lock_pref))
 	App.danger_gem = bool(data.get("danger_gem", DEF.danger_gem))
+	App.red_border_glow = bool(data.get("red_border_glow", DEF.red_border_glow))
 	App.salvage_dupes = bool(data.get("salvage_dupes", DEF.salvage_dupes))
 	App.salvage_finish = clampf(float(data.get("salvage_finish", DEF.salvage_finish)), 0.5, 1.0)
 	App.salvage_fortune = clampf(float(data.get("salvage_fortune", DEF.salvage_fortune)), 0.75, 1.25)
@@ -147,6 +149,7 @@ static func fresh_delver() -> void:
 	App.web_fullscreen = DEF.web_fullscreen
 	App.target_lock_pref = DEF.target_lock_pref
 	App.danger_gem = DEF.danger_gem
+	App.red_border_glow = DEF.red_border_glow
 	App.salvage_dupes = DEF.salvage_dupes
 	App.salvage_finish = DEF.salvage_finish
 	App.salvage_fortune = DEF.salvage_fortune

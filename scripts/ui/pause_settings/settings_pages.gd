@@ -120,6 +120,13 @@ static func page_ui(host: Node) -> void:
 		View.apply_col(host)
 		View.focus_col(host)
 	))
+	var glow_on: bool = bool(App.red_border_glow)
+	var glow_box: CheckBox = _check(App.tr("settings_pages.red_border_glow"), glow_on, func(on: bool) -> void:
+		App.red_border_glow = on
+		if App.has_method("save_now"):
+			App.save_now()
+	)
+	_add_check_centered(host, glow_box)
 
 static func page_audio(host: Node) -> void:
 	_slider(host, App.tr("settings_pages.master_volume"), float(App.vol_master), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("master", v))
