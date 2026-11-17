@@ -2,6 +2,7 @@ extends Object
 
 const REACH := 36
 const Nav := preload("res://scripts/debug/playtest_path/path_nav.gd")
+const Util := preload("res://scripts/debug/playtest_path/path_util.gd")
 
 static func door_bypass(pt: PlayHost, p: Node, boss: Node) -> Vector2:
 	var door: Node = pt._closed_door()
@@ -35,11 +36,37 @@ static func door_bypass(pt: PlayHost, p: Node, boss: Node) -> Vector2:
 			return pt._door_away(p)
 	return v.normalized()
 
+static func _back_along(pt: PlayHost, p: Node, pos: Vector3, here: Vector2i, cells: Array) -> Vector2:
+	var i: int = cells.size() - 1
+	while i >= 0:
+		var c: Variant = cells[i]
+		if c is Vector2i and (c as Vector2i) != here:
+			var cell: Vector2i = c as Vector2i
+			var step: Vector2 = Vector2(float(cell.x) + 0.5 - pos.x, float(cell.y) + 0.5 - pos.z)
+			if step.length_squared() > 0.04 and pt._dir_open(p, step):
+				return step.normalized()
+		i -= 1
+	return Vector2.ZERO
+
+static func retreat_dir(pt: PlayHost, p: Node) -> Vector2:
+	var pos: Vector3 = (p as Node3D).global_position
+	var here: Vector2i = pt._cell_of_pos(pos)
+	var crumb: Array = []
+	if pt.has_meta("crumb") and pt.get_meta("crumb") is Array:
+		crumb = pt.get_meta("crumb")
+	var back: Vector2 = _back_along(pt, p, pos, here, crumb)
+	if back != Vector2.ZERO:
+		return back
+	var trail: Array = []
+	if pt.has_meta("trail") and pt.get_meta("trail") is Array:
+		trail = pt.get_meta("trail")
+	return _back_along(pt, p, pos, here, trail)
+
 static func follow_goal(pt: PlayHost, p: Node, dest: Node) -> void:
 	if dest == null:
 		pt.move = pt._steer(p, Vector2.ZERO)
 		return
-	if pt._dist(p, dest) < 1.55:
+	if pt._dist(p, dest) < 1.55 and not Util.seek_unreached(pt, p, dest):
 		pt.path.clear()
 		pt.path_i = 0
 		pt.path_goal = dest
@@ -49,12 +76,22 @@ static func follow_goal(pt: PlayHost, p: Node, dest: Node) -> void:
 	if pt._door_between(p, dest):
 		pt._go_open_door(p, pt._closed_door())
 		return
-	if pt.stuck_t > 0.7:
+	if pt._near_closed_door(p):
+		var gate: Node = pt._closed_door()
+		if gate != null and pt._dist(gate, dest) < pt._dist(p, dest):
+			pt._go_open_door(p, gate)
+			return
+	var cell_t: float = 0.0
+	if pt.has_meta("cell_t"):
+		cell_t = float(pt.get_meta("cell_t"))
+	if pt.stuck_t > 0.7 or cell_t > 2.0:
 		pt.path.clear()
 		pt.path_i = 0
 		pt.path_goal = dest
-		pt.move = pt._steer(p, pt._any_open(p))
-		if pt.stuck_t > 1.0:
+		var back: Vector2 = retreat_dir(pt, p)
+		pt.move = pt._steer(p, back)
+		pt.aim = back
+		if pt.stuck_t > 1.0 and back != Vector2.ZERO:
 			pt.dash = true
 			pt.just["dash"] = true
 		return
@@ -63,10 +100,7 @@ static func follow_goal(pt: PlayHost, p: Node, dest: Node) -> void:
 		pt.path_i = 0
 		pt.path_goal = dest
 	var step: Vector2 = Nav.follow_or_direct(pt, p, dest)
-	if step != Vector2.ZERO and pt._dir_open(p, step):
-		pt.move = pt._steer(p, step)
-	else:
-		pt.move = pt._safe_step(p, step)
+	pt.move = pt._steer(p, step)
 	if step != Vector2.ZERO:
 		pt.aim = step
 

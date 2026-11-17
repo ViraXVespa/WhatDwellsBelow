@@ -12,6 +12,25 @@ const GATE_MAX := 15.0  # s on a soft gate (paused / transition / loading) befor
 const HARD_MAX := 90.0  # s on a hard gate (no dungeon / no player) before the run is ended as "stalled"
 const GATE_SOFT := ["paused", "transition", "loading", "scene_not_ready"]
 
+static func release_menu(pt: PlayHost) -> void:
+	var tree: SceneTree = pt.get_tree()
+	if tree == null or not tree.paused:
+		return
+	var closed: bool = false
+	for n: Node in tree.get_nodes_in_group("crystal_ui"):
+		if is_instance_valid(n):
+			n.queue_free()
+			closed = true
+	var menu: Node = App.pause_menu
+	if menu != null and bool(menu.get("open")) and menu.has_method("close_ui"):
+		menu.close_ui()
+		closed = true
+	if not closed:
+		return
+	App.ui_open = false
+	tree.paused = false
+
+
 static func reset(pt: PlayHost) -> void:
 	pt.perf = {"think_us": 0, "think_n": 0, "think_max_us": 0, "phys_us": 0, "phys_n": 0, "gate_s": 0.0, "gate_over": 0, "scale": 1.0}
 	pt.gate_t = 0.0

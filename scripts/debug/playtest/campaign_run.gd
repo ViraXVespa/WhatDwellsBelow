@@ -92,11 +92,14 @@ static func buy_supplies() -> Dictionary:
 		var mode: String = str(row.get("mode", "new"))
 		if fid == "" or (mode == "new" and Cons.needs_toss(App.prog, fid)):
 			continue
-		if not Cons.give_food(App.prog, fid, 1):
-			continue
-		App.bank_gold -= food_cost
-		Shop.shop_spend(food_cost)
-		foods += 1
+		var bought: int = 0
+		while bought < 20 and App.bank_gold >= food_cost:
+			if not Cons.give_food(App.prog, fid, 1):
+				break
+			App.bank_gold -= food_cost
+			Shop.shop_spend(food_cost)
+			foods += 1
+			bought += 1
 	return {"potions": pots, "foods": foods}
 
 static func hub_ready(pt: PlayHost) -> bool:

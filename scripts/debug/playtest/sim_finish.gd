@@ -97,6 +97,9 @@ static func finish_job(pt: PlayHost, cond: String, force_end: bool) -> void:
 			if LiveSmoke.until_death() and end_s == "death":
 				Store.save_slot("campaign")
 				LiveSmoke.campaign_stop("death")
+			elif LiveSmoke.until_live() and end_s != "" and end_s != "death" and end_s != "dispel":
+				Store.save_slot("campaign")
+				LiveSmoke.campaign_stop("lived")
 			elif LiveSmoke.gather_full():
 				Store.save_slot("campaign")
 				LiveSmoke.campaign_stop("gather")
@@ -201,6 +204,9 @@ static func reset_ai_state(pt: PlayHost) -> void:
 	pt.path_i = 0
 	pt.path_goal = null
 	pt.just.clear()
+	var mark: Node = pt.get_node_or_null("CampaignSeekMark")
+	if mark != null:
+		mark.queue_free()
 	if "last_think_t" in pt:
 		pt.last_think_t = -1.0
 	App.extracted = false
@@ -209,6 +215,9 @@ static func reset_ai_state(pt: PlayHost) -> void:
 		"lock_n", "lock_t", "cell_t", "skip_list", "seen_map", "decide_why",
 		"log_gather_d", "log_clerk_d", "log_threat_d", "log_gather_k",
 		"trail", "stuck_cell", "wander_hold", "dash_cd", "flee_c", "campaign_left",
+		"seek_goal", "seek_mark_cell", "seek_ban", "crumb", "guardian_door",
+		"campaign_slip", "campaign_hold", "campaign_side", "campaign_ax", "campaign_ay",
+		"food_wait",
 	]:
 		if pt.has_meta(key):
 			pt.remove_meta(key)

@@ -1153,7 +1153,7 @@ def loop_flags(rows: int) -> list[str]:
         "--wdb-pt-campaign",
         "--wdb-pt-fast",
         "--wdb-pt-scale=6",
-        "--wdb-pt-until-death",
+        "--wdb-pt-until-live",
     ]
     if rows > 0:
         flags.append(f"--wdb-pt-gather={int(rows)}")
@@ -1181,10 +1181,10 @@ def do_loop(args, root: Path) -> int:
         lines.append(msg)
         append_log(log_path, msg, write)
 
-    note("loop campaign until death, then train. Ctrl+C stops.")
+    note("loop campaign, resume after death, train when a dive does not die. Ctrl+C stops.")
     note(f"policy {policy}")
     cap = "none" if args.rows == 0 else str(int(args.rows))
-    note(f"until_death row_cap {cap} wait_s {args.wait}")
+    note(f"until_live row_cap {cap} wait_s {args.wait}")
     note("The campaign slot stays as it is. Acting scale is 6 while the fast flag is set.")
     empty = 0
     cycle = 0
@@ -1304,7 +1304,7 @@ def transfer_selftest() -> list[str]:
         if dest.read_text(encoding="utf-8") != frozen:
             bad.append("dry-run wrote")
     plain = loop_flags(0)
-    if "--wdb-pt-until-death" not in plain or any(item.startswith("--wdb-pt-gather=") for item in plain):
+    if "--wdb-pt-until-live" not in plain or "--wdb-pt-until-death" in plain or any(item.startswith("--wdb-pt-gather=") for item in plain):
         bad.append("loop flags row cap")
     if "--wdb-pt-gather=200" not in loop_flags(200):
         bad.append("loop flags keep cap")

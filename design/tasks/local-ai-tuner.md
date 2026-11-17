@@ -48,6 +48,8 @@ A headless campaign on this PC wrote 1924 new decide rows before a 10 minute cap
 
 Vira's later loop improved for a while, then stayed on one dive. A learned wander consumed the think, so the campaign depth step never walked to the guardian or the stairs. The door press also dropped the reach it was given, and the nearest pickup could take the press. A wander on a campaign now falls through while a living guardian or the floor stairs exist. The press uses the chosen prop when it is inside the interact radius or that prop's own reach. The current setup was tested and found to not be working (still not progressing floors). Further investigation is still required.
 
+Vira watched a windowed campaign on this PC on 2026-11-16 and said it looks mostly workable. The walker was not using extraction gates. That still needs a bit more work. No dive has recorded a floor above 1, and `tune --live` has not written a recommendation.
+
 We'll also want to make sure that the Balance tuner is fully implemented and working.
 
 ## Next Steps (User Only)

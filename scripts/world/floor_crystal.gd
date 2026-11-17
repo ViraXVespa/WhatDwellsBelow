@@ -61,6 +61,8 @@ func interact(who: Node) -> String:
 		CrystalNet.activate(self)
 		refresh()
 		App.toast(tr("floor_crystal.crystal_bound_to_this_floor"))
+	if App.playtest != null and bool(App.playtest.get("live_running")):
+		return tr("floor_crystal.the_crystal_hums")
 	var CrystalUIS: GDScript = load("res://scripts/ui/crystal_ui.gd") as GDScript
 	CrystalUIS.open(self)
 	return tr("floor_crystal.the_crystal_hums")
