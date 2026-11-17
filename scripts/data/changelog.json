@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.12.2",
+			"points": [
+				{
+					"text": "Loop stall: 45 min in-game no death/floor progress forces campaign_stop(stall) so the tuner trains."
+				},
+				{
+					"text": "Loop --headed: launches a visible Godot window instead of headless so the campaign can be watched."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.12.1",
 			"points": [
 				{
