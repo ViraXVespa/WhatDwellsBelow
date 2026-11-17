@@ -1132,8 +1132,8 @@ def consider(rows: list[dict], dest: Path, write: bool) -> list[str]:
     new_hit, new_n = held(model, rows)
     current = read_policy(dest)
     old_hit, old_n = held(current, rows) if current else (0, 0)
-    new_p = (float(new_hit)/float(new_n)) * 100.0
-    old_p = (float(old_hit)/float(old_n)) * 100.0
+    new_p = (float(new_hit)/float(new_n) if new_n > 0 else 0) * 100.0
+    old_p = (float(old_hit)/float(old_n) if old_n > 0 else 0) * 100.0
     lines.append(f"candidate {new_hit}/{new_n} ({new_p:.2f}%) current {old_hit}/{old_n} ({old_p:.2f}%)")
     if accept_model(new_hit, new_n, old_hit, old_n):
         write_policy(dest, model, write)
@@ -1223,8 +1223,33 @@ def do_loop(args, root: Path) -> int:
                     return finish(args, root, lines, "FAIL", cmd="loop")
                 continue
             empty = 0
-            for part in consider(fresh, policy, write):
-                note(part)
+            best_model = None
+            best_hit = -1
+            best_n = 0
+            import random
+            rng = random.Random(cycle)
+            for _pass in range(4):
+                # bootstrap sample (with replacement) so each pass sees different data
+                variant = [rng.choice(fresh) for _ in range(max(1, len(fresh)))]
+                lines, model, _status = train_report(variant, False, policy)
+                if model is None:
+                    continue
+                hit, n = held(model, fresh)
+                note(f"pass {_pass} candidate {hit}/{n} ({float(hit)/float(n) * 100.0 if n > 0 else 0.0:.2f}%)")
+                if n > 0 and hit > best_hit:
+                    best_hit = hit
+                    best_n = n
+                    best_model = model
+            if best_model is not None:
+                current = read_policy(policy)
+                old_hit, old_n = held(current, fresh) if current else (0, 0)
+                if accept_model(best_hit, best_n, old_hit, old_n):
+                    write_policy(policy, best_model, write)
+                    note(f"wrote best policy {best_hit}/{best_n}")
+                else:
+                    note(f"kept current ({old_hit}/{old_n})")
+            else:
+                note("no candidate from the 4 passes")
     except KeyboardInterrupt:
         note("Stopped.")
         note(f"policy {policy}")

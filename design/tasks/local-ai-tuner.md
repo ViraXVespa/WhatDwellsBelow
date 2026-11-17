@@ -43,6 +43,12 @@ Vira said go on 2026-11-03. The set-and-forget command is `python tools/local-ai
 
 ## Status
 
+Each loop cycle now trains 4 bootstrap variants of the gathered rows and keeps only the best held-out policy.
+
+Each loop cycle now runs the training step 4 times on the gathered rows before the next dive.
+
+Campaign slot now skips the general local-exit door/stairs check so the Extraction Gate cannot lock the AI into pacing.
+
 `--headed` on the loop command launches a visible Godot window so the campaign can be watched.
 
 The loop now passes `--wdb-pt-stall-sec=2700`. A campaign that sees no death and no floor progress (deepest or guardian/stairs clear) for 45 minutes of in-game time (whichever of act_t/sim_t hits first) calls campaign_stop("stall") and the loop trains.

@@ -155,7 +155,7 @@ static func think(pt: PlayHost, p: Node, delta: float) -> void:
 			Misc.use_prop(pt, p, local)
 			return
 		var stairs_locked: bool = lk.find("stairs") >= 0 and bool(local.get("locked"))
-		if not stairs_locked and (lk.find("door") >= 0 or lk.find("stairs") >= 0):
+		if str(pt.slot) != "campaign" and not stairs_locked and (lk.find("door") >= 0 or lk.find("stairs") >= 0):
 			U._lock(pt, local, 2.5)
 			L.decide(pt, p, "door", "local_exit", L.target(local))
 			Misc.use_prop(pt, p, local)
