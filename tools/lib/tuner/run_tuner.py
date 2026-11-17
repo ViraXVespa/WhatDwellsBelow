@@ -815,7 +815,7 @@ def godot_missing() -> str:
     return ""
 
 
-def launch_smoke(root: Path, extra: list[str], sec: float, log_dir: Path, timeout: int | None = None) -> tuple[str, dict]:
+def launch_smoke(root: Path, extra: list[str], sec: float, log_dir: Path, timeout: int | None = None, gui: bool = False) -> tuple[str, dict]:
     godot_lib = load_module("godot_lib")
     log_dir.mkdir(parents=True, exist_ok=True)
     err_log = log_dir / "godot-err.txt"
@@ -825,10 +825,11 @@ def launch_smoke(root: Path, extra: list[str], sec: float, log_dir: Path, timeou
     res = godot_lib.run_godot(
         root,
         root,
-        ["--headless", "--", *extra],
+        ["--headless", "--", *extra] if not gui else ["--", *extra],
         out_log=out_log,
         err_log=err_log,
         timeout=limit,
+        gui=gui,
     )
     wall = time.perf_counter() - t0
     text = ""
@@ -1156,6 +1157,7 @@ def loop_flags(rows: int) -> list[str]:
         "--wdb-pt-fast",
         "--wdb-pt-scale=6",
         "--wdb-pt-until-death",
+        "--wdb-pt-stall-sec=2700",
     ]
     if rows > 0:
         flags.append(f"--wdb-pt-gather={int(rows)}")
@@ -1197,7 +1199,7 @@ def do_loop(args, root: Path) -> int:
             work = Path(tempfile.mkdtemp(prefix="wdb-tuner-loop-"))
             try:
                 text, res = launch_smoke(
-                    root, loop_flags(int(args.rows)), float(args.wait), work, timeout=int(args.wait)
+                    root, loop_flags(int(args.rows)), float(args.wait), work, timeout=int(args.wait), gui=bool(args.headed)
                 )
             except Exception as exc:
                 if type(exc).__name__ in ("GodotBusy", "FileNotFoundError"):
@@ -1445,6 +1447,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--frames", default="", help="Folder of frames for the pixel check. Empty skips it. Needs opencv.")
     ap.add_argument("--rows", type=int, default=0, help="Optional decide-row cap before each train. 0 waits until the delve ends in death. loop only.")
     ap.add_argument("--wait", type=int, default=14400, help="Seconds to wait for one campaign gather. loop only.")
+    ap.add_argument("--headed", action="store_true", help="Launch with a visible window instead of headless. loop only.")
     ap.add_argument("--file", default="", help="Policy bundle path for export and import.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)

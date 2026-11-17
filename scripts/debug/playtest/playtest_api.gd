@@ -10,6 +10,7 @@ const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PtGate := preload("res://scripts/debug/playtest/pt_gate.gd")
 const Campaign := preload("res://scripts/debug/playtest/campaign_run.gd")
+const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const HumanLog := preload("res://scripts/debug/playtest/human_log.gd")
@@ -58,6 +59,8 @@ var last_beat_t: float = -1.0
 var last_wait_t: float = -9.0
 var last_think_t: float = -1.0
 var act_t: float = 0.0
+var last_progress_t: float = 0.0
+var last_deepest: int = 0
 var gate_t: float = 0.0
 var gate_why: String = ""
 var perf: Dictionary = {}
@@ -132,6 +135,8 @@ func begin_smoke() -> void:
 	last_wait_t = -9.0
 	last_think_t = -1.0
 	act_t = 0.0
+	last_progress_t = 0.0
+	last_deepest = int(App.prog.deepest)
 	reset_perf()
 	path.clear()
 	path_i = 0
@@ -284,6 +289,18 @@ func _tick(delta: float) -> void:
 		return
 	ai_on = true
 	act_t += delta
+	# Stall watchdog: 45 min in-game (whichever clock hits first) with no death or floor progress
+	if LiveSmoke.stall_sec() > 0.0 and LiveSmoke.campaign_active() and LiveSmoke.until_death():
+		var progressed: bool = int(App.prog.deepest) > last_deepest or Campaign.floor_cleared(int(App.floor_n), bool(App.boss_dead))
+		if progressed:
+			last_progress_t = maxf(sim_t, act_t)
+			last_deepest = int(App.prog.deepest)
+		var stalled: float = maxf(sim_t, act_t) - last_progress_t
+		if stalled >= LiveSmoke.stall_sec():
+			printerr("PT: stall in_game=%.1f" % stalled)
+			LiveSmoke.campaign_stop("stall")
+			return
+
 	PtGate.set_scale(PtGate.acting_scale(self))
 	perf["scale"] = float(Engine.time_scale)
 	if smoke_mode and act_t >= 8.0:

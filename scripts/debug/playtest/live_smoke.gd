@@ -12,6 +12,7 @@ const CAMPAIGN_FLAG := "--wdb-pt-campaign"
 const GATHER_FLAG := "--wdb-pt-gather"
 const UNTIL_DEATH_FLAG := "--wdb-pt-until-death"
 const UNTIL_LIVE_FLAG := "--wdb-pt-until-live"
+const STALL_FLAG := "--wdb-pt-stall-sec"
 static var gather_n: int = 0
 
 static func active() -> bool:
@@ -84,6 +85,12 @@ static func until_death() -> bool:
 static func until_live() -> bool:
 	return CliArgs.has(UNTIL_LIVE_FLAG)
 
+static func stall_sec() -> float:
+	var raw: String = _str(STALL_FLAG, "")
+	if raw == "" or not raw.is_valid_float():
+		return 0.0
+	return maxf(0.0, float(raw))
+
 
 static func campaign_stop(why: String) -> void:
 	if not campaign_active():
@@ -100,6 +107,9 @@ static func campaign_stop(why: String) -> void:
 		printerr("PT: done=1")
 	elif why == "lived":
 		printerr("PT: campaign_stop=lived")
+		printerr("PT: done=1")
+	elif why == "stall":
+		printerr("PT: campaign_stop=stall")
 		printerr("PT: done=1")
 	else:
 		printerr("PT: campaign_stop=%s" % why)
