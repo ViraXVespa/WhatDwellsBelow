@@ -6,6 +6,9 @@ const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
 
 static func _ready(host: Node) -> void:
+	if "--mcp" in OS.get_cmdline_user_args() and ResourceLoader.exists("res://addons/godot_ai/runtime/game_helper.gd"):
+		ProjectSettings.set_setting("autoload/_mcp_game_helper", "*res://addons/godot_ai/runtime/game_helper.gd")
+		ProjectSettings.save()
 	LocS.setup()
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	host.world_action.connect(func(action: String): world_action(host, action))

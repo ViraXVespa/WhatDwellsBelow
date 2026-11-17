@@ -11,7 +11,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 | Path | Recognize | Deliver |
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`, then the repository pc-offload skill. Same-system APIs just do; design decisions, a new cross-system owner or a named live-module replace are asked first (`ask_user_question`, even under always-allow). |
-| **Web / chat** | You cannot write the repo | `design/web-session.md`. Never assume a disk write landed. |
+| **Web / chat** | You cannot write the repo | `design/web-session.md`. |
 | **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python tools/bot_status.py`, then one printed Job file. Refactor only, plus a `tools/` runner the User approved. Smokes, shots, gates: `BOT.md`. Ship via branch + PR. |
 
 If unsure: ask, then **web / chat**.
@@ -36,6 +36,4 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 Reading: this file + the path file + (web / Build) the plan pair + the topic doc and gates whose `when` matches. **Multi-system job:** list every system and read each one's doc and code-map row before changing anything.
 Do not fetch this file again. Routing work: `design/load-graph.md`.
 
-Earlier work: connected wdb MCP, else `find.py changed`; `session.py summary --job JOB` reads any tool RESULT. Never open `_logs/` with a file read. A symbol missing from the packet: one lookup of that symbol plus `slice.py adjust` (add-func, add-doc, or promote) in the same turn. Do not xref `^func` or list names to rebuild a plan the Approach already states. A doc and its code disagree: compare history (`find.py changed --history`, `design/prove.md`), trust the newer, ask if unclear.
-Imagine (Build only): `design/isolated-media.md` first; Web / chat and Grok Bot never run the isolated runner.
 Ask as many questions as the job needs, in rounds. Report when done, with rough edges (`tools.md` rule 9). Build and Web may add a helpful tool (rule 5) and tell the User.

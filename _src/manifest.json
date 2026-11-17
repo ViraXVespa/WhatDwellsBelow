@@ -11086,6 +11086,42 @@
         58,
         55
       ]
+    },
+    {
+      "live": "assets/ui/hud/portrait_male.png",
+      "source": "sources/assets/sprites/player/bible_locked_male.png",
+      "origin": "_src/sources/assets/sprites/player/bible_locked_male.png",
+      "kind": "figure",
+      "loose": true,
+      "window": "full",
+      "flip": false,
+      "fit": [
+        128,
+        128,
+        32,
+        16,
+        96,
+        112
+      ],
+      "opaque_side": 64
+    },
+    {
+      "live": "assets/ui/hud/portrait_female.png",
+      "source": "sources/assets/sprites/player/bible_locked_female.png",
+      "origin": "_src/sources/assets/sprites/player/bible_locked_female.png",
+      "kind": "figure",
+      "loose": true,
+      "window": "full",
+      "flip": false,
+      "fit": [
+        128,
+        128,
+        32,
+        16,
+        96,
+        112
+      ],
+      "opaque_side": 64
     }
   ],
   "videos": [

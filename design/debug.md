@@ -1,4 +1,4 @@
-﻿# Debug tools (door)
+# Debug tools (door)
 
 Status: current plan  
 Read when: secret console, playtest, journal, smoke
@@ -24,3 +24,5 @@ Always on in a debug build: hitch log (not on Pages), debug menu and its input c
 Opt-in per scenario: phase smokes (`--wdb-phaseN-smoke`), load/open timing (`--wdb-*-timing`), hub bench (`--wdb-hub-bench`), dungeon bench (`--wdb-dungeon-bench`), shot tool and flows, playtest runs and journal (`--wdb-pt-*`, debug menu), web hook (`?wdb-playtest`), anim browser (built on first open), dungeon map dump.
 
 `gate.py release` proves release: title to hub to dungeon with `--wdb-release` and with the folder deleted, no debug node, no script error; `--pck DIR` / `--pck-debug DIR` check an export's PCK. `web_perf` hitch rows and `wdb-playtest` flows need the debug export.
+
+`--mcp` flag enables the Godot AI game-helper autoload (editor/debug only; never on normal or web launches).

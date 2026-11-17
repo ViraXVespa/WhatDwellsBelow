@@ -8,8 +8,8 @@ const Icons := preload("res://scripts/ui/gear_icons.gd")
 const CARD_TEX := "res://assets/ui/hud/card.png"
 const BAR_TEX := "res://assets/ui/hud/bar.png"
 const GEM_TEX := "res://assets/ui/hud/gem.png"
-const BIBLE_MALE := preload("res://assets/sprites/player/bible_locked_male.png")
-const BIBLE_FEMALE := preload("res://assets/sprites/player/bible_locked_female.png")
+const BIBLE_MALE := preload("res://assets/ui/hud/portrait_male.png")
+const BIBLE_FEMALE := preload("res://assets/ui/hud/portrait_female.png")
 const BAR_INSET := 3.0
 const STRIP_INK := Color(0.93, 0.88, 0.76)
 
