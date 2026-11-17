@@ -1,138 +1,69 @@
 {
-	"series": "0.11",
+	"series": "0.12",
 	"generated_from": "design/changelog",
 	"entries": [
 		{
-			"label": "0.11.5",
+			"label": "0.12.0",
 			"points": [
 				{
-					"text": "Task skeleton now places the User-only launch line in a ## Next Steps (User Only) section at the bottom of the file instead of a resume: header field."
+					"text": "Dungeon map is event-driven. The floor map is built once and fog is revealed with a mask."
 				},
 				{
-					"text": "docs.py task show no longer prints an empty resume line."
+					"text": "Crystals and the player marker update on events instead of every floor tick."
 				},
 				{
-					"text": "Added task splash-platform-prompt for the start-splash platform prompt and click/tap change (local worktree only; do not push to the Grok Build branch)."
+					"text": "The corner minimap is a thin-ruled square that shows revealed terrain with fog on unrevealed cells."
 				},
 				{
-					"text": "The gather agent no longer stops at 30 rounds or starts the main session on the seed when it fails. It runs until it reports or the context is compacted; a compact, crash, timeout, or missing report writes a halt and does not launch. An `xref` pattern that contains `|` requires `regex=true`. `slice.py open` prints each prepare step as it runs, and the gather agent's thoughts and tool calls as they arrive."
+					"text": "Settings \u2192 UI controls minimap size (25\u20131000 px), opacity, zoom (1\u00d7\u2013256\u00d7, default 8\u00d7), and zoom mode (minimum or fixed)."
+				},
+				{
+					"text": "Settings \u2192 UI also holds full-map opacity and the map-toggle mode."
+				},
+				{
+					"text": "Map toggle is a three-state control (hidden / mini / full) via the View/Back button or M key."
+				},
+				{
+					"text": "Adaptive toggle (default) swaps between the full map and the saved rest state; cycle mode steps through all three."
+				},
+				{
+					"text": "The full map opens fitted to the revealed area, supports zoom and pan, and gameplay continues underneath."
+				},
+				{
+					"text": "HUD strip is tighter. Potion and food slots show the icon with stack count."
+				},
+				{
+					"text": "Potion and food use a clockwise dark sweep for cooldowns and heal-over-time instead of a separate numeric bar."
+				},
+				{
+					"text": "Player portrait shows progressive damage: bruises at 88 % HP, cuts at 72 %, and blood from 50 % downward."
+				},
+				{
+					"text": "A red screen-edge glow appears at 50 % HP and intensifies toward 0 % (toggleable in Settings \u2192 UI, default on)."
+				},
+				{
+					"text": "Interact prompt has a dark plate so it stays readable over the dungeon."
+				},
+				{
+					"text": "Campaign walker explores only the revealed floor and resumes cleanly after death or dispel."
+				},
+				{
+					"text": "Campaign walker handles crystal binding, resource gathering, and gate seeking more consistently."
+				},
+				{
+					"text": "Extraction-gate use by the campaign walker still needs more work."
+				},
+				{
+					"text": "MCP is used when connected; gathering can be turned off with --no-gather."
+				},
+				{
+					"text": "Gather agent and slice open/adjust behavior improved; local AI tuner updated."
+				},
+				{
+					"text": "Tool efficiency, help probes, and pixel-shot handling on the GL SubViewport improved."
 				}
 			],
-			"summary": ""
-		},
-		{
-			"label": "0.11.4",
-			"points": [
-				{
-					"text": "Gather step now finishes the high-signal context packet on grok-build-0.1 so the main session starts clean."
-				},
-				{
-					"text": "Removed unnecessary clamps (--effort low, --no-subagents, --disable-web-search, --no-memory) from the gather agent."
-				},
-				{
-					"text": "Main session first message now points at the task file first, then session-context.md, and states that gather already ran."
-				},
-				{
-					"text": "Post-compact turns regenerate and re-read session-context.md; session-plan.md stays current via adjust and the four sections."
-				},
-				{
-					"text": "Build tasks moved the User-only launch line into a ## Next Steps (User Only) section; dropped the special-case verbose resume wording."
-				}
-			],
-			"summary": ""
-		},
-		{
-			"label": "0.11.3",
-			"points": [
-				{
-					"text": "The `wdb` MCP answers in fewer calls: `all=true` returns a whole lookup or check in one reply, `lookup reads=[...]` answers several reads at once, pages are about 60 lines, `names` lists every function, and a doc without a heading returns its outline with line numbers."
-				},
-				{
-					"text": "`slice.py open` gains `--seed-only`, `--in WT` (an existing worktree) and `--launch WT --review`; the gather agent now sees the User's request, is told to batch its reads, and stops only at a 30-round runaway cap."
-				},
-				{
-					"text": "The mechanical seed lists the scripts a job doc names (with their functions) instead of the whole system, the index can hold line ranges of files and docs, `adjust batch --op` works under the gather role, and the identity says `gather: agent` once the agent refined it."
-				},
-				{
-					"text": "Fixes from the second gather run: `adjust demote` and `set-condition` take their condition as text or `--when`, `adjust --help` lists every op, a failing op's error always prints in full (also with `--dry-run`, and in `--json`), `--verbose` exists, `find.py xref --path` accumulates repeated paths, `wdb_mcp.py call --help` lists each tool's arguments, a doc without a heading stays its outline even with `all=true`, and identical batched reads run once."
-				},
-				{
-					"text": "Report Bug on phones and tablets: tapping a text field now opens the on-screen keyboard in the web build, the Door and Job lists take two taps (the first picks a row and shows its description, the second closes the list) and scroll instead of covering the description, Email me about this report stays off and disabled until you type a valid email and then checks itself, and the privacy line now promises your data is never sold and is used only for debugging and messages you authorize."
-				},
-				{
-					"text": "The start card's ref and merge-back follow the checked-out branch; `check.py load-graph` no longer flags the slice's `session-context.md`."
-				},
-				{
-					"text": "Rough edges from the implementation run: `slice.py open` sets a new worktree up for Godot and shoots the slice's before shots before any edit (`shots.py flow --before`), and `check.py prove` says plainly whether a visual review is requested and which shots, names a missing setup, and groups signature and docstring REVIEW lines (310 to about 20 here); `find.py func` stops at the function end; `find.py xref` and the gather prompt cover `project.godot` and `export_presets.cfg`; `--scope`, `--history`, `--for` and `--paths` accumulate repeats; `--match` hits never fold; the script cap says 10000 bytes; Report Bug smoke failures name the failed step; Godot UI-check quirks are written down in debug-smokes."
-				}
-			],
-			"summary": "The Report Bug page works on touch screens (keyboard, two-tap lists, email opt-in, privacy promise); behind the scenes, the slice gather and the repo MCP waste fewer turns and scope context more tightly."
-		},
-		{
-			"label": "0.11.2",
-			"points": [
-				{
-					"text": "New read-only repo MCP for Grok Build, `wdb` (`lookup`, `check`, `protocol`): thin wrappers over the existing find/check/docs/session tools that answer with a status and a short first page, keep the rest behind a handle (several sessions can share one checkout), and cap Build check reruns."
-				},
-				{
-					"text": "`slice.py open` now prepares the slice before Build starts: it runs `slice.py start` for the new session, lets a cheap gather agent refine the session plan, checks the result itself and writes `session-context.md`. A crash falls back to the plain seed with a loud warning; a halt or a failed check stops before launch. New `--review`, `--launch WT` and `--no-gather`."
-				},
-				{
-					"text": "`session-plan.md` is now a context index (core items and conditional candidates) changed only through the new `slice.py adjust`, which logs every change and is replayed by `plan --refresh`; the new `slice.py expand` builds or validates the packet. `find.py func --full` prints a whole declaration."
-				},
-				{
-					"text": "Build docs and skills point at the packet and the MCP instead of the manual trim; the live run with the real model is a separate step (task `build-gather-mcp`)."
-				}
-			],
-			"summary": "Behind-the-scenes Build tooling: slices open with their context already gathered and checked, and a repo MCP serves lookups in short pages, with no gameplay changes."
-		},
-		{
-			"label": "0.11.1",
-			"points": [
-				{
-					"text": "Unused-code cleanup across all scripts: the unused-code sweep now follows the ways the game actually reaches its code (string calls on loaded scripts, lazy-loaded helpers, schema keys read by name, shot-flow targets, skin lists, typed facades), so far fewer live functions are flagged by mistake. Flagged \"maybe unused\" rows dropped from about 750 to 140; the rest are shared or debug-only paths that stay as warnings on purpose."
-				},
-				{
-					"text": "Clearer types in playtest, debug menu, enemy AI, shop, pause/recap, music and light-stamp code (new `PlayHost`, `DebugMenu`, `EnemyHost`, `ProgressUI` class names) with no behavior change."
-				},
-				{
-					"text": "Verified-dead code removed: the orphaned pause inventory action and text scripts (`inv_act.gd`, `inv_text.gd`) and their dead helper chain, the unused archives `rebuild`, unused dummy-boss helpers, and stale facades, with their doc mentions."
-				},
-				{
-					"text": "Safer cleanup tooling: `lint.py unused` gains a per-chunk view (`--paths`, baselines, `--why` reach explanation), `--apply` removes exact stale doc references itself and records each pass, and visual-path deletions must pass a load check. New `check.py chunk-finish` runs a chunk's checks with one retry and prints the failing line."
-				},
-				{
-					"text": "Fixes and coverage: the nightly promo clip selftest passes again on ffmpeg 6.1; the archives docs/read screens are covered by a shot flow; fresh worktrees are told how to install the Godot AI addon from the Asset Library."
-				}
-			],
-			"summary": "Behind-the-scenes cleanup \u2014 the unused-code sweep now understands how the game reaches its code, dead inventory and debug leftovers are removed, and new tooling makes future cleanups safer, with no gameplay changes."
-		},
-		{
-			"label": "0.11.0",
-			"points": [
-				{
-					"text": "GPU actor lighting and ground marks: actor sprites sample the shared light texture on the GPU at the feet (same origin/span/lod tap as the ground shader) and multiply the sticker by that value. CPU `LightRt.sample_xz` is removed from the actor hot path. Marks are near-black, low-alpha floor silhouettes whose sole positions and quad geometry are pre-baked in `actor_soles.json`. They live in a shared pool (starts at 6 nodes) that actors check out inside a light volume and return on exit. Hub uses one sun-driven mark; dungeon allows up to three (torches, crystals, campfires) with alpha split so they do not stack black. Static actors (dummy, vendor) no longer use `ActorLit`. Hub building shadows match their projected polygons again (hull-mask FINE_GAP band lowered from 200 to 165 so it no longer reads above the 0.75 inside cut and grows every shadow 0.1 m)."
-				},
-				{
-					"text": "Mark-pool and script-size follow-through: reparent into the pool with `false` so a mark never reads a global transform after its actor leaves the tree. `actor_lit.gd` split under 10 KB (mark pool and tick into `actor_lit/lit_pool.gd` and `lit_tick.gd`)."
-				},
-				{
-					"text": "Headless local-AI tuner and campaign: the loop no longer stalls before decide rows. On a headless display `wait_painted` yields one process frame instead of waiting for the never-emitted `frame_post_draw`. Decide-row counting deduplicates against the spool. A headless run produced 1924 new rows; the resulting policy scored 199/383 held-out and 22/383 on the scripted ladder. Campaign walker now paths to the living guardian, opens doors, and takes stairs after the guardian dies; one weapon worn per run with next-weapon selection by lowest performance; floor-5 clear stored per weapon. P6 smoke survives Loadout\u2019s real dungeon entry under the same headless wait. Wander falls through when a guardian or stairs exist; interact press uses the chosen prop instead of the nearest pickup stealing it."
-				},
-				{
-					"text": "Consumables on the live stat path: food and potion stat bonuses (`bonus_id` / `bonus_amt` / duration) flow through `App.gear()` via `consumable_bonus()`. Timed food (while heal-over-time is active) and potion (while its timer runs) add to derived stats. HP bonuses refresh max HP on apply and expire; the move-speed cache also watches active consumables."
-				},
-				{
-					"text": "Dungeon geometry and map edges: `outline.gd` split (seal/gap into `outline_seal.gd`); `mesh_span.gd` split (joins into `mesh_span_join.gd`, bevels into `mesh_span_bevel.gd`). Straight-span edge marking shared between `outline_seal` and `map_rim` via `edge_mark.gd`. Fixed-expectation edge/seal/rim fixtures added (`perf.py map --fixtures`). `Dungeon.walls` chain and the `torch_ms` metric removed (torch facing is assigned once at placement)."
-				},
-				{
-					"text": "Debug surfaces and tools: `debug.playtest` split into `playtest` (AI sim walker / recommended config) and `bench` (hub/dungeon/perf-sweep). Report Bug UI files and shared helpers named in the UI docs. Inventory gains its own code-map row. Routes bind the wall pipeline and the light_rt shared write. `lint.py unused` gained a multi-line string lexer, inner-class scopes, file/module-aware dead-code graph, verified `--apply`, and refuses property-block vars; verified-unused code removed from visual-review paths; nightly advisory unused sweep added. `review_hook --nope` fixed; perf_sweep hub claim corrected."
-				},
-				{
-					"text": "Process, docs, and parked work: compact stops named \u201csafe\u201d (before Prove or a follow-up Gather/Change). `find.py changed --prior-week` lists seed-to-seed diffs. Build pickup starts at `slice.py start` + pc-offload. AGENTS.md brought under its 3350-byte boot budget. Contradictions, dated lines, and read_when drift cleaned. `shot-catalog-gaps` task closed. Unfinished female modular-voxel mannequin (build script, cells, blend, keyed parts, review shots) saved under `_src/wip/modular-voxel-walk/` for next week."
-				}
-			],
-			"summary": "Grok Build Week 11 \u2014 GPU actor lighting and shared mark pool, headless AI tuner and campaign unblocked, consumable bonuses on the live stat path, dungeon/map edge and wall-pipeline cleanup with script splits under 10 KB, playtest/bench split, lint unused-code improvements, and the unfinished female voxel mannequin parked for next week."
+			"summary": "Week 12 ships a customizable event-driven dungeon map and minimap, clearer HUD damage feedback with portrait wounds and a low-HP border glow, a more reliable campaign walker, and improved build tooling."
 		}
 	]
 }
