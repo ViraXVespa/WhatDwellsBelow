@@ -195,22 +195,30 @@ static func campaign_depth(pt: PlayHost, p: Node, delta: float) -> bool:
 		var aim_cell: Vector2i = pt._cell_of_node(door)
 		if _crystal_here(pt, p, aim_cell):
 			return true
-		var here: Vector2i = pt._cell_of_node(p)
-		var at_door: bool = bool(door.get("open")) and pt._dist(p, door) <= 2.2
-		if not at_door:
-			var open_way: bool = PathU.opens_toward(pt, here, aim_cell) or pt._near_closed_door(p)
-			if open_way:
-				pt.set_meta("campaign_slip", 0.0)
+		if _crystal_detour(pt, p, aim_cell):
+			return true
+		var door_open: bool = bool(door.get("open"))
+		if door_open:
+			var boss_live: Node = _living_boss(pt, p)
+			var at_open: bool = pt._dist(p, door) <= 2.2
+			if boss_live != null and (pt._dist(p, boss_live) <= A.SEE or at_open):
+				L.decide(pt, p, "hunt", "campaign_boss", L.target(boss_live))
+				if pt._dist(p, boss_live) > A.SEE:
+					pt._follow_goal(p, boss_live)
+					pt.aim = pt._xz_to(p, boss_live)
+				else:
+					A.approach_boss(pt, p, boss_live)
+				return true
+			if not at_open:
 				L.decide(pt, p, "hunt", "campaign_door", L.target(door))
 				pt._follow_goal(p, door)
 				pt.aim = pt._xz_to(p, door)
 				return true
-			if _crystal_detour(pt, p, aim_cell):
-				return true
-			if _retreat_move(pt, p):
-				L.decide(pt, p, "wander", "campaign_back", L.target(door))
-				return true
-			return _explore_slip(pt, p, door, delta)
+		else:
+			pt.set_meta("campaign_slip", 0.0)
+			L.decide(pt, p, "hunt", "campaign_door", L.target(door))
+			use_prop(pt, p, door, 1.85)
+			return true
 	return _explore(pt, p, delta)
 
 static func _tight(pt: PlayHost, p: Node, delta: float) -> bool:
@@ -368,8 +376,13 @@ static func _known_guardian(pt: PlayHost, p: Node) -> Node:
 	if pt.has_meta("guardian_door"):
 		var kept: Variant = pt.get_meta("guardian_door")
 		if kept is Node and is_instance_valid(kept):
-			return kept as Node
-		pt.remove_meta("guardian_door")
+			var kept_door: Node = kept as Node
+			if bool(kept_door.get("open")) and _living_boss(pt, p) == null:
+				pt.remove_meta("guardian_door")
+			else:
+				return kept_door
+		else:
+			pt.remove_meta("guardian_door")
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -410,12 +423,19 @@ static func _bind_here(pt: PlayHost, p: Node) -> bool:
 	return true
 
 static func _haul(pt: PlayHost, p: Node) -> bool:
-	if int(pt._gather_cargo()) < HAUL:
+	var resources: int = int(pt._gather_cargo())
+	var purse: int = int(App.gold)
+	if resources < HAUL and purse < HAUL:
 		return false
 	var clerk: Node = pt._best_clerk(p)
 	if clerk == null or not is_instance_valid(clerk) or not _wants_clerk(pt, clerk):
 		return false
-	if not pt._has_path(p, clerk):
+	if _mail_if_close(pt, p, clerk):
+		return true
+	var start_cell: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
+	var goal_cell: Vector2i = pt._stand_cell(p, clerk)
+	var near_cell: Vector2i = PathU._toward(pt, start_cell, goal_cell)
+	if PathU._manh(near_cell, goal_cell) > 1:
 		return false
 	U._lock(pt, clerk, 4.0)
 	L.decide(pt, p, "clerk", "campaign_extract", L.target(clerk))

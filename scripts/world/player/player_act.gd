@@ -134,8 +134,16 @@ static func refresh_prompt(host: Node) -> void:
 static func try_interact(host: Node) -> void:
 	if App.ui_open or host.interact_lock > 0.0:
 		return
-	var best: Node = Near.aimed(host as Node3D, 1.25)
-	if best == null:
+	var radius: float = 1.25
+	var goal: Node3D = null
+	var pt: Node = App.playtest as Node
+	if pt != null and bool(pt.get("ai_on")) and pt.get("path_goal") is Node3D:
+		goal = pt.get("path_goal") as Node3D
+		radius = 1.85
+		if goal.get("reach") != null:
+			radius = maxf(radius, float(goal.get("reach")))
+	var best: Node = Near.aimed(host as Node3D, radius)
+	if best == null and goal == null:
 		best = Near.nearest(host as Node3D, 1.25)
 	if best and best.has_method("interact"):
 		App.interact_locked = false

@@ -41,8 +41,6 @@ static func best_clerk(pt: PlayHost, p: Node) -> Node:
 		if d < best_d:
 			best_d = d
 			best = n
-	if best and not pt._has_path(p, best):
-		return null
 	return best
 
 static func nearest_hunt(pt: PlayHost, p: Node) -> Node:
