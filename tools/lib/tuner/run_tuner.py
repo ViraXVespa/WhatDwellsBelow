@@ -1131,12 +1131,14 @@ def consider(rows: list[dict], dest: Path, write: bool) -> list[str]:
     new_hit, new_n = held(model, rows)
     current = read_policy(dest)
     old_hit, old_n = held(current, rows) if current else (0, 0)
-    lines.append(f"candidate {new_hit}/{new_n} current {old_hit}/{old_n}")
+    new_p = (float(new_hit)/float(new_n)) * 100.0
+    old_p = (float(old_hit)/float(old_n)) * 100.0
+    lines.append(f"candidate {new_hit}/{new_n} ({new_p:.2f}%) current {old_hit}/{old_n} ({old_p:.2f}%)")
     if accept_model(new_hit, new_n, old_hit, old_n):
         write_policy(dest, model, write)
         lines.append("policy written" if write else "dry-run: policy not written")
     else:
-        lines.append("kept the current policy")
+        lines.append(f"kept the current policy ({old_p - new_p:.2f}% gap)")
     return lines
 
 
