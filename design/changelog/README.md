@@ -2,6 +2,6 @@
 
 One flat file per build: `design/changelog/{epoch}.{series}.{patch}.md`.
 
-The current series is the editable set. A finished file stays at that path. A note that is not in this directory is in git history.
+Week start (`tools/release.py week-start`) deletes every `*.md` in this directory except this README so the new series starts clean. Finished notes remain in git history.
 
 Grok Build does not write changelogs.

@@ -3,7 +3,8 @@
 (design/build-week-start.md); Grok Bot never runs it. In this order: seed version.json as epoch.{series+1}.0 + open_commit,
 create and switch to the local branch grok-build-w{series+1} from HEAD, commit the seed
 there ("Grok Build Week N": version.json and the catalog), `grok worktree gc`, delete Godot locks, clean logs
-(--new-week). The weekly archives are NOT made here: when the squash-merge of that branch adds
+(--new-week), and delete every design/changelog/*.md except README.md
+(staged in the seed commit). The weekly archives are NOT made here: when the squash-merge of that branch adds
 design/changelog/0.N.0.md, CI pins grok_build_wN at the merge and grok_web_w{N-1} at its parent (release.py ci-archive). Catch-up only: when the closing series has no
 `grok_web_w{series}` / `grok_build_w{series}` row (CI did not run), the missing rows are pinned at HEAD with local
 tags. Never bumps the epoch, kills Godot, pushes, or writes leave-off. --dry-run prints "would ..." lines.
@@ -110,10 +111,19 @@ def main(argv: list[str] | None = None) -> int:
         if not dry:
             data = {"epoch": epoch, "series": new_series, "patch": 0, "label": new_label, "open_commit": sha}
             ver_p.write_text(json.dumps(data, indent="\t") + "\n", encoding="utf-8")
+    # changelog cleanup: list always; delete + stage only on real run
+    cl_dir = root / "design/changelog"
+    cl_files = sorted(f for f in cl_dir.glob("*.md") if f.name != "README.md") if cl_dir.is_dir() else []
+    if dry:
+        for f in cl_files:
+            say(f"would delete {agent_log.rel(root, f)}" if dry else f"delete {agent_log.rel(root, f)}")
     if not dry:
         # archives/docs is retired (notes are not copied). A missing pathspec fails this add.
-        # Changelog files stay flat. Week start does not move or delete them.
+        for f in cl_files:
+            f.unlink(missing_ok=True)
         paths = ["scripts/data/version.json", "scripts/data/archive_catalog.json"]
+        if cl_files:
+            paths.extend(agent_log.rel(root, f) for f in cl_files)
         added = repo_lib.run_git(root, "add", "-A", "--", *paths)
         committed = repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths) if added[0] == 0 else (1, "")
         if added[0] != 0 or committed[0] != 0:
