@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.12.4",
+			"points": [
+				{
+					"text": "Week start now deletes every design/changelog/*.md except README.md (staged in the seed commit; dry-run lists the files; history stays in git)."
+				}
+			],
+			"summary": "Week-start cleans prior changelog files so each series starts fresh."
+		},
+		{
 			"label": "0.12.3",
 			"points": [
 				{
