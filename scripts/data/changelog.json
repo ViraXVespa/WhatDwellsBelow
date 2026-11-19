@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.12.5",
+			"points": [
+				{
+					"text": "Updated a task and made a few small tweaks."
+				}
+			],
+			"summary": "Nothing sexy happened. Just a small maintenance patch."
+		},
+		{
 			"label": "0.12.4",
 			"points": [
 				{
