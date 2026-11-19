@@ -1,1 +1,1 @@
-A separate gather session closed the context index and inlined the core bodies in this packet. Write the Approach from these bodies before editing if this packet has none (edit order, what must stay true, the prove command). If an Approach is present, trust the inlined code when they disagree.
+A separate gather session already refined the packet. The core bodies are inlined. Write the Approach from these bodies before editing if this packet has none (edit order, what must stay true, the prove command). If an Approach is present, trust the inlined code when they disagree.

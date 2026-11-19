@@ -1,14 +1,17 @@
-"""The `slice.py open` gather step (library; import only): run start for the main session, seed, local agent, packet.
+"""The `slice.py open` gather step (library; import only): run start for the main session, the local chain, then the packet.
 
 Order in a new worktree WT (open_slice.py calls these):
     1. start(): `slice.py start <flags>` in WT with GROK_SESSION_ID = the main session's pre-assigned id (`grok -s SID`),
        so slice state records the main session and session-plan.md gets its mechanical seed.
-    2. The main session closes the mechanical seed and writes the Approach. Open does not run a separate gather agent.
+    2. local_chain(): Ollama role sessions (`slice.py gather-pick --chain`). A pick sets `gather: agent`.
+       A miss, a model error, or invalid JSON on scout or mark leaves the mechanical seed (`gather: seed`).
+       `--seed-only` skips this step. WDB_GATHER_PICK=skip is the open selftest and does not call Ollama.
     3. finish(): `plan --refresh --clean` restores the seed only when a warn is set and there is no halt file.
        Then open's own `slice.py expand --check`
-       (it does not trust the agent): a failure stops before launch; then `expand --out session-context.md` writes the packet.
+       (it does not trust the chain): a failure stops before launch; then `expand --out session-context.md` writes the packet.
 A `_logs/gather/halt` file (adjust report --halt) also makes open refuse to launch. The first message for the main session is
-tools/data/gather/build-first.md. Open does not call a model. Tests pass a stub as `grok`.
+tools/data/gather/build-first.md plus packet-refined.md when the chain marked funcs, otherwise packet-seed.md.
+The OpenCode launcher in this file is not called by open. Tests pass a stub as `grok`.
 """
 from __future__ import annotations
 
@@ -502,6 +505,44 @@ def finish(wt: Path, restore: bool) -> tuple[bool, list[str]]:
     run("expand", "--out", "session-context.md")
     live("open: packet written\n")
     return True, []
+
+def local_chain(wt: Path, door: str, job: str, task: str, say) -> int:
+    """Run the Ollama role chain in wt. Returns how many funcs were marked, or 0 when the seed stays.
+
+    Never raises. WDB_GATHER_PICK=skip returns 0 without a model. WDB_GATHER_PICK=mark stubs
+    scripts/demo.gd:alpha for the open selftest.
+    """
+    import gather_pick
+
+    mode = os.environ.get("WDB_GATHER_PICK", "")
+    if mode == "skip":
+        say("open: gather skipped\n")
+        return 0
+
+    def stub(messages: list[dict[str, str]], _model: str) -> str:
+        user = messages[-1]["content"] if messages else ""
+        if user.startswith("Role: scout"):
+            if "scripts/demo.gd" in user:
+                return json.dumps({"read": ["scripts/demo.gd"]})
+            return json.dumps({"read": []})
+        if user.startswith("Role: mark") and "File: scripts/demo.gd" in user:
+            return json.dumps({"edit": [{"path": "scripts/demo.gd", "func": "alpha", "why": "the edit"}]})
+        if user.startswith("Role: trim"):
+            return json.dumps({"keep": ["alpha"]})
+        if user.startswith("Role: review"):
+            return json.dumps({"drop": []})
+        return json.dumps({"read": []})
+
+    complete = stub if mode == "mark" else gather_pick.ollama_complete
+    try:
+        rep = gather_pick.chain(wt, door, job, task, gather_pick.MODEL, complete, False, say)
+    except Exception as exc:
+        say(f"open: gather failed; the mechanical seed stays ({exc})\n")
+        return 0
+    if rep.route != "pick":
+        say("open: gather left the mechanical seed\n")
+        return 0
+    return rep.accepted
 
 def gathered(wt: Path) -> bool:
     """True when the index identity says the gather agent refined the seed (`gather: agent`, set by slice.py adjust)."""

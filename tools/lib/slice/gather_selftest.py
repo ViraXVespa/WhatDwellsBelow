@@ -1,4 +1,4 @@
-"""`slice.py open` gather cases with a stub grok (library for open_slice.py --selftest; no model is ever called).
+"""`slice.py open` gather cases with a stub grok (library for open_slice.py --selftest; no Ollama is ever called).
 
 The stub ($WDB_GROK, a .py) creates the worktree (git worktree add + a copy of the tracked tools/), plays the gather
 agent per $STUB_MODE (ok, halt, bad, crash; crash exits before the report, so open must halt and not launch) through the real `slice.py adjust`, and records every call in $STUB_LOG.
@@ -121,10 +121,10 @@ def run(script: list[str], td: Path) -> list[str]:
     (td / "stub.py").write_text(STUB, encoding="utf-8")
     (td / "wts").mkdir()
 
-    def go(mode: str, *a: str) -> tuple[int, str, list[dict]]:
+    def go(mode: str, *a: str, pick: str = "skip") -> tuple[int, str, list[dict]]:
         logf = td / f"log-{len(list(td.glob('log-*')))}.jsonl"
         env = dict(os.environ, WDB_GROK=str(td / "stub.py"), WDB_OPENCODE=str(td / "stub.py"), STUB_LOG=str(logf), STUB_WTS=str(td / "wts"), STUB_MODE=mode,
-                   STUB_TOOLS=str(real), STUB_FILES=str(td / "files.txt"), WDB_OPEN_NO_PREPARE="1")  # no Godot download
+                   STUB_TOOLS=str(real), STUB_FILES=str(td / "files.txt"), WDB_OPEN_NO_PREPARE="1", WDB_GATHER_PICK=pick)  # no Godot, no Ollama
         env.pop("WDB_ROLE", None)
         p = subprocess.run([*script, "--root", str(root), *a], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
         calls = [json.loads(x) for x in logf.read_text(encoding="utf-8").splitlines()] if logf.is_file() else []
@@ -176,6 +176,19 @@ def run(script: list[str], td: Path) -> list[str]:
     prompt = (sess.get("argv") or [""])[-1]
     if code or "Fix the stub keyboard." not in prompt or "only the mechanical seed" not in prompt:
         bad.append("the User's request is appended to the main session's first message")
+    code, out, calls = go("ok", "demo.part", "--review", pick="mark")
+    wt_line = next((ln.split(" ", 1)[1].strip() for ln in out.splitlines() if ln.startswith("worktree ")), "")
+    wt = Path(wt_line) if wt_line else td / "none"
+    ctx = (wt / "session-context.md").read_text(encoding="utf-8") if (wt / "session-context.md").is_file() else ""
+    plan = (wt / "session-plan.md").read_text(encoding="utf-8") if (wt / "session-plan.md").is_file() else ""
+    if code or main_call(calls) or "gather: agent" not in plan or "scripts/demo.gd:alpha" not in ctx or "chain marked" not in out:
+        bad.append(f"a stub chain inlines the func and does not launch ({code}): {out[-400:]}")
+    else:
+        code2, out2, calls2 = go("ok", "--launch", str(wt), pick="skip")
+        sess = main_call(calls2)
+        prompt = (sess.get("argv") or [""])[-1]
+        if code2 or not sess or "already refined the packet" not in prompt or "only the mechanical seed" in prompt:
+            bad.append(f"--launch after a stub chain uses the refined first message: {prompt[:220]!r} {out2[-200:]}")
     bad += seed_only(go, main_call, td, root)
     return bad
 
