@@ -356,7 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     addon_line = "\n".join([addon_line, *prepare(wt, flows)])
     if gather:
         gather_agent.live("open: slice.py start\n")
-        code, out = gather_agent.start(wt, sargv, sid, tid, extra)
+        # code, out = gather_agent.start(wt, sargv, sid, tid, extra)  # skip launching main session during review
         if code != 0:
             tail = " | ".join(out.strip().splitlines()[-4:])
             return end("\n".join(lines + [addon_line, f"worktree {wt}", f"START FAILED in the worktree (exit {code}): {tail}"]), "FAIL", route="start-failed")
