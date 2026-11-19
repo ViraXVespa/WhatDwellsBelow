@@ -58,3 +58,4 @@ tools/__scratch.py
 # Downloaded model weights and tool caches (tools/imglib/scunet.py)
 /_cache/*
 !/_cache/.gdignore
+opencode.json

@@ -14,7 +14,10 @@ Change the start splash "Enter / Esc to continue" text to the correct platform p
 
 ## Acceptance
 - The splash shows the correct platform prompt for the current input method (keyboard, gamepad, or touch).
+-- Keyboard and gamepad should use the button and keyboard assets to show the image for the bound control, rather than text; similar to the control tooltips at the bottom of menus.
+-- Touch should just say "Tap to Continue" in plain text.
 - Click or tap advances past the splash.
+-- Tap currently does not work to bypass splash.
 - The worktree is left with local changes only (nothing pushed).
 
 ## Next Steps (User Only)
