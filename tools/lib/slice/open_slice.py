@@ -23,16 +23,15 @@ slice.py start inside the worktree.
 that junction cannot be created. Remove worktrees with `grok worktree rm` or `git worktree remove` (those drop the junction
 and leave the checkout install). Do not recursively delete the worktree folder in PowerShell 5.1.
 Gather (an AREA or --task that resolves to a routes.yaml door or job, and no handoff prompt): after the worktree exists, open runs
-`slice.py start` there for the main session (pre-assigned id, `grok -s SID`), the cheap gather agent refines the
-session-plan.md index, and `session-context.md` is written; the main session's first message is
-tools/data/gather/build-first.md (gather_agent.py has the steps). An unfinished gather (context compacted, crash, timeout, or no report) writes a halt and does not launch. While it runs, it prints each step as it starts (`open: ...`) and the gather agent's thoughts and tool calls as they arrive. --no-gather turns gathering off:
-no start, no agent, no session-context.md, and the main session gets the pre-gather command (it runs slice.py start
-itself). --review stops after the agent and prints the report; --launch WT then starts the main session there (--launch WT
---review: check, packet and report only). A halt from the agent refuses the launch. --seed-only stops after start and the
-seed (no agent, packet or launch) for a gather done by hand; --in WT uses an existing slice worktree instead of creating
+`slice.py start` there for the main session (pre-assigned id, `grok -s SID`) and writes `session-context.md` from the mechanical
+seed. The main session closes that index and writes the Approach (tools/data/gather/packet-seed.md, via build-first.md). There is
+no separate gather agent. While it runs, it prints each step as it starts (`open: ...`). --no-gather turns that off:
+no start, no session-context.md, and the main session gets the pre-gather command (it runs slice.py start
+itself). --review stops after the seed packet; --launch WT then starts the main session there (--launch WT
+--review: check and packet only). A halt file refuses the launch. --seed-only stops after start and the
+seed (no packet or launch) for a gather done by hand; --in WT uses an existing slice worktree instead of creating
 one (it may be run from inside that worktree; the worktree's own branch is the ref).
-This is the only tool that launches grok for a Build slice; the gather agent is its headless child, and the isolated-media runner
-is the other launcher, under its own gate.
+This is the only tool that launches grok for a Build slice. The isolated-media runner is the other launcher, under its own gate.
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
 """
 from __future__ import annotations
@@ -308,11 +307,11 @@ def main(argv: list[str] | None = None) -> int:
 
         sid = str(uuid.uuid4())
         sargv = gather_agent.start_cmd(area, door, job, tid, t if args.task else None)
-        extra, prompt = prompt, gather_agent.first_message(sargv, tid, [], prompt)
+        extra, prompt = prompt, gather_agent.first_message(sargv, tid, [], prompt, False)
         session = session_argv(g, "PATH", prompt, sid)
         steps = [show(create), "(in PATH) " + show(sargv)]
         if not args.seed_only:
-            steps += [show(gather_agent.agent_argv(g, Path("PATH"), Path("PATH/_logs/gather/prompt.md"))), "(in PATH) slice.py expand --check; expand --out session-context.md", show(session)]
+            steps += ["(in PATH) slice.py expand --check; expand --out session-context.md", show(session)]
     else:
         session = session_argv(g, "PATH", prompt)
         steps = [show(create), show(session)]
@@ -367,10 +366,9 @@ def main(argv: list[str] | None = None) -> int:
             return end("\n".join(lines + [f"seed-only: stopped after the seed ({wt / 'session-plan.md'}). Gather with `{py} tools/slice.py adjust ...` "
                                            f"(WDB_ROLE=gather marks the index `gather: agent`), then `{py} tools/slice.py open --launch {wt} --review` "
                                            "(check, packet, report; no launch) or `--launch` alone to start the main session."]), "PASS", route="seed-only")
-        gather_agent.live("open: gather agent\n")
-        ok, line = gather_agent.agent(exe, wt, area, door, job, tid, extra)
-        gather_agent.set_meta(wt, agent_ok=ok, agent_warn="" if ok else line)
-        lines.append(line)
+        gather_agent.live("open: seed packet (the main session closes the index)\n")
+        gather_agent.set_meta(wt, agent_ok=False, agent_warn="")
+        lines.append("seed packet: the main session closes the index")
         return gathered_launch(root, wt, exe, end, lines, args.review)
     gather_agent.live("open: starting session\n")
     cmd = session_argv(exe, str(wt), prompt)

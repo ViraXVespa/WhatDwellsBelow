@@ -1,32 +1,29 @@
-"""The `slice.py open` gather step (library; import only): run start for the main session, seed, cheap agent, packet.
+"""The `slice.py open` gather step (library; import only): run start for the main session, seed, local agent, packet.
 
 Order in a new worktree WT (open_slice.py calls these):
     1. start(): `slice.py start <flags>` in WT with GROK_SESSION_ID = the main session's pre-assigned id (`grok -s SID`),
        so slice state records the main session and session-plan.md gets its mechanical seed.
-    2. agent(): the cheap model (MODEL) edits only the index, through `slice.py adjust`, under WDB_ROLE=gather
-       (wdb-pretool.py denies edits, other shell, and other MCP tools). Its prompt is tools/data/gather/gather-prompt.md.
-       A crash, timeout, turn cap or context compact writes `_logs/gather/halt` and does not launch (the seed stays
-       on disk; adjust logs each op). Thoughts and tool calls print as each stream line arrives.
-       A finished report with exit 0 continues.
+    2. The main session closes the mechanical seed and writes the Approach. Open does not run a separate gather agent.
     3. finish(): `plan --refresh --clean` restores the seed only when a warn is set and there is no halt file.
        Then open's own `slice.py expand --check`
        (it does not trust the agent): a failure stops before launch; then `expand --out session-context.md` writes the packet.
 A `_logs/gather/halt` file (adjust report --halt) also makes open refuse to launch. The first message for the main session is
-tools/data/gather/build-first.md. No model call happens here outside agent(); tests pass a stub as `grok`.
+tools/data/gather/build-first.md. Open does not call a model. Tests pass a stub as `grok`.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
-MODEL = "grok-build-0.1"
-TIMEOUT = 3600  # hung-process guard. Auto-compact is the working stop; a finished gather is minutes.
-TURN_CAP = 10000  # not a working budget (one model round; parallel tool calls count once). Compact stops the run first.
+MODEL = "ollama/qwen3-coder:30b"
+TIMEOUT = 6 * 3600  # stuck-process guard only. Compaction is not a stop, and there is no turn cap.
 DATA = Path(__file__).resolve().parents[2] / "data" / "gather"
 GATHER = "_logs/gather"
 
@@ -47,6 +44,29 @@ def grok_exe() -> str | None:
     import shutil
 
     return os.environ.get("WDB_GROK") or shutil.which("grok")
+
+
+def opencode_exe() -> str | None:
+    """opencode on PATH, or $WDB_OPENCODE (selftests: a stub; a .py runs under this Python)."""
+    import shutil
+
+    return os.environ.get("WDB_OPENCODE") or shutil.which("opencode")
+
+
+def install_local(wt: Path) -> None:
+    """Copy the gather agent, and the gitignored opencode.json, into a worktree git did not carry them to."""
+    root = Path(__file__).resolve().parents[3]
+    if root.resolve() == wt.resolve():
+        return
+    agent = root / ".opencode" / "agents" / "gather.md"
+    if agent.is_file():
+        dest = wt / ".opencode" / "agents" / "gather.md"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(agent.read_text(encoding="utf-8"), encoding="utf-8")
+    src = root / "opencode.json"
+    dest_json = wt / "opencode.json"
+    if src.is_file() and not dest_json.exists():
+        dest_json.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
 
 def runnable(argv: list[str]) -> list[str]:
     return [sys.executable, *argv] if argv and argv[0].endswith(".py") else argv
@@ -79,9 +99,13 @@ def start(wt: Path, argv: list[str], sid: str, tid: str = "", extra: str = "") -
     (wt / GATHER / "start.txt").write_text(out, encoding="utf-8")
     return code, out
 
-def agent_argv(grok: str, wt: Path, prompt_file: Path) -> list[str]:
-    return [grok, "-m", MODEL, "--prompt-file", str(prompt_file), "--cwd", str(wt), "--trust", "--always-approve",
-            "--max-turns", str(TURN_CAP), "--output-format", "streaming-messages-json", "--include-partial-messages"]
+def agent_argv(opencode: str, wt: Path, prompt_file: Path) -> list[str]:
+    """Headless gather in wt. No turn cap. OpenCode takes its directory from the process cwd, not this argv."""
+    if not isinstance(wt, Path):
+        raise TypeError("gather cwd must be a path")
+    return [opencode, "run", "--standalone", "--format", "json", "--thinking", "--auto",
+            "--model", MODEL, "--agent", "gather", "--file", str(prompt_file), "--title", "gather",
+            "Follow the attached gather instructions. Do not implement the slice."]
 
 def py() -> str:
     """The interpreter name to print in commands: python on Windows, python3 where only that exists (the Linux box)."""
@@ -114,18 +138,8 @@ def _json_line(line: str) -> dict | None:
     return d if isinstance(d, dict) else None
 
 def _stop_kind(line: str) -> str:
-    """'compact' or 'turns' when this stream line is that stop, else ''."""
-    d = _json_line(line)
-    if not d:
-        return ""
-    subtype, typ = str(d.get("subtype") or ""), str(d.get("type") or "")
-    if subtype == "compact_boundary" or typ == "compact_boundary" or typ.startswith("auto_compact"):
-        return "compact"
-    if typ == "max_turns_reached" or subtype == "error_max_turns":
-        return "turns"
-    reason = str(d.get("stop_reason") or d.get("stopReason") or "")
-    if reason in ("max_turns", "max_turn_requests"):
-        return "turns"
+    """Compaction and turn count are not stops. The local model may compact until it reports."""
+    _json_line(line)
     return ""
 
 def live(text: str) -> None:
@@ -165,6 +179,19 @@ class StreamFeed:
         elif typ in ("content_block_stop", "message_stop") and self._thinking:
             self._write("\n")
             self._thinking = False
+        elif typ == "text":
+            part = d.get("part") if isinstance(d.get("part"), dict) else {}
+            self._paragraph(str(part.get("text") or ""))
+        elif typ == "tool_use":
+            part = d.get("part") if isinstance(d.get("part"), dict) else {}
+            state = part.get("state") if isinstance(part.get("state"), dict) else {}
+            status = str(state.get("status") or "completed")
+            if status in ("completed", "error"):
+                inp = state.get("input") if isinstance(state.get("input"), dict) else {}
+                self._say_tool({"name": part.get("tool") or "tool", "input": inp})
+                if status == "error":
+                    err = str(state.get("error") or "").strip().splitlines()
+                    self._write("gather: tool failed" + (": " + err[0][:160] if err else "") + "\n")
         elif typ == "thought":
             if not self._streamed:
                 self._paragraph(str(d.get("data") or ""))
@@ -176,7 +203,9 @@ class StreamFeed:
         elif typ == "user":
             self._user(d)
         elif typ == "error":
-            msg = str(d.get("message") or "").strip().splitlines()
+            err = d.get("error") if isinstance(d.get("error"), dict) else {}
+            data = err.get("data") if isinstance(err.get("data"), dict) else {}
+            msg = str(d.get("message") or data.get("message") or err.get("name") or "").strip().splitlines()
             if msg:
                 self._write("gather: " + msg[0][:160] + "\n")
 
@@ -269,17 +298,71 @@ def _kill(proc: subprocess.Popen) -> None:
     else:
         proc.kill()
 
+def _section(text: str, heading: str) -> list[str]:
+    lines: list[str] = []
+    on = False
+    for line in text.splitlines():
+        if line.startswith("### "):
+            if on:
+                break
+            on = line.startswith(f"### {heading}")
+            continue
+        if on:
+            lines.append(line)
+    return lines
+
+def _index_text(wt: Path) -> str:
+    path = wt / "session-plan.md"
+    return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+def core_has_func(text: str) -> bool:
+    return any(" func `" in line for line in _section(text, "Core"))
+
+_SEED_WHEN = re.compile(
+    r"the change reaches it \("
+    r"|the change touches door-wide rules or a sibling job"
+    r"| - when: the change reaches \S+ code$")
+
+def seed_candidate_ids(text: str) -> list[str]:
+    """Ids still carrying a mechanical seed condition. A candidate the agent rewrote (any other when) stays."""
+    ids: list[str] = []
+    for line in _section(text, "Candidates"):
+        if not _SEED_WHEN.search(line):
+            continue
+        match = re.match(r"-\s+([CK]\d+)\b", line.strip())
+        if match:
+            ids.append(match.group(1))
+    return ids
+
+def drop_seed_candidates(wt: Path) -> None:
+    """Remove candidates the agent never rewrote. A real `when` is kept."""
+    ids = seed_candidate_ids(_index_text(wt))
+    if not ids:
+        return
+    ops: list[str] = []
+    for kid in ids:
+        ops += ["--op", f"rem {kid}"]
+    _run([sys.executable, "tools/slice.py", "adjust", "batch", *ops, "--root", str(wt)], wt,
+         dict(os.environ, WDB_ROLE="gather"))
+
+def _index_ready(wt: Path) -> bool:
+    """True once the report exists, core has a function, and expand --check passes. Drops untouched seed candidates first."""
+    if not (wt / GATHER / "report.md").is_file() or not core_has_func(_index_text(wt)):
+        return False
+    drop_seed_candidates(wt)
+    code, _out = _run([sys.executable, "tools/slice.py", "expand", "--check", "--root", str(wt)], wt)
+    return code == 0
+
 def _stream(argv: list[str], wt: Path, env: dict, timeout: int) -> tuple[int, str, str]:
-    """(code, output, why). why is set when the run compacted or hit the turn cap; the process is killed then.
+    """(code, output, why). why is set only for the stuck-process timeout. Compaction does not kill the run.
+    A report plus one core function does: the process is ended as success so the model may compact until then.
     Thoughts and tool lines are printed as each stream line arrives."""
     proc = subprocess.Popen(runnable(argv), cwd=wt, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, encoding="utf-8", errors="replace", env=env, bufsize=1)
     lines: list[str] = []
-    kind = ""
     feed = StreamFeed()
 
     def read() -> None:
-        nonlocal kind
         assert proc.stdout is not None
         try:
             for line in proc.stdout:
@@ -288,33 +371,40 @@ def _stream(argv: list[str], wt: Path, env: dict, timeout: int) -> tuple[int, st
                     feed(line)
                 except Exception:
                     pass
-                kind = kind or _stop_kind(line)
-                if kind:
-                    _kill(proc)
-                    break
         except OSError:
             return
 
     thread = threading.Thread(target=read, daemon=True)
     thread.start()
-    try:
-        code = proc.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        _kill(proc)
+    deadline = time.monotonic() + timeout
+    code: int | None = None
+    while code is None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            _kill(proc)
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                pass
+            thread.join(timeout=5)
+            return 124, "".join(lines), f"timeout after {timeout}s"
         try:
-            proc.wait(timeout=10)
+            code = proc.wait(timeout=min(2.0, remaining))
         except subprocess.TimeoutExpired:
-            pass
-        thread.join(timeout=5)
-        return 124, "".join(lines), f"timeout after {timeout}s"
+            if _index_ready(wt):
+                _kill(proc)
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    pass
+                code = 0
     thread.join(timeout=5)
-    why = {"compact": "context compacted before the packet was finished", "turns": "turn cap reached"}.get(kind, "")
     if code is None:
-        code = 1 if why else 0
-    return code, "".join(lines), why
+        code = 0
+    return code, "".join(lines), ""
 
 def usage(out: str) -> str:
-    """'turns=N tokens=in/out cost=$X session=ID' from grok's JSON output (last JSON object), or ''."""
+    """'turns=N tokens=in/out cost=$X session=ID' from the last grok-shaped object, else a sum of opencode step_finish."""
     for line in reversed(out.strip().splitlines()):
         d = _json_line(line)
         if not isinstance(d, dict) or "usage" not in d and "num_turns" not in d:
@@ -324,7 +414,26 @@ def usage(out: str) -> str:
             u = {}
         return (f"turns={d.get('num_turns', '?')} tokens={u.get('input_tokens', '?')}/{u.get('output_tokens', '?')} "
                 f"cost=${d.get('total_cost_usd', '?')} session={d.get('sessionId') or d.get('session_id') or '?'}")
-    return ""
+    steps = tin = tout = 0
+    cost = 0.0
+    sid = ""
+    for line in out.splitlines():
+        d = _json_line(line)
+        if not d or str(d.get("type") or "") != "step_finish":
+            continue
+        part = d.get("part") if isinstance(d.get("part"), dict) else {}
+        tok = part.get("tokens") if isinstance(part.get("tokens"), dict) else {}
+        steps += 1
+        sid = str(d.get("sessionID") or sid)
+        try:
+            tin += int(tok.get("input") or 0)
+            tout += int(tok.get("output") or 0)
+            cost += float(part.get("cost") or 0)
+        except (TypeError, ValueError):
+            pass
+    if not steps:
+        return ""
+    return f"steps={steps} tokens={tin}/{tout} cost=${cost:.4f} session={sid or '?'}"
 
 def prompt_text(area: str, door: str, job: str, tid: str, request: str = "") -> str:
     """The gather prompt: no task line without a task; the User's request (open's prompt) appended when there is one."""
@@ -343,11 +452,22 @@ def _note_stop(wt: Path, reason: str) -> None:
     if not (d / "report.md").is_file():
         (d / "report.md").write_text(text, encoding="utf-8")
 
-def agent(grok: str, wt: Path, area: str, door: str, job: str, tid: str, request: str = "") -> tuple[bool, str]:
-    """(ok, one line). Runs the cheap model once; never raises. An unfinished run writes a halt and does not launch."""
+def agent(opencode: str, wt: Path, area: str, door: str, job: str, tid: str, request: str = "") -> tuple[bool, str]:
+    """(ok, one line). Runs the local model; never raises. An exit with no report starts it once more.
+    An unfinished run writes a halt and does not launch."""
+    install_local(wt)
     prompt = wt / GATHER / "prompt.md"
     prompt.write_text(prompt_text(area, door, job, tid, request), encoding="utf-8")
-    code, out, why = _stream(agent_argv(grok, wt, prompt), wt, dict(os.environ, WDB_ROLE="gather", PYTHONUNBUFFERED="1"), TIMEOUT)
+    env = dict(os.environ, WDB_ROLE="gather", PYTHONUNBUFFERED="1", OPENCODE_DISABLE_CLAUDE_CODE="1")
+    parts: list[str] = []
+    code, why = 0, ""
+    for attempt in (1, 2):
+        code, out, why = _stream(agent_argv(opencode, wt, prompt), wt, env, TIMEOUT)
+        parts.append(out)
+        if why or code != 0 or (wt / GATHER / "report.md").is_file() or halted(wt) or attempt == 2:
+            break
+        live("open: gather exited with no report; starting it once more\n")
+    out = "".join(parts)
     (wt / GATHER / "agent.txt").write_text(out, encoding="utf-8")
     use = usage(out)
     if not why and code != 0:
@@ -360,6 +480,7 @@ def agent(grok: str, wt: Path, area: str, door: str, job: str, tid: str, request
                   f"Delete {GATHER}/halt before `slice.py open --launch` to start the main session anyway. {use}").rstrip()
         _note_stop(wt, reason)
         return False, reason
+    drop_seed_candidates(wt)
     return True, f"gather agent: done. {use}".rstrip()
 
 def finish(wt: Path, restore: bool) -> tuple[bool, list[str]]:

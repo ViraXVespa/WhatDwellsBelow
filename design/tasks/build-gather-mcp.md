@@ -13,13 +13,12 @@ done-when: A real slice launched through slice.py open --review then --launch, w
 - A next unit in the same session uses the seed only, and that session closes the seed (index and Approach) before editing. The `_src/wip/.../session-plan.md` copy stays.
 - Success metric: main-session tokens and turns against recent slices; the gather cost is reported apart.
 - 2026-11-16: the gather walks the edit to a closed func set and writes the Approach into the packet (why-notes on core headings). `action=packet` with no budget returns the whole packet; other lookups stay on the 60-line page. The main session's code read is that one packet. A missing symbol is one lookup plus `slice.py adjust` in the same turn. The 2026-11-16 map-rework and playtest slices spent the gather on a menu (about 50–60 cheap calls) and the main session on the lookups (about 400 calls, about 12× the gather cost). P6 still compares live tokens; this decision does not close the task.
+- 2026-11-18: a local OpenCode gather (`ollama/qwen3-coder:30b`) did not produce a packet that inlines the edit. Splash trials pointed at the wrong file, exited before any adjust, or removed the seed and left only the docs plus a thin Approach. `slice.py open` no longer runs that agent. It writes the mechanical seed; the main session closes the index and writes the Approach.
 
 ## P6 (live; needs Vira, spends tokens)
 
-1. On her PC: `grok models` (is `grok-build-0.1` listed? else set `MODEL` in `tools/lib/slice/gather_agent.py`) and `python -m pip install -r tools/requirements-mcp.txt`.
-2. `python tools/slice.py open <small task> --review`: the agent runs, the report prints, Build does not launch.
-3. `python tools/slice.py open --launch <WT>` for one real slice; compare tokens and turns. Tune `tools/data/gather/gather-prompt.md`.
-4. Rollout: the next week start.
+1. The local-agent comparison is dropped. Do not start OpenCode from `slice.py open`.
+2. A real slice's main session closes the seed (funcs in, seed candidates out) and writes the Approach before editing.
 
 ## Next Steps (User Only)
 Bot: after Vira runs the P6 steps below and reports her output
