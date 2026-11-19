@@ -25,7 +25,7 @@ import threading
 import time
 from pathlib import Path
 
-MODEL = "ollama/qwen3-coder:30b"
+MODEL = "gpt-oss:20b"
 TIMEOUT = 6 * 3600  # stuck-process guard only. Compaction is not a stop, and there is no turn cap.
 DATA = Path(__file__).resolve().parents[2] / "data" / "gather"
 GATHER = "_logs/gather"

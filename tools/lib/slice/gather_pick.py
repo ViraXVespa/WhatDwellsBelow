@@ -32,7 +32,7 @@ import plan_adjust
 import plan_expand
 import session_plan
 
-MODEL = "qwen3-coder:30b"
+MODEL = "gpt-oss:20b"
 CAP = 8  # names-only table; --chain does not use this
 PAGE = 12  # one scout or gap page; the chain walks every page
 FILE_CHARS = 16000  # one mark session; a larger file is split on function boundaries
