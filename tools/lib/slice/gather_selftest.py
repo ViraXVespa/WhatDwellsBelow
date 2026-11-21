@@ -1,7 +1,7 @@
 """`slice.py open` gather cases with a stub grok (library for open_slice.py --selftest; no Ollama is ever called).
 
-The stub ($WDB_GROK, a .py) creates the worktree (git worktree add + a copy of the tracked tools/), plays the gather
-agent per $STUB_MODE (ok, halt, bad, crash; crash exits before the report, so open must halt and not launch) through the real `slice.py adjust`, and records every call in $STUB_LOG.
+The stub ($WDB_GROK, a .py) creates the worktree (git worktree add + a copy of the tracked tools/) and records every call in $STUB_LOG.
+Open does not start a separate gather process.
 """
 from __future__ import annotations
 
@@ -33,75 +33,12 @@ if a[:2] == ["worktree", "create"]:
         shutil.copy2(src / rel, wt / rel)
     print(wt)
     raise SystemExit(0)
-if a[:1] == ["run"]:
-    mode = os.environ.get("STUB_MODE", "ok")
-    def adj(*w):
-        subprocess.run([sys.executable, "tools/slice.py", "adjust", *w, "--root", "."], capture_output=True)
-    if mode == "compact":
-        print(json.dumps({"type": "system", "subtype": "compact_boundary"}), flush=True)
-        adj("add-names", "scripts/demo.gd", "--cand", "--when", "after compact")
-        adj("report", "--text", "continued after compact")
-        print(json.dumps({"num_turns": 4, "usage": {"input_tokens": 10, "output_tokens": 2}, "total_cost_usd": 0, "sessionId": "gather-1"}))
-        raise SystemExit(0)
-    if mode == "noreport":
-        flag = Path("_logs/gather/stub-saw.txt")
-        if not flag.is_file():
-            flag.parent.mkdir(parents=True, exist_ok=True)
-            flag.write_text("1", encoding="utf-8")
-            raise SystemExit(0)
-        adj("add-func", "scripts/demo.gd", "alpha", "--why", "edit")
-        adj("report", "--text", "resumed after an early exit")
-        raise SystemExit(0)
-    if mode == "linger":
-        import time
-        adj("add-func", "scripts/demo.gd", "alpha", "--why", "edit")
-        adj("add-names", "scripts/demo.gd", "--cand", "--when", "the change reaches it (named in the job doc)")
-        adj("report", "--text", "lingered then stopped")
-        time.sleep(30)
-        raise SystemExit(9)
-    if mode == "crash":
-        adj("add-func", "scripts/demo.gd", "nothere")
-        raise SystemExit(3)
-    if mode == "bad":
-        adj("add-func", "scripts/demo.gd", "nothere")
-    if mode == "ok":
-        print(json.dumps({"type": "content_block_delta", "delta": {"type": "thinking_delta", "thinking": "stub thought"}}), flush=True)
-        print(json.dumps({"type": "content_block_stop"}), flush=True)
-        print(json.dumps({"type": "assistant", "message": {"content": [
-            {"type": "thinking", "thinking": "stub thought"},
-            {"type": "tool_use", "name": "wdb__lookup", "input": {"action": "names", "path": "scripts/demo.gd"}}
-        ]}}), flush=True)
-    adj("add-names", "scripts/demo.gd", "--cand", "--when", "the stub says so")
-    adj("report", "--text", "stub judgment", *(["--halt", "stub halt"] if mode == "halt" else []))
-    print(json.dumps({"num_turns": 3, "usage": {"input_tokens": 10, "output_tokens": 2}, "total_cost_usd": 0, "sessionId": "gather-1"}))
 '''
 
 def run(script: list[str], td: Path) -> list[str]:
-    import gather_agent
     import repo_lib
 
     bad: list[str] = []
-    fed: list[str] = []
-    feed = gather_agent.StreamFeed(write=fed.append)
-    feed('{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"hi"}}')
-    feed('{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"hi"},{"type":"tool_use","name":"wdb__lookup","input":{"action":"names","path":"scripts/demo.gd"}}]}}')
-    shown = "".join(fed)
-    if shown.count("hi") != 1 or "gather: wdb__lookup action=names path=scripts/demo.gd" not in shown:
-        bad.append(f"a streamed thought is printed once, then the tool line: {shown!r}")
-    fed2: list[str] = []
-    feed2 = gather_agent.StreamFeed(write=fed2.append)
-    feed2('{"type":"content_block_start","content_block":{"type":"tool_use","name":"wdb__lookup"}}')
-    feed2('{"type":"content_block_delta","delta":{"type":"input_json_delta","partial_json":"{\\"action\\":\\"names\\",\\"path\\":\\"scripts/demo.gd\\"}"}}')
-    feed2('{"type":"assistant","message":{"content":[{"type":"tool_use","name":"wdb__lookup","input":{"action":"names","path":"scripts/demo.gd"}}]}}')
-    if "".join(fed2).count("gather: wdb__lookup action=names path=scripts/demo.gd") != 1:
-        bad.append(f"a tool call streamed as input_json_delta is not printed again: {''.join(fed2)!r}")
-    fed3: list[str] = []
-    feed3 = gather_agent.StreamFeed(write=fed3.append)
-    feed3('{"type":"text","part":{"text":"oc thought"}}')
-    feed3('{"type":"tool_use","part":{"tool":"bash","state":{"status":"completed","input":{"command":"python tools/slice.py expand --check"}}}}')
-    shown3 = "".join(fed3)
-    if shown3.count("oc thought") != 1 or "gather: bash command=python tools/slice.py expand --check" not in shown3:
-        bad.append(f"an opencode text and tool_use line must print: {shown3!r}")
     real = Path(__file__).resolve().parents[3]
     (td / "g").mkdir()
     root = repo_lib.selftest_repo(td / "g")
@@ -117,13 +54,15 @@ def run(script: list[str], td: Path) -> list[str]:
     repo_lib.git_test(root, "commit", "-qm", "seed")
     repo_lib.git_test(root, "branch", "grok-build-w9")
     files = subprocess.run(["git", "ls-files", "tools"], cwd=real, capture_output=True, text=True).stdout
-    (td / "files.txt").write_text("\n".join(f for f in files.splitlines() if f.endswith((".py", ".json", ".md", ".txt", ".yaml"))), encoding="utf-8")
+    (td / "files.txt").write_text("\n".join(
+        f for f in files.splitlines()
+        if f.endswith((".py", ".json", ".md", ".txt", ".yaml")) and (real / f).is_file()), encoding="utf-8")
     (td / "stub.py").write_text(STUB, encoding="utf-8")
     (td / "wts").mkdir()
 
     def go(mode: str, *a: str, pick: str = "skip") -> tuple[int, str, list[dict]]:
         logf = td / f"log-{len(list(td.glob('log-*')))}.jsonl"
-        env = dict(os.environ, WDB_GROK=str(td / "stub.py"), WDB_OPENCODE=str(td / "stub.py"), STUB_LOG=str(logf), STUB_WTS=str(td / "wts"), STUB_MODE=mode,
+        env = dict(os.environ, WDB_GROK=str(td / "stub.py"), STUB_LOG=str(logf), STUB_WTS=str(td / "wts"), STUB_MODE=mode,
                    STUB_TOOLS=str(real), STUB_FILES=str(td / "files.txt"), WDB_OPEN_NO_PREPARE="1", WDB_GATHER_PICK=pick)  # no Godot, no Ollama
         env.pop("WDB_ROLE", None)
         p = subprocess.run([*script, "--root", str(root), *a], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)

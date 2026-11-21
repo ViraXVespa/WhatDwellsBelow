@@ -11,7 +11,7 @@ Order in a new worktree WT (open_slice.py calls these):
        (it does not trust the chain): a failure stops before launch; then `expand --out session-context.md` writes the packet.
 A `_logs/gather/halt` file (adjust report --halt) also makes open refuse to launch. The first message for the main session is
 tools/data/gather/build-first.md plus packet-refined.md when the chain marked funcs, otherwise packet-seed.md.
-The OpenCode launcher in this file is not called by open. Tests pass a stub as `grok`.
+Tests pass a stub as `grok`.
 """
 from __future__ import annotations
 
@@ -21,12 +21,8 @@ import re
 import shlex
 import subprocess
 import sys
-import threading
-import time
 from pathlib import Path
 
-MODEL = "gpt-oss:20b"
-TIMEOUT = 6 * 3600  # stuck-process guard only. Compaction is not a stop, and there is no turn cap.
 DATA = Path(__file__).resolve().parents[2] / "data" / "gather"
 GATHER = "_logs/gather"
 
@@ -48,28 +44,6 @@ def grok_exe() -> str | None:
 
     return os.environ.get("WDB_GROK") or shutil.which("grok")
 
-
-def opencode_exe() -> str | None:
-    """opencode on PATH, or $WDB_OPENCODE (selftests: a stub; a .py runs under this Python)."""
-    import shutil
-
-    return os.environ.get("WDB_OPENCODE") or shutil.which("opencode")
-
-
-def install_local(wt: Path) -> None:
-    """Copy the gather agent, and the gitignored opencode.json, into a worktree git did not carry them to."""
-    root = Path(__file__).resolve().parents[3]
-    if root.resolve() == wt.resolve():
-        return
-    agent = root / ".opencode" / "agents" / "gather.md"
-    if agent.is_file():
-        dest = wt / ".opencode" / "agents" / "gather.md"
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(agent.read_text(encoding="utf-8"), encoding="utf-8")
-    src = root / "opencode.json"
-    dest_json = wt / "opencode.json"
-    if src.is_file() and not dest_json.exists():
-        dest_json.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
 
 def runnable(argv: list[str]) -> list[str]:
     return [sys.executable, *argv] if argv and argv[0].endswith(".py") else argv
@@ -102,14 +76,6 @@ def start(wt: Path, argv: list[str], sid: str, tid: str = "", extra: str = "") -
     (wt / GATHER / "start.txt").write_text(out, encoding="utf-8")
     return code, out
 
-def agent_argv(opencode: str, wt: Path, prompt_file: Path) -> list[str]:
-    """Headless gather in wt. No turn cap. OpenCode takes its directory from the process cwd, not this argv."""
-    if not isinstance(wt, Path):
-        raise TypeError("gather cwd must be a path")
-    return [opencode, "run", "--standalone", "--format", "json", "--thinking", "--auto",
-            "--model", MODEL, "--agent", "gather", "--file", str(prompt_file), "--title", "gather",
-            "Follow the attached gather instructions. Do not implement the slice."]
-
 def py() -> str:
     """The interpreter name to print in commands: python on Windows, python3 where only that exists (the Linux box)."""
     name = Path(sys.executable).stem.lower()
@@ -121,30 +87,6 @@ def render(template: str, **kv: str) -> str:
         text = text.replace("{" + k + "}", v)
     return text
 
-def ident(area: str, door: str, job: str) -> tuple[str, str, str]:
-    """(area, door, job) as the seed, the start card and the prompt show them: door from a door.job, area defaults to the job."""
-    door = door or (job.split(".", 1)[0] if "." in job else "")
-    return area or job or door, door, job
-
-def slice_line(area: str, door: str, job: str, tid: str) -> str:
-    area, door, job = ident(area, door, job)
-    return " ".join(f"{k}={v}" for k, v in (("area", area), ("door", door), ("job", job), ("task", tid)) if v)
-
-def _json_line(line: str) -> dict | None:
-    s = line.strip()
-    if not s.startswith("{"):
-        return None
-    try:
-        d = json.loads(s)
-    except json.JSONDecodeError:
-        return None
-    return d if isinstance(d, dict) else None
-
-def _stop_kind(line: str) -> str:
-    """Compaction and turn count are not stops. The local model may compact until it reports."""
-    _json_line(line)
-    return ""
-
 def live(text: str) -> None:
     """Print gather progress now. Open captures nothing until the process exits, so this is the live view."""
     if not text:
@@ -154,152 +96,6 @@ def live(text: str) -> None:
         sys.stdout.flush()
     except (OSError, UnicodeError):
         return
-
-class StreamFeed:
-    """Print thoughts as deltas arrive, then one line per tool call. A later copy of the same thought or tool is skipped."""
-
-    def __init__(self, write=None) -> None:
-        self._write = write or live
-        self._thinking = False
-        self._streamed = False
-        self._pending: dict | None = None
-        self._said: set[str] = set()
-
-    def __call__(self, line: str) -> None:
-        d = _json_line(line)
-        if not d:
-            return
-        typ = str(d.get("type") or "")
-        if typ == "message_start":
-            self._said.clear()
-            self._streamed = False
-            self._pending = None
-        elif typ == "content_block_start":
-            block = d.get("content_block")
-            self._pending = block if isinstance(block, dict) and str(block.get("type") or "") == "tool_use" else None
-        elif typ == "content_block_delta":
-            self._delta(d.get("delta"))
-        elif typ in ("content_block_stop", "message_stop") and self._thinking:
-            self._write("\n")
-            self._thinking = False
-        elif typ == "text":
-            part = d.get("part") if isinstance(d.get("part"), dict) else {}
-            self._paragraph(str(part.get("text") or ""))
-        elif typ == "tool_use":
-            part = d.get("part") if isinstance(d.get("part"), dict) else {}
-            state = part.get("state") if isinstance(part.get("state"), dict) else {}
-            status = str(state.get("status") or "completed")
-            if status in ("completed", "error"):
-                inp = state.get("input") if isinstance(state.get("input"), dict) else {}
-                self._say_tool({"name": part.get("tool") or "tool", "input": inp})
-                if status == "error":
-                    err = str(state.get("error") or "").strip().splitlines()
-                    self._write("gather: tool failed" + (": " + err[0][:160] if err else "") + "\n")
-        elif typ == "thought":
-            if not self._streamed:
-                self._paragraph(str(d.get("data") or ""))
-        elif typ == "tool_call":
-            raw = d.get("rawInput")
-            self._say_tool({"name": d.get("toolName") or d.get("title") or "tool", "input": raw if isinstance(raw, dict) else {}})
-        elif typ == "assistant":
-            self._assistant(d)
-        elif typ == "user":
-            self._user(d)
-        elif typ == "error":
-            err = d.get("error") if isinstance(d.get("error"), dict) else {}
-            data = err.get("data") if isinstance(err.get("data"), dict) else {}
-            msg = str(d.get("message") or data.get("message") or err.get("name") or "").strip().splitlines()
-            if msg:
-                self._write("gather: " + msg[0][:160] + "\n")
-
-    def _paragraph(self, text: str) -> None:
-        text = text.strip()
-        if text:
-            self._close_thought()
-            self._write("gather: " + text + "\n")
-            self._streamed = True
-
-    def _close_thought(self) -> None:
-        if self._thinking:
-            self._write("\n")
-            self._thinking = False
-
-    def _delta(self, delta: object) -> None:
-        if not isinstance(delta, dict):
-            return
-        kind = str(delta.get("type") or "")
-        if kind in ("thinking_delta", "reasoning_delta", "thinking"):
-            text = str(delta.get("thinking") or delta.get("reasoning") or delta.get("text") or "")
-            if not text:
-                return
-            if not self._thinking:
-                self._write("gather: ")
-            self._thinking = True
-            self._streamed = True
-            self._write(text)
-            return
-        if kind != "input_json_delta" or not isinstance(self._pending, dict):
-            return
-        raw = str(delta.get("partial_json") or "")
-        try:
-            inp = json.loads(raw) if raw.strip().startswith("{") else None
-        except json.JSONDecodeError:
-            return
-        if isinstance(inp, dict):
-            self._say_tool({**self._pending, "input": inp})
-            self._pending = None
-
-    def _say_tool(self, block: dict) -> None:
-        line = "gather: " + _tool_brief(block)
-        if line in self._said:
-            return
-        self._said.add(line)
-        self._close_thought()
-        self._write(line + "\n")
-
-    def _assistant(self, d: dict) -> None:
-        msg = d.get("message") if isinstance(d.get("message"), dict) else {}
-        content = msg.get("content") if isinstance(msg, dict) else None
-        self._close_thought()
-        if isinstance(content, list):
-            for block in content:
-                if not isinstance(block, dict):
-                    continue
-                kind = str(block.get("type") or "")
-                if kind in ("thinking", "reasoning"):
-                    if not self._streamed:
-                        self._paragraph(str(block.get("thinking") or block.get("text") or ""))
-                elif kind == "tool_use":
-                    self._say_tool(block)
-                elif kind == "text":
-                    self._paragraph(str(block.get("text") or ""))
-        self._streamed = False
-        self._pending = None
-        self._said.clear()
-
-    def _user(self, d: dict) -> None:
-        msg = d.get("message") if isinstance(d.get("message"), dict) else {}
-        content = msg.get("content") if isinstance(msg, dict) else None
-        if not isinstance(content, list):
-            return
-        for block in content:
-            if not isinstance(block, dict) or block.get("type") != "tool_result" or not block.get("is_error"):
-                continue
-            head = str(block.get("content") or "").strip().splitlines()
-            self._write("gather: tool failed" + (": " + head[0][:160] if head else "") + "\n")
-
-def _tool_brief(block: dict) -> str:
-    name = str(block.get("name") or "tool")
-    raw = block.get("input")
-    inp = raw if isinstance(raw, dict) else {}
-    bits = [f"{k}={inp[k]}" for k in ("action", "path", "name", "pattern", "command", "target_file") if inp.get(k)]
-    return (name + " " + " ".join(bits)).strip()[:180]
-
-def _kill(proc: subprocess.Popen) -> None:
-    if os.name == "nt":
-        subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
-    else:
-        proc.kill()
 
 def _section(text: str, heading: str) -> list[str]:
     lines: list[str] = []
@@ -336,155 +132,6 @@ def seed_candidate_ids(text: str) -> list[str]:
         if match:
             ids.append(match.group(1))
     return ids
-
-def drop_seed_candidates(wt: Path) -> None:
-    """Remove candidates the agent never rewrote. A real `when` is kept."""
-    ids = seed_candidate_ids(_index_text(wt))
-    if not ids:
-        return
-    ops: list[str] = []
-    for kid in ids:
-        ops += ["--op", f"rem {kid}"]
-    _run([sys.executable, "tools/slice.py", "adjust", "batch", *ops, "--root", str(wt)], wt,
-         dict(os.environ, WDB_ROLE="gather"))
-
-def _index_ready(wt: Path) -> bool:
-    """True once the report exists, core has a function, and expand --check passes. Drops untouched seed candidates first."""
-    if not (wt / GATHER / "report.md").is_file() or not core_has_func(_index_text(wt)):
-        return False
-    drop_seed_candidates(wt)
-    code, _out = _run([sys.executable, "tools/slice.py", "expand", "--check", "--root", str(wt)], wt)
-    return code == 0
-
-def _stream(argv: list[str], wt: Path, env: dict, timeout: int) -> tuple[int, str, str]:
-    """(code, output, why). why is set only for the stuck-process timeout. Compaction does not kill the run.
-    A report plus one core function does: the process is ended as success so the model may compact until then.
-    Thoughts and tool lines are printed as each stream line arrives."""
-    proc = subprocess.Popen(runnable(argv), cwd=wt, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            text=True, encoding="utf-8", errors="replace", env=env, bufsize=1)
-    lines: list[str] = []
-    feed = StreamFeed()
-
-    def read() -> None:
-        assert proc.stdout is not None
-        try:
-            for line in proc.stdout:
-                lines.append(line)
-                try:
-                    feed(line)
-                except Exception:
-                    pass
-        except OSError:
-            return
-
-    thread = threading.Thread(target=read, daemon=True)
-    thread.start()
-    deadline = time.monotonic() + timeout
-    code: int | None = None
-    while code is None:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            _kill(proc)
-            try:
-                proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                pass
-            thread.join(timeout=5)
-            return 124, "".join(lines), f"timeout after {timeout}s"
-        try:
-            code = proc.wait(timeout=min(2.0, remaining))
-        except subprocess.TimeoutExpired:
-            if _index_ready(wt):
-                _kill(proc)
-                try:
-                    proc.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    pass
-                code = 0
-    thread.join(timeout=5)
-    if code is None:
-        code = 0
-    return code, "".join(lines), ""
-
-def usage(out: str) -> str:
-    """'turns=N tokens=in/out cost=$X session=ID' from the last grok-shaped object, else a sum of opencode step_finish."""
-    for line in reversed(out.strip().splitlines()):
-        d = _json_line(line)
-        if not isinstance(d, dict) or "usage" not in d and "num_turns" not in d:
-            continue
-        u = d.get("usage") or {}
-        if not isinstance(u, dict):
-            u = {}
-        return (f"turns={d.get('num_turns', '?')} tokens={u.get('input_tokens', '?')}/{u.get('output_tokens', '?')} "
-                f"cost=${d.get('total_cost_usd', '?')} session={d.get('sessionId') or d.get('session_id') or '?'}")
-    steps = tin = tout = 0
-    cost = 0.0
-    sid = ""
-    for line in out.splitlines():
-        d = _json_line(line)
-        if not d or str(d.get("type") or "") != "step_finish":
-            continue
-        part = d.get("part") if isinstance(d.get("part"), dict) else {}
-        tok = part.get("tokens") if isinstance(part.get("tokens"), dict) else {}
-        steps += 1
-        sid = str(d.get("sessionID") or sid)
-        try:
-            tin += int(tok.get("input") or 0)
-            tout += int(tok.get("output") or 0)
-            cost += float(part.get("cost") or 0)
-        except (TypeError, ValueError):
-            pass
-    if not steps:
-        return ""
-    return f"steps={steps} tokens={tin}/{tout} cost=${cost:.4f} session={sid or '?'}"
-
-def prompt_text(area: str, door: str, job: str, tid: str, request: str = "") -> str:
-    """The gather prompt: no task line without a task; the User's request (open's prompt) appended when there is one."""
-    text = render("gather-prompt.md", slice=slice_line(area, door, job, tid),
-                  task_step=f", then the task file once: design/tasks/{tid}.md (read it whole; it is the assignment)" if tid else "",
-                  request_step=", and the User's request at the end of this prompt" if request.strip() else "")
-    return text.rstrip() + ("\n\nThe User's request:\n\n" + request.strip() + "\n" if request.strip() else "\n")
-
-def _note_stop(wt: Path, reason: str) -> None:
-    """Record an unfinished gather so open refuses to launch. Keeps a halt or report the agent already wrote."""
-    d = wt / GATHER
-    d.mkdir(parents=True, exist_ok=True)
-    text = reason.strip() + "\n"
-    if not (d / "halt").is_file():
-        (d / "halt").write_text(text, encoding="utf-8")
-    if not (d / "report.md").is_file():
-        (d / "report.md").write_text(text, encoding="utf-8")
-
-def agent(opencode: str, wt: Path, area: str, door: str, job: str, tid: str, request: str = "") -> tuple[bool, str]:
-    """(ok, one line). Runs the local model; never raises. An exit with no report starts it once more.
-    An unfinished run writes a halt and does not launch."""
-    install_local(wt)
-    prompt = wt / GATHER / "prompt.md"
-    prompt.write_text(prompt_text(area, door, job, tid, request), encoding="utf-8")
-    env = dict(os.environ, WDB_ROLE="gather", PYTHONUNBUFFERED="1", OPENCODE_DISABLE_CLAUDE_CODE="1")
-    parts: list[str] = []
-    code, why = 0, ""
-    for attempt in (1, 2):
-        code, out, why = _stream(agent_argv(opencode, wt, prompt), wt, env, TIMEOUT)
-        parts.append(out)
-        if why or code != 0 or (wt / GATHER / "report.md").is_file() or halted(wt) or attempt == 2:
-            break
-        live("open: gather exited with no report; starting it once more\n")
-    out = "".join(parts)
-    (wt / GATHER / "agent.txt").write_text(out, encoding="utf-8")
-    use = usage(out)
-    if not why and code != 0:
-        why = f"exit {code}"
-    if not why and not (wt / GATHER / "report.md").is_file() and not halted(wt):
-        why = "no report"
-    if why:
-        reason = (f"GATHER STOPPED ({why}). Not launched. The index may be partial; "
-                  f"`{py()} tools/slice.py plan --refresh --clean` restores the seed. "
-                  f"Delete {GATHER}/halt before `slice.py open --launch` to start the main session anyway. {use}").rstrip()
-        _note_stop(wt, reason)
-        return False, reason
-    drop_seed_candidates(wt)
-    return True, f"gather agent: done. {use}".rstrip()
 
 def finish(wt: Path, restore: bool) -> tuple[bool, list[str]]:
     """open's own `expand --check` (it does not trust the agent), then session-context.md. restore: the agent crashed,
