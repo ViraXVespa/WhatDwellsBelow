@@ -6,6 +6,7 @@ const Util := preload("res://scripts/debug/dungeon_map/map_util.gd")
 
 const DungeonMapRim := preload("res://scripts/debug/dungeon_map/map_rim.gd")
 const Edge := preload("res://scripts/dungeon/gen/edge_mark.gd")
+const GateWall := preload("res://scripts/debug/dungeon_map/gate_wall.gd")
 
 static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs: Array) -> int:
 	var fail: int = 0
@@ -42,6 +43,7 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 	fail += Util._spec(lines, "gates_placed", gates.size() == want_gates, "n=%d want=%d" % [gates.size(), want_gates])
 	var gate_sep: int = Util._min_pair_sep(gates)
 	fail += Util._spec(lines, "gate_sep", gates.size() < 2 or gate_sep >= 28, "min=%d want>=28" % gate_sep)
+	fail += GateWall.emit(lines, host, data)
 	var crystals: Array[Vector2i] = Util._cells_of(objs, "crystal")
 	var extra_max: int = maxi(1, int(App.bal.get("crystal_extra_max")))
 	var spawn: Vector2i = Vector2i(data.get("spawn", Vector2i.ZERO))
