@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Local Comfy character pipeline and the approve / deny book.
 
-Open the GUI workflow (after install) and follow the note on the left.
+Open the GUI workflow (after setup) and follow the note on the left.
 Headless runs read that same book: the last Approve becomes the next
 reference, and Deny notes are added to the avoid text.
+
+Stop the Comfy server before setup. Generated pictures under depth,
+walk-reel, walk-test, walk-good, frames, and lora-set stay out of git.
+ledger.json and walk-picks.json stay in git.
 
     python tools/media.py comfy-character setup
     python tools/media.py comfy-character install
@@ -12,6 +16,8 @@ reference, and Deny notes are added to the avoid text.
     python tools/media.py comfy-character run --dry-run
     python tools/media.py comfy-character export-set --dry-run
     python tools/media.py comfy-character depth --cell side
+    python tools/media.py comfy-character walk-reel
+    python tools/media.py comfy-character walk-build --cell side
 
 Summary: _logs/comfy-character/<stamp>-comfy-character.txt.
 """
@@ -1237,14 +1243,17 @@ def main(argv: list[str] | None = None) -> int:
         "export-set  copy Approve pictures for a later LoRA\n"
         "depth     one cell, or --all for every bible cell\n"
         "walk-reel extract the walk clips so the page can mark frames\n"
-        "walk-build turn Good frames of one facing into the walk test",
+        "walk-build turn Good frames of one facing into the walk test\n\n"
+        "Stop the Comfy server before setup.\n"
+        "depth, walk-reel, walk-test, walk-good, frames, and lora-set stay out of git.\n"
+        "ledger.json and walk-picks.json stay in git.",
         writes=True,
         verbose=True,
     )
     ap.add_argument("cmd", nargs="?", default="", help="setup, install, run, review, status, export-set, depth, walk-reel, or walk-build")
     ap.add_argument("--all", action="store_true", help="With depth, write one gray depth for every bible cell.")
     ap.add_argument("--selftest", action="store_true", help="Check the workflow wires and the book logic; write nothing.")
-    ap.add_argument("--name", default="female", help="Character name in the book.")
+    ap.add_argument("--name", default="female", help="Character name. female or male for the walk clips. Default: female.")
     ap.add_argument("--id", default="", help="Run id to review. Default: the latest unmarked run.")
     ap.add_argument("--yes", action="store_true", help="Mark the run approved.")
     ap.add_argument("--no", action="store_true", help="Mark the run denied.")

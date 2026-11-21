@@ -82,7 +82,7 @@ def _load_png(path: Path):
 
     if not path.is_file():
         raise FileNotFoundError(
-            "missing " + path.name + ". On the game repo run: python tools/media.py comfy-character install"
+            "missing " + path.name + ". Stop the Comfy server, then on the game repo run: python tools/media.py comfy-character setup"
         )
     image = Image.open(path).convert("RGB")
     array = np.asarray(image).astype("float32") / 255.0
@@ -425,7 +425,7 @@ if PromptServer is not None and web is not None:
             if built and built != which:
                 raise ValueError("These depths are the " + built + " walk. Set Her picture to " + built + ", then queue again.")
             if not (_bible_dir() / f"female-{which}.png").is_file():
-                raise ValueError("missing her picture. Run python tools/media.py comfy-character install")
+                raise ValueError("missing her picture. Stop the Comfy server, then run: python tools/media.py comfy-character setup")
             prompt = str(payload.get("prompt") or words(which, "walk frame", "klein"))
             negative = str(payload.get("negative") or _prompts()["avoid"])
             steps = int(payload.get("steps") or 28)
