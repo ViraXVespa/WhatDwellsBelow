@@ -14,19 +14,29 @@ static func _js_close() -> void:
 		})();
 	""", true)
 
+## Fullscreen the page root, not #canvas: Godot's web virtual keyboard is a hidden <input>/<textarea> beside the
+## canvas, and Chromium makes everything outside the fullscreen element inert, so with the canvas fullscreen the
+## input could not take focus and no phone keyboard opened. The canvas is the fallback where the root can't go fullscreen.
+## bug_report_touch_check.gd pins the order.
+const REQUEST_FS_JS := """
+	(function () {
+		try {
+			var c = document.documentElement;
+			var fn = c.requestFullscreen || c.webkitRequestFullscreen;
+			if (!fn) {
+				c = document.getElementById('canvas');
+				fn = c && (c.requestFullscreen || c.webkitRequestFullscreen);
+			}
+			if (!fn) return;
+			try { fn.call(c, { keyboardLock: 'browser' }); }
+			catch (e1) { fn.call(c); }
+		} catch (e) {}
+	})();
+"""
+
 static func _js_request_fs() -> void:
 	Web.ensure_web_hooks()
-	JavaScriptBridge.eval("""
-		(function () {
-			try {
-				var c = document.getElementById('canvas') || document.documentElement;
-				var fn = c.requestFullscreen || c.webkitRequestFullscreen;
-				if (!fn) return;
-				try { fn.call(c, { keyboardLock: 'browser' }); }
-				catch (e1) { fn.call(c); }
-			} catch (e) {}
-		})();
-	""", true)
+	JavaScriptBridge.eval(REQUEST_FS_JS, true)
 
 static func web_kind() -> String:
 	var _fac = load("res://scripts/display_mode.gd")

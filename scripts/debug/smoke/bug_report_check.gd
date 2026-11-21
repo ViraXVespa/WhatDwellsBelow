@@ -14,6 +14,7 @@ const Page := preload("res://scripts/ui/pause_settings/report_page.gd")
 const Pick := preload("res://scripts/ui/pause_settings/report_pick.gd")
 const Doors := preload("res://scripts/data/bug_doors.gd")
 const PickCheck := preload("res://scripts/debug/smoke/bug_report_pick_check.gd")
+const TouchCheck := preload("res://scripts/debug/smoke/bug_report_touch_check.gd")
 
 static func run(_host: Node) -> void:
 	var fails: PackedStringArray = []
@@ -58,6 +59,7 @@ static func run(_host: Node) -> void:
 	if cats != ["", "ui.hud", ""] or str(Send.payload({"door": "nope"}, "", true).category) != "":
 		fails.append("door/job category " + str(cats))
 	fails.append_array(PickCheck.faults(_host))
+	fails.append_array(TouchCheck.faults(_host))
 	if not _backspace_ok(_host):
 		fails.append("Backspace in the email field does not delete")
 	fails.append_array(_opt_faults())
