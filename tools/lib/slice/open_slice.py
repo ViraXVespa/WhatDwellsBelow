@@ -37,7 +37,9 @@ This is the only tool that launches grok for a Build slice. The isolated-media r
 """
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
+import io
 import os
 import re
 import shutil
@@ -407,15 +409,19 @@ def _prepare_selftest(td: Path) -> list[str]:
             out = status if argv[0] == "git" else f"RESULT {'PASS' if rc == 0 else 'FAIL'} x=1\n"
             return subprocess.CompletedProcess(argv, 0 if argv[0] == "git" else rc, out, "")
         return run
-    lines = prepare(wt, "camp-pause-pages", fake())
+
+    def prep(*a):  # quiet: the planted failure's live "SETUP FAILED" line became the sweep's FAIL detail (#87)
+        with contextlib.redirect_stdout(io.StringIO()):
+            return prepare(*a)
+    lines = prep(wt, "camp-pause-pages", fake())
     if not any("bot-smokes --setup" in a for a in seen) or not any("flow --flow camp-pause-pages --before" in a for a in seen) \
             or lines != ["setup: RESULT PASS x=1", "before shots: RESULT PASS x=1"]:
         bad.append(f"prepare must run the setup, then the before shots of the slice flows: {lines} {seen}")
-    if "skipped: 1 tracked path(s) already edited" not in " ".join(prepare(wt, "f", fake(" M scripts/a.gd\n"))):
+    if "skipped: 1 tracked path(s) already edited" not in " ".join(prep(wt, "f", fake(" M scripts/a.gd\n"))):
         bad.append("prepare must not shoot before shots in an edited worktree")
-    if prepare(wt, "", fake())[-1] != "before shots: none (no shot flow mapped to this slice)":
+    if prep(wt, "", fake())[-1] != "before shots: none (no shot flow mapped to this slice)":
         bad.append("prepare with no flow must say so")
-    if not prepare(wt, "f", fake(rc=1))[0].startswith("SETUP FAILED (exit 1)"):
+    if not prep(wt, "f", fake(rc=1))[0].startswith("SETUP FAILED (exit 1)"):
         bad.append("a failed setup must say so and print the fix")
     return bad
 

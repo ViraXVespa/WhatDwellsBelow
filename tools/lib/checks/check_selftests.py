@@ -54,6 +54,10 @@ def classify(rc: int | None, text: str) -> tuple[str, str]:
         return "SKIP", m.group(0).strip()[:120]
     if rc == 0:
         return ("SKIP", m.group(0)[:120]) if m and re.match(r"RESULT SKIP|not run", m.group(0), re.I) else ("PASS", "")
+    tb = max((i for i, l in enumerate(lines) if l.startswith("Traceback")), default=-1)
+    exc = [l for l in lines[tb + 1:] if not l[:1].isspace()] if tb >= 0 else []
+    if exc:  # the exception line, not "Traceback (...)" or a planted failure printed earlier (#87)
+        return "FAIL", ("Traceback: " + exc[0].strip())[:200]
     first = next((l for l in lines if re.search(r"FAIL|Error|error:|Traceback", l)), lines[-1] if lines else f"exit {rc}")
     return "FAIL", first.strip()[:200]
 
@@ -77,16 +81,18 @@ def sweep(root: Path, items: list[tuple[str, str]], timeout: int, jobs: int) -> 
     return [(p, c, s, w, d) for (p, c), (s, w, d) in zip(items, res)]
 
 def selftest() -> int:
-    """Planted fixtures: one passing, one failing, one missing exe, one missing module; each must classify as planted."""
+    """Planted fixtures: pass, fail, missing exe, missing module, timeout, traceback; each classifies as planted (traceback: names the exception)."""
     with tempfile.TemporaryDirectory() as td:
         t = Path(td)
         cases = {"ok.py": ("print('RESULT PASS')", "PASS"), "bad.py": ("print('FAIL planted fault'); raise SystemExit(1)", "FAIL"),
                  "exe.py": ("import subprocess; subprocess.run(['grok-missing-x'])", "SKIP"), "mod.py": ("import no_such_mod_wdb", "SKIP"),
-                 "slow.py": ("import time; time.sleep(5)", "FAIL")}
+                 "slow.py": ("import time; time.sleep(5)", "FAIL"),
+                 "tb.py": ("print('open: SETUP FAILED planted noise'); assert 0, 'real cause'", "FAIL")}
         for n, (src, _) in cases.items():
             (t / n).write_text(src.replace("grok-missing-x", "grok"), encoding="utf-8")
         got = sweep(t, [(n, f"{sys.executable} {n}") for n in cases], 2, 4)
     bad = [f"{p}: got {s} ({w}) want {cases[p][1]}" for p, _, s, w, _ in got if s != cases[p][1]]
+    bad += [f"{p}: detail {w!r} must name the exception" for p, _, s, w, _ in got if p == "tb.py" and "AssertionError: real cause" not in w]
     for b in bad:
         print("FAIL " + b)
     print(f"RESULT {'FAIL' if bad else 'PASS'} selftest check-selftests cases={len(cases)}")
