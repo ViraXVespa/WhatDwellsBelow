@@ -6,8 +6,10 @@ Names-only mode offers at most 8 scripts (task, job doc, door code-map stems). `
 whole door code-map, paged, with no file cap. Fresh sessions share the session plan and each has its
 own instructions in `tools/data/gather/skills/` (scout, mark, follow, gap, trim, review). The conductor
 writes `slice.py adjust` between sessions. A runaway guard stops a chain that does not finish and
-keeps marks when a core func remains. Tools stay off. Invalid JSON on scout or mark is repaired once,
-then the mechanical seed stays. Follow, gap, trim, and review keep the marks when their reply is not JSON.
+keeps marks when a core func remains. Tools stay off. A scout page that returns no JSON or no final answer
+is skipped; if no page chooses a script, the mechanical seed stays. A mark list may name funcs as strings
+for that file. Invalid JSON on mark is repaired once, then the mechanical seed stays. Follow, gap, trim, and
+review keep the marks when their reply is not JSON.
 A pick that passes the check sets `gather: agent`. No Approach. `--selftest` uses a stub model.
 Open still launches when the chain misses: the packet stays the mechanical seed.
 """
@@ -34,11 +36,11 @@ import session_plan
 
 MODEL = "gpt-oss:20b"
 CAP = 8  # names-only table; --chain does not use this
-PAGE = 12  # one scout or gap page; the chain walks every page
-FILE_CHARS = 16000  # one mark session; a larger file is split on function boundaries
+PAGE = 12  # one scout or gap page; a larger page made gpt-oss return no scripts
+FILE_CHARS = 64000  # one mark session; a larger file is split on function boundaries
 MAX_READS = 200  # runaway guard, not a cap on a finished chain
 MAX_SESSIONS = 400
-TIMEOUT = 480  # one completion; a chain is several of these
+TIMEOUT = 900  # one completion; gpt-oss may reason for a long page before the JSON
 ROLES = ("scout", "mark", "follow", "gap", "trim", "review")
 PATH_RE = re.compile(r"(?<![\w./-])((?:[\w.-]+/)*[\w.-]+\.(?:gd|tscn))")
 WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{2,}")
@@ -48,7 +50,8 @@ WHY = "picker: edit owner"
 _SKILLS: dict[str, str] = {}
 MEMORY = (
     "The session plan is your only memory. If you compact, re-read that plan and continue this same job. "
-    "Do not implement the change. The conductor writes the plan from your JSON."
+    "Do not implement the change. The conductor writes the plan from your JSON. "
+    "You cannot search or open files. Decide from this message only, then put one JSON object in the final answer."
 )
 
 
@@ -264,6 +267,29 @@ def parse_edit(raw: str) -> list[tuple[str, str, str]] | None:
     return out
 
 
+def parse_mark(raw: str, path: str) -> list[tuple[str, str, str]] | None:
+    """Edit rows for one file. A string row is a func name in path. An object row uses path and func."""
+    data = _load_json(raw)
+    if data is None or not isinstance(data.get("edit"), list):
+        return None
+    out: list[tuple[str, str, str]] = []
+    for row in data["edit"]:
+        if isinstance(row, str):
+            func = row.strip()
+            if not func:
+                return None
+            out.append((path, func, _why_of("")))
+            continue
+        if not isinstance(row, dict):
+            return None
+        got = _clean_path(str(row.get("path") or "")) or path
+        func = str(row.get("func") or "").strip()
+        if not func:
+            return None
+        out.append((got, func, _why_of(str(row.get("why") or ""))))
+    return out
+
+
 def _string_list(data: dict | None, key: str) -> list[str] | None:
     """Strings under key, or None when the reply is not that object. An empty list is valid."""
     if data is None or not isinstance(data.get(key), list):
@@ -286,18 +312,47 @@ def _ollama_post(body: dict) -> dict:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def ollama_complete(messages: list[dict[str, str]], model: str) -> str:
-    """One /api/chat completion. think=false so the reply is the JSON, not a trace.
+def _think(model: str):
+    """gpt-oss thinks at medium unless this is set. high is the level this gather uses. A boolean false does not select a level."""
+    if model.startswith("gpt-oss"):
+        return "high"
+    return False
 
-    A model that rejects the think field is retried once without it.
+
+def _predict(model: str, messages: list[dict[str, str]]) -> int:
+    """Mark and trim may list several funcs. Other roles answer with a short list, and a longer cap only stretches a ramble."""
+    if not model.startswith("gpt-oss"):
+        return 2048
+    user = messages[-1]["content"] if messages else ""
+    if user.startswith("Role: mark") or user.startswith("Role: trim"):
+        return 16384
+    return 8192
+
+
+def _reply_text(payload: dict) -> str:
+    """The final answer. A reasoning trace cut off by the token cap is not the answer."""
+    message = payload.get("message") or {}
+    content = str(message.get("content") or "").strip()
+    if content:
+        return content
+    if payload.get("done_reason") == "stop":
+        return str(message.get("thinking") or "").strip()
+    return ""
+
+
+def ollama_complete(messages: list[dict[str, str]], model: str) -> str:
+    """One /api/chat completion. gpt-oss reasons at high; other models keep thinking off.
+
+    A model that rejects the think field is retried once without it. The token cap is wide for
+    gpt-oss so a high reasoning pass can still emit the final JSON.
     """
     body = {
         "model": model,
         "messages": messages,
         "stream": False,
         "format": "json",
-        "think": False,
-        "options": {"temperature": 0, "num_predict": 2048},
+        "think": _think(model),
+        "options": {"temperature": 0, "num_predict": _predict(model, messages)},
     }
     try:
         try:
@@ -309,11 +364,11 @@ def ollama_complete(messages: list[dict[str, str]], model: str) -> str:
             payload = _ollama_post(body)
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
         raise ModelError(str(exc)) from exc
-    message = payload.get("message") or {}
-    content = str(message.get("content") or message.get("thinking") or "").strip()
+    content = _reply_text(payload)
     if content:
         return content
-    raise ModelError("ollama returned an empty completion")
+    reason = str(payload.get("done_reason") or "unknown")
+    raise ModelError(f"ollama returned no final answer ({reason})")
 
 
 def _accept(scripts: list[Script], pairs: list[tuple[str, str, str]]) -> tuple[list[tuple[str, str, str]], int]:
@@ -577,7 +632,7 @@ def _drop_files(root: Path, marked: list[tuple[str, str, str]], drop_paths: list
 
 
 class _ChainStop(Exception):
-    """A scout or mark failure already restored the seed."""
+    """A mark failure, or a scout that chose nothing, already restored the seed."""
 
     def __init__(self, report: Report):
         self.report = report
@@ -616,9 +671,9 @@ def chain(root: Path, door: str, job: str, task: str, model: str, complete, dry:
         nonlocal sessions, repair
         try:
             raw, n = _ask(complete, messages, model)
-        except ModelError:
-            _restore(root, before, delta_before)
-            raise
+        except ModelError as exc:
+            lines.append(f"model: {exc}")
+            return None
         sessions += 1 + n
         repair += n
         return _string_list(_load_json(raw), key)
@@ -657,9 +712,11 @@ def chain(root: Path, door: str, job: str, task: str, model: str, complete, dry:
                 raise
             sessions += 1 + n
             repair += n
-            pairs = parse_edit(raw)
+            pairs = parse_mark(raw, path)
             if pairs is None:
-                raise _ChainStop(fail_closed(f"chain: mark {path} did not return JSON; the mechanical seed stays"))
+                snippet = " ".join((raw or "").split())[:160]
+                raise _ChainStop(fail_closed(
+                    f"chain: mark {path} did not return an edit list ({snippet}); the mechanical seed stays"))
             got, skip = _accept(scripts, pairs)
             dropped += skip
             fresh = [(p, f, w) for p, f, w in got if p == path and (p, f) not in seen_funcs]
@@ -690,7 +747,8 @@ def chain(root: Path, door: str, job: str, task: str, model: str, complete, dry:
                 break
             got = ask_list(_scout_messages(task_text, page, _index(root), n, len(pages)), "read")
             if got is None:
-                raise _ChainStop(fail_closed(f"chain: scout page {n} did not return JSON; the mechanical seed stays"))
+                lines.append(f"scout page {n}: skipped")
+                continue
             page_set = {script.path for script in page}
             for path in got:
                 if path in page_set and path not in chosen_set:
@@ -1024,8 +1082,8 @@ def selftest() -> int:
 
         fresh()
         rep = chain(root, "demo", "demo.part", "pick-task", "stub", broken_choose, False)
-        if md.read_text(plan) != before or rep.route != "seed" or rep.sessions != 2:
-            bad.append(f"a bad scout is repaired once and the seed stays ({rep.route}, sessions={rep.sessions})")
+        if md.read_text(plan) != before or rep.route != "seed" or rep.sessions != 2 or "skipped" not in rep.body:
+            bad.append(f"a bad scout page is skipped and an empty choice keeps the seed ({rep.route}, sessions={rep.sessions})")
 
         pages = {"n": 0}
 
@@ -1058,6 +1116,47 @@ def selftest() -> int:
         offered = catalog(root, "demo", "demo.part", "pick-task")[0]
         if len(offered) <= CAP or "scripts/ui/splash.gd" not in [s.path for s in offered]:
             bad.append(f"the chain catalog is not capped at {CAP}: {len(offered)}")
+
+        def scout_miss(messages: list[dict[str, str]], _model: str) -> str:
+            user = messages[-1]["content"]
+            if user.startswith("Role: scout"):
+                if "scripts/ui/splash.gd" in user:
+                    return json.dumps({"read": ["scripts/ui/splash.gd"]})
+                raise ModelError("ollama returned no final answer")
+            if user.startswith("Role: mark") and "File: scripts/ui/splash.gd" in user:
+                return splash_edit
+            if user.startswith("Role: review"):
+                return json.dumps({"drop": []})
+            if user.startswith("Role: follow") or user.startswith("Role: gap"):
+                return json.dumps({"read": []})
+            return json.dumps({"edit": []})
+
+        fresh()
+        rep = chain(root, "demo", "demo.part", "pick-task", "stub", scout_miss, False)
+        if (rep.route != "pick" or "skipped" not in rep.body
+                or "func `scripts/ui/splash.gd:_ready`" not in md.read_text(plan)):
+            bad.append(f"a scout page with no final answer is skipped and the other pages still mark ({rep.route})")
+
+        def string_mark(messages: list[dict[str, str]], _model: str) -> str:
+            user = messages[-1]["content"]
+            if user.startswith("Role: scout"):
+                return json.dumps({"read": ["scripts/ui/splash.gd"]} if "scripts/ui/splash.gd" in user else {"read": []})
+            if user.startswith("Role: mark") and "File: scripts/ui/splash.gd" in user:
+                return json.dumps({"edit": ["_ready", "_process", "_unhandled_input", "_advance"]})
+            if user.startswith("Role: review"):
+                return json.dumps({"drop": []})
+            if user.startswith("Role: follow") or user.startswith("Role: gap"):
+                return json.dumps({"read": []})
+            return json.dumps({"keep": ["_ready", "_process", "_unhandled_input", "_advance"]})
+
+        fresh()
+        rep = chain(root, "demo", "demo.part", "pick-task", "stub", string_mark, False)
+        text = md.read_text(plan)
+        for name in ("_ready", "_process", "_unhandled_input", "_advance"):
+            if f"func `scripts/ui/splash.gd:{name}`" not in text:
+                bad.append(f"a mark list of func names missed {name}")
+        if rep.route != "pick":
+            bad.append(f"a mark list of func names should apply ({rep.route})")
 
         (root / "scripts" / "ui" / "splash.gd").write_text(
             "extends Node\n\nfunc _ready() -> void:\n\t_play()\n\nfunc _process(_d: float) -> void:\n\tpass\n\n"
@@ -1140,7 +1239,7 @@ def selftest() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser(
-        "Ask the local model which funcs to inline. Fail closed keeps the mechanical seed. slice.py open runs --chain.",
+        "Ask the local model which funcs to inline. Fail closed keeps the mechanical seed. slice.py open runs this role chain after start.",
         writes=True)
     ap.add_argument("--task", default="", metavar="ID", help="Task id. Default: this worktree's slice state.")
     ap.add_argument("--door", default="", help="routes.yaml door. Default: slice state.")
@@ -1156,9 +1255,12 @@ def main(argv: list[str] | None = None) -> int:
     door, job, _area, task, _mode = session_plan._from_state(root, args.door, args.job, "", args.task)
     if not door and not job:
         agent_log.fail("pass --door D or --job door.job (or start the slice so the worktree state has one).")
-    go = chain if args.chain else run
     try:
-        rep = go(root, door, job, task, args.model, ollama_complete, args.dry_run)
+        if args.chain:
+            rep = chain(root, door, job, task, args.model, ollama_complete, args.dry_run,
+                        lambda line: print(line, end="", flush=True))
+        else:
+            rep = run(root, door, job, task, args.model, ollama_complete, args.dry_run)
     except ModelError as exc:
         return agent_log.finish(
             "gather-pick", root, f"picker: model error; the mechanical seed stays\n{exc}", "FAIL",

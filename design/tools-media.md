@@ -10,6 +10,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 ## Jobs
 
 - **Imagine a still:** `media.py grok --kind ui --brief "..." --out DIR` (flow: the isolated-media gate).
+- **Local Comfy character:** Stop the Comfy server if it is running, then `media.py comfy-character setup`. That installs the pose page and the style page, writes one depth per bible cell, and extracts the female walk clips. Start the headless server again (Comfy Desktop stays closed while it holds port 8188) and open `WDB Character` and `WDB Style lock` from the workflow list. Those pictures are gitignored: `_src/comfy-character/depth/`, `walk-reel/`, `walk-test/`, `walk-good/`, `frames/`, and `lora-set/`. `setup` rebuilds the depths and the reel. Approve or Deny writes `_src/comfy-character/ledger.json`. Good and Bad marks write `_src/comfy-character/walk-picks.json`. Those two stay in git. `walk-build` turns Good frames into the walk test. Also `status`, `review`, `export-set`, `depth`, `walk-reel`. Node source `data/comfy_wdb_character/`. Workflows `data/comfy-character-workflow.json` and `data/comfy-workflows/`.
 - **Rekey stills:** `media.py rekey --only assets/...png` (live), `--out DIR` (review copy), `--check`; look first with `media.py rekey-preview --only ...`; full-set check `media.py rekey-check --new DIR`.
 - **Read-only modeling references:** `slice.py references export` uses the existing layout/image library and retains native provenance. It does not run Imagine/I2V or Blender.
 - **Sound effects:** `media.py sfx --list`, `media.py sfx --only CUE`, `media.py sfx --check`.
@@ -39,6 +40,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 | `media.py rekey` | Key manifest stills from source into live or an explicit review output. Check mode verifies repeatability. Summary: `rekey-all-stills`. | D | `--help` | N |
 | `media.py rekey-check` | Compare a full new still set with live/source plates and report per-class counts. Summary: `rekey-check`. | D | `--help` | N |
 | `media.py grok` | Stage an isolated media child by kind. Flags/permissions are defined by the runner and isolated-media guide; `--selftest` mocks Grok. | D | `--help` | N |
+| `media.py comfy-character` | Set up the local Comfy pose page and bible style-lock page. `setup` rebuilds the gitignored cell depths and walk reel. Record Approve or Deny, and mark walk-clip frames Good or Bad before a walk test. Summary: `comfy-character`. | D | `--help` | N |
 | `media.py sprites` | Existing sprite cleanup, keying and fitting pipeline; image operations remain in imglib. | D | `--help` | N |
 
 ### Image library `tools/lib/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)

@@ -171,6 +171,10 @@ def run(script: list[str], td: Path) -> list[str]:
     code, out, calls = go("ok", "demo.part", "--no-gather", "--review")
     if code == 0 or "turns gathering off" not in out:
         bad.append(f"--no-gather cannot combine with --review: {out[-200:]}")
+    code, out, calls = go("ok", "title", "--review")
+    launched = [c for c in calls if "--cwd" in c.get("argv", []) or "--trust" in c.get("argv", [])]
+    if code == 0 or launched or "does not start the main session" not in out:
+        bad.append(f"--review on a name that is not a door must not start grok ({code}): {out[-300:]}")
     code, out, calls = go("ok", "demo.part", "--prompt", "Fix the stub keyboard.")
     sess = main_call(calls)
     prompt = (sess.get("argv") or [""])[-1]

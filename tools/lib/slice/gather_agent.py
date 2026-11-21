@@ -4,7 +4,7 @@ Order in a new worktree WT (open_slice.py calls these):
     1. start(): `slice.py start <flags>` in WT with GROK_SESSION_ID = the main session's pre-assigned id (`grok -s SID`),
        so slice state records the main session and session-plan.md gets its mechanical seed.
     2. local_chain(): Ollama role sessions (`slice.py gather-pick --chain`). A pick sets `gather: agent`.
-       A miss, a model error, or invalid JSON on scout or mark leaves the mechanical seed (`gather: seed`).
+       A miss or invalid JSON on mark leaves the mechanical seed (`gather: seed`). A scout page with no final answer is skipped.
        `--seed-only` skips this step. WDB_GATHER_PICK=skip is the open selftest and does not call Ollama.
     3. finish(): `plan --refresh --clean` restores the seed only when a warn is set and there is no halt file.
        Then open's own `slice.py expand --check`

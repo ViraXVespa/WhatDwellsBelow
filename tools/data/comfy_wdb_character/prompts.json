@@ -1,0 +1,21 @@
+{
+  "avoid": "gold crown, gold circlet, gold headband, gold bar, soft shading, washed out colors, blur, extra limbs, text, watermark",
+  "cells": ["up_left", "up", "up_right", "left", "face", "right", "down_left", "down", "down_right"],
+  "identity": {
+    "female": "Female player character copied from the reference. Long dark wavy hair hangs loose from the scalp down the back in one sheet, same hang as the reference. A small braid lies along the crown of the scalp only. That is hair on the top of the head, not a worn circlet. Hair is not tied. Ends hang free. Burgundy fitted armor, dark trousers, brown boots. A short green neckband worn only around the neck, same bulk as the reference. Hands empty. No weapon. No tool.",
+    "female_up": "Female player character copied from the reference. Loose dark hair, same shape as the reference. Burgundy armor, dark trousers, brown boots. Hands empty."
+  },
+  "facing": {
+    "down": "Square front view copied from the reference. Eyes, nose, chest, and belt face the camera. Toes point at the viewer. Both shoulders the same width. Both ears visible.",
+    "up": "Square back view copied from the reference. Back of the head, rear of the armor, and heels face the camera. Both shoulders the same width. Rear silhouette matches the reference.",
+    "left": "Strict left profile copied from the reference. Nose, chest, and toes point at the left edge. One ear, one shoulder silhouette.",
+    "right": "Strict right profile copied from the reference. Nose, chest, and toes point at the right edge. One ear, one shoulder silhouette.",
+    "down_left": "Three-quarter front toward down-left, copied from the reference. More face than back.",
+    "down_right": "Three-quarter front toward down-right, copied from the reference. More face than back.",
+    "up_left": "Three-quarter back toward up-left, copied from the reference. More back than face. Rear silhouette matches the reference.",
+    "up_right": "Three-quarter back toward up-right, copied from the reference. More back than face. Rear silhouette matches the reference."
+  },
+  "klein_still": "refcontrol. 2D pixel-art sprite. Flat #FF00FF. No new shadows. Crisp flat colors, hard edges.\n\n{facing}\n\n{identity}",
+  "klein_walk": "refcontrol. 2D pixel-art sprite. One in-place walk frame. Small step. Knees bend. Arms stay close to the ribs and move only a little. Flat #FF00FF. No new shadows. Crisp flat colors, hard edges.\n\n{facing}\n\n{identity}",
+  "sdxl_style": "2D pixel-art sprite. Flat #FF00FF. No new shadows. Crisp flat colors, hard edges. Same costume, hair, and colors as the style pictures.\n\n{facing}\n\n{identity}"
+}
