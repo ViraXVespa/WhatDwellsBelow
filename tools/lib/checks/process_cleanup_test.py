@@ -17,7 +17,8 @@ def selftest(root):
               debug=None, recap=None, get_tree=lambda: tree,
               pause_menu=NS(toggle=lambda: calls.append("pause")))
     boot = read("scripts/app/app_boot.gd")
-    dispatch = function(boot, "world_action", {}, "host, action")
+    # world_action reads the scene through Touch.scene_host() (the shot tool reparents it out of current_scene).
+    dispatch = function(boot, "world_action", {"App": NS(Touch=NS(scene_host=lambda: tree.current_scene))}, "host, action")
     dispatch(host, "pause"); dispatch(host, "map_view")
     assert calls == ["pause", "map"]
     for field in ("_menu_loading", "ui_open"):
@@ -53,7 +54,8 @@ def selftest(root):
     assert 'func _on_pause' not in camp
     assert camp.index('Hud._hud(self)') < camp.index('_connect_hud()', camp.index('Hud._hud(self)'))
     touch = read("scripts/ui/touch_hud.gd")
-    assert 'func _process' not in touch and '_refresh_queued' in touch
+    # W13 touch rework: _process may only queue a refresh while the overlay is up or on a touch device.
+    assert '_refresh_queued' in touch and ('func _process' not in touch or 'if visible or Touch.wants_device():\n\t\trequest_refresh()' in touch)
     for producer in ('size_changed', 'scene_changed', 'joy_connection_changed', 'input_changed', 'InputEventScreenDrag'):
         assert producer in touch, producer
     assert 'PROCESS_MODE_ALWAYS' in boot and 'PROCESS_MODE_ALWAYS' in read("scripts/ui/pause_menu/pause_menu_view.gd")
