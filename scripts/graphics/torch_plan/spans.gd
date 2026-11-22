@@ -10,6 +10,10 @@ static var _suy: PackedFloat32Array = PackedFloat32Array()
 static var _slen: PackedFloat32Array = PackedFloat32Array()
 static var _pn: int = 0
 static var _bins: Dictionary = {}
+## Brackets keep END_INSET m from a run's end (issue #82: a bracket on an outer corner put its camera-facing quad in
+## the plane of the wall's end face and z-fought). Debug plant: plant_no_inset puts the old clamp back.
+const END_INSET := 0.55
+static var plant_no_inset := false
 
 static func _prep_spans(spans: Array, per: int) -> void:
 	_pn = 0
@@ -182,7 +186,7 @@ static func _span_at(per: int, cell: Vector2i) -> Dictionary:
 		var along: float = (aim.x - o.x) * ux + (aim.y - o.y) * uy
 		if along < -scale or along > slen + scale:
 			continue
-		var t: float = clampf(along, 0.0, slen)
+		var t: float = _inset(along, slen, scale)
 		var hit: Vector2 = o + Vector2(ux, uy) * t
 		var to_floor: Vector2 = aim - hit
 		if to_floor.dot(nrm) <= 0.0:
@@ -197,6 +201,15 @@ static func _span_at(per: int, cell: Vector2i) -> Dictionary:
 	if not found:
 		return {}
 	return _site_on(best_hit, best_n, scale, cell.x, cell.y)
+
+## Along-run spot for a bracket aimed at `along`: END_INSET m from either end, the middle on a run too short for both.
+static func _inset(along: float, slen: float, scale: float) -> float:
+	if plant_no_inset:
+		return clampf(along, 0.0, slen)
+	var m: float = END_INSET * scale
+	if slen <= 2.0 * m:
+		return slen * 0.5
+	return clampf(along, m, slen - m)
 
 static func _span_ends(run: Dictionary) -> PackedVector2Array:
 	var out: PackedVector2Array = PackedVector2Array()

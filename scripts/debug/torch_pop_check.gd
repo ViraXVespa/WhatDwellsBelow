@@ -51,6 +51,12 @@ var hide_foes: String:
 				(n as Node3D).visible = false
 		return "ok"
 
+static func _host() -> Node:
+	var n: Node = _player()
+	while n != null and not ("geo_jobs" in n):
+		n = n.get_parent()
+	return n
+
 static func _player() -> Node3D:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	return tree.get_first_node_in_group("player") as Node3D
@@ -105,3 +111,60 @@ static func flame_fault() -> String:
 		if not found:
 			return "no bill %.1f,%.1f " % [at.x, at.z]
 	return ""
+
+## Issue #82: .ends is "" when every torch site sits at least 0.5 m from both ends of its wall run (or mid-run on
+## a run under 1.1 m). .plant_ends re-plans the floor with Spans.plant_no_inset (the old end clamp) and must read
+## "caught"; the live plan is left as it was.
+var ends: String:
+	get:
+		return ends_fault(LightRt._sites)
+var plant_ends: String:
+	get:
+		var plan: GDScript = load("res://scripts/graphics/torch_plan.gd") as GDScript
+		var spans: GDScript = load("res://scripts/graphics/torch_plan/spans.gd") as GDScript
+		var host: Node = _host()
+		spans.set("plant_no_inset", true)
+		plan.set("_cache_key", "")
+		var bad: String = ends_fault(plan.call("build", host, [], Rect2i()))
+		spans.set("plant_no_inset", false)
+		plan.set("_cache_key", "")
+		plan.call("build", host, [], Rect2i())
+		return "caught" if bad != "" else "missed"
+
+static func ends_fault(sites: Array) -> String:
+	var sp: GDScript = load("res://scripts/graphics/torch_plan/spans.gd") as GDScript
+	var ori: PackedVector2Array = sp.get("_sori")
+	var nrm: PackedVector2Array = sp.get("_snrm")
+	var ux: PackedFloat32Array = sp.get("_sux")
+	var uy: PackedFloat32Array = sp.get("_suy")
+	var slen: PackedFloat32Array = sp.get("_slen")
+	var pn: int = int(sp.get("_pn"))
+	var host: Node = _host()
+	var scale: float = float(maxi(1, int(host.data.get("solid_n", 1))))
+	var n_bad: int = 0
+	var first: String = ""
+	for site: Dictionary in sites:
+		var nx: float = float(site["nx"])
+		var nz: float = float(site["nz"])
+		var wall := Vector2(float(site["px"]) - nx * 0.12, float(site["pz"]) - nz * 0.12) * scale
+		var best_room: float = -INF
+		for i in pn:
+			if nrm[i].dot(Vector2(nx, nz)) < 0.99:
+				continue
+			var u := Vector2(ux[i], uy[i])
+			var along: float = (wall - ori[i]).dot(u)
+			if along < -0.01 or along > slen[i] + 0.01:
+				continue
+			if (wall - ori[i] - u * along).length() > 0.02 * scale:
+				continue
+			# Collinear runs can share the point: judge it on the run it sits deepest in.
+			var room: float = minf(along, slen[i] - along) - minf(0.5 * scale, slen[i] * 0.5 - 0.01)
+			if room > best_room:
+				best_room = room
+		if best_room == -INF:
+			continue
+		if best_room < 0.0:
+			n_bad += 1
+			if first == "":
+				first = "%.2f,%.2f" % [float(site["px"]), float(site["pz"])]
+	return "" if n_bad == 0 else "on_end=%d first=%s" % [n_bad, first]
