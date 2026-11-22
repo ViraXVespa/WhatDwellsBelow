@@ -4,9 +4,14 @@ extends Object
 ## to a hard range cap, cut by the source's own wall (behind its face), its eave (above the awning hem) and any
 ## footprint box between the source and the lit point. Ground and wall shaders evaluate it per 1/82.6 m texel cell,
 ## so pool edges stay on the sprite-texel grid. Uniforms: GLSL; push with bind() after set_sources() / set_boxes().
+## Coverage mask: set_sources() also bakes pool_mask, MASK_PX_PER_M texels per metre over the sources' range boxes,
+## set where any range circle touches the texel. pool_light() returns 0 off the mask before its loop: those points
+## are past every range cap, so the light is unchanged, but most of the yard skips the per-source loop (web camp
+## frame ~120 -> ~65 ms in headless Chrome; design/benchmarks/web-perf.md).
 
 const MAX_S := 16
 const MAX_B := 24
+const MASK_PX_PER_M := 4.0
 ## Falloff 1 / (1 + (r / SOFT)^2), Lambert on the receiver, windowed to 0 at the range cap.
 const SOFT := 0.8
 ## Hub lantern: range (m), gain, core and rim colour. HOT is the core tint inside CORE of the range.
@@ -20,6 +25,8 @@ static var _b := PackedVector4Array()
 static var _n := 0
 static var _bn := 0
 static var last := ""
+static var _mask: ImageTexture = null
+static var _mask_rect := Vector4.ZERO
 
 const GLSL := """
 uniform int pool_n = 0;
@@ -27,6 +34,8 @@ uniform vec4 pool_p[16]; // source x, y, z, range
 uniform vec4 pool_c[16]; // rim colour rgb, gain
 uniform vec4 pool_f[16]; // facing x, z (0 = all round), eave y, core share
 uniform vec4 pool_hot = vec4(1.0, 0.86, 0.62, 0.0);
+uniform sampler2D pool_mask : filter_nearest, repeat_disable;
+uniform vec4 pool_mask_rect = vec4(0.0); // x0, z0, 1 / width m, 1 / depth m; z 0 = no mask
 uniform int occ_n = 0;
 uniform vec4 occ_b[24]; // footprint x0, z0, x1, z1
 bool occ_hit(vec2 a, vec2 b) {
@@ -48,6 +57,10 @@ bool occ_hit(vec2 a, vec2 b) {
 // Light at point q with receiver normal nrm; wrap lifts grazing receivers (walls a lamp hangs on).
 vec3 pool_light(vec3 q, vec3 nrm, float wrap) {
 	vec3 sum = vec3(0.0);
+	if (pool_mask_rect.z > 0.0) {
+		vec2 mu = (q.xz - pool_mask_rect.xy) * pool_mask_rect.zw;
+		if (mu.x < 0.0 || mu.y < 0.0 || mu.x >= 1.0 || mu.y >= 1.0 || textureLod(pool_mask, mu, 0.0).r < 0.5) { return sum; }
+	}
 	for (int i = 0; i < pool_n; i++) {
 		vec3 l = pool_p[i].xyz;
 		float range = pool_p[i].w;
@@ -85,9 +98,44 @@ static func set_sources(rows: Array) -> void:
 		_c.append(Vector4(col.r, col.g, col.b, float(row["gain"])))
 		_f.append(Vector4(face.x, face.y, float(row.get("eave", 1000.0)), float(row.get("core", 0.35))))
 	_n = _p.size()
+	_bake_mask()
 	_p.resize(MAX_S)
 	_c.resize(MAX_S)
 	_f.resize(MAX_S)
+
+static func _bake_mask() -> void:
+	_mask = null
+	_mask_rect = Vector4.ZERO
+	if _n == 0:
+		return
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for v: Vector4 in _p:
+		lo = lo.min(Vector2(v.x - v.w, v.z - v.w))
+		hi = hi.max(Vector2(v.x + v.w, v.z + v.w))
+	var w: int = int(ceil((hi.x - lo.x) * MASK_PX_PER_M)) + 1
+	var h: int = int(ceil((hi.y - lo.y) * MASK_PX_PER_M)) + 1
+	var img := Image.create(w, h, false, Image.FORMAT_R8)
+	var cell: float = 1.0 / MASK_PX_PER_M
+	for v: Vector4 in _p:
+		var c := Vector2(v.x, v.z)
+		for j in range(maxi(int((v.z - v.w - lo.y) * MASK_PX_PER_M) - 1, 0), mini(int((v.z + v.w - lo.y) * MASK_PX_PER_M) + 2, h)):
+			for i in range(maxi(int((v.x - v.w - lo.x) * MASK_PX_PER_M) - 1, 0), mini(int((v.x + v.w - lo.x) * MASK_PX_PER_M) + 2, w)):
+				var t0 := lo + Vector2(i, j) * cell
+				if c.distance_to(c.clamp(t0, t0 + Vector2(cell, cell))) < v.w + 0.01:
+					img.set_pixel(i, j, Color.WHITE)
+	_mask = ImageTexture.create_from_image(img)
+	_mask_rect = Vector4(lo.x, lo.y, MASK_PX_PER_M / float(w), MASK_PX_PER_M / float(h))
+
+## CPU twin of the shader's mask test: false only where pool_light() skips its loop.
+static func mask_at(xz: Vector2) -> bool:
+	if _mask_rect.z <= 0.0:
+		return true
+	var mu := (xz - Vector2(_mask_rect.x, _mask_rect.y)) * Vector2(_mask_rect.z, _mask_rect.w)
+	if mu.x < 0.0 or mu.y < 0.0 or mu.x >= 1.0 or mu.y >= 1.0:
+		return false
+	var img: Image = _mask.get_image()
+	return img.get_pixel(mini(int(mu.x * img.get_width()), img.get_width() - 1), mini(int(mu.y * img.get_height()), img.get_height() - 1)).r > 0.5
 
 ## Occluding footprints (Rect2 in xz).
 static func set_boxes(rects: Array) -> void:
@@ -111,6 +159,8 @@ static func bind(m: ShaderMaterial) -> bool:
 	m.set_shader_parameter("pool_hot", Vector4(hot.r, hot.g, hot.b, 0.0))
 	m.set_shader_parameter("occ_n", _bn)
 	m.set_shader_parameter("occ_b", _b)
+	m.set_shader_parameter("pool_mask", _mask)
+	m.set_shader_parameter("pool_mask_rect", _mask_rect)
 	return true
 
 static func bind_all(mats: Array) -> int:

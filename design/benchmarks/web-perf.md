@@ -36,3 +36,12 @@ Release export (preset `Web`, no `scripts/debug/`), only the 9 flows with no in-
 | dungeon-load | 2089 | 55.9 | 33.4 | 107.2 |
 | dungeon-walk | 2088 | 35.3 | 36.3 | 69.8 |
 | dungeon-music-cold | 71765 | 27.5 | 64.6 | 72.8 |
+
+## Camp ground fill (2026-11-21, w13, `a6e7c1bb`)
+
+Box: Xeon x8, Chrome 156 headless, SwiftShader, 1280x720, debug export, camp idle at spawn, median of 20 frames (window.wdbEval, `?wdb-playtest`). Release `--release-ref` on the same build: camp-idle 8.6 fps, camp-walk 11.4, dungeon-walk 32.1, title-idle 49.3.
+
+- Camp frame ~118 ms. Script processing is not the cost (disabling every processing node's `process_mode` moves it < 5 ms). Hiding the camp `Generated` ground planes drops it to 13.5 ms; the main yard plane alone is ~65 ms.
+- Ground shader split (shader edits removed one term at a time): lantern `pool_light` loop ~60 ms, `hub_sun` ~13, feather `vnoise` ~12, wear/light/albedo taps a few ms each.
+- `pools.gd` coverage mask (pool_light returns 0 off the range circles before its loop): 118 -> ~87 ms at spawn (4 runs each). Same light (hub_pool_check `mask`: every lit point is on the mask). Hub settle LOADSTEPS 5.8 s -> 3.8 s from the cheaper frames.
+- 3D scale on headless web: 0.9 / 0.8 / 0.6 = -10% / -30% / -52%. Not used: real-GPU web blit cost (design/tasks/perf-sweep.md) keeps web Auto at 1.0. Headless numbers are not the FPS reading.
