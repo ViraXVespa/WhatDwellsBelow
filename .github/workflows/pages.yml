@@ -134,6 +134,10 @@ jobs:
           mkdir -p "$SITE"
           python3 tools/release.py mips --root "$PWD"
           "$GODOT_BIN" --headless --path "$PWD" --import
+          # CI has no gitignored addons/, so the addon's export plugin cannot strip this autoload.
+          cp project.godot project.godot.mcpbak
+          python3 -c "from pathlib import Path; import re; p=Path('project.godot'); p.write_text(re.sub(r'(?m)^_mcp_game_helper=.*\n','',p.read_text(encoding='utf-8')), encoding='utf-8')"
+          trap 'mv -f project.godot.mcpbak project.godot' EXIT
           "$GODOT_BIN" --headless --path "$PWD" --export-release Web "$SITE/index.html"
           python3 tools/release.py postexport "$SITE"
           touch "$SITE/.nojekyll"
