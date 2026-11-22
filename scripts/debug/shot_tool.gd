@@ -102,12 +102,27 @@ static func mount_capture(host: Node) -> void:
 	win.remove_child(host)
 	snap.add_child(host)
 	tree.current_scene = host
+	_route_app_layers(win, snap)
 	snap.size = shot + Vector2i(0, 1)
 	snap.size = shot
 	if not Args.show_window():
 		win.size = Vector2i(64, 64)
 		DisplayServer.window_set_size(Vector2i(64, 64))
 	printerr("SHOT: mark=capture %dx%d" % [shot.x, shot.y])
+
+
+## App-owned overlays (pause menu, recap, presentation) are CanvasLayers under the root window, which now only
+## draws a 64x64 GL host. Point them at the capture viewport so a PNG shows them; their input stays with the root.
+static func _route_app_layers(win: Window, snap: SubViewport) -> void:
+	var app: Node = win.get_node_or_null("App")
+	if app == null:
+		return
+	# Lay those layers out at the shot size 1:1 (the 64x64 host with stretch expand would size them for a square).
+	win.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
+	win.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
+	win.content_scale_size = snap.size
+	for n: Node in app.find_children("*", "CanvasLayer", true, false):
+		(n as CanvasLayer).custom_viewport = snap
 
 
 static func attach_dungeon(host: Node) -> void:
