@@ -90,8 +90,8 @@ static func run() -> void:
 	page.pool = "pad"
 	page.capture_action = "potion"
 	page.capture_slot = 1
-	page._capture(_pad(JOY_BUTTON_DPAD_DOWN))
-	assert(App.toast_msg.begins_with("Can't swap D-pad Down") and _name("look_mode", "pad", 0) == "D-pad Down")
+	page._capture(_pad(JOY_BUTTON_RIGHT_STICK))
+	assert(App.toast_msg.begins_with("Can't swap R3") and _name("look_mode", "pad", 0) == "R3")
 	Binds.reset_pool("kb")
 	Binds.reset_pool("pad")
 	App.save_now()

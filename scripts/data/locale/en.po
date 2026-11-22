@@ -591,6 +591,9 @@ msgstr "Cancel"
 msgid "confirm_dlg.confirm"
 msgstr "Confirm"
 
+msgid "controls.aim"
+msgstr "Bow aim (Bow mode)"
+
 msgid "controls.attack"
 msgstr "Attack"
 
@@ -599,6 +602,9 @@ msgstr "Crystal map zoom"
 
 msgid "controls.dash"
 msgstr "Dash"
+
+msgid "controls.fire"
+msgstr "Bow fire (Bow mode)"
 
 msgid "controls.food"
 msgstr "Food"

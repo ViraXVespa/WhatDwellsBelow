@@ -29,11 +29,12 @@ static func dirty() -> bool:
 	_shown = now
 	return true
 
+## Gear stats card page turn (binds/table.gd MENU: Q / E, LT / RT).
 static func page_prev() -> String:
-	return "special" if scheme() == "pad" else "target_lock"
+	return "page_prev"
 
 static func page_next() -> String:
-	return "attack" if scheme() == "pad" else "interact"
+	return "page_next"
 
 static func event_for(action: String) -> InputEvent:
 	if not InputMap.has_action(action):
@@ -66,7 +67,7 @@ static func event_for(action: String) -> InputEvent:
 				if action == "interact" or action == page_next():
 					if code == KEY_E or phys == KEY_E:
 						return e
-				if action == "target_lock" or action == page_prev():
+				if action == page_prev():
 					if code == KEY_Q or phys == KEY_Q:
 						return e
 				if best == null:

@@ -3,6 +3,7 @@ extends RefCounted
 const Pool := preload("res://scripts/input/binds/binds_pool.gd")
 const Defaults := preload("res://scripts/input/binds/defaults.gd")
 const Table := preload("res://scripts/input/binds/table.gd")
+const Migrate := preload("res://scripts/input/binds/migrate.gd")
 const REFUSED := Pool.REFUSED
 const BOUND := Pool.BOUND
 const SWAPPED := Pool.SWAPPED
@@ -12,7 +13,7 @@ static func actions() -> PackedStringArray:
 	return Table.ids()
 
 static func collect() -> Array:
-	var out: Array = []
+	var out: Array = [{"action": Migrate.LAYOUT_ROW, "v": Table.LAYOUT}]
 	for a in actions():
 		if not InputMap.has_action(a):
 			continue
@@ -22,6 +23,8 @@ static func collect() -> Array:
 				var k: InputEventKey = e as InputEventKey
 				row["type"] = "key"
 				row["code"] = k.physical_keycode if k.physical_keycode != 0 else k.keycode
+				if k.physical_keycode == 0:
+					row["letter"] = true
 				row["pool"] = "kb"
 			elif e is InputEventJoypadButton:
 				row["type"] = "joy"
@@ -45,6 +48,7 @@ static func collect() -> Array:
 static func apply(rows: Array) -> void:
 	if rows.is_empty():
 		return
+	rows = Migrate.migrate(rows)
 	var seen: Dictionary = {}
 	for row in rows:
 		if not (row is Dictionary):
@@ -65,7 +69,10 @@ static func bind_event(row: Dictionary) -> InputEvent:
 	var t: String = str(row.get("type", ""))
 	if t == "key":
 		var e := InputEventKey.new()
-		e.physical_keycode = int(row.get("code", 0)) as Key
+		if bool(row.get("letter", false)):
+			e.keycode = int(row.get("code", 0)) as Key
+		else:
+			e.physical_keycode = int(row.get("code", 0)) as Key
 		return e
 	if t == "joy":
 		var jb := InputEventJoypadButton.new()
