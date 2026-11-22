@@ -5,6 +5,7 @@ extends Object
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const MapAct := preload("res://scripts/world/dungeon/map_act.gd")
+const Layout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
 
 static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.visible:
@@ -22,18 +23,27 @@ static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 		host.get_viewport().set_input_as_handled()
 
 static func down(host: CanvasLayer, idx: int, pos: Vector2) -> void:
-	for row in host._btns:
-		if pos.distance_to(row["pos"]) <= float(row["r"]) + 8.0:
-			var action := str(row["action"])
-			if Touch.in_camp() and action in ["map_view", "food", "potion"]:
-				return
-			host._btn_i[idx] = action
-			if action == "attack":
-				Touch.attack_press(now())
-			else:
-				Touch.set_held(action, true)
+	var vp := host.get_viewport().get_visible_rect().size
+	var row: Dictionary = Layout.hit(host._btns, pos, Layout.scale_for(vp))
+	if not row.is_empty():
+		var action := str(row["action"])
+		if Touch.in_camp() and action in ["map_view", "food", "potion", "target_lock"]:
 			return
-	if host._move_live:
+		if str(row["kind"]) == "stick":
+			host._bow_i = idx
+			host._bow_origin = row["pos"]
+			Touch.set_held("aim", true)
+			Touch.set_held("fire", true)
+			Touch.set_aim(Vector2.ZERO)
+			return
+		host._btn_i[idx] = action
+		if action == "attack":
+			Touch.attack_press(now())
+		else:
+			Touch.set_held(action, true)
+		return
+	if not host._move_live and host._move_i < 0 and Layout.in_move_zone(vp, pos) and host._pinch_a < 0:
+		claim_move(host, idx, pos, pos)
 		return
 	host._free[idx] = pos
 	host._park[idx] = pos
@@ -41,6 +51,11 @@ static func down(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 		begin_pinch(host)
 
 static func drag(host: CanvasLayer, idx: int, pos: Vector2) -> void:
+	if idx == host._bow_i:
+		var b: Vector2 = pos - host._bow_origin
+		var br: float = float(host._btns[0]["r"]) if not host._btns.is_empty() else 100.0
+		Touch.set_aim(b.limit_length(br) / br)
+		return
 	if idx == host._move_i:
 		var d: Vector2 = pos - host._move_origin
 		if d.length() > host._move_r:
@@ -76,6 +91,12 @@ static func drag(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 static func up(host: CanvasLayer, idx: int) -> void:
 	host._free.erase(idx)
 	host._park.erase(idx)
+	if idx == host._bow_i:
+		host._bow_i = -1
+		Touch.set_held("aim", false)
+		Touch.set_held("fire", false)
+		Touch.set_aim(Vector2.ZERO)
+		return
 	if host._btn_i.has(idx):
 		var action := str(host._btn_i[idx])
 		host._btn_i.erase(idx)
@@ -138,25 +159,23 @@ static func can_pan(host: CanvasLayer) -> bool:
 	return MapAct.is_open(map_host) and float(map_host.get_meta("map_zoom", 1.0)) > 1.001
 
 static func in_move_zone(host: CanvasLayer, pos: Vector2) -> bool:
-	var vp := host.get_viewport().get_visible_rect().size
-	return pos.x <= vp.x * 0.48 and pos.y >= vp.y * 0.22
+	return Layout.in_move_zone(host.get_viewport().get_visible_rect().size, pos)
+
+## Target lock is armed on the player (the lock slot glows).
+static func lock_on() -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	var p: Node = tree.get_first_node_in_group("player") if tree else null
+	return p != null and bool(p.get("lock_armed"))
 
 static func dungeon() -> Node:
-	var loop := Engine.get_main_loop()
-	if loop == null:
-		return null
-	var tree := loop as SceneTree
-	if tree == null:
-		return null
-	var scene := tree.current_scene
-	if scene == null:
-		return null
-	if str(scene.scene_file_path).ends_with("dungeon.tscn"):
+	var scene := Touch.scene_host()
+	if scene and str(scene.scene_file_path).ends_with("dungeon.tscn"):
 		return scene
 	return null
 
 static func release_all(host: CanvasLayer) -> void:
 	host._move_i = -1
+	host._bow_i = -1
 	host._btn_i.clear()
 	host._move_live = false
 	host._pinch_a = -1

@@ -1,0 +1,144 @@
+{
+  "name": "dungeon-touch-controls",
+  "about": "Dungeon floor 1, seed 42, phone landscape canvas 2340x1080, enemies frozen, touch overlay forced: debug/touch_layout_check.gd checks the hud_layout geometry over phone / 16:9 / 4:3 canvases with and without notch insets and Bow mode (safe area, no overlaps, centre clear, move ring zone, hit-tests), with planted overlap / off-screen / centre faults that must fail; then drives the real TouchHud with screen touches: every world button holds and releases, Dash dashes, the lock slot toggles target lock, the floating move stick walks the player right, and in Bow mode the aim stick aims up and shoots. Shots: the overlay at rest and while bow-aiming.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "width": 2340,
+  "height": 1080,
+  "covers": [
+    "play:touch-controls"
+  ],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "wait",
+      "ms": 1200
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.geometry",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.plant_caught",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.setup",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "frames": 2
+    },
+    {
+      "op": "shot",
+      "name": "touch-phone"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.buttons",
+      "equals": ""
+    },
+    {
+      "op": "wait",
+      "frames": 2
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.dash_down",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "frames": 4
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.dash_fired",
+      "equals": ""
+    },
+    {
+      "op": "wait",
+      "ms": 800
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.lock_tap",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "frames": 3
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.lock_toggled",
+      "equals": ""
+    },
+    {
+      "op": "wait",
+      "frames": 2
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.move_down",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "frames": 20
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.move_walked",
+      "equals": ""
+    },
+    {
+      "op": "wait",
+      "frames": 4
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.bow_on",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "frames": 2
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.bow_down",
+      "equals": "ok"
+    },
+    {
+      "op": "wait",
+      "frames": 12
+    },
+    {
+      "op": "shot",
+      "name": "touch-bow-aim"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.bow_aimed",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/touch_layout_check.teardown",
+      "equals": "ok"
+    }
+  ]
+}

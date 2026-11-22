@@ -959,12 +959,26 @@ msgstr "%d / %d"
 msgid "hud_act.text_2"
 msgstr "%s  %d / %d"
 
+msgid "hud_draw.aim"
+msgstr "Aim"
 
+msgid "hud_draw.attack"
+msgstr "Attack"
 
+msgid "hud_draw.dash"
+msgstr "Dash"
 
+msgid "hud_draw.map"
+msgstr "Map"
 
+msgid "hud_draw.pause"
+msgstr "Pause"
 
+msgid "hud_draw.special"
+msgstr "Special"
 
+msgid "hud_draw.use"
+msgstr "Use"
 
 msgid "hud_view.dash"
 msgstr "Dash"

@@ -138,6 +138,8 @@ static func attach_dungeon(host: Node) -> void:
 	var scheme := Args.scheme()
 	if scheme == "touch":
 		Touch.force_show = true
+		if App.touch_hud:
+			App.touch_hud.request_refresh()
 	elif scheme == "gamepad":
 		Pad.mode = true
 		Touch.force_show = false
