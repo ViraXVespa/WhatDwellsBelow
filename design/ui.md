@@ -12,7 +12,7 @@ Read when: pause panels, fullscreen drape, play-menu
 | recap reel, ghost vendor pane, quest pane, banner | `design/ui-run-flow.md` |
 | loadout tray, tooltip shell | `design/ui-gear-entry.md` |
 | restyle, builders, skin hooks, scrollbar hiding | `design/ui-style.md` |
-| menu fade in / out, Menu transitions setting | `design/ui-transitions.md` |
+| fade, transitions checkbox | `design/ui-transitions.md` |
 | legend keycaps, bindings legend | `design/ui-unit-controls.md` |
 | smithing readout, cost breakdown | `design/ui-unit-anvil.md` |
 | enter-dungeon footer, weapon tool choice | `design/ui-unit-loadout.md` |

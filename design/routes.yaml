@@ -367,6 +367,7 @@ job_read_when:
   ui.recap: "tally sequence, finale bars"
   ui.quest_board: "pinned parchment, offer cutouts"
   ui.receptionist: "talk cycle, ask topics"
+  ui.transitions: "fade, transitions checkbox"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.bench: "scored legs, continuous sweep"

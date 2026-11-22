@@ -46,7 +46,7 @@ Graphics
 
 UI
 - HUD scale, minimap size / opacity / zoom, zoom mode, Full Map Opacity, map toggle, Red border glow
-- Menu transitions checkbox (on by default; `design/ui-transitions.md`)
+- Menu transitions checkbox (on by default; fades every menu in and out)
 
 Controls
 - Pool selector at the top (Keyboard / Gamepad). It wraps both ways. D-pad / arrows are discrete; left-stick X switches once per push. Changing it rebuilds the list for that pool.
