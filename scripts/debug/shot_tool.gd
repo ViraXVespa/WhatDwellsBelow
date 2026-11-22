@@ -117,10 +117,17 @@ static func _route_app_layers(win: Window, snap: SubViewport) -> void:
 	var app: Node = win.get_node_or_null("App")
 	if app == null:
 		return
-	# Lay those layers out at the shot size 1:1 (the 64x64 host with stretch expand would size them for a square).
+	# The game's canvas_items stretch (aspect expand) at the shot size: lay 2D out at the expanded base size and
+	# stretch it to the shot, in the capture viewport and the root (the 64x64 host would size layers for a square).
+	var base := Vector2(win.content_scale_size)
+	var k: float = minf(float(snap.size.x) / base.x, float(snap.size.y) / base.y)
+	var lay := Vector2i((Vector2(snap.size) / k).round())
+	if lay != snap.size:
+		snap.size_2d_override = lay
+		snap.size_2d_override_stretch = true
 	win.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 	win.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
-	win.content_scale_size = snap.size
+	win.content_scale_size = lay
 	for n: Node in app.find_children("*", "CanvasLayer", true, false):
 		(n as CanvasLayer).custom_viewport = snap
 
