@@ -479,6 +479,10 @@ shot_flows:
   ui.recap: "camp-recap"
   ui.quest_board: "camp-npc-panels"
   ui.receptionist: "camp-receptionist-menu"
+  input: "camp-controls,dungeon-bow-mode,dungeon-touch-controls"
+  input.rebind_prompts: "camp-controls"
+  input.web_touch: "dungeon-touch-controls"
+  player: "dungeon-bow-mode"
 
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. slice.py start --door D picks the first
 # not done (`--unit-done` marks it done at Complete; a `<door>-units` task keeps the queue), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.

@@ -39,7 +39,7 @@ Binding rules live in input. UI rules for this slice:
 - Hidden on title / foundation. Shown only in Placeholdia and the dungeon when the device check passes, or when Debug Settings **Force touch overlay** is on (session-only; still hidden while `App.ui_open`).
 - Map well stays visible in Placeholdia but is disabled.
 - Menus are finger-tap. Do not draw virtual A / B over an open menu.
-- Touch RT is press-and-hold only. There is no double-tap latch.
+- Touch Attack is press-and-hold only. There is no double-tap latch.
 
 ## HUD / pause layout
 

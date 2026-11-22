@@ -7,7 +7,7 @@
   "zoom": 1.5,
   "settle_ms": 0,
   "fixed_fps": 60,
-  "covers": ["play:bow-mode"],
+  "covers": [],
   "smoke": true,
   "steps": [
     {"op": "freeze", "group": "enemies"},
