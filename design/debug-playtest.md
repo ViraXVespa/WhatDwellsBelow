@@ -44,7 +44,7 @@ Implement the following. MAY add a small number of closely related fields if a M
 - Damage dealt / damage taken
 - Kills
 - Player deaths attributed to the implemented role / type name; Guardian and Gate Master MUST still be tagged separately
-- Dash uses; special (LT) uses
+- Dash uses; special (A / RMB) uses
 - Adrenaline Rush activations and uptime
 - Crits landed (count only)
 

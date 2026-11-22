@@ -17,4 +17,4 @@ Mouse wheel zooms world camera or the large map as described under Look mode. It
 
 **Esc** opens pause by default (rebindable) and always backs out of menus; Backspace backs out too. **Space** is dash only: it does nothing in menus and is not a confirm key (Enter, E, pad A confirm). On web it MUST NOT exit browser fullscreen. Only Pause → Settings → Graphics and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause when Esc is the pause bind; otherwise the page hands Esc to the game as a normal key press so it fires its bound action (or is captured by the rebind page). F1 is always pause on web.
 
-**I** opens pause on Inventory from gameplay only. Same action as D-pad Right. MUST NOT jump tabs while pause or any other `App.ui_open` menu is already up.
+**I** opens pause on Inventory from gameplay only. Same action as the View button (pad Back). MUST NOT jump tabs while pause or any other `App.ui_open` menu is already up.

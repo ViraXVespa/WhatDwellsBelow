@@ -28,7 +28,7 @@ Camera3D + input + basic player movement/animation states (art_pipeline sprites,
 Smoke: `--wdb-phase1-smoke`
 
 **Phase 2 – Core Combat**  
-Three weapons with basic + LT specials, Dash, target-lock, crits, Adrenaline Rush, full attack telegraphs, aim-line indicator, proper depth sorting and juice.  
+Three weapons with basic + specials, Dash, target-lock, crits, Adrenaline Rush, full attack telegraphs, aim-line indicator, proper depth sorting and juice.  
 *Exit criteria*: All three weapons fully playable with telegraphs and active indicators; 60 FPS; all values exposed in debug. Report to User.  
 Smoke: `--wdb-phase2-smoke`
 

@@ -18,7 +18,7 @@ Menu bindings are shared through `scripts/ui/menu_pad.gd` (input):
 - A / Enter confirms the focused control. A second A confirms a pending prompt.
 - B / Esc backs out of a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu.
 - LB / RB (or `[` / `]`) cycle the three pause tabs. They MUST NOT page the inventory stats card.
-- **I** / D-pad Right open pause on Inventory from gameplay only. They MUST NOT jump tabs while pause or any other menu is already open. In menus D-pad Right stays `ui_right`.
+- **I** / View (pad Back) open pause on Inventory from gameplay only. They MUST NOT jump tabs while pause or any other menu is already open. In menus D-pad Right stays `ui_right`.
 
 Select / Back render in a footer strip at the bottom-right of the menu panel via `PromptView.footer`. Button captions stay verbs only. Tab chips and gear page glyphs MUST follow the last-used scheme as soon as the scheme changes; do not wait for a tab change or a new focus owner.
 
