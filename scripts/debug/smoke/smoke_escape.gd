@@ -220,7 +220,8 @@ static func _click(pos: Vector2, down: bool) -> void:
 
 static func _chip(tree: SceneTree, action: String) -> Control:
 	for n: Node in tree.root.find_children(PromptView.BAR_NAME, "", true, false):
-		if not (n is Control) or not (n as Control).is_visible_in_tree():
+		# A closed menu still fading out (MenuFade ghost) is drawn but takes no input: its chips do not count.
+		if not (n is Control) or not (n as Control).is_visible_in_tree() or not n.can_process():
 			continue
 		for c: Node in n.get_children():
 			if c is Control and str(c.get_meta("prompt_action", "")) == action:
