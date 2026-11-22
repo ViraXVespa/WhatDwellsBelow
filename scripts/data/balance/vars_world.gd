@@ -20,6 +20,7 @@ var hall_w_interval := 10
 var hall_w_min_pct := 0.15
 var hall_w_mode_pct := 0.60
 var fog_radius := 5
+var map_enemy_range := 14
 var max_clerks := 12
 var ghost_shop_chance := 0.33
 var base_guards := 5

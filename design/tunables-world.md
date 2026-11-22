@@ -19,6 +19,7 @@ Same table shape and rules as the tunables door; `tools/docs.py tunable get|set|
 | Hall width interval | 10 | **10** | Tiles along a winding path |
 | Hall width min / mode pct | 0.15 / 0.60 | **0.15 / 0.60** | Remainder is max width |
 | Fog of war reveal radius | 5 tiles | 5 | Map disk only, not 3D chunks |
+| Map enemy range (`map_enemy_range`) | ~1 screen | **14** | Cells; enemies show on the minimap / full map only this close to the player. Loot and interactables ignore it (`map_marks.gd`) |
 | Max Extraction Gates per floor (`max_clerks`) | 12 | **12** | |
 | Ghost shop chance | ~33 % | 0.33 | Always in safe room |
 | Named monster rate | ~1 every 3 floors | 3 | |

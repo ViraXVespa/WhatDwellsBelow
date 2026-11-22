@@ -43,6 +43,7 @@ func setup_item(it: Dictionary, pos: Vector3) -> void:
 	_visual()
 
 func _visual() -> void:
+	add_to_group("pickups")
 	var path: String = ART.get(kind, ART["hp"])
 	spr = BillSpr.make(path, 0.45, 0.0, 0, false)
 	if kind == "item":

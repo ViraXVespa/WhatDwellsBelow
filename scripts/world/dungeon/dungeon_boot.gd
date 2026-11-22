@@ -8,6 +8,7 @@ const SpotS := preload("res://scripts/world/interact.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
+const MapMarks := preload("res://scripts/world/dungeon/map_marks.gd")
 const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
@@ -116,6 +117,7 @@ static func process_floor(host: Node, delta: float) -> void:
 			DungeonMinimap.note_player(host, t)
 		host._tick_pressure(delta, grew)
 		DungeonStream.tick(host, delta)
+		MapMarks.tick(host, delta)
 		# CrystalNet.guard removed; volumes handle safe zones
 	host._note_verge()
 	if t0 > 0:

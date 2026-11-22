@@ -5,6 +5,7 @@ const HudS := preload("res://scripts/ui/hud.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonGeo := preload("res://scripts/world/dungeon_geo.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
+const MinimapView := preload("res://scripts/world/dungeon/minimap_view.gd")
 const DungeonCells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 const DungeonPack := preload("res://scripts/world/dungeon/dungeon_pack.gd")
 const DungeonBoot := preload("res://scripts/world/dungeon/dungeon_boot.gd")
@@ -125,7 +126,7 @@ func _redraw_map() -> void:
 		MapActS.apply(self)
 
 func sync_map_view() -> void:
-	DungeonMinimap.sync_views(self)
+	MinimapView.sync_views(self)
 	if map_layer and map_layer.visible:
 		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 		MapActS.apply(self)
