@@ -49,6 +49,7 @@ def median(runs: list[dict]) -> dict:
     if len({len(r.get("load_marks", [])) for r in runs}) == 1:  # engine load marks: median of each mark across the runs
         rep["load_marks"] = [[m[0]] + [int(statistics.median(r["load_marks"][i][j] for r in runs)) for j in range(1, 5)]
                              for i, m in enumerate(runs[0].get("load_marks", []))]
+    rep["note_runs"] = [{"load_notes": r.get("load_notes", [])} for r in runs]  # LOAD: key=val notes (warm_frames, fps_ok, ...)
     rep["invalid"] = sorted({x for r in runs for x in r.get("invalid", [])})
     if any(r["play"] for r in runs):
         rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
@@ -254,6 +255,7 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]
         lines += ["  mark %s=%s" % kv for kv in r["marks"].items()]
         lines += ["  load %s t=%d dt=%d vram=%d wasm=%d" % tuple(m) for m in r.get("load_marks", [])]
+        lines += ["  note run%d %s" % (i, " ".join(rr.get("load_notes", []))) for i, rr in enumerate(r.get("note_runs", [])) if rr.get("load_notes")]
         lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
         lines += ["  audio %s" % " ".join("%s=%s" % kv for kv in sorted(r["audio"].items()))] if r.get("audio") else []
