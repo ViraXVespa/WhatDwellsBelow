@@ -34,6 +34,11 @@ static func ready(host: CanvasLayer) -> void:
 
 static func tick(host: CanvasLayer, _delta: float) -> void:
 	var pad_on := Touch.wants_show()
+	if pad_on != bool(host.get_meta("prompt_touch", false)):
+		# World prompt chips swap pad glyphs for touch button words (prompts.gd touch_word) when the overlay comes or goes.
+		host.set_meta("prompt_touch", pad_on)
+		if load("res://scripts/input/prompts.gd").dirty():
+			load("res://scripts/ui/prompt_view.gd").pulse()
 	host.visible = pad_on
 	host.root.mouse_filter = Control.MOUSE_FILTER_STOP if pad_on else Control.MOUSE_FILTER_IGNORE
 	if not pad_on:

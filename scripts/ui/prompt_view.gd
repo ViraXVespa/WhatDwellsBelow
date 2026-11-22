@@ -177,7 +177,7 @@ static func _paint(host: Control, parts: Array, base_size: int, color: Color) ->
 			if tex:
 				chip.add_child(_col(host, _glyph(tex, font_size)))
 			else:
-				chip.add_child(_col(host, _lab(Prompts.chip_for(action), font_size, color)))
+				chip.add_child(_col(host, Prompts.word_chip(action, _lab(Prompts.chip_for(action), font_size, color))))
 			if verb_text != "":
 				chip.add_child(_lab(verb_text, font_size, color, _journal_host(host)))
 		elif text != "":
@@ -203,7 +203,7 @@ static func _swap_glyphs(host: Control, font_size: int, color: Color) -> bool:
 		if tex:
 			glyph = _glyph(tex, font_size)
 		else:
-			glyph = _lab(Prompts.chip_for(action), font_size, color)
+			glyph = Prompts.word_chip(action, _lab(Prompts.chip_for(action), font_size, color))
 		c.remove_child(old)
 		old.queue_free()
 		c.add_child(_col(host, glyph))

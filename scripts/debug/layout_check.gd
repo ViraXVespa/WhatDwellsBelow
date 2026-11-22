@@ -7,10 +7,14 @@ extends RefCounted
 ## area, centred in it, 1920x1080 is the base (32, 16, 1856, 1048). .pause_fit: the open pause journal is centred in the
 ## live canvas and every Settings list row lies inside the list pane (none clipped or scrolled off). .pause_plant: the
 ## old fixed rect on this canvas and a row pushed past the pane must both be caught. .confirm_fit: the open confirm slip
-## is centred across the canvas and its buttons sit inside it, clear of the prompt hint.
+## is centred across the canvas and its buttons sit inside it, clear of the prompt hint. .touch_prompt (touch HUD up, a
+## world prompt shown): the HUD prompt chip reads as the touch Use button (ringed word, no pad glyph); .touch_plant: the
+## same chip built with the touch HUD off (a pad glyph) is caught.
 
 const View := preload("res://scripts/ui/pause_menu/pause_menu_view.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Chip := preload("res://scripts/ui/prompt_chip.gd")
 
 var hud_clear: String:
 	get:
@@ -84,6 +88,45 @@ var confirm_fit: String:
 			if br.intersects(hint.get_global_rect()) or not paper.get_global_rect().encloses(br):
 				return "confirm button %s overlaps the hint or leaves the slip" % br
 		return ""
+
+var touch_prompt: String:
+	get:
+		var row: Control = _prompt_row()
+		if row == null or str(App.interact_prompt) == "":
+			return "touch_prompt: no HUD prompt row or no world prompt"
+		return prompt_fault(row)
+var touch_plant: String:
+	get:
+		var row: Control = _prompt_row()
+		var was: bool = Touch.force_show
+		Touch.force_show = false
+		var tmp := HBoxContainer.new()
+		row.get_parent().add_child(tmp)
+		PromptView.fill(tmp, [{"action": "interact", "verb": "x"}])
+		var r: String = prompt_fault(tmp)
+		tmp.free()
+		Touch.force_show = was
+		return "caught" if r != "" else "missed: a pad glyph passed as the touch word"
+
+## The first prompt chip in row must be the touch Use word with its ring.
+static func prompt_fault(row: Control) -> String:
+	for c: Node in row.get_children():
+		if not c.has_meta(Chip.META) or c.get_child_count() == 0:
+			continue
+		var g: Node = c.get_child(0)
+		if not (g is Label):
+			return "prompt chip shows a %s (pad / key glyph), not the touch word" % g.get_class()
+		if (g as Label).text != App.tr("hud_draw.use") or not (g as Label).has_theme_stylebox_override("normal"):
+			return "prompt chip word %s (ring %s), want %s" % [(g as Label).text, (g as Label).has_theme_stylebox_override("normal"), App.tr("hud_draw.use")]
+		return ""
+	return "no prompt chip in the HUD prompt row"
+
+static func _prompt_row() -> Control:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	for n: Node in tree.root.find_children("*", "CanvasLayer", true, false):
+		if "prompt_row" in n and n.get("prompt_row") is Control:
+			return n.get("prompt_row") as Control
+	return null
 
 static func hud_fault(hud: CanvasLayer) -> String:
 	if hud == null:

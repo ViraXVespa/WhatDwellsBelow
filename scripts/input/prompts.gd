@@ -1,6 +1,8 @@
 extends Object
 
 const Pad := preload("res://scripts/input/pad.gd")
+const TouchPad := preload("res://scripts/input/touch_pad.gd")
+const TOUCH_HUD := "res://scripts/ui/touch_hud/hud_draw.gd"
 
 const DIR := "res://assets/ui/prompts/"
 const DEBOUNCE := 0.12
@@ -23,7 +25,7 @@ static func scheme() -> String:
 	return "pad" if Pad.mode else "kb"
 
 static func dirty() -> bool:
-	var now := scheme()
+	var now := scheme() + ("+touch" if TouchPad.wants_show() else "")
 	if now == _shown:
 		return false
 	_shown = now
@@ -101,7 +103,33 @@ static func path_for_event(e: InputEvent, pool: String = "") -> String:
 		return DIR + "pad/" + id + ".png"
 	return DIR + "kb/" + id + ".png"
 
+## Touch play (touch HUD up): an action with a touch button reads as that button's word (Use, Attack, Dash), not a
+## pad glyph; "" otherwise. Menus are unaffected (the touch HUD hides while one is open).
+static func touch_word(action: String) -> String:
+	if not TouchPad.wants_show():
+		return ""
+	var labels: Dictionary = load(TOUCH_HUD).LABELS
+	return App.tr(labels[action]) if labels.has(action) else ""
+
+## A prompt chip's word label: in touch play a touch-button action gets the button's ring (hud_draw.gd look).
+static func word_chip(action: String, l: Label) -> Label:
+	if touch_word(action) == "":
+		return l
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.07, 0.05, 0.04, 0.42)
+	sb.border_color = Color(0.98, 0.93, 0.82, 0.62)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(64)
+	sb.set_content_margin_all(2)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	l.add_theme_stylebox_override("normal", sb)
+	l.add_theme_color_override("font_color", Color(0.98, 0.95, 0.88, 0.97))
+	return l
+
 static func texture_for(action: String) -> Texture2D:
+	if touch_word(action) != "":
+		return null
 	var p := path_for(action)
 	if p != "" and ResourceLoader.exists(p):
 		return load(p)
@@ -114,6 +142,9 @@ static func texture_for_event(e: InputEvent, pool: String = "") -> Texture2D:
 	return null
 
 static func chip_for(action: String) -> String:
+	var tw := touch_word(action)
+	if tw != "":
+		return tw
 	var id := id_for_event(event_for(action))
 	if id == "":
 		return action

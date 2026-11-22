@@ -1,6 +1,6 @@
 {
   "name": "dungeon-touch-controls",
-  "about": "Dungeon floor 1, seed 42, phone landscape canvas 2340x1080, enemies frozen, touch overlay forced: debug/touch_layout_check.gd checks the hud_layout geometry over phone / 16:9 / 4:3 canvases with and without notch insets and Bow mode (safe area, no overlaps, centre clear, move ring zone, hit-tests), with planted overlap / off-screen / centre faults that must fail; then drives the real TouchHud with screen touches: every world button holds and releases, Dash dashes, the lock slot toggles target lock, the floating move stick walks the player right, and in Bow mode the aim stick aims up and shoots. Shots: the overlay at rest and while bow-aiming.",
+  "about": "Dungeon floor 1, seed 42, phone landscape canvas 2340x1080, enemies frozen, touch overlay forced: debug/touch_layout_check.gd checks the hud_layout geometry over phone / 16:9 / 4:3 canvases with and without notch insets and Bow mode (safe area, no overlaps, centre clear, move ring zone, hit-tests), with planted overlap / off-screen / centre faults that must fail; then drives the real TouchHud with screen touches: every world button holds and releases, Dash dashes, the lock slot toggles target lock, the floating move stick walks the player right, and in Bow mode the aim stick aims up and shoots. The world prompt at the entrance crystal reads as the touch Use button, not a pad glyph (debug/layout_check.gd touch_prompt, planted touch_plant). Shots: the overlay at rest and while bow-aiming.",
   "scene": "dungeon",
   "seed": 42,
   "floor": 1,
@@ -42,6 +42,16 @@
     {
       "op": "shot",
       "name": "touch-phone"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.touch_prompt",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.touch_plant",
+      "equals": "caught"
     },
     {
       "op": "assert",
