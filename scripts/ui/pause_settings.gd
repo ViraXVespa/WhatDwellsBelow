@@ -7,6 +7,7 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const BindsPage := preload("res://scripts/ui/binds_page.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
+const PageUi := preload("res://scripts/ui/pause_settings/page_ui.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
@@ -139,7 +140,7 @@ func split_build_page(id: String) -> void:
 		"graphics":
 			Pages.page_graphics(self)
 		"ui":
-			Pages.page_ui(self)
+			PageUi.page_ui(self)
 		"controls":
 			BindsPage.build(self)
 		"report":
