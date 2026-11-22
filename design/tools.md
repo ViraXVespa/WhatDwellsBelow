@@ -55,3 +55,4 @@ By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it nev
 - Stdout is a short summary, at most 30 lines (a `--list` run 60): long lists fold to the first rows plus a count (`agent_log.fold`), `--verbose` prints all. The last line is always `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`. Exempt: printers and `session.py scratch-server`.
 - Output paths are `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); older names stay only as aliases.
 - Text goes through `md_format_lib` (BOM and line endings kept). Printed paths are repo-relative POSIX. Project scanners print a WARN line only when the scanned root is not the current directory's project.
+| Character mobile UI | `media.py comfy-character` (auto-starts UI) | tools-media.md |

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Character Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title-row">
+        <h1>Character Studio</h1>
+        <span id="comfy-status" class="status-pill" title="Tap to check again">Checking…</span>
+      </div>
+      <label class="field">
+        <span>Facing</span>
+        <select id="facing">
+          <option value="front">Front</option>
+          <option value="back">Back</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+          <option value="fl">Front-Left</option>
+          <option value="fr">Front-Right</option>
+          <option value="bl">Back-Left</option>
+          <option value="br">Back-Right</option>
+        </select>
+      </label>
+      <button id="start-comfy" class="secondary full" style="margin-top:0.5rem;">Start picture maker</button>
+    </header>
+
+    <section id="prompt-section" class="card">
+      <p class="lead">Describe what you want to see, then generate. Mark the results Good or Bad when they appear.</p>
+      <label class="field">
+        <span>What should she look like?</span>
+        <textarea id="prompt" rows="4" placeholder="soft lighting, simple outfit, calm expression…"></textarea>
+      </label>
+
+      <details id="more-options" class="more">
+        <summary>More options</summary>
+        <div class="more-body">
+          <label class="field">
+            <span>How closely to follow the style</span>
+            <input type="range" id="style" min="0" max="1" step="0.05" value="0.7">
+          </label>
+          <label class="field">
+            <span>Random seed</span>
+            <div class="row">
+              <input type="number" id="seed" value="-1">
+              <button type="button" id="randomize" class="secondary">New</button>
+            </div>
+            <span class="tiny">-1 means surprise me each time</span>
+          </label>
+          <label class="field">
+            <span>Detail steps</span>
+            <input type="number" id="steps" value="20">
+          </label>
+          <label class="field">
+            <span>Prompt strength</span>
+            <input type="number" id="cfg" step="0.5" value="7">
+          </label>
+          <label class="field">
+            <span>Things to avoid</span>
+            <input type="text" id="negative" placeholder="optional">
+          </label>
+          <label class="field">
+            <span>Character</span>
+            <select id="name">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </label>
+          <details>
+            <summary>For the computer (you can ignore these)</summary>
+            <label class="field">
+              <span>Reference picture path</span>
+              <input type="text" id="ref" placeholder="leave blank for automatic">
+            </label>
+            <label class="field">
+              <span>Pose picture path</span>
+              <input type="text" id="pose" placeholder="leave blank for automatic">
+            </label>
+          </details>
+        </div>
+      </details>
+
+      <button id="generate" class="primary full">Generate</button>
+    </section>
+
+    <section id="status" class="card status-card" hidden>
+      <p id="status-text" class="status-title">Working…</p>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <details class="log-details">
+        <summary>Details</summary>
+        <pre id="log"></pre>
+      </details>
+      <button id="cancel" class="secondary full" hidden>Cancel</button>
+    </section>
+
+    <section id="review" class="card" hidden>
+      <p class="lead">Mark each result. When you’re happy with the Goods, build a walk test, then approve or deny the set.</p>
+      <p id="review-prompt" class="review-prompt"></p>
+      <button id="copy-prompt" class="ghost full" style="margin-bottom:0.75rem;">Copy prompt</button>
+      <p id="facing-reminder" class="hint"></p>
+      <p id="next-hint" class="next-hint"></p>
+      <p id="empty-hint" class="hint" hidden>Nothing here yet — write a prompt and generate.</p>
+      <div id="clips"></div>
+      <div class="another-row">
+        <button id="generate-another" class="primary full">Generate another</button>
+        <label class="seed-check"><input type="checkbox" id="new-seed" checked> New seed</label>
+      </div>
+      <button id="clear-marks" class="ghost full">Clear marks</button>
+      <div class="stack">
+        <button id="build-test" class="secondary full">Build walk test</button>
+        <p class="tiny">Prepares the Good frames for a walk.</p>
+        <button id="queue" class="secondary full">Queue walk folder</button>
+        <p class="tiny">Sends them to be generated.</p>
+      </div>
+      <div class="stack decision">
+        <button id="approve" class="good full">Approve this set</button>
+        <button id="deny" class="bad full">Deny this set</button>
+      </div>
+      <button id="back" class="ghost full">Back to prompt</button>
+      <button id="new" class="primary full" hidden>Start a new one</button>
+    </section>
+  </div>
+
+  <button id="summary-toggle" class="summary-toggle">Summary</button>
+  <div id="summary-flyout" class="summary-flyout" hidden>
+    <div class="summary-inner">
+      <p id="summary-text">No results yet</p>
+      <button id="summary-close" class="ghost full">Hide</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="approve-burst" class="approve-burst"></div>
+  <script src="app.js"></script>
+</body>
+</html>

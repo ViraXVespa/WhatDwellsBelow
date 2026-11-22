@@ -1297,4 +1297,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    try:
+        import media.mobile_ui_server  # noqa: F401
+    except Exception:
+        pass
     raise SystemExit(main())
