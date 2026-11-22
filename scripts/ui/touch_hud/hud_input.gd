@@ -5,7 +5,7 @@ extends Object
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const MapAct := preload("res://scripts/world/dungeon/map_act.gd")
-const Layout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
+const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
 
 static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.visible:
@@ -24,7 +24,7 @@ static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 
 static func down(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 	var vp := host.get_viewport().get_visible_rect().size
-	var row: Dictionary = Layout.hit(host._btns, pos, Layout.scale_for(vp))
+	var row: Dictionary = TouchLayout.hit(host._btns, pos, TouchLayout.scale_for(vp))
 	if not row.is_empty():
 		var action := str(row["action"])
 		if Touch.in_camp() and action in ["map_view", "food", "potion", "target_lock"]:
@@ -42,7 +42,7 @@ static func down(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 		else:
 			Touch.set_held(action, true)
 		return
-	if not host._move_live and host._move_i < 0 and Layout.in_move_zone(vp, pos) and host._pinch_a < 0:
+	if not host._move_live and host._move_i < 0 and TouchLayout.in_move_zone(vp, pos) and host._pinch_a < 0:
 		claim_move(host, idx, pos, pos)
 		return
 	host._free[idx] = pos
@@ -159,7 +159,7 @@ static func can_pan(host: CanvasLayer) -> bool:
 	return MapAct.is_open(map_host) and float(map_host.get_meta("map_zoom", 1.0)) > 1.001
 
 static func in_move_zone(host: CanvasLayer, pos: Vector2) -> bool:
-	return Layout.in_move_zone(host.get_viewport().get_visible_rect().size, pos)
+	return TouchLayout.in_move_zone(host.get_viewport().get_visible_rect().size, pos)
 
 ## Target lock is armed on the player (the lock slot glows).
 static func lock_on() -> bool:

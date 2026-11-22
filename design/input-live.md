@@ -32,7 +32,7 @@ Read when: default binds or web_pad
 
 `defaults.gd` also strips Space from Godot’s `ui_accept` / `ui_select`, so Space never confirms in a menu.
 
-P / F / T are `letter` rows: they bind the logical keycode (the key's printed label), so they stay on P / F / T on AZERTY, QWERTZ and Dvorak. Position keys (WASD, E, Space, I, M) bind `physical_keycode`. Gamepad defaults are in `design/input-gamepad.md`. Gear stats paging is the fixed menu pair `page_prev` / `page_next` (Q / E, LT / RT), not a world bind. LMB / RMB never page the stats card.
+P / F / T are `letter` rows: they bind the logical keycode (the key's printed label), so they stay on P / F / T on AZERTY, QWERTZ and Dvorak. Position keys (WASD, E, Space, I, M) bind `physical_keycode`. Gamepad defaults: input.platforms_gamepad. Gear stats paging is the fixed menu pair `page_prev` / `page_next` (Q / E, LT / RT), not a world bind. LMB / RMB never page the stats card.
 
 Y is `gear_tip` in the live map. The Animation Browser reuses that action for review-state cycle while the viewer is open.
 X is `gear_drop` in the live map. The Animation Browser reuses that action for play/pause while the viewer is open.

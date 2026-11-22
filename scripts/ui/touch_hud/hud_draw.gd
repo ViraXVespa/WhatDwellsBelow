@@ -5,7 +5,7 @@ extends Object
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
-const Layout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
+const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
 const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
@@ -45,9 +45,9 @@ static func tick(host: CanvasLayer, _delta: float) -> void:
 static func layout(host: CanvasLayer) -> void:
 	var vp := host.get_viewport().get_visible_rect().size
 	var ins := Touch.safe_insets(vp)
-	host._move_r = Layout.move_radius(vp)
-	host._move_home = Layout.move_home(vp, ins)
-	host._btns = Layout.compute(vp, ins, BowMode.active())
+	host._move_r = TouchLayout.move_radius(vp)
+	host._move_home = TouchLayout.move_home(vp, ins)
+	host._btns = TouchLayout.compute(vp, ins, BowMode.active())
 
 static func dimmed(action: String) -> bool:
 	return Touch.in_camp() and CAMP_OFF.has(action)

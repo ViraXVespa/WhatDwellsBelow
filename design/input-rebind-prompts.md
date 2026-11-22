@@ -29,7 +29,7 @@ Prompts follow **last used** input. One scheme at a time. `Pad.note_event` sets 
 
 While the web touch overlay is active, `Pad.mode` stays pad so world prompts keep pad glyphs. This slice does not add a `touch/` glyph pack.
 
-Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions, hint text, or status lines. Verbs stay on the control; glyphs come from the bind. Text hints write `{action_id}` tokens and pass through `Prompts.fmt`, which swaps in `Prompts.label(action)` (the current scheme’s bind, e.g. Esc, Start, RT). This covers the locale file, camp, splash, fullscreen gate, archive loader, foundation, and debug status lines. The touch overlay labels its buttons with words and icons, not pad glyphs (`design/input-web-touch.md`).
+Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions, hint text, or status lines. Verbs stay on the control; glyphs come from the bind. Text hints write `{action_id}` tokens and pass through `Prompts.fmt`, which swaps in `Prompts.label(action)` (the current scheme’s bind, e.g. Esc, Start, RT). This covers the locale file, camp, splash, fullscreen gate, archive loader, foundation, and debug status lines. The touch overlay labels its buttons with words and icons, not pad glyphs (input.web_touch).
 
 | Surface | Where the glyph lives |
 |---------|------------------------|

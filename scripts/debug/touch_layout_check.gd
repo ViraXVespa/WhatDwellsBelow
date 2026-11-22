@@ -8,7 +8,7 @@ extends RefCounted
 ## reads it back as held through Touch and Pad, then released; .dash_down / .dash_fired, .lock_tap / .lock_toggled,
 ## .move_down / .move_walked and .bow_down / .bow_aimed drive the game over frames.
 
-const Layout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
+const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 
@@ -61,16 +61,16 @@ static func validate(vp: Vector2, ins: Vector4, rows: Array) -> String:
 			return "%s at %s r%.0f leaves the safe area %s (vp %s)" % [a["action"], c, r, safe, vp]
 		if mid.grow(r).has_point(c):
 			return "%s at %s covers the playfield centre (vp %s)" % [a["action"], c, vp]
-		var hit: Dictionary = Layout.hit(rows, c, Layout.scale_for(vp))
+		var hit: Dictionary = TouchLayout.hit(rows, c, TouchLayout.scale_for(vp))
 		if hit.is_empty() or str(hit["action"]) != str(a["action"]):
 			return "%s centre hit-tests to %s" % [a["action"], hit.get("action", "nothing")]
 		for j in range(i + 1, rows.size()):
 			var b: Dictionary = rows[j]
 			if c.distance_to(b["pos"]) < r + float(b["r"]):
 				return "%s overlaps %s (vp %s)" % [a["action"], b["action"], vp]
-	var home := Layout.move_home(vp, ins)
-	var mr := Layout.move_radius(vp)
-	if not Layout.in_move_zone(vp, home) or not safe.encloses(Rect2(home - Vector2(mr, mr), Vector2(mr, mr) * 2.0)):
+	var home := TouchLayout.move_home(vp, ins)
+	var mr := TouchLayout.move_radius(vp)
+	if not TouchLayout.in_move_zone(vp, home) or not safe.encloses(Rect2(home - Vector2(mr, mr), Vector2(mr, mr) * 2.0)):
 		return "move ring at %s outside its zone (vp %s)" % [home, vp]
 	return ""
 
@@ -79,7 +79,7 @@ var geometry: String:
 		for vp: Vector2 in VPS:
 			for ins: Vector4 in [Vector4.ZERO, NOTCH]:
 				for bow: bool in [false, true]:
-					var rows := Layout.compute(vp, ins, bow)
+					var rows := TouchLayout.compute(vp, ins, bow)
 					if rows.size() != 9:
 						return "%d controls, want 9" % rows.size()
 					if bow != (str(rows[0]["kind"]) == "stick"):
@@ -98,7 +98,7 @@ var plant_caught: String:
 			"centre": func(rows: Array) -> void: rows[2]["pos"] = vp * 0.5,
 		}
 		for name: String in plants:
-			var rows := Layout.compute(vp, Vector4.ZERO, false)
+			var rows := TouchLayout.compute(vp, Vector4.ZERO, false)
 			(plants[name] as Callable).call(rows)
 			if validate(vp, Vector4.ZERO, rows) == "":
 				return "planted %s passed" % name

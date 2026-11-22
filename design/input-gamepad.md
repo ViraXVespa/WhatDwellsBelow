@@ -21,7 +21,7 @@ Default layout (week 13 playtest, `table.gd` LAYOUT 2; saves on older defaults m
 - Y: Interact. On a gear board, gear tip. In the secret Animation Browser, Y cycles the current clip's review state (Good / Repack / Regenerate).
 - B: Back only. In menus, back one layer, or close the menu at root. World play does not consume B.
 - RB: Dash. In menus RB is the next tab (`tab_right`); a menu-closing press never bleeds into a dash.
-- LT / RT: Bow aim / Bow fire, live only with Bow mode on and the longbow equipped (`design/player.md` Bow mode). Off, the triggers do nothing in the world. On a gear board, LT / RT page the stats card (`page_prev` / `page_next`).
+- LT / RT: Bow aim / Bow fire, live only with Bow mode on and the longbow equipped (player door, Bow mode). Off, the triggers do nothing in the world. On a gear board, LT / RT page the stats card (`page_prev` / `page_next`).
 - D-pad Down: Toggle target-lock (default off). On activation or when current target dies, lock nearest valid enemy in LOS and on-screen. Right-stick deflection cycles to the nearest enemy in that direction after a short delay. Lock breaks when no valid targets remain but stays armed for auto-reacquisition. Second press disengages.
 - D-pad Right: Use equipped potion
 - D-pad Left: Use equipped food
