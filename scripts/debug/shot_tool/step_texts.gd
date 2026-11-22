@@ -24,7 +24,7 @@ static func _walk(n: Node, out: Array) -> void:
 		if not t.is_empty():
 			var r: Rect2 = c.get_global_rect()
 			var fs: int = c.get_theme_font_size("normal_font_size" if c is RichTextLabel else "font_size")
-			var k: float = c.get_global_transform_with_canvas().get_scale().y * c.get_viewport().get_final_transform().get_scale().y
+			var k: float = c.get_global_transform_with_canvas().get_scale().y * _draw_vp(c).get_final_transform().get_scale().y
 			out.append({
 				"text": t,
 				"font_size": c.get_theme_font_size("font_size"),
@@ -34,6 +34,14 @@ static func _walk(n: Node, out: Array) -> void:
 			})
 	for ch: Node in n.get_children():
 		_walk(ch, out)
+
+## The viewport a Control is drawn in: an App layer routed into the capture SubViewport (shot_tool.gd) draws
+## there, not in the 64x64 root host.
+static func _draw_vp(c: Control) -> Viewport:
+	var layer: CanvasLayer = c.get_canvas_layer_node()
+	if layer != null and layer.custom_viewport is Viewport:
+		return layer.custom_viewport as Viewport
+	return c.get_viewport()
 
 static func collect(root: Node) -> Array:
 	var out: Array = []

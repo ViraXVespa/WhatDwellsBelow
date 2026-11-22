@@ -17,7 +17,7 @@ func setup_crystal(pos: Vector3, cell: Vector2i, cl: int, gate: bool) -> void:
 	CrystalNet.attach_volume(self)
 	if crystal_on:
 		CrystalNet.mark_on(cell)
-		CrystalNet.relocate_inside(self, get_tree().current_scene)
+		CrystalNet.relocate_inside(self, App.Touch.scene_host())
 	refresh()
 func refresh() -> void:
 	if kind != "crystal":

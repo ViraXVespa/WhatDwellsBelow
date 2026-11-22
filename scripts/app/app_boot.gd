@@ -4,6 +4,7 @@ const Dbg := preload("res://scripts/app/dbg.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
+const LetterFit := preload("res://scripts/input/binds/letter_fit.gd")
 
 static func _ready(host: Node) -> void:
 	if "--mcp" in OS.get_cmdline_user_args() and ResourceLoader.exists("res://addons/godot_ai/runtime/game_helper.gd"):
@@ -91,6 +92,8 @@ static func _process(host: Node, delta: float) -> void:
 
 static func _input(host: Node, event: InputEvent) -> void:
 	App.Pad.note_event(event)
+	if event is InputEventKey:
+		LetterFit.learn(event)  # a letter default on a key another action holds (Colemak F on E) falls back
 	if App.Disp.handle_input(event):
 		host.get_viewport().set_input_as_handled()
 		return
@@ -131,7 +134,7 @@ static func world_action(host: Node, action: String) -> void:
 		return
 	if (host.debug and host.debug.get("open")) or (host.recap and host.recap.get("open")):
 		return
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	if action == "pause" and host.pause_menu:
 		host.pause_menu.toggle()
 	elif action == "map_view" and scene and scene.has_method("toggle_map"):

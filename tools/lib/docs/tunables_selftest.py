@@ -94,6 +94,12 @@ def main() -> int:
         ok("legacy doc get still works", _run(sc, "get", "special_mana")[0] == 0)
         ok("add duplicate fails", _run(sc, "add", "zz_selftest_gain", "--default", "1.0", "--range", "0", "2", "0.05", "--after", "special_mana")[0] != 0)
         ok("add e_* fails", _run(sc, "add", "e_slime_luck", "--default", "1.0", "--range", "0", "2", "0.05", "--system", "world", "--doc-after", "gen_w")[0] != 0)
+        rc, _ = _run(sc, "add", "zz_after_rooms", "--default", "1.0", "--range", "0", "2", "0.05", "--system", "world", "--doc-after", "gen_rooms", "--note", "after rooms")
+        docw = txt("design/tunables-world.md")
+        ok("add --doc-after gen_rooms (unique code key in a prose row)", rc == 0 and "`zz_after_rooms`" in docw
+           and docw.find("Rooms (`gen_rooms`)") < docw.find("`zz_after_rooms`") and _run(sc, "diff")[0] == 0)
+        rc, out = _run(sc, "add", "zz_hall_amb", "--default", "1.0", "--range", "0", "2", "0.05", "--system", "world", "--doc-after", "Hall width min")
+        ok("add --doc-after still fails when two rows share the alias", rc != 0 and "matched 2" in out)
         ok("add bad name fails", _run(sc, "add", "Bad-Key", "--default", "1.0", "--range", "0", "2", "0.05", "--system", "combat")[0] != 0)
         ok("add default out of range fails", _run(sc, "add", "zz_two", "--default", "5.0", "--range", "0", "2", "0.05", "--after", "special_mana")[0] != 0)
         rc, out = _run(sc, "add", "zz_unfiled", "--default", "1", "--range", "0", "4", "1")

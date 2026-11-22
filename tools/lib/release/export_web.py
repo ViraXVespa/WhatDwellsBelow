@@ -2,7 +2,7 @@
 """Export the GitHub Pages build (Godot Web, no threads). Windows/Steam Godot or $GODOT_BIN.
 
     python tools/release.py export-web [--archives] [--out DIR] [--godot PATH] [--debug --out DIR]
-Release (preset Web) excludes scripts/debug/; --debug (preset Web Debug, debug template) keeps it, scratch --out only.
+Release (preset Web) excludes scripts/debug/ and addons/*; --debug (preset Web Debug, debug template) keeps both, scratch --out only.
 Live-only writes _out/web/ (untracked; Pages builds in CI). The mip flip (release.py mips) and the import only touch the export workspace: tracked
 .import files that were clean before the export are restored after it (any you were already editing are left alone).
 --archives writes a combined site to _pages/ (gitignored); archive pins are
@@ -10,6 +10,7 @@ best-effort, cached under .archive_export_cache/. Logs: _logs/export-web/.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -21,6 +22,30 @@ import godot_lib
 
 TOOLS = Path(__file__).resolve().parents[2]
 
+_MCP_AUTOLOAD = re.compile(r"(?m)^_mcp_game_helper=.*\n")
+
+
+def strip_mcp_autoload(root: Path) -> str | None:
+    """Drop the godot_ai helper autoload from project.godot. Returns the original text, or None.
+
+    The addon's EditorExportPlugin already strips this when the plugin is loaded. A headless
+    export with no addons/ (CI Pages) never loads it, and would bake a missing autoload into
+    the pack. Restored by restore_mcp_autoload.
+    """
+    pg = root / "project.godot"
+    text = pg.read_text(encoding="utf-8")
+    new, n = _MCP_AUTOLOAD.subn("", text)
+    if n == 0:
+        return None
+    pg.write_text(new, encoding="utf-8")
+    return text
+
+
+def restore_mcp_autoload(root: Path, original: str | None) -> None:
+    if original is not None:
+        (root / "project.godot").write_text(original, encoding="utf-8")
+
+
 def py(*a: str) -> int:
     return subprocess.run([sys.executable, *a]).returncode
 
@@ -29,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--archives", action="store_true", help="Also export catalog archives into _pages/.")
     ap.add_argument("--godot", default="", help="Godot executable (default: GODOT_BIN / Steam / bot pin).")
     ap.add_argument("--out", default="", help="Export here instead of _out/web/ (scratch dir for web_perf; not committed).")
-    ap.add_argument("--debug", action="store_true", help="Debug export (preset 'Web Debug': debug template + scripts/debug/). Needs --out; _out/web/ is release only.")
+    ap.add_argument("--debug", action="store_true", help="Debug export (preset 'Web Debug': debug template + scripts/debug/ + addons/). Needs --out; _out/web/ is release only.")
     ap.add_argument("--timeout-sec", type=int, default=900, help="Godot export timeout in seconds (default 900).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -54,9 +79,16 @@ def main(argv: list[str] | None = None) -> int:
 
     dirty = set(godot_lib.modified_imports(root))
     print("Enabling 3D texture mipmaps on import...")
+    def export() -> bool:
+        bak = None if args.debug else strip_mcp_autoload(root)
+        try:
+            return godot("godot-export", "--headless", "--path", str(root), *(("--export-debug", "Web Debug") if args.debug else ("--export-release", "Web")), str(out_html))
+        finally:
+            restore_mcp_autoload(root, bak)
+
     steps = [lambda: step("texture_mips", py(*boot.cmd("enable_texture_mips")[1:], "--root", str(root))),
              lambda: godot("godot-import", "--headless", "--path", str(root), "--import"),
-             lambda: godot("godot-export", "--headless", "--path", str(root), *(("--export-debug", "Web Debug") if args.debug else ("--export-release", "Web")), str(out_html)),
+             export,
              lambda: step("postexport", py(*boot.cmd("web_postexport")[1:], str(out_dir)))]
     ok = True
     for i, s in enumerate(steps):

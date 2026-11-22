@@ -29,7 +29,7 @@ Show the gate once per browser tab session (`sessionStorage`). Skip it when the 
 
 Copy and the action button MUST follow the UA bucket:
 
-- Desktop web — Fullscreen requests canvas fullscreen from the tap. Chromium may also fire the stashed PWA install prompt.
+- Desktop web — Fullscreen requests fullscreen from the tap. Chromium may also fire the stashed PWA install prompt. Fullscreen targets the page root (`document.documentElement`), never `#canvas`: Godot's web virtual keyboard is a hidden `<input>` beside the canvas, and Chromium makes everything outside the fullscreen element inert, so a canvas fullscreen stops the phone keyboard from opening on a text field (`mode_desk.gd` `REQUEST_FS_JS`; `bug_report_touch_check.gd` pins it). The canvas is only the fallback where the root cannot go fullscreen.
 - Android web — same tap; label may read Fullscreen / Install.
 - iOS web — Safari cannot open Add to Home Screen from script. Action is Try fullscreen (requestFullscreen, usually a no-op on iPhone). Body tells the player Share → Add to Home Screen → Add, with Open as Web App on.
 

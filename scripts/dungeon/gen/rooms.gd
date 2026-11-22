@@ -4,6 +4,7 @@ const WALL := 0
 const FLOOR := 1
 const Carve := preload("res://scripts/dungeon/gen/carve.gd")
 const Place := preload("res://scripts/dungeon/gen/rooms_place.gd")
+const GateSlot := preload("res://scripts/dungeon/gen/gate_slot.gd")
 
 static func idx(x: int, y: int, w: int) -> int:
 	return y * w + x
@@ -87,7 +88,8 @@ static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
 		arr[i] = arr[j]
 		arr[j] = tmp
 
-static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object) -> void:
+## Gate rooms need a top-wall slot (GateSlot): gates never hang on side walls.
+static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object, grid: PackedByteArray, w: int, h: int) -> void:
 	var want := maxi(1, int(bal.get("max_clerks")))
 	var spawn: Vector2i = Vector2i.ZERO
 	var sr: Dictionary = find_kind(rooms, "spawn")
@@ -98,6 +100,8 @@ static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: 
 		if str(rooms[i].kind) != "normal":
 			continue
 		if int(rooms[i].w) < 5 or int(rooms[i].h) < 4 or int(rooms[i].y) < 1:
+			continue
+		if GateSlot.room_slot(grid, w, h, rooms[i]).x < 0:
 			continue
 		cands.append(i)
 	shuffle_i(rng, cands)
@@ -141,7 +145,7 @@ static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: 
 		rooms[i].kind = "extract_gate"
 	if picked.is_empty():
 		for r in rooms:
-			if str(r.kind) == "normal" and int(r.w) >= 5 and int(r.y) >= 1:
+			if str(r.kind) == "normal" and GateSlot.room_slot(grid, w, h, r).x >= 0:
 				r.kind = "extract_gate"
 				break
 static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object) -> void:
@@ -203,7 +207,7 @@ static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: i
 		rooms[i].kind = "vein"
 		rooms[i].vein = str(vein_types[veins % vein_types.size()])
 		veins += 1
-	assign_extract_gates(rooms, rng, bal)
+	assign_extract_gates(rooms, rng, bal, grid, w, h)
 	if find_kind(rooms, "shop").is_empty() and rng.randf() < float(bal.get("ghost_shop_chance")):
 		for r in rooms:
 			if str(r.kind) == "normal":

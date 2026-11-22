@@ -8,9 +8,12 @@ const SpotS := preload("res://scripts/world/interact.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
+const MapMarks := preload("res://scripts/world/dungeon/map_marks.gd")
 const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
+const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 static var _first_tick: bool = true
+static var _light_step: GDScript
 ## Sweep only. Off leaves the floor tick untimed.
 static var floor_on: bool = false
 static var floor_us: int = 0
@@ -93,6 +96,9 @@ static func process_floor(host: Node, delta: float) -> void:
 		var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
 		LightRtS.maintain(host)
 		_first_tick = false
+	if _light_step == null:
+		_light_step = load("res://scripts/graphics/light_rt/publish.gd") as GDScript
+	_light_step.step()
 	host.frame_acc += delta
 	host.frame_n += 1
 	if host.frame_acc >= 0.5:
@@ -111,6 +117,7 @@ static func process_floor(host: Node, delta: float) -> void:
 			DungeonMinimap.note_player(host, t)
 		host._tick_pressure(delta, grew)
 		DungeonStream.tick(host, delta)
+		MapMarks.tick(host, delta)
 		# CrystalNet.guard removed; volumes handle safe zones
 	host._note_verge()
 	if t0 > 0:
@@ -225,8 +232,12 @@ static func toggle_map(host: Node) -> void:
 	_set_map_state(host, "full")
 
 static func _set_map_state(host: Node, state: String) -> void:
+	var was_full: bool = str(host.map_state) == "full"
 	host.map_state = state
 	if state == "full":
 		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 		MapActS.reset(host)
 	host._redraw_map()
+	# The big map fades in like a menu (Menu transitions); it closes at once so map input never lands on a ghost.
+	if state == "full" and not was_full and host.map_layer != null:
+		MenuFade.fade_in(host.map_layer)

@@ -1,23 +1,27 @@
 extends Object
 
-## Touch HUD layout and pad drawing.
+## Touch HUD drawing. Geometry comes from hud_layout.gd; wells are translucent dark discs with light ink so the
+## world stays readable under them. Buttons say what they do (Attack, Special, Dash, Use), not pad glyphs.
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
-const T := preload("res://scripts/data/tunables.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
-const Binds := preload("res://scripts/input/binds.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
+const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const Icons := preload("res://scripts/ui/gear_icons.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
-const INK := Color(0.98, 0.96, 0.90, 0.96)
-const INK_DIM := Color(0.55, 0.48, 0.38, 0.55)
-const WELL := Color(Tok.PAPER, 0.92)
-const WELL_DIM := Color(0.90, 0.84, 0.72, 0.40)
-const RING := Color(Tok.RULE, 0.92)
-const RING_DIM := Tok.RULE_QUIET
-const KNOB := Color(Tok.INK, 0.88)
-const PRESS := Color(Tok.PAPER_DEEP, 0.94)
-const LATCH := Color(Tok.DANGER, 0.92)
+const INK := Color(0.98, 0.95, 0.88, 0.97)
+const INK_DIM := Color(0.80, 0.76, 0.70, 0.40)
+const WELL := Color(0.07, 0.05, 0.04, 0.42)
+const WELL_DIM := Color(0.07, 0.05, 0.04, 0.20)
+const PRESS := Color(Tok.PAPER, 0.55)
+const RING := Color(0.98, 0.93, 0.82, 0.62)
+const RING_DIM := Color(0.98, 0.93, 0.82, 0.22)
+const LIVE := Color(0.98, 0.78, 0.38, 0.95)
+const LABELS := {"attack": "hud_draw.attack", "special": "hud_draw.special", "dash": "hud_draw.dash",
+	"interact": "hud_draw.use", "map_view": "hud_draw.map", "pause": "hud_draw.pause"}
+const CAMP_OFF: PackedStringArray = ["map_view", "food", "potion", "target_lock"]
 
 static func ready(host: CanvasLayer) -> void:
 	host.layer = 28
@@ -30,6 +34,11 @@ static func ready(host: CanvasLayer) -> void:
 
 static func tick(host: CanvasLayer, _delta: float) -> void:
 	var pad_on := Touch.wants_show()
+	if pad_on != bool(host.get_meta("prompt_touch", false)):
+		# World prompt chips swap pad glyphs for touch button words (prompts.gd touch_word) when the overlay comes or goes.
+		host.set_meta("prompt_touch", pad_on)
+		if load("res://scripts/input/prompts.gd").dirty():
+			load("res://scripts/ui/prompt_view.gd").pulse()
 	host.visible = pad_on
 	host.root.mouse_filter = Control.MOUSE_FILTER_STOP if pad_on else Control.MOUSE_FILTER_IGNORE
 	if not pad_on:
@@ -40,78 +49,78 @@ static func tick(host: CanvasLayer, _delta: float) -> void:
 
 static func layout(host: CanvasLayer) -> void:
 	var vp := host.get_viewport().get_visible_rect().size
-	var sc: float = clampf(minf(vp.x, vp.y) / T.base_size().y, 0.7, 1.35)
-	host._move_r = 98.0 * sc
-	var sr0 := 28.0 * sc
-	var gap0 := 6.0 * sc
-	var br0 := sr0 * 2.0
-	var span0 := br0 * 2.0 + gap0
-	var cx0 := vp.x * 0.86
-	var cy0 := vp.y * 0.78
-	var pad := 18.0 * sc
-	var half_w0 := span0 * 0.5 + br0
-	var half_h0 := span0 * 0.5 + br0
-	var row_h0 := sr0 * 2.0 + gap0
-	cx0 = clampf(cx0, vp.x * 0.52 + half_w0, vp.x - pad - half_w0)
-	cy0 = clampf(cy0, pad + row_h0 + half_h0, vp.y - pad - half_h0)
-	var rx := cx0 + span0 * 0.5
-	var by := cy0 + span0 * 0.5
-	var sr := sr0 * 1.25
-	var gap := gap0 * 1.25
-	var br := sr * 2.0
-	var span := br * 2.0 + gap
-	var lx := rx - span
-	var ty := by - span
-	var cx := (lx + rx) * 0.5
-	var small_span := sr * 2.0 + gap
-	var row_y := ty - br - gap - sr
-	var row_w := small_span * 3.0
-	var s0 := cx - row_w * 0.5
-	host._btns = [
-		{"action": "map_view", "pos": Vector2(s0, row_y), "r": sr},
-		{"action": "food", "pos": Vector2(s0 + small_span, row_y), "r": sr},
-		{"action": "potion", "pos": Vector2(s0 + small_span * 2.0, row_y), "r": sr},
-		{"action": "pause", "pos": Vector2(s0 + small_span * 3.0, row_y), "r": sr},
-		{"action": "attack", "pos": Vector2(lx, ty), "r": br},
-		{"action": "special", "pos": Vector2(rx, ty), "r": br},
-		{"action": "interact", "pos": Vector2(lx, by), "r": br},
-		{"action": "dash", "pos": Vector2(rx, by), "r": br},
-	]
+	var ins := Touch.safe_insets(vp)
+	host._move_r = TouchLayout.move_radius(vp)
+	host._move_home = TouchLayout.move_home(vp, ins)
+	host._btns = TouchLayout.compute(vp, ins, BowMode.active())
+
+static func dimmed(action: String) -> bool:
+	return Touch.in_camp() and CAMP_OFF.has(action)
 
 static func draw_pad(host: CanvasLayer) -> void:
 	if host._move_live:
-		well(host, host._move_origin, host._move_r)
-		knob(host, host._move_knob, host._move_r * 0.38)
-	for row in host._btns:
+		well(host, host._move_origin, host._move_r, false, false)
+		knob(host, host._move_knob, host._move_r * 0.4)
+	else:
+		host.root.draw_arc(host._move_home, host._move_r, 0.0, TAU, 48, RING_DIM, 2.0, true)
+		knob(host, host._move_home, host._move_r * 0.4, true)
+	for row: Dictionary in host._btns:
 		var action := str(row["action"])
 		var pos: Vector2 = row["pos"]
 		var r: float = float(row["r"])
-		var dim := Touch.in_camp() and action in ["map_view", "food", "potion"]
+		var dim := dimmed(action)
 		var on := Touch.held(action) and not dim
-		if action == "attack" and Touch.attack_latch:
-			on = true
-		well(host, pos, r, on, dim)
-		glyph(host, action, pos, r, dim)
+		if str(row["kind"]) == "stick":
+			on = Touch.held("aim")
+		well(host, pos, r, on, dim, action == "target_lock" and PadInput.lock_on())
+		face(host, row, pos, r, dim)
 
-static func well(host: CanvasLayer, c: Vector2, r: float, on := false, dim := false) -> void:
-	var fill := WELL_DIM if dim else (PRESS if on else WELL)
-	var ring := RING_DIM if dim else (LATCH if on else RING)
-	host.root.draw_circle(c, r, fill)
-	host.root.draw_arc(c, r, 0.0, TAU, 48, ring, 2.4, true)
+static func well(host: CanvasLayer, c: Vector2, r: float, on := false, dim := false, live := false) -> void:
+	host.root.draw_circle(c, r, PRESS if on else (WELL_DIM if dim else WELL))
+	host.root.draw_arc(c, r, 0.0, TAU, 48, LIVE if live else (RING_DIM if dim else RING), 3.0 if live else 2.2, true)
 
-static func knob(host: CanvasLayer, c: Vector2, r: float) -> void:
-	host.root.draw_circle(c, r, KNOB)
-	host.root.draw_arc(c, r, 0.0, TAU, 32, RING, 2.0, true)
+static func knob(host: CanvasLayer, c: Vector2, r: float, idle := false) -> void:
+	host.root.draw_circle(c, r, Color(INK, 0.18) if idle else Color(INK, 0.55))
+	host.root.draw_arc(c, r, 0.0, TAU, 32, RING_DIM if idle else RING, 2.0, true)
 
-static func glyph(host: CanvasLayer, action: String, c: Vector2, r: float, dim := false) -> void:
-	var p: String = Prompts.path_for_event(Binds.slot_event(action, "pad", 0), "pad")
-	if p == "":
+static func face(host: CanvasLayer, row: Dictionary, c: Vector2, r: float, dim: bool) -> void:
+	var action := str(row["action"])
+	var ink := INK_DIM if dim else INK
+	if str(row["kind"]) == "stick":
+		var k: Vector2 = c + Touch.aim * r * 0.6
+		knob(host, k, r * 0.34)
+		text(host, App.tr("hud_draw.aim"), c + Vector2(0.0, r * 0.62), r * 0.26, ink)
 		return
-	if not host._tex.has(p):
-		host._tex[p] = load(p) if ResourceLoader.exists(p) else null
-	var tex: Texture2D = host._tex[p]
-	if tex == null:
+	if action == "potion" or action == "food":
+		var hud: Object = _hud()
+		var icon: TextureRect = hud.get("pot_icon" if action == "potion" else "food_icon") as TextureRect if hud else null
+		var tex: Texture2D = icon.texture if icon else Icons.tex_for_slot(action, {})
+		if tex:
+			var s := r * 1.1
+			var tint: Color = icon.modulate if icon else Color.WHITE
+			tint.a *= 0.4 if dim else 1.0
+			host.root.draw_texture_rect(tex, Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false, tint)
+		var cnt: Label = hud.get("pot_lab" if action == "potion" else "food_lab") as Label if hud else null
+		if cnt and cnt.text != "" and not dim:
+			text(host, cnt.text, c + Vector2(r * 0.55, r * 0.62), r * 0.40, ink)
 		return
-	var s := r * 1.15
-	var dest := Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s))
-	host.root.draw_texture_rect(tex, dest, false, INK_DIM if dim else INK)
+	if action == "target_lock":
+		var a := r * 0.5
+		host.root.draw_arc(c, a * 0.62, 0.0, TAU, 24, ink, 2.4, true)
+		for v: Vector2 in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
+			host.root.draw_line(c + v * a * 0.35, c + v * a, ink, 2.4, true)
+		return
+	text(host, App.tr(str(LABELS.get(action, action))), c, r * (0.42 if r < 60.0 else 0.34), ink)
+
+static func text(host: CanvasLayer, s: String, c: Vector2, px: float, ink: Color) -> void:
+	var font: Font = ThemeS.ink_font()
+	var fs := int(maxf(12.0, px))
+	var w: float = font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var at := Vector2(c.x - w * 0.5, c.y + fs * 0.34)
+	host.root.draw_string_outline(font, at, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 4, Color(0, 0, 0, 0.55))
+	host.root.draw_string(font, at, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, ink)
+
+## The in-play HUD (its potion / food icons and counts are the source of truth for the item slots).
+static func _hud() -> Object:
+	var scene: Node = PadInput.dungeon()
+	return scene.get("hud") if scene else null

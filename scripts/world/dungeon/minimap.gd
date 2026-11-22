@@ -2,10 +2,13 @@ extends Object
 
 ## Floor minimap. The base image is built once when the floor is ready.
 ## Fog is a mask texture. Crystals and the player marker are a second image, written on those events.
+## Enemies, loot and interactables are drawn over both by map_marks.gd. Region math and view sync: minimap_view.gd.
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const View := preload("res://scripts/world/dungeon/minimap_view.gd")
+const Marks := preload("res://scripts/world/dungeon/map_marks.gd")
 
 const _SHADER := """shader_type canvas_item;
 
@@ -76,18 +79,6 @@ static func _bake_static(host: Node) -> void:
 	if not marked:
 		var door_cell: Vector2i = host.data.door
 		_base_dot(host, door_cell, Color(0.9, 0.2, 0.15))
-	if host.get_tree() == null:
-		return
-	for n: Node in host.get_tree().get_nodes_in_group("interact"):
-		if not (n is Node3D):
-			continue
-		var body: Node3D = n as Node3D
-		var kind: String = str(body.get("kind"))
-		var cell := Vector2i(int(body.global_position.x), int(body.global_position.z))
-		if kind == "extract_gate" or kind.begins_with("clerk"):
-			_base_dot(host, cell, Color(0.95, 0.82, 0.35))
-		elif kind == "shop":
-			_base_dot(host, cell, Color(0.55, 0.85, 1.0))
 
 static func _build_base(host: Node) -> void:
 	host.map_seen_min = Vector2i(-1, -1)
@@ -155,7 +146,7 @@ static func refresh_marks(host: Node) -> void:
 static func note_player(host: Node, cell: Vector2i) -> void:
 	host.set_meta("map_pc", cell)
 	refresh_marks(host)
-	sync_views(host)
+	View.sync_views(host)
 
 static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
 	if host.map_mask == null:
@@ -187,7 +178,7 @@ static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
 		host.map_mask_tex = _upload(host.map_mask_tex, host.map_mask)
 	if grew:
 		refresh_marks(host)
-		sync_views(host)
+		View.sync_views(host)
 	return grew
 
 static func make_map(host: Node) -> void:
@@ -226,6 +217,7 @@ static func make_map(host: Node) -> void:
 	host.map_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.map_clip.add_child(host.map_rect)
 	attach(host, host.map_rect, Rect2(0, 0, 1, 1))
+	Marks.bind(host, host.map_rect, Rect2(0, 0, 1, 1))
 	var viewport: Viewport = host.get_viewport()
 	if not viewport.size_changed.is_connected(host._redraw_map):
 		viewport.size_changed.connect(host._redraw_map)
@@ -250,7 +242,7 @@ static func redraw_map(host: Node) -> void:
 	refresh_marks(host)
 	if host.map_rect:
 		attach(host, host.map_rect, Rect2(0, 0, 1, 1))
-	sync_views(host)
+	View.sync_views(host)
 
 static func _note_seen(host: Node, x: int, y: int) -> void:
 	var lo: Vector2i = host.map_seen_min
@@ -261,89 +253,3 @@ static func _note_seen(host: Node, x: int, y: int) -> void:
 		return
 	host.map_seen_min = Vector2i(mini(lo.x, x), mini(lo.y, y))
 	host.map_seen_max = Vector2i(maxi(hi.x, x), maxi(hi.y, y))
-
-## Cells of map per cell of view. 1 shows the whole floor. No upper cap; callers clamp.
-static func reveal_zoom(host: Node) -> float:
-	if host == null or host.get("data") == null:
-		return 1.0
-	var lo: Vector2i = host.map_seen_min
-	var hi: Vector2i = host.map_seen_max
-	if lo.x < 0:
-		return 1.0
-	var w: float = maxf(float(host.data.w), 1.0)
-	var h: float = maxf(float(host.data.h), 1.0)
-	var rw: float = float(hi.x - lo.x + 1)
-	var rh: float = float(hi.y - lo.y + 1)
-	return minf(w / maxf(rw, 1.0), h / maxf(rh, 1.0))
-
-## Cell-space center of the revealed bounds, or (-1, -1) when nothing is revealed.
-static func seen_center(host: Node) -> Vector2:
-	var lo: Vector2i = host.map_seen_min
-	var hi: Vector2i = host.map_seen_max
-	if lo.x < 0:
-		return Vector2(-1.0, -1.0)
-	var cx: float = (float(lo.x) + float(hi.x) + 1.0) * 0.5
-	var cy: float = (float(lo.y) + float(hi.y) + 1.0) * 0.5
-	return Vector2(cx, cy)
-
-static func full_alpha() -> float:
-	if bool(App.full_map_opacity):
-		return clampf(float(App.mini_opacity), 0.0, 1.0)
-	return 1.0
-
-static func mini_region(host: Node) -> Rect2:
-	var configured: float = clampf(float(App.mini_zoom), T.MINI_ZOOM_MIN, T.MINI_ZOOM_MAX)
-	var zoom: float = configured
-	var center: Vector2 = _player_uv(host)
-	if bool(App.mini_zoom_fit):
-		var fit: float = reveal_zoom(host)
-		if fit >= configured and host.get("data") != null:
-			zoom = minf(fit, T.MINI_ZOOM_MAX)
-			var seen: Vector2 = seen_center(host)
-			if seen.x >= 0.0:
-				var w: float = maxf(float(host.data.w), 1.0)
-				var h: float = maxf(float(host.data.h), 1.0)
-				center = Vector2(seen.x / w, seen.y / h)
-	zoom = maxf(zoom, 1.0)
-	var span: float = 1.0 / zoom
-	var origin: Vector2 = Vector2(center.x - span * 0.5, center.y - span * 0.5)
-	origin.x = clampf(origin.x, 0.0, 1.0 - span)
-	origin.y = clampf(origin.y, 0.0, 1.0 - span)
-	return Rect2(origin, Vector2(span, span))
-
-static func sync_views(host: Node) -> void:
-	var full: bool = str(host.get("map_state")) == "full"
-	var layer: CanvasLayer = host.get("map_layer") as CanvasLayer
-	if layer:
-		layer.visible = full
-	var hud: CanvasLayer = host.get("hud") as CanvasLayer
-	var map_view: TextureRect = null
-	if hud != null:
-		map_view = hud.get("mini_map") as TextureRect
-	if map_view != null:
-		var View: GDScript = load("res://scripts/ui/hud/hud_view.gd") as GDScript
-		View.layout(hud)
-		attach(host, map_view, mini_region(host))
-		var shell: Control = hud.get("mini_wrap") as Control
-		if shell:
-			shell.visible = str(host.get("map_state")) == "mini"
-	var alpha: float = full_alpha()
-	var rect: TextureRect = host.get("map_rect") as TextureRect
-	if rect:
-		rect.modulate.a = alpha
-	var edge: ColorRect = host.get("map_border") as ColorRect
-	if edge:
-		edge.modulate.a = alpha
-
-static func _player_uv(host: Node) -> Vector2:
-	var w: float = 1.0
-	var h: float = 1.0
-	if host.get("data") != null:
-		w = maxf(float(host.data.w), 1.0)
-		h = maxf(float(host.data.h), 1.0)
-	var cell: Vector2i = host.get_meta("map_pc", Vector2i(-999, -999))
-	if cell.x < 0 and host.player:
-		cell = Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
-	if cell.x < 0:
-		return Vector2(0.5, 0.5)
-	return Vector2((float(cell.x) + 0.5) / w, (float(cell.y) + 0.5) / h)

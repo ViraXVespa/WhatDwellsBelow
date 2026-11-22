@@ -50,10 +50,13 @@ const LIGHT_FIRE_RANGE := 6.0
 const LIGHT_FIRE_ENERGY := 1.0
 const LIGHT_SUN_RANGE := 48.0
 const LIGHT_SUN_ENERGY := 0.9
-const LIGHT_SOURCE_CAP := 32.0
+const LIGHT_SOURCE_CAP := 96.0
 const WARM_FRAMES_MAX := 6.0
-## Hub settle only. Stays behind the loader until two frames are within 16.7 ms.
+## Hub settle only. Stays behind the loader until two frames are within 16.7 ms, a flat plateau, or this cap.
 const WARM_HUB_FRAMES_MAX := 24.0
+## Hub plateau reveal: after this many settle frames, the last 3 within WARM_HUB_PLATEAU_REL (+4 ms) of each other.
+const WARM_HUB_PLATEAU_MIN := 4.0
+const WARM_HUB_PLATEAU_REL := 0.2
 const WARM_STEADY_MS := 3.0
 const WARM_STEADY_N := 3.0
 const DYNRES_ON := true

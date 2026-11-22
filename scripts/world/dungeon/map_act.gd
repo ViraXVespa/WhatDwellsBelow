@@ -4,7 +4,7 @@ extends RefCounted
 ## map_rect lives inside map_clip, so its position is clip-local. Focus arguments stay in viewport space.
 
 const T := preload("res://scripts/data/tunables.gd")
-const MapS := preload("res://scripts/world/dungeon/minimap.gd")
+const MapView := preload("res://scripts/world/dungeon/minimap_view.gd")
 const ZOOM_MAX := T.MAP_ZOOM_MAX
 const FRAME_PAD := 96.0
 const FRAME_CAP := 800.0
@@ -22,7 +22,7 @@ static func reset(host: Node) -> void:
 	_drag = false
 	if host == null:
 		return
-	_set_z(host, MapS.reveal_zoom(host))
+	_set_z(host, MapView.reveal_zoom(host))
 	apply(host)
 	_center_seen(host)
 
@@ -43,7 +43,7 @@ static func apply(host: Node) -> void:
 	if z <= 1.001:
 		rect.position = (frame.size - rect.size) * 0.5
 	_clamp(host, frame)
-	var alpha: float = MapS.full_alpha()
+	var alpha: float = MapView.full_alpha()
 	rect.modulate.a = alpha
 	var edge: ColorRect = host.get("map_border") as ColorRect
 	if edge:
@@ -169,7 +169,7 @@ static func _center_seen(host: Node) -> void:
 	if rect == null or host.get("data") == null:
 		return
 	var frame: Rect2 = _frame(host)
-	var seen: Vector2 = MapS.seen_center(host)
+	var seen: Vector2 = MapView.seen_center(host)
 	if seen.x < 0.0:
 		rect.position = (frame.size - rect.size) * 0.5
 		_clamp(host, frame)

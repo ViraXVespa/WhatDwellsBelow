@@ -63,6 +63,7 @@ SMOKE: dict[str, list] = {
     "run_isolated_grok": [["--selftest"]],
     "agent_log": [["smoke-job"], ["--selftest"]],
     "anim_review": [["pack", "--dry-run"], ["regen", "--dry-run"], ["tree", "--dry-run"]],
+    "comfy_character": [["--selftest"], ["status", "--dry-run"], ["run", "--dry-run"], ["export-set", "--dry-run"], ["install", "--dry-run"], ["setup", "--dry-run"], ["depth", "--all", "--dry-run"], ["walk-reel", "--dry-run"], ["walk-build", "--dry-run"]],
     "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"], ["--dry-run", "update", "opt-003", "--status", "open"]],

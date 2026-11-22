@@ -591,6 +591,9 @@ msgstr "Cancel"
 msgid "confirm_dlg.confirm"
 msgstr "Confirm"
 
+msgid "controls.aim"
+msgstr "Bow aim (Bow mode)"
+
 msgid "controls.attack"
 msgstr "Attack"
 
@@ -599,6 +602,9 @@ msgstr "Crystal map zoom"
 
 msgid "controls.dash"
 msgstr "Dash"
+
+msgid "controls.fire"
+msgstr "Bow fire (Bow mode)"
 
 msgid "controls.food"
 msgstr "Food"
@@ -952,6 +958,27 @@ msgstr "%d / %d"
 
 msgid "hud_act.text_2"
 msgstr "%s  %d / %d"
+
+msgid "hud_draw.aim"
+msgstr "Aim"
+
+msgid "hud_draw.attack"
+msgstr "Attack"
+
+msgid "hud_draw.dash"
+msgstr "Dash"
+
+msgid "hud_draw.map"
+msgstr "Map"
+
+msgid "hud_draw.pause"
+msgstr "Pause"
+
+msgid "hud_draw.special"
+msgstr "Special"
+
+msgid "hud_draw.use"
+msgstr "Use"
 
 msgid "hud_view.dash"
 msgstr "Dash"
@@ -1333,6 +1360,21 @@ msgstr "Earlier weeks"
 
 msgid "news_show.what_s_new"
 msgstr "What's new"
+
+msgid "page_gameplay.bow_mode"
+msgstr "Bow mode"
+
+msgid "page_gameplay.bow_mode_off"
+msgstr "Off: the longbow fires on {attack}, like every weapon."
+
+msgid "page_gameplay.bow_mode_on_kb"
+msgstr "Longbow: hold {aim} to aim (the mouse steers), {attack} to fire."
+
+msgid "page_gameplay.bow_mode_on_pad"
+msgstr "Longbow: hold {aim} to aim (the right stick steers), {fire} to fire."
+
+msgid "page_ui.menu_transitions"
+msgstr "Menu transitions"
 
 msgid "pages_floors.floor"
 msgstr "Floor %d"

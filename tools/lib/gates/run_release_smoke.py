@@ -8,7 +8,7 @@ Both add tools/data/release_smoke/release_drive.gd as an autoload in the copy on
 FAIL on a script error, a debug node at runtime (App.debug/playtest/anim_browser, or any node in the tree running a
 scripts/debug/ script), balance read from user://debug_tunables.json or an old save's
 `debug_bal`, or the drive not reaching the dungeon.
---pck DIR: DIR/*.pck must hold no `scripts/debug/` path (a release export, release.py export-web). --pck-debug DIR: it must
+--pck DIR: DIR/*.pck must hold no `scripts/debug/` or `addons/` path (a release export, release.py export-web). --pck-debug DIR: it must
 (a debug export, release.py export-web --debug). Stripped also compiles every live .gd and scene in the copy (the drive
 loads only its own path). Logs: _logs/release-smoke/. --selftest: a stray debug node; a shared preload of scripts/debug/.
 """
@@ -45,14 +45,27 @@ def run_mode(root: Path, proj: Path, mode: str, timeout: int) -> tuple[bool, lis
           and not re.search(r"(debug_menu|playtest|anim_browser)=true", rel) and "tel=true" in rel)
     return ok, [f"{mode} {r['status']} ms={r['ms']} -> {'PASS' if ok else 'FAIL'}"] + hits[:30]
 
+def pck_file_paths(data: bytes, prefix: str) -> list[str]:
+    """Packed file entries under prefix (.gdc / .remap only): the uid cache and notes may name paths as text."""
+    pat = re.compile(re.escape(prefix).encode() + rb"[A-Za-z0-9_./-]+?\.(?:gdc|gd\.remap|tscn\.remap|tres\.remap)")
+    return sorted({m.group(0).decode("utf-8", "replace") for m in pat.finditer(data)})
+
+
 def pck_paths(d: Path) -> tuple[int, list[str]]:
-    """(pck count, packed debug files) for DIR/*.pck. Counts file entries (.gdc, .remap) only: the uid cache and the
-    shipped archive notes name debug paths as text, which is not code."""
+    """(pck count, packed debug files) for DIR/*.pck."""
     found: list[str] = []
     pcks = sorted(Path(d).glob("*.pck"))
     for p in pcks:
-        found += sorted({m.group(0).decode("utf-8", "replace") for m in re.finditer(rb"scripts/debug/[A-Za-z0-9_./-]+?\.(?:gdc|gd\.remap|tscn\.remap|tres\.remap)", p.read_bytes())})
+        found += pck_file_paths(p.read_bytes(), "scripts/debug/")
     return len(pcks), found
+
+
+def pck_addon_paths(d: Path) -> list[str]:
+    """Packed addons/ file entries in DIR/*.pck."""
+    found: list[str] = []
+    for p in sorted(Path(d).glob("*.pck")):
+        found += pck_file_paths(p.read_bytes(), "addons/")
+    return found
 
 def stripped_static(proj: Path, ok: bool, lines: list[str]) -> tuple[bool, list[str]]:
     import contextlib
@@ -83,7 +96,7 @@ def selftest(root: Path, timeout: int) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Release-mode smokes (no debug code at runtime) and the release PCK leak check.")
     ap.add_argument("--modes", default="flag,stripped", help="flag,stripped (default both); '' skips the runs.")
-    ap.add_argument("--pck", default="", metavar="DIR", help="Release export dir: its .pck must hold no scripts/debug/ path.")
+    ap.add_argument("--pck", default="", metavar="DIR", help="Release export dir: its .pck must hold no scripts/debug/ or addons/ path.")
     ap.add_argument("--pck-debug", dest="pck_debug", default="", metavar="DIR", help="Debug export dir: its .pck must hold scripts/debug/.")
     ap.add_argument("--timeout-sec", type=int, default=240, help="Per-run timeout in seconds (default 240).")
     ap.add_argument("--selftest", action="store_true", help="A stray scripts/debug/ node in the tree must fail flag mode (one Godot run).")
@@ -108,9 +121,15 @@ def main(argv: list[str] | None = None) -> int:
     for d, want in ((args.pck, False), (args.pck_debug, True)):
         if d:
             n, found = pck_paths(Path(d))
-            ok = n > 0 and (bool(found) == want)
+            addons = pck_addon_paths(Path(d)) if not want else []
+            ok = n > 0 and (bool(found) == want) and not addons
             fail += 0 if ok else 1
-            body.append(f"pck {'debug' if want else 'release'} {d}: pcks={n} debug_paths={len(found)} -> {'PASS' if ok else 'FAIL'}" + (f" e.g. {found[:3]}" if found and not want else ""))
+            extra = ""
+            if found and not want:
+                extra += f" e.g. {found[:3]}"
+            if addons:
+                extra += f" addons e.g. {addons[:3]}"
+            body.append(f"pck {'debug' if want else 'release'} {d}: pcks={n} debug_paths={len(found)} addon_paths={len(addons)} -> {'PASS' if ok else 'FAIL'}" + extra)
     return agent_log.finish("release-smoke", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, fail_signals=fail)
 
 if __name__ == "__main__":

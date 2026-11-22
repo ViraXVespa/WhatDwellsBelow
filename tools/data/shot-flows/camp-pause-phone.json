@@ -1,0 +1,112 @@
+{
+  "name": "camp-pause-phone",
+  "about": "Placeholdia on a landscape phone (844x390 CSS at devicePixelRatio 3 = 2532x1170, the textsize phone-l canvas): the pause journal is centred in the safe area and every Settings list row (Main Menu, Quit) fits the list pane without scrolling (debug/layout_check.gd pause_fit), rect_for holds over phone / 16:9 / 4:3 / ultrawide / notched canvases (pause_geometry), and the old fixed left-hugging rect and a row pushed past the pane are both caught (pause_plant). The Main Menu confirm slip is centred and its prompt hint sits under the buttons (confirm_fit). Shots: the journal, the last row selected, the confirm slip.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "width": 2532,
+  "height": 1170,
+  "dpr": 3,
+  "smoke": true,
+  "steps": [
+    {
+      "op": "device",
+      "kind": "pad"
+    },
+    {
+      "op": "call",
+      "target": "App.pause_menu",
+      "method": "show_menu"
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.pause_geometry",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.pause_fit",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.pause_plant",
+      "equals": "caught"
+    },
+    {
+      "op": "shot",
+      "name": "pause-phone",
+      "texts": true
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.pause_fit",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "pause-phone-last-row",
+      "texts": true
+    },
+    {
+      "op": "press",
+      "pad": "UP"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "press",
+      "pad": "A"
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/layout_check.confirm_fit",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "confirm-phone",
+      "texts": true
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "call",
+      "target": "App.pause_menu",
+      "method": "close_ui"
+    },
+    {
+      "op": "wait",
+      "ms": 300
+    },
+    {
+      "op": "assert",
+      "target": "App.pause_menu.open",
+      "equals": false
+    }
+  ]
+}

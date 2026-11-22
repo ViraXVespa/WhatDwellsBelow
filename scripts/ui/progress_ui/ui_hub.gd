@@ -48,6 +48,7 @@ static func rebuild_controls(ui) -> void:
 		["potion", App.tr("controls.potion")],
 		["food", App.tr("controls.food")],
 		["map_view", App.tr("controls.map_view")],
+		["inventory", App.tr("controls.inventory")],
 		["target_lock", App.tr("ui_hub.target_lock")],
 	]
 	var col: float = PromptView.glyph_col(acts.map(func(p): return p[0]), 18)

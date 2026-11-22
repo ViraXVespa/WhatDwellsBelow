@@ -23,7 +23,7 @@ Run `python tools/ENTRY.py` to list commands; append `COMMAND --help` for flags 
 | Size, duplicates, dead code, splits, doc edits | `check.py script-cap --bot --sweep`; `lint.py dupes`; `lint.py unused`; `lint.py split FILE --list`; `docs.py patch` | `tools-lint.md` |
 | Tasks, code map, routing docs | `docs.py task list`; `docs.py code-map row --path P`; `check.py load-graph` | `tools-gates.md` |
 | Localization (keys, copy on screen) | No dedicated tool: `find.py xref KEY` (code and `en.po`), `find.py xref TEXT --texts` after a shot flow, `shots.py inspect contrast` | `tools-lookup.md` |
-| Art, stills, I2V, rekey, audio | `media.py grok --kind K --brief "..." --out DIR`; `media.py rekey --only PATH`; `media.py anim-review`; `media.py sfx` | `tools-media.md` |
+| Art, stills, I2V, rekey, audio | `media.py grok --kind K --brief "..." --out DIR`; `media.py comfy-character setup`; `media.py rekey --only PATH`; `media.py anim-review`; `media.py sfx` | `tools-media.md` |
 | Gameplay video, before/after clips for X | `shots.py movie NAME [--game DIR]`; `media.py clip sbs A B`; `media.py clip export IN --for x\|gif`; `perf.py web --flow F --video DIR` | `tools-media.md` |
 | Start a slice, logs, export, week, Pages | `slice.py open` (User), `slice.py start`, `slice.py plan`, `session.py clean`, `release.py export-web` | `tools-build.md` |
 | Progressive reads and checks inside Build (paged) | MCP `wdb__lookup`, `wdb__check`, `wdb__protocol` (`.grok/config.toml`) | `tools-mcp.md` |

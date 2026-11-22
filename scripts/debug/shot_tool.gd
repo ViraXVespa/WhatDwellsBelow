@@ -101,7 +101,11 @@ static func mount_capture(host: Node) -> void:
 		win.add_child(snap)
 	win.remove_child(host)
 	snap.add_child(host)
-	tree.current_scene = host
+	# Godot rejects current_scene unless the node is a direct child of root (scene_tree.cpp
+	# set_current_scene). Stash the host so Touch.scene_host() (and game code that uses it) can
+	# still find the captured scene.
+	win.set_meta("wdb_shot_host", host)
+	_route_app_layers(win, snap)
 	snap.size = shot + Vector2i(0, 1)
 	snap.size = shot
 	if not Args.show_window():
@@ -110,12 +114,35 @@ static func mount_capture(host: Node) -> void:
 	printerr("SHOT: mark=capture %dx%d" % [shot.x, shot.y])
 
 
+## App-owned overlays (pause menu, recap, presentation) are CanvasLayers under the root window, which now only
+## draws a 64x64 GL host. Point them at the capture viewport so a PNG shows them; their input stays with the root.
+static func _route_app_layers(win: Window, snap: SubViewport) -> void:
+	var app: Node = win.get_node_or_null("App")
+	if app == null:
+		return
+	# The game's canvas_items stretch (aspect expand) at the shot size: lay 2D out at the expanded base size and
+	# stretch it to the shot, in the capture viewport and the root (the 64x64 host would size layers for a square).
+	var base := Vector2(win.content_scale_size)
+	var k: float = minf(float(snap.size.x) / base.x, float(snap.size.y) / base.y)
+	var lay := Vector2i((Vector2(snap.size) / k).round())
+	if lay != snap.size:
+		snap.size_2d_override = lay
+		snap.size_2d_override_stretch = true
+	win.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
+	win.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
+	win.content_scale_size = lay
+	for n: Node in app.find_children("*", "CanvasLayer", true, false):
+		(n as CanvasLayer).custom_viewport = snap
+
+
 static func attach_dungeon(host: Node) -> void:
 	if not active():
 		return
 	var scheme := Args.scheme()
 	if scheme == "touch":
 		Touch.force_show = true
+		if App.touch_hud:
+			App.touch_hud.request_refresh()
 	elif scheme == "gamepad":
 		Pad.mode = true
 		Touch.force_show = false

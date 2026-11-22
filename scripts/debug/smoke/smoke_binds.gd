@@ -28,7 +28,7 @@ static func _name(action: String, pool: String, slot: int) -> String:
 static func _click(ui: Node, idx: int) -> void:
 	var dlg: Node = ui.get_node_or_null(Confirm.NODE_NAME)
 	var n := 0
-	for c: Node in dlg.get_children():
+	for c: Node in dlg.find_children("*", "Button", true, false):
 		if c is Button:
 			if n == idx:
 				(c as Button).pressed.emit()
@@ -90,8 +90,8 @@ static func run() -> void:
 	page.pool = "pad"
 	page.capture_action = "potion"
 	page.capture_slot = 1
-	page._capture(_pad(JOY_BUTTON_DPAD_DOWN))
-	assert(App.toast_msg.begins_with("Can't swap D-pad Down") and _name("look_mode", "pad", 0) == "D-pad Down")
+	page._capture(_pad(JOY_BUTTON_RIGHT_STICK))
+	assert(App.toast_msg.begins_with("Can't swap R3") and _name("look_mode", "pad", 0) == "R3")
 	Binds.reset_pool("kb")
 	Binds.reset_pool("pad")
 	App.save_now()

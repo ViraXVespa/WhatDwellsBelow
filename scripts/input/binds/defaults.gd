@@ -26,6 +26,7 @@ static func register() -> void:
 				_ensure(a, e)
 	strip_key("ui_accept", KEY_SPACE)
 	strip_key("ui_select", KEY_SPACE)
+	load("res://scripts/input/binds/letter_fit.gd").fit()
 
 ## Adds the event unless the action already has an equal one (the engine ships its own ui_* events).
 static func _ensure(action: String, ev: InputEvent) -> void:

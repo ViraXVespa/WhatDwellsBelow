@@ -4,129 +4,9 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const MenuUtil := preload("res://scripts/ui/pause_menu/menu_util.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
-const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
-const ItemNames := preload("res://scripts/data/item_names.gd")
-
-static func page_gameplay(host: Node) -> void:
-	var ch: Button = ThemeS.btn(App.tr("settings_pages.character") % App.character_type, func() -> void:
-		var nxt: String = "female" if App.character_type == "male" else "male"
-		if App.has_method("set_character"):
-			App.set_character(nxt)
-		else:
-			App.character_type = nxt
-		App.save_now()
-		host.split_build_page("gameplay")
-		View.apply_col(host)
-		View.focus_col(host)
-	)
-	View.add_page_btn(host, ch)
-	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.language").format({"name": LocS.name_of(LocS.current)}), func() -> void:
-		LocS.set_locale(LocS.next_locale())
-		ItemNames.refresh(App.prog)
-		App.save_now()
-		host.split_build_page("gameplay")
-		View.apply_col(host)
-		View.focus_col(host)
-	))
-	var lock_on: bool = bool(App.get("target_lock_pref"))
-	var lock: CheckBox = _check(App.tr("settings_pages.target_lock"), lock_on, func(on: bool) -> void:
-		App.target_lock_pref = on
-		if App.has_method("save_now"):
-			App.save_now()
-	)
-	_add_check_centered(host, lock)
-	var salvage_on: bool = bool(App.get("salvage_dupes"))
-	var salvage: CheckBox = _check(App.tr("common.salvage_spare_gear"), salvage_on, func(on: bool) -> void:
-		App.salvage_dupes = on
-		if App.has_method("save_now"):
-			App.save_now()
-		host.split_build_page("gameplay")
-		View.apply_col(host)
-		_focus_named(host, App.tr("common.salvage_spare_gear"))
-	)
-	_add_check_centered(host, salvage)
-	if salvage_on:
-		var hint: Label = ThemeS.lab(App.tr("settings_pages.break_down_mailed_copies_you"), 16, Color(0.82, 0.76, 0.66))
-		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		host.info_box.add_child(hint)
-		var keep: Label = ThemeS.lab(App.tr("settings_pages.keep_a_copy_when"), 20, ThemeS.INK)
-		keep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		keep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		host.info_box.add_child(keep)
-		var finish_v: float = clampf(float(App.get("salvage_finish")), 0.5, 1.0)
-		_slider(host, App.tr("settings_pages.finish") % finish_v, finish_v, 0.5, 1.0, 0.05, func(v: float) -> void:
-			App.salvage_finish = v
-			if App.has_method("save_now"):
-				App.save_now()
-		)
-		var fortune_v: float = clampf(float(App.get("salvage_fortune")), 0.75, 1.25)
-		_slider(host, App.tr("settings_pages.fortune") % fortune_v, fortune_v, 0.75, 1.25, 0.05, func(v: float) -> void:
-			App.salvage_fortune = v
-			if App.has_method("save_now"):
-				App.save_now()
-		)
-	var wipe: Button = ThemeS.btn(App.tr("common.delete_save_data"), func() -> void:
-		Confirm.open(host.pause, App.tr("common.delete_save_data"), App.tr("settings_pages.wipe_all_save_data_and"), func() -> void:
-			App.wipe_save()
-			host.pause.close_ui()
-			App.go_title()
-		, Callable(), "danger")
-	, true, "danger")
-	View.add_page_btn(host, wipe)
-
-static func page_ui(host: Node) -> void:
-	_slider(host, App.tr("settings_pages.hud_scale"), float(App.hud_scale), T.HUD_SCALE_MIN, T.HUD_SCALE_MAX, 0.05, func(v: float) -> void:
-		if App.has_method("set_hud_scale"):
-			App.set_hud_scale(v)
-		else:
-			App.hud_scale = v
-	)
-	_span_slider(host, App.tr("settings_pages.minimap_size"), float(App.mini_px), T.MINI_PX_MIN, T.MINI_PX_DEFAULT, T.MINI_PX_MAX, func(v: float) -> String:
-		return "%d" % int(round(v))
-	, func(v: float) -> void:
-		App.set_mini_px(v)
-	)
-	_slider(host, App.tr("settings_pages.minimap_opacity"), float(App.mini_opacity), 0.0, 1.0, 0.01, func(v: float) -> void:
-		App.set_mini_opacity(v)
-	)
-	_span_slider(host, App.tr("settings_pages.minimap_zoom"), float(App.mini_zoom), T.MINI_ZOOM_MIN, T.MINI_ZOOM_DEFAULT, T.MINI_ZOOM_MAX, func(v: float) -> String:
-		return _zoom_text(v)
-	, func(v: float) -> void:
-		App.set_mini_zoom(v)
-	)
-	var fit_on: bool = bool(App.mini_zoom_fit)
-	var fit_word: String = App.tr("settings_pages.zoom_minimum") if fit_on else App.tr("settings_pages.zoom_fixed")
-	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.zoom_mode") % fit_word, func() -> void:
-		App.set_mini_zoom_fit(not bool(App.mini_zoom_fit))
-		host.split_build_page("ui")
-		View.apply_col(host)
-		View.focus_col(host)
-	))
-	var share_on: bool = bool(App.full_map_opacity)
-	var share: CheckBox = _check(App.tr("settings_pages.full_map_opacity"), share_on, func(on: bool) -> void:
-		App.set_full_map_opacity(on)
-	)
-	_add_check_centered(host, share)
-	var adapt_on: bool = bool(App.map_toggle_adapt)
-	var adapt_word: String = App.tr("settings_pages.toggle_adaptive") if adapt_on else App.tr("settings_pages.toggle_cycle")
-	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.map_toggle") % adapt_word, func() -> void:
-		App.set_map_toggle_adapt(not bool(App.map_toggle_adapt))
-		host.split_build_page("ui")
-		View.apply_col(host)
-		View.focus_col(host)
-	))
-	var glow_on: bool = bool(App.red_border_glow)
-	var glow_box: CheckBox = _check(App.tr("settings_pages.red_border_glow"), glow_on, func(on: bool) -> void:
-		App.red_border_glow = on
-		if App.has_method("save_now"):
-			App.save_now()
-	)
-	_add_check_centered(host, glow_box)
 
 static func page_audio(host: Node) -> void:
 	_slider(host, App.tr("settings_pages.master_volume"), float(App.vol_master), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("master", v))
@@ -217,14 +97,6 @@ static func _span_slider(host: Node, title: String, value: float, lo: float, mid
 	var sl: HSlider = shell.get_child(shell.get_child_count() - 1) as HSlider
 	if sl:
 		host.info_btns.append(sl)
-
-static func _zoom_text(z: float) -> String:
-	var shown: float = T.snap_mini_zoom(z)
-	if absf(shown - round(shown)) < 0.001:
-		return "%dx" % int(round(shown))
-	if shown >= 10.0:
-		return "%.1fx" % shown
-	return "%.2fx" % shown
 
 static func _scale_label(v: float) -> String:
 	return App.tr("settings_pages.auto") if DynRes.snap(v) <= 0.0 else "%.1f" % v

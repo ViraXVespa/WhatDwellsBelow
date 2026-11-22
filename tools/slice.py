@@ -16,6 +16,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("plan",    "slice/session_plan",            "Mechanical seed: write the session-plan.md context index for the named door/job"),
     ("adjust",  "slice/plan_adjust",             "Change the context index (add/rem/promote/demote/set-condition/batch/report); logs every change"),
     ("expand",  "slice/plan_expand",             "Context packet from the index (--check validates, --out session-context.md, --only K1)"),
+    ("gather-pick", "slice/gather_pick",         "Local-model func pick; open runs --chain after start (a miss keeps the mechanical seed)"),
     ("references", "slice/reference_access",     "Task-scoped visual references: export, grant, status, revoke"),
     ("commit",  "slice/commit_slice",           "Commit the slice after a passing gate build"),
 ]

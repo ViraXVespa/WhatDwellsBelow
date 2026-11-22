@@ -7,8 +7,11 @@ const Disp := preload("res://scripts/display_mode.gd")
 ## Actions whose press edge Pad tracks. Which pad button or trigger drives each comes from the InputMap (binds/table.gd).
 const TRACKED: PackedStringArray = [
 	"interact", "dash", "target_lock", "pause", "map_view", "potion", "food", "look_mode",
-	"tab_left", "tab_right", "attack", "special",
+	"tab_left", "tab_right", "attack", "special", "aim", "fire",
 ]
+
+## World actions a menu blocks and a menu-closing press must not bleed into.
+const WORLD: PackedStringArray = ["dash", "attack", "special", "aim", "fire", "interact", "potion", "food", "target_lock"]
 
 static var was: Dictionary = {}
 static var edge: Dictionary = {}
@@ -156,7 +159,7 @@ static func _pad_down(action: String) -> bool:
 	return false
 
 static func just(action: String) -> bool:
-	if eat_pause and action in ["dash", "pause", "interact", "attack", "special", "potion", "food", "target_lock"]:
+	if eat_pause and (action == "pause" or action in WORLD):
 		return false
 	if bool(edge.get(action, false)):
 		return true
@@ -181,7 +184,7 @@ static func pause_just() -> bool:
 	return Input.is_action_just_pressed("pause") or just("pause")
 
 static func swallow_close() -> void:
-	for action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock", "pause"]:
+	for action in WORLD + PackedStringArray(["pause"]):
 		edge[action] = false
 		was[action] = true
 		if action != "pause" and _raw_held(action):
@@ -192,7 +195,7 @@ static func swallow_close() -> void:
 static func blocked(action: String) -> bool:
 	if not App.ui_open:
 		return false
-	return action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]
+	return action in WORLD
 
 static func tick() -> void:
 	Touch.tick()

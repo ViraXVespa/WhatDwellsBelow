@@ -3,7 +3,8 @@ extends RefCounted
 ## Lantern pools (light_rt/pools.gd, camp/lamp_pools.gd), CPU twin of the shader: every hub_lamp lights the yard
 ## 0.6 m ahead of its face (warm core), nothing past the range cap, nothing behind its own wall.
 ## pools: "" or the failing lamps; report: per lamp numbers; plant_pools: every facing flipped (light behind the
-## wall), must be "caught".
+## wall), must be "caught". mask: "" or the lit points pool_mask would skip (the shader returns 0 there);
+## plant_mask: the mask shifted 1 m, must be "caught".
 
 const Pools := preload("res://scripts/graphics/light_rt/pools.gd")
 const LampPools := preload("res://scripts/world/camp/lamp_pools.gd")
@@ -20,8 +21,36 @@ var plant_pools: String:
 		var r: String = _run(true)[0]
 		return "caught" if r != "" else "missed"
 
+var mask: String:
+	get:
+		return _mask_run(false)
+var plant_mask: String:
+	get:
+		return "caught" if _mask_run(true) != "" else "missed"
+
+static func _mask_run(plant: bool) -> String:
+	LampPools.apply(App.Touch.scene_host(), [])
+	if plant:
+		Pools._mask_rect.x += 1.0
+	var bad := PackedStringArray()
+	var lit := 0
+	for i in Pools._n:
+		var v: Vector4 = Pools._p[i]
+		var x: float = v.x - v.w - 0.3
+		while x <= v.x + v.w + 0.3:
+			var z: float = v.z - v.w - 0.3
+			while z <= v.z + v.w + 0.3:
+				if Pools.light_at(Vector3(x, 0.0, z), Vector3.UP, 0.0).get_luminance() > 0.0:
+					lit += 1
+					if not Pools.mask_at(Vector2(x, z)) and bad.size() < 4:
+						bad.append("%.2f,%.2f" % [x, z])
+				z += 0.07
+			x += 0.07
+	LampPools.apply(App.Touch.scene_host(), [])
+	return "no lit points" if lit == 0 else ", ".join(bad)
+
 static func _run(plant: bool) -> Array:
-	var root: Node = (Engine.get_main_loop() as SceneTree).current_scene
+	var root: Node = App.Touch.scene_host()
 	Pools.plant_flip = plant
 	LampPools.apply(root, [])
 	Pools.plant_flip = false

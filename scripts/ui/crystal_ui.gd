@@ -30,12 +30,12 @@ static func open(from: Node) -> void:
 	if old:
 		old.queue_free()
 	var ui := new()
-	from.get_tree().current_scene.add_child(ui)
+	App.Touch.scene_host().add_child(ui)
 	ui.begin(from)
 
 func begin(from: Node) -> void:
 	spot = from
-	host = from.get_tree().current_scene
+	host = App.Touch.scene_host()
 	add_to_group("crystal_ui")
 	set_meta("btn_skin", "crystal")
 	layer = 46
@@ -47,17 +47,17 @@ func begin(from: Node) -> void:
 
 func close_ui() -> void:
 	focus_btn = null
-	UiSession.close(self)
+	remove_from_group("crystal_ui")
+	UiSession.close(self, true)
 	var p := get_tree().get_first_node_in_group("player")
 	if p:
 		p.set("interact_lock", 0.25)
 	App.swallow_close_pad()
 	App.wake_web_pad()
-	queue_free()
 
 func _rebuild() -> void:
 	for c in get_children():
-		if str(c.name) == PromptView.BAR_NAME:
+		if str(c.name) == PromptView.BAR_NAME or str(c.name) == UiSession.MenuFade.NODE:
 			continue
 		remove_child(c)
 		c.queue_free()

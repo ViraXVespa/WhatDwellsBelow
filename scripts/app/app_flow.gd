@@ -57,7 +57,7 @@ static func enter_dungeon(host: Node) -> void:
 		host._after_enter()
 
 static func _close_hub_ui(host: Node) -> void:
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	if scene == null:
 		return
 	var raw: Variant = scene.get("ui")
@@ -85,7 +85,7 @@ static func go_foundation(host: Node) -> void:
 
 static func go_camp(host: Node) -> void:
 	host.in_dungeon = false
-	if host.recap == null or not bool(host.recap.visible):
+	if host.recap == null or not bool(host.recap.get("open")):
 		host.ui_open = false
 	host.interact_prompt = ""
 	host.get_tree().paused = false
@@ -134,21 +134,21 @@ static func play_from_menu_async(host: Node) -> void:
 			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp")))
 	Dbg.hitch("load_camp_scene")
 	Dbg.lt_mark("camp_ready")
-	var scene_b: Node = host.get_tree().current_scene
+	var scene_b: Node = App.Touch.scene_host()
 	var built_n: int = 0
 	while built_n < 240 and scene_b != null and scene_b.get("build_done") != true:
 		built_n += 1
 		if host.loader:
 			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp"))
 		await host.get_tree().process_frame
-		scene_b = host.get_tree().current_scene
+		scene_b = App.Touch.scene_host()
 	Hub.LoadW.done(&"camp")
 	Dbg.lt_note("camp_wait_frames", str(guard))
 	Dbg.lt_note("camp_build_frames", str(built_n))
 	Dbg.hitch("load_warmup")
 	await Hub._warmup_hub(host)
 	Dbg.hitch("load_finish")
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	if host.loader:
 		host.loader.finish()
 	Hub.LoadW.save()

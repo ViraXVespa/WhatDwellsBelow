@@ -295,7 +295,9 @@ def cmd_add_code(root: Path, args) -> int:
 def _add_doc(src: bs.Src, key: str, system: str, kind: str, val: object, args) -> list[str]:
     rel = f"design/{bs.DOC[system]}"
     anchor = args.doc_after or args.after
-    hits = [h for h in tl.parse_hits("".join(src.lines(rel))) if anchor and tl.find_hits([h], anchor)]
+    # find_hits must see the whole table: per-row calls fall through to substring/token
+    # matches and make a unique code key (gen_rooms vs gen_room_min) look ambiguous.
+    hits = tl.find_hits(tl.parse_hits("".join(src.lines(rel))), anchor) if anchor else []
     exact = [h for h in hits if h.key_cell.strip() == f"`{anchor}`"]
     hits = exact or hits
     if len(hits) != 1:

@@ -17,7 +17,8 @@ def selftest(root):
               debug=None, recap=None, get_tree=lambda: tree,
               pause_menu=NS(toggle=lambda: calls.append("pause")))
     boot = read("scripts/app/app_boot.gd")
-    dispatch = function(boot, "world_action", {}, "host, action")
+    # world_action reads the scene through Touch.scene_host() (the shot tool reparents it out of current_scene).
+    dispatch = function(boot, "world_action", {"App": NS(Touch=NS(scene_host=lambda: tree.current_scene))}, "host, action")
     dispatch(host, "pause"); dispatch(host, "map_view")
     assert calls == ["pause", "map"]
     for field in ("_menu_loading", "ui_open"):
@@ -53,7 +54,8 @@ def selftest(root):
     assert 'func _on_pause' not in camp
     assert camp.index('Hud._hud(self)') < camp.index('_connect_hud()', camp.index('Hud._hud(self)'))
     touch = read("scripts/ui/touch_hud.gd")
-    assert 'func _process' not in touch and '_refresh_queued' in touch
+    # W13 touch rework: _process may only queue a refresh while the overlay is up or on a touch device.
+    assert '_refresh_queued' in touch and ('func _process' not in touch or 'if visible or Touch.wants_device():\n\t\trequest_refresh()' in touch)
     for producer in ('size_changed', 'scene_changed', 'joy_connection_changed', 'input_changed', 'InputEventScreenDrag'):
         assert producer in touch, producer
     assert 'PROCESS_MODE_ALWAYS' in boot and 'PROCESS_MODE_ALWAYS' in read("scripts/ui/pause_menu/pause_menu_view.gd")
@@ -137,7 +139,19 @@ def selftest(root):
     assert 'is_instance_valid(_player) and is_instance_valid(_dungeon)' in hud
     assert 'App.interact_locked, View.UiText.frame_scale(), View.UiText.applied()' in gem
     assert 'host._state.clear()' in gem and 'size.y)' in gem
-    assert 'pcd > 0.0, TranslationServer.get_locale()' in gem
+    # W12 potion HUD: the slot repaints on stack/empty/locale; the cooldown is a sweep bar written only on change.
+    assert 'changed(host, "potion", [pn, pot.is_empty(), locale])' in gem
+    assert 'paint_sweep(host.pot_timer, 0.0 if pcd <= 0.0 else pcd / pmax)' in gem
+    class Bar:
+        def __init__(self): self.__dict__.update(visible=False, value=0.0, writes=0)
+        def __setattr__(self, k, v): self.__dict__[k] = v; self.__dict__["writes"] += 1
+    sweep = function(gem, "paint_sweep", {"is_equal_approx": lambda a, b: abs(a - b) < 1e-5}, "bar, frac")
+    bar = Bar()
+    sweep(bar, .5); sweep(bar, .5)
+    assert bar.visible and bar.value == .5 and bar.writes == 2
+    sweep(bar, 0.0); sweep(bar, 0.0)
+    assert not bar.visible and bar.value == .5 and bar.writes == 3
+    sweep(None, .5)
     dirty = function(gem, "changed", {}, "host, key, value")
     h = NS(_state={})
     for key in ("hp", "mana", "level", "resources", "floor", "shrine", "food", "toast", "look", "prompt", "boss"):

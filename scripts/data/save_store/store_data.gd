@@ -7,6 +7,8 @@ const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
 const Dbg := preload("res://scripts/app/dbg.gd")
+const MenuFade := preload("res://scripts/ui/menu_fade.gd")
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 
 ## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
 const DEF := {
@@ -37,6 +39,8 @@ const DEF := {
 	"target_lock_pref": false,
 	"danger_gem": true,
 	"red_border_glow": true,
+	"menu_fx": true,
+	"bow_mode": false,
 	"salvage_dupes": false,
 	"salvage_finish": 0.8,
 	"salvage_fortune": 1.0,
@@ -75,6 +79,8 @@ static func apply(data: Dictionary) -> bool:
 	App.target_lock_pref = bool(data.get("target_lock_pref", DEF.target_lock_pref))
 	App.danger_gem = bool(data.get("danger_gem", DEF.danger_gem))
 	App.red_border_glow = bool(data.get("red_border_glow", DEF.red_border_glow))
+	MenuFade.enabled = bool(data.get("menu_fx", DEF.menu_fx))
+	BowMode.enabled = bool(data.get("bow_mode", DEF.bow_mode))
 	App.salvage_dupes = bool(data.get("salvage_dupes", DEF.salvage_dupes))
 	App.salvage_finish = clampf(float(data.get("salvage_finish", DEF.salvage_finish)), 0.5, 1.0)
 	App.salvage_fortune = clampf(float(data.get("salvage_fortune", DEF.salvage_fortune)), 0.75, 1.25)
@@ -150,6 +156,8 @@ static func fresh_delver() -> void:
 	App.target_lock_pref = DEF.target_lock_pref
 	App.danger_gem = DEF.danger_gem
 	App.red_border_glow = DEF.red_border_glow
+	MenuFade.enabled = DEF.menu_fx
+	BowMode.enabled = DEF.bow_mode
 	App.salvage_dupes = DEF.salvage_dupes
 	App.salvage_finish = DEF.salvage_finish
 	App.salvage_fortune = DEF.salvage_fortune

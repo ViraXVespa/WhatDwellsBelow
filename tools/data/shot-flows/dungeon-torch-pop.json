@@ -1,0 +1,118 @@
+{
+  "name": "dungeon-torch-pop",
+  "about": "Dungeon floor 1, seed 42, enemies frozen: the player walks east at run speed (1.5 m per 20 frames = 4.5 m/s) from 100.5,100.5 across two light-ring restamps; after every hop every torch whose light pool reaches the screen is already in the published light stamp and every on-screen bracket has its bill (debug/torch_pop_check.gd .check/.faults). Planted: Lights.plant_old (restamp only on the 0.2 s stream tick, bills held behind a pending restamp, old 32-light cap) over the same walk must be caught.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.0,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            100.5,
+            0,
+            100.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 2500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.faults",
+      "equals": ""
+    },
+    {
+      "op": "repeat",
+      "max": 70,
+      "steps": [
+        {
+          "op": "assert",
+          "target": "script:debug/torch_pop_check.hop",
+          "equals": "ok"
+        },
+        {
+          "op": "wait",
+          "frames": 20
+        },
+        {
+          "op": "assert",
+          "target": "script:debug/torch_pop_check.check",
+          "equals": "ok"
+        }
+      ]
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.faults",
+      "equals": ""
+    },
+    {
+      "op": "shot",
+      "name": "walked"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.plant_on",
+      "equals": "set"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            100.5,
+            0,
+            100.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 2500
+    },
+    {
+      "op": "repeat",
+      "max": 70,
+      "steps": [
+        {
+          "op": "assert",
+          "target": "script:debug/torch_pop_check.hop",
+          "equals": "ok"
+        },
+        {
+          "op": "wait",
+          "frames": 20
+        },
+        {
+          "op": "assert",
+          "target": "script:debug/torch_pop_check.check",
+          "equals": "ok"
+        }
+      ]
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.plant_caught",
+      "equals": "caught"
+    }
+  ]
+}

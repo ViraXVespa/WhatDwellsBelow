@@ -35,9 +35,9 @@ static func _hud(host: Node3D) -> void:
 
 
 ## Camp menus (receptionist, vendor, crystal...) own the screen: hide the bar while one is open, restore it after.
-## process_frame fires while the tree is paused, so this follows menus that pause the hub.
+## process_frame fires while the tree is paused, so this follows menus that pause the hub. The hook follows the layer
+## in and out of the tree: a hub moved under another viewport (the shot tool's capture mount) keeps hiding the bar.
 static func follow_menus(layer: CanvasLayer) -> void:
-	var tree := layer.get_tree()
 	var cb := func():
 		if not is_instance_valid(layer):
 			return
@@ -47,5 +47,14 @@ static func follow_menus(layer: CanvasLayer) -> void:
 		elif not App.ui_open and bool(layer.get_meta("menu_hid", false)):
 			layer.visible = true
 			layer.set_meta("menu_hid", false)
-	tree.process_frame.connect(cb)
-	layer.tree_exiting.connect(func(): if tree.process_frame.is_connected(cb): tree.process_frame.disconnect(cb))
+	var hook := func():
+		var tree := layer.get_tree()
+		if tree != null and not tree.process_frame.is_connected(cb):
+			tree.process_frame.connect(cb)
+	layer.tree_entered.connect(hook)
+	layer.tree_exiting.connect(func():
+		var tree := layer.get_tree()
+		if tree != null and tree.process_frame.is_connected(cb):
+			tree.process_frame.disconnect(cb))
+	if layer.is_inside_tree():
+		hook.call()

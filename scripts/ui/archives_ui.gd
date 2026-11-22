@@ -57,16 +57,19 @@ func show_browser() -> void:
 	entries = T.archive_catalog()
 	selected = clampi(selected, 0, maxi(0, entries.size() - 1))
 	split_page = str(_cur().get("id", ""))
+	UiSession.MenuFade.fade_in(self)
 	Split.rebuild(self)
 
 func hide_browser() -> void:
 	BtnSkin.follow(self, false)
 	open = false
 	visible = false
+	UiSession.MenuFade.fade_out(self)
 	mode = "info"
 	col = "list"
 	if App.pause_menu == null or not bool(App.pause_menu.get("open")):
-		if get_tree().current_scene == null or str(get_tree().current_scene.scene_file_path).find("title") < 0:
+		var scn: Node = App.Touch.scene_host()
+		if scn == null or str(scn.scene_file_path).find("title") < 0:
 			App.ui_open = false
 		App.wake_web_pad()
 	if App.pause_menu and bool(App.pause_menu.get("open")) and App.pause_menu.has_method("_focus"):

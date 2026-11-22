@@ -1,0 +1,268 @@
+{
+  "name": "dungeon-torch-walls",
+  "about": "Seed 776773760 floor 1 (issue #82 reporter seed): wall torches close up at zoom 4, enemies hidden. issue82-corner is the reported torch at an outer wall corner (z-fighting before the fix); west-mid / east-mid side brackets mid-span; east-edge a side bracket the old plan put on a span end; front / back face-on brackets. Probe: debug/torch_pop_check.gd. Issue #82 check: every torch site keeps 0.5 m from its wall run's ends (.ends); a re-plan with the old end clamp (.plant_ends) must be caught.",
+  "scene": "dungeon",
+  "seed": 776773760,
+  "floor": 1,
+  "zoom": 4,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "hud": 0,
+  "covers": [],
+  "smoke": false,
+  "steps": [
+    {
+      "op": "wait",
+      "ms": 2500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.ends",
+      "equals": ""
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.plant_ends",
+      "equals": "caught"
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            21.28,
+            0,
+            56.6
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "camera",
+      "at": [
+        22.88,
+        55.0
+      ],
+      "zoom": 4
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "shot",
+      "name": "issue82-corner"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            70.28,
+            0,
+            24.1
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "camera",
+      "at": [
+        71.88,
+        22.5
+      ],
+      "zoom": 4
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "shot",
+      "name": "west-mid"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            17.72,
+            0,
+            57.1
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "camera",
+      "at": [
+        16.12,
+        55.5
+      ],
+      "zoom": 4
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "shot",
+      "name": "east-mid"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            20.72,
+            0,
+            86.6
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "camera",
+      "at": [
+        19.12,
+        85.0
+      ],
+      "zoom": 4
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "shot",
+      "name": "east-edge"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            60.1,
+            0,
+            42.72
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "camera",
+      "at": [
+        58.5,
+        41.12
+      ],
+      "zoom": 4
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "shot",
+      "name": "front"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            84.1,
+            0,
+            10.28
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "assert",
+      "target": "script:debug/torch_pop_check.hide_foes",
+      "equals": "ok"
+    },
+    {
+      "op": "camera",
+      "at": [
+        82.5,
+        11.88
+      ],
+      "zoom": 4
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "shot",
+      "name": "back"
+    }
+  ]
+}

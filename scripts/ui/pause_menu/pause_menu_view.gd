@@ -4,6 +4,12 @@ const ScrollBox := preload("res://scripts/ui/scroll_box.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Journal: GDScript = preload("res://scripts/ui/pause_menu/journal_page.gd")
 const JournalSpread := preload("res://scripts/ui/journal_spread.gd")
+const Touch := preload("res://scripts/input/touch_pad.gd")
+
+## The journal at the 1920x1080 base (32, 16, 1856, 1048). A wider (phone) or taller (4:3) canvas centres it in the
+## safe area; a short or notched one shrinks it to fit (the settings list then packs its rows: split_menu_view).
+const PANEL_MAX := Vector2(1856, 1048)
+const PANEL_MARGIN := Vector2(64, 32)
 
 static func build(host: CanvasLayer) -> void:
 	host.layer = 55
@@ -18,15 +24,13 @@ static func build(host: CanvasLayer) -> void:
 	panel.name = "menu_panel"
 	panel.color = Color(0, 0, 0, 0)
 	panel.position = Vector2(32, 16)
-	panel.size = Vector2(1856, 1048)
+	panel.size = PANEL_MAX
 	host.add_child(panel)
 	JournalSpread.add(host, panel.position, panel.size)
 	var edge: ColorRect = ColorRect.new()
 	edge.name = "menu_edge"
 	edge.visible = false
 	edge.color = Plate.EDGE
-	edge.position = panel.position
-	edge.size = Vector2(panel.size.x, Plate.EDGE_H)
 	host.add_child(edge)
 	var page_w: float = (panel.size.x - Journal.PAD * 2.0 - Journal.GUTTER) * 0.5
 	var content_w: float = page_w * 2.0 + Journal.GUTTER
@@ -59,3 +63,36 @@ static func build(host: CanvasLayer) -> void:
 	host.tab_wrap.add_child(host.tab_scroll)
 	host.tab_wrap.add_child(host.tab_right)
 	ScrollBox.build(host, Vector2(left_x, panel.position.y + Journal.TOP + Journal.TEXT_DROP), Vector2(content_w, panel.size.y - Journal.TOP - Journal.BOTTOM - Journal.TEXT_DROP), 8)
+	layout(host)
+	host.get_viewport().size_changed.connect(func() -> void:
+		if layout(host) and bool(host.get("open")):
+			host._rebuild())
+
+## Journal rect for a canvas `vp` (logical px) with safe-area insets `ins` (left, top, right, bottom).
+static func rect_for(vp: Vector2, ins: Vector4) -> Rect2:
+	var safe := Rect2(ins.x, ins.y, vp.x - ins.x - ins.z, vp.y - ins.y - ins.w)
+	var sz := Vector2(minf(PANEL_MAX.x, safe.size.x - PANEL_MARGIN.x), minf(PANEL_MAX.y, safe.size.y - PANEL_MARGIN.y))
+	return Rect2((safe.position + (safe.size - sz) * 0.5).floor(), sz)
+
+## Place the journal, tabs and scroll for the current canvas. True when anything moved.
+static func layout(host: CanvasLayer) -> bool:
+	var vp: Vector2 = host.get_viewport().get_visible_rect().size
+	var r: Rect2 = rect_for(vp, Touch.safe_insets(vp))
+	var panel: ColorRect = host.get_node("menu_panel") as ColorRect
+	if host.has_meta("journal_rect") and host.get_meta("journal_rect") == r:
+		return false
+	host.set_meta("journal_rect", r)
+	panel.position = r.position
+	panel.size = r.size
+	Journal.place(host.get_node("journal_page") as Control, r.position, r.size)
+	var edge: ColorRect = host.get_node("menu_edge") as ColorRect
+	edge.position = r.position
+	edge.size = Vector2(r.size.x, Plate.EDGE_H)
+	var page_w: float = (r.size.x - Journal.PAD * 2.0 - Journal.GUTTER) * 0.5
+	var content_w: float = page_w * 2.0 + Journal.GUTTER
+	var left_x: float = r.position.x + Journal.PAD
+	host.tab_wrap.position = Vector2(left_x, r.position.y + Journal.TOP - 46.0)
+	host.tab_wrap.size = Vector2(content_w, 58)
+	host.scroll.position = Vector2(left_x, r.position.y + Journal.TOP + Journal.TEXT_DROP)
+	host.scroll.size = Vector2(content_w, r.size.y - Journal.TOP - Journal.BOTTOM - Journal.TEXT_DROP)
+	return true

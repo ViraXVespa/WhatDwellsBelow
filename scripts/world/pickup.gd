@@ -22,7 +22,7 @@ static func drop_item(it: Dictionary, pos: Vector3) -> void:
 	var tree := Engine.get_main_loop()
 	if tree == null or it.is_empty():
 		return
-	var host: Node = (tree as SceneTree).current_scene
+	var host: Node = App.Touch.scene_host()
 	if host == null:
 		return
 	var p := new()
@@ -43,6 +43,7 @@ func setup_item(it: Dictionary, pos: Vector3) -> void:
 	_visual()
 
 func _visual() -> void:
+	add_to_group("pickups")
 	var path: String = ART.get(kind, ART["hp"])
 	spr = BillSpr.make(path, 0.45, 0.0, 0, false)
 	if kind == "item":

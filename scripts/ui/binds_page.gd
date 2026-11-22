@@ -130,6 +130,12 @@ func _slot_btn(action: String, slot: int) -> Button:
 	if tex and not capturing:
 		b.icon = tex
 		b.expand_icon = true
+		# A one-letter key's keycap already prints the letter in a crisp face; the ink font's M reads as H at this size.
+		if pool == "kb" and txt.length() == 1:
+			b.text = ""
+			b.tooltip_text = txt
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.set_meta("bind_slot", [action, pool, slot])
 	host.info_btns.append(b)
 	return b
 

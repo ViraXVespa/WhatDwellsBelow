@@ -59,3 +59,12 @@ tools/__scratch.py
 /_cache/*
 !/_cache/.gdignore
 opencode.json
+
+# Comfy character outputs. Rebuild with: python tools/media.py comfy-character setup
+# The approve book and the Good/Bad marks stay in git.
+/_src/comfy-character/depth/
+/_src/comfy-character/walk-reel/
+/_src/comfy-character/walk-good/
+/_src/comfy-character/walk-test/
+/_src/comfy-character/frames/
+/_src/comfy-character/lora-set/

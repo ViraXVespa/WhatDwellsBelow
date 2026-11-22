@@ -73,10 +73,10 @@ static func tab_delta(event: InputEvent) -> int:
 	return 0
 
 static func is_page_prev(event: InputEvent) -> bool:
-	return _is_page(event, "target_lock", "special")
+	return _is_page(event, "page_prev", "page_prev")
 
 static func is_page_next(event: InputEvent) -> bool:
-	return _is_page(event, "interact", "attack")
+	return _is_page(event, "page_next", "page_next")
 
 ## Page turn: the keyboard action (when it is not also Accept) or the pad action.
 static func _is_page(event: InputEvent, key_action: String, pad_action: String) -> bool:

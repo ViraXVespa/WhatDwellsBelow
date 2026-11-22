@@ -50,10 +50,10 @@ static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 	elif event.is_action_pressed("target_lock") or event.is_action_pressed("anim_idle"):
 		Nav.set_facing(host, "down")
 		host.get_viewport().set_input_as_handled()
-	elif pad_list_event(event) and (event.is_action_pressed("special") or event.is_action_pressed("anim_list_up")):
+	elif pad_list_event(event) and event.is_action_pressed("anim_list_up"):
 		Nav.scroll_anim(host, -1)
 		host.get_viewport().set_input_as_handled()
-	elif pad_list_event(event) and (event.is_action_pressed("attack") or event.is_action_pressed("anim_list_down")):
+	elif pad_list_event(event) and event.is_action_pressed("anim_list_down"):
 		Nav.scroll_anim(host, 1)
 		host.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("anim_play") or event.is_action_pressed("gear_drop"):

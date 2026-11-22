@@ -61,7 +61,9 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `DYNRES_WINDOW_S` / `DYNRES_HITCH_S` | 1.5 / 0.5 (fps window; longer frames are ignored) |
 | `DYNRES_RECOVER_WINDOWS` / `DYNRES_BACKOFF_MAX` | 8 / 8 (windows at HIGH per climb; a failed climb doubles the wait up to 8x) |
 | `WARM_FRAMES_MAX` | 6 (dungeon and non-hub `pump_fps` cap; early exit on 2 frames <= 17 ms or `WARM_STEADY_N` 3 deltas within `WARM_STEADY_MS` 3 ms). Hub settle uses `WARM_HUB_FRAMES_MAX`. `pump_fps` first draws 2 frames at one `DYNRES_STEP` lower (`DynRes.warm`), so the first scale drop does not compile in view |
-| `WARM_HUB_FRAMES_MAX` | 24 (hub `pump_fps` cap only; exits on 2 frames at or under 17 ms, not on a slow plateau) |
+| `WARM_HUB_FRAMES_MAX` | 24 (hub `pump_fps` cap only; exits on 2 frames at or under 17 ms, or a flat plateau: `WARM_HUB_PLATEAU_MIN`) |
+| `WARM_HUB_PLATEAU_MIN` | 4 (hub settle frames before a plateau may reveal; the last 3 frame times are within `WARM_HUB_PLATEAU_REL` 0.2 + 4 ms of each other; a compile spike breaks it) |
+| `WARM_HUB_PLATEAU_REL` | 0.2 (relative spread of the hub plateau check) |
 
 ## Ground field
 
@@ -86,7 +88,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | `LIGHT_FIRE_ENERGY` / `light_fire_energy` | 1.0 |
 | `LIGHT_SUN_RANGE` / `light_sun_range` | 48 |
 | `LIGHT_SUN_ENERGY` / `light_sun_energy` | 0.9 |
-| `LIGHT_SOURCE_CAP` / `light_source_cap` | 32 |
+| `LIGHT_SOURCE_CAP` / `light_source_cap` | 96 |
 
 ## Other tunables files
 

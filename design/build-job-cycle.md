@@ -7,7 +7,7 @@ A **slice** is the User-opened worktree/session; a **unit** is one piece of its 
 
 ## 1. Understand
 
-One gather. A refined packet is one `wdb__lookup action=packet all=true` (Approach, core bodies, candidates). Do not page it or file-read `session-context.md`. If the Approach disagrees with the code, trust the code and `slice.py adjust approach`, then edit. Do not re-read a core body. `--no-gather`: the first message names `slice.py start`, and this session closes that seed before editing.
+One gather. A refined packet is one `wdb__lookup action=packet all=true` (core bodies, candidates; write the Approach if absent). Do not page it or file-read `session-context.md`. If the Approach disagrees with the code, trust the code and `slice.py adjust approach`, then edit. Do not re-read a core body. `--no-gather`: the first message names `slice.py start`, and this session closes that seed before editing.
 
 On a new session, read the named task file once. It stays the assignment. The plan does not replace it or a survey handoff.
 

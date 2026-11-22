@@ -4,6 +4,9 @@ extends RefCounted
 ## pools the Controls page may rebind. Defaults, Reset Controls, the rebind page, saves, and every
 ## on-screen hint read from here (names and glyphs come from the live InputMap via prompts.gd).
 ## rebind: "both" | "kb" | "pad" | "" (fixed). axis rows are [axis, sign]. web: extra pad buttons on web.
+## kb rows bind by physical position (WASD stays put on AZERTY); "letter" rows bind by the key's printed label
+## (logical keycode), so P / F / T mnemonics stay on P / F / T on AZERTY, QWERTZ and Dvorak.
+## LAYOUT bumps when a default changes; binds/migrate.gd moves untouched saves from the older defaults.
 
 const ROWS: Array = [
 	{"id": "move_up", "label": "Move up", "rebind": "kb", "kb": [KEY_W, KEY_UP], "axis": [[JOY_AXIS_LEFT_Y, -1.0]]},
@@ -14,16 +17,18 @@ const ROWS: Array = [
 	{"id": "aim_right", "axis": [[JOY_AXIS_RIGHT_X, 1.0]]},
 	{"id": "aim_up", "axis": [[JOY_AXIS_RIGHT_Y, -1.0]]},
 	{"id": "aim_down", "axis": [[JOY_AXIS_RIGHT_Y, 1.0]]},
-	{"id": "attack", "label": "Attack", "rebind": "both", "mouse": [MOUSE_BUTTON_LEFT], "axis": [[JOY_AXIS_TRIGGER_RIGHT, 1.0]], "web": [7]},
-	{"id": "special", "label": "Special", "rebind": "both", "mouse": [MOUSE_BUTTON_RIGHT], "axis": [[JOY_AXIS_TRIGGER_LEFT, 1.0]], "web": [6]},
-	{"id": "dash", "label": "Dash", "rebind": "both", "kb": [KEY_SPACE], "pad": [JOY_BUTTON_B]},
-	{"id": "target_lock", "label": "Target lock", "rebind": "both", "kb": [KEY_Q], "pad": [JOY_BUTTON_RIGHT_STICK]},
-	{"id": "interact", "label": "Interact", "rebind": "both", "kb": [KEY_E, KEY_ENTER, KEY_KP_ENTER], "pad": [JOY_BUTTON_A]},
-	{"id": "map_view", "label": "Map", "rebind": "both", "kb": [KEY_M], "pad": [JOY_BUTTON_BACK]},
-	{"id": "inventory", "label": "Inventory", "rebind": "both", "kb": [KEY_I], "pad": [JOY_BUTTON_DPAD_RIGHT]},
-	{"id": "potion", "label": "Potion", "rebind": "both", "kb": [KEY_F], "pad": [JOY_BUTTON_DPAD_UP]},
-	{"id": "food", "label": "Food", "rebind": "both", "kb": [KEY_C], "pad": [JOY_BUTTON_DPAD_LEFT]},
-	{"id": "look_mode", "label": "Look mode", "rebind": "pad", "pad": [JOY_BUTTON_DPAD_DOWN]},
+	{"id": "attack", "label": "Attack", "rebind": "both", "mouse": [MOUSE_BUTTON_LEFT], "pad": [JOY_BUTTON_X]},
+	{"id": "special", "label": "Special", "rebind": "both", "mouse": [MOUSE_BUTTON_RIGHT], "pad": [JOY_BUTTON_A]},
+	{"id": "aim", "label": "Bow aim (Bow mode)", "rebind": "both", "kb": [KEY_SHIFT], "axis": [[JOY_AXIS_TRIGGER_LEFT, 1.0]], "web": [6]},
+	{"id": "fire", "label": "Bow fire (Bow mode)", "rebind": "pad", "axis": [[JOY_AXIS_TRIGGER_RIGHT, 1.0]], "web": [7]},
+	{"id": "dash", "label": "Dash", "rebind": "both", "kb": [KEY_SPACE], "pad": [JOY_BUTTON_RIGHT_SHOULDER]},
+	{"id": "target_lock", "label": "Target lock", "rebind": "both", "letter": [KEY_T], "pad": [JOY_BUTTON_DPAD_DOWN]},
+	{"id": "interact", "label": "Interact", "rebind": "both", "kb": [KEY_E, KEY_ENTER, KEY_KP_ENTER], "pad": [JOY_BUTTON_Y]},
+	{"id": "map_view", "label": "Map", "rebind": "both", "kb": [KEY_M], "pad": [JOY_BUTTON_DPAD_UP]},
+	{"id": "inventory", "label": "Inventory", "rebind": "both", "kb": [KEY_I], "pad": [JOY_BUTTON_BACK]},
+	{"id": "potion", "label": "Potion", "rebind": "both", "letter": [KEY_P], "pad": [JOY_BUTTON_DPAD_RIGHT]},
+	{"id": "food", "label": "Food", "rebind": "both", "letter": [KEY_F], "pad": [JOY_BUTTON_DPAD_LEFT]},
+	{"id": "look_mode", "label": "Look mode", "rebind": "pad", "pad": [JOY_BUTTON_RIGHT_STICK]},
 	{"id": "pause", "label": "Pause menu", "rebind": "both", "kb": [KEY_ESCAPE], "pad": [JOY_BUTTON_START]},
 	{"id": "tab_left", "label": "Menu tab left", "rebind": "both", "kb": [KEY_BRACKETLEFT], "pad": [JOY_BUTTON_LEFT_SHOULDER]},
 	{"id": "tab_right", "label": "Menu tab right", "rebind": "both", "kb": [KEY_BRACKETRIGHT], "pad": [JOY_BUTTON_RIGHT_SHOULDER]},
@@ -47,7 +52,11 @@ const MENU: Array = [
 	{"id": "ui_right", "kb": [KEY_RIGHT, KEY_D], "pad": [JOY_BUTTON_DPAD_RIGHT]},
 	{"id": "ui_up", "kb": [KEY_UP, KEY_W], "pad": [JOY_BUTTON_DPAD_UP]},
 	{"id": "ui_down", "kb": [KEY_DOWN, KEY_S], "pad": [JOY_BUTTON_DPAD_DOWN]},
+	{"id": "page_prev", "kb": [KEY_Q], "axis": [[JOY_AXIS_TRIGGER_LEFT, 1.0]]},
+	{"id": "page_next", "kb": [KEY_E], "axis": [[JOY_AXIS_TRIGGER_RIGHT, 1.0]]},
 ]
+
+const LAYOUT := 2
 
 static func ids() -> PackedStringArray:
 	var out := PackedStringArray()
@@ -81,6 +90,10 @@ static func stock(r: Dictionary, pool: String) -> Array:
 			var e := InputEventKey.new()
 			e.physical_keycode = k as Key
 			out.append(e)
+		for k: int in r.get("letter", []):
+			var lk := InputEventKey.new()
+			lk.keycode = k as Key
+			out.append(lk)
 		for b: int in r.get("mouse", []):
 			var m := InputEventMouseButton.new()
 			m.button_index = b as MouseButton

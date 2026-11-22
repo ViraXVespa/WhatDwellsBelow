@@ -1,5 +1,7 @@
 extends Object
 
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+
 static var _setup_s: GDScript
 
 static func _setup() -> GDScript:
@@ -56,7 +58,7 @@ static func try_basic(p: CharacterBody3D) -> void:
 		return
 	if p.atk_state != p.ATK_NONE or p.dash_t > 0.0:
 		return
-	if not (p._ai_held("attack") or App.pad_held("attack")):
+	if not (p._ai_held("attack") or App.pad_held("attack") or BowMode.fire_held()):
 		return
 	p.atk_state = p.ATK_BASIC
 	p.atk_t = 0.0
@@ -127,7 +129,7 @@ static func update_aim_line(p: CharacterBody3D) -> void:
 	if p.aim_line == null:
 		return
 	var bow_spec: bool = App.weapon == "longbow" and (p.atk_state == p.ATK_WIND or p.atk_state == p.ATK_ACT)
-	var on: bool = bool(App.bal.aim_line_on) and not bow_spec
+	var on: bool = (bool(App.bal.aim_line_on) or BowMode.aiming()) and not bow_spec
 	var length: float = App.bal.aim_line_length
 	if App.bal.aim_line_use_weapon_range:
 		length = p._weapon_reach()

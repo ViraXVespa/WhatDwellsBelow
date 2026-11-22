@@ -4,6 +4,8 @@ extends RefCounted
 
 const LocS := preload("res://scripts/app/app_loc.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
+const MenuFade := preload("res://scripts/ui/menu_fade.gd")
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 static func collect() -> Dictionary:
 	return {
 		"v": 1,
@@ -34,6 +36,8 @@ static func collect() -> Dictionary:
 		"target_lock_pref": bool(App.get("target_lock_pref")),
 		"danger_gem": bool(App.get("danger_gem")),
 		"red_border_glow": bool(App.get("red_border_glow")),
+		"menu_fx": MenuFade.enabled,
+		"bow_mode": BowMode.enabled,
 		"salvage_dupes": bool(App.get("salvage_dupes")),
 		"salvage_finish": float(App.get("salvage_finish")),
 		"salvage_fortune": float(App.get("salvage_fortune")),

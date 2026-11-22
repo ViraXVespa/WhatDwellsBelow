@@ -1,1 +1,1 @@
-A separate gather session has already refined the context packet; its Approach and card are in the packet from session-context.md. Do not re-gather what the packet already holds. Trust the inlined code when the Approach disagrees.
+A separate gather session already refined the packet. The core bodies are inlined. Write the Approach from these bodies before editing if this packet has none (edit order, what must stay true, the prove command). If an Approach is present, trust the inlined code when they disagree.

@@ -12,6 +12,7 @@ import boot  # noqa: E402
 
 COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("grok",             "media/run_isolated_grok",      "Isolated Grok Build media job in a scratch dir (--kind ui|i2v|...)"),
+    ("comfy-character",  "media/comfy_character",        "Local Comfy pose and style pages; setup rebuilds gitignored depths and the walk reel"),
     ("i2v-seeds",        "media/i2v_seeds",              "I2V seed plate and prompt (gender, facing, action)"),
     ("rekey",            "media/rekey_all_stills",       "Rekey every manifest still from _src (--check, --out DIR)"),
     ("rekey-preview",    "media/rekey_preview",          "Open-set rekey preview on blue (no live writes)"),

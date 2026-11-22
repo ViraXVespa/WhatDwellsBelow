@@ -240,6 +240,6 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
            **_stats(meas, long_ms), "shot_excluded": sum(n for k, (_, n) in cut.items() if not k.startswith("_")), "heap_mb": round(max(w["heap"], m.get("JSHeapUsedSize", 0)) / 1048576, 1),
            "wasm_mem_mb": round(w["wasm"] / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
            "transfer_mb": round(sum(b for _, b, _, _ in res) / 1048576, 2), "page_errors": len(errs) + w["errs"],
-           "phases": ph, "marks": marks, "load_marks": _load_marks(w["load"]), "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "audio": aud, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
+           "phases": ph, "marks": marks, "load_marks": _load_marks(w["load"]), "load_notes": [x.rsplit(" wasm=", 1)[0] for x in w["load"] if not x.startswith("mark=")], "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "audio": aud, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
            "video": clip, "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b, _, _ in res if b > 262144), key=lambda a: -a["kb"])}
     return rep

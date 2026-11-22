@@ -67,7 +67,7 @@ static func set_map_rest_mini(host: Node, on: bool) -> void:
 static func _poke_map(host: Node) -> void:
 	if not host.in_dungeon:
 		return
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	if scene and scene.has_method("sync_map_view"):
 		scene.sync_map_view()
 

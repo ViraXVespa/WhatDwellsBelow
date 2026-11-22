@@ -22,6 +22,8 @@ Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 - Maximum one ghost shop per floor.
 - A fixed number of Extraction Gates per floor (`max_clerks`: tunables-world).
 - Gate rooms MUST be spread across the floor. Spacing starts wide and relaxes step by step until enough candidate rooms are marked (tunables-world). If the floor has fewer legal rooms, every legal room is marked.
+- A gate hangs on a top (north, camera-facing) wall only: 3 wall cells with 3 walkable floor cells directly south (`scripts/dungeon/gen/gate_slot.gd`). A legal gate room has such a slot on its own top wall; prefer the slot nearest the room's middle with one floor cell free past each end (not flush in a corner).
+- Placement (`scripts/world/dungeon/dungeon_gate.gd`) takes the room's slot, else the nearest free top-wall slot within 12 cells of the room centre, else places no gate (warning). Never a side wall, never a free-standing floor spot. Map spec `gate_top_wall` (debug-smokes) sweeps this.
 
 Mail-legal goods and one-use visit rules: inventory.meta and interactables.
 

@@ -2,6 +2,7 @@ extends CanvasLayer
 
 const Draw := preload("res://scripts/ui/touch_hud/hud_draw.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
+const Touch := preload("res://scripts/input/touch_pad.gd")
 
 var root: Control
 var _tex: Dictionary = {}
@@ -11,6 +12,9 @@ var _move_origin := Vector2.ZERO
 var _move_knob := Vector2.ZERO
 var _move_live := false
 var _move_r := 96.0
+var _move_home := Vector2.ZERO
+var _bow_i := -1
+var _bow_origin := Vector2.ZERO
 var _btns: Array = []
 var _pinch_a := -1
 var _pinch_b := -1
@@ -40,6 +44,12 @@ func request_refresh() -> void:
 func _refresh() -> void:
 	_refresh_queued = false
 	Draw.tick(self, 0.0)
+
+## Live state the overlay draws (lock glow, item counts, the Bow mode stick, camp dimming, menus hiding it) changes
+## without a signal, so a touch device redraws each frame; elsewhere this stays idle.
+func _process(_delta: float) -> void:
+	if visible or Touch.wants_device():
+		request_refresh()
 
 func _on_joy_connection(_device: int, _connected: bool) -> void:
 	request_refresh()

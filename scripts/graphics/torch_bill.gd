@@ -1,6 +1,6 @@
 extends Node3D
 
-## Unlit bracket from the 4-facing bible. Flame is a Y-billboard shader, not a sheet.
+## Unlit bracket from the 4-facing bible. Flame is a camera-facing shader quad, not a sheet.
 
 const BIBLE := "res://assets/sprites/props/torch_bracket_bible.png"
 const FLAME := """
@@ -42,6 +42,12 @@ var _flame: MeshInstance3D
 var _nx: float = 0.0
 var _nz: float = 1.0
 var _half: float = 512.0
+## Bracket cell height in metres (WALL_H is 1.45): the plate centres near 0.75 m, mid-wall, and the head tops out
+## under the wall cap. Flame lift and size follow the same scale.
+const CELL_M := 0.95
+const CELL_Y := 0.92
+const FLAME_Y := 1.22
+const K := CELL_M / 1.45
 
 static var _sites_ref: Array = []
 
@@ -130,8 +136,8 @@ func _ready() -> void:
 		spr.texture = tex
 		spr.region_enabled = true
 		spr.region_rect = _front_cell()
-		spr.pixel_size = 1.45 / maxf(_half, 1.0)
-		spr.position.y = 0.72
+		spr.pixel_size = CELL_M / maxf(_half, 1.0)
+		spr.position.y = CELL_Y
 		_spr = spr
 		add_child(spr)
 	_flame = _make_flame()
@@ -155,7 +161,7 @@ func _front_cell() -> Rect2:
 func _make_flame() -> MeshInstance3D:
 	if _quad == null:
 		var quad: QuadMesh = QuadMesh.new()
-		quad.size = Vector2(0.26, 0.42)
+		quad.size = Vector2(0.26, 0.42) * K
 		_quad = quad
 	if _flame_shader == null:
 		var sh: Shader = Shader.new()
@@ -168,19 +174,16 @@ func _make_flame() -> MeshInstance3D:
 	mesh.mesh = _quad
 	mesh.material_override = mat
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var lift: float = 1.18
-	mesh.position = Vector3(float(_nx) * 0.12, lift, float(_nz) * 0.12)
+	# Over the torch head in the sprite (side cells draw the head 0.08 m out from the plate), a hair toward the camera.
+	mesh.position = Vector3(float(_nx) * 0.12 * K, FLAME_Y, float(_nz) * 0.12 * K + 0.03)
 	return mesh
 
+## The flame quad faces the fixed south camera on every wall (yawing it to the wall normal left side brackets with an
+## edge-on, invisible flame). Idempotent.
 func _set_facing_once() -> void:
 	if _flame == null:
 		return
-	var nx: float = float(get_meta("nx", 0.0))
-	var nz: float = float(get_meta("nz", 1.0))
-	var flat := Vector3(nx, 0.0, nz)
-	if flat.length_squared() < 0.0001:
-		return
-	_flame.look_at(_flame.global_position + flat, Vector3.UP)
+	_flame.basis = Basis.IDENTITY
 
 static func _bible() -> Texture2D:
 	if not ResourceLoader.exists(BIBLE):

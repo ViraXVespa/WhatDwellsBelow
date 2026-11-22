@@ -86,6 +86,7 @@ const RULES: Array = [
 	["outline_", "Dungeon Layout"],
 	["crystal_", "Dungeon Layout"],
 	["fog_radius", "Dungeon Layout"],
+	["map_enemy_range", "Dungeon Layout"],
 	["max_clerks", "Dungeon Layout"],
 	["ghost_shop_chance", "Dungeon Layout"],
 	["mine_", "Gathering & Props"],

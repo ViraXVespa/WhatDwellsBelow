@@ -3,6 +3,7 @@ extends Object
 ## The game's own state report for Report Bug: only the relay's STATE_KEYS (tools/relay/src/report.js), no logs,
 ## no names, paths or other user data. Version is the label plus the week-open commit from version.json.
 
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const KEYS: Array = ["version", "platform", "build", "scene", "floor", "seed", "pos", "loadout", "recent", "perf",
@@ -10,7 +11,7 @@ const KEYS: Array = ["version", "platform", "build", "scene", "floor", "seed", "
 
 static func build() -> Dictionary:
 	var tree: SceneTree = App.get_tree()
-	var scn: Node = tree.current_scene if tree else null
+	var scn: Node = App.Touch.scene_host() if tree else null
 	var pl: Node3D = tree.get_first_node_in_group("player") as Node3D if tree else null
 	var prog: Object = App.prog
 	return {
@@ -27,7 +28,8 @@ static func build() -> Dictionary:
 			"gpu": RenderingServer.get_video_adapter_name(), "window": str(DisplayServer.window_get_size()),
 			"render_scale": App.render_scale},
 		"settings": {"zoom": App.cam_zoom, "hud_scale": App.hud_scale, "sprite_filter": App.sprite_filter,
-			"display": App.display_mode, "locale": LocS.current, "target_lock": App.target_lock_pref},
+			"display": App.display_mode, "locale": LocS.current, "target_lock": App.target_lock_pref,
+			"bow_mode": BowMode.enabled},
 		"run": {"in_dungeon": App.in_dungeon, "boss_dead": App.boss_dead, "deepest": int(prog.get("deepest")) if prog else 0,
 			"kills": int(App.tel.kills) if App.tel else 0},
 		"uptime_s": int(Time.get_ticks_msec() / 1000.0),
@@ -63,7 +65,8 @@ static func where() -> String:
 	if App.in_dungeon:
 		return "dungeon"
 	var tree: SceneTree = App.get_tree()
-	var path: String = str(tree.current_scene.scene_file_path) if tree and tree.current_scene else ""
+	var scn: Node = App.Touch.scene_host() if tree else null
+	var path: String = str(scn.scene_file_path) if scn else ""
 	if path.find("title") >= 0:
 		return "ui.title_web"
 	return "hub" if path.find("camp") >= 0 else "triage"

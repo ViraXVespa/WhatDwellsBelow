@@ -15,7 +15,7 @@ const LIT := 0  # lit points allowed per hull (a gap is lit ground inside the sh
 const BAD := 0.01  # share of points allowed off level per hull
 
 static func run(plant: String = "") -> String:
-	var root: Node = (Engine.get_main_loop() as SceneTree).current_scene
+	var root: Node = App.Touch.scene_host()
 	var cam: Camera3D = root.get_viewport().get_camera_3d()
 	var hs: Array = Hulls.build(root)
 	var g: float = Chunky.GRID_M

@@ -191,5 +191,5 @@ static func rows() -> Array:
 		["light_fire_energy", 0.05, 2.0, 0.05],
 		["light_sun_range", 4.0, 64.0, 1.0],
 		["light_sun_energy", 0.05, 2.0, 0.05],
-		["light_source_cap", 1.0, 64.0, 1.0],
+		["light_source_cap", 1.0, 128.0, 1.0],
 	]

@@ -71,9 +71,9 @@ def git_state(root: Path) -> dict[str, str]:
     }
 
 def shipped_changelogs(root: Path) -> list[str]:
-    """design/changelog/*.md on origin/main that this branch (commits or worktree) changed."""
+    """design/changelog/*.md on origin/main that this branch (commits or worktree) edited; week-start deletions of the old series are not edits."""
     _c, base = repo_lib.run_git(root, "merge-base", "origin/main", "HEAD")
-    _c, out = repo_lib.run_git(root, "diff", "--name-only", base.strip() or "HEAD", "--", "design/changelog")
+    _c, out = repo_lib.run_git(root, "diff", "--name-only", "--diff-filter=d", base.strip() or "HEAD", "--", "design/changelog")
     return [rel for rel in out.split() if rel.endswith(".md") and repo_lib.run_git(root, "cat-file", "-e", f"origin/main:{rel}")[0] == 0
             and repo_lib.run_git(root, "diff", "--quiet", "origin/main", "--", rel)[0] != 0]
 

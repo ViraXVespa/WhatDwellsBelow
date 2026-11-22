@@ -77,7 +77,7 @@ static func next_floor(host: Node) -> void:
 
 static func notify_boss_dead(host: Node) -> void:
 	host.boss_dead = true
-	var s := host.get_tree().current_scene
+	var s := App.Touch.scene_host()
 	if s and s.has_method("_on_boss_dead"):
 		s._on_boss_dead()
 

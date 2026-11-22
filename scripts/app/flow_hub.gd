@@ -22,7 +22,7 @@ static func _warmup_hub(host: Node) -> void:
 			host.loader.set_solid(true)
 		host.loader.stage(LoadW.at(&"warm_frame"), LoadW.after(&"warm_frame"))
 	await host.get_tree().process_frame  # draw the milestone before the blocking warm-up frame
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	# Everything the first seconds in camp would add (dummy, aim line, telegraph) is built and drawn here, under the loader.
 	if scene and scene.has_method("ensure_dummy"):
 		scene.ensure_dummy()
@@ -167,6 +167,8 @@ static func pump_fps(host: Node, hub: bool) -> void:
 	var last_dt: int = 0
 	var prev_dt: int = -1
 	var cap: int = int(T.WARM_HUB_FRAMES_MAX) if hub else int(T.WARM_FRAMES_MAX)
+	var dts: PackedInt32Array = PackedInt32Array()
+	var flat: bool = false
 	while n < cap:
 		var t0: int = Time.get_ticks_usec()
 		RenderingServer.force_draw()
@@ -179,9 +181,15 @@ static func pump_fps(host: Node, hub: bool) -> void:
 		good = good + 1 if last_dt <= 17 else 0
 		steady = steady + 1 if prev_dt >= 0 and absi(last_dt - prev_dt) <= int(T.WARM_STEADY_MS) else 0
 		prev_dt = last_dt
-		# Hub stays covered until two frames are on the 60 FPS budget. A slow plateau is not a reveal.
-		# Other pumps still accept a steady slow device so the bar cannot sit there.
-		var settled: bool = good >= 2
+		dts.append(last_dt)
+		# Hub: two frames on the 60 FPS budget, or (w13 web A/B) a flat plateau after the first frames:
+		# the frames after it match the steady rate, so more cover only delays play. A spike breaks it.
+		if hub and n >= int(T.WARM_HUB_PLATEAU_MIN):
+			var l3: PackedInt32Array = dts.slice(-3)
+			var lo: int = mini(l3[0], mini(l3[1], l3[2]))
+			var hi: int = maxi(l3[0], maxi(l3[1], l3[2]))
+			flat = float(hi) <= float(lo) * (1.0 + T.WARM_HUB_PLATEAU_REL) + 4.0
+		var settled: bool = good >= 2 or flat
 		if not hub and steady >= int(T.WARM_STEADY_N):
 			settled = true
 		if settled:
@@ -192,6 +200,7 @@ static func pump_fps(host: Node, hub: bool) -> void:
 		Dbg.lt_note("fps_ok", ok_s)
 		Dbg.lt_note("warm_last_dt", str(last_dt))
 		Dbg.lt_note("warm_steady", str(steady))
+		Dbg.lt_note("warm_plateau", "1" if flat and good < 2 else "0")
 	else:
 		Dbg.lt_dnote("warm_frames", str(n))
 		Dbg.lt_dnote("fps_ok", ok_s)
