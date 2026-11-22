@@ -8,7 +8,8 @@ const StampJob := preload("res://scripts/graphics/light_stamp/stamp_job.gd")
 const Plan := preload("res://scripts/graphics/torch_plan.gd")
 const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
-## Walking restamps run in units of at most this many microseconds per frame (the first stamp, under the cover, runs whole).
+## Walking restamps run in units of at most this many microseconds per frame (step, from process_floor; the first
+## stamp, under the cover, runs whole).
 const STAGE_US := 4000
 
 static func maintain(host: Node) -> void:
@@ -20,8 +21,15 @@ static func maintain(host: Node) -> void:
 		mode = str(App.present.get("_mode"))
 	var entering: bool = mode == "enter_hold" or mode == "enter_fade" or rt._rect.size.x < 1
 	if rt._job != null:
-		if not entering:
+		if not entering and Lights.plant_old:
 			_advance()
+			return
+		if not entering:
+			# The job itself advances every frame (step); bills for newly live chunks must not wait for it.
+			var live_now: String = Lights._live_key(host)
+			if live_now != rt._live:
+				rt._live = live_now
+				_refill(host)
 			return
 		rt._job = null
 		rt._knob = ""
@@ -90,6 +98,12 @@ static func _begin_dungeon(host: Node, rect: Rect2i) -> RefCounted:
 	if host.data.has("outline_loops") and host.data["outline_loops"] is Array:
 		loops = host.data["outline_loops"]
 	return Stamp.begin(tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n, x0, z0, loops)
+
+## Every dungeon frame: run STAGE_US of a pending walking restamp (maintain itself only runs on the 0.2 s stream tick).
+static func step() -> void:
+	var rt: Variant = load(RT_PATH)
+	if rt._job != null and not Lights.plant_old:
+		_advance()
 
 static func _advance() -> void:
 	var rt: Variant = load(RT_PATH)

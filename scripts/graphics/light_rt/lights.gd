@@ -4,11 +4,16 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
+## Debug plant (dungeon-torch-pop): the old pop-in path. Restamp only on the 0.2 s stream tick, torch bills held
+## behind a pending restamp, and the old 32-light cap.
+static var plant_old := false
 
 static func _dungeon_lights(host: Node, x0: int, z0: int, tw: int, th: int) -> Array:
 	var rt: Variant = load(RT_PATH)
 	var focus: Vector2i = _focus(host)
 	var cap: int = int(_bal("light_source_cap", T.LIGHT_SOURCE_CAP))
+	if plant_old:
+		cap = 32
 	var ranked: Array = []
 	for node in rt._props:
 		if not is_instance_valid(node):

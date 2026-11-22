@@ -50,7 +50,7 @@ const LIGHT_FIRE_RANGE := 6.0
 const LIGHT_FIRE_ENERGY := 1.0
 const LIGHT_SUN_RANGE := 48.0
 const LIGHT_SUN_ENERGY := 0.9
-const LIGHT_SOURCE_CAP := 32.0
+const LIGHT_SOURCE_CAP := 96.0
 const WARM_FRAMES_MAX := 6.0
 ## Hub settle only. Stays behind the loader until two frames are within 16.7 ms.
 const WARM_HUB_FRAMES_MAX := 24.0

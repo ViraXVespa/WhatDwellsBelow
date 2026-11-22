@@ -11,6 +11,7 @@ const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
 const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 
 static var _first_tick: bool = true
+static var _light_step: GDScript
 ## Sweep only. Off leaves the floor tick untimed.
 static var floor_on: bool = false
 static var floor_us: int = 0
@@ -93,6 +94,9 @@ static func process_floor(host: Node, delta: float) -> void:
 		var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
 		LightRtS.maintain(host)
 		_first_tick = false
+	if _light_step == null:
+		_light_step = load("res://scripts/graphics/light_rt/publish.gd") as GDScript
+	_light_step.step()
 	host.frame_acc += delta
 	host.frame_n += 1
 	if host.frame_acc >= 0.5:
