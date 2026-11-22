@@ -32,7 +32,7 @@ Read when: default binds or web_pad
 
 `defaults.gd` also strips Space from Godot’s `ui_accept` / `ui_select`, so Space never confirms in a menu.
 
-P / F / T are `letter` rows: they bind the logical keycode (the key's printed label), so they stay on P / F / T on AZERTY, QWERTZ and Dvorak. Position keys (WASD, E, Space, I, M) bind `physical_keycode`. Gamepad defaults: input.platforms_gamepad. Gear stats paging is the fixed menu pair `page_prev` / `page_next` (Q / E, LT / RT), not a world bind. LMB / RMB never page the stats card.
+P / F / T are `letter` rows: they bind the logical keycode (the key's printed label), so they stay on P / F / T on AZERTY, QWERTZ and Dvorak. When a letter's label sits on a key a play bind already holds by position (Colemak prints F on QWERTY E, Interact), `letter_fit.gd` moves only that letter to the first free near key (G H V C B R Z N; Colemak Food goes to G); the save still records the letter. Desktop reads the layout from the OS; web (no layout query) learns it from the first clashing press, which is released so it fires only the position action. Check: camp-controls `colemak` + planted `colemak_plant`. Position keys (WASD, E, Space, I, M) bind `physical_keycode`. Gamepad defaults: input.platforms_gamepad. Gear stats paging is the fixed menu pair `page_prev` / `page_next` (Q / E, LT / RT), not a world bind. LMB / RMB never page the stats card.
 
 Y is `gear_tip` in the live map. The Animation Browser reuses that action for review-state cycle while the viewer is open.
 X is `gear_drop` in the live map. The Animation Browser reuses that action for play/pause while the viewer is open.

@@ -1,6 +1,6 @@
 {
   "name": "camp-controls",
-  "about": "Placeholdia: W13 default controls (scripts/input/binds/table.gd LAYOUT 2). debug/controls_check.gd asserts the Xbox layout (X attack, A special, Y interact, B back only, RB dash, LT aim, RT fire, View inventory, Menu pause, D-pad potion/food/map/target lock, R3 look mode), P / F / T bound by key label so a Dvorak or AZERTY key printed P is Potion while WASD stays physical, an untouched layout-1 save moving to the new layout, a layout-1 save with a keyboard or pad rebind keeping that pool (and Bow aim / fire not doubling a kept input), a layout-2 round trip, and three planted faults (Potion on physical P, B left on Dash, a layout-1 save loaded unmigrated) caught. Then the Gameplay page with Bow mode and the Controls page keyboard and gamepad pools.",
+  "about": "Placeholdia: W13 default controls (scripts/input/binds/table.gd LAYOUT 2). debug/controls_check.gd asserts the Xbox layout (X attack, A special, Y interact, B back only, RB dash, LT aim, RT fire, View inventory, Menu pause, D-pad potion/food/map/target lock, R3 look mode), P / F / T bound by key label so a Dvorak or AZERTY key printed P is Potion while WASD stays physical, an untouched layout-1 save moving to the new layout, a layout-1 save with a keyboard or pad rebind keeping that pool (and Bow aim / fire not doubling a kept input), a layout-2 round trip, and three planted faults (Potion on physical P, B left on Dash, a layout-1 save loaded unmigrated) caught; Colemak (F printed on Interact's E) moves only Food, to G, learned from a press, kept as the letter in saves, with the unfitted clash caught (letter_fit.gd). Then the Gameplay page with Bow mode and the Controls page keyboard and gamepad pools.",
   "scene": "camp",
   "hud": 0,
   "settle_ms": 1500,
@@ -15,6 +15,8 @@
     {"op": "assert", "target": "script:debug/controls_check.migrate_pad_custom", "equals": ""},
     {"op": "assert", "target": "script:debug/controls_check.roundtrip", "equals": ""},
     {"op": "assert", "target": "script:debug/controls_check.plant_caught", "equals": ""},
+    {"op": "assert", "target": "script:debug/controls_check.colemak", "equals": ""},
+    {"op": "assert", "target": "script:debug/controls_check.colemak_plant", "equals": "caught"},
     {"op": "assert", "target": "script:debug/controls_check.reset", "equals": "ok"},
     {"op": "device", "kind": "kb"},
     {"op": "call", "target": "App.pause_menu", "method": "show_menu"},

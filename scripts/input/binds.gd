@@ -4,6 +4,7 @@ const Pool := preload("res://scripts/input/binds/binds_pool.gd")
 const Defaults := preload("res://scripts/input/binds/defaults.gd")
 const Table := preload("res://scripts/input/binds/table.gd")
 const Migrate := preload("res://scripts/input/binds/migrate.gd")
+const LetterFit := preload("res://scripts/input/binds/letter_fit.gd")
 const REFUSED := Pool.REFUSED
 const BOUND := Pool.BOUND
 const SWAPPED := Pool.SWAPPED
@@ -23,7 +24,10 @@ static func collect() -> Array:
 				var k: InputEventKey = e as InputEventKey
 				row["type"] = "key"
 				row["code"] = k.physical_keycode if k.physical_keycode != 0 else k.keycode
-				if k.physical_keycode == 0:
+				var fit: Array = LetterFit.fitted.get(a, [])
+				if not fit.is_empty() and int(k.physical_keycode) == int(fit[1]):
+					row["code"] = int(fit[0])  # a fitted letter default saves as its letter (refits on load)
+				if k.physical_keycode == 0 or not fit.is_empty() and int(k.physical_keycode) == int(fit[1]):
 					row["letter"] = true
 				row["pool"] = "kb"
 			elif e is InputEventJoypadButton:
@@ -64,6 +68,8 @@ static func apply(rows: Array) -> void:
 		var ev: InputEvent = bind_event(row)
 		if ev:
 			InputMap.action_add_event(a, ev)
+	LetterFit.fitted.clear()
+	LetterFit.fit()
 
 static func bind_event(row: Dictionary) -> InputEvent:
 	var t: String = str(row.get("type", ""))

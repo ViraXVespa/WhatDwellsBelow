@@ -8,11 +8,15 @@ extends RefCounted
 ## loads as the new layout. .migrate_kb_custom / .migrate_pad_custom: a layout-1 save with a rebind keeps that pool
 ## as saved (the other pool moves) and the new Bow aim / fire do not take an input the kept pool uses.
 ## .roundtrip: a layout-2 save keeps its rebinds and letter binds. .plant_caught: physical P for Potion, B left
-## on Dash, and a layout-1 save loaded without migration must each be caught.
+## on Dash, and a layout-1 save loaded without migration must each be caught. .colemak: letter_fit.gd plans no move
+## for QWERTY / AZERTY / QWERTZ / Dvorak and moves only Food on Colemak (F printed on Interact's E) to G; a Colemak
+## press of that key teaches the layout, then it fires Interact alone, physical G fires Food, and a save keeps Food
+## as its letter and refits on load. .colemak_plant: the unfitted Colemak defaults (E fires both) must be caught.
 
 const Binds := preload("res://scripts/input/binds.gd")
 const Table := preload("res://scripts/input/binds/table.gd")
 const Migrate := preload("res://scripts/input/binds/migrate.gd")
+const LetterFit := preload("res://scripts/input/binds/letter_fit.gd")
 
 const PAD := {JOY_BUTTON_X: "attack", JOY_BUTTON_A: "special", JOY_BUTTON_Y: "interact", JOY_BUTTON_B: "ui_cancel",
 	JOY_BUTTON_RIGHT_SHOULDER: "dash", JOY_BUTTON_BACK: "inventory", JOY_BUTTON_START: "pause",
@@ -108,6 +112,43 @@ var plant_caught: String:
 		if a == "" or b == "" or c == "":
 			return "plant missed: physical P '%s' B on dash '%s' unmigrated '%s'" % [a, b, c]
 		return ""
+
+var colemak: String:
+	get:
+		LetterFit.learned.clear()
+		for lay: Array in [["qwerty/azerty/qwertz", {}], ["dvorak", {KEY_P: KEY_R, KEY_F: KEY_Y, KEY_T: KEY_K}]]:
+			if not LetterFit.plan(lay[1]).is_empty():
+				return "%s: letters moved %s" % [lay[0], LetterFit.plan(lay[1])]
+		var cole: Dictionary = {KEY_F: KEY_E, KEY_P: KEY_R, KEY_T: KEY_F}
+		if LetterFit.plan(cole) != {"food": KEY_G}:
+			return "colemak plan %s, want food on G" % LetterFit.plan(cole)
+		Binds.reset()
+		LetterFit.learn(_key(KEY_F, KEY_E))
+		var bad := colemak_fault()
+		if bad == "":
+			Binds.apply(Binds.collect())
+			bad = colemak_fault()
+			for r: Dictionary in Binds.collect():
+				if str(r.get("action")) == "food" and str(r.get("type")) == "key" and not (bool(r.get("letter", false)) and int(r.code) == KEY_F):
+					bad = "food saved as %s, want its letter F" % r
+		LetterFit.learned.clear()
+		Binds.reset()
+		return bad
+var colemak_plant: String:
+	get:
+		LetterFit.learned.clear()
+		Binds.reset()
+		return "caught" if colemak_fault() != "" else "missed: unfitted Colemak defaults passed"
+
+## Colemak keys: printed F on QWERTY E fires Interact only; QWERTY G (printed D) fires Food; P / T labels still work.
+static func colemak_fault() -> String:
+	if _world_of(_key(KEY_F, KEY_E)) != "interact":
+		return "colemak E (prints F) fires [%s], want interact only" % _world_of(_key(KEY_F, KEY_E))
+	if _world_of(_key(KEY_D, KEY_G)) != "food":
+		return "colemak G (prints D) fires [%s], want food" % _world_of(_key(KEY_D, KEY_G))
+	if _world_of(_key(KEY_P, KEY_R)) != "potion" or _world_of(_key(KEY_T, KEY_F)) != "target_lock":
+		return "colemak P / T labels lost"
+	return ""
 
 ## A layout-1 save: every table row at its layout-1 defaults; over = {"action|pool": [events]} replaces one.
 static func legacy_rows(over: Dictionary) -> Array:
