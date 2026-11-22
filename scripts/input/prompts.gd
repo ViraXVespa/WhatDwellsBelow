@@ -172,7 +172,7 @@ static func label_for_event(e: InputEvent) -> String:
 		return "["
 	if id == "rbracket":
 		return "]"
-	return id.to_upper() if id.length() <= 2 else id.capitalize()
+	return id.to_upper() if id.length() == 1 or (id.length() == 2 and id[1].is_valid_int()) else id.capitalize()
 
 ## Name of the current scheme's bind for an action (follows rebinding); the action id when unbound.
 static func label(action: String) -> String:
