@@ -30,12 +30,12 @@ const GLSL := """
 uniform int hull_n = 0;
 uniform sampler2D hull_mask : filter_nearest, repeat_disable;
 uniform ivec2 hull_o = ivec2(0);
+uniform ivec2 hull_ts = ivec2(0); // mask size (bind)
 float hub_sun(vec2 q, float ll) {
 	if (hull_n <= 0) { return -1.0; }
 	ivec2 c = ivec2(floor(q * 82.5806)) - hull_o;
-	ivec2 ts = textureSize(hull_mask, 0);
 	float hd = -1.0;
-	if (c.x >= 0 && c.y >= 0 && c.x < ts.x && c.y < ts.y) {
+	if (c.x >= 0 && c.y >= 0 && c.x < hull_ts.x && c.y < hull_ts.y) {
 		float mark = texelFetch(hull_mask, c, 0).r;
 		hd = mark > 0.75 ? 1.0 : (mark > 0.25 ? -0.05 : -1.0);
 	}
@@ -118,6 +118,7 @@ static func bind(m: ShaderMaterial) -> bool:
 	m.set_shader_parameter("hull_o", Vector2i(_ox, _oz))
 	if _mask != null:
 		m.set_shader_parameter("hull_mask", _mask)
+		m.set_shader_parameter("hull_ts", _mask.get_size())
 	return true
 
 

@@ -61,3 +61,10 @@ Debug export, `?wdbskip=` A/B of each hub warmup (temporary build, not in the tr
 | hub settle with a flat plateau | settle 0.55 / 0.98 s | first 30 frames max 151 / 175 ms vs 145 / 149 with the 24-frame settle; first frame the same |
 
 Settle frame times on this box: 258 or 178 ms, then flat ~150 ms to the cap (each iteration is a forced draw plus a frame). Kept: warm_frame and `UiWarm.finish` (the cold costs land in play). Changed: the hub settle reveals on a flat plateau after `WARM_HUB_PLATEAU_MIN` frames (debug check: settle 2.2 s, first frame 153 ms). Next: the player texture warm (~0.9 s) needs a walk-and-attack A/B before it moves; ground `hub_sun` textureSize to a uniform (~13 ms) and feather `vnoise` (~12 ms); Pages compression for the 38.6 MB wasm and 30.6 MB pck.
+
+## Part 3: ground hull mask and feather band (2026-11-22, w13, `f1b88f68`)
+
+`hub_sun` reads the hull mask size from the `hull_ts` uniform (set in `Hulls.bind`) instead of `textureSize` per pixel. The ground feather computes its two `vnoise` wobble terms only inside the band `0 < d < feather + 0.37` (the wobble is 0 to 0.37 m, so `k` is the same everywhere) and skips the `under_tex` read when `k` is 1. Same image: ground pixels unchanged in the wide camp shot; camp-prop-shadows diffs are the lantern flicker (the same boxes and size between two after runs).
+
+- Debug export, camp spawn, median of 20 frames, 6 blocks per run, interleaved: before 86.9 / 88.1 / 84.8 ms, after 83.9 / 83.0 ms (third after run disturbed, 93 to 131 ms). About -3 ms (-3.5%), not the ~25 ms the remove-the-term split suggested; the mask fetch, not its size query, is the cost.
+- Release `--release-ref`, interleaved, 2 runs each: camp-idle 11.9 / 11.6 -> 12.0 / 10.9 fps, camp-walk 15.4 / 15.3 -> 15.4 / 8.5 (second after run under box load 7). No change beyond noise.

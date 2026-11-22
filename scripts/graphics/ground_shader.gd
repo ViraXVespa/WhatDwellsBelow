@@ -79,8 +79,9 @@ void fragment() {
 		if (feather_rect2.z > feather_rect2.x) {
 			d = max(d, min(min(q.x - feather_rect2.x, feather_rect2.z - q.x), min(q.y - feather_rect2.y, feather_rect2.w - q.y)));
 		}
-		float k = smoothstep(0.0, feather, d - 0.25 * vnoise(q * 0.5) - 0.12 * vnoise(q * 1.7 + 9.0));
-		c = mix(texture(under_tex, xz * under_uv).rgb, c, k);
+		// The wobble is 0..0.37 m, so the noise only matters inside the band 0 < d < feather + 0.37 (same k elsewhere).
+		float k = d <= 0.0 ? 0.0 : (d >= feather + 0.37 ? 1.0 : smoothstep(0.0, feather, d - 0.25 * vnoise(q * 0.5) - 0.12 * vnoise(q * 1.7 + 9.0)));
+		if (k < 1.0) { c = mix(texture(under_tex, xz * under_uv).rgb, c, k); }
 	}
 	float worn = 1.0 - clamp(wear, 0.0, 1.0) * WEAR_DEPTH * texture(wear_tex, xz * wear_uv).r;
 	// Baked light per cell of the 1/82.6 m (player texel) (Chunky.GRID_M) ground grid (Chunky.GRID_M): the box average over the cell (2x2 bilinear
