@@ -45,3 +45,19 @@ Box: Xeon x8, Chrome 156 headless, SwiftShader, 1280x720, debug export, camp idl
 - Ground shader split (shader edits removed one term at a time): lantern `pool_light` loop ~60 ms, `hub_sun` ~13, feather `vnoise` ~12, wear/light/albedo taps a few ms each.
 - `pools.gd` coverage mask (pool_light returns 0 off the range circles before its loop): 118 -> ~87 ms at spawn (4 runs each). Same light (hub_pool_check `mask`: every lit point is on the mask). Hub settle LOADSTEPS 5.8 s -> 3.8 s from the cheaper frames.
 - 3D scale on headless web: 0.9 / 0.8 / 0.6 = -10% / -30% / -52%. Not used: the scaled blit measured on a real GPU (perf-sweep task log) costs more than it saves, so web Auto stays at 1.0. Headless numbers are not the FPS reading.
+
+## Part 1 release check and hub warmups (2026-11-22, w13, `32bcb8e3`)
+
+Release `--release-ref`, interleaved, 2 runs each (before = `a6e7c1bb` export, after = `32bcb8e3`): camp-idle 7.7 / 8.6 -> 11.0 / 12.4 fps, camp-walk 10.2 / 11.0 -> 15.2 / 15.6. The flow's `camp_load_ms` 32.1 s (its settle never met) -> 6.5 to 9.6 s.
+
+Debug export, `?wdbskip=` A/B of each hub warmup (temporary build, not in the tree), frame times from `window.wdbEval`, 2 runs each:
+
+| Variant | Loader step | After the reveal |
+| --- | --- | --- |
+| all warmups | warm_frame 1.45 s, warm_ui 2.25 to 2.45 s, settle 3.5 to 3.9 s | first frame 95 to 160 ms, then ~80 ms steady |
+| no warm_frame (`Warm.frame`) | warm_frame 0.08 s | first full-yard view 1236 / 1351 ms, then 455 / 553 ms (warm: ~80) |
+| no `UiWarm.finish` | warm_ui 1.6 s | `ensure_ui` 105 ms; first open pause 62, inventory 68, anvil 32 ms (warm 17 to 43, 10); budget 16 ms |
+| no player texture / lazy-script warm | warm_ui 1.5 s | no extra spike at idle, first move or attack (1 run) |
+| hub settle with a flat plateau | settle 0.55 / 0.98 s | first 30 frames max 151 / 175 ms vs 145 / 149 with the 24-frame settle; first frame the same |
+
+Settle frame times on this box: 258 or 178 ms, then flat ~150 ms to the cap (each iteration is a forced draw plus a frame). Kept: warm_frame and `UiWarm.finish` (the cold costs land in play). Changed: the hub settle reveals on a flat plateau after `WARM_HUB_PLATEAU_MIN` frames (debug check: settle 2.2 s, first frame 153 ms). Next: the player texture warm (~0.9 s) needs a walk-and-attack A/B before it moves; ground `hub_sun` textureSize to a uniform (~13 ms) and feather `vnoise` (~12 ms); Pages compression for the 38.6 MB wasm and 30.6 MB pck.
