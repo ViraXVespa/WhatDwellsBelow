@@ -1,6 +1,7 @@
 extends Object
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 
 static var _combat_s: GDScript
 
@@ -57,15 +58,17 @@ static func lock_and_aim(host: Node, move: Vector2, delta: float) -> void:
 	if not bool(host.get_meta("lock_pref_applied", false)):
 		apply_pref(host)
 		host.set_meta("lock_pref_applied", true)
-	if Touch.active():
-		host.lock_armed = true
-	elif Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):
+	if Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):
 		if host.lock_armed:
 			host.lock_armed = false
 			host.lock_target = null
 		else:
 			host.lock_armed = true
 			acquire_lock(host)
+	if BowMode.aiming():
+		BowMode.steer(host, ai_or_vec(host, "aim"), Vector2.ZERO if App.using_pad() else mouse_aim_dir(host))
+		host.stick_hold = 0.0
+		return
 	if host.lock_armed:
 		if not valid_lock(host, host.lock_target):
 			acquire_lock(host)

@@ -1,6 +1,6 @@
 {
   "name": "camp-controls",
-  "about": "Placeholdia: W13 default controls (scripts/input/binds/table.gd LAYOUT 2). debug/controls_check.gd asserts the Xbox layout (X attack, A special, Y interact, B back only, RB dash, LT aim, RT fire, View inventory, Menu pause, D-pad potion/food/map/target lock, R3 look mode), P / F / T bound by key label so a Dvorak or AZERTY key printed P is Potion while WASD stays physical, an untouched layout-1 save moving to the new layout, a layout-1 save with a keyboard or pad rebind keeping that pool (and Bow aim / fire not doubling a kept input), a layout-2 round trip, and three planted faults (Potion on physical P, B left on Dash, a layout-1 save loaded unmigrated) caught. Then the Controls page keyboard and gamepad pools.",
+  "about": "Placeholdia: W13 default controls (scripts/input/binds/table.gd LAYOUT 2). debug/controls_check.gd asserts the Xbox layout (X attack, A special, Y interact, B back only, RB dash, LT aim, RT fire, View inventory, Menu pause, D-pad potion/food/map/target lock, R3 look mode), P / F / T bound by key label so a Dvorak or AZERTY key printed P is Potion while WASD stays physical, an untouched layout-1 save moving to the new layout, a layout-1 save with a keyboard or pad rebind keeping that pool (and Bow aim / fire not doubling a kept input), a layout-2 round trip, and three planted faults (Potion on physical P, B left on Dash, a layout-1 save loaded unmigrated) caught. Then the Gameplay page with Bow mode and the Controls page keyboard and gamepad pools.",
   "scene": "camp",
   "hud": 0,
   "settle_ms": 1500,
@@ -19,6 +19,8 @@
     {"op": "device", "kind": "kb"},
     {"op": "call", "target": "App.pause_menu", "method": "show_menu"},
     {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "settings-gameplay-bow", "texts": true},
+    {"op": "assert_texts", "min_font": 14, "must_contain": ["Bow mode", "Off: the longbow fires on LMB"]},
     {"op": "press", "pad": "DOWN", "times": 4},
     {"op": "device", "kind": "kb"},
     {"op": "wait", "ms": 300},

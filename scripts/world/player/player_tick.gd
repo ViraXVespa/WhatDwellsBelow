@@ -4,6 +4,7 @@ extends Object
 
 const Ground := preload("res://scripts/world/player/ground.gd")
 const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 
 static var _gd_at: Dictionary = {}
 
@@ -63,7 +64,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 	var spd: float = App.bal.move_speed * (1.0 + _move_gear())
 	if App.adrenaline:
 		spd *= App.bal.adrenaline_speed
-	if host.atk_state == host.ATK_BASIC:
+	if host.atk_state == host.ATK_BASIC or BowMode.aiming():
 		spd *= App.bal.attack_move_mult
 	if host.atk_state == host.ATK_WIND or host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_REC:
 		spd *= 0.2

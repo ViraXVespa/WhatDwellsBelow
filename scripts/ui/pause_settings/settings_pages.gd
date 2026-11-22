@@ -4,80 +4,9 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const MenuUtil := preload("res://scripts/ui/pause_menu/menu_util.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
-const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
-const ItemNames := preload("res://scripts/data/item_names.gd")
-
-static func page_gameplay(host: Node) -> void:
-	var ch: Button = ThemeS.btn(App.tr("settings_pages.character") % App.character_type, func() -> void:
-		var nxt: String = "female" if App.character_type == "male" else "male"
-		if App.has_method("set_character"):
-			App.set_character(nxt)
-		else:
-			App.character_type = nxt
-		App.save_now()
-		host.split_build_page("gameplay")
-		View.apply_col(host)
-		View.focus_col(host)
-	)
-	View.add_page_btn(host, ch)
-	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.language").format({"name": LocS.name_of(LocS.current)}), func() -> void:
-		LocS.set_locale(LocS.next_locale())
-		ItemNames.refresh(App.prog)
-		App.save_now()
-		host.split_build_page("gameplay")
-		View.apply_col(host)
-		View.focus_col(host)
-	))
-	var lock_on: bool = bool(App.get("target_lock_pref"))
-	var lock: CheckBox = _check(App.tr("settings_pages.target_lock"), lock_on, func(on: bool) -> void:
-		App.target_lock_pref = on
-		if App.has_method("save_now"):
-			App.save_now()
-	)
-	_add_check_centered(host, lock)
-	var salvage_on: bool = bool(App.get("salvage_dupes"))
-	var salvage: CheckBox = _check(App.tr("common.salvage_spare_gear"), salvage_on, func(on: bool) -> void:
-		App.salvage_dupes = on
-		if App.has_method("save_now"):
-			App.save_now()
-		host.split_build_page("gameplay")
-		View.apply_col(host)
-		_focus_named(host, App.tr("common.salvage_spare_gear"))
-	)
-	_add_check_centered(host, salvage)
-	if salvage_on:
-		var hint: Label = ThemeS.lab(App.tr("settings_pages.break_down_mailed_copies_you"), 16, Color(0.82, 0.76, 0.66))
-		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		host.info_box.add_child(hint)
-		var keep: Label = ThemeS.lab(App.tr("settings_pages.keep_a_copy_when"), 20, ThemeS.INK)
-		keep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		keep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		host.info_box.add_child(keep)
-		var finish_v: float = clampf(float(App.get("salvage_finish")), 0.5, 1.0)
-		_slider(host, App.tr("settings_pages.finish") % finish_v, finish_v, 0.5, 1.0, 0.05, func(v: float) -> void:
-			App.salvage_finish = v
-			if App.has_method("save_now"):
-				App.save_now()
-		)
-		var fortune_v: float = clampf(float(App.get("salvage_fortune")), 0.75, 1.25)
-		_slider(host, App.tr("settings_pages.fortune") % fortune_v, fortune_v, 0.75, 1.25, 0.05, func(v: float) -> void:
-			App.salvage_fortune = v
-			if App.has_method("save_now"):
-				App.save_now()
-		)
-	var wipe: Button = ThemeS.btn(App.tr("common.delete_save_data"), func() -> void:
-		Confirm.open(host.pause, App.tr("common.delete_save_data"), App.tr("settings_pages.wipe_all_save_data_and"), func() -> void:
-			App.wipe_save()
-			host.pause.close_ui()
-			App.go_title()
-		, Callable(), "danger")
-	, true, "danger")
-	View.add_page_btn(host, wipe)
 
 static func page_audio(host: Node) -> void:
 	_slider(host, App.tr("settings_pages.master_volume"), float(App.vol_master), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("master", v))

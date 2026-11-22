@@ -8,6 +8,7 @@ const BindsPage := preload("res://scripts/ui/binds_page.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const PageUi := preload("res://scripts/ui/pause_settings/page_ui.gd")
+const PageGameplay := preload("res://scripts/ui/pause_settings/page_gameplay.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
@@ -134,7 +135,7 @@ func split_build_page(id: String) -> void:
 	View.clear_page(self)
 	match id:
 		"gameplay":
-			Pages.page_gameplay(self)
+			PageGameplay.page_gameplay(self)
 		"audio":
 			Pages.page_audio(self)
 		"graphics":

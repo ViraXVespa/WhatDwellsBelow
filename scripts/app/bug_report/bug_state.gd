@@ -3,6 +3,7 @@ extends Object
 ## The game's own state report for Report Bug: only the relay's STATE_KEYS (tools/relay/src/report.js), no logs,
 ## no names, paths or other user data. Version is the label plus the week-open commit from version.json.
 
+const BowMode := preload("res://scripts/world/player/bow_mode.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const KEYS: Array = ["version", "platform", "build", "scene", "floor", "seed", "pos", "loadout", "recent", "perf",
@@ -27,7 +28,8 @@ static func build() -> Dictionary:
 			"gpu": RenderingServer.get_video_adapter_name(), "window": str(DisplayServer.window_get_size()),
 			"render_scale": App.render_scale},
 		"settings": {"zoom": App.cam_zoom, "hud_scale": App.hud_scale, "sprite_filter": App.sprite_filter,
-			"display": App.display_mode, "locale": LocS.current, "target_lock": App.target_lock_pref},
+			"display": App.display_mode, "locale": LocS.current, "target_lock": App.target_lock_pref,
+			"bow_mode": BowMode.enabled},
 		"run": {"in_dungeon": App.in_dungeon, "boss_dead": App.boss_dead, "deepest": int(prog.get("deepest")) if prog else 0,
 			"kills": int(App.tel.kills) if App.tel else 0},
 		"uptime_s": int(Time.get_ticks_msec() / 1000.0),
