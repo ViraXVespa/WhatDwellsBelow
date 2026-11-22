@@ -289,6 +289,7 @@ doors:
       recap: design/ui-unit-recap.md
       quest_board: design/ui-unit-quest-board.md
       receptionist: design/ui-unit-receptionist.md
+      transitions: design/ui-transitions.md
   debug:
     file: design/debug.md
     read_when: "secret console, playtest, journal, smoke"
@@ -432,6 +433,7 @@ smokes:
   ui.quest_board: "5,6,7"
   ui.receptionist: "6,8"
   ui.style: "7"
+  ui.transitions: "6,7"
   gear_ui: "6,7"
   hub: "8"
   hub.guild: "6,8"
@@ -467,6 +469,7 @@ shot_flows:
   ui.hud: "dungeon-hud-states"
   ui.title_web: "title-menu,splash-credit,fs-gate"
   ui.style: "camp-npc-panels"
+  ui.transitions: "camp-menu-fade,dungeon-map-fade"
   ui.controls: "camp-billboard-controls"
   ui.anvil: "camp-anvil-tabs"
   ui.loadout: "camp-npc-panels"
