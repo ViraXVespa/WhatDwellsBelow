@@ -93,7 +93,8 @@ static func probe(body: Node3D, cam: Camera3D, lay: bool = true) -> Dictionary:
 static func run(plant: String = "") -> String:
 	rows.clear()
 	var tree := Engine.get_main_loop() as SceneTree
-	var cam: Camera3D = tree.root.get_viewport().get_camera_3d()
+	var host: Node = App.Touch.scene_host()
+	var cam: Camera3D = (host.get_viewport() if host else tree.root).get_camera_3d()
 	var pl: Node3D = tree.get_first_node_in_group("player") as Node3D
 	var body: Node3D = stand_in(pl.global_position + Vector3(1.2, 0.0, 0.0), "bat", "down")
 	body.get_node("ActorLit").set("air_force", plant != "glued")
