@@ -25,3 +25,7 @@ A closed menu can be visible for 0.12 s. Code that asks "is this menu up" reads 
 ## Proof
 
 Flow `camp-menu-fade` (smoke) with `scripts/debug/menu_fade_check.gd`: mid fade-in and at-rest focus, a pad press mid-fade, the ghost (game unpaused, no focus, a forced `ui_accept` does not fire), six rapid toggles settle, setting off is instant, and two planted ghost faults (still processing, keeps focus) are caught. Flow `dungeon-map-fade`: the large map mid-fade, at rest, closed. Phase 6 escape sweep: every hub menu closes on every Back input with nothing held.
+
+## Camp HUD bar under menus
+
+The camp `PlayHud` bar hides while any camp menu is open (`App.ui_open`) and comes back when it closes (`scripts/world/camp/camp_hud.gd` `follow_menus`, re-hooked when the hub moves between viewports, as the shot tool's capture mount does), so no panel top sits under it. Proof: flow `camp-menu-fade` (`scripts/debug/layout_check.gd` `hud_clear`, planted `hud_plant`).
