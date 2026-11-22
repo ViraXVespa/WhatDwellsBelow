@@ -57,12 +57,14 @@ func show_browser() -> void:
 	entries = T.archive_catalog()
 	selected = clampi(selected, 0, maxi(0, entries.size() - 1))
 	split_page = str(_cur().get("id", ""))
+	UiSession.MenuFade.fade_in(self)
 	Split.rebuild(self)
 
 func hide_browser() -> void:
 	BtnSkin.follow(self, false)
 	open = false
 	visible = false
+	UiSession.MenuFade.fade_out(self)
 	mode = "info"
 	col = "list"
 	if App.pause_menu == null or not bool(App.pause_menu.get("open")):

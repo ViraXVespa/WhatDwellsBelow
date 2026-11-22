@@ -5,6 +5,7 @@ const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Journal := preload("res://scripts/ui/pause_menu/journal_page.gd")
+const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 const NODE_NAME := "confirm_dlg"
 
@@ -48,6 +49,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 		root.set_meta("prev_focus", prev)
 	root.set_meta("prev_footer", prev_footer)
 	parent.add_child(root)
+	MenuFade.pop_in(root)
 	Plate.dim(root)
 	var card := Vector2(560, 280)
 	var card_sz := Vector2(800, 360)

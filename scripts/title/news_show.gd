@@ -5,6 +5,7 @@ const Fmt := preload("res://scripts/title/news_fmt.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiBuild := preload("res://scripts/ui/ui_build.gd")
+const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	var Fac = load("res://scripts/title/news.gd")
@@ -14,6 +15,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	host._news_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	host._news_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 	host.add_child(host._news_layer)
+	MenuFade.pop_in(host._news_layer)
 	Plate.dim(host._news_layer)
 	var box := VBoxContainer.new()
 	UiBuild.center(box, 380, -280, 280)

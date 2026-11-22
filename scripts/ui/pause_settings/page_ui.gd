@@ -1,12 +1,13 @@
 extends Object
 
-## Settings > UI page (HUD scale, minimap, map toggle, red border glow). Row helpers live in
+## Settings > UI page (HUD scale, minimap, map toggle, red border glow, menu transitions). Row helpers live in
 ## settings_pages.gd.
 
 const T := preload("res://scripts/data/tunables.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
+const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 static func page_ui(host: Node) -> void:
 	Pages._slider(host, App.tr("settings_pages.hud_scale"), float(App.hud_scale), T.HUD_SCALE_MIN, T.HUD_SCALE_MAX, 0.05, func(v: float) -> void:
@@ -56,6 +57,12 @@ static func page_ui(host: Node) -> void:
 			App.save_now()
 	)
 	Pages._add_check_centered(host, glow_box)
+	var fade_box: CheckBox = Pages._check(App.tr("page_ui.menu_transitions"), MenuFade.enabled, func(on: bool) -> void:
+		MenuFade.enabled = on
+		if App.has_method("save_now"):
+			App.save_now()
+	)
+	Pages._add_check_centered(host, fade_box)
 
 static func _zoom_text(z: float) -> String:
 	var shown: float = T.snap_mini_zoom(z)

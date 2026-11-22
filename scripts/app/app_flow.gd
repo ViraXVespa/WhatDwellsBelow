@@ -85,7 +85,7 @@ static func go_foundation(host: Node) -> void:
 
 static func go_camp(host: Node) -> void:
 	host.in_dungeon = false
-	if host.recap == null or not bool(host.recap.visible):
+	if host.recap == null or not bool(host.recap.get("open")):
 		host.ui_open = false
 	host.interact_prompt = ""
 	host.get_tree().paused = false

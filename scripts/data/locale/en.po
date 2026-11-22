@@ -1334,6 +1334,9 @@ msgstr "Earlier weeks"
 msgid "news_show.what_s_new"
 msgstr "What's new"
 
+msgid "page_ui.menu_transitions"
+msgstr "Menu transitions"
+
 msgid "pages_floors.floor"
 msgstr "Floor %d"
 
