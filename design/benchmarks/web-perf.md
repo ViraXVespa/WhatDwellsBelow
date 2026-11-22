@@ -68,3 +68,14 @@ Settle frame times on this box: 258 or 178 ms, then flat ~150 ms to the cap (eac
 
 - Debug export, camp spawn, median of 20 frames, 6 blocks per run, interleaved: before 86.9 / 88.1 / 84.8 ms, after 83.9 / 83.0 ms (third after run disturbed, 93 to 131 ms). About -3 ms (-3.5%), not the ~25 ms the remove-the-term split suggested; the mask fetch, not its size query, is the cost.
 - Release `--release-ref`, interleaved, 2 runs each: camp-idle 11.9 / 11.6 -> 12.0 / 10.9 fps, camp-walk 15.4 / 15.3 -> 15.4 / 8.5 (second after run under box load 7). No change beyond noise.
+
+Pages delivery (live site, curl with `Accept-Encoding`, 2026-11-22): gzip, no brotli, `max-age=600`. `index.wasm` 39.5 MB -> 10.2 MB gzip; `index.pck` 30.4 MB -> 29.0 MB (-4.5%); `index.js` 280 KB -> 69 KB. The pck is 2476 files, 28.1 MB of them `.ctex` that already hold lossless WebP, so gzip cannot shrink it and no lossless repo-side cut was found (the biggest files are tutorial and journal art, 0.5 to 1.6 MB each; `torch_bracket_bible.png` is used by `torch_bill.gd`). Lossy import of the two photos (`vira_profile.jpg` 1.37 MB and `load_background.jpg` 1.03 MB as ctex) would save ~1 to 1.5 MB but changes pixels, so it is not done.
+
+Player texture / lazy-script warm A/B (debug export, temporary `?wdbskip=player`, not in the tree), 3 interleaved runs each:
+
+| | warm_ui step | first frame after reveal | first move | first special (frames 0-3) |
+| --- | --- | --- | --- | --- |
+| warm kept | 2.24 / 2.31 / 2.26 s | 155 / 154 / 143 ms | 112 / 97 / 105 ms | one ~141-155 ms frame at frame 3 |
+| warm skipped | 0.98 / 1.10 / 1.02 s | 197 / 248 / 228 ms | 107 / 111 / 200 ms | 145+162, 159+160, 145+160 ms at frames 1-2 |
+
+Steady frames ~80 ms either way. Kept: skipping saves ~1.2 s of loader but moves +45 to +105 ms onto the first visible frame and adds a second ~150 ms frame to the first special (run 3 also 200 ms on the first move), over the 50 ms spike rule.
