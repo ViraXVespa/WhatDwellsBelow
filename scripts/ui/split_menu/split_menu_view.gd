@@ -56,6 +56,31 @@ static func tune_host(host: Node) -> void:
 		return
 	tune_scroll(_col_scroll(host, "_list_scroll"))
 	tune_scroll(_col_scroll(host, "_info_scroll"))
+	fit_list(host)
+
+## Every list row stays on screen: when the rows at their usual height (ThemeS.btn, which grows with the text scale
+## on a phone) overrun the list pane, they pack (tighter gap, shorter rows, never under the text plus a margin).
+static func fit_list(host: Node) -> void:
+	var sc: ScrollContainer = _col_scroll(host, "_list_scroll")
+	if sc == null or sc.size.y < 40.0 or host.list_box == null:
+		return
+	var rows: Array[Button] = []
+	for c: Node in host.list_box.get_children():
+		if c is Button and not c.is_queued_for_deletion():
+			rows.append(c as Button)
+	if rows.is_empty():
+		return
+	var n: float = float(rows.size())
+	var natural: float = ThemeS.UiText.min_size(0.0, 44.0).y
+	var sep: int = 10
+	if natural * n + 10.0 * (n - 1.0) > sc.size.y:
+		sep = 4
+	var h: float = minf(natural, floorf((sc.size.y - float(sep) * (n - 1.0)) / n))
+	for b: Button in rows:
+		h = maxf(h, float(b.get_theme_font_size("font_size")) + 12.0)
+	host.list_box.add_theme_constant_override("separation", sep)
+	for b: Button in rows:
+		b.custom_minimum_size.y = h
 
 static func rebuild_list(host: Node) -> void:
 	if not _live(host) or host.list_box == null:

@@ -51,14 +51,21 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	parent.add_child(root)
 	MenuFade.pop_in(root)
 	Plate.dim(root)
+	# The slip is laid out at the 1920x1080 base and centred on wider / taller canvases (a phone); rows taller than the
+	# base (phone text scale) push the hint and the slip's foot down instead of overlapping the buttons.
+	var slip := Control.new()
+	slip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slip.position = ((parent.get_viewport().get_visible_rect().size - Vector2(1920, 1080)) * 0.5).floor()
+	root.add_child(slip)
+	var grow: float = maxf(0.0, ThemeS.UiText.min_size(0.0, 44.0).y - 52.0)
 	var card := Vector2(560, 280)
-	var card_sz := Vector2(800, 360)
+	var card_sz := Vector2(800, 360 + grow)
 	var back: ColorRect = ColorRect.new()
 	back.color = Color(ThemeS.PAPER, 1.0)
 	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	back.position = card
 	back.size = card_sz
-	root.add_child(back)
+	slip.add_child(back)
 	if parent.has_meta("journal_sheet"):
 		var lip_tones: Array[Color] = [
 			Color(0.78, 0.68, 0.52, 1.0),
@@ -72,7 +79,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 			lip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			lip.position = Vector2(card.x + 12.0, card.y + card_sz.y + step)
 			lip.size = Vector2(card_sz.x - 28.0, 4.0)
-			root.add_child(lip)
+			slip.add_child(lip)
 	var paper := TextureRect.new()
 	paper.texture = Journal._tex_at(Journal.PAPER_PATH)
 	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -82,20 +89,20 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	paper.position = card
 	paper.size = card_sz
 	paper.set_meta("paper_tex", true)
-	root.add_child(paper)
-	Plate.edge(root, card, card_sz.x)
-	Plate.edge(root, card + Vector2(0, card_sz.y - 3.0), card_sz.x)
-	Plate.edge(root, card, 3.0, card_sz.y)
-	Plate.edge(root, card + Vector2(card_sz.x - 3.0, 0), 3.0, card_sz.y)
+	slip.add_child(paper)
+	Plate.edge(slip, card, card_sz.x)
+	Plate.edge(slip, card + Vector2(0, card_sz.y - 3.0), card_sz.x)
+	Plate.edge(slip, card, 3.0, card_sz.y)
+	Plate.edge(slip, card + Vector2(card_sz.x - 3.0, 0), 3.0, card_sz.y)
 	var cap: Label = ThemeS.lab(title, 28, ThemeS.INK)
 	cap.position = Vector2(592, 308)
 	cap.size = Vector2(736, 40)
-	root.add_child(cap)
+	slip.add_child(cap)
 	var msg: Label = ThemeS.lab(body, 20, ThemeS.INK_SOFT)
 	msg.position = Vector2(592, 360)
 	msg.size = Vector2(736, 120)
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	root.add_child(msg)
+	slip.add_child(msg)
 	var yes: Button = ThemeS.btn(App.tr("confirm_dlg.confirm"), func() -> void:
 		close(parent)
 		if on_yes.is_valid():
@@ -103,7 +110,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	, true, role)
 	yes.position = Vector2(592, 520)
 	yes.size = Vector2(340, 52)
-	root.add_child(yes)
+	slip.add_child(yes)
 	var no: Button = ThemeS.btn(App.tr("confirm_dlg.cancel"), func() -> void:
 		close(parent)
 		if on_no.is_valid():
@@ -113,16 +120,16 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	no.size = Vector2(340, 52)
 	ThemeS.BtnSkin.watch(root, "panel")
 	no.shortcut = _cancel_shortcut()
-	root.add_child(no)
+	slip.add_child(no)
 	View.wire_vert([yes, no])
 	View.wire_horiz([yes, no])
 	var hint := HBoxContainer.new()
 	hint.name = "confirm_hint"
 	hint.alignment = BoxContainer.ALIGNMENT_END
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hint.position = Vector2(592, 584)
+	hint.position = Vector2(592, 584 + grow)
 	hint.size = Vector2(728, 40)
-	root.add_child(hint)
+	slip.add_child(hint)
 	PromptView.fill(hint, PromptView.merge_parts([]), 16, ThemeS.PROMPT_GOLD)
 	yes.grab_focus()
 	if parent is CanvasLayer:

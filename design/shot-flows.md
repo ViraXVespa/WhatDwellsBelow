@@ -9,7 +9,7 @@ Before guessing a `--state` or `--flow` name, run `python tools/shots.py flow --
 
 ## Flows
 
-A flow is `tools/data/shot-flows/<name>.json` with a setup header and `steps`. The header fills unset CLI defaults for scene, HUD, camera, viewport, seed and timing. `about` describes intent; `covers` names UI states. `covered_by` suppresses a redundant flow when the covering one is selected. `smoke: true` enables headless assertion coverage. Optional `mask` rectangles/tolerance exclude live animation from baseline diffs; `publish` controls staged outputs. Coordinates for masks are at 1920x1080.
+A flow is `tools/data/shot-flows/<name>.json` with a setup header and `steps`. The header fills unset CLI defaults for scene, HUD, camera, viewport (`width`, `height`, and `dpr` for a phone canvas: CSS size x dpr), seed and timing. `about` describes intent; `covers` names UI states. `covered_by` suppresses a redundant flow when the covering one is selected. `smoke: true` enables headless assertion coverage. Optional `mask` rectangles/tolerance exclude live animation from baseline diffs; `publish` controls staged outputs. Coordinates for masks are at 1920x1080.
 
 | Op | Keys | Does |
 |---|---|---|

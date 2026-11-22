@@ -95,6 +95,7 @@ func _store_tip_restore() -> void:
 	Flow._store_tip_restore(self)
 
 func _rebuild() -> void:
+	View.layout(self)
 	Flow._rebuild(self)
 
 func _paint_menu_hint() -> void:

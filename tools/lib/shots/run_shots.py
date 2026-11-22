@@ -41,7 +41,7 @@ WARN_BYTES = 2048
 RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
 SCREENS = ("title", "splash", "fs_gate")
-FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz", "width", "height", "fixed_fps")
+FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "cx", "cz", "width", "height", "fixed_fps", "dpr")
 
 def _load_recipe(root: Path, name: str) -> dict:
     path = root / "tools" / "data" / "shot-recipes.json"

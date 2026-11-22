@@ -28,7 +28,7 @@ static func _name(action: String, pool: String, slot: int) -> String:
 static func _click(ui: Node, idx: int) -> void:
 	var dlg: Node = ui.get_node_or_null(Confirm.NODE_NAME)
 	var n := 0
-	for c: Node in dlg.get_children():
+	for c: Node in dlg.find_children("*", "Button", true, false):
 		if c is Button:
 			if n == idx:
 				(c as Button).pressed.emit()

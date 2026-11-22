@@ -7,6 +7,8 @@ Read when: pause menu layout / tabs / behavior
 
 The open pause is a journal binder (ui-theme). Settings is two sheets: the list is the shorter left sheet, and the open page is the wider right sheet, with leather between them. Inventory is two even sheets. Skills is two sheets with the split right of center, so the list is the wide sheet and the tip is the narrow one. A confirm is a slip on top. No center crease cuts a row. Bookmark tabs, ink, and the prompt footer stay.
 
+Layout (`pause_menu_view.gd` `rect_for` / `layout`): the journal is 1856x1048 at the 1920x1080 base (32, 16), centred in the safe area (`touch_pad.gd` `safe_insets`) on any wider or taller canvas (a landscape phone, 4:3, ultrawide) and shrunk to fit a short or notched one; it re-lays on open and on a canvas resize. Every Settings list row MUST be on screen without scrolling: when the rows at their usual height overrun the list pane (phone text scale), `split_menu_view.fit_list` packs them (gap 4, shorter rows, never under the text plus 12 px). Proof: flow `camp-pause-phone` (2532x1170 at dpr 3) with `scripts/debug/layout_check.gd` (`pause_fit`, `pause_geometry`, planted faults `pause_plant`); `camp-pause-menu` checks the desktop base.
+
 Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
