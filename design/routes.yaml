@@ -467,7 +467,7 @@ shot_flows:
   ui.pause: "camp-pause-pages,camp-pause-phone"
   ui.run_flow: "camp-recap,dungeon-map-crystal,camp-npc-panels,camp-billboard-controls,dungeon-gate-shop"
   ui.gear_entry: "camp-anvil-tabs"
-  ui.hud: "dungeon-hud-states"
+  ui.hud: "dungeon-hud-states,dungeon-map-marks"
   ui.title_web: "title-menu,splash-credit,fs-gate"
   ui.style: "camp-npc-panels"
   ui.transitions: "camp-menu-fade,dungeon-map-fade"
