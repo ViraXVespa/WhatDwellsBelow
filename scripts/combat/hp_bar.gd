@@ -83,8 +83,8 @@ func _ready() -> void:
 	_lv = Label3D.new()
 	_lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_lv.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_lv.font_size = 28
-	_lv.outline_size = 10
+	_lv.font_size = 34
+	_lv.outline_size = 12
 	_lv.outline_modulate = Color(0, 0, 0)
 	_lv.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_lv.no_depth_test = true
