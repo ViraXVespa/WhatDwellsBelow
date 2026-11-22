@@ -44,4 +44,4 @@ Box: Xeon x8, Chrome 156 headless, SwiftShader, 1280x720, debug export, camp idl
 - Camp frame ~118 ms. Script processing is not the cost (disabling every processing node's `process_mode` moves it < 5 ms). Hiding the camp `Generated` ground planes drops it to 13.5 ms; the main yard plane alone is ~65 ms.
 - Ground shader split (shader edits removed one term at a time): lantern `pool_light` loop ~60 ms, `hub_sun` ~13, feather `vnoise` ~12, wear/light/albedo taps a few ms each.
 - `pools.gd` coverage mask (pool_light returns 0 off the range circles before its loop): 118 -> ~87 ms at spawn (4 runs each). Same light (hub_pool_check `mask`: every lit point is on the mask). Hub settle LOADSTEPS 5.8 s -> 3.8 s from the cheaper frames.
-- 3D scale on headless web: 0.9 / 0.8 / 0.6 = -10% / -30% / -52%. Not used: real-GPU web blit cost (design/tasks/perf-sweep.md) keeps web Auto at 1.0. Headless numbers are not the FPS reading.
+- 3D scale on headless web: 0.9 / 0.8 / 0.6 = -10% / -30% / -52%. Not used: the scaled blit measured on a real GPU (perf-sweep task log) costs more than it saves, so web Auto stays at 1.0. Headless numbers are not the FPS reading.
