@@ -3,6 +3,33 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.13.1",
+			"points": [
+				{
+					"text": "Added a mobile-first LAN UI for the comfy-character workflow."
+				},
+				{
+					"text": "UI is written for a non-technical user, starts automatically on port 8189, proxies ComfyUI, uses node 5/6 for positive/negative prompts, appends generated images, shows the prompt on the review screen with copy, disables Generate when empty, auto-scrolls to new images, supports clear marks (with confirm) and undo, includes a hideable session summary flyout, offers a best-effort Comfy start button, tappable status pill, soft haptic feedback, remembers More options state, clears the prompt on new session, persists form state, streams progress with a process-killing cancel, and writes the existing Good/Bad and Approve/Deny files."
+				},
+				{
+					"text": "Fixed mobile UI workflow path to tools/data/comfy-character-workflow.json."
+				},
+				{
+					"text": "Mobile UI now shows the real Comfy error when a prompt fails to queue."
+				},
+				{
+					"text": "Mobile UI proxy now returns the real Comfy error body; failures are written to the Details log."
+				},
+				{
+					"text": "Mobile UI shows a friendly status message again; real Comfy errors stay in the Details log. Clearer hint when the workflow file is missing or not API format."
+				},
+				{
+					"text": "Mobile UI converts the UI-format character workflow to API format on the fly; original file is unchanged."
+				}
+			],
+			"summary": "On-the-fly workflow conversion for mobile UI."
+		},
+		{
 			"label": "0.13.0",
 			"points": [
 				{
