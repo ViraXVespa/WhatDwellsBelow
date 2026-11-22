@@ -21,7 +21,7 @@ var plant_pools: String:
 		return "caught" if r != "" else "missed"
 
 static func _run(plant: bool) -> Array:
-	var root: Node = (Engine.get_main_loop() as SceneTree).current_scene
+	var root: Node = App.Touch.scene_host()
 	Pools.plant_flip = plant
 	LampPools.apply(root, [])
 	Pools.plant_flip = false

@@ -31,10 +31,9 @@ static func flyers() -> Array[String]:
 	return out
 
 static func stand_in(at: Vector3, kind: String, face: String) -> Node3D:
-	var tree := Engine.get_main_loop() as SceneTree
 	var body := Node3D.new()
 	body.name = "FlyStandIn"
-	tree.current_scene.add_child(body)
+	App.Touch.scene_host().add_child(body)
 	body.global_position = at
 	var spr: Sprite3D = BillSpr.bare(1)
 	body.add_child(spr)
@@ -178,5 +177,6 @@ static func stage() -> String:
 	for k in ks.size():
 		for a in ALTS.size():
 			stand_in(pl.global_position + Vector3([-2.2, -1.0, 1.2][a], 0.0, float(k) * 1.3 - 1.6), ks[k], FACES[(k * 3 + a) % 8])
-			_face(tree.current_scene.get_child(tree.current_scene.get_child_count() - 1), ks[k], FACES[(k * 3 + a) % 8], ALTS[a])
+			var host: Node = App.Touch.scene_host()
+			_face(host.get_child(host.get_child_count() - 1), ks[k], FACES[(k * 3 + a) % 8], ALTS[a])
 	return ""

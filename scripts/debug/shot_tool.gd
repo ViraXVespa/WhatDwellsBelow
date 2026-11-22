@@ -101,7 +101,10 @@ static func mount_capture(host: Node) -> void:
 		win.add_child(snap)
 	win.remove_child(host)
 	snap.add_child(host)
-	tree.current_scene = host
+	# Godot rejects current_scene unless the node is a direct child of root (scene_tree.cpp
+	# set_current_scene). Stash the host so Touch.scene_host() (and game code that uses it) can
+	# still find the captured scene.
+	win.set_meta("wdb_shot_host", host)
 	_route_app_layers(win, snap)
 	snap.size = shot + Vector2i(0, 1)
 	snap.size = shot

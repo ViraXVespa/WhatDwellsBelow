@@ -30,12 +30,12 @@ static func open(from: Node) -> void:
 	if old:
 		old.queue_free()
 	var ui := new()
-	from.get_tree().current_scene.add_child(ui)
+	App.Touch.scene_host().add_child(ui)
 	ui.begin(from)
 
 func begin(from: Node) -> void:
 	spot = from
-	host = from.get_tree().current_scene
+	host = App.Touch.scene_host()
 	add_to_group("crystal_ui")
 	set_meta("btn_skin", "crystal")
 	layer = 46

@@ -115,7 +115,7 @@ static func activate(spot: Node) -> void:
 	var tree := _tree(spot)
 	if tree == null:
 		return
-	var scene: Node = tree.current_scene
+	var scene: Node = App.Touch.scene_host()
 	if scene:
 		var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
 		Geo.refresh_marks(scene)

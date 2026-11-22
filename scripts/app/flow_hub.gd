@@ -22,7 +22,7 @@ static func _warmup_hub(host: Node) -> void:
 			host.loader.set_solid(true)
 		host.loader.stage(LoadW.at(&"warm_frame"), LoadW.after(&"warm_frame"))
 	await host.get_tree().process_frame  # draw the milestone before the blocking warm-up frame
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	# Everything the first seconds in camp would add (dummy, aim line, telegraph) is built and drawn here, under the loader.
 	if scene and scene.has_method("ensure_dummy"):
 		scene.ensure_dummy()

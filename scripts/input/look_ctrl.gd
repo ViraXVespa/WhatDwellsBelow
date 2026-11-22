@@ -129,13 +129,10 @@ static func _pad_id() -> int:
 	return pads[0] if not pads.is_empty() else -1
 
 static func _dungeon() -> Node:
-	var loop := Engine.get_main_loop()
-	if loop == null:
+	var scene: Node = App.Touch.scene_host()
+	if scene == null:
 		return null
-	var tree := loop as SceneTree
-	if tree == null or tree.current_scene == null:
-		return null
-	var path := str(tree.current_scene.scene_file_path)
+	var path := str(scene.scene_file_path)
 	if path.ends_with("dungeon.tscn"):
-		return tree.current_scene
+		return scene
 	return null

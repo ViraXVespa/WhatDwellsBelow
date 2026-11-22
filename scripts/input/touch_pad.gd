@@ -69,14 +69,24 @@ static func _scene_path() -> String:
 	var n := scene_host()
 	return str(n.scene_file_path) if n else ""
 
-## The play scene: current_scene, else the player's camp / dungeon ancestor (the shot tool reparents the scene
-## into a capture SubViewport, where current_scene stays null).
+## The play scene: current_scene when it is set, else the shot-tool capture host, else the player's
+## camp / dungeon ancestor. The shot tool reparents the scene into a SubViewport; Godot only accepts a
+## direct child of root as current_scene, so that property stays null for the rest of the capture.
 static func scene_host() -> Node:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return null
 	if tree.current_scene:
 		return tree.current_scene
+	var win := tree.root
+	if win:
+		if win.has_meta("wdb_shot_host"):
+			var h: Node = win.get_meta("wdb_shot_host") as Node
+			if is_instance_valid(h):
+				return h
+		var snap: Node = win.find_child("ShotCapture", true, false)
+		if snap and snap.get_child_count() > 0:
+			return snap.get_child(0)
 	var n: Node = tree.get_first_node_in_group("player")
 	while n:
 		var path := str(n.scene_file_path)

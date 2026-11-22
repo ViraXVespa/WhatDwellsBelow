@@ -204,7 +204,7 @@ func _pump_enter_async() -> void:
 		return
 	set("_enter_pumped", true)
 	await AppFlow.pump_fps(self, false)
-	var scene: Node = get_tree().current_scene
+	var scene: Node = Touch.scene_host()
 	if scene != null and scene.get("data") != null:
 		(load("res://scripts/graphics/light_rt.gd") as GDScript).finish_plan(scene)
 		await get_tree().process_frame

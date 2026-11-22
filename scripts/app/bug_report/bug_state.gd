@@ -11,7 +11,7 @@ const KEYS: Array = ["version", "platform", "build", "scene", "floor", "seed", "
 
 static func build() -> Dictionary:
 	var tree: SceneTree = App.get_tree()
-	var scn: Node = tree.current_scene if tree else null
+	var scn: Node = App.Touch.scene_host() if tree else null
 	var pl: Node3D = tree.get_first_node_in_group("player") as Node3D if tree else null
 	var prog: Object = App.prog
 	return {
@@ -65,7 +65,8 @@ static func where() -> String:
 	if App.in_dungeon:
 		return "dungeon"
 	var tree: SceneTree = App.get_tree()
-	var path: String = str(tree.current_scene.scene_file_path) if tree and tree.current_scene else ""
+	var scn: Node = App.Touch.scene_host() if tree else null
+	var path: String = str(scn.scene_file_path) if scn else ""
 	if path.find("title") >= 0:
 		return "ui.title_web"
 	return "hub" if path.find("camp") >= 0 else "triage"

@@ -23,7 +23,7 @@ func pitch(deg: float) -> void:
 
 ## The whole hub yard in frame from above (size 0 = the camp warm-up framing x `scale`).
 func hub_overhead(scale: float, deg: float) -> void:
-	var scene: Node = _tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	var warm: GDScript = load("res://scripts/world/camp/warm.gd") as GDScript
 	var rig: Node = _rig()
 	if rig == null or warm == null:
@@ -40,13 +40,13 @@ func debug_draw(mode: String) -> void:
 
 ## Build every dungeon chunk now (fly-throughs and wide shots see the whole floor).
 func stream_all() -> void:
-	var host: Node = _tree().current_scene
+	var host: Node = App.Touch.scene_host()
 	(load("res://scripts/world/dungeon_stream.gd") as GDScript).call("force_all", host)
 
 ## Fly the camera from the arrival spawn through the nearest unvisited room each hop (`hops` hops, 0 = every room), `ms`
 ## per hop, camera size `size` (0 keeps it). The timeline waits about hops x ms; SHOT: log prints hops and seconds.
 func fly_rooms(ms: int, size: float, hops: int) -> void:
-	var host: Node = _tree().current_scene
+	var host: Node = App.Touch.scene_host()
 	var rig: Node = _rig()
 	var data: Variant = host.get("data")
 	if rig == null or not (data is Dictionary):
@@ -88,7 +88,7 @@ func drop_grid(seed_n: int, n: int) -> void:
 		var row: int = 0
 		for k: String in d:
 			var p: Node3D = (load("res://scripts/world/pickup.gd") as GDScript).new()
-			_tree().current_scene.add_child(p)
+			App.Touch.scene_host().add_child(p)
 			p.call("setup", k, pl.global_position + Vector3(float(i % 6) * 0.7 - 1.75, 0.0, 1.2 + float(floori(i / 6.0)) * 1.4 + row * 0.45), 3 if k == "gold" else 0)
 			p.set("life", 0.0)
 			p.set("_block_t", 9999.0)
@@ -98,7 +98,8 @@ func drop_grid(seed_n: int, n: int) -> void:
 ## Pin wall-clock HUD pulses (the danger gem alpha) after every frame's HUD refresh, so stills compare equal across refs
 ## and runs; ref-compare views call this before their shot. Older refs work too: it only touches the hud's `gem` if any.
 func still_hud() -> void:
-	var hud: Node = _tree().current_scene.get("hud") as Node if _tree().current_scene != null else null
+	var hud_host: Node = App.Touch.scene_host()
+	var hud: Node = hud_host.get("hud") as Node if hud_host != null else null
 	if hud == null:
 		return
 	var pin := GemPin.new()

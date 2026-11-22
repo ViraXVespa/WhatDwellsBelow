@@ -148,7 +148,7 @@ static func open_shop(host: Node3D) -> String:
 	return App.tr("interact_act.a_pale_shopkeep_waits")
 
 static func ui_node(host: Node3D) -> Node:
-	var s := host.get_tree().current_scene
+	var s := App.Touch.scene_host()
 	if s and s.has_method("world_ui"):
 		return s.world_ui()
 	return null

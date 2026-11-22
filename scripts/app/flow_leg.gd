@@ -17,7 +17,7 @@ static func wait_scene(host: Node, stem: String, node_name: String, on_wait: Cal
 	var guard: int = 0
 	while guard < 240:
 		guard += 1
-		var s: Node = host.get_tree().current_scene
+		var s: Node = App.Touch.scene_host()
 		if s and s.is_node_ready() and (str(s.scene_file_path).find(stem) >= 0 or str(s.name) == node_name):
 			break
 		if on_wait.is_valid():

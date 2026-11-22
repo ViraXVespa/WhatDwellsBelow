@@ -22,7 +22,7 @@ static func drop_item(it: Dictionary, pos: Vector3) -> void:
 	var tree := Engine.get_main_loop()
 	if tree == null or it.is_empty():
 		return
-	var host: Node = (tree as SceneTree).current_scene
+	var host: Node = App.Touch.scene_host()
 	if host == null:
 		return
 	var p := new()

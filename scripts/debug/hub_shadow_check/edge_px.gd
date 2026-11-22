@@ -19,8 +19,7 @@ const MAX_POCKET := 0.02  # m2 of lit ground allowed inside one building's whole
 static var last := ""
 
 static func run(plant: String = "") -> String:
-	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var root: Node = tree.current_scene
+	var root: Node = App.Touch.scene_host()
 	var cam: Camera3D = root.get_viewport().get_camera_3d()
 	var hs: Array = Hulls.build(root)
 	var g: float = Chunky.GRID_M

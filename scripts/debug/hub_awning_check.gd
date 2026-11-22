@@ -1,12 +1,11 @@
 extends RefCounted
 
-## Hub awning / window checks (camp-prop-shadows flow), measured from the live camera (orthographic, so the pitch,
-## not the zoom, sets the result):
+## Hub awning / window checks, from the live camera (orthographic: pitch, not zoom, sets the result):
 ## - gap: per building, the awning hem's screen height above the face sprite's top edge (metres of screen and px).
-##   Positive is a visible gap between the wall art and the awning; "" when every hem is at or below its face top.
+##   Positive is a visible gap between wall art and awning; "" when every hem is at or below its face top.
 ## - window: the receptionist stands behind the counter: her visible bottom (Spec.RECEPTION_CUT) on the window's
 ##   counter line (Spec.RECEPTION_WINDOW bottom) and her head top in the opening's top third, x inside.
-## plant_gap lifts one hem 3 cm, plant_window floats her 0.28 m up; both must FAIL.
+## plant_gap lifts one hem 3 cm, plant_window floats her 0.28 m; both must FAIL.
 
 const Spec := preload("res://scripts/world/camp/layout_spec.gd")
 const TOL := 0.004
@@ -31,7 +30,8 @@ var plant_window: String:
 		return "caught" if window_faults(0.28) != "" else "missed"
 
 static func _cam() -> Camera3D:
-	return (Engine.get_main_loop() as SceneTree).root.get_viewport().get_camera_3d()
+	var n: Node = App.Touch.scene_host()
+	return ((n.get_viewport() if n else (Engine.get_main_loop() as SceneTree).root) as Viewport).get_camera_3d()
 
 static func _bodies(n: Node, out: Array) -> void:
 	if n.get_node_or_null("Awning") is MeshInstance3D:

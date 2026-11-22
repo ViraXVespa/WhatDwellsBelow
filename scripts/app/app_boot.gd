@@ -134,7 +134,7 @@ static func world_action(host: Node, action: String) -> void:
 		return
 	if (host.debug and host.debug.get("open")) or (host.recap and host.recap.get("open")):
 		return
-	var scene: Node = host.get_tree().current_scene
+	var scene: Node = App.Touch.scene_host()
 	if action == "pause" and host.pause_menu:
 		host.pause_menu.toggle()
 	elif action == "map_view" and scene and scene.has_method("toggle_map"):

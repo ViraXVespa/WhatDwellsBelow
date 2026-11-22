@@ -15,7 +15,7 @@ var plant_cover: String:
 		return "caught" if _run(true) != "" else "missed"
 
 static func _run(plant: bool) -> String:
-	var root: Node = (Engine.get_main_loop() as SceneTree).current_scene
+	var root: Node = App.Touch.scene_host()
 	var pitch := root.find_child("StallPitch", true, false) as MeshInstance3D
 	if pitch == null:
 		return "no_stall"
