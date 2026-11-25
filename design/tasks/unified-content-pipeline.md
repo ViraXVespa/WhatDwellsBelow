@@ -2,7 +2,7 @@
 id: unified-content-pipeline
 owner: build
 status: open
-done-when: All deliverables are complete and the entire system works as described.
+done-when: All deliverables are complete, the entire system works as described, and the existing.
 door: art_pipeline
 
 ## Goal
@@ -10,7 +10,11 @@ Build a single, project-wide art and content authoring system that every asset t
 
 Users can also start from loose external references (image upload, URL, or X/Twitter post) and be walked through the full review/adjustment flow until a usable in-game character is produced. The pipeline can use local LLMs (including vision models) to automatically tune generations toward the locked female character artstyle.
 
-**This outline is a baseline recommendation only.** Sections may be expanded, split, merged, or restructured during implementation as real usage reveals better shapes. Improvements are expected on the fly rather than treated as scope changes.
+**This outline is a baseline recommendation only.** Sections may be expanded, split, merged, or restructured during implementation as real usage reveals better shapes. Improvements are expected on the fly rather than treated as scope changes. You have complete design control over this system until the task is closed.
+
+The final system should be feature complete and user friendly when accessed via the web on a mobile or desktop browser. The workflow should be logical and easy to follow.
+
+This system should also be able to track what files/assets still need to be updated for the game to be feature complete.
 
 ## Context & Constraints from Prior Discussion
 This task is the culmination of an extended design discussion. The following context is required for a clean implementation and is **not** fully discoverable from the repo alone:
@@ -126,7 +130,7 @@ Users can start from imperfect external references:
 
 **Flow**:
 1. User supplies the reference (upload, URL, or X post such as https://x.com/TheKingOfStank/status/2122638614454575113).
-2. System extracts image(s) and runs a vision pass (Qwen3-VL) to produce a structural description, suggested mannequin adjustments, and visible traits.
+2. System extracts image(s) (and/or searches for relevant desciption/prompt text in the link) and runs a vision pass (Qwen3-VL) to produce a structural description, suggested mannequin adjustments, and visible traits.
 3. User enters the normal Character flow with the reference pinned for side-by-side comparison.
 4. Guided (skippable) steps: edit extracted description → generate conditioned front+side mannequin → proportion tweaks → feature extraction into traits → continue through Model, Customization, Animation, Export.
 5. Original reference is stored in the subject record.
@@ -134,6 +138,8 @@ Users can start from imperfect external references:
 7. Dirty-flag and Review behavior identical to standard generation.
 
 Output is always a normal pipeline Character.
+
+Note: This section is intended to be used as a robustness test of the pipeline after everything else has been implemented to test how cleanly the system works with a baseline goal of making a usable character from a vague reference. The supplied link is meant to be the reference to test with.
 
 ### NPC
 Optional directional + walk (pre-skipped for stationary but reachable). Richer idles, speaking close-ups, facial expressions. Dialog editor with condition system. Loose-reference entry optional.
