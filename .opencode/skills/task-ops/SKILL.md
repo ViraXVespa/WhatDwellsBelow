@@ -11,14 +11,14 @@ Create or update a complete task file under design/tasks/ that another session c
 - Use `python tools/docs.py task new ID --owner ... --title ... --done-when "..." --resume "..."` (or `task update`).
 - The `--resume` value becomes the `## Next Steps (User Only)` section automatically. Prefer a real slice-open line when the task is for Grok Build.
 - Assign door and job only from routes.yaml or explicit content in the user’s input. If no exact pair exists, use the closest and tell the user.
-- **Copy, do not summarize.** The body of the task must contain every section and every line the user supplied (Approach, Context, Skills lists, Constraints, Deliverables, First Actions, examples, notes, etc.). 
+- **Copy, do not summarize.** The body of the task must contain every section and every line the user supplied (Approach, Context, Skills lists, Constraints, Deliverables, First Actions, examples, notes, etc.) exactly as provided, preserving all markdown, code fences, and line breaks. 
 - **Forbidden:** Do not write “(omitted for brevity)”, “see above”, “details omitted”, ellipsis-only bullets, or any other form of truncation. If the input is long, still include it in full.
 - After creating or updating, run `python tools/docs.py task index` so the README index is current.
 - Do not commit.
 - Work on the trusted worktree when called after slice open.
 
 ## What a good task looks like
-- Header fields: id, owner, status, done-when (concise success condition)
+- Include any header fields present in the source (e.g., `area`, `door`, `job`) exactly as they appear, preserving their values.
 - Body that is a faithful, complete copy of the user’s structured content
 - A real `## Next Steps (User Only)` section containing the launch line
 

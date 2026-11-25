@@ -25,9 +25,11 @@ id | owner | status | title | needs
 --- | --- | --- | --- | ---
 hub-2d-bake | build | open | Bake hub visuals to 2D sprites / viewport texture while preserving identical look and feel | -
 modular-voxel-walk-proof | build | open | Modular 3D walk proof (Blender + bake) | -
+open-code-skills | build | open |  | -
 perf-sweep | build | open | Perf sweep - one continuous hub/dungeon run at 60+ FPS, desktop and web | -
 splash-platform-prompt | build | open | Start splash: platform prompt + click/tap to continue | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
+unified-content-pipeline | build | open | WDB Unified Art & Content Pipeline – Standing Task | -
 ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 build-gather-mcp | bot | open | Build gather agent and wdb MCP: live verification (P6) and rollout | -
