@@ -12,7 +12,6 @@ Binds **Grok Bot** splits and extracts only: a refactor only rearranges what alr
 - No features, tunables, comments, renames, reformats or drive-by cleanups; no better API; no generalizing two vaguely similar features.
 - No helper that was not already in the tree, except a shared-module extract of **near-identical** existing bodies (same control flow; renamed locals OK).
 - Minimum edits to relocate lines and keep compiling. Wiring is not new behavior: `: Type` on a moved line, `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`.
-- A non-empty `design/reuse-map.md` brief may name small kits at the surface it states, not a widget framework.
 
 ## Cluster folders (placement rule; one copy)
 
@@ -35,23 +34,13 @@ The **facade stays beside its folder** in the area dir. Its **helpers live in a 
 
 A helper is **moved code**, not new logic. The Bot's size targets are in `grok-bot-size.md`.
 
-## New shared modules and reuse (Grok Bot)
-
-Hunt for copies only after split work on the current cluster, or in the extract / staged reuse flow; not when the User already named the cluster. Exception: the dupes gate (`lint.py dupes --gate`, run by `bot_status --prove`) always applies; when you write the second copy of a construction block (posts, faces, buttons, pixels) that differs only in literals, write a helper that returns the base piece, or a loop over a data table, before proving.
-
-- Near-identical = same control flow (renamed locals OK), not vaguely similar features. Do not merge pairs under **Do not merge** in the Bot extract job.
-- Copy lives inside one system: a sibling of that facade (the split shape), not a new global owner.
-- Same concern as an **existing** shared script and routing call sites there fits the owner (`grok-bot-extract.md`): call that script. Find owners from the live tree plus one `design/code-map.md` row (not `design/reuse-map.md`, which is not an owners encyclopedia). Known: menu tab / confirm / back / page `scripts/ui/menu_pad.gd`; prompt / hint strip `scripts/ui/prompt_view.gd`; also `theme.gd`, `menu_util.gd`, `tip.gd`, `plate_chrome.gd`, `tip_place.gd`.
-- Otherwise prefer a **NEW shared module** (moved bodies) over growing an owner: never grow an owner just to avoid a new file, and do not add a method to an existing owner just so copies fit; if neither fits, leave the copies and report.
-- Build: same-system method or helper is just-do; a new cross-system owner is asked first (build path file).
-
 ## Hostify, types, shared calcs
 
 Compile pitfalls of facade + `static func(host, ...)` splits, typing rules for moved lines, and the one-helper rule for gameplay formulas used by smokes: `refactor-hostify.md`, when a split or extract touches `host` helpers or a smoke asserts a gameplay number.
 
 ## Tokens and after a split
 
-One `design/code-map.md` row + the cluster is enough; do not load the design corpus, read bodies to measure them, or dump whole files when a diff will do. After a split update `design/code-map.md` when a new sibling or shared module must be listed; leave topic design files alone unless behavior changed. Bot does not write extract results into `design/reuse-map.md` (web / chat Phase 4 emit owns that brief).
+One `design/code-map.md` row + the cluster is enough; do not load the design corpus, read bodies to measure them, or dump whole files when a diff will do. After a split update `design/code-map.md` when a new sibling or shared module must be listed; leave topic design files alone unless behavior changed.
 
 ## Parked folder moves
 

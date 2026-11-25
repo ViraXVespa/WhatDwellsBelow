@@ -56,3 +56,14 @@ By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it nev
 - Output paths are `--out` (one file or folder) or `--out-<kind>` (`--out-md`, `--out-json`); older names stay only as aliases.
 - Text goes through `md_format_lib` (BOM and line endings kept). Printed paths are repo-relative POSIX. Project scanners print a WARN line only when the scanned root is not the current directory's project.
 | Character mobile UI | `media.py comfy-character` (auto-starts UI) | tools-media.md |
+
+### graphs
+
+`python tools/release.py graphs [--out DIR] [--root DIR]`
+
+Generates interactive HTML dependency graphs plus machine-readable JSON:
+
+- Game scripts via gdhealth (emerge-html + graph.json)
+- Tools via codegraph + a simple import map
+
+Used by the Pages workflow. Local testing writes to `_out/graphs/` by default.

@@ -66,3 +66,8 @@ Image checks use `python tools/shots.py inspect CMD ...` (programmatic eyes: fac
 **Looks the same as main (one image).** Enough for a sprite, icon or panel: `shots.py inspect diff MAIN_PNG NEW_PNG --max-ratio 0.001 --out OUT` (changed px, regions, heatmap; `--mask` ignores live animation); `montage A B --out OUT` for a side-by-side.
 
 **Moves as intended.** `shots.py inspect motion F1 F2 F3 ...` gives the changed share per step; `find SHOT TEMPLATE` locates an icon or glyph.
+
+
+## Visual-proof logs
+
+Capture commands, image paths, and notes for before/after proof live under `_logs/visual-proof/` inside the worktree. Expected files: `before.json`, `after.json`, `montage.txt`, `notes.md`. Later phases read this directory instead of re-deriving the captures.

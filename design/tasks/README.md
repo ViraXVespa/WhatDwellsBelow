@@ -7,7 +7,7 @@ One open task is one `<id>.md` in this folder: Web parks, Build handoffs and uni
 
 ## Fields
 
-The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, `resume` (how a fresh session picks it up: a Build task's is the launch line the User runs from the repo root, `python tools/slice.py open AREA --task ID`, never run by Build; a Web or Bot task's is one plain line; every tool it names must exist, `docs.py task check`), optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`; any Build task may carry `units:` labels without dots (its own queue, run by `slice.py start --task ID`, ticked by `--unit-done`) with `done: none`. The body is free sections.
+The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`; any Build task may carry `units:` labels without dots (its own queue, run by `slice.py start --task ID`, ticked by `--unit-done`) with `done: none`. The body is free sections.
 
 ## Lifecycle
 
