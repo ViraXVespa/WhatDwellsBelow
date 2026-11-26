@@ -3,6 +3,33 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.13.2",
+			"points": [
+				{
+					"text": "Updated GitHub Pages deployment workflow to streamline asset handling and improve build reliability."
+				},
+				{
+					"text": "Reworked BOT documentation to clarify usage and troubleshooting steps."
+				},
+				{
+					"text": "Revised the main README and design documentation to reflect recent feature changes and updated URLs."
+				},
+				{
+					"text": "Updated internal routing and task documentation to match new system layout."
+				},
+				{
+					"text": "Enhanced tools documentation and added new helpers to the documentation patch library."
+				},
+				{
+					"text": "Refined the map marks script for more accurate dungeon layout representation."
+				},
+				{
+					"text": "Adjusted the release script to support new build targets and version stamping."
+				}
+			],
+			"summary": "Streamlined documentation, tooling, and deployment workflows, and improved map representation."
+		},
+		{
 			"label": "0.13.1",
 			"points": [
 				{
