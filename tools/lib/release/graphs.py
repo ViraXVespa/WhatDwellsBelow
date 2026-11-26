@@ -12,69 +12,132 @@ Writes:
 import argparse
 import ast
 import json
+import platform
 import shutil
+import ssl
 import subprocess
 import sys
+import tarfile
 import urllib.request
+import urllib.error
+import zipfile
 from pathlib import Path
 
 CACHE_DIR = Path.home() / ".cache" / "wdb-graphs"
-GDHEALTH_BIN = CACHE_DIR / "gdhealth"
 GDHEALTH_API = "https://api.github.com/repos/q-rault/gdhealth/releases/latest"
 
+
+
+def _urlopen(req: urllib.request.Request):
+    """urlopen that falls back to unverified SSL on Windows cert problems."""
+    try:
+        return urllib.request.urlopen(req)
+    except urllib.error.URLError as exc:
+        if "CERTIFICATE_VERIFY_FAILED" in str(exc):
+            print("warning: SSL verification failed; retrying without verification")
+            ctx = ssl._create_unverified_context()
+            return urllib.request.urlopen(req, context=ctx)
+        raise
 
 def _download(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     req = urllib.request.Request(url, headers={"User-Agent": "wdb-graphs"})
-    with urllib.request.urlopen(req) as resp, open(dest, "wb") as f:
+    with _urlopen(req) as resp, open(dest, "wb") as f:
         f.write(resp.read())
 
 
+def _platform_asset(assets: list[dict]) -> dict | None:
+    """Pick the release asset that matches the current OS/arch."""
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+
+    if machine in ("x86_64", "amd64"):
+        arch = "x86_64"
+    elif machine in ("aarch64", "arm64"):
+        arch = "aarch64"
+    else:
+        arch = machine
+
+    prefer = []
+    if system == "windows":
+        prefer = [f"{arch}-pc-windows", "windows"]
+    elif system == "linux":
+        prefer = [f"{arch}-unknown-linux", "linux"]
+    elif system == "darwin":
+        prefer = [f"{arch}-apple-darwin", "darwin", "macos"]
+
+    for needle in prefer:
+        for a in assets:
+            name = a.get("name", "").lower()
+            if needle in name and name.endswith((".tar.gz", ".zip", ".tgz")):
+                return a
+    return None
+
+
+def _extract_binary(archive: Path, dest_bin: Path) -> None:
+    """Extract the gdhealth binary from a tar.gz or zip into dest_bin."""
+    if archive.name.endswith(".zip"):
+        with zipfile.ZipFile(archive) as zf:
+            for info in zf.infolist():
+                if info.filename.endswith("gdhealth") or info.filename.endswith("gdhealth.exe"):
+                    zf.extract(info, archive.parent)
+                    extracted = archive.parent / info.filename
+                    dest_bin.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(extracted), dest_bin)
+                    return
+    else:
+        with tarfile.open(archive, "r:gz") as tf:
+            for member in tf.getmembers():
+                if member.name.endswith("gdhealth") or member.name.endswith("gdhealth.exe"):
+                    tf.extract(member, archive.parent)
+                    extracted = archive.parent / member.name
+                    dest_bin.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(extracted), dest_bin)
+                    return
+    raise SystemExit(f"no gdhealth binary found inside {archive.name}")
+
+
 def ensure_gdhealth() -> Path:
-    """Download or update the latest Linux x86_64 prebuilt binary."""
+    """Download or update the latest prebuilt binary for the current platform."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     version_file = CACHE_DIR / "gdhealth.version"
+    bin_name = "gdhealth.exe" if platform.system().lower() == "windows" else "gdhealth"
+    dest_bin = CACHE_DIR / bin_name
 
     try:
         req = urllib.request.Request(GDHEALTH_API, headers={"User-Agent": "wdb-graphs"})
-        with urllib.request.urlopen(req) as resp:
+        with _urlopen(req) as resp:
             release = json.load(resp)
     except Exception as exc:  # noqa: BLE001
-        if GDHEALTH_BIN.is_file():
+        if dest_bin.is_file():
             print(f"warning: could not check latest gdhealth ({exc}); using cached binary")
-            return GDHEALTH_BIN
+            return dest_bin
         raise SystemExit(f"could not fetch gdhealth release info: {exc}") from exc
 
     latest_tag = release.get("tag_name", "")
     cached_tag = version_file.read_text(encoding="utf-8").strip() if version_file.is_file() else ""
 
-    if GDHEALTH_BIN.is_file() and cached_tag == latest_tag:
-        GDHEALTH_BIN.chmod(0o755)
-        return GDHEALTH_BIN
+    if dest_bin.is_file() and cached_tag == latest_tag:
+        if platform.system().lower() != "windows":
+            dest_bin.chmod(0o755)
+        return dest_bin
 
-    candidates = []
-    for a in release.get("assets", []):
-        name = a.get("name", "").lower()
-        if not any(name.endswith(ext) for ext in (".sha256", ".sig", ".txt", ".md", ".json", ".tar.gz", ".zip")):
-            if "linux" in name and ("x86_64" in name or "amd64" in name or "x64" in name):
-                candidates.append(a)
-    if not candidates:
-        for a in release.get("assets", []):
-            name = a.get("name", "").lower()
-            if "linux" in name and not name.endswith((".tar.gz", ".zip", ".sha256")):
-                candidates.append(a)
-    if not candidates:
+    asset = _platform_asset(release.get("assets", []))
+    if asset is None:
         raise SystemExit(
-            f"no suitable Linux binary found in {latest_tag}; assets: "
+            f"no suitable binary for {platform.system()} {platform.machine()} in {latest_tag}; assets: "
             + ", ".join(a.get("name", "") for a in release.get("assets", []))
         )
 
-    asset = candidates[0]
     print(f"downloading gdhealth {latest_tag} ({asset['name']})...")
-    _download(asset["browser_download_url"], GDHEALTH_BIN)
-    GDHEALTH_BIN.chmod(0o755)
+    archive = CACHE_DIR / asset["name"]
+    _download(asset["browser_download_url"], archive)
+    _extract_binary(archive, dest_bin)
+    archive.unlink(missing_ok=True)
+    if platform.system().lower() != "windows":
+        dest_bin.chmod(0o755)
     version_file.write_text(latest_tag + "\n", encoding="utf-8")
-    return GDHEALTH_BIN
+    return dest_bin
 
 
 def run_gdhealth(root: Path, out_dir: Path) -> None:
@@ -111,7 +174,7 @@ def run_gdhealth(root: Path, out_dir: Path) -> None:
     if html is None:
         raise SystemExit(f"gdhealth produced no HTML under {tmp}")
 
-    # Locate graph JSON (gdhealth writes graph.json in the bundle)
+    # Locate graph JSON
     graph_json = None
     for candidate in (
         tmp / "graph.json",
@@ -150,11 +213,21 @@ def _python_imports(path: Path) -> list[str]:
 
 
 def run_codegraph(tools_dir: Path, out_dir: Path) -> None:
+    """Tools graph via py-code-visualizer (interactive HTML) + simple import JSON."""
     out_html = out_dir / "tools.html"
-    cmd = ["codegraph", str(tools_dir), "--output", str(out_html)]
+    # --max-nodes keeps the view usable; raise if you want more detail.
+    cmd = [
+        "py-code-visualizer",
+        "visualize",
+        str(tools_dir),
+        "-o",
+        str(out_html),
+        "--max-nodes",
+        "200",
+    ]
     subprocess.run(cmd, check=True)
 
-    # Simple machine-readable import map for agents
+    # Simple machine-readable import map for agents (unchanged)
     import_map: dict[str, list[str]] = {}
     for py in tools_dir.rglob("*.py"):
         if "__pycache__" in py.parts:

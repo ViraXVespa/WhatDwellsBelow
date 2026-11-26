@@ -177,7 +177,7 @@ jobs:
       - name: Generate code graphs
         run: |
           set -euo pipefail
-          pip install --user 'codegraph==1.2.0'
+          pip install --user "py-code-visualizer==2.3.1"
           python3 tools/release.py graphs --out "$PWD/site/graphs" --root "$PWD"
 
       - name: Restore archive export cache

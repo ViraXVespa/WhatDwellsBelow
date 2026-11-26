@@ -64,6 +64,6 @@ By surface: the **Bot** follows `BOT.md` (boot, prove, smokes, which docs it nev
 Generates interactive HTML dependency graphs plus machine-readable JSON:
 
 - Game scripts via gdhealth (emerge-html + graph.json)
-- Tools via codegraph + a simple import map
+- Tools via py-code-visualizer + a simple import map
 
 Used by the Pages workflow. Local testing writes to `_out/graphs/` by default.
