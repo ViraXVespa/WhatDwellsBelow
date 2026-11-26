@@ -11,7 +11,7 @@ thigh/chest about 0.83, calf/chest about 0.63.
 A bald mannequin chest is the ribcage, which sits inside that coat. Front and
 back therefore pass only when the head is a little wider than the ribcage and
 each leg is slimmer than the current oversized mesh. The two side views share
-a wider band because the chest there is depth, not width. A pass is not a
+a wider band because a round head is deeper than the chest. A pass is not a
 look approval.
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ from media.pipeline import mesh_check
 
 # One limb over the ribcage. Front and back share FRONT. Left and right share SIDE.
 FRONT = {"head_min": 0.75, "head_max": 1.20, "thigh_max": 0.50, "calf_max": 0.32}
-SIDE = {"head_min": 0.90, "head_max": 1.45, "thigh_max": 0.95, "calf_max": 0.72}
+SIDE = {"head_min": 0.90, "head_max": 1.60, "thigh_max": 0.95, "calf_max": 0.72}
 HEAD_DELTA = 0.15
 THIGH_DELTA = 0.12
 CALF_DELTA = 0.10
@@ -153,22 +153,38 @@ def _row_stats(mask: bytearray, w: int, h: int) -> tuple[list[int], list[list[in
 
 
 def _head_width(spans: list[int], top: int, height: int) -> tuple[int, int, bool]:
-    """Widest row above the shoulder flare. The third value is false when this view has no outstretched arms."""
+    """Widest row above the neck. A shoulder that widens in steps must not count as the head."""
     seen = 0
-    end = top + max(1, int(height * 0.30))
-    flared = False
-    min_rows = max(3, int(height * 0.05))
-    for index, y in enumerate(range(top, min(len(spans), top + int(height * 0.55)))):
+    neck_y = None
+    neck_w = 10**9
+    shrinking = False
+    limit = min(len(spans), top + int(height * 0.45))
+    ready = top + max(3, int(height * 0.05))
+    for y in range(top, limit):
         width = spans[y]
-        if index > min_rows and seen >= 4 and width > seen * 1.6:
-            end = y
-            flared = True
+        if not shrinking:
+            if width >= seen:
+                seen = width
+                continue
+            if seen >= 8 and y >= ready and width <= seen * 0.85:
+                shrinking = True
+                neck_y = y
+                neck_w = width
+            continue
+        if 0 < width < neck_w:
+            neck_w = width
+            neck_y = y
+        if width > seen and width > neck_w * 1.5:
             break
-        if width > seen:
-            seen = width
-        end = y + 1
-    band = [spans[y] for y in range(top, min(end, len(spans)))]
-    return (max(band) if band else 0), end, flared
+    if neck_y is None:
+        band = [spans[y] for y in range(top, min(limit, top + int(height * 0.28)))]
+        return (max(band) if band else 0), top + int(height * 0.28), False
+    band = [spans[y] for y in range(top, neck_y)]
+    return (max(band) if band else 0), neck_y, True
+
+
+def _widest(row: list[int]) -> int:
+    return max(row) if row else 0
 
 
 def _chest_width(spans: list[int], runs: list[list[int]], top: int, bottom: int, head_end: int) -> int:
@@ -178,28 +194,30 @@ def _chest_width(spans: list[int], runs: list[list[int]], top: int, bottom: int,
     arm_hi = min(bottom, top + int(height * 0.75))
     if arm_hi <= arm_lo:
         arm_lo = top
-    arm_y = max(range(arm_lo, arm_hi), key=lambda y: spans[y])
-    arm = spans[arm_y]
+    arm_y = max(range(arm_lo, arm_hi), key=lambda y: _widest(runs[y]))
+    arm = _widest(runs[arm_y])
     under = arm_y
     floor = min(bottom, top + int(height * 0.62))
-    while under < floor and arm and spans[under] > arm * 0.42:
+    while under < floor and arm and _widest(runs[under]) > arm * 0.42:
         under += 1
-    if arm and spans[min(under, bottom)] > arm * 0.42:
+    if arm and _widest(runs[min(under, bottom)]) > arm * 0.42:
         under = min(bottom, top + int(height * 0.40))
     end = min(bottom + 1, under + max(3, int(height * 0.08)))
     widths = [max(runs[y]) for y in range(under, end) if runs[y]]
     return _median(widths) if widths else 0
 
 
-def _band_width(runs: list[list[int]], top: int, height: int, start: float, stop: float) -> int:
-    """Median torso width for a view whose arms are not in the picture, such as a side projection."""
-    widths: list[int] = []
-    y0 = top + int(height * start)
-    y1 = max(y0 + 1, top + int(height * stop))
-    for y in range(y0, min(y1, len(runs))):
-        if runs[y]:
-            widths.append(max(runs[y]))
-    return _median(widths) if widths else 0
+def _torso_band(runs: list[list[int]], neck_y: int, top: int, height: int) -> int:
+    """Chest depth when the arms are not outstretched in this view."""
+    y1 = top + int(height * 0.48)
+    if y1 <= neck_y:
+        y1 = neck_y + max(3, int(height * 0.08))
+    widths = [_widest(runs[y]) for y in range(neck_y, min(y1, len(runs))) if runs[y]]
+    if not widths:
+        return 0
+    peak = max(widths)
+    solid = [width for width in widths if width >= peak * 0.6]
+    return _median(solid or widths)
 
 
 def _limb(runs: list[list[int]], top: int, height: int, start: float, stop: float) -> tuple[int, bool]:
@@ -284,12 +302,14 @@ def measure_mask(mask: bytearray, w: int, h: int, *, view: str | None = None) ->
     top, bottom = occupied[0], occupied[-1]
     height = bottom - top + 1
     head_px, head_end, flared = _head_width(spans, top, height)
-    if flared:
+    arm_hi = min(bottom, top + int(height * 0.55))
+    arm = 0
+    if arm_hi > head_end:
+        arm = max(_widest(runs[y]) for y in range(head_end, arm_hi))
+    if flared and arm > head_px * 1.4:
         chest_px = _chest_width(spans, runs, top, bottom, head_end)
     else:
-        # No arm span in this view. The ribcage is the upper torso, not the widest row.
-        head_px = _band_width(runs, top, height, 0.04, 0.28) or head_px
-        chest_px = _band_width(runs, top, height, 0.38, 0.50)
+        chest_px = _torso_band(runs, head_end, top, height)
     thigh_px, split = _limb(runs, top, height, 0.62, 0.70)
     calf_px, _calf_split = _limb(runs, top, height, 0.80, 0.88)
     kind = view if view in ("front", "side") else ("front" if split else "side")
