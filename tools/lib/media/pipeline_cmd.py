@@ -18,13 +18,15 @@
     python tools/media.py pipeline frame --image still.png --out still-framed.png
     python tools/media.py pipeline mesh --glb coarse.glb
     python tools/media.py pipeline body
+    python tools/media.py pipeline smooth
 
 WIP under data/pipeline/wip stays off Git. Export under data/pipeline/export is the game contract.
 Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under data/pipeline/wip/review.
 `tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
 `mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
-`body` builds a Hunyuan3D surface-net mesh from the locked front plate. The 32-grid path is not used.
+`body` builds a Hunyuan3D surface-net mesh from one front plate. The 32-grid path is not used.
+`smooth` tunes a smooth mesh-source still, then builds that body if the still passes.
 A fit failure retries one smaller octree. A fragmented mesh stops. The limit writes a progress report. A fail is not a handoff.
 """
 from __future__ import annotations
@@ -39,7 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
 import boot  # noqa: E402,F401
 
 import agent_log
-from media.pipeline import body, comfy_run, mesh_check, plates, store, tune, vision_review
+from media.pipeline import body, comfy_run, mesh_check, plates, smooth, store, tune, vision_review
 
 _PROMPTS = Path("data/pipeline/prompts/defaults.json")
 
@@ -146,7 +148,14 @@ def _check(real: Path) -> int:
         if boss["draw_scale"] != 4:
             print("error: boss draw_scale")
             return agent_log.emit_result("FAIL", summary="draw_scale")
-        problems = vision_review.selftest() + tune.selftest() + plates.selftest() + mesh_check.selftest() + body.selftest()
+        problems = (
+            vision_review.selftest()
+            + tune.selftest()
+            + plates.selftest()
+            + mesh_check.selftest()
+            + body.selftest()
+            + smooth.selftest()
+        )
         if problems:
             print("error: vision review " + "; ".join(problems))
             return agent_log.emit_result("FAIL", summary="vision review")
@@ -451,6 +460,38 @@ def _body(root: Path, args: object, dry: bool) -> int:
     return agent_log.emit_result("FAIL", summary="body", turns=report["turns"], report=str(dest / "report.md"))
 
 
+def _smooth(root: Path, args: object, dry: bool) -> int:
+    """Tune a smooth mesh-source still from the pixel front, then build a body if it passes."""
+    pixel = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-front.png"
+    if not pixel.is_file():
+        print(f"error: missing pixel front {pixel}")
+        return agent_log.emit_result("FAIL", summary="missing front")
+    if dry:
+        print("would tune a smooth mesh-source still, then build a body if that still passes")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    start = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-smooth-src.png"
+    start.write_bytes(pixel.read_bytes())
+    workflow_path = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-smooth.json"
+    workflow_path.write_text(json.dumps(smooth.front_workflow(), indent=2) + "\n", encoding="utf-8")
+    still_turns = args.turns if args.turns is not None else tune.DEFAULT_TURNS
+    args.role = "mannequin-smooth"
+    args.image = [str(start)]
+    args.workflow = str(workflow_path)
+    args.turns = still_turns
+    code = _tune(root, args, False)
+    if code != 0:
+        return code
+    dest = root / "data" / "pipeline" / "wip" / "review" / "female-mannequin-smooth-src-tune"
+    report = json.loads((dest / "report.json").read_text(encoding="utf-8"))
+    passed = dest / str(report.get("image") or "")
+    framed = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-smooth-framed.png"
+    plates.frame_file(passed, framed)
+    print(f"framed {framed}")
+    args.front = str(framed)
+    args.turns = len(body.STAGES)
+    return _body(root, args, False)
+
+
 def _need(value: str | None, flag: str) -> str:
     if not value:
         agent_log.fail(f"{flag} is required")
@@ -463,7 +504,7 @@ def main(argv: list[str] | None = None) -> int:
         writes=True,
         verbose=True,
     )
-    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, or body.")
+    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, body, or smooth.")
     ap.add_argument("id", nargs="?", default=None, help="Subject id for show, link, mark, and export.")
     ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
     ap.add_argument("--name", help="Display name for new. The id is the slug unless --id is set.")
@@ -529,6 +570,8 @@ def main(argv: list[str] | None = None) -> int:
             return _mesh(root, args, dry)
         if args.cmd == "body":
             return _body(root, args, dry)
+        if args.cmd == "smooth":
+            return _smooth(root, args, dry)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return agent_log.emit_result("FAIL", summary=str(exc))
