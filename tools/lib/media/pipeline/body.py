@@ -138,12 +138,16 @@ def run_body(
     views: dict[str, Path],
     dest: Path,
     *,
+    subject_id: str,
+    gates: dict,
     server: str,
     turns: int,
     seed: int = 3,
     timeout: float = 2400,
 ) -> dict:
-    """Upload the four plates and try the stages. Stop when the mesh connects or the limit hits."""
+    """Upload the front plate and try the stages. Stop when the mesh connects or the limit hits."""
+    if not subject_id:
+        raise ValueError("subject id is required")
     limit = max(1, min(turns, len(STAGES)))
     comfy_run.free(server)
     uploaded = {"front": comfy_run.upload_image(server, views["front"])}
@@ -155,7 +159,7 @@ def run_body(
         workflow = build_workflow(
             uploaded,
             seed=seed + index,
-            prefix=f"wdb-gen/female-hunyuan-body-t{index}",
+            prefix=f"wdb-gen/{subject_id}-hunyuan-body-t{index}",
             **stage,
         )
         print(f"turn {index} latent={stage['latent']} octree={stage['octree']}", flush=True)
@@ -173,12 +177,12 @@ def run_body(
             step["empty"] = measured["empty"]
             step["share"] = measured.get("share")
             if measured["ok"]:
-                sized = proportion.check_glb(glb)
+                sized = proportion.check_glb(glb, gates)
                 step["proportion"] = sized["reason"]
                 if sized["ok"]:
                     final = dest / "body.glb"
                     final.write_bytes(glb.read_bytes())
-                    gen = root / "data" / "pipeline" / "wip" / "gen" / "female-hunyuan-body.glb"
+                    gen = root / "data" / "pipeline" / "wip" / "gen" / f"{subject_id}-hunyuan-body.glb"
                     gen.parent.mkdir(parents=True, exist_ok=True)
                     gen.write_bytes(glb.read_bytes())
                     step["action"] = "kept"

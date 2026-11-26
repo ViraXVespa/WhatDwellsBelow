@@ -43,6 +43,35 @@ def role_spec(doc: dict, role: str) -> dict:
     return spec
 
 
+def spec_for(doc: dict, role: str, extra_ids: list[str] | None = None) -> dict:
+    """Copy a role and append the optional checks this asset asked for. Unknown ids fail."""
+    spec = role_spec(doc, role)
+    if not extra_ids:
+        return spec
+    optional = doc.get("optional") or {}
+    rows = optional.get(role) if isinstance(optional, dict) else None
+    if not isinstance(rows, list):
+        raise ValueError(f"role {role} has no optional checks")
+    pool: dict[str, dict] = {}
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+            raise ValueError(f"role {role} optional check needs an id")
+        pool[row["id"]] = row
+    seen = {row["id"] for row in spec["checks"]}
+    added = []
+    for cid in extra_ids:
+        if cid in seen:
+            raise ValueError(f"check {cid} is already on {role}")
+        row = pool.get(cid)
+        if row is None:
+            raise ValueError(f"role {role} has no optional check {cid}")
+        added.append(row)
+        seen.add(cid)
+    out = dict(spec)
+    out["checks"] = list(spec["checks"]) + added
+    return out
+
+
 def prompt_for(spec: dict) -> str:
     lines = [
         "Review this one image for a game art pipeline.",
@@ -142,11 +171,20 @@ def _ask(host: str, model: str, image: Path, text: str, timeout: float) -> str:
     return content
 
 
-def review_image(root: Path, image: Path, role: str, *, host: str = HOST, model: str = MODEL, timeout: float = 480) -> dict:
+def review_image(
+    root: Path,
+    image: Path,
+    role: str,
+    *,
+    extra: list[str] | None = None,
+    host: str = HOST,
+    model: str = MODEL,
+    timeout: float = 480,
+) -> dict:
     if not image.is_file():
         raise ValueError(f"no image {image}")
     doc = load_checks(root)
-    spec = role_spec(doc, role)
+    spec = spec_for(doc, role, extra)
     expected = [row["id"] for row in spec["checks"]]
     parsed = None
     last_error: Exception | None = None
@@ -271,4 +309,19 @@ def selftest() -> list[str]:
     text = again["4"]["inputs"]["prompt"]
     if text.count("No eyebrows.") != 1 or "eyebrows" not in again["4"]["inputs"]["negative_prompt"]:
         bad.append("prompt fix was dropped or repeated")
+    sample_doc = {
+        "roles": {"sample": {"flow": "prompt", "checks": [{"id": "feet", "fail_if": "blocks"}]}},
+        "optional": {"sample": [{"id": "mark", "fail_if": "missing mark"}]},
+    }
+    added = spec_for(sample_doc, "sample", ["mark"])
+    if [row["id"] for row in added["checks"]] != ["feet", "mark"]:
+        bad.append("an optional check was not added")
+    plain = spec_for(sample_doc, "sample", None)
+    if [row["id"] for row in plain["checks"]] != ["feet"]:
+        bad.append("a role gained a check it was not given")
+    try:
+        spec_for(sample_doc, "sample", ["nope"])
+        bad.append("an unknown optional check was accepted")
+    except ValueError:
+        pass
     return bad

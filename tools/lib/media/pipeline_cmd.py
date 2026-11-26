@@ -26,9 +26,9 @@ Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under d
 `tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
 `mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
-`proportion` measures a T-pose still or a glb. A head outside the ribcage band fails. Thick thighs or calves fail. A vision pass does not override it.
-`body` builds a Hunyuan3D surface-net mesh from one front plate. The 32-grid path is not used. A connected mesh with the wrong proportions is not kept.
-`smooth` tunes four T-pose bible stills, then builds the body from the front if they pass. Idle is a later animation.
+`proportion ID` measures a still or a glb against the measures that subject lists. A missing list fails. A vision pass does not override it.
+`body ID` builds a Hunyuan3D surface-net mesh from that subject's front plate. The 32-grid path is not used. A connected mesh that misses the subject's measures is not kept.
+`smooth ID` tunes four T-pose stills from that subject's shape, then builds the body from the front if they pass. Idle is a later animation.
 A fit failure retries one smaller octree. A fragmented mesh stops. The limit writes a progress report. A fail is not a handoff.
 """
 from __future__ import annotations
@@ -159,6 +159,24 @@ def _check(real: Path) -> int:
             + smooth.selftest()
             + proportion.selftest()
         )
+        hero_doc = store.load_subject(repo, hero["id"])
+        hero_doc["sections"]["body"]["data"] = {
+            "label": "hero",
+            "shape": "A broad chest.",
+            "measures": [{"id": "aspect", "view": "any", "max": 1.5}],
+        }
+        store.save_subject(repo, hero_doc)
+        recorded = store.asset_record(store.load_subject(repo, hero["id"]))
+        if recorded["measures"][0]["id"] != "aspect":
+            print("error: asset record dropped its measures")
+            return agent_log.emit_result("FAIL", summary="asset record")
+        blank = store.create_subject(repo, "enemy", "Blank")
+        try:
+            store.asset_record(blank)
+            print("error: a subject with no measures was accepted")
+            return agent_log.emit_result("FAIL", summary="missing measures")
+        except ValueError:
+            pass
         doc = vision_review.load_checks(real)
         library = doc.get("fix_library") or {}
         for role, spec in doc["roles"].items():
@@ -166,6 +184,20 @@ def _check(real: Path) -> int:
             for row in spec["checks"]:
                 if row["id"] not in library:
                     problems.append(f"{role} check {row['id']} has no fix")
+        optional = doc.get("optional") or {}
+        if not isinstance(optional, dict):
+            problems.append("optional checks must be an object")
+        else:
+            for role, rows in optional.items():
+                if role not in doc["roles"]:
+                    problems.append(f"optional role {role} is unknown")
+                if not isinstance(rows, list):
+                    problems.append(f"optional {role} checks must be a list")
+                    continue
+                for row in rows:
+                    cid = row.get("id") if isinstance(row, dict) else None
+                    if cid not in library:
+                        problems.append(f"{role} optional check {cid} has no fix")
         if problems:
             print("error: vision review " + "; ".join(problems))
             return agent_log.emit_result("FAIL", summary="vision review")
@@ -229,8 +261,32 @@ def _coverage(root: Path, dry: bool) -> int:
     return agent_log.emit_result("INFO", slots=doc["slots"], open=doc["open"])
 
 
+def _record(root: Path, args: object) -> dict:
+    """Load the subject's measure record. A missing id or a missing list is an error."""
+    subject_id = getattr(args, "id", None)
+    if not subject_id:
+        agent_log.fail("id is required")
+    doc = store.load_subject(root, subject_id)
+    record = dict(store.asset_record(doc))
+    record["id"] = doc["id"]
+    return record
+
+
+def _extras(root: Path, args: object) -> list[str]:
+    """Optional vision checks from the subject. No id means no extra checks, and not the female list."""
+    subject_id = getattr(args, "id", None)
+    if not subject_id:
+        return []
+    record = store.asset_record(store.load_subject(root, subject_id))
+    checks = record.get("checks") or []
+    if not isinstance(checks, list) or any(not isinstance(item, str) or not item for item in checks):
+        raise ValueError(f"{subject_id} checks must be a list of ids")
+    return list(checks)
+
+
 def _review(root: Path, args: object, dry: bool) -> int:
     jobs = _review_jobs(root, args)
+    extra = _extras(root, args)
     if dry:
         for image, role in jobs:
             print(f"would review {image} as {role}")
@@ -239,7 +295,7 @@ def _review(root: Path, args: object, dry: bool) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     failed = 0
     for image, role in jobs:
-        doc = vision_review.review_image(root, image, role)
+        doc = vision_review.review_image(root, image, role, extra=extra or None)
         dest = out_dir / f"{image.stem}-{role}.json"
         dest.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
         print(f"{image.name} {role} {doc['verdict'].upper()}")
@@ -289,8 +345,9 @@ def _review_jobs(root: Path, args: object) -> list[tuple[Path, str]]:
 
 def _correct(root: Path, args: object, dry: bool) -> int:
     role = _need(args.role, "--role")
+    extra = _extras(root, args)
     doc = vision_review.load_checks(root)
-    spec = vision_review.role_spec(doc, role)
+    spec = vision_review.spec_for(doc, role, extra or None)
     if args.review_from:
         path = Path(args.review_from)
         if not path.is_file():
@@ -306,7 +363,7 @@ def _correct(root: Path, args: object, dry: bool) -> int:
         if dry:
             print(f"would review {image_path} as {role} and correct")
             return agent_log.emit_result("INFO", summary="dry-run")
-        review = vision_review.review_image(root, image_path, role)
+        review = vision_review.review_image(root, image_path, role, extra=extra or None)
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
     failed = review.get("failed")
     if not isinstance(failed, list):
@@ -355,6 +412,10 @@ def _tune(root: Path, args: object, dry: bool) -> int:
         print(f"would tune {image_path} as {role} for {turns} turns from {src}")
         return agent_log.emit_result("INFO", summary="dry-run", turns=turns)
     workflow = json.loads(src.read_text(encoding="utf-8"))
+    extra = _extras(root, args)
+    gates = None
+    if role in proportion.STILL_ROLES:
+        gates = proportion.gates_for(_record(root, args))
     subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
     first = None
     if args.review_from:
@@ -370,11 +431,13 @@ def _tune(root: Path, args: object, dry: bool) -> int:
     def review(path: Path) -> dict:
         print(f"review {path.name}", flush=True)
         comfy_run.free(server)
-        doc = vision_review.review_image(root, path, role)
+        doc = vision_review.review_image(root, path, role, extra=extra or None)
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
-        if role in proportion.STILL_ROLES:
+        if gates is not None:
             forced = "side" if role == "mannequin-tpose-side" else "front"
-            measured = proportion.with_reference(root, proportion.measure_image(path, view=forced))
+            measured = proportion.with_reference(
+                root, args.id, proportion.measure_image(path, gates, view=forced), gates["deltas"],
+            )
             if forced == "front" and list(measured.get("failed") or []) == ["no_ears"]:
                 from PIL import Image
 
@@ -382,7 +445,9 @@ def _tune(root: Path, args: object, dry: bool) -> int:
                     clipped, removed = proportion.clip_ear_lobes(plate)
                 if removed:
                     clipped.convert("RGB").save(path)
-                    measured = proportion.with_reference(root, proportion.measure_image(path, view=forced))
+                    measured = proportion.with_reference(
+                        root, args.id, proportion.measure_image(path, gates, view=forced), gates["deltas"],
+                    )
                     print(f"clipped ear lobes {removed}px", flush=True)
             print(
                 f"proportion {measured['reason']}",
@@ -454,19 +519,21 @@ def _mesh(root: Path, args: object, dry: bool) -> int:
 
 
 def _proportion(root: Path, args: object, dry: bool) -> int:
-    """Print head, thigh, and calf ratios. Exit fail when the still or the mesh is outside the band."""
+    """Print the measures this subject listed. Exit fail when the still or the mesh misses them."""
+    record = _record(root, args)
+    gates = proportion.gates_for(record)
     image = (args.image or [None])[0]
     if not image and not args.glb:
         agent_log.fail("proportion needs --image or --glb")
     if dry:
         target = image or args.glb
-        print(f"would measure {target}")
+        print(f"would measure {target} for {args.id}")
         return agent_log.emit_result("INFO", summary="dry-run")
     if args.glb:
         path = Path(args.glb)
         if not path.is_file():
             path = root / args.glb
-        sized = proportion.check_glb(path)
+        sized = proportion.check_glb(path, gates)
         print(sized["reason"])
         if sized["ok"]:
             return agent_log.emit_result("PASS", summary="in band", glb=str(path))
@@ -480,7 +547,7 @@ def _proportion(root: Path, args: object, dry: bool) -> int:
         forced = "side"
     elif args.role in proportion.STILL_ROLES:
         forced = "front"
-    measured = proportion.measure_image(path, view=forced)
+    measured = proportion.measure_image(path, gates, view=forced)
     print(f"head={measured['head_ratio']} thigh={measured['thigh_ratio']} calf={measured['calf_ratio']} {measured['reason']}")
     if measured["ok"]:
         return agent_log.emit_result("PASS", summary="in band", image=str(path))
@@ -489,14 +556,19 @@ def _proportion(root: Path, args: object, dry: bool) -> int:
 
 
 def _body(root: Path, args: object, dry: bool) -> int:
+    record = _record(root, args)
+    gates = proportion.gates_for(record)
+    plates_map = record.get("plates") if isinstance(record.get("plates"), dict) else {}
     slots = {
-        "front": args.front or "data/pipeline/wip/gen/female-mannequin-front-framed.png",
-        "left": args.left or "data/pipeline/wip/gen/female-mannequin-left-framed.png",
-        "back": args.back or "data/pipeline/wip/gen/female-mannequin-back-framed.png",
-        "right": args.right or "data/pipeline/wip/gen/female-mannequin-right-framed.png",
+        "front": args.front or plates_map.get("front"),
+        "left": args.left or plates_map.get("left"),
+        "back": args.back or plates_map.get("back"),
+        "right": args.right or plates_map.get("right"),
     }
     views: dict[str, Path] = {}
     for slot, raw in slots.items():
+        if not raw:
+            agent_log.fail(f"{args.id} has no {slot} plate")
         path = Path(raw)
         if not path.is_file():
             path = root / raw
@@ -504,13 +576,15 @@ def _body(root: Path, args: object, dry: bool) -> int:
             print(f"error: missing {slot} plate {raw}")
             return agent_log.emit_result("FAIL", summary=f"missing {slot}")
         views[slot] = path
-    dest = root / "data" / "pipeline" / "wip" / "review" / "female-hunyuan-body"
+    dest = root / "data" / "pipeline" / "wip" / "review" / f"{args.id}-hunyuan-body"
     turns = args.turns if args.turns is not None else len(body.STAGES)
     server = args.server or comfy_run.SERVER
     if dry:
         print(f"would build a surface-net body from {', '.join(views)} turns={turns}")
         return agent_log.emit_result("INFO", summary="dry-run")
-    report = body.run_body(root, views, dest, server=server, turns=turns)
+    report = body.run_body(
+        root, views, dest, subject_id=args.id, gates=gates, server=server, turns=turns,
+    )
     print(f"body {report['status'].upper()} turns={report['turns']}/{report['limit']}")
     for step in report["steps"]:
         detail = step.get("error") or step.get("mesh") or ""
@@ -523,20 +597,21 @@ def _body(root: Path, args: object, dry: bool) -> int:
 
 
 def _smooth(root: Path, args: object, dry: bool) -> int:
-    """Generate four T-pose bible stills, tune each, then build a body from the front."""
+    """Generate four T-pose stills for one subject, tune each, then build a body from the front."""
+    record = _record(root, args)
     gen = root / "data" / "pipeline" / "wip" / "gen"
     if dry:
-        print("would tune four T-pose bible stills, then build a body from the front")
+        print(f"would tune four T-pose stills for {args.id}, then build a body from the front")
         return agent_log.emit_result("INFO", summary="dry-run")
     server = args.server or comfy_run.SERVER
     subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
     still_turns = args.turns if args.turns is not None else tune.DEFAULT_TURNS
     framed: dict[str, Path] = {}
-    for view in smooth.VIEWS:
+    for view in smooth.views_for(record):
         slot = view["slot"]
-        start = gen / f"female-mannequin-tpose-{slot}-src.png"
-        workflow_path = gen / f"female-mannequin-tpose-{slot}.json"
-        workflow = smooth.workflow_for(slot)
+        start = gen / f"{args.id}-mannequin-tpose-{slot}-src.png"
+        workflow_path = gen / f"{args.id}-mannequin-tpose-{slot}.json"
+        workflow = smooth.workflow_for(slot, record)
         workflow_path.write_text(json.dumps(workflow, indent=2) + "\n", encoding="utf-8")
         print(f"generate {slot} first", flush=True)
         comfy_run.run(server, workflow, start)
@@ -558,7 +633,7 @@ def _smooth(root: Path, args: object, dry: bool) -> int:
             print(f"error: {slot} tune exited clean with status {report.get('status')}")
             return agent_log.emit_result("FAIL", summary="tune status")
         passed = dest / str(report.get("image") or "")
-        plate = gen / f"female-mannequin-tpose-{slot}-framed.png"
+        plate = gen / f"{args.id}-mannequin-tpose-{slot}-framed.png"
         plates.frame_file(passed, plate)
         print(f"framed {plate}")
         framed[slot] = plate
@@ -583,7 +658,11 @@ def main(argv: list[str] | None = None) -> int:
         verbose=True,
     )
     ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, proportion, body, or smooth.")
-    ap.add_argument("id", nargs="?", default=None, help="Subject id for show, link, mark, and export.")
+    ap.add_argument(
+        "id", nargs="?", default=None,
+        help="Subject id. Required for show, link, mark, export, proportion, body, and smooth. "
+        "Tune, review, and correct use it for that subject's extra checks and measures.",
+    )
     ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
     ap.add_argument("--name", help="Display name for new. The id is the slug unless --id is set.")
     ap.add_argument("--template", default=None, help="For new: copy this subject id. Same type only.")

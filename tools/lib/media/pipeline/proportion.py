@@ -1,18 +1,8 @@
-"""Measure T-pose head, thigh, and calf size against the in-game woman.
+"""Measure a silhouette against the measures that one asset lists.
 
-Vision rubber-stamps scale, so this gate is pixels and mesh projections.
-The clothed sprites are the reference, not inputs. Their arms are down, and
-running the T-pose arm finder on them would call the coat the chest.
-
-idle_down.png, border mask: head/coat about 0.71, one thigh/coat about 0.30,
-one calf/coat about 0.19. idle_left.png: head/chest about 1.33 with hair,
-thigh/chest about 0.83, calf/chest about 0.63.
-
-A bald mannequin chest is the ribcage, which sits inside that coat. Front and
-back therefore pass only when the head is a little wider than the ribcage and
-each leg is slimmer than the current oversized mesh. The two side views share
-a wider band because a round head is deeper than the chest. A pass is not a
-look approval.
+The tool does not assume a head, a thigh, or a calf. A character lists those.
+A building lists different ones. The numbers live on the asset. A missing list
+is an error. A pass is not a look approval.
 """
 from __future__ import annotations
 
@@ -25,19 +15,78 @@ from PIL import Image
 
 from media.pipeline import mesh_check
 
-# One limb over the ribcage. Front and back share FRONT. Left and right share SIDE.
-FRONT = {"head_min": 0.75, "head_max": 1.20, "thigh_max": 0.50, "calf_max": 0.32}
-# A round head is deeper than a slim ribcage. Front head_max 1.20 on a chest
-# about 0.64 as deep as it is wide is a side ratio near 1.88. The giant mesh
-# is still over 2.6 and fails.
-SIDE = {"head_min": 0.90, "head_max": 1.90, "thigh_max": 0.95, "calf_max": 0.72}
-HEAD_DELTA = 0.15
-THIGH_DELTA = 0.12
-CALF_DELTA = 0.10
 BG_DISTANCE = 28
 STILL_ROLES = frozenset({"mannequin-smooth", "mannequin-tpose-side", "mannequin-tpose-back"})
-REF_NAME = "proportion-ref.json"
-_FIELDS = ("ok", "view", "head_ratio", "thigh_ratio", "calf_ratio", "head_px", "chest_px", "thigh_px", "calf_px", "failed", "reason")
+# One entry per measure. high/low are the fail ids the tune loop already words.
+# A new subject picks from this list. A new kind of measure is one entry here.
+_RATIO = {
+    "head": {"field": "head_ratio", "high": "head_wide", "low": "head_narrow", "views": ("front", "side")},
+    "thigh": {"field": "thigh_ratio", "high": "thigh_thick", "low": None, "views": ("front", "side")},
+    "calf": {"field": "calf_ratio", "high": "calf_thick", "low": None, "views": ("front", "side")},
+    "aspect": {"field": "aspect_ratio", "high": "aspect_wide", "low": "aspect_tall", "views": ("front", "side", "any")},
+}
+_FLAG = {
+    "ears": {"fail": "no_ears", "views": ("front",)},
+}
+_FIELDS = (
+    "ok", "view", "head_ratio", "thigh_ratio", "calf_ratio", "aspect_ratio",
+    "head_px", "chest_px", "thigh_px", "calf_px", "failed", "reason",
+)
+
+
+def gates_for(spec: dict) -> dict:
+    """Read one asset's measure list. An unknown measure or a missing bound is an error."""
+    raw = spec.get("measures")
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("body data needs measures")
+    measures = []
+    seen: set[tuple[str, str]] = set()
+    for index, row in enumerate(raw):
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+            raise ValueError(f"measures[{index}] needs an id")
+        mid = row["id"]
+        ratio = _RATIO.get(mid)
+        flag = _FLAG.get(mid)
+        if ratio is None and flag is None:
+            known = ", ".join(sorted([*_RATIO, *_FLAG]))
+            raise ValueError(f"unknown measure {mid}. Known measures: {known}")
+        kind = ratio or flag
+        view = row.get("view")
+        if not isinstance(view, str) or view not in kind["views"]:
+            raise ValueError(f"measure {mid} does not apply to view {view!r}")
+        if (mid, view) in seen:
+            raise ValueError(f"measure {mid} is listed twice for {view}")
+        seen.add((mid, view))
+        item: dict = {"id": mid, "view": view, "kind": "ratio" if ratio else "flag"}
+        if ratio:
+            if "min" not in row and "max" not in row:
+                raise ValueError(f"measure {mid} needs min or max")
+            if "min" in row:
+                if not ratio["low"]:
+                    raise ValueError(f"measure {mid} has no lower bound")
+                item["min"] = float(row["min"])
+            if "max" in row:
+                item["max"] = float(row["max"])
+            item["field"] = ratio["field"]
+            item["high"] = ratio["high"]
+            item["low"] = ratio["low"]
+        else:
+            if "min" in row or "max" in row:
+                raise ValueError(f"measure {mid} takes no bounds")
+            item["fail"] = flag["fail"]
+        measures.append(item)
+    deltas_raw = spec.get("deltas") or {}
+    if not isinstance(deltas_raw, dict):
+        raise ValueError("deltas must be an object")
+    asked = {item["id"] for item in measures}
+    deltas = {}
+    for key, value in deltas_raw.items():
+        if key not in _RATIO:
+            raise ValueError(f"delta {key} is not a ratio measure")
+        if key not in asked:
+            raise ValueError(f"delta {key} has no measure")
+        deltas[key] = float(value)
+    return {"measures": measures, "deltas": deltas}
 
 
 def _median(values: list[int]) -> int:
@@ -367,67 +416,88 @@ def _limb(runs: list[list[int]], top: int, height: int, start: float, stop: floa
     return _median(widths), split * 2 >= len(widths)
 
 
-def _empty(reason: str) -> dict:
+def _requested(gates: dict, view: str) -> list[dict]:
+    return [item for item in gates["measures"] if item["view"] in (view, "any")]
+
+
+def _blank_ratios() -> dict:
     return {
-        "ok": False,
-        "view": "front",
         "head_ratio": 0.0,
         "thigh_ratio": 0.0,
         "calf_ratio": 0.0,
+        "aspect_ratio": 0.0,
         "head_px": 0,
         "chest_px": 0,
         "thigh_px": 0,
         "calf_px": 0,
-        "failed": ["head_wide", "thigh_thick", "calf_thick"],
-        "reason": reason,
     }
 
 
-def _judge(view: str, head: float, thigh: float, calf: float) -> list[str]:
-    band = FRONT if view == "front" else SIDE
+def _closed(gates: dict, view: str, reason: str) -> dict:
+    """Fail the measures this asset asked for. Do not invent a body part it did not list."""
     failed: list[str] = []
-    if head > band["head_max"]:
-        failed.append("head_wide")
-    elif head < band["head_min"]:
-        failed.append("head_narrow")
-    if thigh > band["thigh_max"]:
-        failed.append("thigh_thick")
-    if calf > band["calf_max"]:
-        failed.append("calf_thick")
-    return failed
+    for item in _requested(gates, view):
+        if item["kind"] != "ratio" or not item.get("high"):
+            continue
+        if item["high"] not in failed:
+            failed.append(item["high"])
+    if not failed:
+        for item in _requested(gates, view):
+            fail = item.get("fail") or item.get("high")
+            if fail and fail not in failed:
+                failed.append(fail)
+    if not failed:
+        failed = ["unmeasured"]
+    return {"ok": False, "view": view, "failed": failed, "reason": reason, **_blank_ratios()}
 
 
-def _pack(view: str, head_px: int, chest_px: int, thigh_px: int, calf_px: int) -> dict:
-    if chest_px < 4 or head_px < 4:
-        return _empty("no ribcage to measure")
-    head = round(head_px / chest_px, 3)
-    thigh = round(thigh_px / chest_px, 3)
-    calf = round(calf_px / chest_px, 3)
-    failed = _judge(view, head, thigh, calf)
-    reason = f"{view} head {head:.2f} thigh {thigh:.2f} calf {calf:.2f}"
+def _apply(readings: dict, gates: dict) -> dict:
+    kind = str(readings["view"])
+    failed: list[str] = []
+    for item in _requested(gates, kind):
+        if item["kind"] == "flag":
+            if item["id"] == "ears" and readings["ears"]:
+                failed.append(item["fail"])
+            continue
+        if item["id"] != "aspect" and not readings["measurable"]:
+            failed.append(item["high"])
+            continue
+        value = float(readings[item["field"]])
+        if "max" in item and value > item["max"]:
+            failed.append(item["high"])
+        elif item.get("low") and "min" in item and value < item["min"]:
+            failed.append(item["low"])
+    asked = {item["id"] for item in _requested(gates, kind)}
+    if "aspect" in asked and "head" not in asked:
+        reason = f"{kind} aspect {readings['aspect_ratio']:.2f}"
+    else:
+        reason = (
+            f"{kind} head {readings['head_ratio']:.2f} "
+            f"thigh {readings['thigh_ratio']:.2f} calf {readings['calf_ratio']:.2f}"
+        )
     if failed:
         reason += " fail " + ",".join(failed)
     return {
         "ok": not failed,
-        "view": view,
-        "head_ratio": head,
-        "thigh_ratio": thigh,
-        "calf_ratio": calf,
-        "head_px": head_px,
-        "chest_px": chest_px,
-        "thigh_px": thigh_px,
-        "calf_px": calf_px,
+        "view": kind,
         "failed": failed,
         "reason": reason,
+        "head_ratio": readings["head_ratio"],
+        "thigh_ratio": readings["thigh_ratio"],
+        "calf_ratio": readings["calf_ratio"],
+        "aspect_ratio": readings["aspect_ratio"],
+        "head_px": readings["head_px"],
+        "chest_px": readings["chest_px"],
+        "thigh_px": readings["thigh_px"],
+        "calf_px": readings["calf_px"],
     }
 
 
-def measure_mask(mask: bytearray, w: int, h: int, *, view: str | None = None) -> dict:
-    """Ratios for one silhouette. view forces the band. None detects front from two leg masses."""
+def _silhouette(mask: bytearray, w: int, h: int, view: str | None) -> dict | None:
     spans, runs = _row_stats(mask, w, h)
     occupied = [y for y in range(h) if spans[y]]
     if len(occupied) < 16:
-        return _empty("no silhouette")
+        return None
     top, bottom = occupied[0], occupied[-1]
     height = bottom - top + 1
     head_px, head_end, flared = _head_width(spans, top, height)
@@ -442,48 +512,68 @@ def measure_mask(mask: bytearray, w: int, h: int, *, view: str | None = None) ->
     thigh_px, split = _limb(runs, top, height, 0.62, 0.70)
     calf_px, _calf_split = _limb(runs, top, height, 0.80, 0.88)
     kind = view if view in ("front", "side") else ("front" if split else "side")
-    packed = _pack(kind, head_px, chest_px, thigh_px, calf_px)
-    if kind == "front" and _ear_lobes(spans, top, head_end):
-        failed = list(packed["failed"])
-        if "no_ears" not in failed:
-            failed.append("no_ears")
-        packed["failed"] = failed
-        packed["ok"] = False
-        reason = str(packed["reason"])
-        packed["reason"] = reason + (",no_ears" if " fail " in reason else " fail no_ears")
-    return packed
+    width = max(spans[top:bottom + 1])
+    measurable = chest_px >= 4 and head_px >= 4
+    return {
+        "view": kind,
+        "head_ratio": round(head_px / chest_px, 3) if measurable else 0.0,
+        "thigh_ratio": round(thigh_px / chest_px, 3) if measurable else 0.0,
+        "calf_ratio": round(calf_px / chest_px, 3) if measurable else 0.0,
+        "aspect_ratio": round(width / height, 3) if height else 0.0,
+        "head_px": head_px,
+        "chest_px": chest_px,
+        "thigh_px": thigh_px,
+        "calf_px": calf_px,
+        "ears": bool(measurable and kind == "front" and _ear_lobes(spans, top, head_end)),
+        "measurable": measurable,
+    }
 
 
-def measure_image(path: Path, *, view: str | None = None) -> dict:
-    """Measure a T-pose still. A missing file is an error. A blank plate fails closed."""
+def measure_mask(mask: bytearray, w: int, h: int, gates: dict, *, view: str | None = None) -> dict:
+    """Judge one silhouette by the measures this asset listed. view forces front or side."""
+    readings = _silhouette(mask, w, h, view)
+    if readings is None:
+        kind = view if view in ("front", "side") else "front"
+        return _closed(gates, kind, "no silhouette")
+    body = [
+        item for item in _requested(gates, readings["view"])
+        if item["kind"] == "ratio" and item["id"] != "aspect"
+    ]
+    if body and not readings["measurable"]:
+        return _closed(gates, readings["view"], "no ribcage to measure")
+    return _apply(readings, gates)
+
+
+def measure_image(path: Path, gates: dict, *, view: str | None = None) -> dict:
+    """Measure a still. A missing file is an error. A blank plate fails the measures it was given."""
     if not path.is_file():
         raise ValueError(f"no image {path}")
     with Image.open(path) as im:
         mask, w, h = _mask(im)
-    return measure_mask(mask, w, h, view=view)
+    return measure_mask(mask, w, h, gates, view=view)
 
 
-def mismatches(left: dict, right: dict) -> bool:
-    """True when two views of the same class drifted. Front is not compared to a side."""
+def mismatches(left: dict, right: dict, deltas: dict) -> bool:
+    """True when two views of the same class drifted on a measure this asset compares."""
     if left.get("view") != right.get("view"):
         return False
-    if abs(float(left.get("head_ratio", 0)) - float(right.get("head_ratio", 0))) > HEAD_DELTA:
-        return True
-    if abs(float(left.get("thigh_ratio", 0)) - float(right.get("thigh_ratio", 0))) > THIGH_DELTA:
-        return True
-    return abs(float(left.get("calf_ratio", 0)) - float(right.get("calf_ratio", 0))) > CALF_DELTA
+    for key, limit in deltas.items():
+        field = _RATIO[key]["field"]
+        if abs(float(left.get(field, 0)) - float(right.get(field, 0))) > float(limit):
+            return True
+    return False
 
 
-def with_reference(root: Path, measure: dict) -> dict:
-    """Fail a passing still that drifts from the first passing still of that class."""
-    path = root / "data" / "pipeline" / "wip" / "gen" / REF_NAME
+def with_reference(root: Path, subject_id: str, measure: dict, deltas: dict) -> dict:
+    """Fail a passing still that drifts from the first passing still of that asset and view."""
+    path = root / "data" / "pipeline" / "wip" / "gen" / f"{subject_id}-proportion-ref.json"
     blob: dict = {}
     if path.is_file():
         blob = json.loads(path.read_text(encoding="utf-8"))
     kind = str(measure.get("view") or "front")
     ref = blob.get(kind)
     failed = list(measure.get("failed") or [])
-    if measure.get("ok") and isinstance(ref, dict) and ref.get("ok") and mismatches(measure, ref):
+    if measure.get("ok") and isinstance(ref, dict) and ref.get("ok") and mismatches(measure, ref, deltas):
         failed.append("proportion_mismatch")
     elif measure.get("ok") and not (isinstance(ref, dict) and ref.get("ok")):
         blob[kind] = {key: measure[key] for key in ("ok", "view", "head_ratio", "thigh_ratio", "calf_ratio")}
@@ -558,15 +648,28 @@ def _raster(points: list[tuple[float, float, float]], faces: list[tuple[int, int
     return mask
 
 
-def check_glb(path: Path) -> dict:
-    """Front and side projections of a GLB. Both must pass. A fragment is the mesh check's job."""
+def _skip(view: str) -> dict:
+    return {"ok": True, "view": view, "failed": [], "reason": f"{view} not requested", **_blank_ratios()}
+
+
+def check_glb(path: Path, gates: dict) -> dict:
+    """Project a GLB and judge the views this asset listed. A fragment is the mesh check's job."""
     points, faces = mesh_check.load_primitive(path)
+    wants = {
+        "front": any(item["view"] in ("front", "any") for item in gates["measures"]),
+        "side": any(item["view"] in ("side", "any") for item in gates["measures"]),
+    }
     if not faces:
-        empty = _empty("mesh has no triangles")
-        return {"ok": False, "reason": empty["reason"], "failed": empty["failed"], "front": empty, "side": empty}
-    front = measure_mask(_raster(points, faces, 0), 180, 180, view="front")
-    side = measure_mask(_raster(points, faces, 2), 180, 180, view="side")
-    failed = [f"front {cid}" for cid in front["failed"]] + [f"side {cid}" for cid in side["failed"]]
+        front = _closed(gates, "front", "mesh has no triangles") if wants["front"] else _skip("front")
+        side = _closed(gates, "side", "mesh has no triangles") if wants["side"] else _skip("side")
+    else:
+        front = measure_mask(_raster(points, faces, 0), 180, 180, gates, view="front") if wants["front"] else _skip("front")
+        side = measure_mask(_raster(points, faces, 2), 180, 180, gates, view="side") if wants["side"] else _skip("side")
+    failed: list[str] = []
+    if wants["front"]:
+        failed.extend(f"front {cid}" for cid in front["failed"])
+    if wants["side"]:
+        failed.extend(f"side {cid}" for cid in side["failed"])
     reason = f"front {front['reason']}; side {side['reason']}"
     return {"ok": not failed, "reason": reason, "failed": failed, "front": front, "side": side}
 
@@ -664,10 +767,37 @@ def _mannequin_glb(path: Path, *, head_half: float) -> None:
     _write_glb(path, points, faces)
 
 
+def _female_spec() -> dict:
+    """Synthetic stand-in for the female mannequin's measure list. Not a production default."""
+    return {
+        "measures": [
+            {"id": "head", "view": "front", "min": 0.75, "max": 1.20},
+            {"id": "thigh", "view": "front", "max": 0.50},
+            {"id": "calf", "view": "front", "max": 0.32},
+            {"id": "ears", "view": "front"},
+            {"id": "head", "view": "side", "min": 0.90, "max": 1.90},
+            {"id": "thigh", "view": "side", "max": 0.95},
+            {"id": "calf", "view": "side", "max": 0.72},
+        ],
+        "deltas": {"head": 0.15, "thigh": 0.12, "calf": 0.10},
+    }
+
+
 def selftest() -> list[str]:
-    """A slim T-pose passes. A giant head, a thick thigh, and a thick calf fail. The glb gate uses the same bands."""
+    """A listed measure is judged. A measure the asset did not list is not."""
     bad: list[str] = []
-    slim = measure_mask(_figure(220, 320, head=40, chest=36, thigh=14, calf=10, side=False), 220, 320)
+    try:
+        gates_for({})
+        bad.append("a subject with no measures was accepted")
+    except ValueError:
+        pass
+    try:
+        gates_for({"measures": [{"id": "roof", "view": "front", "max": 1}]})
+        bad.append("an unknown measure was accepted")
+    except ValueError:
+        pass
+    gates = gates_for(_female_spec())
+    slim = measure_mask(_figure(220, 320, head=40, chest=36, thigh=14, calf=10, side=False), 220, 320, gates)
     if not slim["ok"] or slim["view"] != "front":
         bad.append(f"a slim front failed ({slim['reason']})")
     if "no_ears" in slim["failed"]:
@@ -680,9 +810,14 @@ def selftest() -> list[str]:
             eared[row + x] = 1
         for x in range(cx + 16, cx + 26):
             eared[row + x] = 1
-    heard = measure_mask(eared, 220, 320)
+    heard = measure_mask(eared, 220, 320, gates)
     if "no_ears" not in heard["failed"]:
         bad.append(f"ear lobes passed ({heard['reason']})")
+    quiet_spec = _female_spec()
+    quiet_spec["measures"] = [row for row in quiet_spec["measures"] if row["id"] != "ears"]
+    quiet = measure_mask(eared, 220, 320, gates_for(quiet_spec))
+    if "no_ears" in quiet["failed"]:
+        bad.append("ears were judged for an asset that did not list them")
     plate = Image.new("RGB", (220, 320), (199, 30, 191))
     paint = plate.load()
     for index, on in enumerate(eared):
@@ -694,7 +829,7 @@ def selftest() -> list[str]:
     with tempfile.TemporaryDirectory() as tmp:
         clipped_path = Path(tmp) / "clipped.png"
         clipped.convert("RGB").save(clipped_path)
-        fixed = measure_image(clipped_path, view="front")
+        fixed = measure_image(clipped_path, gates, view="front")
         if "no_ears" in fixed["failed"] or not fixed["ok"]:
             bad.append(f"a clipped head still failed ({fixed['reason']})")
     smooth_plate = Image.new("RGB", (220, 320), (199, 30, 191))
@@ -709,47 +844,64 @@ def selftest() -> list[str]:
     with tempfile.TemporaryDirectory() as tmp:
         calf_path = Path(tmp) / "calf.png"
         smooth_plate.save(calf_path)
-        before_calf = measure_image(calf_path, view="front")
+        before_calf = measure_image(calf_path, gates, view="front")
         narrowed, cut = slim_calves(smooth_plate, 0.7)
         if cut < 1:
             bad.append("front calves were not narrowed")
         narrow_path = Path(tmp) / "narrow.png"
         narrowed.convert("RGB").save(narrow_path)
-        after_calf = measure_image(narrow_path, view="front")
+        after_calf = measure_image(narrow_path, gates, view="front")
         if after_calf["calf_ratio"] >= before_calf["calf_ratio"]:
             bad.append(f"narrowed calves did not shrink ({after_calf['reason']})")
-    giant = measure_mask(_figure(220, 320, head=90, chest=36, thigh=14, calf=10, side=False), 220, 320)
+    giant = measure_mask(_figure(220, 320, head=90, chest=36, thigh=14, calf=10, side=False), 220, 320, gates)
     if giant["ok"] or "head_wide" not in giant["failed"]:
         bad.append(f"a giant head passed ({giant['reason']})")
-    meaty = measure_mask(_figure(220, 320, head=40, chest=36, thigh=22, calf=10, side=False), 220, 320)
+    aspect_only = gates_for({"measures": [{"id": "aspect", "view": "any", "max": 3}]})
+    giant_aspect = measure_mask(_figure(220, 320, head=90, chest=36, thigh=14, calf=10, side=False), 220, 320, aspect_only)
+    if "head_wide" in giant_aspect["failed"] or not giant_aspect["ok"]:
+        bad.append(f"a head measure ran for an aspect-only asset ({giant_aspect['reason']})")
+    tight_aspect = gates_for({"measures": [{"id": "aspect", "view": "any", "max": 0.2}]})
+    wide_aspect = measure_mask(_figure(220, 320, head=40, chest=36, thigh=14, calf=10, side=False), 220, 320, tight_aspect)
+    if "aspect_wide" not in wide_aspect["failed"] or "thigh_thick" in wide_aspect["failed"]:
+        bad.append(f"aspect did not fail on its own ({wide_aspect['reason']})")
+    meaty = measure_mask(_figure(220, 320, head=40, chest=36, thigh=22, calf=10, side=False), 220, 320, gates)
     if "thigh_thick" not in meaty["failed"]:
         bad.append(f"a thick thigh passed ({meaty['reason']})")
-    thick_calf = measure_mask(_figure(220, 320, head=40, chest=36, thigh=14, calf=16, side=False), 220, 320)
+    thick_calf = measure_mask(_figure(220, 320, head=40, chest=36, thigh=14, calf=16, side=False), 220, 320, gates)
     if "calf_thick" not in thick_calf["failed"]:
         bad.append(f"a thick calf passed ({thick_calf['reason']})")
-    side = measure_mask(_figure(220, 320, head=40, chest=32, thigh=24, calf=18, side=True), 220, 320, view="side")
+    loose_spec = _female_spec()
+    for row in loose_spec["measures"]:
+        if row["id"] == "calf" and row["view"] == "front":
+            row["max"] = 0.9
+    loose_calf = measure_mask(
+        _figure(220, 320, head=40, chest=36, thigh=14, calf=16, side=False), 220, 320, gates_for(loose_spec),
+    )
+    if "calf_thick" in loose_calf["failed"]:
+        bad.append("a looser calf bound still used the female number")
+    side = measure_mask(_figure(220, 320, head=40, chest=32, thigh=24, calf=18, side=True), 220, 320, gates, view="side")
     if not side["ok"] or side["view"] != "side":
         bad.append(f"a slim side failed ({side['reason']})")
     if "no_ears" in side["failed"]:
         bad.append("a side view was failed for front ears")
-    wide_side = measure_mask(_figure(220, 320, head=70, chest=32, thigh=24, calf=18, side=True), 220, 320, view="side")
+    wide_side = measure_mask(_figure(220, 320, head=70, chest=32, thigh=24, calf=18, side=True), 220, 320, gates, view="side")
     if "head_wide" not in wide_side["failed"]:
         bad.append(f"a wide side head passed ({wide_side['reason']})")
     drifted = dict(slim)
-    drifted["head_ratio"] = round(slim["head_ratio"] + HEAD_DELTA + 0.02, 3)
-    if not mismatches(slim, drifted):
+    drifted["head_ratio"] = round(slim["head_ratio"] + gates["deltas"]["head"] + 0.02, 3)
+    if not mismatches(slim, drifted, gates["deltas"]):
         bad.append("a drifted head matched its pair")
-    if mismatches(slim, side):
+    if mismatches(slim, side, gates["deltas"]):
         bad.append("a front was compared to a side")
     merged = merge_review({"verdict": "pass", "failed": [], "checks": []}, giant)
     if merged["verdict"] != "fail" or "head_wide" not in merged["failed"]:
         bad.append("a vision pass hid a giant head")
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        first = with_reference(root, slim)
+        first = with_reference(root, "fixture", slim, gates["deltas"])
         if not first["ok"]:
             bad.append("the first passing still was rejected")
-        second = with_reference(root, drifted)
+        second = with_reference(root, "fixture", drifted, gates["deltas"])
         if "proportion_mismatch" not in second["failed"]:
             bad.append("a later still was allowed to drift")
         plate = root / "plate.png"
@@ -761,7 +913,7 @@ def selftest() -> list[str]:
                 if mask[y * 220 + x]:
                     pix[x, y] = (235, 200, 180)
         paint.save(plate)
-        loaded = measure_image(plate, view="front")
+        loaded = measure_image(plate, gates, view="front")
         if not loaded["ok"]:
             bad.append(f"a magenta plate failed ({loaded['reason']})")
         soft = Image.new("RGBA", (220, 320), (255, 0, 255, 160))
@@ -772,16 +924,16 @@ def selftest() -> list[str]:
                     soft_pix[x, y] = (235, 200, 180, 255)
         soft_path = root / "soft.png"
         soft.save(soft_path)
-        soft_measured = measure_image(soft_path, view="front")
+        soft_measured = measure_image(soft_path, gates, view="front")
         if not soft_measured["ok"]:
             bad.append(f"a soft magenta margin failed ({soft_measured['reason']})")
         glb = root / "body.glb"
         _mannequin_glb(glb, head_half=0.20)
-        sized = check_glb(glb)
+        sized = check_glb(glb, gates)
         if not sized["ok"]:
             bad.append(f"a slim glb failed ({sized['reason']})")
         _mannequin_glb(glb, head_half=0.42)
-        huge = check_glb(glb)
+        huge = check_glb(glb, gates)
         if huge["ok"] or not any("head_wide" in item for item in huge["failed"]):
             bad.append(f"a giant-head glb passed ({huge['reason']})")
     return bad

@@ -192,6 +192,30 @@ def load_subject(repo: Path, subject_id: str) -> dict:
     return doc
 
 
+def asset_record(doc: dict) -> dict:
+    """The section that lists this asset's measures. Any subject type can carry that list."""
+    sections = doc.get("sections") if isinstance(doc.get("sections"), dict) else {}
+    preferred = ("body", "model", "dimensions", "art", "details")
+    names = [name for name in preferred if name in sections]
+    names.extend(name for name in sections if name not in names)
+    found = None
+    for name in names:
+        section = sections.get(name)
+        if not isinstance(section, dict):
+            continue
+        data = section.get("data")
+        if isinstance(data, dict) and data.get("measures"):
+            found = data
+            break
+    subject_id = doc.get("id", "subject")
+    if not isinstance(found, dict):
+        raise ValueError(f"{subject_id} has no measures")
+    measures = found.get("measures")
+    if not isinstance(measures, list) or not measures:
+        raise ValueError(f"{subject_id} has no measures")
+    return found
+
+
 def list_subjects(repo: Path) -> list[dict]:
     return list(load_index(repo)["subjects"])
 
