@@ -26,6 +26,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("pack-loco",        "media/pack_locomotion",        "Pack idle and walk frames from I2V clips"),
     ("pack-oneshot",     "media/pack_oneshot",           "Pack one-shot I2V clips into engine frames"),
     ("pack-turntable",   "media/pack_turntable",         "Pack 8-dir player sheets from turntable clips"),
+    ("pipeline",         "media/pipeline_cmd",           "Art pipeline WIP store and export (local until export)"),
     ("bible-prompt",     "media/bible_prompt",           "Bible Imagine text (--gender, --enemy ID)"),
     ("bible-normalize",  "media/bible_normalize",        "Squared 3x3 Bible to the live lock sheet"),
     ("attack-keys",      "media/attack_keyframes",       "Beat-by-beat attack stills from a Bible cell"),

@@ -1,0 +1,27 @@
+{
+  "schema": "wdb.pipeline.prompts/1",
+  "global": "Pixel-art game sprite, readable at 128 pixels, clean silhouette, flat colors, no text, no border.",
+  "types": {
+    "character": "One human character, full body, the locked front and side are the identity.",
+    "npc": "One town person, full body, readable face, no weapon unless the subject says so.",
+    "enemy": "One creature, full body, the design sheet is the identity. Weapons stay on that design.",
+    "sub-boss": "One large creature, full body, same rules as an enemy, drawn for a 2x source.",
+    "boss": "One huge creature, full body, same rules as an enemy, drawn for a 4x source.",
+    "equipment": "One held or worn object, centered, no person unless the skin section asks.",
+    "item": "One object, centered, plain background.",
+    "projectile": "One projectile in flight, centered, plain background.",
+    "decoration": "One prop, centered, plain background.",
+    "resource": "One resource pile or node, centered, plain background.",
+    "ui": "One interface plate or icon, centered.",
+    "biome": "One environment view, no characters.",
+    "building": "One building exterior, front, no characters.",
+    "vfx": "One effect burst, centered, plain background."
+  },
+  "steps": {
+    "still": "Key pose, one facing, the subject fills the frame.",
+    "four-view": "Square front, left, back, and right of the same subject, matched scale, plain background.",
+    "reconstruct": "Use the four views. Keep the silhouette and the proportions of the lock.",
+    "pose": "Lift the pose from the still. Do not invent extra limbs.",
+    "pixel": "Integer downscale to 128, snap to the subject palette, clean alpha."
+  }
+}

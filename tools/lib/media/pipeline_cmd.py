@@ -1,0 +1,472 @@
+#!/usr/bin/env python3
+"""WIP and export store for the art and content pipeline.
+
+    python tools/media.py pipeline status
+    python tools/media.py pipeline check
+    python tools/media.py pipeline list
+    python tools/media.py pipeline coverage
+    python tools/media.py pipeline new --type character --name "Town Guard"
+    python tools/media.py pipeline show ID
+    python tools/media.py pipeline link ID --rel wears --to OTHER
+    python tools/media.py pipeline mark ID --reason locked-front
+    python tools/media.py pipeline export ID [--area body]
+    python tools/media.py pipeline prompts
+    python tools/media.py pipeline review --image path.png --role mannequin-front
+    python tools/media.py pipeline review --cycle data/pipeline/wip/review/cycle.json
+    python tools/media.py pipeline correct --from review.json --role mannequin-front --workflow still.json --out still-retry.json
+    python tools/media.py pipeline tune --image path.png --role mannequin-side --workflow still.json --turns 4
+    python tools/media.py pipeline frame --image still.png --out still-framed.png
+
+WIP under data/pipeline/wip stays off Git. Export under data/pipeline/export is the game contract.
+Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under data/pipeline/wip/review.
+`tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
+At the limit it writes report.md with each in-between image. A fail is not a handoff.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
+import boot  # noqa: E402,F401
+
+import agent_log
+from media.pipeline import comfy_run, plates, store, tune, vision_review
+
+_PROMPTS = Path("data/pipeline/prompts/defaults.json")
+
+
+def _fingerprint(root: Path) -> list[tuple[str, int, int]]:
+    base = store.pipeline_root(root)
+    if not base.is_dir():
+        return []
+    rows = []
+    for path in sorted(base.rglob("*")):
+        if path.is_file():
+            stat = path.stat()
+            rows.append((path.relative_to(base).as_posix(), stat.st_size, stat.st_mtime_ns))
+    return rows
+
+
+def _print_subject(doc: dict) -> None:
+    print(json.dumps(doc, indent=2))
+
+
+def _status(root: Path) -> int:
+    wip = store.list_subjects(root)
+    export_path = store.export_dir(root) / "index.json"
+    exported = 0
+    if export_path.is_file():
+        exported = len(json.loads(export_path.read_text(encoding="utf-8")).get("subjects") or [])
+    prompts = root / _PROMPTS
+    print(f"schema {store.SCHEMA}")
+    print(f"export {store.EXPORT_SCHEMA}")
+    print(f"wip {len(wip)}")
+    print(f"exported {exported}")
+    print(f"prompts {'yes' if prompts.is_file() else 'missing'} { _PROMPTS.as_posix()}")
+    return agent_log.emit_result("INFO", wip=len(wip), exported=exported)
+
+
+def _list(root: Path) -> int:
+    rows = store.list_subjects(root)
+    for row in rows:
+        print(f"{row['id']} {row['type']} {row['name']}")
+    return agent_log.emit_result("INFO", subjects=len(rows))
+
+
+def _show(root: Path, subject_id: str) -> int:
+    _print_subject(store.load_subject(root, subject_id))
+    return agent_log.emit_result("INFO", id=subject_id)
+
+
+def _prompts(root: Path) -> int:
+    path = root / _PROMPTS
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    steps = doc.get("steps") or {}
+    print(f"global {len(doc.get('global') or '')} chars")
+    print(f"types {len(doc.get('types') or {})}")
+    print(f"steps {len(steps)}")
+    return agent_log.emit_result("INFO", steps=len(steps))
+
+
+def _check(real: Path) -> int:
+    before = _fingerprint(real)
+    with tempfile.TemporaryDirectory(prefix="wdb-pipeline-") as tmp:
+        repo = Path(tmp)
+        (repo / "assets" / "sprites" / "player" / "hero").mkdir(parents=True)
+        (repo / "assets" / "sprites" / "npcs").mkdir(parents=True)
+        data = repo / "scripts" / "data"
+        data.mkdir(parents=True)
+        (data / "talk_lines.gd").write_text(
+            'const LINES: Dictionary = {\n\t"vendor": [\n\t],\n}\nconst ONCE: Dictionary = {\n\t"receptionist": "x",\n}\n',
+            encoding="utf-8",
+        )
+        (data / "catalog.gd").write_text(
+            'const ARTS: Array = [\n\t{"id": "cinder_ember", "set": "cinder"},\n]\n',
+            encoding="utf-8",
+        )
+        hero = store.create_subject(repo, "character", "Hero")
+        vendor = store.create_subject(repo, "npc", "Vendor")
+        store.mark_hard(repo, hero["id"], "front")
+        blocked = False
+        try:
+            store.export_subject(repo, hero["id"])
+        except ValueError as exc:
+            blocked = "hard-dirty" in str(exc)
+        if not blocked:
+            print("error: hard-dirty export was allowed")
+            return agent_log.emit_result("FAIL", summary="hard-dirty export was allowed")
+        linked = store.link_subjects(repo, hero["id"], "talks", vendor["id"])
+        if not any(link["id"] == vendor["id"] for link in linked["links"]):
+            print("error: link was not stored")
+            return agent_log.emit_result("FAIL", summary="link was not stored")
+        copied = store.create_subject(repo, "character", "Hero Two", template=hero["id"])
+        if copied["template_of"] != hero["id"] or copied["dirty"]["hard"]:
+            print("error: template copy kept the lock or lost its source")
+            return agent_log.emit_result("FAIL", summary="template copy")
+        exported = store.export_subject(repo, vendor["id"])
+        if exported["schema"] != store.EXPORT_SCHEMA or exported["canvas"] != store.CANVAS:
+            print("error: export contract")
+            return agent_log.emit_result("FAIL", summary="export contract")
+        store.validate(store.load_subject(repo, hero["id"]))
+        cov = store.coverage(repo)
+        missing = {slot["id"] for slot in cov["missing"]}
+        if cov["schema"] != "wdb.pipeline.coverage/1" or cov["slots"] != 4 or missing != {"hero", "receptionist", "cinder_ember"}:
+            print(f"error: coverage slots={cov['slots']} missing={sorted(missing)}")
+            return agent_log.emit_result("FAIL", summary="coverage")
+        boss = store.create_subject(repo, "boss", "Gate")
+        if boss["draw_scale"] != 4:
+            print("error: boss draw_scale")
+            return agent_log.emit_result("FAIL", summary="draw_scale")
+        problems = vision_review.selftest() + tune.selftest() + plates.selftest()
+        if problems:
+            print("error: vision review " + "; ".join(problems))
+            return agent_log.emit_result("FAIL", summary="vision review")
+        vision_review.role_spec(vision_review.load_checks(real), "mannequin-front")
+    after = _fingerprint(real)
+    if before != after:
+        print("error: check wrote the real pipeline store")
+        return agent_log.emit_result("FAIL", summary="real store changed")
+    print("check passed on a temp store")
+    return agent_log.emit_result("PASS", summary="temp store")
+
+
+def _new(root: Path, args: object, dry: bool) -> int:
+    if dry:
+        subject_id = args.id or store.slug(args.name)
+        print(f"would create {args.type} {subject_id} {args.name}")
+        return agent_log.emit_result("INFO", summary="dry-run", id=subject_id)
+    doc = store.create_subject(root, args.type, args.name, args.id, args.template)
+    print(f"created {doc['type']} {doc['id']}")
+    return agent_log.emit_result("PASS", summary="created", id=doc["id"], type=doc["type"])
+
+
+def _link(root: Path, args: object, dry: bool) -> int:
+    if dry:
+        print(f"would link {args.id} {args.rel} -> {args.to}")
+        return agent_log.emit_result("INFO", summary="dry-run", id=args.id)
+    doc = store.link_subjects(root, args.id, args.rel, args.to)
+    print(f"linked {doc['id']} {args.rel} {args.to}")
+    return agent_log.emit_result("PASS", summary="linked", id=doc["id"])
+
+
+def _mark(root: Path, args: object, dry: bool) -> int:
+    if dry:
+        print(f"would mark {args.id} hard {args.reason}")
+        return agent_log.emit_result("INFO", summary="dry-run", id=args.id)
+    doc = store.mark_hard(root, args.id, args.reason)
+    print(f"hard {doc['id']} {args.reason}")
+    return agent_log.emit_result("PASS", summary="marked", id=doc["id"])
+
+
+def _export(root: Path, args: object, dry: bool) -> int:
+    areas = agent_log.split_list(args.area) or None
+    if dry:
+        print(f"would export {args.id} areas={areas or 'all'}")
+        return agent_log.emit_result("INFO", summary="dry-run", id=args.id)
+    doc = store.export_subject(root, args.id, areas)
+    print(f"exported {doc['type']} {doc['id']} areas={len(doc['areas'])}")
+    return agent_log.emit_result("PASS", summary="exported", id=doc["id"])
+
+
+def _coverage(root: Path, dry: bool) -> int:
+    if dry:
+        print("would scan live sprite slots and write data/pipeline/wip/coverage.json")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    doc = store.coverage(root)
+    print(f"slots {doc['slots']} open {doc['open']}")
+    for slot in doc["missing"][:12]:
+        print(f"open {slot['type']} {slot['id']}")
+    extra = len(doc["missing"]) - 12
+    if extra > 0:
+        print(f"... {extra} more open slots")
+    return agent_log.emit_result("INFO", slots=doc["slots"], open=doc["open"])
+
+
+def _review(root: Path, args: object, dry: bool) -> int:
+    jobs = _review_jobs(root, args)
+    if dry:
+        for image, role in jobs:
+            print(f"would review {image} as {role}")
+        return agent_log.emit_result("INFO", summary="dry-run", images=len(jobs))
+    out_dir = root / "data" / "pipeline" / "wip" / "review"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    failed = 0
+    for image, role in jobs:
+        doc = vision_review.review_image(root, image, role)
+        dest = out_dir / f"{image.stem}-{role}.json"
+        dest.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+        print(f"{image.name} {role} {doc['verdict'].upper()}")
+        for row in doc["checks"]:
+            mark = "PASS" if row["pass"] else "FAIL"
+            reason = f" {row['reason']}" if row["reason"] else ""
+            print(f"  {row['id']} {mark}{reason}")
+        if doc["verdict"] != "pass":
+            failed += 1
+    subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+    status = "FAIL" if failed else "PASS"
+    return agent_log.emit_result(status, summary=f"{failed} failed of {len(jobs)}", failed=failed, images=len(jobs))
+
+
+def _review_jobs(root: Path, args: object) -> list[tuple[Path, str]]:
+    if args.cycle:
+        path = Path(args.cycle)
+        if not path.is_file():
+            path = root / args.cycle
+        if not path.is_file():
+            agent_log.fail(f"no cycle file {args.cycle}")
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        rows = doc.get("images") if isinstance(doc, dict) else None
+        if not isinstance(rows, list) or not rows:
+            agent_log.fail("cycle file needs an images list")
+        jobs = []
+        for row in rows:
+            if not isinstance(row, dict) or not row.get("image") or not row.get("role"):
+                agent_log.fail("each cycle image needs image and role")
+            image = Path(row["image"])
+            if not image.is_file():
+                image = root / row["image"]
+            jobs.append((image, row["role"]))
+        return jobs
+    images = args.image or []
+    if not images:
+        agent_log.fail("--image or --cycle is required")
+    role = _need(args.role, "--role")
+    jobs = []
+    for raw in images:
+        image = Path(raw)
+        if not image.is_file():
+            image = root / raw
+        jobs.append((image, role))
+    return jobs
+
+
+def _correct(root: Path, args: object, dry: bool) -> int:
+    role = _need(args.role, "--role")
+    doc = vision_review.load_checks(root)
+    spec = vision_review.role_spec(doc, role)
+    if args.review_from:
+        path = Path(args.review_from)
+        if not path.is_file():
+            path = root / args.review_from
+        review = json.loads(path.read_text(encoding="utf-8"))
+        if review.get("role") not in (None, role):
+            agent_log.fail(f"review role is {review.get('role')}, not {role}")
+    else:
+        image = _need((args.image or [None])[0], "--image")
+        image_path = Path(image)
+        if not image_path.is_file():
+            image_path = root / image
+        if dry:
+            print(f"would review {image_path} as {role} and correct")
+            return agent_log.emit_result("INFO", summary="dry-run")
+        review = vision_review.review_image(root, image_path, role)
+        subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+    failed = review.get("failed")
+    if not isinstance(failed, list):
+        agent_log.fail("review has no failed list")
+    plan = vision_review.correction_plan(doc, spec, failed)
+    print(f"{role} {plan['action'].upper()} failed={','.join(failed) or 'none'}")
+    if plan["action"] in ("pass", "hold", "rebuild"):
+        if plan["action"] == "hold":
+            print("no automatic fix for " + ", ".join(plan.get("unfixed", [])))
+        if plan["action"] == "rebuild":
+            print("rebuild the mesh from a checklist-passing still. Do not present this render.")
+        status = "PASS" if plan["action"] == "pass" else "FAIL"
+        return agent_log.emit_result(status, summary=plan["action"], action=plan["action"])
+    workflow_path = _need(args.workflow, "--workflow")
+    src = Path(workflow_path)
+    if not src.is_file():
+        src = root / workflow_path
+    workflow = json.loads(src.read_text(encoding="utf-8"))
+    if dry:
+        print(f"would patch {src}")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    patched = vision_review.patch_workflow(workflow, plan["adds"], plan["negatives"])
+    dest = Path(args.out) if args.out else src.with_name(src.stem + "-retry.json")
+    if not dest.is_absolute():
+        dest = root / dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(patched, indent=2) + "\n", encoding="utf-8")
+    print(f"patched {dest}")
+    return agent_log.emit_result("FAIL", summary="prompt retry", action="prompt", out=str(dest))
+
+
+def _tune(root: Path, args: object, dry: bool) -> int:
+    role = _need(args.role, "--role")
+    image = _need((args.image or [None])[0], "--image")
+    workflow_path = _need(args.workflow, "--workflow")
+    turns = args.turns if args.turns is not None else tune.DEFAULT_TURNS
+    if turns < 1:
+        agent_log.fail("--turns must be at least 1")
+    image_path = Path(image)
+    if not image_path.is_file():
+        image_path = root / image
+    src = Path(workflow_path)
+    if not src.is_file():
+        src = root / workflow_path
+    if dry:
+        print(f"would tune {image_path} as {role} for {turns} turns from {src}")
+        return agent_log.emit_result("INFO", summary="dry-run", turns=turns)
+    workflow = json.loads(src.read_text(encoding="utf-8"))
+    subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+    first = None
+    if args.review_from:
+        path = Path(args.review_from)
+        if not path.is_file():
+            path = root / args.review_from
+        first = json.loads(path.read_text(encoding="utf-8"))
+        if first.get("role") not in (None, role):
+            agent_log.fail(f"review role is {first.get('role')}, not {role}")
+    dest = root / "data" / "pipeline" / "wip" / "review" / f"{image_path.stem}-tune"
+    server = args.server or comfy_run.SERVER
+
+    def review(path: Path) -> dict:
+        comfy_run.free(server)
+        doc = vision_review.review_image(root, path, role)
+        subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+        return doc
+
+    def generate(patched: dict, turn: int, target: Path) -> Path:
+        print(f"generate turn {turn}")
+        saved = comfy_run.run(server, patched, target)
+        try:
+            comfy_run.free(server)
+        except ValueError as exc:
+            print(f"warn: Comfy did not free ({exc})")
+        return saved
+
+    report = tune.run_tune(
+        root, image_path, role, workflow, dest, review, generate,
+        turns=turns, first_review=first,
+    )
+    print(f"{role} {report['status'].upper()} turns={report['turns']}/{report['limit']}")
+    for step in report["steps"]:
+        failed = ",".join(step["failed"]) or "none"
+        print(f"  turn {step['turn']} {step['verdict'].upper()} failed={failed} action={step['action']}")
+    report_path = dest / "report.md"
+    if report["status"] == "pass":
+        print(f"passed {dest / report['image']}")
+        return agent_log.emit_result("PASS", summary="tune passed", role=role, turns=report["turns"], image=str(dest / report["image"]))
+    print(f"progress report {report_path}")
+    return agent_log.emit_result("FAIL", summary=report["status"], role=role, turns=report["turns"], report=str(report_path))
+
+
+def _frame(root: Path, args: object, dry: bool) -> int:
+    image = _need((args.image or [None])[0], "--image")
+    out = _need(args.out, "--out")
+    src = Path(image)
+    if not src.is_file():
+        src = root / image
+    dest = Path(out)
+    if not dest.is_absolute():
+        dest = root / dest
+    if dry:
+        print(f"would frame {src} -> {dest}")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    info = plates.frame_file(src, dest)
+    print(f"framed {dest} height={info['height']} canvas={info['canvas']}")
+    return agent_log.emit_result("PASS", summary="framed", height=info["height"], out=str(dest))
+
+
+def _need(value: str | None, flag: str) -> str:
+    if not value:
+        agent_log.fail(f"{flag} is required")
+    return value
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser(
+        "WIP and export store for the art and content pipeline.",
+        writes=True,
+        verbose=True,
+    )
+    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, or frame.")
+    ap.add_argument("id", nargs="?", default=None, help="Subject id for show, link, mark, and export.")
+    ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
+    ap.add_argument("--name", help="Display name for new. The id is the slug unless --id is set.")
+    ap.add_argument("--template", default=None, help="For new: copy this subject id. Same type only.")
+    ap.add_argument("--rel", default=None, help="Relation name for link, for example wears or talks.")
+    ap.add_argument("--to", default=None, help="Other subject id for link.")
+    ap.add_argument("--reason", default=None, help="Hard-dirty reason for mark, for example locked-front.")
+    ap.add_argument("--area", action="append", default=[], help="Section id to export. Repeat for several. Default: every section.")
+    ap.add_argument("--image", action="append", default=[], help="Image to review. Repeat to review several with the same --role.")
+    ap.add_argument("--role", default=None, help="Vision checklist role, for example mannequin-front.")
+    ap.add_argument("--cycle", default=None, help="JSON file with an images list of {image, role}.")
+    ap.add_argument("--workflow", default=None, help="Still workflow to patch when a locked-image review fails.")
+    ap.add_argument("--out", default=None, help="Patched workflow path for correct.")
+    ap.add_argument("--from", dest="review_from", default=None, help="Existing review JSON. Skips a second model call.")
+    ap.add_argument("--turns", type=int, default=None, help="Generation limit for tune. Default 4. The limit writes a progress report.")
+    ap.add_argument("--server", default=None, help="Local ComfyUI for tune. Default http://127.0.0.1:8188.")
+    args = ap.parse_args(argv)
+    root = agent_log.resolve_root(args)
+    dry = bool(args.dry_run)
+    try:
+        if args.cmd == "status":
+            return _status(root)
+        if args.cmd == "check":
+            return _check(root)
+        if args.cmd == "list":
+            return _list(root)
+        if args.cmd == "coverage":
+            return _coverage(root, dry)
+        if args.cmd == "prompts":
+            return _prompts(root)
+        if args.cmd == "new":
+            args.type = _need(args.type, "--type")
+            args.name = _need(args.name, "--name")
+            return _new(root, args, dry)
+        if args.cmd == "show":
+            return _show(root, _need(args.id, "id"))
+        if args.cmd == "link":
+            _need(args.id, "id")
+            _need(args.rel, "--rel")
+            _need(args.to, "--to")
+            return _link(root, args, dry)
+        if args.cmd == "mark":
+            _need(args.id, "id")
+            _need(args.reason, "--reason")
+            return _mark(root, args, dry)
+        if args.cmd == "export":
+            _need(args.id, "id")
+            return _export(root, args, dry)
+        if args.cmd == "review":
+            return _review(root, args, dry)
+        if args.cmd == "correct":
+            return _correct(root, args, dry)
+        if args.cmd == "tune":
+            return _tune(root, args, dry)
+        if args.cmd == "frame":
+            return _frame(root, args, dry)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return agent_log.emit_result("FAIL", summary=str(exc))
+    agent_log.fail(f"unknown command {args.cmd}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(agent_log.guarded(main))

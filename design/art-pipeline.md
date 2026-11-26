@@ -15,6 +15,7 @@ This file is the door. Do not run `tools/media.py bible-prompt` unless you are w
 | canon bible, layer law, quality floor | `design/art-bible.md` |
 | identity sketch, template wording, reliability notes | `design/art-bible-character.md` |
 | enemy facings, prop hands, mirror swap, quiver and staff | `design/art-bible-enemy.md` |
+| staged generators, wip subjects | `design/content-pipeline.md` |
 
 I2V stays in Grok Build unless the User says otherwise. I2V stays in a slice thread (not Bot notes, PC offload, or smoke tests). One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
 

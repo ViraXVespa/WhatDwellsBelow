@@ -1,0 +1,75 @@
+{
+  "schema": "wdb.pipeline.vision-checks/1",
+  "model": "qwen3-vl:8b",
+  "fix_library": {
+    "one_figure": {"add": "One full-body character only.", "negative": "extra person, cropped body"},
+    "no_brows": {"add": "No eyebrows. Eyebrows are a later piece.", "negative": "eyebrows"},
+    "no_nose": {"add": "No nose. The nose is a later piece.", "negative": "nose"},
+    "no_mouth": {"add": "No mouth and no lips. The mouth is a later piece.", "negative": "mouth, lips"},
+    "no_face": {"add": "No face on this view.", "negative": "face, eyes, eyebrows, nose, mouth"},
+    "no_hair": {"add": "Bald. No hair and no circlet.", "negative": "hair, braid, circlet"},
+    "no_cloth": {"add": "No neckband, no cloth, no armor, no pants, and no boots.", "negative": "neckband, scarf, scarf tail, hanging cloth, armor, pants, boots"},
+    "feet": {"add": "Two distinct feet, not blocks or slabs.", "negative": "block feet, slabs, rectangular feet"},
+    "arms": {"add": "Two arms a little away from the torso.", "negative": "missing arm, extra arm, fused arm"}
+  },
+  "roles": {
+    "mannequin-front": {
+      "flow": "prompt",
+      "about": "Front of the clean base body for a customizable player. Eyes may stay. Eyebrows, the nose, and the mouth are later pieces.",
+      "allow": "Eyes may be present. A bald head and bare skin are correct. Do not fail those.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person, standing, facing the camera."},
+        {"id": "no_brows", "fail_if": "Eyebrows are drawn. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose is drawn. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are drawn. The mouth is a later customization."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-side": {
+      "flow": "prompt",
+      "about": "Strict side of the same clean base body. Feet together, not a walk step.",
+      "allow": "One eye in profile may be present. Bare skin and a bald head are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person in a strict side view."},
+        {"id": "no_brows", "fail_if": "An eyebrow is drawn. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose sticks out. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are drawn. The mouth is a later customization."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are a walk step, or a large block, slab, or rectangle instead of a foot."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-back": {
+      "flow": "prompt",
+      "about": "Strict back of the same clean base body. No face and no hanging cloth.",
+      "allow": "A bald back of the head and bare skin are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person seen from the back."},
+        {"id": "no_face", "fail_if": "A face, eyes, eyebrows, a nose, or a mouth is visible."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots. Cloth hanging down the back fails."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-mesh": {
+      "flow": "rebuild",
+      "about": "A render of the 3D base body. Same rules as the front still. Eyes may stay. Eyebrows, the nose, and the mouth must not be modeled.",
+      "allow": "Eyes may be present. Low-poly facets are allowed. A bald head and bare skin are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person, upright, facing the camera."},
+        {"id": "no_brows", "fail_if": "Eyebrows are modeled or painted. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose is modeled or painted. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are modeled or painted. The mouth is a later customization."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    }
+  }
+}

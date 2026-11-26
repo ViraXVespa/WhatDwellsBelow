@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "wdb.export/1",
+  "title": "Pipeline export, the game contract",
+  "type": "object",
+  "required": ["schema", "id", "type", "name", "canvas", "areas", "frames", "sheets", "rules"],
+  "properties": {
+    "schema": {"const": "wdb.export/1"},
+    "id": {"type": "string"},
+    "type": {"type": "string"},
+    "name": {"type": "string", "minLength": 1},
+    "canvas": {"const": 128},
+    "draw_scale": {"type": "number"},
+    "areas": {"type": "array", "items": {"type": "string"}},
+    "sections": {"type": "object"},
+    "frames": {"type": "object"},
+    "sheets": {"type": "array"},
+    "paperdoll": {"type": "array"},
+    "rules": {"type": "array"},
+    "dialog": {"type": "array"},
+    "audio": {"type": "array"},
+    "stats": {"type": "object"}
+  }
+}
