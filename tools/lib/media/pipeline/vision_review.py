@@ -110,16 +110,31 @@ def _ask(host: str, model: str, image: Path, text: str, timeout: float) -> str:
         }],
         "options": {"temperature": 0},
     }
-    req = urllib.request.Request(
-        host.rstrip("/") + "/api/chat",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            body = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.URLError as exc:
-        raise ValueError(f"Ollama at {host} did not answer ({exc}). Free Comfy before qwen3-vl:8b.") from exc
+    raw = json.dumps(payload).encode("utf-8")
+    last: Exception | None = None
+    body: dict | None = None
+    for attempt in (1, 2):
+        req = urllib.request.Request(
+            host.rstrip("/") + "/api/chat",
+            data=raw,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+            last = None
+            break
+        except TimeoutError as exc:
+            last = exc
+            print(f"review timed out, retry {attempt}", flush=True)
+        except urllib.error.URLError as exc:
+            if isinstance(exc.reason, TimeoutError):
+                last = exc
+                print(f"review timed out, retry {attempt}", flush=True)
+                continue
+            raise ValueError(f"Ollama at {host} did not answer ({exc}). Free Comfy before qwen3-vl:8b.") from exc
+    if last is not None or body is None:
+        raise ValueError(f"Ollama at {host} timed out ({last}). Free Comfy before qwen3-vl:8b.") from last
     message = body.get("message") if isinstance(body, dict) else None
     content = message.get("content") if isinstance(message, dict) else None
     if not isinstance(content, str) or not content.strip():
@@ -127,7 +142,7 @@ def _ask(host: str, model: str, image: Path, text: str, timeout: float) -> str:
     return content
 
 
-def review_image(root: Path, image: Path, role: str, *, host: str = HOST, model: str = MODEL, timeout: float = 240) -> dict:
+def review_image(root: Path, image: Path, role: str, *, host: str = HOST, model: str = MODEL, timeout: float = 480) -> dict:
     if not image.is_file():
         raise ValueError(f"no image {image}")
     doc = load_checks(root)

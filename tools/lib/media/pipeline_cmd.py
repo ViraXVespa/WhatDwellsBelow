@@ -365,6 +365,7 @@ def _tune(root: Path, args: object, dry: bool) -> int:
     server = args.server or comfy_run.SERVER
 
     def review(path: Path) -> dict:
+        print(f"review {path.name}", flush=True)
         comfy_run.free(server)
         doc = vision_review.review_image(root, path, role)
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
@@ -467,23 +468,27 @@ def _body(root: Path, args: object, dry: bool) -> int:
 
 
 def _smooth(root: Path, args: object, dry: bool) -> int:
-    """Tune the four T-pose bible stills, then build a body from the front if they pass."""
+    """Generate four T-pose bible stills, tune each, then build a body from the front."""
     gen = root / "data" / "pipeline" / "wip" / "gen"
-    missing = [row["slot"] for row in smooth.VIEWS if not (gen / row["pixel"]).is_file()]
-    if missing:
-        print("error: missing standing lock for " + ", ".join(missing))
-        return agent_log.emit_result("FAIL", summary="missing still")
     if dry:
         print("would tune four T-pose bible stills, then build a body from the front")
         return agent_log.emit_result("INFO", summary="dry-run")
+    server = args.server or comfy_run.SERVER
+    subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
     still_turns = args.turns if args.turns is not None else tune.DEFAULT_TURNS
     framed: dict[str, Path] = {}
     for view in smooth.VIEWS:
         slot = view["slot"]
         start = gen / f"female-mannequin-tpose-{slot}-src.png"
-        start.write_bytes((gen / view["pixel"]).read_bytes())
         workflow_path = gen / f"female-mannequin-tpose-{slot}.json"
-        workflow_path.write_text(json.dumps(smooth.workflow_for(slot), indent=2) + "\n", encoding="utf-8")
+        workflow = smooth.workflow_for(slot)
+        workflow_path.write_text(json.dumps(workflow, indent=2) + "\n", encoding="utf-8")
+        print(f"generate {slot} first", flush=True)
+        comfy_run.run(server, workflow, start)
+        try:
+            comfy_run.free(server)
+        except ValueError as exc:
+            print(f"warn: Comfy did not free ({exc})")
         args.role = view["role"]
         args.image = [str(start)]
         args.workflow = str(workflow_path)
