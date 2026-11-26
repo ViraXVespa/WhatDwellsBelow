@@ -29,6 +29,7 @@ notes_exempt:
   - design/build-simulation.md
   - design/tasks/README.md
   - design/refs/README.md
+  - design/refs/unified-content-pipeline/system-description.md
   - design/benchmarks/frame-time.md
   - design/benchmarks/menu-open.md
   - design/benchmarks/web-perf.md
