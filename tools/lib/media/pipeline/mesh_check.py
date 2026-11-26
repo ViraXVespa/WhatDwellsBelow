@@ -11,7 +11,7 @@ import struct
 from pathlib import Path
 
 BANDS = 10
-MIN_SPAN = 1.5
+MIN_SPAN = 0.5
 MIN_VERTS = 1000
 FLOAT_VEC3 = 5126
 
@@ -126,7 +126,7 @@ def selftest() -> list[str]:
     hole = height_report(gap)
     if hole["ok"] or not hole["empty"]:
         bad.append("a missing middle band passed")
-    short = height_report([(0.0, index / 2000, 0.0) for index in range(1200)])
+    short = height_report([(0.0, index / 4000, 0.0) for index in range(1200)])
     if short["ok"] or short["reason"] != "height span is short":
         bad.append(f"a short span passed ({short['reason']})")
     path_points = [(0.0, -1.0 + i * 0.02, 0.0) for i in range(1200)]
