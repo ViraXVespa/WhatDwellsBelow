@@ -6,7 +6,7 @@
     "no_brows": {"add": "No eyebrows. Eyebrows are a later piece.", "negative": "eyebrows"},
     "no_nose": {"add": "No nose. The nose is a later piece.", "negative": "nose"},
     "no_mouth": {"add": "No mouth and no lips. The mouth is a later piece.", "negative": "mouth, lips"},
-    "no_ears": {"add": "Erase every ear. The head silhouette has no bumps on the left or the right.", "negative": "ears, ear lobes, ear bumps, ear cartilage"},
+    "no_ears": {"add": "Cut off both ears. Each side of the head is one continuous curve from the crown down to the neck.", "negative": "visible ear, ear attached to the jaw, lobed skull"},
     "breasts": {"add": "A female chest with breasts. The front of the torso is not a flat board.", "negative": "flat chest, missing breasts, flat plane on the torso"},
     "head_round": {"add": "The head is a rounded oval, not a square or a box.", "negative": "square head, box head, rectangular head"},
     "no_plane": {"add": "No flat plane or panel on the front of the torso.", "negative": "flat plane, flat panel, flat board on the chest"},

@@ -207,6 +207,32 @@ def _chest_width(spans: list[int], runs: list[list[int]], top: int, bottom: int,
     return _median(widths) if widths else 0
 
 
+def _ear_lobes(spans: list[int], top: int, neck_y: int) -> bool:
+    """True when the lower head widens again. A smooth oval has one width peak."""
+    span = neck_y - top
+    if span < 16:
+        return False
+    cut = top + int(span * 0.55)
+    upper = [spans[y] for y in range(top, cut) if spans[y] > 0]
+    lower = [spans[y] for y in range(cut, neck_y) if spans[y] > 0]
+    if not upper or not lower:
+        return False
+    skull = max(upper)
+    if skull < 8:
+        return False
+    bulge = max(3, int(skull * 0.025))
+    if max(lower) >= skull + bulge:
+        return True
+    valley = skull
+    rebound = 0
+    for width in lower:
+        if width < valley:
+            valley = width
+        rebound = max(rebound, width - valley)
+    tuck = skull - valley
+    return tuck >= max(2, int(skull * 0.012)) and rebound >= bulge
+
+
 def _torso_band(runs: list[list[int]], neck_y: int, top: int, height: int) -> int:
     """Chest depth when the arms are not outstretched in this view."""
     y1 = top + int(height * 0.48)
@@ -313,7 +339,16 @@ def measure_mask(mask: bytearray, w: int, h: int, *, view: str | None = None) ->
     thigh_px, split = _limb(runs, top, height, 0.62, 0.70)
     calf_px, _calf_split = _limb(runs, top, height, 0.80, 0.88)
     kind = view if view in ("front", "side") else ("front" if split else "side")
-    return _pack(kind, head_px, chest_px, thigh_px, calf_px)
+    packed = _pack(kind, head_px, chest_px, thigh_px, calf_px)
+    if kind == "front" and _ear_lobes(spans, top, head_end):
+        failed = list(packed["failed"])
+        if "no_ears" not in failed:
+            failed.append("no_ears")
+        packed["failed"] = failed
+        packed["ok"] = False
+        reason = str(packed["reason"])
+        packed["reason"] = reason + (",no_ears" if " fail " in reason else " fail no_ears")
+    return packed
 
 
 def measure_image(path: Path, *, view: str | None = None) -> dict:
@@ -532,6 +567,19 @@ def selftest() -> list[str]:
     slim = measure_mask(_figure(220, 320, head=40, chest=36, thigh=14, calf=10, side=False), 220, 320)
     if not slim["ok"] or slim["view"] != "front":
         bad.append(f"a slim front failed ({slim['reason']})")
+    if "no_ears" in slim["failed"]:
+        bad.append(f"a smooth head was called ears ({slim['reason']})")
+    eared = bytearray(_figure(220, 320, head=40, chest=36, thigh=14, calf=10, side=False))
+    cx = 110
+    for y in range(50, 64):
+        row = y * 220
+        for x in range(cx - 26, cx - 16):
+            eared[row + x] = 1
+        for x in range(cx + 16, cx + 26):
+            eared[row + x] = 1
+    heard = measure_mask(eared, 220, 320)
+    if "no_ears" not in heard["failed"]:
+        bad.append(f"ear lobes passed ({heard['reason']})")
     giant = measure_mask(_figure(220, 320, head=90, chest=36, thigh=14, calf=10, side=False), 220, 320)
     if giant["ok"] or "head_wide" not in giant["failed"]:
         bad.append(f"a giant head passed ({giant['reason']})")
@@ -544,6 +592,8 @@ def selftest() -> list[str]:
     side = measure_mask(_figure(220, 320, head=40, chest=32, thigh=24, calf=18, side=True), 220, 320, view="side")
     if not side["ok"] or side["view"] != "side":
         bad.append(f"a slim side failed ({side['reason']})")
+    if "no_ears" in side["failed"]:
+        bad.append("a side view was failed for front ears")
     wide_side = measure_mask(_figure(220, 320, head=70, chest=32, thigh=24, calf=18, side=True), 220, 320, view="side")
     if "head_wide" not in wide_side["failed"]:
         bad.append(f"a wide side head passed ({wide_side['reason']})")

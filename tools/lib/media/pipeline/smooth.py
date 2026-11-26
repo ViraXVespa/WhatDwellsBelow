@@ -13,6 +13,7 @@ _SKIN = (
     "Smooth continuous skin, like a clean sculpt, not a pixel drawing and not a voxel. "
     "The head has no ears. Ears are a later piece. "
     "The sides of the head are a smooth unbroken oval, with no ear lobes and no ear bumps. "
+    "The widest part of the head is the upper skull, never a lobe beside the jaw. "
     "A female chest with breasts. A narrow waist and an hourglass figure. "
     "The abdomen is slim. The hips are wider than the waist. "
     "The torso is a continuous curve, not a flat plane and not a thick tube. "
@@ -26,7 +27,8 @@ _POSE = (
     "The feet are apart, flat on the ground, toes forward, and do not touch. "
 )
 NEGATIVE = (
-    "ears, ear lobes, ear bumps, ear cartilage, square head, box head, rectangular head, flat chest, missing breasts, "
+    "ears, ear lobes, ear bumps, ear cartilage, visible ear, ear attached to the jaw, lobed skull, "
+    "square head, box head, rectangular head, flat chest, missing breasts, "
     "flat plane, flat panel, thick abdomen, barrel torso, wide waist, no waist, rectangular torso, "
     "bent elbows, hanging arms, A-pose, arms down, idle stance, hands on hips, "
     "arm pointing forward, arm in front of the chest, pointing pose, "
