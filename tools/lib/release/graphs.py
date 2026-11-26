@@ -141,58 +141,72 @@ def ensure_gdhealth() -> Path:
 
 
 def run_gdhealth(root: Path, out_dir: Path) -> None:
+    """Run gdhealth health (default bundle location) and copy all artifacts."""
     bin_path = ensure_gdhealth()
-    tmp = out_dir / "_gdhealth_tmp"
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True)
+    default_bundle = root / "reports" / "code-health"
 
-    cmd = [
-        str(bin_path),
-        "graph",
-        "--root",
-        str(root),
-        "--format",
-        "emerge-html",
-        "--output",
-        str(tmp),
-    ]
+    # Clean any previous run
+    if default_bundle.exists():
+        shutil.rmtree(default_bundle)
+
+    cmd = [str(bin_path), "health", "--root", str(root)]
     subprocess.run(cmd, check=True, cwd=root)
 
-    # Locate HTML
+    if not default_bundle.is_dir():
+        raise SystemExit(f"gdhealth health did not produce {default_bundle}")
+
+    # Copy the entire bundle into out_dir/game/
+    game_dir = out_dir / "game"
+    if game_dir.exists():
+        shutil.rmtree(game_dir)
+    shutil.copytree(default_bundle, game_dir)
+
+    # Surface the main HTML at the top level for the index link.
     html = None
     for candidate in (
-        tmp / "index.html",
-        tmp / "game.html",
-        tmp / "browser" / "index.html",
-        next(tmp.glob("*.html"), None),
-        next(tmp.rglob("index.html"), None),
+        game_dir / "browser" / "index.html",
+        game_dir / "index.html",
+        next(game_dir.rglob("index.html"), None),
+        next(game_dir.glob("*.html"), None),
     ):
         if candidate and candidate.is_file():
             html = candidate
             break
-    if html is None:
-        raise SystemExit(f"gdhealth produced no HTML under {tmp}")
-
-    # Locate graph JSON
-    graph_json = None
-    for candidate in (
-        tmp / "graph.json",
-        tmp / "browser" / "graph.json",
-        next(tmp.rglob("graph.json"), None),
-    ):
-        if candidate and candidate.is_file():
-            graph_json = candidate
-            break
-
-    dest_html = out_dir / "game.html"
-    shutil.copy2(html, dest_html)
-    if graph_json:
-        shutil.copy2(graph_json, out_dir / "game.json")
-        print(f"game graph -> {dest_html} + game.json")
+    if html:
+        shutil.copy2(html, out_dir / "game.html")
     else:
-        print(f"game graph -> {dest_html} (no graph.json found)")
-    shutil.rmtree(tmp)
+        # Fallback: generate the emerge-html viewer separately.
+        html_tmp = out_dir / "_gdhealth_html"
+        if html_tmp.exists():
+            shutil.rmtree(html_tmp)
+        html_tmp.mkdir(parents=True)
+        subprocess.run(
+            [
+                str(bin_path),
+                "graph",
+                "--root",
+                str(root),
+                "--format",
+                "emerge-html",
+                "--output",
+                str(html_tmp),
+            ],
+            check=True,
+            cwd=root,
+        )
+        for candidate in (
+            html_tmp / "index.html",
+            html_tmp / "browser" / "index.html",
+            next(html_tmp.rglob("*.html"), None),
+        ):
+            if candidate and candidate.is_file():
+                shutil.copy2(candidate, out_dir / "game.html")
+                break
+        shutil.rmtree(html_tmp)
+
+    # Remove the default bundle so we don't leave reports/ in the repo.
+    shutil.rmtree(default_bundle)
+    print(f"game health bundle -> {game_dir} (and game.html)")
 
 
 def _python_imports(path: Path) -> list[str]:
@@ -257,7 +271,11 @@ a { display: block; margin: 1rem 0; font-size: 1.2rem; }
 <p>Interactive file-dependency graphs generated on each Pages deploy.</p>
 <a href="game.html">Game (GDScript)</a>
 <a href="tools.html">Tools (Python)</a>
-<p>Machine-readable: <a href="game.json">game.json</a>, <a href="tools.json">tools.json</a></p>
+<p>Machine-readable:</p>
+<ul>
+  <li><a href="game/graph.json">game/graph.json</a> (and the rest of the health bundle under game/)</li>
+  <li><a href="tools.json">tools.json</a></li>
+</ul>
 </body>
 </html>
 """,
