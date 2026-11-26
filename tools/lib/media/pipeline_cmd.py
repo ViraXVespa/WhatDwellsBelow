@@ -375,6 +375,15 @@ def _tune(root: Path, args: object, dry: bool) -> int:
         if role in proportion.STILL_ROLES:
             forced = "side" if role == "mannequin-tpose-side" else "front"
             measured = proportion.with_reference(root, proportion.measure_image(path, view=forced))
+            if forced == "front" and list(measured.get("failed") or []) == ["no_ears"]:
+                from PIL import Image
+
+                with Image.open(path) as plate:
+                    clipped, removed = proportion.clip_ear_lobes(plate)
+                if removed:
+                    clipped.convert("RGB").save(path)
+                    measured = proportion.with_reference(root, proportion.measure_image(path, view=forced))
+                    print(f"clipped ear lobes {removed}px", flush=True)
             print(
                 f"proportion {measured['reason']}",
                 flush=True,

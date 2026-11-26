@@ -43,7 +43,7 @@ def _median(values: list[int]) -> int:
 
 
 def _mask(im: Image.Image) -> tuple[bytearray, int, int]:
-    """Foreground from alpha, or from distance to the border color."""
+    """Foreground is distance from the border color. A clear border also drops alpha under 128."""
     rgba = im.convert("RGBA")
     w, h = rgba.size
     pix = rgba.load()
@@ -57,23 +57,18 @@ def _mask(im: Image.Image) -> tuple[bytearray, int, int]:
             if pix[0, y][3] < 128 or pix[w - 1, y][3] < 128:
                 border_clear = True
                 break
-    mask = bytearray(w * h)
-    if border_clear:
-        for y in range(h):
-            row = y * w
-            for x in range(w):
-                if pix[x, y][3] >= 128:
-                    mask[row + x] = 1
-        return _largest(mask, w, h), w, h
     samples = [pix[x, 0][:3] for x in range(w)]
     samples.extend(pix[x, h - 1][:3] for x in range(w))
     samples.extend(pix[0, y][:3] for y in range(h))
     samples.extend(pix[w - 1, y][:3] for y in range(h))
     bg = tuple(_median([sample[channel] for sample in samples]) for channel in range(3))
     limit = BG_DISTANCE * BG_DISTANCE
+    mask = bytearray(w * h)
     for y in range(h):
         row = y * w
         for x in range(w):
+            if border_clear and pix[x, y][3] < 128:
+                continue
             red, green, blue = pix[x, y][:3]
             dist = (red - bg[0]) ** 2 + (green - bg[1]) ** 2 + (blue - bg[2]) ** 2
             if dist > limit:
@@ -231,6 +226,52 @@ def _ear_lobes(spans: list[int], top: int, neck_y: int) -> bool:
         rebound = max(rebound, width - valley)
     tuck = skull - valley
     return tuck >= max(2, int(skull * 0.012)) and rebound >= bulge
+
+
+def clip_ear_lobes(im: Image.Image) -> tuple[Image.Image, int]:
+    """Cut lower-head lobes back to the skull curve. A smooth head is unchanged."""
+    rgba = im.convert("RGBA")
+    mask, w, h = _mask(rgba)
+    spans, _runs = _row_stats(mask, w, h)
+    occupied = [y for y in range(h) if spans[y]]
+    if len(occupied) < 16:
+        return rgba, 0
+    top = occupied[0]
+    _head, neck_y, _flared = _head_width(spans, top, occupied[-1] - top + 1)
+    if not _ear_lobes(spans, top, neck_y):
+        return rgba, 0
+    cut = top + int((neck_y - top) * 0.55)
+    upper = [y for y in range(top, cut) if spans[y] > 0]
+    if not upper:
+        return rgba, 0
+    skull = max(spans[y] for y in upper)
+    skull_y = max(y for y in upper if spans[y] == skull)
+
+    def edges(y: int) -> tuple[int, int]:
+        row = y * w
+        xs = [x for x in range(w) if mask[row + x]]
+        return xs[0], xs[-1]
+
+    allow_left, allow_right = edges(skull_y)
+    pix = rgba.load()
+    background = pix[0, 0]
+    changed = 0
+    for y in range(skull_y + 1, neck_y):
+        row = y * w
+        xs = [x for x in range(w) if mask[row + x]]
+        if not xs:
+            continue
+        left, right = xs[0], xs[-1]
+        if left > allow_left:
+            allow_left = left
+        if right < allow_right:
+            allow_right = right
+        for x in xs:
+            if x < allow_left or x > allow_right:
+                pix[x, y] = background
+                mask[row + x] = 0
+                changed += 1
+    return rgba, changed
 
 
 def _torso_band(runs: list[list[int]], neck_y: int, top: int, height: int) -> int:
@@ -580,6 +621,29 @@ def selftest() -> list[str]:
     heard = measure_mask(eared, 220, 320)
     if "no_ears" not in heard["failed"]:
         bad.append(f"ear lobes passed ({heard['reason']})")
+    plate = Image.new("RGB", (220, 320), (199, 30, 191))
+    paint = plate.load()
+    for index, on in enumerate(eared):
+        if on:
+            paint[index % 220, index // 220] = (235, 200, 180)
+    clipped, removed = clip_ear_lobes(plate)
+    if removed < 8:
+        bad.append("ear lobes were not clipped")
+    with tempfile.TemporaryDirectory() as tmp:
+        clipped_path = Path(tmp) / "clipped.png"
+        clipped.convert("RGB").save(clipped_path)
+        fixed = measure_image(clipped_path, view="front")
+        if "no_ears" in fixed["failed"] or not fixed["ok"]:
+            bad.append(f"a clipped head still failed ({fixed['reason']})")
+    smooth_plate = Image.new("RGB", (220, 320), (199, 30, 191))
+    smooth_paint = smooth_plate.load()
+    smooth_mask = _figure(220, 320, head=40, chest=36, thigh=14, calf=10, side=False)
+    for index, on in enumerate(smooth_mask):
+        if on:
+            smooth_paint[index % 220, index // 220] = (235, 200, 180)
+    _unchanged, smooth_removed = clip_ear_lobes(smooth_plate)
+    if smooth_removed:
+        bad.append("a smooth head was clipped")
     giant = measure_mask(_figure(220, 320, head=90, chest=36, thigh=14, calf=10, side=False), 220, 320)
     if giant["ok"] or "head_wide" not in giant["failed"]:
         bad.append(f"a giant head passed ({giant['reason']})")
@@ -626,6 +690,17 @@ def selftest() -> list[str]:
         loaded = measure_image(plate, view="front")
         if not loaded["ok"]:
             bad.append(f"a magenta plate failed ({loaded['reason']})")
+        soft = Image.new("RGBA", (220, 320), (255, 0, 255, 160))
+        soft_pix = soft.load()
+        for y in range(320):
+            for x in range(220):
+                if mask[y * 220 + x]:
+                    soft_pix[x, y] = (235, 200, 180, 255)
+        soft_path = root / "soft.png"
+        soft.save(soft_path)
+        soft_measured = measure_image(soft_path, view="front")
+        if not soft_measured["ok"]:
+            bad.append(f"a soft magenta margin failed ({soft_measured['reason']})")
         glb = root / "body.glb"
         _mannequin_glb(glb, head_half=0.20)
         sized = check_glb(glb)
