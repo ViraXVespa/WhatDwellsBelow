@@ -42,9 +42,10 @@ PROMPT = (
     + _SKIN
 )
 _SIDE = (
-    "T-pose seen from the side. One arm points straight at the camera and the other points straight away. "
-    "Do not point an arm the way the face points. No arm in front of the chest. "
-    "Both arms are horizontal and the elbows are locked. The legs are straight, not a walk step. "
+    "T-pose seen from the side. The near hand is large because it reaches toward the camera. "
+    "The far arm is a thin horizontal line going back. No arm follows the face. "
+    "No arm in front of the chest. Both arms are horizontal and the elbows are locked. "
+    "The legs are straight, not a walk step. "
 )
 SIDE_LEFT = (
     "Full-body female game mannequin, strict orthographic side view, face pointing to screen right. "
@@ -161,7 +162,7 @@ def selftest() -> list[str]:
         bad.append("front prompt is not a gapped T-pose")
     if "screen right" not in workflow_for("left")["4"]["inputs"]["prompt"]:
         bad.append("left prompt does not face screen right")
-    if "at the camera" not in workflow_for("left")["4"]["inputs"]["prompt"]:
+    if "toward the camera" not in workflow_for("left")["4"]["inputs"]["prompt"]:
         bad.append("left prompt does not aim an arm at the camera")
     if "screen left" not in workflow_for("right")["4"]["inputs"]["prompt"]:
         bad.append("right prompt does not face screen left")
