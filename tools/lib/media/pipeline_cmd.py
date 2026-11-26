@@ -26,7 +26,7 @@ Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under d
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
 `mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
 `body` builds a Hunyuan3D surface-net mesh from one front plate. The 32-grid path is not used.
-`smooth` tunes a smooth mesh-source still, then builds that body if the still passes.
+`smooth` tunes four T-pose bible stills, then builds the body from the front if they pass. Idle is a later animation.
 A fit failure retries one smaller octree. A fragmented mesh stops. The limit writes a progress report. A fail is not a handoff.
 """
 from __future__ import annotations
@@ -156,10 +156,16 @@ def _check(real: Path) -> int:
             + body.selftest()
             + smooth.selftest()
         )
+        doc = vision_review.load_checks(real)
+        library = doc.get("fix_library") or {}
+        for role, spec in doc["roles"].items():
+            vision_review.role_spec(doc, role)
+            for row in spec["checks"]:
+                if row["id"] not in library:
+                    problems.append(f"{role} check {row['id']} has no fix")
         if problems:
             print("error: vision review " + "; ".join(problems))
             return agent_log.emit_result("FAIL", summary="vision review")
-        vision_review.role_spec(vision_review.load_checks(real), "mannequin-front")
     after = _fingerprint(real)
     if before != after:
         print("error: check wrote the real pipeline store")
@@ -461,33 +467,45 @@ def _body(root: Path, args: object, dry: bool) -> int:
 
 
 def _smooth(root: Path, args: object, dry: bool) -> int:
-    """Tune a smooth mesh-source still from the pixel front, then build a body if it passes."""
-    pixel = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-front.png"
-    if not pixel.is_file():
-        print(f"error: missing pixel front {pixel}")
-        return agent_log.emit_result("FAIL", summary="missing front")
+    """Tune the four T-pose bible stills, then build a body from the front if they pass."""
+    gen = root / "data" / "pipeline" / "wip" / "gen"
+    missing = [row["slot"] for row in smooth.VIEWS if not (gen / row["pixel"]).is_file()]
+    if missing:
+        print("error: missing standing lock for " + ", ".join(missing))
+        return agent_log.emit_result("FAIL", summary="missing still")
     if dry:
-        print("would tune a smooth mesh-source still, then build a body if that still passes")
+        print("would tune four T-pose bible stills, then build a body from the front")
         return agent_log.emit_result("INFO", summary="dry-run")
-    start = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-smooth-src.png"
-    start.write_bytes(pixel.read_bytes())
-    workflow_path = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-smooth.json"
-    workflow_path.write_text(json.dumps(smooth.front_workflow(), indent=2) + "\n", encoding="utf-8")
     still_turns = args.turns if args.turns is not None else tune.DEFAULT_TURNS
-    args.role = "mannequin-smooth"
-    args.image = [str(start)]
-    args.workflow = str(workflow_path)
-    args.turns = still_turns
-    code = _tune(root, args, False)
-    if code != 0:
-        return code
-    dest = root / "data" / "pipeline" / "wip" / "review" / "female-mannequin-smooth-src-tune"
-    report = json.loads((dest / "report.json").read_text(encoding="utf-8"))
-    passed = dest / str(report.get("image") or "")
-    framed = root / "data" / "pipeline" / "wip" / "gen" / "female-mannequin-smooth-framed.png"
-    plates.frame_file(passed, framed)
-    print(f"framed {framed}")
-    args.front = str(framed)
+    framed: dict[str, Path] = {}
+    for view in smooth.VIEWS:
+        slot = view["slot"]
+        start = gen / f"female-mannequin-tpose-{slot}-src.png"
+        start.write_bytes((gen / view["pixel"]).read_bytes())
+        workflow_path = gen / f"female-mannequin-tpose-{slot}.json"
+        workflow_path.write_text(json.dumps(smooth.workflow_for(slot), indent=2) + "\n", encoding="utf-8")
+        args.role = view["role"]
+        args.image = [str(start)]
+        args.workflow = str(workflow_path)
+        args.turns = still_turns
+        args.review_from = None
+        code = _tune(root, args, False)
+        if code != 0:
+            return code
+        dest = root / "data" / "pipeline" / "wip" / "review" / f"{start.stem}-tune"
+        report = json.loads((dest / "report.json").read_text(encoding="utf-8"))
+        if report.get("status") != "pass":
+            print(f"error: {slot} tune exited clean with status {report.get('status')}")
+            return agent_log.emit_result("FAIL", summary="tune status")
+        passed = dest / str(report.get("image") or "")
+        plate = gen / f"female-mannequin-tpose-{slot}-framed.png"
+        plates.frame_file(passed, plate)
+        print(f"framed {plate}")
+        framed[slot] = plate
+    args.front = str(framed["front"])
+    args.left = str(framed["left"])
+    args.back = str(framed["back"])
+    args.right = str(framed["right"])
     args.turns = len(body.STAGES)
     return _body(root, args, False)
 
