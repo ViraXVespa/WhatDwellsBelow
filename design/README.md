@@ -23,8 +23,6 @@ Do not open this table as a boot list. Open a topic when `design/routes.yaml` na
 
 Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`.
 
-Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in a Phase 4 emit when that is the goal.
-
 ## Build procedures
 
 The Build front door is `grok-build.md`; `build-job-cycle.md` owns the work cycle and context breaks. Conditional guides: `build-handoff.md` (surveys/queues), `build-references.md` (image grants/MCPs), `build-week-start.md` (release routine), `pc-offload.md` (Windows runners), `isolated-media.md` (generation). Tool flags and technical recipes stay in the catalogs and prove standard; these are not another boot read list.
@@ -72,4 +70,3 @@ Per-build player notes are flat `design/changelog/{label}.md`. They are not topi
 - Put numbers in `tunables.md`, not buried in paragraphs.
 - Do not collapse `design/` into one document.
 - When live scripts are split, update `design/code-map.md` in the same slice.
-- Do not treat `design/reuse-map.md` as an owners encyclopedia. Web / chat writes that brief; Bot does not log extracts there.

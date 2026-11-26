@@ -624,3 +624,29 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(agent_log.guarded(main))
+
+
+def changelog_state(root: Path | None = None) -> str:
+    """Return 'new' or 'append\n- bullets...' based on newest file vs version.json."""
+    root = root or Path.cwd()
+    cl_dir = root / "design" / "changelog"
+    if not cl_dir.exists():
+        return "new"
+    files = sorted(cl_dir.glob("*.md"), key=lambda p: p.stem, reverse=True)
+    if not files:
+        return "new"
+    newest = files[0]
+    ver = root / "version.json"
+    if ver.exists():
+        try:
+            import json
+            label = json.loads(ver.read_text(encoding="utf-8")).get("label", "")
+            if label and newest.stem != label:
+                return "new"
+        except Exception:
+            pass
+    body = newest.read_text(encoding="utf-8")
+    bullets = [ln for ln in body.splitlines() if ln.startswith("- ")]
+    if not bullets:
+        return "new"
+    return "append\n" + "\n".join(bullets)

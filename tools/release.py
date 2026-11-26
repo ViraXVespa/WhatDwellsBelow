@@ -21,6 +21,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("week-start",       "release/week_start",             "Week start from main: epoch, branches, locks, logs"),
     ("week-pin",         "release/week_pin",               "Catalog row, notes and local tag for a week (--web N, --build N)"),
     ("ci-archive",       "release/ci_archive",             "CI: pin web + build weeks when a release changelog merges"),
+    ("graphs",           "release/graphs",                 "Generate interactive file-dependency graphs for game (gdhealth) and tools (codegraph)"),
 ]
 
 if __name__ == "__main__":

@@ -80,6 +80,13 @@ static func collect(host: Node) -> Array:
 		var at := Vector2(p.x, p.z)
 		if at.distance_to(pc) > rng and not plant_no_range:
 			continue
+		var x: int = floori(p.x)
+		var y: int = floori(p.z)
+		var w: int = int(host.data.w)
+		if x < 0 or y < 0 or x >= w or y >= int(host.data.h):
+			continue
+		if host.visited[Gen.idx(x, y, w)] == 0:
+			continue
 		var k: int = ViewS.ENEMY
 		if n.get("is_boss") == true:
 			k = ViewS.BOSS

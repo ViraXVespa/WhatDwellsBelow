@@ -7,7 +7,7 @@ One open task is one `<id>.md` in this folder: Web parks, Build handoffs and uni
 
 ## Fields
 
-The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, `resume` (how a fresh session picks it up: a Build task's is the launch line the User runs from the repo root, `python tools/slice.py open AREA --task ID`, never run by Build; a Web or Bot task's is one plain line; every tool it names must exist, `docs.py task check`), optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`; any Build task may carry `units:` labels without dots (its own queue, run by `slice.py start --task ID`, ticked by `--unit-done`) with `done: none`. The body is free sections.
+The lines above the first `## ` heading: `id` (the file name), `owner` (build, web or bot: who picks it up), `status` (open, active or blocked), `done-when`, optional `needs` (ids it waits on; set while blocked). Build handoffs also carry `area`, `door`, `job`, `units` and `done`; any Build task may carry `units:` labels without dots (its own queue, run by `slice.py start --task ID`, ticked by `--unit-done`) with `done: none`. The body is free sections.
 
 ## Lifecycle
 
@@ -25,9 +25,11 @@ id | owner | status | title | needs
 --- | --- | --- | --- | ---
 hub-2d-bake | build | open | Bake hub visuals to 2D sprites / viewport texture while preserving identical look and feel | -
 modular-voxel-walk-proof | build | open | Modular 3D walk proof (Blender + bake) | -
+open-code-skills | build | open |  | -
 perf-sweep | build | open | Perf sweep - one continuous hub/dungeon run at 60+ FPS, desktop and web | -
 splash-platform-prompt | build | open | Start splash: platform prompt + click/tap to continue | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
+unified-content-pipeline | build | open | WDB Unified Art & Content Pipeline – Standing Task | -
 ai-scaling | web | open | Range-limit and share LOS / separation checks | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 build-gather-mcp | bot | open | Build gather agent and wdb MCP: live verification (P6) and rollout | -
