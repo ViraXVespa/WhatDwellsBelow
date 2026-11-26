@@ -16,11 +16,13 @@
     python tools/media.py pipeline correct --from review.json --role mannequin-front --workflow still.json --out still-retry.json
     python tools/media.py pipeline tune --image path.png --role mannequin-side --workflow still.json --turns 4
     python tools/media.py pipeline frame --image still.png --out still-framed.png
+    python tools/media.py pipeline mesh --glb coarse.glb
 
 WIP under data/pipeline/wip stays off Git. Export under data/pipeline/export is the game contract.
 Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under data/pipeline/wip/review.
 `tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
+`mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
 """
 from __future__ import annotations
 
@@ -34,7 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
 import boot  # noqa: E402,F401
 
 import agent_log
-from media.pipeline import comfy_run, plates, store, tune, vision_review
+from media.pipeline import comfy_run, mesh_check, plates, store, tune, vision_review
 
 _PROMPTS = Path("data/pipeline/prompts/defaults.json")
 
@@ -141,7 +143,7 @@ def _check(real: Path) -> int:
         if boss["draw_scale"] != 4:
             print("error: boss draw_scale")
             return agent_log.emit_result("FAIL", summary="draw_scale")
-        problems = vision_review.selftest() + tune.selftest() + plates.selftest()
+        problems = vision_review.selftest() + tune.selftest() + plates.selftest() + mesh_check.selftest()
         if problems:
             print("error: vision review " + "; ".join(problems))
             return agent_log.emit_result("FAIL", summary="vision review")
@@ -392,6 +394,26 @@ def _frame(root: Path, args: object, dry: bool) -> int:
     return agent_log.emit_result("PASS", summary="framed", height=info["height"], out=str(dest))
 
 
+def _mesh(root: Path, args: object, dry: bool) -> int:
+    raw = _need(args.glb, "--glb")
+    path = Path(raw)
+    if not path.is_file():
+        path = root / raw
+    if dry:
+        print(f"would measure {path}")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    report = mesh_check.check_glb(path)
+    print(
+        f"verts={report['verts']} span={report['span']} "
+        f"empty={report['empty'] or 'none'} bands={report['bands']}"
+    )
+    if report["ok"]:
+        print("coarse mesh has no height gap. Shape may run. This is not a look approval.")
+        return agent_log.emit_result("PASS", summary="connected", verts=report["verts"], span=report["span"])
+    print(f"coarse mesh failed: {report['reason']}. Do not present it.")
+    return agent_log.emit_result("FAIL", summary=report["reason"], verts=report["verts"], span=report["span"])
+
+
 def _need(value: str | None, flag: str) -> str:
     if not value:
         agent_log.fail(f"{flag} is required")
@@ -404,7 +426,7 @@ def main(argv: list[str] | None = None) -> int:
         writes=True,
         verbose=True,
     )
-    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, or frame.")
+    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, or mesh.")
     ap.add_argument("id", nargs="?", default=None, help="Subject id for show, link, mark, and export.")
     ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
     ap.add_argument("--name", help="Display name for new. The id is the slug unless --id is set.")
@@ -421,6 +443,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--from", dest="review_from", default=None, help="Existing review JSON. Skips a second model call.")
     ap.add_argument("--turns", type=int, default=None, help="Generation limit for tune. Default 4. The limit writes a progress report.")
     ap.add_argument("--server", default=None, help="Local ComfyUI for tune. Default http://127.0.0.1:8188.")
+    ap.add_argument("--glb", default=None, help="Coarse glb for mesh. An empty height band fails.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = bool(args.dry_run)
@@ -461,6 +484,8 @@ def main(argv: list[str] | None = None) -> int:
             return _tune(root, args, dry)
         if args.cmd == "frame":
             return _frame(root, args, dry)
+        if args.cmd == "mesh":
+            return _mesh(root, args, dry)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return agent_log.emit_result("FAIL", summary=str(exc))

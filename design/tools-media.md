@@ -31,7 +31,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 | `media.py pack-loco` | Pack idle, transition and walk frames from accepted I2V clips. | D | `--help` | N |
 | `media.py pack-oneshot` | Pack accepted one-shot clips into engine frames. | D | `--help` | N |
 | `media.py pack-turntable` | Pack eight-facing player sheets with shared scale and torso pin. | D | `--help` | N |
-| `media.py pipeline` | WIP and export store for the art pipeline. `check` round-trips a temp repo and does not touch the real WIP. `tune` reviews and regenerates a locked still until the checklist passes or `--turns` (default 4) is hit, then writes a progress report with the in-between images. Summary: `pipeline`. | D | `--help` | N |
+| `media.py pipeline` | WIP and export store for the art pipeline. `check` round-trips a temp repo and does not touch the real WIP. `tune` reviews and regenerates a locked still until the checklist passes or `--turns` (default 4) is hit, then writes a progress report with the in-between images. `mesh` fails a coarse glb that has an empty height band. Summary: `pipeline`. | D | `--help` | N |
 | `media.py plate-remap` | Remap only the outside opaque plate to exact magenta; preserve drawn RGB farther from the border reference. | D | `--help` | N |
 | `media.py gear-icons` | Key approved gear source plates into live icons; `--check` fails missing expected sources/outputs. | D | `--help` | N |
 | `media.py shop-icons` | Slice/key the approved shop-icon sheet into source plates and 64px icons. | D | `--help` | N |
@@ -77,8 +77,9 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/media/pipeline/store.py` | WIP and export JSON for `media.py pipeline`. WIP stays gitignored. |
 | `lib/media/pipeline/vision_review.py` | Qwen3-VL pass/fail checklists and one-step prompt correction. |
 | `lib/media/pipeline/tune.py` | Turn-limited review, correct, and regenerate loop. The limit writes the in-between images. |
+| `lib/media/pipeline/mesh_check.py` | Read a coarse glb. An empty height band fails. A pass only allows shape. |
 | `lib/media/pipeline/comfy_run.py` | Queue one local Comfy workflow and fetch its saved image. |
-| `lib/media/pipeline/plates.py` | Frame a keyed mannequin view on a black square. The figure's long side is 1/1.1 of the canvas. |
+| `lib/media/pipeline/plates.py` | Frame a keyed mannequin view on a black square. The figure's long side is 1/1.1 of the canvas. Specks outside the main mass are dropped. |
 | `lib/media/clip_fx.py` | Clip framing/effects; compose/tracking/promo modules own specs and overlays. The clip guide describes supported recipes. |
 | `lib/media/anim_review_lib.py` | Shared Animation Browser ledger/brief readers and writers; supports non-Bot commands |
 | `data/attack_keyframes_log.json` | Sidecar data for the tool of the same stem |
