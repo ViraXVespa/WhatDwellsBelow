@@ -27,7 +27,10 @@ from media.pipeline import mesh_check
 
 # One limb over the ribcage. Front and back share FRONT. Left and right share SIDE.
 FRONT = {"head_min": 0.75, "head_max": 1.20, "thigh_max": 0.50, "calf_max": 0.32}
-SIDE = {"head_min": 0.90, "head_max": 1.60, "thigh_max": 0.95, "calf_max": 0.72}
+# A round head is deeper than a slim ribcage. Front head_max 1.20 on a chest
+# about 0.64 as deep as it is wide is a side ratio near 1.88. The giant mesh
+# is still over 2.6 and fails.
+SIDE = {"head_min": 0.90, "head_max": 1.90, "thigh_max": 0.95, "calf_max": 0.72}
 HEAD_DELTA = 0.15
 THIGH_DELTA = 0.12
 CALF_DELTA = 0.10
@@ -268,6 +271,65 @@ def clip_ear_lobes(im: Image.Image) -> tuple[Image.Image, int]:
             allow_right = right
         for x in xs:
             if x < allow_left or x > allow_right:
+                pix[x, y] = background
+                mask[row + x] = 0
+                changed += 1
+    return rgba, changed
+
+
+def slim_calves(im: Image.Image, factor: float = 0.72) -> tuple[Image.Image, int]:
+    """Narrow the front calf columns. Thighs and feet stay. A side view is unchanged."""
+    if not 0.4 <= factor <= 1:
+        raise ValueError("calf factor must sit between 0.4 and 1")
+    rgba = im.convert("RGBA")
+    mask, w, h = _mask(rgba)
+    spans, runs = _row_stats(mask, w, h)
+    occupied = [y for y in range(h) if spans[y]]
+    if len(occupied) < 16:
+        return rgba, 0
+    top, bottom = occupied[0], occupied[-1]
+    height = bottom - top + 1
+    _thigh, split = _limb(runs, top, height, 0.62, 0.70)
+    if not split:
+        return rgba, 0
+    pix = rgba.load()
+    background = pix[0, 0]
+    changed = 0
+    y_lo = top + int(height * 0.72)
+    y_hi = top + int(height * 0.93)
+    for y in range(y_lo, min(y_hi, h)):
+        if not runs[y]:
+            continue
+        along = (y - y_lo) / max(1, y_hi - y_lo)
+        if along < 0.25:
+            scale = 1 - (1 - factor) * (along / 0.25)
+        elif along > 0.75:
+            scale = 1 - (1 - factor) * ((1 - along) / 0.25)
+        else:
+            scale = factor
+        row = y * w
+        xs = [x for x in range(w) if mask[row + x]]
+        if len(xs) < 4:
+            continue
+        gaps = [(xs[i + 1] - xs[i], i) for i in range(len(xs) - 1)]
+        _gap, cut = max(gaps)
+        legs = [xs[: cut + 1], xs[cut + 1 :]]
+        painted: set[int] = set()
+        for leg in legs:
+            if len(leg) < 2:
+                continue
+            center = (leg[0] + leg[-1]) / 2
+            half = (leg[-1] - leg[0]) / 2 * scale
+            x0 = max(0, int(round(center - half)))
+            x1 = min(w - 1, int(round(center + half)))
+            for x in range(x0, x1 + 1):
+                src = int(round(center + (x - center) / scale))
+                src = min(leg[-1], max(leg[0], src))
+                pix[x, y] = pix[src, y]
+                mask[row + x] = 1
+                painted.add(x)
+        for x in xs:
+            if x not in painted:
                 pix[x, y] = background
                 mask[row + x] = 0
                 changed += 1
@@ -644,6 +706,18 @@ def selftest() -> list[str]:
     _unchanged, smooth_removed = clip_ear_lobes(smooth_plate)
     if smooth_removed:
         bad.append("a smooth head was clipped")
+    with tempfile.TemporaryDirectory() as tmp:
+        calf_path = Path(tmp) / "calf.png"
+        smooth_plate.save(calf_path)
+        before_calf = measure_image(calf_path, view="front")
+        narrowed, cut = slim_calves(smooth_plate, 0.7)
+        if cut < 1:
+            bad.append("front calves were not narrowed")
+        narrow_path = Path(tmp) / "narrow.png"
+        narrowed.convert("RGB").save(narrow_path)
+        after_calf = measure_image(narrow_path, view="front")
+        if after_calf["calf_ratio"] >= before_calf["calf_ratio"]:
+            bad.append(f"narrowed calves did not shrink ({after_calf['reason']})")
     giant = measure_mask(_figure(220, 320, head=90, chest=36, thigh=14, calf=10, side=False), 220, 320)
     if giant["ok"] or "head_wide" not in giant["failed"]:
         bad.append(f"a giant head passed ({giant['reason']})")
