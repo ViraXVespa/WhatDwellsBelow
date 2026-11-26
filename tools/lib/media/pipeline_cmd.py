@@ -17,12 +17,15 @@
     python tools/media.py pipeline tune --image path.png --role mannequin-side --workflow still.json --turns 4
     python tools/media.py pipeline frame --image still.png --out still-framed.png
     python tools/media.py pipeline mesh --glb coarse.glb
+    python tools/media.py pipeline body
 
 WIP under data/pipeline/wip stays off Git. Export under data/pipeline/export is the game contract.
 Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under data/pipeline/wip/review.
 `tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
 `mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
+`body` builds a Hunyuan3D surface-net mesh from the four framed plates. The 32-grid path is not used.
+A fit failure retries one smaller octree. The limit writes a progress report. A fail is not a handoff.
 """
 from __future__ import annotations
 
@@ -36,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
 import boot  # noqa: E402,F401
 
 import agent_log
-from media.pipeline import comfy_run, mesh_check, plates, store, tune, vision_review
+from media.pipeline import body, comfy_run, mesh_check, plates, store, tune, vision_review
 
 _PROMPTS = Path("data/pipeline/prompts/defaults.json")
 
@@ -143,7 +146,7 @@ def _check(real: Path) -> int:
         if boss["draw_scale"] != 4:
             print("error: boss draw_scale")
             return agent_log.emit_result("FAIL", summary="draw_scale")
-        problems = vision_review.selftest() + tune.selftest() + plates.selftest() + mesh_check.selftest()
+        problems = vision_review.selftest() + tune.selftest() + plates.selftest() + mesh_check.selftest() + body.selftest()
         if problems:
             print("error: vision review " + "; ".join(problems))
             return agent_log.emit_result("FAIL", summary="vision review")
@@ -414,6 +417,40 @@ def _mesh(root: Path, args: object, dry: bool) -> int:
     return agent_log.emit_result("FAIL", summary=report["reason"], verts=report["verts"], span=report["span"])
 
 
+def _body(root: Path, args: object, dry: bool) -> int:
+    slots = {
+        "front": args.front or "data/pipeline/wip/gen/female-mannequin-front-framed.png",
+        "left": args.left or "data/pipeline/wip/gen/female-mannequin-left-framed.png",
+        "back": args.back or "data/pipeline/wip/gen/female-mannequin-back-framed.png",
+        "right": args.right or "data/pipeline/wip/gen/female-mannequin-right-framed.png",
+    }
+    views: dict[str, Path] = {}
+    for slot, raw in slots.items():
+        path = Path(raw)
+        if not path.is_file():
+            path = root / raw
+        if not path.is_file():
+            print(f"error: missing {slot} plate {raw}")
+            return agent_log.emit_result("FAIL", summary=f"missing {slot}")
+        views[slot] = path
+    dest = root / "data" / "pipeline" / "wip" / "review" / "female-hunyuan-body"
+    turns = args.turns if args.turns is not None else len(body.STAGES)
+    server = args.server or comfy_run.SERVER
+    if dry:
+        print(f"would build a surface-net body from {', '.join(views)} turns={turns}")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    report = body.run_body(root, views, dest, server=server, turns=turns)
+    print(f"body {report['status'].upper()} turns={report['turns']}/{report['limit']}")
+    for step in report["steps"]:
+        detail = step.get("error") or step.get("mesh") or ""
+        print(f"  turn {step['turn']} octree={step['octree']} action={step['action']} {detail}")
+    if report["status"] == "pass":
+        print(f"connected {report['glb']}. This is not a look approval.")
+        return agent_log.emit_result("PASS", summary="connected", glb=report["glb"], turns=report["turns"])
+    print(f"progress report {dest / 'report.md'}. Do not present the mesh.")
+    return agent_log.emit_result("FAIL", summary="body", turns=report["turns"], report=str(dest / "report.md"))
+
+
 def _need(value: str | None, flag: str) -> str:
     if not value:
         agent_log.fail(f"{flag} is required")
@@ -426,7 +463,7 @@ def main(argv: list[str] | None = None) -> int:
         writes=True,
         verbose=True,
     )
-    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, or mesh.")
+    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, or body.")
     ap.add_argument("id", nargs="?", default=None, help="Subject id for show, link, mark, and export.")
     ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
     ap.add_argument("--name", help="Display name for new. The id is the slug unless --id is set.")
@@ -444,6 +481,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--turns", type=int, default=None, help="Generation limit for tune. Default 4. The limit writes a progress report.")
     ap.add_argument("--server", default=None, help="Local ComfyUI for tune. Default http://127.0.0.1:8188.")
     ap.add_argument("--glb", default=None, help="Coarse glb for mesh. An empty height band fails.")
+    ap.add_argument("--front", default=None, help="Framed front plate for body. Default: the locked mannequin front.")
+    ap.add_argument("--left", default=None, help="Framed left plate for body.")
+    ap.add_argument("--back", default=None, help="Framed back plate for body.")
+    ap.add_argument("--right", default=None, help="Framed right plate for body.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = bool(args.dry_run)
@@ -486,6 +527,8 @@ def main(argv: list[str] | None = None) -> int:
             return _frame(root, args, dry)
         if args.cmd == "mesh":
             return _mesh(root, args, dry)
+        if args.cmd == "body":
+            return _body(root, args, dry)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return agent_log.emit_result("FAIL", summary=str(exc))
