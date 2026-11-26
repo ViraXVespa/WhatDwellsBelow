@@ -1,8 +1,9 @@
 """Build the mannequin body with Hunyuan3D surface net, not the 32-grid structure.
 
-The locked plates are already framed. This uploads them, runs the Comfy
-blueprint settings, and checks the glb for a height gap. If that setting does
-not fit on the card, one smaller octree is tried. A fail stays in the report.
+The locked front plate is the view. Four views at once produced a fragment
+cloud, so this graph is the single-view blueprint. If that setting does not
+fit on the card, one smaller octree is tried. A fragmented mesh stops.
+A fail stays in the report.
 """
 from __future__ import annotations
 
@@ -12,13 +13,12 @@ from pathlib import Path
 from media.pipeline import comfy_run, mesh_check
 
 CKPT = "hunyuan_3d_v2.1.safetensors"
-# Blueprint first (latent 4096, octree 256, 30 steps, cfg 5, surface net).
-# The second row is the fit retry. It is not the 32-grid path.
+# Single front plate, blueprint settings. The second row is only for a fit failure.
+# Four-view conditioning was tried once and came back as fragments. It is not a stage.
 STAGES = (
     {"latent": 4096, "octree": 256, "steps": 30, "cfg": 5.0, "threshold": 0.6},
     {"latent": 3072, "octree": 128, "steps": 30, "cfg": 5.0, "threshold": 0.6},
 )
-VIEWS = ("front", "left", "back", "right")
 
 
 def _fits_failure(message: str) -> bool:
@@ -38,34 +38,30 @@ def build_workflow(
     threshold: float,
     prefix: str,
 ) -> dict:
-    """API graph. View order is front, left, back, right, matching the Hunyuan embeds."""
-    missing = [slot for slot in VIEWS if slot not in names]
-    if missing:
-        raise ValueError("body views missing " + ",".join(missing))
+    """API graph for one front plate. This is the Comfy Hunyuan 2.1 blueprint."""
+    if "front" not in names:
+        raise ValueError("body views missing front")
     graph: dict[str, dict] = {
         "1": {
             "class_type": "ImageOnlyCheckpointLoader",
             "inputs": {"ckpt_name": CKPT},
         },
+        "10": {
+            "class_type": "LoadImage",
+            "inputs": {"image": names["front"]},
+        },
+        "20": {
+            "class_type": "CLIPVisionEncode",
+            "inputs": {"clip_vision": ["1", 1], "image": ["10", 0], "crop": "center"},
+        },
+        "30": {
+            "class_type": "Hunyuan3Dv2Conditioning",
+            "inputs": {"clip_vision_output": ["20", 0]},
+        },
         "40": {
             "class_type": "EmptyLatentHunyuan3Dv2",
             "inputs": {"resolution": latent, "batch_size": 1},
         },
-    }
-    encode_ids = {"front": "20", "left": "21", "back": "22", "right": "23"}
-    load_ids = {"front": "10", "left": "11", "back": "12", "right": "13"}
-    for slot in VIEWS:
-        graph[load_ids[slot]] = {
-            "class_type": "LoadImage",
-            "inputs": {"image": names[slot]},
-        }
-        graph[encode_ids[slot]] = {
-            "class_type": "CLIPVisionEncode",
-            "inputs": {"clip_vision": ["1", 1], "image": [load_ids[slot], 0], "crop": "center"},
-        }
-    graph["30"] = {
-        "class_type": "Hunyuan3Dv2ConditioningMultiView",
-        "inputs": {slot: [encode_ids[slot], 0] for slot in VIEWS},
     }
     graph["50"] = {
         "class_type": "KSampler",
@@ -126,7 +122,7 @@ def _write_report(dest: Path, report: dict) -> None:
         if step.get("mesh"):
             lines.append(
                 f"mesh: {step['mesh']} verts={step.get('verts')} span={step.get('span')} "
-                f"empty={step.get('empty') or 'none'}"
+                f"share={step.get('share')} empty={step.get('empty') or 'none'}"
             )
         lines.append(f"action: {step['action']}")
         lines.append("")
@@ -148,7 +144,7 @@ def run_body(
     """Upload the four plates and try the stages. Stop when the mesh connects or the limit hits."""
     limit = max(1, min(turns, len(STAGES)))
     comfy_run.free(server)
-    uploaded = {slot: comfy_run.upload_image(server, views[slot]) for slot in VIEWS}
+    uploaded = {"front": comfy_run.upload_image(server, views["front"])}
     steps: list[dict] = []
     status = "fail"
     kept: Path | None = None
@@ -173,6 +169,7 @@ def run_body(
             step["verts"] = measured["verts"]
             step["span"] = measured["span"]
             step["empty"] = measured["empty"]
+            step["share"] = measured.get("share")
             if measured["ok"]:
                 final = dest / "body.glb"
                 final.write_bytes(glb.read_bytes())
@@ -207,17 +204,16 @@ def run_body(
 def selftest() -> list[str]:
     """The graph is the surface-net blueprint, and the retry is a smaller octree."""
     bad: list[str] = []
-    names = {slot: f"{slot}.png" for slot in VIEWS}
-    graph = build_workflow(names, seed=3, prefix="wdb-gen/body", **STAGES[0])
+    graph = build_workflow({"front": "front.png"}, seed=3, prefix="wdb-gen/body", **STAGES[0])
     blob = json.dumps(graph)
-    if "VaeDecodeStructureTrellis2" in blob or "resolution\": 32" in blob:
-        bad.append("body graph still uses the 32-grid structure path")
+    if "VaeDecodeStructureTrellis2" in blob or "Hunyuan3Dv2ConditioningMultiView" in blob:
+        bad.append("body graph is not the single-view blueprint")
     if graph["70"]["inputs"]["algorithm"] != "surface net":
         bad.append("body graph is not surface net")
     if graph["60"]["inputs"]["octree_resolution"] != STAGES[0]["octree"]:
         bad.append("body graph dropped the blueprint octree")
     loads = [node for node in graph.values() if node["class_type"] == "LoadImage"]
-    if len(loads) != 4:
+    if len(loads) != 1:
         bad.append(f"body graph has {len(loads)} views")
     if STAGES[1]["octree"] >= STAGES[0]["octree"] or STAGES[1]["latent"] >= STAGES[0]["latent"]:
         bad.append("the fit retry is not smaller")
@@ -226,8 +222,8 @@ def selftest() -> list[str]:
     if _fits_failure("node Hunyuan missing"):
         bad.append("a missing node was treated as a fit failure")
     try:
-        build_workflow({"front": "f.png"}, seed=1, prefix="x", **STAGES[0])
-        bad.append("a three-view graph was accepted")
+        build_workflow({}, seed=1, prefix="x", **STAGES[0])
+        bad.append("a graph with no front plate was accepted")
     except ValueError:
         pass
     return bad

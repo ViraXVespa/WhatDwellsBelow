@@ -24,8 +24,8 @@ Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under d
 `tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
 `mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
-`body` builds a Hunyuan3D surface-net mesh from the four framed plates. The 32-grid path is not used.
-A fit failure retries one smaller octree. The limit writes a progress report. A fail is not a handoff.
+`body` builds a Hunyuan3D surface-net mesh from the locked front plate. The 32-grid path is not used.
+A fit failure retries one smaller octree. A fragmented mesh stops. The limit writes a progress report. A fail is not a handoff.
 """
 from __future__ import annotations
 
@@ -411,7 +411,7 @@ def _mesh(root: Path, args: object, dry: bool) -> int:
         f"empty={report['empty'] or 'none'} bands={report['bands']}"
     )
     if report["ok"]:
-        print("coarse mesh has no height gap. Shape may run. This is not a look approval.")
+        print("mesh is one piece. This is not a look approval.")
         return agent_log.emit_result("PASS", summary="connected", verts=report["verts"], span=report["span"])
     print(f"coarse mesh failed: {report['reason']}. Do not present it.")
     return agent_log.emit_result("FAIL", summary=report["reason"], verts=report["verts"], span=report["span"])

@@ -1,8 +1,9 @@
-"""Decide whether a coarse Pixal mesh is one connected body.
+"""Decide whether a mesh is one body.
 
 Height in the glTF file is Y. Blender shows that axis as Z after import.
 An internal empty band is a hole, the failure that left the head floating.
-A pass means the coarse mesh can go on to shape. It is not a look approval.
+A mesh whose largest piece holds under 60 percent of the vertices is fragmented.
+A pass means the mesh can go on. It is not a look approval.
 """
 from __future__ import annotations
 
@@ -13,7 +14,11 @@ from pathlib import Path
 BANDS = 10
 MIN_SPAN = 0.5
 MIN_VERTS = 1000
+MIN_SHARE = 0.6
 FLOAT_VEC3 = 5126
+UNSIGNED_BYTE = 5121
+UNSIGNED_SHORT = 5123
+UNSIGNED_INT = 5125
 
 
 def height_report(points: list[tuple[float, float, float]], *, bands: int = BANDS) -> dict:
@@ -50,8 +55,7 @@ def height_report(points: list[tuple[float, float, float]], *, bands: int = BAND
     }
 
 
-def load_positions(path: Path) -> list[tuple[float, float, float]]:
-    """Read POSITION from the first mesh in a binary glTF file."""
+def _chunks(path: Path) -> tuple[dict, bytes]:
     data = path.read_bytes()
     if data[:4] != b"glTF":
         raise ValueError(f"{path.name} is not a glb")
@@ -65,27 +69,85 @@ def load_positions(path: Path) -> list[tuple[float, float, float]]:
     bin_len, bin_type = struct.unpack_from("<I4s", data, blob_at)
     if bin_type != b"BIN\x00":
         raise ValueError(f"{path.name} has no binary chunk")
-    blob = data[blob_at + 8:blob_at + 8 + bin_len]
+    return doc, data[blob_at + 8:blob_at + 8 + bin_len]
+
+
+def _accessor_bytes(doc: dict, blob: bytes, accessor_index: int) -> tuple[dict, int, int]:
+    accessor = doc["accessors"][accessor_index]
+    view = doc["bufferViews"][accessor["bufferView"]]
+    start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+    return accessor, start, view.get("byteStride", 0)
+
+
+def load_positions(path: Path) -> list[tuple[float, float, float]]:
+    """Read POSITION from the first mesh in a binary glTF file."""
+    points, _faces = load_primitive(path)
+    return points
+
+
+def load_primitive(path: Path) -> tuple[list[tuple[float, float, float]], list[tuple[int, int, int]]]:
+    """Read positions and triangles. A point cloud has an empty triangle list."""
+    doc, blob = _chunks(path)
     try:
         primitive = doc["meshes"][0]["primitives"][0]
-        accessor = doc["accessors"][primitive["attributes"]["POSITION"]]
-        view = doc["bufferViews"][accessor["bufferView"]]
+        accessor, start, stride = _accessor_bytes(doc, blob, primitive["attributes"]["POSITION"])
     except (KeyError, IndexError) as exc:
         raise ValueError(f"{path.name} has no position accessor") from exc
     if accessor.get("componentType") != FLOAT_VEC3 or accessor.get("type") != "VEC3":
         raise ValueError(f"{path.name} positions are not float vectors")
-    start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
-    stride = view.get("byteStride", 12)
-    count = accessor["count"]
-    points = []
-    for index in range(count):
-        points.append(struct.unpack_from("<fff", blob, start + index * stride))
-    return points
+    stride = stride or 12
+    points = [struct.unpack_from("<fff", blob, start + index * stride) for index in range(accessor["count"])]
+    faces: list[tuple[int, int, int]] = []
+    if "indices" in primitive:
+        index_acc, index_at, _stride = _accessor_bytes(doc, blob, primitive["indices"])
+        kind = index_acc.get("componentType")
+        fmt = {UNSIGNED_BYTE: "<B", UNSIGNED_SHORT: "<H", UNSIGNED_INT: "<I"}.get(kind)
+        if fmt is None or index_acc.get("type") != "SCALAR":
+            raise ValueError(f"{path.name} indices are not scalar")
+        width = struct.calcsize(fmt)
+        values = [struct.unpack_from(fmt, blob, index_at + index * width)[0] for index in range(index_acc["count"])]
+        faces = [tuple(values[index:index + 3]) for index in range(0, len(values) - 2, 3)]
+    return points, faces
+
+
+def largest_share(faces: list[tuple[int, int, int]]) -> float:
+    """Share of triangle vertices that sit in the largest connected piece."""
+    parent: dict[int, int] = {}
+
+    def find(node: int) -> int:
+        root = node
+        while parent[root] != root:
+            root = parent[root]
+        while parent[node] != root:
+            parent[node], node = root, parent[node]
+        return root
+
+    for tri in faces:
+        for vert in tri:
+            parent.setdefault(vert, vert)
+        root = find(tri[0])
+        for vert in tri[1:]:
+            parent[find(vert)] = root
+    if not parent:
+        return 1.0
+    counts: dict[int, int] = {}
+    for vert in parent:
+        root = find(vert)
+        counts[root] = counts.get(root, 0) + 1
+    return max(counts.values()) / len(parent)
 
 
 def check_glb(path: Path) -> dict:
-    report = height_report(load_positions(path))
+    points, faces = load_primitive(path)
+    report = height_report(points)
     report["glb"] = str(path)
+    report["share"] = 1.0
+    if faces and report["ok"]:
+        share = largest_share(faces)
+        report["share"] = round(share, 4)
+        if share < MIN_SHARE:
+            report["ok"] = False
+            report["reason"] = "fragmented"
     return report
 
 
@@ -136,6 +198,50 @@ def selftest() -> list[str]:
         path = Path(tmp) / "column.glb"
         path.write_bytes(raw)
         loaded = check_glb(path)
-    if loaded["verts"] != 1200 or not loaded["ok"]:
-        bad.append(f"glb reader verts={loaded['verts']} ok={loaded['ok']}")
+        if loaded["verts"] != 1200 or not loaded["ok"]:
+            bad.append(f"glb reader verts={loaded['verts']} ok={loaded['ok']}")
+        path.write_bytes(_faced_glb(column, _strip(0, 1200)))
+        one = check_glb(path)
+        if not one["ok"] or one["share"] < 0.99:
+            bad.append(f"one strip failed ({one['reason']} share={one['share']})")
+        path.write_bytes(_faced_glb(column, _strip(0, 600) + _strip(600, 1200)))
+        split = check_glb(path)
+        if split["ok"] or split["reason"] != "fragmented":
+            bad.append(f"two pieces passed ({split['reason']})")
     return bad
+
+
+def _strip(start: int, stop: int) -> list[int]:
+    faces: list[int] = []
+    for index in range(start, stop - 2):
+        faces.extend((index, index + 1, index + 2))
+    return faces
+
+
+def _faced_glb(points: list[tuple[float, float, float]], indices: list[int]) -> bytes:
+    """Positions plus triangles, packed back to back in one buffer."""
+    pos = b"".join(struct.pack("<fff", *point) for point in points)
+    idx = b"".join(struct.pack("<I", value) for value in indices)
+    blob = pos + idx
+    doc = {
+        "asset": {"version": "2.0"},
+        "buffers": [{"byteLength": len(blob)}],
+        "bufferViews": [
+            {"buffer": 0, "byteOffset": 0, "byteLength": len(pos)},
+            {"buffer": 0, "byteOffset": len(pos), "byteLength": len(idx)},
+        ],
+        "accessors": [
+            {"bufferView": 0, "componentType": FLOAT_VEC3, "count": len(points), "type": "VEC3"},
+            {"bufferView": 1, "componentType": UNSIGNED_INT, "count": len(indices), "type": "SCALAR"},
+        ],
+        "meshes": [{"primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
+    }
+    raw = json.dumps(doc, separators=(",", ":")).encode("utf-8")
+    raw += b" " * ((4 - len(raw) % 4) % 4)
+    chunks = b"".join((
+        struct.pack("<I4s", len(raw), b"JSON"),
+        raw,
+        struct.pack("<I4s", len(blob), b"BIN\x00"),
+        blob,
+    ))
+    return b"glTF" + struct.pack("<II", 2, 12 + len(chunks)) + chunks
