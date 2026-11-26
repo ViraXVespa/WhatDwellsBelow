@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from media.pipeline import comfy_run, mesh_check
+from media.pipeline import comfy_run, mesh_check, proportion
 
 CKPT = "hunyuan_3d_v2.1.safetensors"
 # Single front plate, blueprint settings. The second row is only for a fit failure.
@@ -124,6 +124,8 @@ def _write_report(dest: Path, report: dict) -> None:
                 f"mesh: {step['mesh']} verts={step.get('verts')} span={step.get('span')} "
                 f"share={step.get('share')} empty={step.get('empty') or 'none'}"
             )
+        if step.get("proportion"):
+            lines.append(f"proportion: {step['proportion']}")
         lines.append(f"action: {step['action']}")
         lines.append("")
     dest.mkdir(parents=True, exist_ok=True)
@@ -171,18 +173,24 @@ def run_body(
             step["empty"] = measured["empty"]
             step["share"] = measured.get("share")
             if measured["ok"]:
-                final = dest / "body.glb"
-                final.write_bytes(glb.read_bytes())
-                gen = root / "data" / "pipeline" / "wip" / "gen" / "female-hunyuan-body.glb"
-                gen.parent.mkdir(parents=True, exist_ok=True)
-                gen.write_bytes(glb.read_bytes())
-                step["action"] = "kept"
-                status = "pass"
-                kept = gen
-                steps.append(step)
-                break
-            step["action"] = "stop"
-            step["error"] = measured["reason"]
+                sized = proportion.check_glb(glb)
+                step["proportion"] = sized["reason"]
+                if sized["ok"]:
+                    final = dest / "body.glb"
+                    final.write_bytes(glb.read_bytes())
+                    gen = root / "data" / "pipeline" / "wip" / "gen" / "female-hunyuan-body.glb"
+                    gen.parent.mkdir(parents=True, exist_ok=True)
+                    gen.write_bytes(glb.read_bytes())
+                    step["action"] = "kept"
+                    status = "pass"
+                    kept = gen
+                    steps.append(step)
+                    break
+                step["action"] = "stop"
+                step["error"] = sized["reason"]
+            else:
+                step["action"] = "stop"
+                step["error"] = measured["reason"]
         except ValueError as exc:
             step["error"] = str(exc)
             if _fits_failure(step["error"]) and index + 1 < limit:

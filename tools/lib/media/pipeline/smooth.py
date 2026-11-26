@@ -7,9 +7,11 @@ only, so those plates are not copied into the mesh source.
 from __future__ import annotations
 
 _SKIN = (
-    "Large rounded head, short legs, chibi game proportions. "
+    "Short legs, chibi game proportions. "
+    "The head is a rounded oval only a little wider than the ribcage. "
+    "Slim thighs and slim calves. "
     "Smooth continuous skin, like a clean sculpt, not a pixel drawing and not a voxel. "
-    "The head is a rounded oval with no ears. Ears are a later piece. "
+    "The head has no ears. Ears are a later piece. "
     "The sides of the head are a smooth unbroken oval, with no ear lobes and no ear bumps. "
     "A female chest with breasts. A narrow waist and an hourglass figure. "
     "The abdomen is slim. The hips are wider than the waist. "
@@ -32,7 +34,7 @@ NEGATIVE = (
     "voxel, voxels, pixel art, pixels, lumpy, blocky, stepped, "
     "eyebrows, nose, mouth, lips, hair, circlet, neckband, scarf, scarf tail, hanging cloth, "
     "armor, coat, pants, boots, clothes, weapon, extra limbs, realistic proportions, "
-    "small head, long legs, fashion figure, blurry, portrait crop, text"
+    "huge head, giant head, thick thighs, thick calves, long legs, fashion figure, blurry, portrait crop, text"
 )
 
 PROMPT = (
@@ -151,6 +153,15 @@ def selftest() -> list[str]:
             bad.append(f"{row['slot']} prompt dropped a required shape")
         if "feet together" in prompt or "a little away" in prompt:
             bad.append(f"{row['slot']} prompt still asks for the standing pose")
+        if "Large rounded head" in prompt or "little wider than the ribcage" not in prompt:
+            bad.append(f"{row['slot']} prompt still asks for a giant head")
+        if "Slim thighs" not in prompt or "slim calves" not in prompt:
+            bad.append(f"{row['slot']} prompt dropped the slim legs")
+        negative = graph["4"]["inputs"]["negative_prompt"]
+        if "small head" in negative or "huge head" not in negative:
+            bad.append(f"{row['slot']} negative still wants a large head")
+        if "Shrink the head" in prompt or "Narrow each thigh" in prompt:
+            bad.append(f"{row['slot']} prompt already contains a retry sentence")
         if graph["1"]["inputs"]["device"] != "cpu":
             bad.append(f"{row['slot']} encoder is not on CPU")
         prefix = graph["7"]["inputs"]["filename_prefix"]

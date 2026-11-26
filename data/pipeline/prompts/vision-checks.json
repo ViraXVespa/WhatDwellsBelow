@@ -20,7 +20,12 @@
     "tpose_side_arms": {"add": "Side T-pose. One arm points straight at the camera and the other points straight away. Do not point an arm the way the face points. No arm in front of the chest.", "negative": "arm pointing forward, arm in front of the chest, pointing pose"},
     "tpose_legs": {"add": "The thighs are apart. There is a clear gap between the legs. The knees are straight.", "negative": "thighs together, legs fused, legs touching"},
     "tpose_feet": {"add": "The feet are apart and flat on the ground. They do not touch.", "negative": "feet together, feet touching, planted together"},
-    "hourglass": {"add": "A narrow waist and an hourglass torso. The abdomen is slim. The hips are wider than the waist.", "negative": "thick abdomen, barrel torso, wide waist, no waist, rectangular torso"}
+    "hourglass": {"add": "A narrow waist and an hourglass torso. The abdomen is slim. The hips are wider than the waist.", "negative": "thick abdomen, barrel torso, wide waist, no waist, rectangular torso"},
+    "head_wide": {"add": "Shrink the head until its width is close to the ribcage.", "negative": "oversized head, head wider than the shoulders"},
+    "head_narrow": {"add": "Make the head a little larger so it stays just wider than the ribcage.", "negative": "tiny head, pinhead"},
+    "thigh_thick": {"add": "Narrow each thigh so it is much slimmer than the chest.", "negative": "bulky thighs, heavy thighs"},
+    "calf_thick": {"add": "Narrow each calf to a thin column under the knee.", "negative": "bulky calves, heavy calves"},
+    "proportion_mismatch": {"add": "Match the head, thigh, and calf widths of the other views of this pose.", "negative": "mismatched proportions, different body scale"}
   },
   "roles": {
     "mannequin-front": {
@@ -79,7 +84,7 @@
     "mannequin-mesh": {
       "flow": "rebuild",
       "about": "A render of the 3D base body in a T-pose. Eyes may stay. Eyebrows, the nose, the mouth, and the ears must not be modeled. A female chest has breasts and a narrow waist. The surface is smooth. Idle is not the bind pose.",
-      "allow": "Eyes may be present. A bald head and bare skin are correct. A fine even surface is correct. A T-pose with a gap between the legs is correct. Voxel steps, a square head, bent elbows, and a thick abdomen are not.",
+      "allow": "Eyes may be present. A bald head and bare skin are correct. A head only a little wider than the ribcage is correct. A gigantic head is not. Slim thighs and slim calves are correct. A fine even surface is correct. A T-pose with a gap between the legs is correct. Voxel steps, a square head, bent elbows, and a thick abdomen are not.",
       "checks": [
         {"id": "one_figure", "fail_if": "There is not exactly one full-body person, upright, facing the camera."},
         {"id": "no_brows", "fail_if": "Eyebrows are modeled or painted. Eyebrows are a later customization."},
@@ -103,7 +108,7 @@
     "mannequin-smooth": {
       "flow": "prompt",
       "about": "Smooth front T-pose still used as the mesh source. Not the pixel ship frame. Eyes may stay. Eyebrows, the nose, the mouth, and the ears are later pieces. A female chest has breasts and a narrow waist. Idle is not this pose.",
-      "allow": "Eyes may be present. A bald head, bare skin, a large head, and short legs are correct. Arms straight out and a gap between the feet are correct.",
+      "allow": "Eyes may be present. A bald head, bare skin, and short legs are correct. A head only a little wider than the ribcage is correct. A gigantic head is not. Slim thighs and slim calves are correct. Arms straight out and a gap between the feet are correct.",
       "checks": [
         {"id": "one_figure", "fail_if": "There is not exactly one full-body person, standing, facing the camera."},
         {"id": "no_brows", "fail_if": "Eyebrows are drawn. Eyebrows are a later customization."},
@@ -127,7 +132,7 @@
     "mannequin-tpose-side": {
       "flow": "prompt",
       "about": "Strict side of the female base in a T-pose. One arm points at the camera and one points away. Not a walk step. The waist tucks in. Ears are a later piece.",
-      "allow": "One eye in profile may be present. Bare skin and a bald head are correct. An arm pointing at the camera is the T-pose, not a missing arm.",
+      "allow": "One eye in profile may be present. Bare skin and a bald head are correct. A head only a little wider than the ribcage is correct. A gigantic head is not. Slim thighs and slim calves are correct. An arm pointing at the camera is the T-pose, not a missing arm.",
       "checks": [
         {"id": "one_figure", "fail_if": "There is not exactly one full-body person in a strict side view."},
         {"id": "no_brows", "fail_if": "An eyebrow is drawn. Eyebrows are a later customization."},
@@ -149,7 +154,7 @@
     "mannequin-tpose-back": {
       "flow": "prompt",
       "about": "Strict back of the female base in a T-pose. No face. Arms straight out. A gap between the legs. A narrow waist.",
-      "allow": "A bald back of the head and bare skin are correct. Arms straight out to the sides are correct.",
+      "allow": "A bald back of the head and bare skin are correct. A head only a little wider than the ribcage is correct. A gigantic head is not. Slim thighs and slim calves are correct. Arms straight out to the sides are correct.",
       "checks": [
         {"id": "one_figure", "fail_if": "There is not exactly one full-body person seen from the back."},
         {"id": "no_face", "fail_if": "A face, eyes, eyebrows, a nose, or a mouth is visible."},

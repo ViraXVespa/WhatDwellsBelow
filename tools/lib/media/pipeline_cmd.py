@@ -17,6 +17,7 @@
     python tools/media.py pipeline tune --image path.png --role mannequin-side --workflow still.json --turns 4
     python tools/media.py pipeline frame --image still.png --out still-framed.png
     python tools/media.py pipeline mesh --glb coarse.glb
+    python tools/media.py pipeline proportion --image still.png
     python tools/media.py pipeline body
     python tools/media.py pipeline smooth
 
@@ -25,7 +26,8 @@ Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under d
 `tune` repeats that review and a local Comfy regeneration until the checklist passes or --turns is hit.
 At the limit it writes report.md with each in-between image. A fail is not a handoff.
 `mesh` reads a coarse glb. An empty height band fails. A pass only means shape may run.
-`body` builds a Hunyuan3D surface-net mesh from one front plate. The 32-grid path is not used.
+`proportion` measures a T-pose still or a glb. A head outside the ribcage band fails. Thick thighs or calves fail. A vision pass does not override it.
+`body` builds a Hunyuan3D surface-net mesh from one front plate. The 32-grid path is not used. A connected mesh with the wrong proportions is not kept.
 `smooth` tunes four T-pose bible stills, then builds the body from the front if they pass. Idle is a later animation.
 A fit failure retries one smaller octree. A fragmented mesh stops. The limit writes a progress report. A fail is not a handoff.
 """
@@ -41,7 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
 import boot  # noqa: E402,F401
 
 import agent_log
-from media.pipeline import body, comfy_run, mesh_check, plates, smooth, store, tune, vision_review
+from media.pipeline import body, comfy_run, mesh_check, plates, proportion, smooth, store, tune, vision_review
 
 _PROMPTS = Path("data/pipeline/prompts/defaults.json")
 
@@ -155,6 +157,7 @@ def _check(real: Path) -> int:
             + mesh_check.selftest()
             + body.selftest()
             + smooth.selftest()
+            + proportion.selftest()
         )
         doc = vision_review.load_checks(real)
         library = doc.get("fix_library") or {}
@@ -369,6 +372,14 @@ def _tune(root: Path, args: object, dry: bool) -> int:
         comfy_run.free(server)
         doc = vision_review.review_image(root, path, role)
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+        if role in proportion.STILL_ROLES:
+            forced = "side" if role == "mannequin-tpose-side" else "front"
+            measured = proportion.with_reference(root, proportion.measure_image(path, view=forced))
+            print(
+                f"proportion {measured['reason']}",
+                flush=True,
+            )
+            doc = proportion.merge_review(doc, measured)
         return doc
 
     def generate(patched: dict, turn: int, target: Path) -> Path:
@@ -431,6 +442,41 @@ def _mesh(root: Path, args: object, dry: bool) -> int:
         return agent_log.emit_result("PASS", summary="connected", verts=report["verts"], span=report["span"])
     print(f"coarse mesh failed: {report['reason']}. Do not present it.")
     return agent_log.emit_result("FAIL", summary=report["reason"], verts=report["verts"], span=report["span"])
+
+
+def _proportion(root: Path, args: object, dry: bool) -> int:
+    """Print head, thigh, and calf ratios. Exit fail when the still or the mesh is outside the band."""
+    image = (args.image or [None])[0]
+    if not image and not args.glb:
+        agent_log.fail("proportion needs --image or --glb")
+    if dry:
+        target = image or args.glb
+        print(f"would measure {target}")
+        return agent_log.emit_result("INFO", summary="dry-run")
+    if args.glb:
+        path = Path(args.glb)
+        if not path.is_file():
+            path = root / args.glb
+        sized = proportion.check_glb(path)
+        print(sized["reason"])
+        if sized["ok"]:
+            return agent_log.emit_result("PASS", summary="in band", glb=str(path))
+        print("proportion failed. Do not present it.")
+        return agent_log.emit_result("FAIL", summary=sized["reason"], glb=str(path))
+    path = Path(image)
+    if not path.is_file():
+        path = root / image
+    forced = None
+    if args.role == "mannequin-tpose-side":
+        forced = "side"
+    elif args.role in proportion.STILL_ROLES:
+        forced = "front"
+    measured = proportion.measure_image(path, view=forced)
+    print(f"head={measured['head_ratio']} thigh={measured['thigh_ratio']} calf={measured['calf_ratio']} {measured['reason']}")
+    if measured["ok"]:
+        return agent_log.emit_result("PASS", summary="in band", image=str(path))
+    print("proportion failed. Do not present it.")
+    return agent_log.emit_result("FAIL", summary=measured["reason"], image=str(path))
 
 
 def _body(root: Path, args: object, dry: bool) -> int:
@@ -527,7 +573,7 @@ def main(argv: list[str] | None = None) -> int:
         writes=True,
         verbose=True,
     )
-    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, body, or smooth.")
+    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, proportion, body, or smooth.")
     ap.add_argument("id", nargs="?", default=None, help="Subject id for show, link, mark, and export.")
     ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
     ap.add_argument("--name", help="Display name for new. The id is the slug unless --id is set.")
@@ -591,6 +637,8 @@ def main(argv: list[str] | None = None) -> int:
             return _frame(root, args, dry)
         if args.cmd == "mesh":
             return _mesh(root, args, dry)
+        if args.cmd == "proportion":
+            return _proportion(root, args, dry)
         if args.cmd == "body":
             return _body(root, args, dry)
         if args.cmd == "smooth":
