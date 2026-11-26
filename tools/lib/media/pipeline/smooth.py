@@ -7,7 +7,6 @@ only, so those plates are not copied into the mesh source.
 from __future__ import annotations
 
 _SKIN = (
-    "Short legs, chibi game proportions. "
     "The head is a rounded oval only a little wider than the ribcage. "
     "Slim thighs and slim calves. "
     "Smooth continuous skin, like a clean sculpt, not a pixel drawing and not a voxel. "
@@ -35,7 +34,7 @@ NEGATIVE = (
     "thighs together, legs fused, legs touching, feet together, feet touching, planted together, "
     "voxel, voxels, pixel art, pixels, lumpy, blocky, stepped, "
     "eyebrows, nose, mouth, lips, hair, circlet, neckband, scarf, scarf tail, hanging cloth, "
-    "armor, coat, pants, boots, clothes, weapon, extra limbs, realistic proportions, "
+    "armor, coat, pants, boots, clothes, weapon, extra limbs, "
     "huge head, giant head, thick thighs, thick calves, long legs, fashion figure, blurry, portrait crop, text"
 )
 
@@ -157,11 +156,15 @@ def selftest() -> list[str]:
             bad.append(f"{row['slot']} prompt still asks for the standing pose")
         if "Large rounded head" in prompt or "little wider than the ribcage" not in prompt:
             bad.append(f"{row['slot']} prompt still asks for a giant head")
+        if "chibi" in prompt.lower() or "short legs" in prompt.lower():
+            bad.append(f"{row['slot']} prompt still asks for a chibi head")
         if "Slim thighs" not in prompt or "slim calves" not in prompt:
             bad.append(f"{row['slot']} prompt dropped the slim legs")
         negative = graph["4"]["inputs"]["negative_prompt"]
         if "small head" in negative or "huge head" not in negative:
             bad.append(f"{row['slot']} negative still wants a large head")
+        if "realistic proportions" in negative or "chibi" in negative.lower():
+            bad.append(f"{row['slot']} negative still pushes a chibi head")
         if "Shrink the head" in prompt or "Narrow each thigh" in prompt:
             bad.append(f"{row['slot']} prompt already contains a retry sentence")
         if graph["1"]["inputs"]["device"] != "cpu":
