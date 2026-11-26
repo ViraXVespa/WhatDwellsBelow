@@ -17,6 +17,7 @@
     "feet": {"add": "Two distinct feet, not blocks or slabs.", "negative": "block feet, slabs, rectangular feet"},
     "arms": {"add": "Two arms straight out to the sides in a T-pose.", "negative": "missing arm, extra arm, fused arm"},
     "tpose_arms": {"add": "T-pose. Both arms are straight out to the sides, horizontal, elbows locked. Not hanging and not bent.", "negative": "bent elbows, hanging arms, A-pose, arms down"},
+    "tpose_side_arms": {"add": "Side T-pose. One arm points straight at the camera and the other points straight away. Do not point an arm the way the face points. No arm in front of the chest.", "negative": "arm pointing forward, arm in front of the chest, pointing pose"},
     "tpose_legs": {"add": "The thighs are apart. There is a clear gap between the legs. The knees are straight.", "negative": "thighs together, legs fused, legs touching"},
     "tpose_feet": {"add": "The feet are apart and flat on the ground. They do not touch.", "negative": "feet together, feet touching, planted together"},
     "hourglass": {"add": "A narrow waist and an hourglass torso. The abdomen is slim. The hips are wider than the waist.", "negative": "thick abdomen, barrel torso, wide waist, no waist, rectangular torso"}
@@ -137,7 +138,7 @@
         {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
         {"id": "no_plane", "fail_if": "A flat plane or panel sits on the side of the torso."},
         {"id": "smooth", "fail_if": "The surface is pixelated, lumpy, stepped, or voxel-like."},
-        {"id": "tpose_arms", "fail_if": "An arm hangs down or an elbow is bent. In a side T-pose one arm points at the camera and one points away, both straight and horizontal."},
+        {"id": "tpose_side_arms", "fail_if": "An arm points the same way the face points, an arm lies in front of the chest, an arm hangs down, or an elbow is bent. One arm must point at the camera and the other must point away."},
         {"id": "hourglass", "fail_if": "The abdomen is as deep as the chest, or the waist does not tuck in between the breast and the hip."},
         {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
         {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},

@@ -27,6 +27,7 @@ NEGATIVE = (
     "ears, ear lobes, ear bumps, ear cartilage, square head, box head, rectangular head, flat chest, missing breasts, "
     "flat plane, flat panel, thick abdomen, barrel torso, wide waist, no waist, rectangular torso, "
     "bent elbows, hanging arms, A-pose, arms down, idle stance, hands on hips, "
+    "arm pointing forward, arm in front of the chest, pointing pose, "
     "thighs together, legs fused, legs touching, feet together, feet touching, planted together, "
     "voxel, voxels, pixel art, pixels, lumpy, blocky, stepped, "
     "eyebrows, nose, mouth, lips, hair, circlet, neckband, scarf, scarf tail, hanging cloth, "
@@ -40,17 +41,20 @@ PROMPT = (
     + _FACE
     + _SKIN
 )
+_SIDE = (
+    "T-pose seen from the side. One arm points straight at the camera and the other points straight away. "
+    "Do not point an arm the way the face points. No arm in front of the chest. "
+    "Both arms are horizontal and the elbows are locked. The legs are straight, not a walk step. "
+)
 SIDE_LEFT = (
     "Full-body female game mannequin, strict orthographic side view, face pointing to screen right. "
-    "T-pose. One arm points straight at the camera and the other points straight away. "
-    "Both arms are horizontal and the elbows are locked. The legs are straight, not a walk step. "
+    + _SIDE
     + _FACE
     + _SKIN
 )
 SIDE_RIGHT = (
     "Full-body female game mannequin, strict orthographic side view, face pointing to screen left. "
-    "T-pose. One arm points straight at the camera and the other points straight away. "
-    "Both arms are horizontal and the elbows are locked. The legs are straight, not a walk step. "
+    + _SIDE
     + _FACE
     + _SKIN
 )
@@ -157,6 +161,8 @@ def selftest() -> list[str]:
         bad.append("front prompt is not a gapped T-pose")
     if "screen right" not in workflow_for("left")["4"]["inputs"]["prompt"]:
         bad.append("left prompt does not face screen right")
+    if "at the camera" not in workflow_for("left")["4"]["inputs"]["prompt"]:
+        bad.append("left prompt does not aim an arm at the camera")
     if "screen left" not in workflow_for("right")["4"]["inputs"]["prompt"]:
         bad.append("right prompt does not face screen left")
     if "No face" not in workflow_for("back")["4"]["inputs"]["prompt"]:
