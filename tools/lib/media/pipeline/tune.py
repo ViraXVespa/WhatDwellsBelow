@@ -76,7 +76,7 @@ def run_tune(
         step = _step(len(report["steps"]), current.name, reviewed)
         report["steps"].append(step)
         report["image"] = current.name
-        plan = vision_review.correction_plan(doc, spec, failed)
+        plan = vision_review.correction_plan(doc, spec, failed, clauses=reviewed.get("clauses"))
         step["action"] = plan["action"]
         if plan["action"] == "pass":
             report["status"] = "pass"

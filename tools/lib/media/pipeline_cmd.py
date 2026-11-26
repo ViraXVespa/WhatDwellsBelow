@@ -272,6 +272,18 @@ def _record(root: Path, args: object) -> dict:
     return record
 
 
+def _load_workflow(root: Path, raw: str | None) -> dict | None:
+    """Load a still workflow. None when the caller did not pass one."""
+    if not raw:
+        return None
+    src = Path(raw)
+    if not src.is_file():
+        src = root / raw
+    if not src.is_file():
+        agent_log.fail(f"no workflow {raw}")
+    return json.loads(src.read_text(encoding="utf-8"))
+
+
 def _extras(root: Path, args: object) -> list[str]:
     """Optional vision checks from the subject. No id means no extra checks, and not the female list."""
     subject_id = getattr(args, "id", None)
@@ -287,15 +299,22 @@ def _extras(root: Path, args: object) -> list[str]:
 def _review(root: Path, args: object, dry: bool) -> int:
     jobs = _review_jobs(root, args)
     extra = _extras(root, args)
+    workflow = _load_workflow(root, getattr(args, "workflow", None))
+    sent, banned = vision_review.prompts_from(workflow) if workflow is not None else ("", "")
     if dry:
         for image, role in jobs:
             print(f"would review {image} as {role}")
+        if sent or banned:
+            count = len(vision_review.clauses_from(sent, banned))
+            print(f"would check {count} prompt clauses in batches of {vision_review.BATCH}")
         return agent_log.emit_result("INFO", summary="dry-run", images=len(jobs))
     out_dir = root / "data" / "pipeline" / "wip" / "review"
     out_dir.mkdir(parents=True, exist_ok=True)
     failed = 0
     for image, role in jobs:
-        doc = vision_review.review_image(root, image, role, extra=extra or None)
+        doc = vision_review.review_image(
+            root, image, role, extra=extra or None, prompt=sent, negative=banned,
+        )
         dest = out_dir / f"{image.stem}-{role}.json"
         dest.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
         print(f"{image.name} {role} {doc['verdict'].upper()}")
@@ -363,12 +382,16 @@ def _correct(root: Path, args: object, dry: bool) -> int:
         if dry:
             print(f"would review {image_path} as {role} and correct")
             return agent_log.emit_result("INFO", summary="dry-run")
-        review = vision_review.review_image(root, image_path, role, extra=extra or None)
+        sent_doc = _load_workflow(root, args.workflow)
+        sent, banned = vision_review.prompts_from(sent_doc) if sent_doc is not None else ("", "")
+        review = vision_review.review_image(
+            root, image_path, role, extra=extra or None, prompt=sent, negative=banned,
+        )
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
     failed = review.get("failed")
     if not isinstance(failed, list):
         agent_log.fail("review has no failed list")
-    plan = vision_review.correction_plan(doc, spec, failed)
+    plan = vision_review.correction_plan(doc, spec, failed, clauses=review.get("clauses"))
     print(f"{role} {plan['action'].upper()} failed={','.join(failed) or 'none'}")
     if plan["action"] in ("pass", "hold", "rebuild"):
         if plan["action"] == "hold":
@@ -410,6 +433,10 @@ def _tune(root: Path, args: object, dry: bool) -> int:
         src = root / workflow_path
     if dry:
         print(f"would tune {image_path} as {role} for {turns} turns from {src}")
+        if src.is_file():
+            sent, banned = vision_review.prompts_from(json.loads(src.read_text(encoding="utf-8")))
+            count = len(vision_review.clauses_from(sent, banned))
+            print(f"would check {count} prompt clauses in batches of {vision_review.BATCH}")
         return agent_log.emit_result("INFO", summary="dry-run", turns=turns)
     workflow = json.loads(src.read_text(encoding="utf-8"))
     extra = _extras(root, args)
@@ -417,6 +444,7 @@ def _tune(root: Path, args: object, dry: bool) -> int:
     if role in proportion.STILL_ROLES:
         gates = proportion.gates_for(_record(root, args))
     subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+    holder = {"workflow": workflow}
     first = None
     if args.review_from:
         path = Path(args.review_from)
@@ -431,7 +459,10 @@ def _tune(root: Path, args: object, dry: bool) -> int:
     def review(path: Path) -> dict:
         print(f"review {path.name}", flush=True)
         comfy_run.free(server)
-        doc = vision_review.review_image(root, path, role, extra=extra or None)
+        sent, banned = vision_review.prompts_from(holder["workflow"])
+        doc = vision_review.review_image(
+            root, path, role, extra=extra or None, prompt=sent, negative=banned,
+        )
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
         if gates is not None:
             forced = "side" if role == "mannequin-tpose-side" else "front"
@@ -458,6 +489,7 @@ def _tune(root: Path, args: object, dry: bool) -> int:
 
     def generate(patched: dict, turn: int, target: Path) -> Path:
         print(f"generate turn {turn}")
+        holder["workflow"] = patched
         saved = comfy_run.run(server, patched, target)
         try:
             comfy_run.free(server)
@@ -673,7 +705,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--image", action="append", default=[], help="Image to review. Repeat to review several with the same --role.")
     ap.add_argument("--role", default=None, help="Vision checklist role, for example mannequin-front.")
     ap.add_argument("--cycle", default=None, help="JSON file with an images list of {image, role}.")
-    ap.add_argument("--workflow", default=None, help="Still workflow to patch when a locked-image review fails.")
+    ap.add_argument(
+        "--workflow", default=None,
+        help="Still workflow. Tune and correct patch it. Review and tune also check its prompt and negative, four clauses at a time.",
+    )
     ap.add_argument("--out", default=None, help="Patched workflow path for correct.")
     ap.add_argument("--from", dest="review_from", default=None, help="Existing review JSON. Skips a second model call.")
     ap.add_argument("--turns", type=int, default=None, help="Generation limit for tune. Default 4. The limit writes a progress report.")

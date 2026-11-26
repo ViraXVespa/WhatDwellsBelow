@@ -3,13 +3,22 @@
 Ollama `qwen3-vl:8b` fits this PC only after Comfy is freed. The caller frees
 Comfy first. This module does not start Comfy and does not call the game.
 
+The role checklist stays. When the caller also passes the prompt that was sent,
+each positive sentence must be visible and each comma-separated negative tag
+must be absent. Those clauses are whatever that prompt said. This module does
+not add a body part the prompt did not name. qwen3-vl:8b drops ids on a long
+list, so every ask is at most BATCH checks. A miss is restated for the tune
+loop. A restatement is not a new check.
+
     python tools/media.py pipeline review --image path.png --role mannequin-front
     python tools/media.py pipeline review --cycle data/pipeline/wip/review/cycle.json
 """
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import re
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -17,6 +26,10 @@ from pathlib import Path
 CHECKS = Path("data/pipeline/prompts/vision-checks.json")
 MODEL = "qwen3-vl:8b"
 HOST = "http://127.0.0.1:11434"
+# qwen3-vl:8b stops answering once the checklist is long. Four is one reply.
+BATCH = 4
+_SENTENCE = re.compile(r"(?<=[.!?])\s+")
+_SKIP = ("required and clearly visible:", "do not include ")
 
 
 def load_checks(root: Path) -> dict:
@@ -80,6 +93,7 @@ def prompt_for(spec: dict) -> str:
         "Include every check id exactly once. Do not stop before the last id.",
         'Set verdict to "fail" if any check has pass false.',
         "If you are unsure, set pass to false and say what you cannot see.",
+        "Judge only the checks listed below.",
         spec.get("about", ""),
         spec.get("allow", ""),
         "Checks:",
@@ -87,6 +101,125 @@ def prompt_for(spec: dict) -> str:
     for row in spec["checks"]:
         lines.append(f"- {row['id']}: Fail if: {row['fail_if']}")
     return "\n".join(line for line in lines if line)
+
+
+def _kept(text: str) -> bool:
+    lowered = text.lower()
+    if not any(ch.isalpha() for ch in text):
+        return False
+    return not any(lowered.startswith(prefix) for prefix in _SKIP)
+
+
+def _sentences(prompt: str) -> list[str]:
+    text = " ".join(prompt.split())
+    if not text:
+        return []
+    return [part.strip() for part in _SENTENCE.split(text) if _kept(part.strip())]
+
+
+def _tags(negative: str) -> list[str]:
+    out = []
+    for part in negative.split(","):
+        part = " ".join(part.split())
+        if _kept(part):
+            out.append(part)
+    return out
+
+
+def _clause_id(kind: str, text: str) -> str:
+    norm = " ".join(text.lower().split())
+    digest = hashlib.sha256(norm.encode("utf-8")).hexdigest()[:8]
+    return ("p-" if kind == "present" else "n-") + digest
+
+
+def clauses_from(prompt: str, negative: str) -> list[dict]:
+    """Positive sentences must show. Negative tags must not. Repeats collapse."""
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for kind, texts in (("present", _sentences(prompt)), ("absent", _tags(negative))):
+        for text in texts:
+            cid = _clause_id(kind, text)
+            if cid in seen:
+                continue
+            seen.add(cid)
+            rows.append({"id": cid, "kind": kind, "text": text})
+    return rows
+
+
+def batches_of(rows: list, size: int) -> list[list]:
+    if size < 1:
+        raise ValueError("batch size must be at least 1")
+    if not rows:
+        return []
+    return [rows[i:i + size] for i in range(0, len(rows), size)]
+
+
+def clause_checks(rows: list[dict]) -> list[dict]:
+    out = []
+    for row in rows:
+        text = row["text"]
+        if row["kind"] == "present":
+            fail_if = f"This is missing or not clearly visible: {text}"
+        elif row["kind"] == "absent":
+            fail_if = f"This is visible: {text}"
+        else:
+            raise ValueError(f"clause kind must be present or absent, not {row['kind']!r}")
+        out.append({"id": row["id"], "fail_if": fail_if})
+    return out
+
+
+def prompts_from(workflow: dict) -> tuple[str, str]:
+    """The prompt and negative that TextEncodeQwenImage21 sent. No encoder means none."""
+    found = []
+    for node in workflow.values():
+        if not isinstance(node, dict) or node.get("class_type") != "TextEncodeQwenImage21":
+            continue
+        inputs = node.get("inputs") or {}
+        found.append((str(inputs.get("prompt") or ""), str(inputs.get("negative_prompt") or "")))
+    if not found:
+        return "", ""
+    if len(found) > 1:
+        raise ValueError("workflow has more than one TextEncodeQwenImage21")
+    return found[0]
+
+
+def _emphasize(row: dict) -> tuple[str, str]:
+    if not isinstance(row, dict):
+        raise ValueError("prompt clause must be an object")
+    text = row.get("text")
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("prompt clause needs text")
+    text = " ".join(text.split())
+    kind = row.get("kind")
+    if kind == "present":
+        return (f"Required and clearly visible: {text}", "")
+    if kind == "absent":
+        return (f"Do not include {text.rstrip('.')}.", text)
+    raise ValueError(f"clause kind must be present or absent, not {kind!r}")
+
+
+def _merge_parts(parts: list[dict]) -> dict:
+    checks: list[dict] = []
+    failed: list[str] = []
+    seen: set[str] = set()
+    for part in parts:
+        checks.extend(part.get("checks") or [])
+        for cid in part.get("failed") or []:
+            if cid not in seen:
+                failed.append(cid)
+                seen.add(cid)
+    return {"verdict": "fail" if failed else "pass", "checks": checks, "failed": failed}
+
+
+def assemble(role_parsed: dict, clauses: list[dict], parts: list[dict]) -> dict:
+    """Join the role batches and the prompt batches. A shared id is an error."""
+    role_ids = [row["id"] for row in role_parsed.get("checks") or []]
+    overlap = [row["id"] for row in clauses if row["id"] in role_ids]
+    if overlap:
+        raise ValueError(f"prompt clause ids collide with role checks: {overlap}")
+    merged = _merge_parts([role_parsed, *parts])
+    merged["clauses"] = {row["id"]: {"kind": row["kind"], "text": row["text"]} for row in clauses}
+    return merged
 
 
 def parse_review(text: str, expected: list[str]) -> dict:
@@ -171,20 +304,7 @@ def _ask(host: str, model: str, image: Path, text: str, timeout: float) -> str:
     return content
 
 
-def review_image(
-    root: Path,
-    image: Path,
-    role: str,
-    *,
-    extra: list[str] | None = None,
-    host: str = HOST,
-    model: str = MODEL,
-    timeout: float = 480,
-) -> dict:
-    if not image.is_file():
-        raise ValueError(f"no image {image}")
-    doc = load_checks(root)
-    spec = spec_for(doc, role, extra)
+def _review_spec(host: str, model: str, image: Path, spec: dict, timeout: float, label: str) -> dict:
     expected = [row["id"] for row in spec["checks"]]
     parsed = None
     last_error: Exception | None = None
@@ -195,16 +315,57 @@ def review_image(
             break
         except ValueError as exc:
             last_error = exc
-            print(f"review reply unusable, retry {attempt}: {exc}", flush=True)
+            print(f"{label} reply unusable, retry {attempt}: {exc}", flush=True)
     if parsed is None:
-        raise ValueError(f"review reply unusable ({last_error})") from last_error
+        raise ValueError(f"{label} reply unusable ({last_error})") from last_error
+    return parsed
+
+
+def review_image(
+    root: Path,
+    image: Path,
+    role: str,
+    *,
+    extra: list[str] | None = None,
+    prompt: str | None = None,
+    negative: str | None = None,
+    host: str = HOST,
+    model: str = MODEL,
+    timeout: float = 480,
+) -> dict:
+    if not image.is_file():
+        raise ValueError(f"no image {image}")
+    doc = load_checks(root)
+    spec = spec_for(doc, role, extra)
+    role_parts = []
+    groups = batches_of(spec["checks"], BATCH)
+    for index, group in enumerate(groups, start=1):
+        label = "review" if len(groups) == 1 else f"check batch {index}/{len(groups)}"
+        if len(groups) > 1:
+            print(label, flush=True)
+        part = dict(spec)
+        part["checks"] = group
+        role_parts.append(_review_spec(host, model, image, part, timeout, label))
+    clauses = clauses_from(prompt or "", negative or "") if (prompt or negative) else []
+    prompt_parts = []
+    prompt_groups = batches_of(clauses, BATCH)
+    for index, group in enumerate(prompt_groups, start=1):
+        label = f"prompt batch {index}/{len(prompt_groups)}"
+        print(label, flush=True)
+        batch_spec = {
+            "about": spec.get("about", ""),
+            "allow": spec.get("allow", ""),
+            "checks": clause_checks(group),
+        }
+        prompt_parts.append(_review_spec(host, model, image, batch_spec, timeout, label))
+    parsed = assemble(_merge_parts(role_parts), clauses, prompt_parts)
     parsed["image"] = str(image)
     parsed["role"] = role
     parsed["model"] = model
     return parsed
 
 
-def correction_plan(doc: dict, spec: dict, failed: list[str]) -> dict:
+def correction_plan(doc: dict, spec: dict, failed: list[str], clauses: dict | None = None) -> dict:
     """Decide how a failed locked-image review is fixed. No fix means hold, not a user handoff."""
     library = doc.get("fix_library") or {}
     flow = spec.get("flow")
@@ -214,17 +375,23 @@ def correction_plan(doc: dict, spec: dict, failed: list[str]) -> dict:
         return {"action": "pass", "adds": [], "negatives": [], "failed": []}
     if flow == "rebuild":
         return {"action": "rebuild", "adds": [], "negatives": [], "failed": list(failed)}
-    missing = [cid for cid in failed if cid not in library]
+    known = clauses or {}
+    missing = [cid for cid in failed if cid not in library and cid not in known]
     if missing:
         return {"action": "hold", "adds": [], "negatives": [], "failed": list(failed), "unfixed": missing}
     adds = []
     negatives = []
     for cid in failed:
-        fix = library[cid]
-        if fix.get("add") and fix["add"] not in adds:
-            adds.append(fix["add"])
-        if fix.get("negative") and fix["negative"] not in negatives:
-            negatives.append(fix["negative"])
+        if cid in known:
+            add, neg = _emphasize(known[cid])
+        else:
+            fix = library[cid]
+            add = fix.get("add") or ""
+            neg = fix.get("negative") or ""
+        if add and add not in adds:
+            adds.append(add)
+        if neg and neg not in negatives:
+            negatives.append(neg)
     return {"action": "prompt", "adds": adds, "negatives": negatives, "failed": list(failed)}
 
 
@@ -324,4 +491,88 @@ def selftest() -> list[str]:
         bad.append("an unknown optional check was accepted")
     except ValueError:
         pass
+    gate = "A stone gatehouse with a tall door."
+    roof = "The roof is a single slope."
+    sent = f"{gate} {roof} Required and clearly visible: {gate}"
+    banned = "glass curtain wall, neon sign, Do not include neon sign"
+    rows = clauses_from(sent, banned)
+    texts = [(row["kind"], row["text"]) for row in rows]
+    expect = [
+        ("present", gate),
+        ("present", roof),
+        ("absent", "glass curtain wall"),
+        ("absent", "neon sign"),
+    ]
+    if texts != expect:
+        bad.append(f"prompt clauses drifted: {texts}")
+    if any(word in row["text"].lower() for row in rows for word in ("head", "thigh", "female", "hourglass")):
+        bad.append("a building prompt grew a body check")
+    if len(batches_of(rows, 2)) != 2 or len(batches_of(rows, BATCH)) != 1:
+        bad.append("clauses did not batch")
+    if [row["id"] for row in clauses_from(sent, banned)] != [row["id"] for row in rows]:
+        bad.append("clause ids changed between calls")
+    if len(clauses_from(f"{gate} {gate}", "")) != 1:
+        bad.append("a repeated sentence was checked twice")
+    if clauses_from("", ""):
+        bad.append("an empty prompt grew a check")
+    bare = clauses_from("one claim without a stop", "pixel art")
+    if [row["kind"] for row in bare] != ["present", "absent"]:
+        bad.append("a prompt without a period was dropped")
+    try:
+        batches_of(rows, 0)
+        bad.append("a zero batch size was accepted")
+    except ValueError:
+        pass
+    graph = {"4": {"class_type": "TextEncodeQwenImage21", "inputs": {"prompt": sent, "negative_prompt": banned}}}
+    if prompts_from(graph) != (sent, banned):
+        bad.append("the sent prompt was not read")
+    if prompts_from({"1": {"class_type": "KSampler", "inputs": {}}}) != ("", ""):
+        bad.append("a mesh graph invented a prompt")
+    try:
+        prompts_from({
+            "4": {"class_type": "TextEncodeQwenImage21", "inputs": {"prompt": "A.", "negative_prompt": ""}},
+            "5": {"class_type": "TextEncodeQwenImage21", "inputs": {"prompt": "B.", "negative_prompt": ""}},
+        })
+        bad.append("two prompts were accepted")
+    except ValueError:
+        pass
+    clause_plan = correction_plan(
+        {"fix_library": {}}, {"flow": "prompt"}, [rows[0]["id"]],
+        clauses={rows[0]["id"]: {"kind": "present", "text": gate}},
+    )
+    if clause_plan["action"] != "prompt" or clause_plan["adds"] != [f"Required and clearly visible: {gate}"]:
+        bad.append("a missing prompt clause was not sent back")
+    if correction_plan({"fix_library": {}}, {"flow": "prompt"}, ["no_nose"])["action"] != "hold":
+        bad.append("a role check with no fix was not held")
+    absent = correction_plan(
+        {"fix_library": {}}, {"flow": "prompt"}, [rows[2]["id"]],
+        clauses={rows[2]["id"]: rows[2]},
+    )
+    if absent["action"] != "prompt" or "glass curtain wall" not in absent["negatives"]:
+        bad.append("a visible negative was not banned again")
+    if not absent["adds"] or not absent["adds"][0].lower().startswith("do not include "):
+        bad.append("a visible negative was not restated")
+    role_ok = {"verdict": "pass", "failed": [], "checks": [{"id": "feet", "pass": True, "reason": ""}]}
+    part = {
+        "verdict": "fail",
+        "failed": [rows[0]["id"]],
+        "checks": [{"id": rows[0]["id"], "pass": False, "reason": "no door"}],
+    }
+    merged = assemble(role_ok, rows[:1], [part])
+    if merged["verdict"] != "fail" or merged["failed"] != [rows[0]["id"]]:
+        bad.append("a prompt miss did not fail the review")
+    if rows[0]["id"] not in merged.get("clauses", {}):
+        bad.append("the review dropped the clause map")
+    try:
+        assemble(
+            {"checks": [{"id": rows[0]["id"], "pass": True}], "failed": []},
+            rows[:1],
+            [],
+        )
+        bad.append("a colliding clause id was accepted")
+    except ValueError:
+        pass
+    wide = batches_of([{"id": f"c{i}"} for i in range(5)], BATCH)
+    if [len(group) for group in wide] != [4, 1]:
+        bad.append("a long checklist was not split")
     return bad
