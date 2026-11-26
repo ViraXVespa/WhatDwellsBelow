@@ -10,6 +10,7 @@ _SKIN = (
     "Large rounded head, short legs, chibi game proportions. "
     "Smooth continuous skin, like a clean sculpt, not a pixel drawing and not a voxel. "
     "The head is a rounded oval with no ears. Ears are a later piece. "
+    "The sides of the head are a smooth unbroken oval, with no ear lobes and no ear bumps. "
     "A female chest with breasts. A narrow waist and an hourglass figure. "
     "The abdomen is slim. The hips are wider than the waist. "
     "The torso is a continuous curve, not a flat plane and not a thick tube. "
@@ -23,7 +24,7 @@ _POSE = (
     "The feet are apart, flat on the ground, toes forward, and do not touch. "
 )
 NEGATIVE = (
-    "ears, square head, box head, rectangular head, flat chest, missing breasts, "
+    "ears, ear lobes, ear bumps, ear cartilage, square head, box head, rectangular head, flat chest, missing breasts, "
     "flat plane, flat panel, thick abdomen, barrel torso, wide waist, no waist, rectangular torso, "
     "bent elbows, hanging arms, A-pose, arms down, idle stance, hands on hips, "
     "thighs together, legs fused, legs touching, feet together, feet touching, planted together, "

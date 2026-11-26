@@ -48,7 +48,7 @@ def prompt_for(spec: dict) -> str:
         "Review this one image for a game art pipeline.",
         "Reply with one JSON object and no markdown.",
         'Schema: {"verdict":"pass"|"fail","checks":[{"id":"...","pass":true|false,"reason":"..."}]}',
-        "Include every check id exactly once.",
+        "Include every check id exactly once. Do not stop before the last id.",
         'Set verdict to "fail" if any check has pass false.',
         "If you are unsure, set pass to false and say what you cannot see.",
         spec.get("about", ""),
@@ -108,7 +108,7 @@ def _ask(host: str, model: str, image: Path, text: str, timeout: float) -> str:
             "content": text,
             "images": [base64.b64encode(image.read_bytes()).decode("ascii")],
         }],
-        "options": {"temperature": 0},
+        "options": {"temperature": 0, "num_predict": 2048},
     }
     raw = json.dumps(payload).encode("utf-8")
     last: Exception | None = None
@@ -148,8 +148,18 @@ def review_image(root: Path, image: Path, role: str, *, host: str = HOST, model:
     doc = load_checks(root)
     spec = role_spec(doc, role)
     expected = [row["id"] for row in spec["checks"]]
-    text = _ask(host, model, image, prompt_for(spec), timeout)
-    parsed = parse_review(text, expected)
+    parsed = None
+    last_error: Exception | None = None
+    for attempt in (1, 2):
+        try:
+            text = _ask(host, model, image, prompt_for(spec), timeout)
+            parsed = parse_review(text, expected)
+            break
+        except ValueError as exc:
+            last_error = exc
+            print(f"review reply unusable, retry {attempt}: {exc}", flush=True)
+    if parsed is None:
+        raise ValueError(f"review reply unusable ({last_error})") from last_error
     parsed["image"] = str(image)
     parsed["role"] = role
     parsed["model"] = model
