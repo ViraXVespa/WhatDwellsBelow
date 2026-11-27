@@ -17,6 +17,17 @@ from media.pipeline import mesh_check
 
 BG_DISTANCE = 28
 STILL_ROLES = frozenset({"mannequin-smooth", "mannequin-tpose-side", "mannequin-tpose-back"})
+
+
+def still_view(role: str) -> str | None:
+    """The silhouette a tuned still is measured as. A back plate is not a front plate."""
+    if role not in STILL_ROLES:
+        return None
+    if role == "mannequin-tpose-side":
+        return "side"
+    if role == "mannequin-tpose-back":
+        return "back"
+    return "front"
 # One entry per measure. high/low are the fail ids the tune loop already words.
 # A new subject picks from this list. A new kind of measure is one entry here.
 _RATIO = {
@@ -511,7 +522,8 @@ def _silhouette(mask: bytearray, w: int, h: int, view: str | None) -> dict | Non
         chest_px = _torso_band(runs, head_end, top, height)
     thigh_px, split = _limb(runs, top, height, 0.62, 0.70)
     calf_px, _calf_split = _limb(runs, top, height, 0.80, 0.88)
-    kind = view if view in ("front", "side") else ("front" if split else "side")
+    # An explicit back stays back. Front bands and the ear flag are not applied to it.
+    kind = view if view in ("front", "side", "back") else ("front" if split else "side")
     width = max(spans[top:bottom + 1])
     measurable = chest_px >= 4 and head_px >= 4
     return {
@@ -530,7 +542,7 @@ def _silhouette(mask: bytearray, w: int, h: int, view: str | None) -> dict | Non
 
 
 def measure_mask(mask: bytearray, w: int, h: int, gates: dict, *, view: str | None = None) -> dict:
-    """Judge one silhouette by the measures this asset listed. view forces front or side."""
+    """Judge one silhouette by the measures this asset listed. view forces front, side, or back."""
     readings = _silhouette(mask, w, h, view)
     if readings is None:
         kind = view if view in ("front", "side") else "front"
@@ -884,6 +896,13 @@ def selftest() -> list[str]:
         bad.append(f"a slim side failed ({side['reason']})")
     if "no_ears" in side["failed"]:
         bad.append("a side view was failed for front ears")
+    back = measure_mask(eared, 220, 320, gates, view="back")
+    if back["view"] != "back" or back["failed"]:
+        bad.append(f"a back view used front measures ({back['reason']})")
+    if still_view("mannequin-tpose-back") != "back" or still_view("mannequin-tpose-side") != "side":
+        bad.append("a still role was measured as the wrong view")
+    if still_view("mannequin-smooth") != "front" or still_view("mannequin-front") is not None:
+        bad.append("a front still role lost its view")
     wide_side = measure_mask(_figure(220, 320, head=70, chest=32, thigh=24, calf=18, side=True), 220, 320, gates, view="side")
     if "head_wide" not in wide_side["failed"]:
         bad.append(f"a wide side head passed ({wide_side['reason']})")

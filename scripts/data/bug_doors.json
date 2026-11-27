@@ -305,12 +305,17 @@
      "key": "receptionist",
      "name": "Receptionist",
      "about": "talk cycle, ask topics"
+    },
+    {
+     "key": "transitions",
+     "name": "Menu transitions",
+     "about": "a menu or overlay opens or closes, the fade, Settings > UI > Menu transitions"
     }
    ]
   },
   {
    "key": "debug",
-   "name": "Debug",
+   "name": "Debug tools (door)",
    "about": "secret console, playtest, journal, smoke",
    "jobs": [
     {
@@ -393,43 +398,18 @@
   },
   {
    "key": "art_pipeline",
-   "name": "Player sprite and paper-doll generation pipeline",
+   "name": "Content pipeline",
    "about": "sprite frames, paper plates, sheet harvest",
    "jobs": [
     {
-     "key": "i2v",
-     "name": "I2v",
-     "about": "preparing or retrying one player I2V clip"
+     "key": "content",
+     "name": "Pipeline subjects",
+     "about": "subject records, size bands, and the prompt checklist"
     },
     {
-     "key": "pack",
-     "name": "Pack",
-     "about": "the User has accepted an I2V clip and it is time to harvest or pack"
-    },
-    {
-     "key": "review",
-     "name": "Animation Browser review briefs",
-     "about": "packing an Animation Browser brief, regen tree, or review ledger"
-    },
-    {
-     "key": "attack_keyframes",
-     "name": "Attack body keyframes (posed stills)",
-     "about": "the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file."
-    },
-    {
-     "key": "bible",
-     "name": "Bible lock, plate remap, overlays, quality bar",
-     "about": "locking a Character Bible, plate remap, overlays, or the quality bar"
-    },
-    {
-     "key": "bible_character",
-     "name": "Character Bible, prompt template and method reliability",
-     "about": "authoring or locking a Character Bible, using the Bible prompt template, or judging method reliability"
-    },
-    {
-     "key": "enemy_bible",
-     "name": "Enemy directional Bible: layout, props and hands",
-     "about": "prompting enemy directional reference sets, enemy props or hands per facing"
+     "key": "mesh",
+     "name": "Mesh models",
+     "about": "Hunyuan, TRELLIS, Pixal, and Hi3D"
     }
    ]
   },

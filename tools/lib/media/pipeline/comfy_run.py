@@ -24,7 +24,11 @@ def run(server: str, workflow: dict, dest: Path, timeout: float = 1200) -> Path:
 def queue(server: str, workflow: dict) -> str:
     body = _request(server, "/prompt", {"prompt": workflow})
     if body.get("node_errors") or body.get("error"):
-        raise ValueError("Comfy rejected the workflow")
+        detail = json.dumps(
+            {"error": body.get("error"), "node_errors": body.get("node_errors")},
+            ensure_ascii=True,
+        )[:500]
+        raise ValueError(f"Comfy rejected the workflow: {detail}")
     prompt_id = body.get("prompt_id")
     if not isinstance(prompt_id, str) or not prompt_id:
         raise ValueError("Comfy did not return a prompt id")
@@ -103,6 +107,47 @@ def upload_image(server: str, path: Path) -> str:
     if not isinstance(name, str) or not name:
         raise ValueError(f"Comfy did not name {path.name}")
     return name
+
+
+def upload_file(server: str, path: Path, *, subfolder: str = "") -> str:
+    """Put one file in the local Comfy input folder. Returns the name Load3D uses."""
+    boundary = "----wdbpipeline"
+    raw = path.read_bytes()
+    head = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="image"; filename="{path.name}"\r\n'
+        "Content-Type: application/octet-stream\r\n\r\n"
+    ).encode("utf-8")
+    tail = (
+        f"\r\n--{boundary}\r\n"
+        'Content-Disposition: form-data; name="subfolder"\r\n\r\n'
+        f"{subfolder}\r\n"
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="overwrite"\r\n\r\n'
+        "true\r\n"
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="type"\r\n\r\n'
+        "input\r\n"
+        f"--{boundary}--\r\n"
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        server.rstrip("/") + "/upload/image",
+        data=head + raw + tail,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=180) as resp:
+            parsed = json.loads(resp.read())
+    except urllib.error.URLError as exc:
+        raise ValueError(f"Comfy file upload failed ({exc})") from exc
+    name = parsed.get("name") if isinstance(parsed, dict) else None
+    if not isinstance(name, str) or not name:
+        raise ValueError(f"Comfy did not name {path.name}")
+    folder = str(parsed.get("subfolder") or "").replace("\\", "/").strip("/")
+    named = name.replace("\\", "/")
+    if folder and not named.startswith(folder + "/"):
+        named = f"{folder}/{named}"
+    return named
 
 
 def save_3d(server: str, item: dict, dest: Path) -> Path:

@@ -13,7 +13,7 @@ This is the current **product scope**; the User can change it. They do not ban G
 - Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5).
 - Hit-based gathering system for both mining and woodcutting.
 - Artifact collections / sets required (exactly eight, run-only; inventory door).
-- Player animations: 8-dir Bible layout and male/female parity (art-pipeline door). Each character type has its own complete voice-over set (player door).
+- Player animations: 8 directions and male/female parity (art_pipeline). New frames are that pipeline. Each character type has its own complete voice-over set (player door).
 - All numeric values exposed and tunable in the secret debug menu.
 - Production / Gold quality on every system that ships.
 - Consistent 60 FPS minimum on target hardware.

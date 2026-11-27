@@ -20,6 +20,7 @@
     python tools/media.py pipeline proportion --image still.png
     python tools/media.py pipeline body
     python tools/media.py pipeline smooth
+    python tools/media.py pipeline edit ID --text "TEXT"
 
 WIP under data/pipeline/wip stays off Git. Export under data/pipeline/export is the game contract.
 Qwen3-VL review runs only after Comfy is freed. It writes pass/fail JSON under data/pipeline/wip/review.
@@ -29,6 +30,8 @@ At the limit it writes report.md with each in-between image. A fail is not a han
 `proportion ID` measures a still or a glb against the measures that subject lists. A missing list fails. A vision pass does not override it.
 `body ID` builds a Hunyuan3D surface-net mesh from that subject's front plate. The 32-grid path is not used. A connected mesh that misses the subject's measures is not kept.
 `smooth ID` tunes four T-pose stills from that subject's shape, then builds the body from the front if they pass. Idle is a later animation.
+`edit ID --text` draws that change on one whole-body T-pose still, then Hi3D refines a copy of the kept mesh into a new glb. The source file stays. A failed mesh is not a handoff.
+`digits ID` adds the thumb, fingers, and toe lobes that subject lists onto its T-pose body mesh. It does not rebuild the body. A missing digits spec fails.
 A fit failure retries one smaller octree. A fragmented mesh stops. The limit writes a progress report. A fail is not a handoff.
 """
 from __future__ import annotations
@@ -43,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tools/lib
 import boot  # noqa: E402,F401
 
 import agent_log
-from media.pipeline import body, comfy_run, mesh_check, plates, proportion, smooth, store, tune, vision_review
+from media.pipeline import body, comfy_run, digits, edit, mesh_check, plates, proportion, smooth, store, tune, vision_review
 
 _PROMPTS = Path("data/pipeline/prompts/defaults.json")
 
@@ -158,6 +161,8 @@ def _check(real: Path) -> int:
             + body.selftest()
             + smooth.selftest()
             + proportion.selftest()
+            + digits.selftest()
+            + edit.selftest()
         )
         hero_doc = store.load_subject(repo, hero["id"])
         hero_doc["sections"]["body"]["data"] = {
@@ -440,9 +445,8 @@ def _tune(root: Path, args: object, dry: bool) -> int:
         return agent_log.emit_result("INFO", summary="dry-run", turns=turns)
     workflow = json.loads(src.read_text(encoding="utf-8"))
     extra = _extras(root, args)
-    gates = None
-    if role in proportion.STILL_ROLES:
-        gates = proportion.gates_for(_record(root, args))
+    forced = proportion.still_view(role)
+    gates = proportion.gates_for(_record(root, args)) if forced is not None else None
     subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
     holder = {"workflow": workflow}
     first = None
@@ -465,7 +469,6 @@ def _tune(root: Path, args: object, dry: bool) -> int:
         )
         subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
         if gates is not None:
-            forced = "side" if role == "mannequin-tpose-side" else "front"
             measured = proportion.with_reference(
                 root, args.id, proportion.measure_image(path, gates, view=forced), gates["deltas"],
             )
@@ -574,17 +577,44 @@ def _proportion(root: Path, args: object, dry: bool) -> int:
     path = Path(image)
     if not path.is_file():
         path = root / image
-    forced = None
-    if args.role == "mannequin-tpose-side":
-        forced = "side"
-    elif args.role in proportion.STILL_ROLES:
-        forced = "front"
+    forced = proportion.still_view(args.role) if args.role else None
     measured = proportion.measure_image(path, gates, view=forced)
     print(f"head={measured['head_ratio']} thigh={measured['thigh_ratio']} calf={measured['calf_ratio']} {measured['reason']}")
     if measured["ok"]:
         return agent_log.emit_result("PASS", summary="in band", image=str(path))
     print("proportion failed. Do not present it.")
     return agent_log.emit_result("FAIL", summary=measured["reason"], image=str(path))
+
+
+def _digits(root: Path, args: object, dry: bool) -> int:
+    """Add the subject's digits to its kept body mesh. The source glb stays."""
+    record = _record(root, args)
+    spec = digits.require_spec(record.get("digits"))
+    src = root / "data" / "pipeline" / "wip" / "gen" / f"{args.id}-hunyuan-body.glb"
+    if args.glb:
+        src = Path(args.glb)
+        if not src.is_file():
+            src = root / args.glb
+    if not src.is_file():
+        agent_log.fail(f"{args.id} has no body mesh")
+    dest = root / "data" / "pipeline" / "wip" / "gen" / f"{args.id}-hunyuan-body-digits.glb"
+    if dry:
+        print(f"would add digits to {src.name} -> {dest.name} fingers={spec['fingers']} toes={spec['toes']}")
+        return agent_log.emit_result("INFO", summary="dry-run", id=args.id)
+    points, faces = mesh_check.load_primitive(src)
+    new_points, new_faces, report = digits.apply(points, faces, spec)
+    digits.write_glb(dest, new_points, new_faces)
+    mesh = mesh_check.check_glb(dest)
+    gates = proportion.gates_for(record)
+    measured = proportion.check_glb(dest, gates)
+    print(
+        f"hands {report['hands']} feet {report['feet']} verts {report['verts']} "
+        f"mesh {mesh['reason'] or 'ok'} proportion {measured['reason']}"
+    )
+    if not mesh["ok"] or not measured["ok"]:
+        print("digits failed the body gates. Do not present the mesh.")
+        return agent_log.emit_result("FAIL", summary="digits missed the body gates", id=args.id)
+    return agent_log.emit_result("PASS", summary="digits added", id=args.id, glb=str(dest))
 
 
 def _body(root: Path, args: object, dry: bool) -> int:
@@ -677,6 +707,100 @@ def _smooth(root: Path, args: object, dry: bool) -> int:
     return _body(root, args, False)
 
 
+def _edit(root: Path, args: object, dry: bool) -> int:
+    """Draw one text change on a whole-body still, then refine a copy of the kept mesh."""
+    record = _record(root, args)
+    text = _need(getattr(args, "text", None), "--text")
+    spoken = edit.prompt_for(record, text)
+    source = edit.kept_source(root, args.id)
+    if args.glb:
+        source = Path(args.glb)
+        if not source.is_file():
+            source = root / args.glb
+    if not source.is_file():
+        agent_log.fail(f"{args.id} has no body mesh")
+    dest = edit.edit_dest(root, args.id)
+    if source.resolve() == dest.resolve():
+        agent_log.fail("edit output is the source mesh")
+    passes = edit.parse_passes(getattr(args, "passes", None))
+    reference = None
+    if args.image:
+        reference = Path(args.image[0])
+        if not reference.is_file():
+            reference = root / args.image[0]
+        if not reference.is_file():
+            print(f"error: missing reference {args.image[0]}")
+            return agent_log.emit_result("FAIL", summary="missing reference")
+    if dry:
+        ref = f" reference={reference.name}" if reference else ""
+        print(
+            f"would edit {args.id}: Qwen still, then Hi3D {','.join(passes)} "
+            f"on a copy of {source.name} -> {dest.name}{ref}"
+        )
+        return agent_log.emit_result("INFO", summary="dry-run", id=args.id)
+    server = args.server or comfy_run.SERVER
+    subprocess.run(["ollama", "stop", vision_review.MODEL], check=False)
+    gen = root / "data" / "pipeline" / "wip" / "gen"
+    gen.mkdir(parents=True, exist_ok=True)
+    start = gen / f"{args.id}-edit-still.png"
+    workflow_path = gen / f"{args.id}-edit-still.json"
+    ref_name = comfy_run.upload_image(server, reference) if reference is not None else None
+    workflow = edit.build_still(
+        spoken["prompt"],
+        spoken["negative"],
+        seed=spoken["seed"],
+        prefix=f"wdb-gen/{args.id}-edit-still",
+        reference=ref_name,
+    )
+    workflow_path.write_text(json.dumps(workflow, indent=2) + "\n", encoding="utf-8")
+    print("generate edit still", flush=True)
+    comfy_run.run(server, workflow, start)
+    try:
+        comfy_run.free(server)
+    except ValueError as exc:
+        print(f"warn: Comfy did not free ({exc})")
+    still_turns = args.turns if args.turns is not None else tune.DEFAULT_TURNS
+    args.role = spoken["role"]
+    args.image = [str(start)]
+    args.workflow = str(workflow_path)
+    args.turns = still_turns
+    args.review_from = None
+    code = _tune(root, args, False)
+    if code != 0:
+        print("edit still missed the checklist. Do not refine.")
+        return code
+    tuned = root / "data" / "pipeline" / "wip" / "review" / f"{start.stem}-tune"
+    report = json.loads((tuned / "report.json").read_text(encoding="utf-8"))
+    if report.get("status") != "pass":
+        print("edit still missed the checklist. Do not refine.")
+        return agent_log.emit_result("FAIL", summary="tune status")
+    passed = tuned / str(report.get("image") or "")
+    plate = gen / f"{args.id}-edit-still-framed.png"
+    plates.frame_file(passed, plate)
+    print(f"framed {plate}")
+    gates = proportion.gates_for(record)
+    review = root / "data" / "pipeline" / "wip" / "review" / f"{args.id}-edit"
+    mesh_report = edit.run_refine(
+        source,
+        plate,
+        dest,
+        review,
+        subject_id=args.id,
+        gates=gates,
+        server=server,
+        passes=passes,
+    )
+    print(f"edit {mesh_report['status'].upper()}")
+    for step in mesh_report["steps"]:
+        detail = step.get("error") or step.get("mesh") or ""
+        print(f"  passes={','.join(step['passes'])} action={step['action']} {detail}")
+    if mesh_report["status"] == "pass":
+        print(f"gates pass {mesh_report['glb']}. This is not a look approval.")
+        return agent_log.emit_result("PASS", summary="gates pass", glb=mesh_report["glb"])
+    print(f"progress report {review / 'report.md'}. Do not present the mesh.")
+    return agent_log.emit_result("FAIL", summary="edit", report=str(review / "report.md"))
+
+
 def _need(value: str | None, flag: str) -> str:
     if not value:
         agent_log.fail(f"{flag} is required")
@@ -689,10 +813,10 @@ def main(argv: list[str] | None = None) -> int:
         writes=True,
         verbose=True,
     )
-    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, proportion, body, or smooth.")
+    ap.add_argument("cmd", help="status, check, list, coverage, prompts, new, show, link, mark, export, review, correct, tune, frame, mesh, proportion, body, digits, smooth, or edit.")
     ap.add_argument(
         "id", nargs="?", default=None,
-        help="Subject id. Required for show, link, mark, export, proportion, body, and smooth. "
+        help="Subject id. Required for show, link, mark, export, proportion, body, digits, smooth, and edit. "
         "Tune, review, and correct use it for that subject's extra checks and measures.",
     )
     ap.add_argument("--type", choices=store.TYPES, help="Subject type for new.")
@@ -718,6 +842,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--left", default=None, help="Framed left plate for body.")
     ap.add_argument("--back", default=None, help="Framed back plate for body.")
     ap.add_argument("--right", default=None, help="Framed right plate for body.")
+    ap.add_argument("--text", default=None, help="Change to draw on the whole subject. Edit requires it.")
+    ap.add_argument("--passes", default=None, help="Hi3D resolutions, comma-separated. Default 512,1024,1536.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = bool(args.dry_run)
@@ -764,8 +890,13 @@ def main(argv: list[str] | None = None) -> int:
             return _proportion(root, args, dry)
         if args.cmd == "body":
             return _body(root, args, dry)
+        if args.cmd == "digits":
+            _need(args.id, "id")
+            return _digits(root, args, dry)
         if args.cmd == "smooth":
             return _smooth(root, args, dry)
+        if args.cmd == "edit":
+            return _edit(root, args, dry)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return agent_log.emit_result("FAIL", summary=str(exc))

@@ -1,32 +1,17 @@
-# Player sprite and paper-doll generation pipeline
+# Content pipeline
 
 Status: current plan
 Read when: sprite frames, paper plates, sheet harvest
-Code: `tools/media.py sprites`, `tools/media.py i2v-seeds`, `tools/media.py bible-prompt`, `tools/media.py attack-keys`, `tools/media.py plate-remap`, `tools/media.py bible-normalize`, `tools/lib/imglib/`, `tools/shots.py inspect`, `tools/media.py pack-loco`, `tools/media.py pack-oneshot`, `tools/media.py rekey`, `tools/media.py world`, `tools/media.py gear-icons`, `tools/media.py pack-turntable`, `tools/media.py anim-review`, `tools/lib/media/anim_review_lib.py`, `tools/media.py grok`, `tools/media.py comfy-character`, `assets/sprites/player/`
+Code: `python tools/media.py pipeline`
 
-This file is the door. Do not run `tools/media.py bible-prompt` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load Job siblings until a table row matches. Do not load art_pipeline.attack_keyframes unless the User is resuming that parked pipeline.
+This file is the door. New art goes through this pipeline until it is complete. Do not run `bible-prompt`, `i2v-seeds`, `pack-loco`, `pack-oneshot`, `pack-turntable`, `plate-remap`, `comfy-character`, or an Imagine character, tile, UI, or I2V call for new game art. The strips already in the game stay. A fail is not presented.
 
 | Job | Open |
 |-----|------|
-| seed unit, spoken cue | `design/art-i2v.md` |
-| cleanup pass, atlas stitch | `design/art-pack.md` |
-| brief packet, tree tour | `design/art-review.md` |
-| parked | parked |
-| canon bible, layer law, quality floor | `design/art-bible.md` |
-| identity sketch, template wording, reliability notes | `design/art-bible-character.md` |
-| enemy facings, prop hands, mirror swap, quiver and staff | `design/art-bible-enemy.md` |
-| staged generators, wip subjects | `design/content-pipeline.md` |
+| pipeline subjects, proportion bands, clause checks | `design/content-pipeline.md` |
+| hunyuan trellis pixal hi3d | `design/content-pipeline-mesh.md` |
+| authoring phone studio | `design/content-pipeline-ui.md` |
 
-I2V stays in Grok Build unless the User says otherwise. I2V stays in a slice thread (not Bot notes, PC offload, or smoke tests). One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
+One command covers a kind of change. Do not add a script per body part, prop, or enemy. Counts and measures live on the subject. A missing list fails. Do not default a subject id.
 
-Imagine calls (`image_gen`, `image_edit`, `image_to_video`) use the isolated-media gate and `tools/media.py grok`, not this door. Generation stays isolated; direct reference grants do not enable in-repo generation. World tiles, UI stills, and other non-character sheets use that door plus this file’s locked-Bible style rule. Pack and review stay in the slice thread after accept.
-
-`python tools/media.py comfy-character` is the local Comfy pose page and bible style-lock page. `setup` rebuilds the gitignored cell depths and female walk reel. That trial does not replace Imagine, `media.py grok`, or the I2V clips this door packs.
-
-Reliability comes from **one Image-to-Video clip at a time**, the live prompt in `tools/media.py i2v-seeds`, **User review**, and plate-correct / cleanup scripts. Do not run automatic multi-pass fill-in.
-
-After an isolated still lands under `_src/`, key the source plate directly with `python tools/media.py sprites key` (or `matte`; both use `tools/lib/imglib/matte.py`), no remap first (art-pack, Still rekey). `tools/media.py plate-remap` is only for opaque I2V seed plates. Do not write a new keyer, a PIL loop, or a one-off script for chroma. Extend `media.py world` or `media.py gear-icons` only if a durable batch wrapper is needed, and tell the User.
-
-This is the existing 2D/Imagine character pipeline. An explicitly approved alternative, such as the modular Blender walk proof task, follows its own modeling/bake steps while retaining accepted identity and comparison requirements; it is not an I2V job. Props may use a simplified stills-only variant.
-Male and female player characters MUST each have their own locked Character Bible and MUST maintain full animation parity so that weapon and tool paper-doll **layers** composite onto either body without special per-gender tweaks.
-Player and enemy animations use exactly 8 directions matching the Character Bible layout.
+Ship frames stay 128. Generate larger, then integer-downscale. The game reads an exported pack. No mesh, vision model, or Comfy run belongs in the game.

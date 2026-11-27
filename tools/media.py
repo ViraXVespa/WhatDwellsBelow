@@ -29,7 +29,6 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("pipeline",         "media/pipeline_cmd",           "Art pipeline WIP store and export (local until export)"),
     ("bible-prompt",     "media/bible_prompt",           "Bible Imagine text (--gender, --enemy ID)"),
     ("bible-normalize",  "media/bible_normalize",        "Squared 3x3 Bible to the live lock sheet"),
-    ("attack-keys",      "media/attack_keyframes",       "Beat-by-beat attack stills from a Bible cell"),
     ("keytest",          "media/keytest",                "Golden-set keying regression"),
     ("sfx",              "media/make_sfx",               "Placeholder SFX wavs from tools/data/sfx-cues.json"),
     ("glyphs",           "media/gen_prompt_glyphs",      "Chunky pixel prompt glyphs"),

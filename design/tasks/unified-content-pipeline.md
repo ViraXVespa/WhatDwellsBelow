@@ -21,16 +21,15 @@ This task is the culmination of an extended design discussion. The following con
 
 - **Target hardware**: The user’s local machine has 16 GB VRAM. All generation paths must stay inside this limit via staging, INT8/GGUF weights, and explicit model unloading. Previous explorations of heavy Wan 2.2 14B animation workflows were rejected for this reason.
 - **Repo anchors** (read these first):
-  - `AGENTS.md` and `design/art-bible.md` (plus `design/art-bible-character.md`, `design/art-bible-enemy.md`) — pixel-art rules (128×128 integer grid, nearest-neighbor, palette snapping, clean alpha, 8-dir character layout / 3×3 neutral standing cells).
-  - `design/art-pack.md`, `tools/media.py`, and existing pack/rekey tooling — current asset ingestion path that Export must ultimately feed.
-  - Existing ComfyUI character workflow driven by `tools/media.py comfy-character` and the mobile UI (`mobile_ui/` + `mobile_ui_server.py`, served on :8189, proxies ComfyUI on :8188).
-  - Workflows are generated/installed rather than checked in under a `data/comfy-workflows/` tree.
-- **Preferred model reality** (starting recommendations chosen for 16 GB + native ComfyUI support; must be verified):
-  - Qwen Image 2.1 / Edit for concept, T-pose, and multi-view sheets.
-  - Pixal3D Multiview (native ComfyUI node) preferred for image/multi-view → 3D; TRELLIS.2 as fallback. INT8 ConvRot, 32³ detail grid safe default on 16 GB.
-  - NVIDIA MotionBricks for real-time pose-to-pose animation inbetweening. MotionBridge as alternate.
-  - Stable Audio 3 Small-SFX for placeholder sound effects (native, extremely light).
-  - Qwen3-VL (or the vision model established by the companion open-code-skills work) as the default eyes for reference analysis, style comparison, and self-tuning loops.
+  - The content pipeline door (`design/art-pipeline.md`, then one sibling). Ship frames stay 128×128, nearest-neighbor, clean alpha, 8 directions.
+  - `python tools/media.py pipeline` is the CLI. Pack and rekey stay for the strips already in the game. Do not use them for new art.
+  - The mobile UI (`tools/lib/media/mobile_ui/` + `tools/lib/media/mobile_ui_server.py`, served on :8189, proxies ComfyUI on :8188). The pipeline studio job is `design/content-pipeline-ui.md`.
+- **Models on this PC** (16 GB, one family at a time):
+  - Qwen Image 2.1 int8 writes stills. Qwen3-VL (`qwen3-vl:8b`) checks the prompt that was sent, four clauses at a time.
+  - Hunyuan3D 2.1 builds the body from a passing text-only front still. The shape graph is image-only.
+  - Pixal3D int8, Pixal3D multiview int8, and TRELLIS.2 int8 (plus both VAEs) are on disk. They copy the plate.
+  - A text edit is a Qwen still plus Hi3D v1.0 INT8 refining the kept mesh. Hi3D does not read text. It will not invent detail the still does not show. Its encoders are public DINOv2 Large and CLIP ViT-L/14.
+  - MotionBricks SOMA FP16 is on disk and is not wired. Stable Audio was measured and is not the character path. Wan 2.2 14B stays out.
 - **Green-field game systems**: Many features the pipeline must support do not yet exist (full character customization/paperdoll, Enemy Log, multiple biomes, Vylenheim city buildings, conditional dialog, weapon skills, etc.). Gear/inventory and basic enemy systems do exist. “Reconfigure the game” includes making data-driven paths live.
 - **Mannequin vs equipped-first rationale**:
   - Characters use a clean mannequin as the locked source of truth for modularity (paperdoll, 8-dir, animation, 3D). Equipped default-loadout is reference only.
@@ -96,13 +95,15 @@ Character, NPC, Enemy, Sub-boss, Boss, Equipment, Item, Projectile, Decoration, 
 - Style-reference images (especially the locked female character set) can be attached to any generation step for conditioning or auto-tune comparison.
 
 ## Visual Generation Stack (16 GB staged)
-- Concept / stills / multi-view sheets: Qwen Image 2.1 / Edit
-- 3D reconstruction: Pixal3D Multiview (preferred) or TRELLIS.2, INT8 ConvRot, 32³ detail grid default
-- Animation: NVIDIA MotionBricks (primary) or MotionBridge
-- Pixel render-back: 128×128 grid snap + palette quant + clean alpha
-- Vision / analysis / style comparison: Qwen3-VL (or the model from the open-code-skills task)
-- Sub-boss default base generation size 2×, Boss 4× (user-adjustable). Final pixel output remains 128×128.
-- Automatic style-tuning loop: vision model scores output against female character references → local LLM proposes prompt/operational adjustments → re-generate → repeat until threshold or user interrupt.
+- Stills: Qwen Image 2.1 int8. A reference image can condition the still.
+- Body: Hunyuan3D 2.1 from one passing front still. The shape graph is image-only.
+- Text edit: `pipeline edit ID --text` draws the change in a Qwen still of the whole body, then Hi3D v1.0 INT8 refines a copy of the kept mesh from that still. The kept body file stays. Hi3D reads the mesh and the image. It does not read the prompt. It will not invent detail the still does not show. Encoders are public DINOv2 Large and CLIP ViT-L/14. Generated meshes can ship. The weights stay on this machine.
+- Direct3D-V3 INT8 shape weights for stage 1536 are on disk. Its image encoder is Meta DINOv3. Access is awaiting author review. Leave that node unloaded.
+- Pixal3D and TRELLIS.2 are on disk. They rebuild from images and copy the plate.
+- Motion: MotionBricks SOMA FP16 is on disk and is not wired.
+- Pixel finish is a post step. Ship frames stay 128. Sub-boss default base generation size 2×, Boss 4× (user-adjustable). Final pixel output remains 128×128.
+- Vision: Qwen3-VL (`qwen3-vl:8b`) checks the sent prompt, four clauses at a time. The review context is 65536. The reply cap is 16384. A vision pass does not override proportion.
+- Tune: `pipeline tune` reviews with Qwen3-VL, restates a miss, and regenerates until the checklist passes or the turn limit.
 
 ## Audio
 - Placeholder SFX via Stable Audio 3 Small-SFX (native, light, swappable).
@@ -192,31 +193,45 @@ Extend existing mobile UI (vanilla JS) into primary modular interface with:
 - Godot data-consumption path (per first-slice boundary)
 - Integration with existing pack/rekey tools
 - Test examples of each subject type
-- **Female walk proof, before the X post**: an 8-direction female walk generated by this pipeline and presented for review. Bar is `design/tasks/modular-voxel-walk-proof.md`: conventional modular body, front lock, side 1:1 including the stride foot, modular default gear, walk on model from the directions the game uses, pixel-art bake, synced side-by-side against `assets/sprites/player/female/walk_DIRECTION_N.png`. The result should read as the current in-game female, with the walk frames on model and continuous instead of the choppy live frames. The current female art is the comparison source.
+- **Female walk proof, before the X post**: an 8-direction female walk generated by this pipeline and presented for review. Compare it with `assets/sprites/player/female/walk_DIRECTION_N.png`. The walk should read as the current in-game female, on model, and continuous instead of the choppy live frames. The modular voxel walk is not part of this pipeline.
 - **Verified end-to-end, after the walk proof**: the X post https://x.com/TheKingOfStank/status/2122638614454575113 successfully ingested and walked through the full Character flow to a packed, game-usable result that has been auto-tuned toward the female character artstyle
 - Documented deferrals
 - Notes on overlap / hand-off with the open-code-skills Qwen3-VL work
 
 ## Session
 
-Approved plan: the session `plan.md` for this Build session. Resume by reading that plan, then this task, then the handoff.
+Approved plan: the session `plan.md` for this Build session. Resume from this task, then the art_pipeline door and the job file for the work.
 
-Handoff: `_logs/pipeline-handoff.md` (gitignored with the rest of `_logs`). Update it at every phase boundary so a compact can resume without re-reading the whole thread. The handoff is the live state. This task's Progress section points at it and records the proof order.
+The live rules are `design/art-pipeline.md`, `design/content-pipeline.md`, `design/content-pipeline-mesh.md`, and `design/content-pipeline-ui.md`. A gitignored session log is a local pointer and is not required.
 
 WIP is local until export. `data/pipeline/wip/` is gitignored, including subject JSON. Export (`data/pipeline/export/` plus the sheets it names) is what enters Git. Schemas and the tool code are the system and are committed.
 
 Proof order: female 8-direction walk, presented for review, then the X-post character. Do not start the X-post proof first.
 
+## Live
+
+The kept body is `data/pipeline/wip/gen/female-hunyuan-body.glb` (prompt `bb26c107`, 52936 verts, 1915824 bytes). Do not overwrite it. The female front head minimum on her subject record is 0.73. The edit still `data/pipeline/wip/review/female-edit-head.png` is in that band and its checklist failed, including separated fingers. Do not queue a mesh refine on it. Do not present it. `female-hunyuan-body-edit.glb` does not exist.
+
+The open implementation is the pipeline studio on port 8189. Build that shell from `design/content-pipeline-ui.md`. Do not run `pipeline edit`, `pipeline body`, or `pipeline smooth` on id `female` while building it.
+
 ## Progress
 
-- 2026-11-25: Plan approved. Weights are linked and visible to the headless ComfyUI on `127.0.0.1:8188` (local `comfy-mcp`). `python tools/media.py pipeline` is the store CLI. Measure pass is in `design/content-pipeline.md`. A Qwen front still of the locked woman is at `data/pipeline/wip/gen/female-front_00001_.png`. Four keyed bible views produced an equipped Pixal3D body (`female-pixal-4view-tex_00001_.glb`). That mesh is the default loadout reference. The character root is a clean mannequin; hair, neckband, armor, and boots stay modular pieces. The neckband has no tail. The locked mannequin front is the blank `data/pipeline/wip/gen/female-mannequin-front.png` (prompt `43a41238`): eyes may stay, and eyebrows, the nose, and the mouth are later pieces. Block feet fail. `pipeline tune` is the turn-limited review and regenerate loop. Both side tunes passed on turn 1. The four-view featureless rebuild (`918e696e`) has an empty neck band and is not the root. Front and back alone connect into one pillar. Widening only the side necks (`004e9412`) opened a larger gap. A 64-grid pass (`ffec9ef8`) still had an empty neck. A speck above the front head had shortened that plate. `pipeline frame` now keeps the largest mass, and `pipeline mesh` fails a coarse glb with an empty height band. The aligned 32-grid mesh (`a89468e1`) passes that check. It is not a look approval. Shape and texture on those plates finished as prompt `1e889747`. The shape is a standing figure. It is not the walk proof. The painted mannequin mesh failed feet and is not the root. The 32-grid structure path is paused. Four-view Hunyuan surface net (`07176358`) is a fragment cloud and is not the root. `pipeline mesh` fails a fragmented mesh. `pipeline body` builds a Hunyuan3D surface-net mesh from the locked front plate. Prompt `ef7de895` is rejected for those notes. Ears are a later piece. `pipeline smooth` passed a smooth still on turn 2 and built prompt `75f81c41`. That mesh is rejected for the bind pose: the upper arms are bent, the thighs and the feet are together, the abdomen is thick, and the hourglass is missing. The bind pose for every character and enemy is a shared T-pose. Idle is a later animation, not the rest pose. `pipeline smooth` tunes four T-pose bible stills and builds the body from the front only. Prompt `c5f67d50` kept the T-pose and was rejected for scale: the head was too large, and the thighs and calves were too thick. `pipeline proportion` is the size gate. Front and back share head/ribcage 0.75 to 1.20, thigh 0.50, calf 0.32. A lower-head lobe fails as ears. A vision pass does not override it. Prompt `bb26c107` passed that gate and replaced the body (`female-hunyuan-body.glb`, 52936 verts, one piece). It is not a look approval and it is not the walk. Her left side still pointed an arm forward and is not the side lock. Pixel-art stays a post step. Live state is `_logs/pipeline-handoff.md`.
+- 2026-11-25: Plan approved. Weights are linked and visible to the headless ComfyUI on `127.0.0.1:8188` (local `comfy-mcp`). `python tools/media.py pipeline` is the store CLI. Measure pass is in `design/content-pipeline.md`. A Qwen front still of the locked woman is at `data/pipeline/wip/gen/female-front_00001_.png`. Four keyed bible views produced an equipped Pixal3D body (`female-pixal-4view-tex_00001_.glb`). That mesh is the default loadout reference. The character root is a clean mannequin; hair, neckband, armor, and boots stay modular pieces. The neckband has no tail. The locked mannequin front is the blank `data/pipeline/wip/gen/female-mannequin-front.png` (prompt `43a41238`): eyes may stay, and eyebrows, the nose, and the mouth are later pieces. Block feet fail. `pipeline tune` is the turn-limited review and regenerate loop. Both side tunes passed on turn 1. The four-view featureless rebuild (`918e696e`) has an empty neck band and is not the root. Front and back alone connect into one pillar. Widening only the side necks (`004e9412`) opened a larger gap. A 64-grid pass (`ffec9ef8`) still had an empty neck. A speck above the front head had shortened that plate. `pipeline frame` now keeps the largest mass, and `pipeline mesh` fails a coarse glb with an empty height band. The aligned 32-grid mesh (`a89468e1`) passes that check. It is not a look approval. Shape and texture on those plates finished as prompt `1e889747`. The shape is a standing figure. It is not the walk proof. The painted mannequin mesh failed feet and is not the root. The 32-grid structure path is paused. Four-view Hunyuan surface net (`07176358`) is a fragment cloud and is not the root. `pipeline mesh` fails a fragmented mesh. `pipeline body` builds a Hunyuan3D surface-net mesh from the locked front plate. Prompt `ef7de895` is rejected for those notes. Ears are a later piece. `pipeline smooth` passed a smooth still on turn 2 and built prompt `75f81c41`. That mesh is rejected for the bind pose: the upper arms are bent, the thighs and the feet are together, the abdomen is thick, and the hourglass is missing. The bind pose for every character and enemy is a shared T-pose. Idle is a later animation, not the rest pose. `pipeline smooth` tunes four T-pose bible stills and builds the body from the front only. Prompt `c5f67d50` kept the T-pose and was rejected for scale: the head was too large, and the thighs and calves were too thick. `pipeline proportion` is the size gate. Front and back share head/ribcage 0.75 to 1.20, thigh 0.50, calf 0.32. A lower-head lobe fails as ears. A vision pass does not override it. Prompt `bb26c107` passed that gate and replaced the body (`female-hunyuan-body.glb`, 52936 verts, one piece). It is not a look approval and it is not the walk. Her left side still pointed an arm forward and is not the side lock. Pixel-art stays a post step. The live rules are the art_pipeline job files.
 - 2026-11-26: Proportion and the T-pose prompt no longer assume the female body. A subject lists its own measures. Head, thigh, calf, and ears are body measures. Aspect is a general one. Breasts and the hourglass are optional vision checks the subject opts into. The female shape, bands, and checks live on the local female subject until export. The kept mesh was not rebuilt for this.
 - 2026-11-26: Qwen3-VL checks the prompt that was sent. Positive sentences must be visible. Comma-separated negative tags must be absent. The asks go out four at a time, then a miss goes back through `pipeline tune`. The clauses are that prompt, so a building does not inherit a body checklist. The kept mesh was not rebuilt for this.
+- 2026-11-26: The Bible, I2V, pack, review, and attack-keyframe docs are removed. New art is this pipeline. TRELLIS.2 and both Pixal3D int8 weights were already on disk. A text change is a Qwen still plus a Hi3D v1.0 refine of the kept mesh. Programmatic digits are not the method. The modular voxel walk task and its WIP folder are deleted. The kept body file is not overwritten. Direct3D-V3 shape weights are on disk, and its DINOv3 encoder access is awaiting author review.
+- 2026-11-26: `pipeline edit ID --text` is the text-edit command. It writes one Qwen whole-body still, then Hi3D v1.0 refines a copy of the kept mesh into `{id}-hunyuan-body-edit.glb`. The kept body file stays. A failed mesh stays in the review report.
+- 2026-11-26: Qwen3-VL review calls use context 8192. One review image and a four-check batch fit in that window. The ask is the checks.
+- 2026-11-26: Qwen3-VL review calls use context 65536 and a reply cap of 16384. That uses part of the free VRAM and the model stays on the GPU. A short reply is asked again for the check ids it left out.
+- 2026-11-26: The closest female edit still measured front head 0.74, 103 px on a 140 px chest. Later seeds of the same head line measured 0.64 to 0.71. A stronger head line measured 0.70 and failed the thigh maximum.
+- 2026-11-26: The female front head minimum is 0.73. The 0.74 still is in band. Its checklist failed the separated-fingers sentence, the head-width sentence, and four other lines. Hi3D has not run. The kept body file stays unchanged.
+- 2026-11-27: A back still uses the measures listed for the back view. A later-piece sentence is not a visibility check. A review JSON object in the think trace is parsed when the content has none. The female edit still was not regenerated. The kept body file stays.
+- 2026-11-27: The live rules from the session log are in the art_pipeline job files. The open implementation is the pipeline studio (`design/content-pipeline-ui.md`). Weights, the WIP store, Qwen stills, Hunyuan body, the text-edit command, and Qwen3-VL review and tune are in the tool. MotionBricks is on disk and the pipeline does not call it. Capture, pixel finish, the Godot sheet, and the other subject shells are still open. The export index lists no subjects. The finger still stays in review.
 
 ## First Actions for a New Session
-1. Read `_logs/pipeline-handoff.md`, then this task's Progress section.
-2. Continue the phase the handoff names. Do not restart finished phases.
-3. Update the handoff and this Progress section before the session ends or at a phase boundary.
+1. Read this task's Live section, then `design/art-pipeline.md` and the job file for the work.
+2. The open implementation is the pipeline studio. Do not rerun a finished phase, and do not refine the female edit still.
+3. Update this Live section and Progress when a fact lands.
 
 ## Next Steps (User Only)
 python tools/slice.py open art_pipeline --task unified-content-pipeline

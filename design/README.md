@@ -59,7 +59,7 @@ The Build front door is `grok-build.md`; `build-job-cycle.md` owns the work cycl
 | Time targets, polish, a11y | `feel.md` |
 | Failure modes | `edge-cases.md` |
 | Phase 1–9 checklist | `coverage.md` |
-| Sprite / paper-doll door | `art-pipeline.md` |
+| Content pipeline door | `art-pipeline.md` |
 | Pinned archive commits (door) | `archives.md` |
 | Suggested starts + live defaults | `tunables.md` |
 Per-build player notes are flat `design/changelog/{label}.md`. They are not topic files. A note that is no longer in the tree is in git history (`versioning-log.md`).

@@ -45,7 +45,7 @@ Build repo skills live at `.grok/skills/` (Imagine / I2V / pc-offload). They are
 Imagine / I2V skills cite the isolated-media gate only and stay Build-only.
 The pc-offload skill cites the pc-offload catalog for Grok Build on the User PC, and may name the agents file where it tells Build to read it by hand (a worktree session does not always auto-load it).
 Types / warnings / tabs live in `design/gdscript-law.md`, not the agents file.
-Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
+New character art uses design/art-pipeline.md then one sibling. Do not start a Bible, a pack, a review tree, or an I2V unit.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md.
 Path files name recipes. Recipes do not name path files.

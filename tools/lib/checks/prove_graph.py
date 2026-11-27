@@ -20,7 +20,7 @@ from pathlib import Path
 SKILL_DIR = Path("/home/box/agent-data/workflows")
 TEXT = (".md", ".py", ".gd", ".tscn", ".tres", ".json", ".yaml", ".yml", ".txt", ".sh", ".cfg", ".toml", ".godot", ".gdshader", ".shader", ".html")
 SKIP = ("design/changelog/", "archives/", "_src/", "assets/", "scripts/data/changelog.json", "scripts/data/archive_catalog.json",
-        "tools/data/dupes-fixture/", "tools/data/prove_rules.json", "tools/data/attack_keyframes_log.json")
+        "tools/data/dupes-fixture/", "tools/data/prove_rules.json")
 KINDS = [  # (glob, kind) first match wins; the kind says what sort of reference an edge is
     ("design/routes.yaml", "routes"), ("BOT.md", "job-table"), ("AGENTS.md", "job-table"), ("design/tools*.md", "job-table"),
     ("design/tasks/*.md", "task"), ("skill:*", "skill"), (".github/*", "ci"), (".grok/hooks/*", "hook"), (".githooks/*", "hook"),

@@ -37,9 +37,6 @@ notes_exempt:
   - design/benchmarks/desktop-release.md
   - design/ui-ux-audit.md
 
-parked_jobs:
-  - design/art-attack-keyframes.md
-
 recipes:
   refactor: design/refactor.md
   refactor_hostify: design/refactor-hostify.md
@@ -104,9 +101,6 @@ gates:
   audio_sfx:
     file: design/audio-sfx.md
     when: wiring_or_generating_sfx_cue
-  art_attack_log:
-    file: design/art-attack-keyframes-log.md
-    when: attack_keyframe_roll_history
   build_week_start:
     file: design/build-week-start.md
     when: build_new_week
@@ -327,14 +321,9 @@ doors:
     file: design/art-pipeline.md
     read_when: "sprite frames, paper plates, sheet harvest"
     jobs:
-      i2v: design/art-i2v.md
-      pack: design/art-pack.md
-      review: design/art-review.md
-      attack_keyframes: design/art-attack-keyframes.md
-      bible: design/art-bible.md
-      bible_character: design/art-bible-character.md
-      enemy_bible: design/art-bible-enemy.md
       content: design/content-pipeline.md
+      mesh: design/content-pipeline-mesh.md
+      studio: design/content-pipeline-ui.md
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
@@ -374,14 +363,9 @@ job_read_when:
   debug.bench: "scored legs, continuous sweep"
   debug.anim_browser: "timeline scrubber, review queue"
   debug.smokes: "phase assertions, runner summary"
-  art_pipeline.i2v: "seed unit, spoken cue"
-  art_pipeline.pack: "cleanup pass, atlas stitch"
-  art_pipeline.review: "brief packet, tree tour"
-  art_pipeline.attack_keyframes: "resume parked, attack keyframes"
-  art_pipeline.bible: "canon bible, layer law, quality floor"
-  art_pipeline.bible_character: "identity sketch, template wording, reliability notes"
-  art_pipeline.enemy_bible: "enemy facings, prop hands, mirror swap, quiver and staff"
-  art_pipeline.content: "staged generators, wip subjects"
+  art_pipeline.content: "pipeline subjects, proportion bands, clause checks"
+  art_pipeline.mesh: "hunyuan trellis pixal hi3d"
+  art_pipeline.studio: "authoring phone studio"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
@@ -407,9 +391,6 @@ job_read_when:
   archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
   archives.play: "worktree minimize, Godot child restore, slug copyhit"
   archives.ui: "split chevron, Documents reader, dim inactive columnstack"
-
-job_parked:
-  - art_pipeline.attack_keyframes
 
 # Build prove: numbered smoke phases per door or door.job (job key wins over its door). Phase meanings: debug-smokes.
 # Printed by list_route and start_build_slice; gate.py smokes / gate.py bot-smokes take --door / --job instead of --phases.
@@ -545,6 +526,10 @@ web_perf:
     interactables: "camp-shop,dungeon-walk"
     hub: "hub-load,camp-walk"
     dungeon: "dungeon-load,dungeon-walk"
+
+job_parked: []
+
+parked_jobs: []
 
 conflicts_with:
   inventory:

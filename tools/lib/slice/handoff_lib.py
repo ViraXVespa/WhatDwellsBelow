@@ -356,8 +356,8 @@ def selftest(script: list[str]) -> list[str]:
             bad.append("a handoff skeleton's resume line must be the launch line `slice.py open AREA --task ID`")
     import task_lib
     tools_root = Path(__file__).resolve().parents[3]
-    for line, ok in (("python tools/slice.py open ui --task x", True), ("python tools/media.py attack-keys --resume", True),
-                     ("the User names this task in a web session", True), ("open design/tasks/README.md (art_pipeline.attack_keyframes job)", True), ("open design/no-such-x.md", False),
+    for line, ok in (("python tools/slice.py open ui --task x", True), ("python tools/media.py pipeline check", True),
+                     ("the User names this task in a web session", True), ("open design/tasks/README.md (art_pipeline.content job)", True), ("open design/no-such-x.md", False),
                      ("python tools/open_slice.py ui --task x", False), ("python tools/slice.py launch ui", False),
                      ("no open_slice command", False), ("run start_build_slice.py --door ui", False)):
         if (not task_lib.command_fails(tools_root, "t.md", "resume", line)) != ok:

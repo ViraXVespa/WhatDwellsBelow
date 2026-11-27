@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clean and normalize a squared 3x3 Character Bible into the live lock sheet (design/art-bible-character.md).
+"""Clean and normalize a squared 3x3 Character Bible into the live lock sheet.
 
 Order: plate remap (imglib.key.remap_plate) -> split thirds -> per cell: 2x Lanczos, SCUNet real_psnr,
 G1 shrink, guided smooth, plate flatten -> 4x -> figure bbox -> full bodies to (cell - 2*margin) tall, bust keeps
@@ -162,7 +162,7 @@ def run(src: Path, dest: Path, cell: int, margin: int, denoise: bool, debug: Pat
     im = imgio.load(src)
     w, h = im.size
     if w != h or w % 3:
-        print(f"error: {src.name} is {w}x{h}; square the Bible on its lattice first (art-bible-character.md)", file=sys.stderr)
+        print(f"error: {src.name} is {w}x{h}; square the Bible on its lattice first", file=sys.stderr)
         return 2
     rgb = np.asarray(key.remap_plate(im)[0].convert("RGB"))
     net = None
