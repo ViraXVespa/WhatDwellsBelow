@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Main tunables (design/tunables.md). Base of the balance vars chain (vars.gd aggregates).
 const T := preload("res://scripts/data/tunables.gd")
-const Pref := preload("res://scripts/data/save_store/store_data.gd")
+const Pref := preload("res://scripts/data/save_store/store_def.gd")
 
 var bitter_loop_offset := T.BITTER_LOOP_DEFAULT
 var music_fade := 0.35

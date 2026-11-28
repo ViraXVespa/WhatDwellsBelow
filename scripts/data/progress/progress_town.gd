@@ -3,6 +3,7 @@ extends Object
 const Extract := preload("res://scripts/data/progress/extract.gd")
 const Quest := preload("res://scripts/data/progress_quest.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const Restock := preload("res://scripts/data/progress/restock.gd")
 
 static func extractable(p: Object, role: String = "") -> Array:
 	return Extract.extractable(p, role)
@@ -86,4 +87,4 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 	Quest.from_meta(p, d)
 
 static func restock(p: Object) -> String:
-	return Quest.restock(p)
+	return Restock.restock(p)

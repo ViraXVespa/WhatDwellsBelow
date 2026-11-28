@@ -77,6 +77,6 @@ Roll rules and the holds cap: inventory (gear job).
 | Hitch cap | 256 | Newest hitch rows kept in `user://hitch/hitch.jsonl` |
 | `potion_cooldown` | **8.0 s** | `balance/vars_economy.gd` only; potions carry no baked cooldown |
 | `RENDER_SCALE_OPTS` | Auto, 1.0, 0.8, 0.6 | Settings > Graphics "Render scale", saved as `render_scale` (0 = Auto, the default: `dyn_res.gd` dynamic scale). A fixed pick stops Auto. |
-| Aim-line prefs | on, 0.85 | `store_data.gd` `DEF` is the home; `balance.gd` reads it |
+| Aim-line prefs | on, 0.85 | `store_def.gd` `DEF` is the home; `balance.gd` reads it |
 
 All other values (enemy stats, drop rates, remaining forge fields, weapon-specific leftovers, quest rewards, leash-adjacent keys, Bitter loop offset timestamp, etc.) should be chosen to support the same feel targets and MUST also be exposed in the debug menu.

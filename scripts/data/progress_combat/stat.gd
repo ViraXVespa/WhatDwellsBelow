@@ -2,6 +2,23 @@ extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
 const Xp := preload("res://scripts/data/progress_combat/combat_xp.gd")
+const XpCurve := preload("res://scripts/data/progress_combat/xp_curve.gd")
+
+static func gear_stat(p, key: String) -> float:
+	var n := 0.0
+	for s in p.SLOTS:
+		var it: Dictionary = p.slots.get(s, {})
+		if not it.is_empty():
+			n += item_stat(it, key)
+	var sets: Dictionary = set_stats(p)
+	n += float(sets.get(key, 0.0))
+	if key == Affix.ID_CRIT_CHANCE:
+		n += float(sets.get("crit", 0.0))
+	if key == Affix.ID_MOVE:
+		n += float(sets.get("spd", 0.0))
+	if key == Affix.ID_GATHER_SPD or key == Affix.ID_YIELD:
+		n += float(sets.get("gather", 0.0))
+	return n + Xp.consumable_bonus(p, key)
 
 static func set_stats(p) -> Dictionary:
 	var c := Xp.set_counts(p)
@@ -115,7 +132,6 @@ static func skill_grant_hit(p, is_special := false) -> void:
 		App.last_style = "str"
 
 static func skill_dmg_mult(p, is_special := false) -> float:
-	var _fac = load("res://scripts/data/progress_combat.gd")
 	var wpn := "axe"
 	var sty := "str"
 	if App.weapon == "staff":
@@ -125,8 +141,8 @@ static func skill_dmg_mult(p, is_special := false) -> float:
 		wpn = "bow"
 		sty = "rng"
 	var m := 1.0
-	m += float(maxi(0, _fac.skill_lv(p, wpn) - 1)) * App.bal.skill_dmg_weapon
-	m += float(maxi(0, _fac.skill_lv(p, sty) - 1)) * App.bal.skill_dmg_style
+	m += float(maxi(0, XpCurve.skill_lv(p, wpn) - 1)) * App.bal.skill_dmg_weapon
+	m += float(maxi(0, XpCurve.skill_lv(p, sty) - 1)) * App.bal.skill_dmg_style
 	if is_special:
-		m += float(maxi(0, _fac.skill_lv(p, wpn) - 1)) * App.bal.skill_special_bonus
+		m += float(maxi(0, XpCurve.skill_lv(p, wpn) - 1)) * App.bal.skill_special_bonus
 	return m

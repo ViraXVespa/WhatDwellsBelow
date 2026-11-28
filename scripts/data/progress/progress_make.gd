@@ -3,6 +3,7 @@ extends Object
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
 const ItemNames := preload("res://scripts/data/item_names.gd")
+const Food := preload("res://scripts/data/progress_gear/food_prof.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	var n: String = App.tr("common.great_axe")
@@ -57,7 +58,7 @@ static func make_food(p: Object, fid: String, n: int) -> Dictionary:
 		nm = App.tr("progress_make.trail_bread")
 		nk = "progress_make.trail_bread"
 	var it: Dictionary = item(p, "food", nm, {"slot": "food", "nk": [nk], "food": fid, "stack": n})
-	return load("res://scripts/data/progress_gear/consumable.gd").decorate_food(it)
+	return Food.decorate_food(it)
 
 static func make_artifact(p: Object, id: String) -> Dictionary:
 	var a: Dictionary = CatalogS.by_id(id)

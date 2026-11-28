@@ -91,7 +91,7 @@
 "scripts/data/progress_quest/quest_meta.gd": "123456789",
 "scripts/data/progress_quest/quest_prog.gd": "123456789",
 "scripts/data/progress_quest/quest_roll.gd": "123456789",
-"scripts/data/progress_quest/restock.gd": "123456789",
+"scripts/data/progress/restock.gd": "123456789",
 "scripts/data/save_store.gd": "123456789",
 "scripts/data/save_store/store_collect.gd": "123456789",
 "scripts/data/save_store/store_data.gd": "123456789",

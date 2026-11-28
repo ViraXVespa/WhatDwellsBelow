@@ -1,6 +1,6 @@
 extends Object
 
-## Guild restock helper for progress.
+## Guild restock helper for progress (progress_town.restock).
 
 static func restock(p: Object) -> String:
 	var Extract := load("res://scripts/data/progress/extract.gd")

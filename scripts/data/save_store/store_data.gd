@@ -10,45 +10,9 @@ const Dbg := preload("res://scripts/app/dbg.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 const BowMode := preload("res://scripts/world/bow_mode.gd")
 
-## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
-const DEF := {
-	"character_type": "male",
-	"character_chosen": false,
-	"last_seen_game_ver": "",
-	"cam_zoom": 1.75,
-	"hud_scale": 1.0,
-	"mini_px": 250.0,
-	"mini_opacity": 1.0,
-	"mini_zoom": 8.0,
-	"mini_zoom_fit": true,
-	"full_map_opacity": true,
-	"map_toggle_adapt": true,
-	"map_rest_mini": true,
-	"vol_master": 1.0,
-	"vol_music": 0.7,
-	"vol_sfx": 0.85,
-	"sprite_filter": 2,
-	"sprite_mip_sharp": false,
-	"sprite_mip_bias": 0.0,
-	"display_mode": "borderless",
-	"display_fs_kind": "borderless",
-	"web_fullscreen": false,
-	"render_scale": 0.0,
-	"aim_line_on": true,
-	"aim_line_opacity": 0.85,
-	"target_lock_pref": false,
-	"danger_gem": true,
-	"red_border_glow": true,
-	"menu_fx": true,
-	"bow_mode": false,
-	"salvage_dupes": false,
-	"salvage_finish": 0.8,
-	"salvage_fortune": 1.0,
-	"bank_gold": 0,
-	"bank_ore": 0,
-	"bank_wood": 0,
-	"bank_root": 0,
-}
+## Pref/bank defaults live in store_def.gd (a leaf, so balance can read them without loading save code).
+const Def := preload("res://scripts/data/save_store/store_def.gd")
+const DEF: Dictionary = Def.DEF
 
 static func apply(data: Dictionary) -> bool:
 	var migrated: bool = false
