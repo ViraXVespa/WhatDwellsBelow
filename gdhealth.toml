@@ -11,14 +11,15 @@ exclude = ["addons/**", ".godot/**", "reports/**"]
 app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/data/bug_doors.gd"]
 archives      = ["scripts/ui/archives_ui.gd", "scripts/ui/archives_ui/**", "scripts/data/archives/**"]
 audio_visual = ["scripts/audio/**"]
-camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
+camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd", "scripts/world/depth.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
 debug         = ["scripts/debug/**"]
+dungeon       = ["scripts/dungeon/**", "scripts/world/dungeon.gd", "scripts/world/dungeon/**", "scripts/world/dungeon_geo.gd", "scripts/world/dungeon_geo/**", "scripts/world/dungeon_props.gd", "scripts/world/dungeon_props/**", "scripts/world/dungeon_stream.gd", "scripts/world/dungeon_stream/**", "scripts/world/crystal/**", "scripts/world/floor_crystal.gd", "scripts/world/wall_rects.gd", "scripts/world/boss_door.gd"]
 display       = ["scripts/display_mode.gd", "scripts/display_mode/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
 gear_ui       = ["scripts/ui/gear_board.gd", "scripts/ui/gear_board/**", "scripts/ui/gear_icons.gd"]
 input         = ["scripts/input/**"]
-interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
+interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd"]
 inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
 localization  = ["scripts/localization/**"]
 numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
@@ -131,6 +132,11 @@ severity = "critical"
 
 [[policy.forbidden_dependencies]]
 from     = "inventory"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "dungeon"
 to       = "debug"
 severity = "critical"
 
@@ -485,4 +491,70 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "interactables"
 to       = "gear_ui"
+severity = "warning"
+
+# The dungeon scene sits above the systems it places (actors, props, numbers, input); they never reach back into it.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "dungeon"
 severity = "warning"
