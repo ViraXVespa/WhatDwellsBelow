@@ -32,6 +32,54 @@ HIDDEN_TOKENS = (  # closed prompts (design/content-pipeline-mesh.md): not prese
 POST_HOSTS = {"x.com", "www.x.com", "twitter.com", "www.twitter.com", "mobile.twitter.com"}
 
 
+# View of a still: an explicit tag on the approval, else the filename or role.
+# left and right count as side. A conflict or an unknown name is left unset.
+VIEWS = ("front", "side", "back", "other")
+SIDE_VIEWS = {"side", "left", "right"}
+ROLE_VIEWS = {
+    "mannequin-front": "front",
+    "mannequin-side": "side",
+    "mannequin-back": "back",
+    "mannequin-mesh": "front",
+    "mannequin-smooth": "front",
+    "mannequin-tpose-front": "front",
+    "mannequin-tpose-side": "side",
+    "mannequin-tpose-back": "back",
+}
+TOKEN_VIEWS = {"front": "front", "side": "side", "left": "side", "right": "side", "back": "back"}
+
+
+def infer_view(path: str, role: str | None = None) -> str | None:
+    """front, side, or back from a role or a WIP/gen filename. None if ambiguous."""
+    found: set[str] = set()
+    text = (role or "").lower().replace("_", "-")
+    for key, view in ROLE_VIEWS.items():
+        if text == key or text.endswith("-" + key) or key in text.split():
+            found.add(view)
+    if text in TOKEN_VIEWS:
+        found.add(TOKEN_VIEWS[text])
+    stem = Path(path or "").stem.lower().replace("_", "-")
+    for key, view in sorted(ROLE_VIEWS.items(), key=lambda kv: -len(kv[0])):
+        if key in stem:
+            found.add(view)
+    for tok in re.split(r"-+", stem):
+        if tok in TOKEN_VIEWS:
+            found.add(TOKEN_VIEWS[tok])
+    return next(iter(found)) if len(found) == 1 else None
+
+
+def normalize_view(value: str | None) -> str | None:
+    if not value:
+        return None
+    v = str(value).lower().strip()
+    if v in TOKEN_VIEWS:
+        return TOKEN_VIEWS[v]
+    if v in VIEWS:
+        return v
+    return None
+
+
+
 def F(name: str, kind: str, label: str, *, flag: str | None = None, required: bool = False, default: object = None) -> dict:
     return {"name": name, "kind": kind, "label": label, "flag": flag or f"--{name}", "required": required, "default": default}
 
@@ -125,6 +173,7 @@ class Backend:
             "commands": COMMANDS,
             "roles": roles,
             "canvas": store.CANVAS,
+            "views": list(VIEWS),
             "store_root": "data/pipeline/wip/_sim" if self.simulated else "data/pipeline/wip",
         }
 
@@ -167,7 +216,9 @@ class Backend:
         names = {r["id"]: r for r in store.list_subjects(self.root)}
         links = [{**link, "type": names.get(link["id"], {}).get("type"), "name": names.get(link["id"], {}).get("name"),
                   "missing": link["id"] not in names} for link in doc["links"]]
-        return {"subject": doc, "links": links, "stills": self.stills(doc), "reviews": self.reviews(doc)}
+        stills = self.stills(doc)
+        return {"subject": doc, "links": links, "stills": stills, "reviews": self.reviews(doc),
+                "gates": self.gates(doc, stills)}
 
     def create(self, body: dict) -> dict:
         try:
@@ -299,7 +350,11 @@ class Backend:
             row["kind"] = "mesh" if p.suffix.lower() in MESH_EXT else "still"
             row["mtime"] = p.stat().st_mtime
             row["size"] = p.stat().st_size
-            row["state"] = (approvals.get(rel) or {}).get("state", "pending")
+            appr = approvals.get(rel) or {}
+            row["state"] = appr.get("state", "pending")
+            role = (row.get("args") or {}).get("role") if isinstance(row.get("args"), dict) else None
+            row["view"] = normalize_view(appr.get("view")) or infer_view(rel, role)
+            row["view_set"] = bool(normalize_view(appr.get("view")))
             row["simulated"] = bool(row.get("simulated"))
             out.append(row)
         out.sort(key=lambda r: -r["mtime"])
@@ -329,10 +384,18 @@ class Backend:
             raise ApiError(400, "state is approved, rejected or pending")
         if rel not in {s["path"] for s in self.stills(doc)}:
             raise ApiError(404, "no such still on this subject")
+        view = normalize_view(body["view"]) if "view" in body and body.get("view") not in (None, "") else None
+        if "view" in body and body.get("view") not in (None, "") and view is None:
+            raise ApiError(400, "view is front, side, back or other")
         ui = self._ui(doc)
-        ui["approvals"][rel] = {"state": state, "at": store._now()}
+        entry = {"state": state, "at": store._now()}
+        if view:
+            entry["view"] = view
+        elif (ui["approvals"].get(rel) or {}).get("view"):
+            entry["view"] = ui["approvals"][rel]["view"]
+        ui["approvals"][rel] = entry
         store.save_subject(self.root, doc, propagate=False)
-        return {"path": rel, "state": state}
+        return {"path": rel, "state": state, "view": entry.get("view") or infer_view(rel)}
 
     def register(self, subject_id: str | None, paths: list[Path], job: Job, extra: dict | None = None) -> list[dict]:
         if not subject_id or not paths or not self._exists(subject_id):
@@ -387,16 +450,74 @@ class Backend:
             raise ApiError(400, "proportion needs a still or a mesh")
         if cmd == "correct" and not (args.get("from") or args.get("image")):
             raise ApiError(400, "correct needs a review JSON or a still")
+        if cmd in ("body", "mesh"):
+            if not subject_id:
+                raise ApiError(400, f"{cmd} needs a subject")
+            self._require_plate_approvals(subject_id, cmd)
 
     def clear_soft(self, subject_id: str) -> None:
         raise NotWired("soft-dirty-clear", "the store has no call that clears a soft flag after it was shown.")
+
+    def _still_view(self, row: dict) -> str | None:
+        return normalize_view(row.get("view")) or infer_view(row.get("path") or "", (row.get("args") or {}).get("role") if isinstance(row.get("args"), dict) else None)
+
+    def _missing_plates(self, stills: list[dict]) -> list[str]:
+        """Views still needed: approved front and side pictures. Rejected or pending do not count."""
+        have: set[str] = set()
+        for row in stills:
+            if row.get("kind") != "still" or row.get("state") != "approved":
+                continue
+            view = self._still_view(row)
+            if view == "front":
+                have.add("front")
+            elif view in SIDE_VIEWS:
+                have.add("side")
+        return [v for v in ("front", "side") if v not in have]
+
+    def _unapproved(self, stills: list[dict]) -> list[dict]:
+        """Current (non-hidden) stills and meshes that are not approved."""
+        out = []
+        for row in stills:
+            if row.get("state") == "approved":
+                continue
+            out.append({"path": row["path"], "state": row.get("state") or "pending", "view": self._still_view(row), "kind": row.get("kind")})
+        return out
+
+    def gates(self, doc: dict, stills: list[dict] | None = None) -> dict:
+        stills = stills if stills is not None else self.stills(doc)
+        plates = self._missing_plates(stills)
+        waiting = self._unapproved(stills)
+        need = {"ok": not plates, "needed": ["front", "side"], "missing": plates}
+        return {"body": dict(need), "mesh": dict(need), "export": {"ok": not waiting, "missing": waiting}}
+
+    def _require_plate_approvals(self, subject_id: str, cmd: str) -> None:
+        stills = self.stills(self._load(subject_id))
+        missing = self._missing_plates(stills)
+        if missing:
+            raise ApiError(
+                409,
+                f"{cmd} needs an approved front still and an approved side still. Missing: {', '.join(missing)}.",
+                gate="approvals", needed=["front", "side"], missing=missing, cmd=cmd,
+            )
+
+    def _require_export_approvals(self, subject_id: str) -> None:
+        waiting = self._unapproved(self.stills(self._load(subject_id)))
+        if waiting:
+            n = len(waiting)
+            raise ApiError(
+                409,
+                f"Export needs every current still approved. {n} still {'is' if n == 1 else 'are'} not.",
+                gate="approvals", missing=waiting, cmd="export",
+            )
 
     def export_check(self, subject_id: str, args: dict) -> None:
         doc = self._load(subject_id)
         if doc["dirty"]["hard"] and not args.get("bypass"):
             raise ApiError(409, "hard-dirty: resolve or bypass before export", hard=doc["dirty"]["hard"])
-        if doc["dirty"]["hard"] and args.get("bypass"):
+        if doc["dirty"]["hard"] and args.get("bypass") and not self.simulated:
             raise NotWired("export-bypass", "export has no bypass flag for hard-dirty subjects.")
+        # The hard-dirty bypass does not skip the approval gate.
+        self._require_export_approvals(subject_id)
 
     def body_for(self, cmd: str, subject_id: str | None, args: dict):
         if cmd == "export":

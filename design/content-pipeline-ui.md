@@ -28,7 +28,7 @@ Generation buttons name the command they run: `review`, `correct`, `tune`, `fram
 
 ## Status
 
-Built: type picker, new subject (with template), subject record with flags and links, section editor with autosave and save review, prompts, start-from-reference, every generation form, jobs with progress, cancel and reconnect, approve, reject or regenerate per still, compare, review checks, GLB viewer, export with hard-flag hold, coverage. Simulate runs all of it. Real mode answers 501 where Build has not wired the seam; the list is under UI gaps for Build in the task. Visuals are unverified until the User looks.
+Built: type picker, new subject (with template), subject record with flags and links, section editor with autosave and save review, prompts, start-from-reference, every generation form, jobs with progress, cancel and reconnect, approve, reject or regenerate per still, compare, review checks, GLB viewer, export with hard-flag hold, coverage. Body and mesh stay disabled until the subject has an approved front still and an approved side still (view comes from the filename or a tag set when approving). Export stays disabled until every current still is approved; the hard-dirty bypass does not skip that. Simulate runs all of it. Real mode answers 501 where Build has not wired the seam; the list is under UI gaps for Build in the task. Visuals are unverified until the User looks.
 
 ## Leave alone
 

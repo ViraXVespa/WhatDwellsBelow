@@ -78,11 +78,6 @@ class SimBackend(Backend):
         doc["dirty"]["soft"] = []
         store.save_subject(self.root, doc, propagate=False)
 
-    def export_check(self, subject_id: str, args: dict) -> None:
-        doc = self._load(subject_id)
-        if doc["dirty"]["hard"] and not args.get("bypass"):
-            raise ApiError(409, "hard-dirty: resolve or bypass before export", hard=doc["dirty"]["hard"])
-
     def coverage(self) -> dict:
         doc = store.coverage(self.repo, write=False)
         exported = {r["id"] for r in json.loads((self.root / "data/pipeline/export/index.json").read_text(encoding="utf-8")).get("subjects", [])}

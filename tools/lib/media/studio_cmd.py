@@ -125,12 +125,21 @@ def _selftest(real: Path) -> int:
                     code, out = _call(base, "POST", "/api/studio/jobs", {"cmd": "reference", "subject": sid})
                     if code != 501 or not out.get("not_wired"):
                         bad.append(f"real: reference ingest should be not wired ({code})")
+                    code, out = _call(base, "POST", "/api/studio/jobs", {"cmd": "body", "subject": sid, "args": {}})
+                    if code != 409 or out.get("gate") != "approvals":
+                        bad.append(f"real: body without approved plates should 409 ({code} {out})")
                     continue
                 if (tmp / "data/pipeline/wip/index.json").read_text(encoding="utf-8").count('"id"') != 1:
                     bad.append("sim: a simulated subject reached the real store")
+                # Approval gates hold body and mesh until a front and a side still are approved.
+                for cmd in ("body", "mesh"):
+                    args = {"glb": "x.glb"} if cmd == "mesh" else {}
+                    code, out = _call(base, "POST", "/api/studio/jobs", {"cmd": cmd, "subject": sid, "args": args})
+                    if code != 409 or out.get("gate") != "approvals" or set(out.get("missing") or []) != {"front", "side"}:
+                        bad.append(f"sim: {cmd} before stills should 409 missing front+side ({code} {out})")
                 jobs = [("review", {"image": "x.png", "role": "mannequin-front"}), ("tune", {"image": "x.png", "role": "mannequin-front", "workflow": "w.json", "turns": 2}),
-                        ("frame", {"image": "x.png", "out": "f.png"}), ("proportion", {"image": "x.png"}), ("mesh", {"glb": "x.glb"}),
-                        ("smooth", {}), ("body", {}), ("edit", {"text": "four fingers"}), ("reference", {}), ("correct", {"role": "mannequin-front", "workflow": "w.json", "image": "x.png"})]
+                        ("frame", {"image": "x.png", "out": "f.png"}), ("proportion", {"image": "x.png"}),
+                        ("smooth", {}), ("edit", {"text": "four fingers"}), ("reference", {}), ("correct", {"role": "mannequin-front", "workflow": "w.json", "image": "x.png"})]
                 for cmd, args in jobs:
                     code, job = _call(base, "POST", "/api/studio/jobs", {"cmd": cmd, "subject": sid, "args": args, "ack_soft": True})
                     if code != 200:
@@ -141,18 +150,52 @@ def _selftest(real: Path) -> int:
                         bad.append(f"sim: {cmd} ended {done.get('status')} {done.get('error')}")
                 code, shown = _call(base, "GET", f"/api/studio/subjects/{sid}")
                 stills = [s for s in shown.get("stills", []) if s["kind"] == "still"]
-                meshes = [s for s in shown.get("stills", []) if s["kind"] == "mesh"]
-                if not stills or not meshes or not shown.get("reviews"):
-                    bad.append(f"sim: show lists stills={len(stills)} meshes={len(meshes)} reviews={len(shown.get('reviews', []))}")
-                elif _call(base, "POST", f"/api/studio/subjects/{sid}/stills", {"path": stills[0]["path"], "state": "approved"})[0] != 200:
-                    bad.append("sim: approve")
+                if not stills or not shown.get("reviews"):
+                    bad.append(f"sim: show lists stills={len(stills)} reviews={len(shown.get('reviews', []))}")
+                front = next((s for s in stills if s.get("view") == "front"), None)
+                side = next((s for s in stills if s.get("view") == "side"), None)
+                if not front or not side:
+                    bad.append(f"sim: expected named front and side stills, views={[s.get('view') for s in stills]}")
+                else:
+                    _call(base, "POST", f"/api/studio/subjects/{sid}/stills", {"path": front["path"], "state": "rejected"})
+                    code, out = _call(base, "POST", "/api/studio/jobs", {"cmd": "body", "subject": sid, "args": {}})
+                    if code != 409 or "front" not in (out.get("missing") or []):
+                        bad.append(f"sim: rejected front still should block body ({code} {out})")
+                    for plate in (front, side):
+                        code, rec = _call(base, "POST", f"/api/studio/subjects/{sid}/stills", {"path": plate["path"], "state": "approved"})
+                        if code != 200:
+                            bad.append(f"sim: approve {plate.get('view')}")
+                    tagged = next((s for s in stills if not s.get("view")), None)
+                    if tagged:
+                        code, rec = _call(base, "POST", f"/api/studio/subjects/{sid}/stills", {"path": tagged["path"], "state": "approved", "view": "front"})
+                        if code != 200 or rec.get("view") != "front":
+                            bad.append(f"sim: view tag ({code} {rec})")
+                for cmd, args in (("body", {}), ("mesh", {"glb": "x.glb"})):
+                    code, job = _call(base, "POST", "/api/studio/jobs", {"cmd": cmd, "subject": sid, "args": args, "ack_soft": True})
+                    if code != 200:
+                        bad.append(f"sim: {cmd} after approve {code} {job.get('error')}")
+                        continue
+                    done = _wait(base, job["id"])
+                    if done.get("status") not in ("done", "failed") or not done.get("result", {}).get("simulated"):
+                        bad.append(f"sim: {cmd} ended {done.get('status')} {done.get('error')}")
+                code, shown = _call(base, "GET", f"/api/studio/subjects/{sid}")
+                stills = shown.get("stills") or []
+                if not any(s["kind"] == "mesh" for s in stills):
+                    bad.append("sim: body/mesh produced no mesh")
+                pending = [s for s in stills if s["state"] != "approved"]
+                if pending:
+                    code, out = _call(base, "POST", "/api/studio/jobs", {"cmd": "export", "subject": sid, "args": {"bypass": True}})
+                    if code != 409 or out.get("gate") != "approvals":
+                        bad.append(f"sim: export with unapproved stills should 409 even with bypass ({code} {out})")
+                    for s in pending:
+                        _call(base, "POST", f"/api/studio/subjects/{sid}/stills", {"path": s["path"], "state": "approved"})
                 _call(base, "POST", f"/api/studio/subjects/{sid}/mark", {"reason": "locked-front"})
                 code, out = _call(base, "POST", "/api/studio/jobs", {"cmd": "export", "subject": sid, "args": {}})
                 if code != 409 or out.get("hard") != ["locked-front"]:
-                    bad.append(f"sim: hard-dirty export not held ({code})")
+                    bad.append(f"sim: hard-dirty export not held ({code} {out})")
                 code, job = _call(base, "POST", "/api/studio/jobs", {"cmd": "export", "subject": sid, "args": {"bypass": True}})
                 if code != 200 or _wait(base, job["id"]).get("status") != "done":
-                    bad.append("sim: bypass export")
+                    bad.append(f"sim: bypass export after approvals {code} {job}")
                 if (tmp / "data/pipeline/export/index.json").read_text(encoding="utf-8").count('"id"'):
                     bad.append("sim: export reached the real export index")
             finally:
