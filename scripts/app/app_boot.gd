@@ -1,21 +1,22 @@
 extends Object
 
 const Dbg := preload("res://scripts/app/dbg.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
-const LetterFit := preload("res://scripts/input/binds/letter_fit.gd")
 
 static func _ready(host: Node) -> void:
 	if "--mcp" in OS.get_cmdline_user_args() and ResourceLoader.exists("res://addons/godot_ai/runtime/game_helper.gd"):
 		ProjectSettings.set_setting("autoload/_mcp_game_helper", "*res://addons/godot_ai/runtime/game_helper.gd")
 		ProjectSettings.save()
-	LocS.setup()
+	LocS.setup(CliArgs.args())
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	host.world_action.connect(func(action: String): world_action(host, action))
 	host.bal = App.BalanceS.new()
 	host.prog = App.ProgressS.new()
 	App.Binds.register()
+	App.Pad.mode_changed = Callable(App.Boot, "pad_mode_changed")  # plain Callable (ObjectID); a stored lambda crashed at exit
 	host.sfx_node = App.SfxS.new()
 	host.add_child(host.sfx_node)
 	host.tel = App.TelS.new()
@@ -59,6 +60,13 @@ static func _ready(host: Node) -> void:
 		host.call_deferred("_open_debug")
 	Dbg.hitch_begin(host)
 
+## Pad mode flipped: repaint every prompt host when the shown scheme changed (lazy loads, as before).
+static func pad_mode_changed() -> void:
+	var Prompts = load("res://scripts/input/prompts.gd")
+	var PView = load("res://scripts/ui/prompt_view.gd")
+	if Prompts.dirty():
+		PView.pulse()
+
 static func ensure_debug(host: Node) -> void:
 	if host.debug != null:
 		return
@@ -93,7 +101,7 @@ static func _process(host: Node, delta: float) -> void:
 static func _input(host: Node, event: InputEvent) -> void:
 	App.Pad.note_event(event)
 	if event is InputEventKey:
-		LetterFit.learn(event)  # a letter default on a key another action holds (Colemak F on E) falls back
+		App.Binds.learn_letter(event)  # a letter default on a key another action holds (Colemak F on E) falls back
 	if App.Disp.handle_input(event):
 		host.get_viewport().set_input_as_handled()
 		return

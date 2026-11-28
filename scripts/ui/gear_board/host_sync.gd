@@ -69,7 +69,7 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 		b.focus_mode = Control.FOCUS_NONE
 	elif str(ui.get("gear_mode")) == "extract":
 		b.pressed.connect(func():
-			load("res://scripts/ui/progress_ui/inv.gd").send_slot(ui, slot)
+			ui.call("inv_send_slot", slot)
 		)
 	else:
 		b.pressed.connect(func():

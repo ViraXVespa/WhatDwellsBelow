@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: restyle, builders, skin hooks, scrollbar hiding  
+Code: `scripts/ui/ui_build.gd`, `scripts/ui/btn_skin.gd` + `scripts/ui/btn_skin/`, `scripts/ui/scroll_box.gd`, `scripts/ui/scroll_cue.gd`  
 
 One place per job, so a screen only fills in what is its own. Existing screens render the same as before this layer.
 

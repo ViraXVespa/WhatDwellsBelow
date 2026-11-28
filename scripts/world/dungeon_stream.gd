@@ -2,7 +2,6 @@ extends RefCounted
 
 const Roster := preload("res://scripts/combat/roster.gd")
 const GeoStream := preload("res://scripts/world/dungeon_geo/geo_stream.gd")
-const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const Queue := preload("res://scripts/world/dungeon_stream/queue.gd")
 const Act := preload("res://scripts/world/dungeon_stream/stream_act.gd")
 
@@ -34,7 +33,7 @@ static func tick(host: Node, delta: float) -> void:
 	_walk_jobs(host, pc, budget)
 	var PropS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 	PropS.tick(host, pc, budget)
-	CrystalNet.place_extras(host)
+	(load("res://scripts/world/crystal/crystal_place.gd") as GDScript).place_extras(host)
 	GeoStream.tick(host, delta)
 
 ## Job walk. Skipped while nothing it could act on changed: same player cell, job count and stream_all as a
@@ -77,4 +76,4 @@ static func force_all(host: Node) -> void:
 			Act.activate_job(host, job)
 	var PropS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 	PropS.flush(host)
-	CrystalNet.place_extras(host)
+	(load("res://scripts/world/crystal/crystal_place.gd") as GDScript).place_extras(host)

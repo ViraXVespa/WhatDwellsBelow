@@ -35,21 +35,23 @@ def cmd_check(root: Path, args) -> int:
     scripts = [cm.posix(p.relative_to(root).as_posix()) for p in gd_lib.live_gd(root)]
     unmapped = [r for r in scripts if not cm.file_is_mapped(r, rows)]
     missing = [r for r in cm.listed_file_paths(rows) if not (root / r).is_file()]
+    dupes = cm.duplicate_rows(scripts, rows)
     mapped = len(scripts) - len(unmapped)
     lines += [
         f"rows_scanned={len(rows)} scripts={len(scripts)} mapped={mapped}",
-        "measure=live .gd (gd_lib.live_gd: scripts/, tools/data/) vs code-map ticks; directory ticks cover children; do not read the map",
+        "measure=live .gd (gd_lib.live_gd: scripts/, tools/data/) vs code-map ticks; directory ticks cover children; a script in two rows is DUPLICATE; do not read the map",
         "",
     ]
     lines += [f"UNMAPPED {r}" for r in unmapped] + [f"MISSING {r}" for r in missing]
-    echo = f"unmapped={len(unmapped)} missing={len(missing)} mapped={mapped} scripts={len(scripts)}"
-    status = "FAIL" if unmapped or missing else "PASS"
+    lines += [f"DUPLICATE {r} rows={' | '.join(s)}" for r, s in dupes.items()]
+    echo = f"unmapped={len(unmapped)} missing={len(missing)} duplicate={len(dupes)} mapped={mapped} scripts={len(scripts)}"
+    status = "FAIL" if unmapped or missing or dupes else "PASS"
     if status == "FAIL":  # name the offenders in the output, not only the summary file
-        shown = [x for x in lines if x.startswith(("UNMAPPED ", "MISSING "))]
+        shown = [x for x in lines if x.startswith(("UNMAPPED ", "MISSING ", "DUPLICATE "))]
         echo += "\n" + "\n".join(shown[:10]) + (f"\n... +{len(shown) - 10} more (summary file)" if len(shown) > 10 else "")
-        echo += "\nnext: UNMAPPED -> `docs.py code-map patch --system <System> --add <path>`; MISSING -> `--remove <path>` (or `--rename OLD=NEW`) on its row"
+        echo += "\nnext: UNMAPPED -> `docs.py code-map patch --system <System> --add <path>`; MISSING -> `--remove <path>` (or `--rename OLD=NEW`) on its row; DUPLICATE -> keep one row, `--remove` it from the others (name it there without backticks)"
     return agent_log.finish("code-map-check", root, "\n".join(lines), status, args=args, echo=echo,
-                            unmapped=len(unmapped), missing=len(missing), mapped=mapped, scripts=len(scripts))
+                            unmapped=len(unmapped), missing=len(missing), duplicate=len(dupes), mapped=mapped, scripts=len(scripts))
 
 def _row_hits(rows: list, needle: str) -> tuple[list, list[str]]:
     """Listed script paths win. Otherwise one system name, or the ambiguous system names."""

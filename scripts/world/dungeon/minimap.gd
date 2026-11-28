@@ -102,19 +102,7 @@ static func _build_base(host: Node) -> void:
 	host.map_shader = _ensure_shader()
 
 static func attach(host: Node, rect: TextureRect, region: Rect2) -> void:
-	if rect == null or host.map_shader == null or host.map_mask_tex == null or host.map_mark_tex == null:
-		return
-	var mat: ShaderMaterial = rect.material as ShaderMaterial
-	if mat == null or mat.shader != host.map_shader:
-		mat = ShaderMaterial.new()
-		mat.shader = host.map_shader
-		rect.material = mat
-	mat.set_shader_parameter("base_tex", host.map_tex)
-	mat.set_shader_parameter("mask_tex", host.map_mask_tex)
-	mat.set_shader_parameter("mark_tex", host.map_mark_tex)
-	mat.set_shader_parameter("fog_color", Color(0.02, 0.02, 0.03, 1.0))
-	var uv := Vector4(region.position.x, region.position.y, region.size.x, region.size.y)
-	mat.set_shader_parameter("region", uv)
+	View.attach(host, rect, region)
 
 ## First call creates the texture from the painted image. Later calls replace its storage.
 static func _upload(tex: ImageTexture, img: Image) -> ImageTexture:

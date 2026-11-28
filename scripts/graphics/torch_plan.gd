@@ -3,7 +3,8 @@ extends Object
 ## One torch per unlit room. Halls only at doorways, junctions, and dead ends.
 ## Brackets sit on outline spans that face floor. No 1 m face mount.
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+## Dungeon grid cell code (scripts/dungeon/gen.gd FLOOR); kept local so lighting never loads the generator.
+const FLOOR := 1
 
 const Spans := preload("res://scripts/graphics/torch_plan/spans.gd")
 const Grid := preload("res://scripts/graphics/torch_plan/plan_grid.gd")
@@ -82,7 +83,7 @@ static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Di
 			if inside[i3] >= 0:
 				x2 += 1
 				continue
-			if grid[i3] != Gen.FLOOR:
+			if grid[i3] != FLOOR:
 				x2 += 1
 				continue
 			hall[i3] = 1

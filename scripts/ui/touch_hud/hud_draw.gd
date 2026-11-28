@@ -6,7 +6,7 @@ extends Object
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
 const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
@@ -19,8 +19,7 @@ const PRESS := Color(Tok.PAPER, 0.55)
 const RING := Color(0.98, 0.93, 0.82, 0.62)
 const RING_DIM := Color(0.98, 0.93, 0.82, 0.22)
 const LIVE := Color(0.98, 0.78, 0.38, 0.95)
-const LABELS := {"attack": "hud_draw.attack", "special": "hud_draw.special", "dash": "hud_draw.dash",
-	"interact": "hud_draw.use", "map_view": "hud_draw.map", "pause": "hud_draw.pause"}
+const LABELS: Dictionary = Touch.LABELS
 const CAMP_OFF: PackedStringArray = ["map_view", "food", "potion", "target_lock"]
 
 static func ready(host: CanvasLayer) -> void:

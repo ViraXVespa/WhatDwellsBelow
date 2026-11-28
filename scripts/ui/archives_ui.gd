@@ -3,8 +3,8 @@ extends CanvasLayer
 ## Title Archives browser. Shared two-column shell.
 
 const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
-const T := preload("res://scripts/data/tunables.gd")
 const Docs := preload("res://scripts/data/archives/docs.gd")
+const Catalog := preload("res://scripts/data/archives/archives_catalog.gd")
 const ArchView := preload("res://scripts/ui/archives_ui/ui_view.gd")
 const Act := preload("res://scripts/ui/archives_ui/ui_act.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
@@ -54,7 +54,7 @@ func show_browser() -> void:
 	App.ui_open = true
 	mode = "info"
 	col = "list"
-	entries = T.archive_catalog()
+	entries = Catalog.all()
 	selected = clampi(selected, 0, maxi(0, entries.size() - 1))
 	split_page = str(_cur().get("id", ""))
 	UiSession.MenuFade.fade_in(self)

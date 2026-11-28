@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma.
 
-Attack body stills (parked keyframe pipeline): tools/media.py attack-keys
-when the User resumes that job. This file stays I2V + overlay prompts.
+This file stays I2V and overlay prompts. New game art does not start here.
 """
 from __future__ import annotations
 

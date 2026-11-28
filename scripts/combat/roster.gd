@@ -1,6 +1,6 @@
 extends Object
 
-const Enemies := preload("res://scripts/data/balance/enemies.gd")
+const Bal := preload("res://scripts/data/balance.gd")
 
 ## Twelve normal enemy types. Floor pools guarantee ≥5 types per floor.
 
@@ -30,7 +30,7 @@ static func def(id: String) -> Dictionary:
 	var all := _all()
 	var d: Dictionary = all[id] if all.has(id) else all["goblin"]
 	d = d.duplicate()
-	d.hp = float((Enemies.defaults()[id if all.has(id) else "goblin"] as Dictionary).hp)
+	d.hp = float((Bal.enemy_defaults()[id if all.has(id) else "goblin"] as Dictionary).hp)
 	if App.bal:
 		var hv := App.bal.getv("e_%s_hp" % id)
 		if hv > 0.0:
@@ -76,3 +76,24 @@ static func _all() -> Dictionary:
 		"beetle": {"role": "melee", "move": "hop", "dmg": 9.0, "spd": 1.85, "range": 1.05, "def": 10.0, "size": 1.4, "arc": 80.0},
 		"wisp": {"role": "ranged", "move": "fly", "dmg": 8.0, "spd": 2.95, "range": 5.4, "def": 0.0, "size": 1.1, "arc": 16.0},
 	}
+
+## Pack cover masks for every roster sprite under the hub loader (moved from cover_hit.gd warm_known).
+static func warm_cover() -> void:
+	var cover: GDScript = load("res://scripts/combat/cover.gd") as GDScript
+	var seen: Dictionary = {}
+	for pool in POOLS:
+		for type_id in pool:
+			var id: String = str(type_id)
+			if seen.has(id):
+				continue
+			seen[id] = true
+			_warm_path(cover, "res://assets/sprites/enemies/%s/idle_down.png" % id)
+	_warm_path(cover, "res://assets/sprites/enemies/guardian/idle_down.png")
+	_warm_path(cover, "res://assets/sprites/enemies/gate_master/idle_down.png")
+	_warm_path(cover, "res://assets/fx/dummy.png")
+
+static func _warm_path(cover: GDScript, path: String) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var tex: Texture2D = load(path) as Texture2D
+	cover.warm_texture(tex)

@@ -1,6 +1,6 @@
 extends Object
 
-const Make := preload("res://scripts/data/progress/progress_make.gd")
+const Make := preload("res://scripts/data/progress_gear/progress_make.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 
 static func required_ok(slot: String, it: Dictionary) -> bool:

@@ -44,7 +44,7 @@ static func ground(host: Node3D) -> void:
 		var other: Rect2i = arms[1 - i]
 		var o4: Vector4 = _tiles(other.position.x, other.position.y, other.end.x - 1, other.end.y - 1)
 		_band(host, r.position.x, r.position.y, r.end.x - 1, r.end.y - 1, y + 0.02, p[0], p[1], p[2], d[0], o4)
-	load("res://scripts/world/camp_build.gd").outer_grass(host)
+	outer_grass(host)
 
 static func _tiles(x0: int, z0: int, x1: int, z1: int) -> Vector4:
 	return Vector4(float(x0), float(z0), float(x0) + float(x1 - x0 + 1) * T.TILE, float(z0) + float(z1 - z0 + 1) * T.TILE)
@@ -122,3 +122,22 @@ static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	hit.name = "WallHit"
 	hit.shape = built.create_trimesh_shape()
 	body.add_child(hit)
+
+## Grass ring around the yard (was camp_build.gd; the ground pass calls it here, so mesh.gd never loads its facade).
+static func outer_grass(host: Node3D) -> void:
+	var lay: Node3D = LayoutS.of(host)
+	var x0: float = lay.aabb_x0()
+	var z0: float = lay.aabb_z0()
+	var x1: float = lay.aabb_x1()
+	var z1: float = lay.aabb_z1()
+	var ix0: float = float(lay.ground_ox)
+	var iz0: float = float(lay.ground_oz)
+	var ix1: float = float(lay.ground_ox + lay.ground_w)
+	var iz1: float = float(lay.ground_oz + lay.ground_d)
+	var y: float = T.FLOOR_Y
+	var tex: String = Spec.SURFACE["grass"][0]
+	var fb: Color = Spec.SURFACE["grass"][1]
+	grass_pad(host, Vector3((x0 + x1) * 0.5, y, (z0 + iz0) * 0.5), Vector2(x1 - x0, iz0 - z0), tex, fb)
+	grass_pad(host, Vector3((x0 + x1) * 0.5, y, (iz1 + z1) * 0.5), Vector2(x1 - x0, z1 - iz1), tex, fb)
+	grass_pad(host, Vector3((x0 + ix0) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(ix0 - x0, iz1 - iz0), tex, fb)
+	grass_pad(host, Vector3((ix1 + x1) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(x1 - ix1, iz1 - iz0), tex, fb)

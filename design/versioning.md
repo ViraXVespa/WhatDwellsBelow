@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: stamping a build, the week sequence, or the User named a pin or archive  
+Code: `scripts/data/version.json`, `scripts/data/changelog.json`, `tools/release.py changelog` (code map row Versioning; no gdhealth group). The game reads them through `scripts/data/game_ver.gd` (code map row Save tech; gdhealth group `save_tech`).  
 
 ## Scheme
 

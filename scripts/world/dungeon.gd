@@ -125,6 +125,26 @@ func _redraw_map() -> void:
 		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 		MapActS.apply(self)
 
+## Map pan / zoom for look_ctrl (input reaches the map through these, not map_act.gd).
+func map_zoom_at(gain: float, focus: Vector2) -> void:
+	(load("res://scripts/world/dungeon/map_act.gd") as GDScript).zoom_at(self, gain, focus)
+
+func map_zoom_player(delta_z: float) -> void:
+	(load("res://scripts/world/dungeon/map_act.gd") as GDScript).zoom_player(self, delta_z)
+
+func map_pan_by(delta: Vector2) -> void:
+	(load("res://scripts/world/dungeon/map_act.gd") as GDScript).pan_by(self, delta)
+
+## Crystal net and crystal screen reach the map through these (no minimap.gd loads from outside).
+func refresh_map_marks() -> void:
+	DungeonMinimap.refresh_marks(self)
+
+func map_note_player(cell: Vector2i) -> void:
+	DungeonMinimap.note_player(self, cell)
+
+func map_attach(rect: TextureRect, region: Rect2) -> void:
+	MinimapView.attach(self, rect, region)
+
 func sync_map_view() -> void:
 	MinimapView.sync_views(self)
 	if map_layer and map_layer.visible:
@@ -143,6 +163,10 @@ func _note_verge() -> void:
 		var mx: float = maxf(1.0, float(b.get("max_hp")))
 		if hp / mx <= 0.3:
 			App.boss_low = true
+
+## Player grid cell (HUD threat gem reads it here, not dungeon_cells.gd).
+func player_cell() -> Vector2i:
+	return DungeonCells.player_cell(self)
 
 func _player_cell() -> Vector2i:
 	return DungeonCells.player_cell(self)

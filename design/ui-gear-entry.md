@@ -1,7 +1,8 @@
 ﻿# Anvil / Loadout entry points
 
 Status: current plan  
-Read when: Anvil / Loadout / tooltip entry chrome from ui — not shared board internals  
+Read when: loadout tray, tooltip shell  
+Code: `scripts/ui/progress_ui/ui_hub.gd`, `scripts/ui/progress_ui/ui_flow.gd` (open the board through gear_board.gd entry points, never its helpers)  
 
 ui is already open when this sibling is loaded. Open gear-ui only when board / anvil chrome is the named work. Do not reopen theme, title-web, hud, pause, run-flow, hub, input, or doc-refactor from this file.
 

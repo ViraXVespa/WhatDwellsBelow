@@ -3,7 +3,7 @@ extends Object
 ## Item display names come from ids: `nk` (name key, one entry) plus `forged`.
 ## The saved `name` is only a cache, refreshed on load and when the language changes.
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const KEYS: PackedStringArray = ["common.great_axe", "common.lightning_staff", "gear.staff", "gear.longbow", "gear.pickaxe", "gear.hatchet", "gear.potion", "gear.ration", "progress_make.trail_bread", "slot.head", "slot.body", "slot.legs"]
 const ARMOR: PackedStringArray = ["head", "body", "legs"]
 const OLD_FORGED := "Forged "

@@ -1,0 +1,191 @@
+{
+  "schema": "wdb.pipeline.vision-checks/1",
+  "model": "qwen3-vl:8b",
+  "fix_library": {
+    "one_figure": {"add": "One full-body character only.", "negative": "extra person, cropped body"},
+    "no_brows": {"add": "No eyebrows. Eyebrows are a later piece.", "negative": "eyebrows"},
+    "no_nose": {"add": "No nose. The nose is a later piece.", "negative": "nose"},
+    "no_mouth": {"add": "No mouth and no lips. The mouth is a later piece.", "negative": "mouth, lips"},
+    "no_ears": {"add": "Cut off both ears. Each side of the head is one continuous curve from the crown down to the neck.", "negative": "visible ear, ear attached to the jaw, lobed skull"},
+    "breasts": {"add": "A female chest with breasts. The front of the torso is not a flat board.", "negative": "flat chest, missing breasts, flat plane on the torso"},
+    "head_round": {"add": "The head is a rounded oval, not a square or a box.", "negative": "square head, box head, rectangular head"},
+    "no_plane": {"add": "No flat plane or panel on the front of the torso.", "negative": "flat plane, flat panel, flat board on the chest"},
+    "smooth": {"add": "Smooth continuous skin, not pixels, voxels, or lumps.", "negative": "pixelated, voxel, lumpy, blocky, stepped"},
+    "no_face": {"add": "No face on this view.", "negative": "face, eyes, eyebrows, nose, mouth"},
+    "no_hair": {"add": "Bald. No hair and no circlet.", "negative": "hair, braid, circlet"},
+    "no_cloth": {"add": "No neckband, no cloth, no armor, no pants, and no boots.", "negative": "neckband, scarf, scarf tail, hanging cloth, armor, pants, boots"},
+    "feet": {"add": "Two distinct feet, not blocks or slabs.", "negative": "block feet, slabs, rectangular feet"},
+    "arms": {"add": "Two arms straight out to the sides in a T-pose.", "negative": "missing arm, extra arm, fused arm"},
+    "tpose_arms": {"add": "T-pose. Both arms are straight out to the sides, horizontal, elbows locked. Not hanging and not bent.", "negative": "bent elbows, hanging arms, A-pose, arms down"},
+    "tpose_side_arms": {"add": "Side T-pose. One arm points straight at the camera and the other points straight away. Do not point an arm the way the face points. No arm in front of the chest.", "negative": "arm pointing forward, arm in front of the chest, pointing pose"},
+    "tpose_legs": {"add": "The thighs are apart. There is a clear gap between the legs. The knees are straight.", "negative": "thighs together, legs fused, legs touching"},
+    "tpose_feet": {"add": "The feet are apart and flat on the ground. They do not touch.", "negative": "feet together, feet touching, planted together"},
+    "hourglass": {"add": "A narrow waist and an hourglass torso. The abdomen is slim. The hips are wider than the waist.", "negative": "thick abdomen, barrel torso, wide waist, no waist, rectangular torso"},
+    "head_wide": {"add": "Shrink the head until its width is close to the ribcage.", "negative": "oversized head, head wider than the shoulders"},
+    "head_narrow": {"add": "Make the head a little larger so it stays just wider than the ribcage.", "negative": "tiny head, pinhead"},
+    "thigh_thick": {"add": "Narrow each thigh so it is much slimmer than the chest.", "negative": "bulky thighs, heavy thighs"},
+    "calf_thick": {"add": "Narrow each calf to a thin column under the knee.", "negative": "bulky calves, heavy calves"},
+    "proportion_mismatch": {"add": "Match the head, thigh, and calf widths of the other views of this pose.", "negative": "mismatched proportions, different body scale"},
+    "aspect_wide": {"add": "Change the silhouette so it is not this wide for its height.", "negative": "over-wide silhouette"},
+    "aspect_tall": {"add": "Change the silhouette so it is not this tall for its width.", "negative": "over-tall silhouette"}
+  },
+  "optional": {
+    "mannequin-front": [
+      {"id": "breasts", "fail_if": "The breasts are missing, or the chest is a flat board."}
+    ],
+    "mannequin-side": [
+      {"id": "breasts", "fail_if": "The breast is missing in profile, or the chest is a flat board."}
+    ],
+    "mannequin-mesh": [
+      {"id": "breasts", "fail_if": "The breasts are missing, or the chest is a flat board."},
+      {"id": "hourglass", "fail_if": "The abdomen is thick, the waist is as wide as the chest, or the hips do not flare. An hourglass figure is required."}
+    ],
+    "mannequin-smooth": [
+      {"id": "breasts", "fail_if": "The breasts are missing, or the chest is a flat board."},
+      {"id": "hourglass", "fail_if": "The abdomen is thick, the waist is as wide as the chest, or the hips do not flare. An hourglass figure is required."}
+    ],
+    "mannequin-tpose-side": [
+      {"id": "breasts", "fail_if": "The breast is missing in profile, or the chest is a flat board."},
+      {"id": "hourglass", "fail_if": "The abdomen is as deep as the chest, or the waist does not tuck in between the breast and the hip."}
+    ],
+    "mannequin-tpose-back": [
+      {"id": "hourglass", "fail_if": "The waist is as wide as the hips, or the abdomen is a thick tube."}
+    ]
+  },
+  "roles": {
+    "mannequin-front": {
+      "flow": "prompt",
+      "about": "Front of the clean base body for a customizable player. Eyes may stay. Eyebrows, the nose, the mouth, and the ears are later pieces.",
+      "allow": "Eyes may be present. A bald head and bare skin are correct. Do not fail those.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person, standing, facing the camera."},
+        {"id": "no_brows", "fail_if": "Eyebrows are drawn. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose is drawn. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are drawn. The mouth is a later customization."},
+        {"id": "no_ears", "fail_if": "Any ear is drawn, even a small ear or a bump on the side of the head. Look at both sides."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "no_plane", "fail_if": "A flat plane or panel sits on the front of the torso."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-side": {
+      "flow": "prompt",
+      "about": "Strict side of the same clean base body. Not a walk step.",
+      "allow": "One eye in profile may be present. Bare skin and a bald head are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person in a strict side view."},
+        {"id": "no_brows", "fail_if": "An eyebrow is drawn. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose sticks out. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are drawn. The mouth is a later customization."},
+        {"id": "no_ears", "fail_if": "Any ear is drawn, even a small ear or a bump on the side of the head."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "no_plane", "fail_if": "A flat plane or panel sits on the side of the torso."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are a walk step, or a large block, slab, or rectangle instead of a foot."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-back": {
+      "flow": "prompt",
+      "about": "Strict back of the same clean base body. No face and no hanging cloth.",
+      "allow": "A bald back of the head and bare skin are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person seen from the back."},
+        {"id": "no_face", "fail_if": "A face, eyes, eyebrows, a nose, or a mouth is visible."},
+        {"id": "no_ears", "fail_if": "Any ear sticks out, even a small ear or a bump on the side of the head."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots. Cloth hanging down the back fails."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-mesh": {
+      "flow": "rebuild",
+      "about": "A render of the 3D base body in a T-pose. Eyes may stay. Eyebrows, the nose, the mouth, and the ears must not be modeled. The surface is smooth. Idle is not the bind pose.",
+      "allow": "Eyes may be present. A bald head and bare skin are correct. A fine even surface is correct. A T-pose with a gap between the legs is correct. Voxel steps, a square head, and bent elbows are not.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person, upright, facing the camera."},
+        {"id": "no_brows", "fail_if": "Eyebrows are modeled or painted. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose is modeled or painted. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are modeled or painted. The mouth is a later customization."},
+        {"id": "no_ears", "fail_if": "Any ear is modeled, even a small ear or a bump on the side of the head. Look at both sides."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "no_plane", "fail_if": "A flat plane or panel sits on the front of the torso."},
+        {"id": "smooth", "fail_if": "The surface is lumpy, stepped, pixelated, or looks like leftover voxels."},
+        {"id": "tpose_arms", "fail_if": "An upper arm is bent, an elbow is bent, or an arm hangs down. Both arms must be straight out to the sides and horizontal."},
+        {"id": "tpose_legs", "fail_if": "The thighs touch or are fused. There must be a gap between the thighs."},
+        {"id": "tpose_feet", "fail_if": "The feet touch or are planted together. The feet must be separated and flat."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-smooth": {
+      "flow": "prompt",
+      "about": "Smooth front T-pose still used as the mesh source. Not the pixel ship frame. Eyes may stay. Eyebrows, the nose, the mouth, and the ears are later pieces. Idle is not this pose.",
+      "allow": "Eyes may be present. A bald head and bare skin are correct. Arms straight out and a gap between the feet are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person, standing, facing the camera."},
+        {"id": "no_brows", "fail_if": "Eyebrows are drawn. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose is drawn. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are drawn. The mouth is a later customization."},
+        {"id": "no_ears", "fail_if": "Any ear is drawn, even a small ear or a bump on the side of the head. Look at both sides."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "no_plane", "fail_if": "A flat plane or panel sits on the front of the torso."},
+        {"id": "smooth", "fail_if": "The surface is pixelated, lumpy, stepped, or voxel-like."},
+        {"id": "tpose_arms", "fail_if": "An upper arm is bent, an elbow is bent, or an arm hangs down. Both arms must be straight out to the sides and horizontal."},
+        {"id": "tpose_legs", "fail_if": "The thighs touch or are fused. There must be a gap between the thighs."},
+        {"id": "tpose_feet", "fail_if": "The feet touch or are planted together. The feet must be separated and flat."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    },
+    "mannequin-tpose-side": {
+      "flow": "prompt",
+      "about": "Strict side of the base in a T-pose. One arm points at the camera and one points away. Not a walk step. Ears are a later piece.",
+      "allow": "One eye in profile may be present. Bare skin and a bald head are correct. An arm pointing at the camera is the T-pose, not a missing arm.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person in a strict side view."},
+        {"id": "no_brows", "fail_if": "An eyebrow is drawn. Eyebrows are a later customization."},
+        {"id": "no_nose", "fail_if": "A nose sticks out. The nose is a later customization."},
+        {"id": "no_mouth", "fail_if": "A mouth or lips are drawn. The mouth is a later customization."},
+        {"id": "no_ears", "fail_if": "Any ear is drawn, even a small ear or a bump on the side of the head."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "no_plane", "fail_if": "A flat plane or panel sits on the side of the torso."},
+        {"id": "smooth", "fail_if": "The surface is pixelated, lumpy, stepped, or voxel-like."},
+        {"id": "tpose_side_arms", "fail_if": "An arm points the same way the face points, an arm lies in front of the chest, an arm hangs down, or an elbow is bent. One arm must point at the camera and the other must point away."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots."},
+        {"id": "feet", "fail_if": "A foot is forward in a walk step, or a foot is a large block, slab, or rectangle."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso. An arm pointing at the camera is correct."}
+      ]
+    },
+    "mannequin-tpose-back": {
+      "flow": "prompt",
+      "about": "Strict back of the base in a T-pose. No face. Arms straight out. A gap between the legs.",
+      "allow": "A bald back of the head and bare skin are correct. Arms straight out to the sides are correct.",
+      "checks": [
+        {"id": "one_figure", "fail_if": "There is not exactly one full-body person seen from the back."},
+        {"id": "no_face", "fail_if": "A face, eyes, eyebrows, a nose, or a mouth is visible."},
+        {"id": "no_ears", "fail_if": "Any ear sticks out, even a small ear or a bump on the side of the head."},
+        {"id": "head_round", "fail_if": "The head is a square, a box, or a rectangle."},
+        {"id": "smooth", "fail_if": "The surface is pixelated, lumpy, stepped, or voxel-like."},
+        {"id": "tpose_arms", "fail_if": "An upper arm is bent, an elbow is bent, or an arm hangs down. Both arms must be straight out to the sides and horizontal."},
+        {"id": "tpose_legs", "fail_if": "The thighs touch or are fused. There must be a gap between the thighs."},
+        {"id": "tpose_feet", "fail_if": "The feet touch or are planted together. The feet must be separated and flat."},
+        {"id": "no_hair", "fail_if": "There is hair, a braid, or a circlet."},
+        {"id": "no_cloth", "fail_if": "There is a neckband, scarf, hanging cloth, armor, coat, pants, or boots. Cloth hanging down the back fails."},
+        {"id": "feet", "fail_if": "The feet are large blocks, slabs, or rectangles instead of feet."},
+        {"id": "arms", "fail_if": "An arm is missing, extra, or fused into the torso."}
+      ]
+    }
+  }
+}

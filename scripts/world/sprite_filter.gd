@@ -2,7 +2,7 @@ extends Object
 
 ## Live Sprite3D filter. System uses nearest + optional mips/aniso; debug can use 3–4.
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const FILT_NEAREST := 0
 const FILT_NEAR_MIP := 1
 const FILT_NEAR_ANISO := 2

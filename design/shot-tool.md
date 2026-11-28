@@ -2,6 +2,7 @@
 
 Status: current plan
 Read when: postcard shot, run_shots, visual proof clipboard, _logs/shots, changing a shot knob
+Code: `scripts/debug/shot_tool.gd` (facade) + `scripts/debug/shot_tool/` (args, pose, capture, step runner and ops), runner `tools/shots.py`
 
 Not a numbered P1-P9 smoke. Not Imagine. A tool that misbehaves gets fixed (below), not worked around with a scratch or hand-driven Godot.
 

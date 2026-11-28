@@ -1,7 +1,8 @@
 # Hub — yard chrome, load and buildings
 
 Status: current plan  
-Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay
+Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay  
+Code: `scripts/world/camp/camp_view.gd`, `scripts/world/camp/warm.gd`, `scripts/combat/dummy.gd`
 
 ## Test Dummy
 - Striking dummy (`DummyS` / `scripts/combat/dummy.gd`) for testing.

@@ -11,7 +11,7 @@ DOCS = (
     "design/shot-flows.md", "design/tools.md", "design/tools-build.md", "design/tools-shots.md",
     "design/tools-media.md", "design/tools-gates.md", "design/tools-lookup.md", "design/tools-libs.md",
     "design/tools-perf.md", "design/debug-smokes.md",
-    "design/tasks/README.md", "design/tasks/modular-voxel-walk-proof.md", "design/tasks/ui-png-art.md",
+    "design/tasks/README.md", "design/tasks/ui-png-art.md",
     "design/tasks/perf-sweep.md", ".grok/skills/pc-offload/SKILL.md",
     ".grok/skills/review-shots-isolated/SKILL.md", ".grok/skills/shot-tool/SKILL.md",
 )
@@ -41,14 +41,11 @@ def check(root: Path) -> list[str]:
                        ("design/build-handoff.md", 8000), ("design/build-references.md", 8000)):
         if (root / rel).stat().st_size >= limit:
             bad.append(f"Build guide exceeds {limit} bytes: {rel}")
-    for rel in ("design/isolated-media.md", "design/art-pipeline.md"):
+    for rel in ("design/isolated-media.md", "design/content-pipeline.md"):
         if "exception table" in (root / rel).read_text().lower():
             bad.append("undocumented generation override promised: " + rel)
     references = (root / "design/build-references.md").read_text()
     for phrase in ("GROK_SESSION_ID", "read-only", "OCR", "Blender", "Godot", "live schema", "host"):
         if phrase not in references:
             bad.append("reference guide contract missing: " + phrase)
-    voxel = (root / "design/tasks/modular-voxel-walk-proof.md").read_text()
-    if "_src/new_bibles/female.png" not in voxel or "bible_locked_female.png" in voxel or "references export" in voxel:
-        bad.append("voxel task must read the new source without assumed legacy crops")
     return bad

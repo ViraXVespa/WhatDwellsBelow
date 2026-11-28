@@ -29,15 +29,14 @@ notes_exempt:
   - design/build-simulation.md
   - design/tasks/README.md
   - design/refs/README.md
+  - design/refs/unified-content-pipeline/system-description.md
+  - design/refs/unified-content-pipeline/studio-build-gaps.md
   - design/benchmarks/frame-time.md
   - design/benchmarks/menu-open.md
   - design/benchmarks/web-perf.md
   - design/benchmarks/hub-bench.md
   - design/benchmarks/desktop-release.md
   - design/ui-ux-audit.md
-
-parked_jobs:
-  - design/art-attack-keyframes.md
 
 recipes:
   refactor: design/refactor.md
@@ -103,9 +102,6 @@ gates:
   audio_sfx:
     file: design/audio-sfx.md
     when: wiring_or_generating_sfx_cue
-  art_attack_log:
-    file: design/art-attack-keyframes-log.md
-    when: attack_keyframe_roll_history
   build_week_start:
     file: design/build-week-start.md
     when: build_new_week
@@ -219,15 +215,25 @@ doors:
   player:
     file: design/player.md
     read_when: "movement, collision, character select, eight-dir body"
-    jobs: {}
+    jobs:
+      avatar: design/player-avatar.md
+      bow: design/player-bow.md
+      anim: design/player-anim.md
   combat:
     file: design/combat.md
-    read_when: "strike detection, dash, lock, juice, crits"
-    jobs: {}
+    read_when: "strikes, hit registration, juice"
+    jobs:
+      weapons: design/combat-weapons.md
+      hits: design/combat-hits.md
+      moves: design/combat-moves.md
+      threat: design/combat-threat.md
   skills:
     file: design/skills.md
     read_when: "XP, forging, formula"
-    jobs: {}
+    jobs:
+      gain: design/skills-gain.md
+      cl: design/skills-cl.md
+      effects: design/skills-effects.md
   inventory:
     file: design/inventory.md
     read_when: "affixes, artifacts, mailing"
@@ -264,11 +270,19 @@ doors:
   enemies:
     file: design/enemies.md
     read_when: "roster, AI, pressure"
-    jobs: {}
+    jobs:
+      roster: design/enemies-roster.md
+      ai: design/enemies-ai.md
+      loot: design/enemies-loot.md
   interactables:
     file: design/interactables.md
     read_when: "gathering swings, shops, shrines, puzzles, extract-wells"
-    jobs: {}
+    jobs:
+      gather: design/interactables-gather.md
+      breakables: design/interactables-breakables.md
+      puzzles: design/interactables-puzzles.md
+      fixtures: design/interactables-fixtures.md
+      prompts: design/interactables-prompts.md
   ui:
     file: design/ui.md
     read_when: "pause panels, fullscreen drape, play-menu"
@@ -298,10 +312,29 @@ doors:
       bench: design/debug-bench.md
       anim_browser: design/debug-anim-browser.md
       smokes: design/debug-smokes.md
+      hitch_log: design/debug-hitch.md
+      dungeon_map: design/debug-dungeon-map.md
+      shot_checks: design/debug-shot-checks.md
   audio_visual:
     file: design/audio-visual.md
     read_when: "music, SFX, splash stills, presentation rules"
-    jobs: {}
+    jobs:
+      music: design/audio-visual-music.md
+      art: design/audio-visual-art.md
+      splash: design/audio-visual-splash.md
+  app_flow:
+    file: design/app-flow.md
+    read_when: "App singleton, scene swaps, launch arguments"
+    jobs:
+      boot: design/app-flow-boot.md
+      legs: design/app-flow-legs.md
+      bug_report: design/app-flow-bug-report.md
+  display:
+    file: design/display.md
+    read_when: "quit chord, window apply"
+    jobs:
+      desktop: design/display-desktop.md
+      browser: design/display-web.md
   save_tech:
     file: design/save-tech.md
     read_when: "persistence, wasm headers, autoloads, perf"
@@ -322,17 +355,14 @@ doors:
     file: design/coverage.md
     read_when: "complete-checklist audit, absent-system survey"
     jobs: {}
-  art_pipeline:
-    file: design/art-pipeline.md
-    read_when: "sprite frames, paper plates, sheet harvest"
+  content_pipeline:
+    file: design/content-pipeline.md
+    read_when: "unified content, export contract, asset types"
     jobs:
-      i2v: design/art-i2v.md
-      pack: design/art-pack.md
-      review: design/art-review.md
-      attack_keyframes: design/art-attack-keyframes.md
-      bible: design/art-bible.md
-      bible_character: design/art-bible-character.md
-      enemy_bible: design/art-bible-enemy.md
+      content: design/content-pipeline-subjects.md
+      mesh: design/content-pipeline-mesh.md
+      studio: design/content-pipeline-ui.md
+      legacy: design/content-pipeline-legacy.md
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
@@ -367,18 +397,26 @@ job_read_when:
   ui.quest_board: "pinned parchment, offer cutouts"
   ui.receptionist: "talk cycle, ask topics"
   ui.transitions: "fade, transitions checkbox"
+  audio_visual.music: "Bitter loop point, attribution links, minimum cues"
+  audio_visual.art: "nearest filter modes, mipmap bake, upright actors, lighting contrast, world art"
+  audio_visual.splash: "credit graffiti, boot handover, Shamelessly line"
+  app_flow.boot: "startup order, Dbg shim, wdb flags"
+  app_flow.legs: "loader handoff, descent, next floor, expedition ending"
+  app_flow.bug_report: "relay upload, crash marker, install id, state report"
+  display.desktop: "borderless exclusive, saved kind, windowed"
+  display.browser: "browser gesture, PWA standalone, orientation, Esc swallow"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.bench: "scored legs, continuous sweep"
   debug.anim_browser: "timeline scrubber, review queue"
   debug.smokes: "phase assertions, runner summary"
-  art_pipeline.i2v: "seed unit, spoken cue"
-  art_pipeline.pack: "cleanup pass, atlas stitch"
-  art_pipeline.review: "brief packet, tree tour"
-  art_pipeline.attack_keyframes: "resume parked, attack keyframes"
-  art_pipeline.bible: "canon bible, layer law, quality floor"
-  art_pipeline.bible_character: "identity sketch, template wording, reliability notes"
-  art_pipeline.enemy_bible: "enemy facings, prop hands, mirror swap, quiver and staff"
+  debug.hitch_log: "spike jsonl, localhost"
+  debug.dungeon_map: "generation dump, ascii seal fixtures"
+  debug.shot_checks: "planted faults, unit probes"
+  content_pipeline.content: "pipeline subjects, proportion bands, clause checks"
+  content_pipeline.mesh: "hunyuan trellis pixal hi3d"
+  content_pipeline.studio: "authoring phone studio"
+  content_pipeline.legacy: "rekey manifests, shipped sprite sheets, retired generators"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
@@ -399,14 +437,29 @@ job_read_when:
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
-  save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
+  save_tech.runtime: "mip decode ban, Compatibility preferred"
   save_tech.benchmarks: "benchmark records, open_timing, fps_pct, hitch timings"
   archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
   archives.play: "worktree minimize, Godot child restore, slug copyhit"
   archives.ui: "split chevron, Documents reader, dim inactive columnstack"
-
-job_parked:
-  - art_pipeline.attack_keyframes
+  combat.weapons: "great axe, lightning staff, longbow arrows, special mana"
+  combat.hits: "opaque coverage, glancing blows, crit roll, damage numbers, diminishing defense"
+  combat.moves: "dash iframes, adrenaline rush, target-lock pointer"
+  combat.threat: "rank multipliers, CL budget, one-shot guard"
+  enemies.roster: "monster variety, suggested roles, named monsters, new enemy type"
+  enemies.ai: "wind-up telegraphs, leash range, flee reinforcements, idle spawns"
+  enemies.loot: "durability, corpse cleanup, kill drops, boss chest"
+  player.avatar: "male or female pick, matching voiceover, silhouette bounds"
+  player.bow: "Bow mode, LT steer, RT shoots"
+  player.anim: "8-way facing, stride start and stop, lead foot, seppuku collapse, lazy loads"
+  interactables.gather: "mining nodes, wood nodes, pickaxe rewards"
+  skills.gain: "eleven mandatory ids, permanent fragment, hitpoints stacking"
+  skills.cl: "style averages, highest-style rounding, calibration example"
+  skills.effects: "survivability, smith craft beat, noticeable power"
+  interactables.breakables: "pots and barrels, HP orbs, smash sound"
+  interactables.puzzles: "pull levers, cracked walls, treasure caches, paired gatework"
+  interactables.fixtures: "microwave housing, pawned goods, blessing buff, campfire sit"
+  interactables.prompts: "descend glyph, waypoint beacons, clear-area text, readable labels"
 
 # Build prove: numbered smoke phases per door or door.job (job key wins over its door). Phase meanings: debug-smokes.
 # Printed by list_route and start_build_slice; gate.py smokes / gate.py bot-smokes take --door / --job instead of --phases.
@@ -442,11 +495,14 @@ smokes:
   dungeon.gates: "3,5"
   debug: "7,9"
   audio_visual: "9"
+  app_flow: "1,7"
+  display: "1,7"
+  app_flow.bug_report: "1"
   save_tech: "8"
   feel: "2,4"
   edge_cases: "7"
   coverage: "1"
-  art_pipeline: "9"
+  content_pipeline: "9"
   archives: "9"
 
 # Build prove: scripted shot flows (tools/data/shot-flows/*.json) per door or door.job. A job maps only to its own key (its door's flows
@@ -482,6 +538,14 @@ shot_flows:
   input.rebind_prompts: "camp-controls"
   input.web_touch: "dungeon-touch-controls"
   player: "dungeon-bow-mode"
+  player.bow: "dungeon-bow-mode"
+  interactables.breakables: "dungeon-pickups"
+  interactables.fixtures: "dungeon-gate-popups,dungeon-gate-shop"
+  interactables.prompts: "dungeon-map-crystal"
+  combat.weapons: "dungeon-bow-mode"
+  enemies.roster: "dungeon-all-enemies"
+  enemies.loot: "dungeon-pickups"
+  debug.shot_checks: "camp-prop-shadows,dungeon-torch-pop"
 
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. slice.py start --door D picks the first
 # not done (`--unit-done` marks it done at Complete; a `<door>-units` task keeps the queue), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
@@ -506,7 +570,7 @@ unit_files:
   ui.controls: "scripts/ui/progress_ui/ui_hub.gd: rebuild_controls; scripts/ui/progress_ui.gd: open_controls; scripts/ui/progress_ui/controls_frame.gd: spec, build, place, dress; scripts/ui/progress_ui/controls_art.gd: grain, face, post, bracket, plank"
   ui.anvil: "scripts/ui/progress_ui/ui_hub.gd: rebuild_anvil; scripts/ui/progress_ui/ui_flow.gd: open_anvil; scripts/ui/gear_board/board_sub.gd: open_sub, _open_forge; scripts/ui/progress_ui/anvil_frame.gd: spec, build, place; scripts/ui/progress_ui/anvil_art.gd: stump, shadow, anvil"
   ui.loadout: "scripts/ui/progress_ui/ui_hub.gd: rebuild_loadout; scripts/ui/progress_ui/ui_flow.gd: open_loadout; scripts/ui/progress_ui/crystal_frame.gd: spec, build, place; scripts/ui/progress_ui/crystal_art.gd: body"
-  ui.extract: "scripts/ui/progress_ui/inv.gd: rebuild_extract, send_slot, send_bag; scripts/ui/progress_ui.gd: open_extract, _extract_all; scripts/ui/confirm_dlg.gd; scripts/ui/progress_ui/extract_frame.gd: spec, build, place; scripts/ui/progress_ui/extract_art.gd: body; scripts/data/progress/extract.gd: extractable, extract_one, extract_all, stock_extract_shot; scripts/ui/gear_board/host_build.gd: build"
+  ui.extract: "scripts/ui/progress_ui/inv.gd: rebuild_extract, send_slot, send_bag; scripts/ui/progress_ui.gd: open_extract, _extract_all; scripts/ui/confirm_dlg.gd; scripts/ui/progress_ui/extract_frame.gd: spec, build, place; scripts/ui/progress_ui/extract_art.gd: body; scripts/data/progress_gear/extract.gd: extractable, extract_one, extract_all, stock_extract_shot; scripts/ui/gear_board/host_build.gd: build"
   ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop; scripts/ui/gear_icons.gd; scripts/ui/item_board.gd"
   ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play; scripts/ui/recap/bars.gd; scripts/ui/tip_hover.gd; scripts/ui/pause_skills.gd; scripts/ui/pause_menu/journal_page.gd; scripts/ui/journal_spread.gd"
   ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd; scripts/ui/pause_menu.gd: TABS; scripts/ui/pause_menu/menu_flow.gd; scripts/ui/pause_menu/pause_menu_view.gd; scripts/ui/tip_hover.gd"
@@ -539,9 +603,17 @@ web_perf:
     ui: "camp-pause,camp-shop"
     graphics: "camp-walk,dungeon-walk,dungeon-fight"
     player: "camp-walk,dungeon-walk,dungeon-fight"
+    camera: "camp-walk,dungeon-walk"
     interactables: "camp-shop,dungeon-walk"
     hub: "hub-load,camp-walk"
     dungeon: "dungeon-load,dungeon-walk"
+    combat: "dungeon-fight"
+    enemies: "dungeon-fight"
+    app_flow: "title-idle,hub-load,dungeon-load"
+
+job_parked: []
+
+parked_jobs: []
 
 conflicts_with:
   inventory:
@@ -563,7 +635,7 @@ conflicts_with:
   interactables:
     - hub
   player:
-    - art_pipeline
+    - content_pipeline
     - combat
   skills:
     - inventory
@@ -575,7 +647,7 @@ conflicts_with:
     - inventory
   enemies:
     - combat
-  art_pipeline:
+  content_pipeline:
     - player
   combat:
     - player

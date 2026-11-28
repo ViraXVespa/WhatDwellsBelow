@@ -25,6 +25,9 @@ from pathlib import Path
 
 CACHE_DIR = Path.home() / ".cache" / "wdb-graphs"
 GDHEALTH_API = "https://api.github.com/repos/q-rault/gdhealth/releases/latest"
+GDHEALTH_TAG_API = "https://api.github.com/repos/q-rault/gdhealth/releases/tags/{tag}"
+# Used only when the latest release has no binary for this OS/arch (e.g. a release whose assets are not built yet).
+GDHEALTH_FALLBACK_TAG = "v0.3.7"
 
 
 
@@ -124,10 +127,29 @@ def ensure_gdhealth() -> Path:
 
     asset = _platform_asset(release.get("assets", []))
     if asset is None:
-        raise SystemExit(
-            f"no suitable binary for {platform.system()} {platform.machine()} in {latest_tag}; assets: "
-            + ", ".join(a.get("name", "") for a in release.get("assets", []))
+        fallback = GDHEALTH_FALLBACK_TAG
+        print(
+            f"notice: gdhealth {latest_tag} has no binary for {platform.system()} {platform.machine()} "
+            f"(assets: {', '.join(a.get('name', '') for a in release.get('assets', [])) or 'none'}); "
+            f"falling back to pinned {fallback}"
         )
+        if dest_bin.is_file() and cached_tag == fallback:
+            if platform.system().lower() != "windows":
+                dest_bin.chmod(0o755)
+            return dest_bin
+        try:
+            req = urllib.request.Request(GDHEALTH_TAG_API.format(tag=fallback), headers={"User-Agent": "wdb-graphs"})
+            with _urlopen(req) as resp:
+                release = json.load(resp)
+        except Exception as exc:  # noqa: BLE001
+            raise SystemExit(f"could not fetch gdhealth {fallback} release info: {exc}") from exc
+        latest_tag = release.get("tag_name", fallback)
+        asset = _platform_asset(release.get("assets", []))
+        if asset is None:
+            raise SystemExit(
+                f"no suitable binary for {platform.system()} {platform.machine()} in {latest_tag} (pinned fallback); assets: "
+                + ", ".join(a.get("name", "") for a in release.get("assets", []))
+            )
 
     print(f"downloading gdhealth {latest_tag} ({asset['name']})...")
     archive = CACHE_DIR / asset["name"]

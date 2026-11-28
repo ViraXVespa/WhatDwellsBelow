@@ -119,7 +119,7 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	rt._push()
 	Dbg.hitch("hub_bake_push")
 	Dbg.lt_note("hub_light", "baked")
-static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
+static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if img == null:
 		return
@@ -156,7 +156,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 		y += 1
 	if rt.hub_crystal.length() < 0.2:
 		return
-	var cr: float = load("res://scripts/world/camp/layout_spec.gd").CRYSTAL_GLOW_R
+	var cr: float = float(layout.get("crystal_glow_r"))
 	# Only pixels within cr of the crystal change; skip the rest of the image.
 	var gx0: int = clampi(int(floor((rt.hub_crystal.x - cr - float(x0)) * sub)) - 2, 0, w)
 	var gx1: int = clampi(int(ceil((rt.hub_crystal.x + cr - float(x0)) * sub)) + 2, 0, w)

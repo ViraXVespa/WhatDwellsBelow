@@ -1,93 +1,13 @@
-﻿# Skills, XP, and combat level
+# Skills, XP, and combat level
 
-Status: current plan  
+Status: current plan
 Read when: XP, forging, formula
-Code: `scripts/data/progress.gd`, `scripts/data/progress_combat.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`  
+Code: `scripts/data/progress_combat.gd` (facade) + `scripts/data/progress_combat/`, `scripts/data/progress_forge.gd` (facade) + `scripts/data/progress_forge/` (code map row Skills; gdhealth group `skills`). Callers read skills through `App.prog` (`scripts/data/progress.gd`) or the two facades. Live numbers: the tunables gate.
 
-## Skills included in the demo
+This file is the door. Open the Job-table sibling only when that row matches.
 
-- Great Axe
-- Staff
-- Longbow
-- Strength
-- Magic
-- Ranged
-- Defense
-- Hitpoints
-- Mining
-- Woodcutting
-- Smithing
-
-These eleven are mandatory.
-
-Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood`, `smith`.
-
-## XP gain and permanent progression
-
-- During a run the player accumulates “run XP” in each skill.
-- On death or voluntary “Dispel”, only a small fragment of that run XP is kept permanently.
-- The recap screen MUST contain a clear visual sequence that shows the run XP values draining down to the permanent fragment amounts, after which the new permanent XP totals and resulting levels are displayed.
-- Duplicate extracted greens/blues and extra starter-template whites convert to **permanent smithing XP**, not a second stored copy.
-
-## Weapon-specific XP rules
-
-- Great Axe attacks grant Great Axe XP + Strength XP.
-- Lightning Staff melee attacks grant Strength XP + Staff XP.
-- Lightning Staff special attacks grant Magic XP + Staff XP.
-- Longbow attacks (both basic and special) grant Ranged XP + Longbow XP.
-
-## Kill XP
-
-- Defeating an enemy grants weapon + partner-style XP (existing split of `xp_per_kill`).
-- The same kill ALSO grants Hitpoints XP and Defense XP. This stacks on top of Defense-from-being-hit and Hitpoints-from-heal.
-- Live `xp_kill_hp` / `xp_kill_def` and `xp_per_kill`: the tunables gate (`add_run_xp` applies adrenaline once).
-
-## Combat level
-
-- Three style scores are tracked. Each is the **average** of four equally weighted skills, not a 1:1 sum:
-  - Melee = (Great Axe + Strength + Defense + Hitpoints) / 4
-  - Magic = (Staff + Magic + Defense + Hitpoints) / 4
-  - Ranged = (Longbow + Ranged + Defense + Hitpoints) / 4
-- One skill level therefore adds +0.25 to that style’s combat level before rounding.
-- Calibration: if the two skills of the highest style are 11 and Hitpoints and Defense are also 11, Combat Level is 11.
-- Global Combat Level is the highest of the three style scores.
-- The HUD displays the player’s highest (global) Combat Level as a rounded integer.
-- If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. Level 14 (Magic 11)).
-- Dungeon item level uses enemy / area combat level. That item level is what Analyze stores and what Forge can configure up to.
-
-Enemy floor band and CL 17 budget: combat. Enemy walk / pack HP: enemies. Live keys: the tunables gate.
-
-## Skill effects (high-level)
-
-- Great Axe, Staff, Longbow, Strength, Magic, and Ranged: increase damage dealt with the corresponding style or weapon (with possible differential scaling on specials).
-- Defense & Hitpoints: increase survivability.
-- Mining: improves reward chance and effectiveness with the hit-based mining system.
-- Woodcutting: improves reward chance and effectiveness with the hit-based woodcutting system.
-- Smithing: anvil only.
-  - Shortens the forge craft beat when smithing is at or above the configured item level; lengthens it when below.
-  - Nudges forge Quality up when smithing ≥ item level, down when smithing is below.
-  - Applies a small cost discount (`forge_smith_disc` per smith level above 1).
-  - Does not change dungeon drop rolls.
-
-## Visible power gain after one good run
-
-After a single successful extraction and return to Placeholdia the player MUST be able to notice either:
-- a few permanent skill levels, or
-- at least one new piece of usable forged gear (or both).
-
-This is a required feel target. Concrete proxy: after one successful run the permanent skill levels or new forged item MUST be visible on the hub loadout/skills screens without external guidance.
-
-## Player CL formulas (`progress.gd`)
-
-score(wpn, sty) = (lv(wpn) + lv(sty) + lv(def) + lv(hp)) / 4  
-melee_f  = score(axe, str)  
-magic_f  = score(staff, mag)  
-ranged_f = score(bow, rng)  
-combat_f = max(melee_f, magic_f, ranged_f)  
-style_f  = melee_f | magic_f | ranged_f from the equipped weapon  
-HUD ints = max(1, round(those scores))
-
-Example: lv 11 / 11 / 11 / 11 → combat 11.  
-Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP once, in `add_run_xp`; the stack (`adrenaline_xp_stack` per kill) is capped at `adrenaline_xp_max` (2.0).
-
-Player CL is ~1/4 of the sum of the four skills. Floor span and per-CL enemy rates live in the tunables gate so same-floor raw stats stay in the same ballpark.
+| Job | Open |
+|-----|------|
+| eleven mandatory ids, permanent fragment, hitpoints stacking | `design/skills-gain.md` |
+| style averages, highest-style rounding, calibration example | `design/skills-cl.md` |
+| survivability, smith craft beat, noticeable power | `design/skills-effects.md` |

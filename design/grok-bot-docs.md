@@ -7,7 +7,7 @@ For **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.
 
 ## Mandate
 
-Split fat topic `design/*.md` files to the art_pipeline door + siblings layout, or trim them for signal-to-noise (below). Pass order and facade checklist: `design/doc-refactor.md`. Caps (Bot-only): a door stays under 4KB (Job table and rules), a sibling under 8KB (one job cluster; split again if one `##` section dominates), hard stop ~12KB: do not leave a touched topic file above it if a legal split exists. Rank over ~12KB first, then over ~8KB. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
+Split fat topic `design/*.md` files to the content_pipeline door + siblings layout, or trim them for signal-to-noise (below). Pass order and facade checklist: `design/doc-refactor.md`. Caps (Bot-only): a door stays under 4KB (Job table and rules), a sibling under 8KB (one job cluster; split again if one `##` section dominates), hard stop ~12KB: do not leave a touched topic file above it if a legal split exists. Rank over ~12KB first, then over ~8KB. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
 
 Scope (in / out): `design/doc-refactor.md`. No inventing systems.
 

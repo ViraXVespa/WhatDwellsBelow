@@ -2,7 +2,7 @@ extends Object
 
 ## Eight artifact sets. Bonuses begin at 2 pieces.
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const SETS: PackedStringArray = ["cinder", "tide", "root", "ash", "spark", "bone", "veil", "iron"]
 
 const ARTS: Array = [

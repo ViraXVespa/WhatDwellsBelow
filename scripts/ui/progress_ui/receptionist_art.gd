@@ -4,7 +4,7 @@ extends Object
 ## The world sprite stays on the guild prop. Bake with tools/bake.py frames.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
-const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+const ArtCache: GDScript = preload("res://scripts/ui/progress_ui/art_cache.gd")
 
 const ART := "receptionist"
 const ART_W: int = 480
@@ -30,7 +30,7 @@ const INK := Color(0.16, 0.12, 0.08, 1)
 static var _images: Dictionary = {}
 
 static func body() -> Texture2D:
-	if ArtBake.hit(_images, ART, "body"):
+	if ArtCache.hit(_images, ART, "body"):
 		return _images["body"]
 	var img: Image = Image.create(ART_W, ART_H, false, Image.FORMAT_RGBA8)
 	img.fill(WOOD)
@@ -42,7 +42,7 @@ static func body() -> Texture2D:
 
 ## 96×96 sheet. The center 48×48 is flat paper so the nine-patch stretch stays clean. Margins are 24.
 static func speech() -> Texture2D:
-	if ArtBake.hit(_images, ART, "speech"):
+	if ArtCache.hit(_images, ART, "speech"):
 		return _images["speech"]
 	var img: Image = Image.create(96, 96, false, Image.FORMAT_RGBA8)
 	img.fill(PAPER)
@@ -59,7 +59,7 @@ static func speech() -> Texture2D:
 
 ## Head-and-shoulders bust, transparent outside the figure.
 static func bust() -> Texture2D:
-	if ArtBake.hit(_images, ART, "bust"):
+	if ArtCache.hit(_images, ART, "bust"):
 		return _images["bust"]
 	var img: Image = Image.create(256, 256, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))

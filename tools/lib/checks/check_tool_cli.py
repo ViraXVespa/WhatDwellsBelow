@@ -40,7 +40,7 @@ import repo_lib
 
 MEDIA_IMPORTS = ("PIL", "numpy", "cv2", "wave", "scipy")
 # printers: stdout is the payload (prompt text to copy), so no RESULT line, no --root
-PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "read_summary"}
+PRINTERS = {"bible_prompt", "i2v_seeds", "read_summary"}
 NO_ROOT: set[str] = set()
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server", "mcp_serve"}  # run helper itself; long-running HTTP server
 # staged JSON hooks: stdin event in, one {"decision": ...} line out, no argv CLI. They get the
@@ -64,7 +64,6 @@ SMOKE: dict[str, list] = {
     "agent_log": [["smoke-job"], ["--selftest"]],
     "anim_review": [["pack", "--dry-run"], ["regen", "--dry-run"], ["tree", "--dry-run"]],
     "comfy_character": [["--selftest"], ["status", "--dry-run"], ["run", "--dry-run"], ["export-set", "--dry-run"], ["install", "--dry-run"], ["setup", "--dry-run"], ["depth", "--all", "--dry-run"], ["walk-reel", "--dry-run"], ["walk-build", "--dry-run"]],
-    "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"], ["--dry-run", "update", "opt-003", "--status", "open"]],
     "bot_smokes": [["--doctor"], ["--for", "scripts/app.gd"]],

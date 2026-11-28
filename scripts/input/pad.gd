@@ -4,6 +4,9 @@ const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 
+## Called when the device mode flips (kb <-> pad). App wires the prompt repaint here at boot, so input reaches no UI code.
+static var mode_changed: Callable = Callable()
+
 ## Actions whose press edge Pad tracks. Which pad button or trigger drives each comes from the InputMap (binds/table.gd).
 const TRACKED: PackedStringArray = [
 	"interact", "dash", "target_lock", "pause", "map_view", "potion", "food", "look_mode",
@@ -50,10 +53,8 @@ static func _set_mode(pad_on: bool) -> void:
 	_refresh_prompts()
 
 static func _refresh_prompts() -> void:
-	var Prompts = load("res://scripts/input/prompts.gd")
-	var PView = load("res://scripts/ui/prompt_view.gd")
-	if Prompts.dirty():
-		PView.pulse()
+	if mode_changed.is_valid():
+		mode_changed.call()
 
 static func wake_web(release_gui: bool = true) -> void:
 	if Engine.get_main_loop() == null:
@@ -199,7 +200,7 @@ static func blocked(action: String) -> bool:
 
 static func tick() -> void:
 	Touch.tick()
-	Look.tick(_dt())
+	Look.tick(_dt(), pad_down("look_mode"))
 	if Touch.active():
 		_set_mode(true)
 	if stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y).length() >= 0.24:

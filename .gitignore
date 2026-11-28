@@ -16,6 +16,11 @@ export_credentials.cfg.uid
 /_logs/*
 !/_logs/.gdignore
 
+# Pipeline working set. Export is the commit. WIP stays local.
+# Ignore contents, not the directory, so Godot's .gdignore can stay tracked.
+/data/pipeline/wip/**
+!/data/pipeline/wip/.gdignore
+
 # Same-worktree Build continuity (not a task file; not under _logs, so a direct read is allowed)
 session-plan.md
 /session-context.md

@@ -21,7 +21,7 @@ Open only the topic files that match the requested work. Numbers: `design/tunabl
 
 Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 
-Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`.
+Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not a content-pipeline job. Rules: `design/doc-refactor.md`.
 
 ## Build procedures
 
@@ -55,11 +55,13 @@ The Build front door is `grok-build.md`; `build-job-cycle.md` owns the work cycl
 | HUD, pause, recap, maps, UIs | `ui.md` |
 | Secret debug, playtest, anim browser | `debug.md` |
 | Music, SFX, art rules, splash | `audio-visual.md` |
+| App autoload, boot, scene legs, Report Bug client | `app-flow.md` |
+| Window modes, web fullscreen, quit chord | `display.md` |
 | Save, web export, perf (door) | `save-tech.md` |
 | Time targets, polish, a11y | `feel.md` |
 | Failure modes | `edge-cases.md` |
 | Phase 1–9 checklist | `coverage.md` |
-| Sprite / paper-doll door | `art-pipeline.md` |
+| Content pipeline door | `content-pipeline.md` |
 | Pinned archive commits (door) | `archives.md` |
 | Suggested starts + live defaults | `tunables.md` |
 Per-build player notes are flat `design/changelog/{label}.md`. They are not topic files. A note that is no longer in the tree is in git history (`versioning-log.md`).

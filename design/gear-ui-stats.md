@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: kit deltas, combat totals, hover highlight, Y preview  
+Code: `scripts/ui/gear_board/stats.gd`, `scripts/ui/gear_board/text_fmt.gd`, `scripts/ui/gear_board/board_text.gd`, `scripts/ui/gear_board/tip.gd`  
 
 ## Stats card
 

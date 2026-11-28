@@ -1,6 +1,6 @@
 extends Object
 
-const Make := preload("res://scripts/data/progress/progress_make.gd")
+const Make := preload("res://scripts/data/progress_gear/progress_make.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Req := preload("res://scripts/data/progress_gear/gear_req.gd")
 

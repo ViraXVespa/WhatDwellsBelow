@@ -2,7 +2,9 @@
 
 Status: current plan  
 Read when: gen, streaming, guardian doors, fog, crystals
-Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `geo_stream.gd`, `map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `net.gd`, `crystal_place.gd`, `floor_crystal.gd`
+Code: `scripts/dungeon/`, `scripts/world/dungeon.gd` + `scripts/world/dungeon/`, `scripts/world/dungeon_geo.gd` + `scripts/world/dungeon_geo/`, `scripts/world/dungeon_props.gd` + `scripts/world/dungeon_props/`, `scripts/world/dungeon_stream.gd` + `scripts/world/dungeon_stream/`, `scripts/world/crystal/`, `scripts/world/floor_crystal.gd`, `scripts/world/wall_rects.gd`, `scripts/world/boss_door.gd` (code map row Dungeon; gdhealth group `dungeon`)
+
+Reach-in rule: the dungeon scene places actors, props and lights; the systems it places never load dungeon code. The crystal net and the crystal screen reach the map through `dungeon.gd` methods (`refresh_map_marks`, `map_note_player`, `map_attach`); a floor crystal opens its screen with `App.open_crystal`. Helpers never load their own facade.
 
 This file is the door. Open the Job-table sibling only when that row matches.
 

@@ -4,7 +4,7 @@ extends Object
 ## Bake with tools/bake.py frames.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
-const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+const ArtCache: GDScript = preload("res://scripts/ui/progress_ui/art_cache.gd")
 
 const ART := "guide"
 const ART_W: int = 440
@@ -20,7 +20,7 @@ const RIBBON := Color(0.55, 0.24, 0.20, 1)
 static var _images: Dictionary = {}
 
 static func body() -> Texture2D:
-	if ArtBake.hit(_images, ART, "body"):
+	if ArtCache.hit(_images, ART, "body"):
 		return _images["body"]
 	var img: Image = Image.create(ART_W, ART_H, false, Image.FORMAT_RGBA8)
 	img.fill(COVER)

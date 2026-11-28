@@ -5,7 +5,7 @@
     python tools/media.py sfx [--only p9_wood ...] [--prefix p2_] [--dry-run]
     python tools/media.py sfx --check        # render to temp, FAIL if a committed wav differs (proof for the old cues)
 
-Writes assets/audio/<name>.wav; a new file there is a Build access confirm (design audio-sfx door).
+Writes assets/audio/<name>.wav; a new file there is a Build access confirm (design audio_sfx gate).
 """
 from __future__ import annotations
 

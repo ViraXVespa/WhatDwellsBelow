@@ -2,7 +2,7 @@ extends Object
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const JournalSpread := preload("res://scripts/ui/journal_spread.gd")

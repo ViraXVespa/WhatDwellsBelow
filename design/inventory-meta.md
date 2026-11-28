@@ -1,8 +1,8 @@
 ﻿# Artifacts, extraction, vendor
 
 Status: current plan  
-Read when: artifacts/collections, extraction mailing, vendor restock  
-Code: `scripts/data/progress_quest/restock.gd`, `scripts/data/progress/extract.gd`
+Read when: set bonuses, shopkeep restock  
+Code: `scripts/data/progress_gear/restock.gd`, `scripts/data/progress_gear/extract.gd` (callers use `scripts/data/progress_gear.gd`)
 
 ## Artifacts and collections
 

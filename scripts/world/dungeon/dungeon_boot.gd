@@ -9,7 +9,6 @@ const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
 const MapMarks := preload("res://scripts/world/dungeon/map_marks.gd")
-const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 static var _first_tick: bool = true
@@ -79,7 +78,7 @@ static func ready_floor(host: Node) -> void:
 	LightRtS.maintain(host)
 	(load("res://scripts/graphics/torch_bill.gd") as GDScript).warm(host)
 	if host.player and is_instance_valid(host.player) and host.player.is_inside_tree():
-		HitAtk.warm_shown(host.player)
+		(load("res://scripts/combat/player_hit.gd") as GDScript).warm_shown(host.player)
 	Dbg.hitch("dungeon_light")
 	Dbg.lt_dmark("light")
 	if App:
@@ -138,7 +137,7 @@ static func spawns(host: Node) -> void:
 	host.stairs.setup("stairs", Vector3(float(st.x) + 0.5, 0.0, float(st.y) + 0.5), not App.boss_dead)
 	host.add_child(host.stairs)
 	Dbg.lt_dmark("spawn_stairs")
-	CrystalNet.place_floor(host)
+	(load("res://scripts/world/crystal/crystal_place.gd") as GDScript).place_entrance(host)
 	Dbg.lt_dmark("spawn_crystals")
 	Dbg.lt_dnote("spawn_jobs", "deferred")
 	Dbg.lt_dmark("spawn_jobs")

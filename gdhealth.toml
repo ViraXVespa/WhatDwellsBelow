@@ -1,0 +1,904 @@
+# gdhealth config for `python tools/release.py graphs` (gdhealth reads this file from the repo root).
+# One group per routes.yaml door work area; a group lists the same files as that door's design/code-map.md row.
+# Groups match in alphabetical order, first match wins, so every group carves its neighbours out with "!" globs.
+# A file no group matches reports as "ungrouped": that area is not organized yet.
+
+[discovery]
+include = ["**/*.gd"]
+exclude = ["addons/**", ".godot/**", "reports/**"]
+
+[groups]
+app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/data/bug_doors.gd", "scripts/world/foundation.gd"]
+archives      = ["scripts/ui/archives_ui.gd", "scripts/ui/archives_ui/**", "scripts/data/archives/**"]
+content_pipeline  = ["scripts/data/content_pack.gd", "scripts/data/content_pack/**"]
+audio_visual = ["scripts/audio/**"]
+camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd", "scripts/world/depth.gd"]
+combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
+debug         = ["scripts/debug/**"]
+dungeon       = ["scripts/dungeon/**", "scripts/world/dungeon.gd", "scripts/world/dungeon/**", "scripts/world/dungeon_geo.gd", "scripts/world/dungeon_geo/**", "scripts/world/dungeon_props.gd", "scripts/world/dungeon_props/**", "scripts/world/dungeon_stream.gd", "scripts/world/dungeon_stream/**", "scripts/world/crystal/**", "scripts/world/floor_crystal.gd", "scripts/world/wall_rects.gd", "scripts/world/boss_door.gd"]
+display       = ["scripts/display_mode.gd", "scripts/display_mode/**"]
+enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
+gear_ui       = ["scripts/ui/gear_board.gd", "scripts/ui/gear_board/**", "scripts/ui/gear_icons.gd"]
+graphics      = ["scripts/graphics/**", "scripts/world/billboard_spr.gd"]
+hub           = ["scripts/world/camp.gd", "scripts/world/camp/**", "scripts/world/camp_build.gd", "scripts/world/camp_build/**"]
+input         = ["scripts/input/**"]
+interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd"]
+inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
+localization  = ["scripts/localization/**"]
+numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
+player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
+progress      = ["scripts/data/progress.gd", "scripts/data/progress/**", "scripts/data/progress_quest.gd", "scripts/data/progress_quest/**", "scripts/data/talk_lines.gd"]
+save_tech     = ["scripts/data/save_store.gd", "scripts/data/save_store/**", "scripts/data/game_ver.gd"]
+skills        = ["scripts/data/progress_combat.gd", "scripts/data/progress_combat/**", "scripts/data/progress_forge.gd", "scripts/data/progress_forge/**"]
+ui            = ["scripts/ui/**", "scripts/data/tutorial_pages.gd", "!scripts/ui/archives_ui.gd", "!scripts/ui/archives_ui/**", "!scripts/ui/gear_board.gd", "!scripts/ui/gear_board/**", "!scripts/ui/gear_icons.gd"]
+
+# Pinned to the gdhealth 0.3.6 defaults so trend numbers do not move with a tool update.
+[thresholds]
+file_lines_warn         = 500
+file_lines_critical     = 1000
+function_lines_warn     = 40
+function_lines_critical = 80
+cyclomatic_warn         = 10
+cyclomatic_critical     = 15
+nesting_warn            = 4
+nesting_critical        = 6
+parameters_warn         = 5
+
+[policy]
+# Only single-file self-factories (a static spawn that does `load(<own path>).new()`), named one by one.
+allow_cycles = [
+	"scripts/combat/float_num.gd",
+	"scripts/combat/hp_bar.gd",
+]
+
+# Live code never depends on debug code.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "debug"
+severity = "critical"
+
+# App flow is the top of the game; it reaches debug only through the Dbg shim (scripts/app/dbg.gd, lazy loads).
+[[policy.forbidden_dependencies]]
+from     = "app_flow"
+to       = "debug"
+severity = "critical"
+
+# Display is an engine service below the screens that ask it for fullscreen state.
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "archives"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "gear_ui"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "ui"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "dungeon"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "hub"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "progress"
+to       = "debug"
+severity = "critical"
+
+# Combat mechanics (hits, cover, projectiles, feedback) sit below the enemies that use them.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "enemies"
+severity = "warning"
+
+# The player reaches enemies only through combat (lock, hits).
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "enemies"
+severity = "warning"
+
+# Camera and sprite filtering sit below every actor that uses them.
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "enemies"
+severity = "warning"
+
+# Audio is an engine service: it reads settings through App and reaches no gameplay code.
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "inventory"
+severity = "warning"
+
+# Localization is an engine service: callers hand it launch args and ids; it reaches no gameplay code.
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "audio_visual"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "camera"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "inventory"
+severity = "warning"
+
+# Input sits below screens and the world: it reports, others react (Pad.mode_changed, dungeon map_* methods).
+# No input/display -> app_flow rule: gdhealth 0.3.7+ counts every `App.` autoload read as an edge to scripts/app.gd.
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "audio_visual"
+severity = "warning"
+
+# Interactables are placed by the dungeon and the hub and used by the player; they reach no actor code.
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "enemies"
+severity = "warning"
+
+# Skill math reads progress state; it never loads or writes the save itself.
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "save_tech"
+severity = "warning"
+
+# Numbers are a leaf: they read the pref defaults (save_tech) and nothing from the systems they tune.
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "skills"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "camera"
+severity = "warning"
+
+# Item data sits below the systems that use items.
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "save_tech"
+severity = "warning"
+
+# Screens sit on top of the systems they show: engine services, data and gameplay never load UI or gear-board code
+# (they report through App, signals or host methods). Gear UI and UI may use each other's public faces.
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "gear_ui"
+severity = "warning"
+
+# The dungeon scene sits above the systems it places (actors, props, numbers, input); they never reach back into it.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "dungeon"
+severity = "warning"
+
+# Graphics (lighting, shaders, meshes, sprites) sits below every scene and actor that draws with it.
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "skills"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "input"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "archives"
+severity = "warning"
+
+# The hub scene sits above the systems it places; they and graphics never reach back into it.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "progress"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "dungeon"
+to       = "hub"
+severity = "warning"
+
+# Progress (App.prog, quests, talk lines) sits above the item and skill data it aggregates; save and screens read it.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "graphics"
+to       = "progress"
+severity = "warning"
+
+# Dungeon and hub are sibling scenes; neither loads the other.
+[[policy.forbidden_dependencies]]
+from     = "hub"
+to       = "dungeon"
+severity = "warning"
+
+# The content pipeline export reader is a leaf: game code reads exported subjects through it; it reads no game system.
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "app_flow"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "skills"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "progress"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "dungeon"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "hub"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "graphics"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "archives"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "save_tech"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "input"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "audio_visual"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "camera"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "display"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "content_pipeline"
+to       = "localization"
+severity = "warning"

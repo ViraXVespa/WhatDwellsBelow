@@ -1,8 +1,8 @@
 extends Object
 
-const SepGrid := preload("res://scripts/combat/enemy/sep_grid.gd")
 const Combat := preload("res://scripts/combat/combat.gd")
 const Atk := preload("res://scripts/combat/enemy/enemy_atk.gd")
+const Move := preload("res://scripts/combat/enemy/enemy_move.gd")
 
 static func tick(host: EnemyHost, delta: float) -> void:
 	var player: Node = host._player() as Node
@@ -109,7 +109,7 @@ static func do_flee(host: EnemyHost, delta: float, to_p: Vector2) -> void:
 	host.flee_t -= delta
 	var away: Vector2 = - to_p.normalized() if to_p.length_squared() > 0.0001 else Vector2.RIGHT
 	host.aim = away
-	move_dir(host, away, App.bal.flee_speed_mult, delta)
+	Move.move_dir(host, away, App.bal.flee_speed_mult, delta)
 	if host.flee_t <= 0.0:
 		host.bang.visible = false
 		call_help(host)
@@ -121,7 +121,7 @@ static func steer_to(host: EnemyHost, dest: Vector3, _delta: float) -> void:
 		host.velocity = Vector3.ZERO
 		return
 	host.aim = d.normalized()
-	move_dir(host, host.aim, 1.0, _delta)
+	Move.move_dir(host, host.aim, 1.0, _delta)
 
 static func idle(host: EnemyHost, delta: float) -> void:
 	host.state = host.ST_IDLE
@@ -155,27 +155,6 @@ static func stuck(host: EnemyHost, delta: float) -> void:
 	else:
 		host.stuck_t = 0.0
 
-static func sep(host: EnemyHost) -> Vector3:
-	var push: Vector3 = Vector3.ZERO
-	var lim: float = App.bal.enemy_sep
-	var cap: int = maxi(1, int(App.bal.sep_max))
-	var n: int = 0
-	var idx: PackedInt32Array = SepGrid.near((host as Node3D).global_position, lim)
-	var list: Array = SepGrid.near_list()
-	for i in idx:
-		var e: Variant = list[i]
-		if e == host or e == null or not is_instance_valid(e):
-			continue
-		var d: Vector3 = host.global_position - (e as Node3D).global_position
-		d.y = 0.0
-		var L: float = d.length()
-		if L < lim and L > 0.01:
-			push += d / L * (lim - L) * 2.4
-			n += 1
-			if n >= cap:
-				break
-	return push
-
 static func call_help(host: EnemyHost) -> void:
 	if host.spawned_help:
 		return
@@ -185,17 +164,3 @@ static func call_help(host: EnemyHost) -> void:
 		var n: int = int(App.bal.flee_help)
 		for i: int in n:
 			parent.spawn_reinforcement(host.type_id, host.global_position, host.group_id)
-
-static func move_dir(host: EnemyHost, dir: Vector2, spd_m: float, delta: float) -> void:
-	var push: Vector3 = sep(host)
-	var wish: Vector2 = dir.normalized() * host.move_spd * spd_m
-	wish += Vector2(push.x, push.z)
-	if host.move_kind == "hop":
-		host.hop_t -= delta
-		if host.hop_t <= 0.0:
-			host.hop_t = 0.42
-			host.velocity = Vector3(wish.x, 0.0, wish.y) * 1.35
-		else:
-			host.velocity = host.velocity.move_toward(Vector3.ZERO, host.move_spd * 3.0 * delta)
-	else:
-		host.velocity = Vector3(wish.x, 0.0, wish.y)

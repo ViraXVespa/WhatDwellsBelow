@@ -1,8 +1,8 @@
 ﻿# Playtest / AI player and journal
 
 Status: current plan  
-Read when: automated playtest or playtest journal  
-Code: `scripts/debug/`  
+Read when: sim walker, recommended config  
+Code: `scripts/debug/playtest.gd` + `scripts/debug/playtest/`, `scripts/debug/playtest_ai.gd` + `scripts/debug/playtest_ai/`, `scripts/debug/playtest_goals.gd` + `scripts/debug/playtest_goals/`, `scripts/debug/playtest_los.gd` + `scripts/debug/playtest_los/`, `scripts/debug/playtest_path.gd` + `scripts/debug/playtest_path/`, `scripts/debug/playtest_log.gd` + `scripts/debug/playtest_log/`, `scripts/debug/playtest_db.gd`, `scripts/debug/playtest_hub/`  
 
 ## Automated Playtest / AI Player system
 

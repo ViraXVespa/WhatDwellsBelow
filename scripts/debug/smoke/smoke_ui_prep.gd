@@ -4,9 +4,7 @@ extends Object
 ## (round trip, older save without it, malformed data rejected), the shared tooltip helper, and popups wearing the host skin (smoke_skins.gd).
 
 const Talk := preload("res://scripts/data/talk_lines.gd")
-const Collect := preload("res://scripts/data/save_store/store_collect.gd")
-const Data := preload("res://scripts/data/save_store/store_data.gd")
-const PauseFlow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
+const Store := preload("res://scripts/data/save_store.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
@@ -37,7 +35,7 @@ static func _tabs() -> bool:
 	var good: bool = true
 	for id: String in ids:
 		pm.show_tab(id)
-		good = good and pm.tab == id and PauseFlow.tab_index(pm, id) == ids.find(id)
+		good = good and pm.tab == id and int(pm.call("tab_index", id)) == ids.find(id)
 	pm.show_tab(ids[0])
 	var walk: Array = []
 	for i: int in ids.size():
@@ -67,13 +65,13 @@ static func _talk() -> bool:
 	Talk.on_hub_entry()
 	var restart_ok: bool = Talk.current("smoke_npc") != first[2] and (Talk.seen["smoke_npc"] as Array).size() == 1
 	var good: bool = _say("talk_seen", cycle_ok and restart_ok, str(first) + " then " + Talk.current("smoke_npc"))
-	var save: Dictionary = Collect.collect()
+	var save: Dictionary = Store.collect()
 	var want: Dictionary = Talk.to_save()
 	Talk.reset()
-	Data.apply(save)
+	Store.apply(save)
 	good = _say("talk_save_round_trip", Talk.to_save() == want and save.has("talk")) and good
 	save.erase("talk")
-	Data.apply(save)
+	Store.apply(save)
 	good = _say("talk_old_save", Talk.seen.is_empty() and Talk.cur.is_empty()) and good
 	var bad: Array = [[], {"v": 1}, {"v": 2, "seen": {}, "cur": {}}, {"v": 1, "seen": {"a": "x"}, "cur": {}}, {"v": 1, "seen": {}, "cur": {"a": 3}}]
 	var rejects: bool = Talk.check(want) == ""

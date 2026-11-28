@@ -2,9 +2,9 @@ extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Fx := preload("res://scripts/combat/player_hit/hit_fx.gd")
+const Core := preload("res://scripts/combat/player_hit/hit_core.gd")
 
 static func apply_special(host: Node) -> void:
-	var _fac = load("res://scripts/combat/player_hit.gd")
 	var extra: float = App.gear("atk_range")
 	if App.weapon == "great_axe":
 		App.sfx("slam")
@@ -23,7 +23,7 @@ static func apply_special(host: Node) -> void:
 	for i in n:
 		var t := 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
 		var a := base + t * cone
-		_fac.spawn_arrow(host, Vector2(cos(a), sin(a)), _fac.scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
+		Core.spawn_arrow(host, Vector2(cos(a), sin(a)), Core.scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
 
 static func trail(host: Node, delta: float) -> void:
 	if not host.is_inside_tree():
@@ -53,29 +53,6 @@ static func trail(host: Node, delta: float) -> void:
 	var tw := g.create_tween()
 	tw.tween_property(g, "modulate:a", 0.0, App.bal.trail_life)
 	tw.finished.connect(g.queue_free)
-
-static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", _is_special := false, glance := false, can_crit := true) -> void:
-	var _fac = load("res://scripts/combat/player_hit.gd")
-	if xp == "magic":
-		_is_special = true
-	_fac.grant_hit_xp(xp)
-	var chance: float = App.bal.crit_chance + App.gear("crit_chance")
-	var crit := can_crit and Combat.roll_crit(chance)
-	if "last_glance" in e:
-		e.last_glance = glance and not crit
-	if e.has_method("take_hit"):
-		e.take_hit(dmg, host.aim_dir, crit)
-	_fac._life_tap(host, e)
-	if App.tel:
-		var shown: float = dmg if not crit else dmg * (App.bal.crit_mult + App.gear("crit_dmg"))
-		App.tel.note_damage_dealt(shown, crit)
-		if host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_WIND:
-			App.tel.spec_hit += 1
-			var key := App.weapon
-			if App.tel.wpn.has(key):
-				App.tel.wpn[key].spec_hit = int(App.tel.wpn[key].spec_hit) + 1
-	if stagger and e.has_method("apply_stagger"):
-		e.apply_stagger(App.bal.slam_stagger)
 
 static func fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) -> void:
 	var s: Sprite3D = _spawn_fx(host, path, pos, h, ybill)

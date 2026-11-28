@@ -1,12 +1,13 @@
 extends Object
 
 ## Object-frame art ships as baked PNGs: res://assets/ui/frames/<art>/<key>.png. The *_art.gd scripts still hold
-## the drawing code; at runtime each picture comes from its PNG (hit() fills the script's cache), and a missing PNG
+## the drawing code; at runtime each picture comes from its PNG (art_cache.gd hit() fills the script's cache), and a missing PNG
 ## is an error, never redrawn. Re-bake after editing any *_art.gd: `python tools/bake.py frames` (runs the game
 ## with --wdb-bake-frame-art: draws every skin in code and writes the PNGs). --wdb-frame-art-time prints how long
 ## building every skin takes (draw cost before a bake, load cost after).
 
-const DIR := "res://assets/ui/frames/"
+const Cache := preload("res://scripts/ui/progress_ui/art_cache.gd")
+const DIR := Cache.DIR
 const BAKE_FLAG := "--wdb-bake-frame-art"
 const TIME_FLAG := "--wdb-frame-art-time"
 ## Draw in code and compare with the committed PNGs (exit 1 on any stale or missing picture).
@@ -25,27 +26,11 @@ const ARTS: Array[String] = [
 	"res://scripts/ui/progress_ui/guide_art.gd",
 ]
 
-## True while baking: pictures are drawn in code instead of loaded.
-static var drawing: bool = false
-
 static func path_of(art: String, key: String) -> String:
-	return DIR + art + "/" + key + ".png"
+	return Cache.path_of(art, key)
 
-## Cache check for an art function: true when cache[key] is ready (loaded from its PNG), false only while baking
-## (draw it). A missing PNG fails loudly.
 static func hit(cache: Dictionary, art: String, key: String) -> bool:
-	if cache.has(key):
-		return true
-	if drawing:
-		return false
-	var path: String = path_of(art, key)
-	var tex: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
-	if tex == null:
-		push_error("frame art PNG missing: %s (run tools/bake.py frames)" % path)
-		assert(false, "frame art PNG missing: " + path)
-		return false
-	cache[key] = tex
-	return true
+	return Cache.hit(cache, art, key)
 
 static func active() -> bool:
 	return OS.get_cmdline_user_args().has(BAKE_FLAG) or OS.get_cmdline_user_args().has(TIME_FLAG) or OS.get_cmdline_user_args().has(CHECK_FLAG)
@@ -53,13 +38,13 @@ static func active() -> bool:
 static func run_and_quit(tree: SceneTree) -> void:
 	var check: bool = OS.get_cmdline_user_args().has(CHECK_FLAG)
 	if OS.get_cmdline_user_args().has(BAKE_FLAG) or check:
-		drawing = true
+		Cache.drawing = true
 	var ms: float = _build_all()
-	print("FRAME_ART: build_ms=%.1f mode=%s" % [ms, "draw" if drawing else "load"])
+	print("FRAME_ART: build_ms=%.1f mode=%s" % [ms, "draw" if Cache.drawing else "load"])
 	var ok: bool = true
 	if check:
 		ok = _compare()
-	elif drawing:
+	elif Cache.drawing:
 		ok = _write()
 	tree.quit(0 if ok else 1)
 

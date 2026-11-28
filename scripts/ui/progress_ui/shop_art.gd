@@ -17,12 +17,12 @@ const STITCH: Color = Color(0.28, 0.38, 0.48, 1)
 const FLAME: Color = Color(0.78, 0.92, 0.96, 1)
 const FLAME_CORE: Color = Color(0.96, 0.97, 0.92, 1)
 
-const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+const ArtCache: GDScript = preload("res://scripts/ui/progress_ui/art_cache.gd")
 const ART := "shop"
 static var _images: Dictionary = {}
 
 static func body() -> Texture2D:
-	if ArtBake.hit(_images, ART, "body"):
+	if ArtCache.hit(_images, ART, "body"):
 		return _images["body"]
 	var img: Image = Image.create(ART_W, ART_H, false, Image.FORMAT_RGBA8)
 	_fill(img, Rect2i(0, 0, ART_W, ART_H), NIGHT)
@@ -40,7 +40,7 @@ static func body() -> Texture2D:
 ## Pale cloth row. `lift` lightens the face; `foot` is the shadow under it.
 static func shelf(lift: float, foot: int) -> Texture2D:
 	var key: String = "shelf-%d-%d" % [int(round(lift * 100.0)), foot]
-	if ArtBake.hit(_images, ART, key):
+	if ArtCache.hit(_images, ART, key):
 		return _images[key]
 	var w: int = 96
 	var h: int = 32
@@ -54,7 +54,7 @@ static func shelf(lift: float, foot: int) -> Texture2D:
 
 ## Dark hem for Leave.
 static func bar() -> Texture2D:
-	if ArtBake.hit(_images, ART, "bar"):
+	if ArtCache.hit(_images, ART, "bar"):
 		return _images["bar"]
 	var w: int = 96
 	var h: int = 28

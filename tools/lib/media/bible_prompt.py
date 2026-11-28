@@ -3,7 +3,7 @@
 
 --gender: the locked 3x3 player Character Bible prompt.
 --enemy ID: the 3x3 Enemy Bible prompt filled from ENEMIES below, the one home of the
-enemy prop and hand table (design/art-bible-enemy.md points here). A '?' in a hand or note
+enemy prop and hand table. A '?' in a hand or note
 means unverified: the output marks it UNKNOWN and a warning goes to stderr.
 I2V / overlay prompts stay in tools/media.py i2v-seeds. Do not send Imagine from this path unless the User says to.
 """

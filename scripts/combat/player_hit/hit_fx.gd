@@ -2,8 +2,9 @@ extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
+const Core := preload("res://scripts/combat/player_hit/hit_core.gd")
+
 static func hit_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto", is_special := false) -> void:
-	var _fac = load("res://scripts/combat/player_hit.gd")
 	for e in Combat.enemies():
 		if e == null or not is_instance_valid(e):
 			continue
@@ -14,11 +15,10 @@ static func hit_circle(host: Node, origin: Vector3, radius: float, dmg: float, n
 			continue
 		if need_los and not Combat.los(origin, (e as Node3D).global_position, host.get_world_3d()):
 			continue
-		load("res://scripts/combat/player_hit/hit_atk.gd").damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, xp, is_special, not Cover.crit_ok(cov), Cover.crit_ok(cov))
-	_fac.hit_breakables_circle(host, origin, radius, dmg, need_los)
+		Core.damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, xp, is_special, not Cover.crit_ok(cov), Cover.crit_ok(cov))
+	Core.hit_breakables_circle(host, origin, radius, dmg, need_los)
 
 static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
-	var _fac = load("res://scripts/combat/player_hit.gd")
 	for e in Combat.enemies():
 		if e == null or not is_instance_valid(e):
 			continue
@@ -29,8 +29,8 @@ static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bo
 			continue
 		if need_los and not Combat.los(host.global_position, (e as Node3D).global_position, host.get_world_3d()):
 			continue
-		load("res://scripts/combat/player_hit/hit_atk.gd").damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, "auto", false, not Cover.crit_ok(cov), Cover.crit_ok(cov))
-	_fac.hit_breakables_arc(host, rng, arc, dmg, need_los)
+		Core.damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, "auto", false, not Cover.crit_ok(cov), Cover.crit_ok(cov))
+	Core.hit_breakables_arc(host, rng, arc, dmg, need_los)
 
 static func draw_special_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:
@@ -48,10 +48,9 @@ static func draw_special_tele(host: Node, _active: bool) -> void:
 		host.telegraph.show_spread(host.global_position, host.aim_dir, App.bal.bow_special_range + extra, App.bal.bow_special_cone, int(App.bal.bow_special_count), w, yel)
 
 static func apply_basic(host: Node) -> void:
-	var _fac = load("res://scripts/combat/player_hit.gd")
 	var extra: float = App.gear("atk_range")
 	if App.weapon == "longbow":
-		_fac.spawn_arrow(host, host.aim_dir, _fac.scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
+		Core.spawn_arrow(host, host.aim_dir, Core.scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
 		App.sfx("bow")
 		return
 	var rng: float = App.bal.axe_range + extra

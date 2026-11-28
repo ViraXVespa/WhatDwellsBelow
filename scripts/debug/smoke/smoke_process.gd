@@ -95,9 +95,8 @@ static func _gem(host: Node, prefix: String) -> void:
 		printerr("%s: PROCESS: gem_tween=no_hud" % prefix)
 		return
 	App.set("danger_gem", true)
-	var Act := load("res://scripts/ui/hud/hud_act.gd") as GDScript
-	if Act.has_method("paint_gem"):
-		Act.paint_gem(hud, host)
+	if hud.has_method("paint_gem"):
+		hud.call("paint_gem", host)
 	var gem: Node = hud.get("gem")
 	var has_tween: bool = gem != null and gem.has_meta("pulse_tween") and gem.get_meta("pulse_tween") != null
 	printerr("%s: PROCESS: gem_tween=%s" % [prefix, str(has_tween)])
@@ -125,8 +124,7 @@ func update_line(pos, dir, length, width, opacity, on):
 	p.set("aim_line", line)
 	var before: Vector2 = p.get("aim_dir")
 	p.set("aim_dir", Vector2.RIGHT if before == Vector2.ZERO else Vector2(-before.y, before.x))
-	var Combat := load("res://scripts/world/player/player_combat.gd") as GDScript
-	Combat.update_aim_line(p)
+	p.call("update_aim_line")
 	var updated: bool = bool(line.get_meta("called", false)) and p.get("aim_dir") != before
 	printerr("%s: PROCESS: aim_line_updates_on_dir_change=%s" % [prefix, str(updated)])
 	p.set("aim_dir", before)

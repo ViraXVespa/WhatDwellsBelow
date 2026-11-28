@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: difficulty, raid-timer, parity, polish
+Code: none of its own (cross-cutting targets; numbers change through the tunables gate, `scripts/data/balance.gd`)
 
 ## Time targets
 

@@ -1,7 +1,8 @@
 ﻿# Gamepad and shared menu input
 
 Status: current plan  
-Read when: gamepad layout, look mode, or universal menus  
+Read when: face buttons, Xbox layout  
+Code: `scripts/input/pad.gd` (`Pad`), `scripts/input/look_ctrl.gd`, `scripts/ui/menu_pad.gd`
 
 ## Target platforms
 

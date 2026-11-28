@@ -89,7 +89,7 @@ Create all ten skills (and their helpers) in a single batch of file writes, then
 **Helper:** Interface to existing `shots.py flow` commands plus file editing of the JSON under tools/data/shot-flows/.
 
 ## Wiring and testing requirements
-- Add a short section to the relevant design docs (prove.md, BOT.md, tasks/README.md, shot-flows-howto.md, or a new design/open-code-skills.md) that lists each skill, when a future Grok Build session should call it, and how to invoke it programmatically (preferring the skill helpers).
+- Add a short section to the relevant design docs (prove.md, BOT.md, tasks/README.md, shot-flows-howto.md, or a new routed design page for these skills) that lists each skill, when a future Grok Build session should call it, and how to invoke it programmatically (preferring the skill helpers).
 - Ensure each skill can be invoked by a thin tool wrapper that makes a direct Ollama API call (so other agents can use them without going through OpenCode). The helpers should be the preferred way to do the mechanical work.
 - Update the two already-created skills (task-ops and changelog-commit) so they also contain their focused helpers.
 - Provide a verification note or small test that exercises each skill against its usage scenario (at least the happy path) and confirms the documented replacement behavior.

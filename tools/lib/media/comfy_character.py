@@ -1298,7 +1298,9 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     try:
-        import media.mobile_ui_server  # noqa: F401
+        if not {"--selftest", "--dry-run", "--json", "--help", "-h"} & set(sys.argv[1:]):
+            import media.mobile_ui_server as studio_server
+            studio_server.start_background()
     except Exception:
         pass
     raise SystemExit(main())

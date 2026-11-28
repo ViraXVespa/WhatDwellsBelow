@@ -4,7 +4,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
-const Extract := preload("res://scripts/data/progress/extract.gd")
+const Gear := preload("res://scripts/data/progress_gear.gd")
 
 static func sets_blurb() -> String:
 	var bits: PackedStringArray = PackedStringArray()
@@ -60,7 +60,7 @@ static func send_slot(ui, slot: String) -> void:
 	if it.is_empty():
 		ui._st(App.tr("common.empty"))
 		return
-	if not Extract._equipped_listed(it, slot):
+	if not Gear.equipped_mailable(it, slot):
 		ui._st(_stay_line(it, slot))
 		return
 	var copy: Dictionary = it.duplicate(true)
@@ -68,7 +68,7 @@ static func send_slot(ui, slot: String) -> void:
 	_ask(ui, str(it.get("name", "?")), copy)
 
 static func send_bag(ui, it: Dictionary) -> void:
-	if not Extract._bag_mailable(it):
+	if not Gear.bag_mailable(it):
 		ui._st(_stay_line(it, ""))
 		return
 	var copy: Dictionary = it.duplicate(true)

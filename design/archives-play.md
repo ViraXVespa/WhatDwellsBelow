@@ -1,7 +1,8 @@
 # Archives — Play and Pages
 
 Status: current plan  
-Read when: worktree minimize, Godot child restore, slug copyhit
+Read when: worktree minimize, Godot child restore, slug copyhit  
+Code: `scripts/data/archives/launch.gd`  
 
 ## Play
 

@@ -5,7 +5,7 @@ extends Object
 const VERSION_PATH := "res://scripts/data/version.json"
 const LOG_PATH := "res://scripts/data/changelog.json"
 const PAGES_CHANGELOG := "https://viraxvespa.github.io/WhatDwellsBelow/changelog/"
-const StoreIO := preload("res://scripts/data/save_store/store_io.gd")
+const Store := preload("res://scripts/data/save_store.gd")
 
 static var _web_notes: Dictionary = {}
 static var _web_tried: bool = false
@@ -114,4 +114,4 @@ static func _read_json(path: String) -> Dictionary:
         var hit2: Variant = web.get("changelog", {})
         if hit2 is Dictionary and not hit2.is_empty():
             return hit2
-    return StoreIO.read_payload(path)
+    return Store.read_payload(path)

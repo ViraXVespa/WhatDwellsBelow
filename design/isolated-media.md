@@ -10,6 +10,8 @@ Code: `tools/media.py grok`
 2. Use `python tools/media.py grok --kind KIND --brief "..." --out DIR`. The runner stages a scratch directory outside the git tree and verifies isolation with `grok inspect` before generation.
 3. Review the result through the owning art job before installing it. Keep sources under `_src/` and reusable processing in the existing tools.
 
+New game art is closed on this gate. Do not start a character, NPC, tile, UI, or I2V kind for new art. The content pipeline owns that work.
+
 The repository hook denies in-repo Imagine/I2V. Attached images, a missing runner or an instruction to stay in-session do not constitute an implemented hook exception. If the supported runner cannot start, report the blocker; do not move cwd, rename tools or generate around the denial. Necessary direct reference reads have a separate task-scoped opt-in; it does not enable generation. Blender modeling is a different task workflow, not an Imagine kind. Web/chat and the Bot do not run this generator.
 
 ## Kind routing

@@ -1,8 +1,6 @@
 extends Object
 
-const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const Act := preload("res://scripts/data/progress_forge/forge_act.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
@@ -62,7 +60,7 @@ static func _analyze_risk() -> void:
 	var rows: Array = _risk_rows()
 	for raw: Variant in rows:
 		if raw is Dictionary:
-			Town.analyze_destroy(App.prog, raw)
+			App.prog.analyze_destroy(raw)
 
 static func _risk_rows() -> Array:
 	var out: Array = []
@@ -102,7 +100,7 @@ static func _keep_hold(slot_name: String, type_id: String, forged: Dictionary, p
 	var raw: Variant = App.prog.holds.get(slot_name, [])
 	if raw is Array:
 		for one: Variant in raw:
-			if keep.size() >= Act.HOLD_CAP:
+			if keep.size() >= ForgeP.HOLD_CAP:
 				break
 			if one is Dictionary and ForgeP.type_of(one) == type_id:
 				var uid: int = int((one as Dictionary).get("uid", 0))

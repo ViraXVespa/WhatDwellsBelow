@@ -97,13 +97,10 @@ static func end_run(host: Node, cond: String, killer := "") -> void:
 	host.finish_end(cond, killer)
 
 static func _spool_human(tel: Object) -> void:
-	# Runtime load so a release tree with scripts/debug removed still parses.
-	if not OS.is_debug_build() or OS.has_feature("web"):
+	# Through the Dbg shim: null in a release build or with scripts/debug removed.
+	if OS.has_feature("web"):
 		return
-	var path := "res://scripts/debug/playtest_db.gd"
-	if not ResourceLoader.exists(path):
-		return
-	var db: GDScript = load(path) as GDScript
+	var db: GDScript = App.Dbg.script("playtest_db")
 	if db:
 		db.call("append_finish", tel, "", false)
 

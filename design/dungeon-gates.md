@@ -1,7 +1,8 @@
 # Dungeon — gates, stairs, fog
 
 Status: current plan  
-Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
+Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk  
+Code: `scripts/world/boss_door.gd`, `scripts/world/dungeon/dungeon_gate.gd`, `scripts/world/dungeon/minimap.gd` + `scripts/world/dungeon/minimap_view.gd`, `scripts/world/dungeon/map_marks.gd`, `scripts/world/dungeon/map_act.gd`
 
 ## Boss / guardian rules
 

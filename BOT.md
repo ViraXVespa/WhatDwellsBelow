@@ -63,7 +63,7 @@ Tools: `design/tools.md` maps each job to a tool and names the sibling with its 
 
 ## Hard stops
 
-No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V (except User-named art-pipeline / rekey / stills work when the task file assigns it to Bot), locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. Do not open the editor or enable Execution on Local Computer.
+No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V (except User-named content-pipeline / rekey / stills work when the task file assigns it to Bot), locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. Do not open the editor or enable Execution on Local Computer.
 Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named opt item lists them.
 
 ## After-cluster report

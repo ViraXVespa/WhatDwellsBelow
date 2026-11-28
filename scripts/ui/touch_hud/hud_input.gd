@@ -4,7 +4,6 @@ extends Object
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
-const MapAct := preload("res://scripts/world/dungeon/map_act.gd")
 const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
 
 static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
@@ -64,7 +63,9 @@ static func drag(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 		Touch.set_move(d / host._move_r)
 		return
 	if idx == host._pan_i:
-		MapAct.pan_by(dungeon(), pos - host._pan_at)
+		var map_host := dungeon()
+		if map_host != null:
+			map_host.call("map_pan_by", pos - host._pan_at)
 		host._pan_at = pos
 		return
 	if host._free.has(idx):
@@ -156,7 +157,7 @@ static func can_pan(host: CanvasLayer) -> bool:
 	if host._move_live or host._pinch_a >= 0:
 		return false
 	var map_host := dungeon()
-	return MapAct.is_open(map_host) and float(map_host.get_meta("map_zoom", 1.0)) > 1.001
+	return _map_up(map_host) and float(map_host.get_meta("map_zoom", 1.0)) > 1.001
 
 static func in_move_zone(host: CanvasLayer, pos: Vector2) -> bool:
 	return TouchLayout.in_move_zone(host.get_viewport().get_visible_rect().size, pos)
@@ -166,6 +167,13 @@ static func lock_on() -> bool:
 	var tree := Engine.get_main_loop() as SceneTree
 	var p: Node = tree.get_first_node_in_group("player") if tree else null
 	return p != null and bool(p.get("lock_armed"))
+
+## Large map shown (the dungeon's map_layer is visible). UI reaches the map through dungeon.gd map_* methods.
+static func _map_up(host: Node) -> bool:
+	if host == null:
+		return false
+	var layer: CanvasLayer = host.get("map_layer") as CanvasLayer
+	return layer != null and layer.visible
 
 static func dungeon() -> Node:
 	var scene := Touch.scene_host()

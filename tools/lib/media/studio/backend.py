@@ -1,0 +1,801 @@
+"""Real backend: the studio's adapter over the pipeline store and `media.py pipeline`.
+
+Store reads and writes call tools/lib/media/pipeline/store.py. Long commands run the pipeline CLI
+in a subprocess. Anything the pipeline does not offer yet raises NotWired; the page shows that text.
+UI-owned fields live under `studio` on the WIP record (see UI_KEY) until the schema adopts them.
+"""
+from __future__ import annotations
+
+import base64
+import json
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+from urllib.parse import urlparse
+
+from media.pipeline import store
+
+from . import registry
+from . import steps as step_flow
+from .jobs import Job
+
+UI_KEY = "studio"
+STILL_EXT = {".png", ".jpg", ".jpeg", ".webp"}
+MESH_EXT = {".glb"}
+SOUND_EXT = {".wav", ".ogg"}
+MAX_UPLOAD = 25 * 1024 * 1024
+GUARDED = {("female", "edit"), ("female", "body"), ("female", "smooth")}
+HIDDEN_NAMES = {"female-hunyuan-body-digits.glb", "female-edit-head.png"}
+HIDDEN_TOKENS = (  # closed prompts (design/content-pipeline-mesh.md): not presented
+    "918e696e", "5b5de309", "d3e0b159", "fcc6c199", "004e9412", "ffec9ef8", "a89468e1", "1e889747",
+    "07176358", "ef7de895", "75f81c41", "c5f67d50", "2e90b57c", "c855bdf0", "45195711",
+)
+SETTING_KEYS = ("seed", "strength", "steps", "width", "height")
+POST_HOSTS = {"x.com", "www.x.com", "twitter.com", "www.twitter.com", "mobile.twitter.com"}
+
+
+# View of a still: an explicit tag on the approval, else the filename or role.
+# left and right count as side. A conflict or an unknown name is left unset.
+VIEWS = ("front", "side", "back", "other")
+SIDE_VIEWS = {"side", "left", "right"}
+ROLE_VIEWS = {
+    "mannequin-front": "front",
+    "mannequin-side": "side",
+    "mannequin-back": "back",
+    "mannequin-mesh": "front",
+    "mannequin-smooth": "front",
+    "mannequin-tpose-front": "front",
+    "mannequin-tpose-side": "side",
+    "mannequin-tpose-back": "back",
+}
+TOKEN_VIEWS = {"front": "front", "side": "side", "left": "side", "right": "side", "back": "back"}
+
+
+def infer_view(path: str, role: str | None = None) -> str | None:
+    """front, side, or back from a role or a WIP/gen filename. None if ambiguous."""
+    found: set[str] = set()
+    text = (role or "").lower().replace("_", "-")
+    for key, view in ROLE_VIEWS.items():
+        if text == key or text.endswith("-" + key) or key in text.split():
+            found.add(view)
+    if text in TOKEN_VIEWS:
+        found.add(TOKEN_VIEWS[text])
+    stem = Path(path or "").stem.lower().replace("_", "-")
+    for key, view in sorted(ROLE_VIEWS.items(), key=lambda kv: -len(kv[0])):
+        if key in stem:
+            found.add(view)
+    for tok in re.split(r"-+", stem):
+        if tok in TOKEN_VIEWS:
+            found.add(TOKEN_VIEWS[tok])
+    return next(iter(found)) if len(found) == 1 else None
+
+
+def normalize_view(value: str | None) -> str | None:
+    if not value:
+        return None
+    v = str(value).lower().strip()
+    if v in TOKEN_VIEWS:
+        return TOKEN_VIEWS[v]
+    if v in VIEWS:
+        return v
+    return None
+
+
+
+# Where a file with no step goes: by filename, then by view. None leaves it for the user to place.
+PLACE_TOKENS = (
+    (("tpose", "mannequin", "hunyuan", "body"), ("body", "model")),
+    (("model", "mesh"), ("model", "body")),
+    (("portrait", "bust"), ("portrait",)),
+    (("anim", "clip", "walk", "idle", "atk", "spc"), ("animation",)),
+    (("icon", "skin", "overlay"), ("skin", "art")),
+    (("tile", "art", "design", "sheet"), ("art", "description", "overview")),
+)
+
+
+def auto_step(subject_type: str, path: str, kind: str, view: str | None) -> str | None:
+    have = list(registry.TYPES.get(subject_type, {}).get("steps", {}))
+    toks = set(re.split(r"[-_.]+", Path(path).stem.lower()))
+    if kind == "mesh":
+        toks.add("mesh")
+    for keys, targets in PLACE_TOKENS:
+        if toks & set(keys):
+            hit = next((t for t in targets if t in have), None)
+            if hit:
+                return hit
+    if view:
+        return next((t for t in ("body", "description", "art", "overview", "model") if t in have), None)
+    return None
+
+
+def finish_message(row: dict) -> str:
+    lack = ", ".join(row.get("finish_missing") or [])
+    return {
+        "pending": f"Some pictures on {row['label']} still need your OK.",
+        "rejected": "Regenerate or hide the rejected pictures first.",
+        "fields": f"Fill in: {lack}.",
+        "empty": "Fill something in first.",
+        "no_approved": "Approve at least one picture first.",
+        "no_mesh": "Approve the 3D model first.",
+        "no_clips": f"Approve an animation for: {lack}.",
+    }.get(row.get("finish_blocker") or "", "Not ready yet.")
+
+
+def F(name: str, kind: str, label: str, *, flag: str | None = None, required: bool = False, default: object = None, options: list | None = None, labels: dict | None = None) -> dict:
+    out = {"name": name, "kind": kind, "label": label, "flag": flag or f"--{name}", "required": required, "default": default, "options": options}
+    return {**out, "labels": labels} if labels else out
+
+
+# Generation and long commands. `gpu` jobs run one at a time. `id`: none | optional | required.
+COMMANDS: dict[str, dict] = {
+    "review": {"label": "Review", "gpu": True, "id": "optional", "about": "Qwen3-VL checks the still against a role checklist and the sent prompt.",
+               "fields": [F("image", "still", "Still", required=True), F("role", "role", "Checklist role", required=True), F("workflow", "path", "Still workflow (optional)")]},
+    "correct": {"label": "Correct", "gpu": True, "id": "optional", "about": "Turns a review miss into a prompt change. Does not run Comfy.",
+                "fields": [F("from", "review", "Review JSON (or a still below)"), F("image", "still", "Still"), F("role", "role", "Checklist role", required=True),
+                           F("workflow", "path", "Still workflow", required=True), F("out", "path", "Patched workflow out")]},
+    "tune": {"label": "Auto-tune", "gpu": True, "id": "optional", "about": "Review, patch and regenerate until the checklist passes or the turn limit.",
+             "fields": [F("image", "still", "Start still", required=True), F("role", "role", "Checklist role", required=True),
+                        F("workflow", "path", "Still workflow", required=True), F("turns", "int", "Turns", default=4)]},
+    "frame": {"label": "Frame", "gpu": False, "id": "optional", "about": "Keeps the largest opaque mass.",
+              "fields": [F("image", "still", "Still", required=True), F("out", "path", "Framed still out", required=True)]},
+    "proportion": {"label": "Proportion", "gpu": False, "id": "required", "about": "Measures a still or a mesh against this subject's measures.",
+                   "fields": [F("image", "still", "Still (or a mesh below)"), F("glb", "glb", "Mesh"), F("role", "role", "View role (optional)")]},
+    "mesh": {"label": "Mesh check", "gpu": False, "id": "optional", "about": "Fails an empty height band or a fragmented mesh. Not a look approval.",
+             "fields": [F("glb", "glb", "Mesh", required=True)]},
+    "smooth": {"label": "Smooth", "gpu": True, "id": "required", "about": "Tunes four T-pose stills, then builds the body from the front.",
+               "fields": [F("turns", "int", "Turns per still", default=4)]},
+    "body": {"label": "Body", "gpu": True, "id": "required", "about": "Hunyuan3D body from the passing front plate.",
+             "fields": [F("front", "still", "Front plate"), F("left", "still", "Left plate"), F("back", "still", "Back plate"), F("right", "still", "Right plate")]},
+    "edit": {"label": "Text edit", "gpu": True, "id": "required", "about": "Draws the change on a whole-body still, then refines a copy of the kept mesh.",
+             "fields": [F("text", "text", "Change", required=True), F("glb", "glb", "Source mesh (optional)"), F("image", "still", "Reference still (optional)"),
+                        F("passes", "str", "Hi3D passes", default="512,1024,1536")]},
+    "reference": {"label": "Ingest reference", "gpu": True, "id": "required", "about": "Pulls the reference image and describes it for the Character flow.", "fields": []},
+    # Not wired yet (registry.ACTIONS): simulate runs them, real mode answers "not set up yet".
+    "generate": {"label": "Make pictures", "gpu": True, "id": "required", "about": "Pictures from the step's description and settings.",
+                 "fields": [F("count", "int", "How many", default=2)]},
+    "variant": {"label": "Variant", "gpu": True, "id": "required", "about": "A changed copy of an approved picture.",
+                "fields": [F("image", "still", "Start picture", required=True), F("text", "text", "What should differ", required=True)]},
+    "icon": {"label": "Icon", "gpu": True, "id": "required", "about": "The 128 inventory icon.", "fields": [F("image", "still", "From picture (optional)")]},
+    "overlay": {"label": "Overlay", "gpu": True, "id": "required", "about": "Worn or held pictures per facing.",
+                "fields": [F("body", "choice", "Body", required=True, options=["female", "male"])]},
+    "tile": {"label": "Tile", "gpu": True, "id": "required", "about": "A seamless tile.",
+             "fields": [F("kind", "choice", "Tile", required=True, options=["floor", "wall", "path", "roof"])]},
+    "wang": {"label": "Wang tileset", "gpu": True, "id": "required", "about": "A tileset that matches where two materials meet.",
+             "fields": [F("kind", "choice", "Kind", required=True, default="wang-corner-16", options=["seamless", "wang-corner-16", "wang-edge-16", "blob-47"],
+                          labels={"seamless": "Single seamless tile", "wang-corner-16": "Wang 2-corner (16)", "wang-edge-16": "Wang 2-edge (16)", "blob-47": "Blob (47)"}),
+                        F("from", "text", "From material", required=True), F("to", "text", "To material", required=True),
+                        F("size", "choice", "Tile size (pixels)", required=True, default="128", options=["64", "128", "256"]),
+                        F("layout", "choice", "Output", required=True, default="sheet", options=["sheet", "terrain", "both"],
+                          labels={"sheet": "Sheet picture", "terrain": "Godot terrain set", "both": "Sheet and Godot terrain set"})]},
+    "animate": {"label": "Animate", "gpu": True, "id": "required", "about": "One clip from the approved 3D model, per facing.",
+                "fields": [F("clip", "clip", "Clip", required=True)]},
+    "keyframes": {"label": "Keyframes", "gpu": True, "id": "required", "about": "Reference frames for one clip.",
+                  "fields": [F("clip", "clip", "Clip", required=True)]},
+    "flatanim": {"label": "Frames", "gpu": True, "id": "required", "about": "A frame strip from an approved key picture.",
+                 "fields": [F("clip", "text", "Clip name", default="play"), F("frames", "int", "Frames", default=6)]},
+    "pixel": {"label": "Pixel finish", "gpu": False, "id": "required", "about": "Integer downscale to 128 with the subject palette.",
+              "fields": [F("image", "still", "Picture", required=True)]},
+    "sheet": {"label": "Sheet", "gpu": False, "id": "required", "about": "Packs approved clips into sheets and frame rects.", "fields": []},
+    "sound": {"label": "Sound", "gpu": True, "id": "required", "about": "A placeholder sound effect.",
+              "fields": [F("cue", "text", "Cue", required=True), F("text", "text", "What it sounds like")]},
+    "preview": {"label": "Preview", "gpu": False, "id": "required", "about": "Packs a temp worktree and captures the game.", "fields": []},
+    "export": {"label": "Export", "gpu": False, "id": "required", "about": "Writes the game contract for the chosen sections.",
+               "fields": [F("areas", "areas", "Sections"), F("bypass", "bool", "Export despite hard-dirty flags")]},
+}
+
+
+class ApiError(Exception):
+    def __init__(self, status: int, message: str, **extra: object) -> None:
+        super().__init__(message)
+        self.status, self.message, self.extra = status, message, extra
+
+
+class NotWired(ApiError):
+    """The pipeline side is missing. `seam` names the gap in the task's UI gaps list."""
+
+    def __init__(self, seam: str, message: str) -> None:
+        super().__init__(501, f"Not wired yet: {message}", not_wired=seam)
+
+
+def hidden(name: str) -> bool:
+    return name in HIDDEN_NAMES or any(tok in name for tok in HIDDEN_TOKENS)
+
+
+class Backend:
+    simulated = False
+
+    def __init__(self, repo: Path) -> None:
+        self.repo = repo      # the checkout (assets, scripts, tools)
+        self.root = repo      # the store root (sim uses its own)
+
+    # ---- paths ---------------------------------------------------------------
+    def wip(self) -> Path:
+        return store.wip_dir(self.root)
+
+    def rel(self, path: Path) -> str:
+        try:
+            return path.resolve().relative_to(self.root.resolve()).as_posix()
+        except ValueError:
+            return path.resolve().relative_to(self.repo.resolve()).as_posix()
+
+    def resolve_file(self, rel: str) -> Path:
+        """A repo-relative path the page may read: WIP files, export files, and live sprites."""
+        if not rel or rel.startswith(("/", "\\")) or ".." in Path(rel).parts:
+            raise ApiError(400, "bad path")
+        if hidden(Path(rel).name):
+            raise ApiError(404, "not presented")
+        for base, allowed in ((self.root, ("data/pipeline/wip/", "data/pipeline/export/")), (self.repo, ("assets/sprites/", "data/pipeline/export/"))):
+            if rel.startswith(allowed):
+                path = (base / rel).resolve()
+                if path.is_file() and base.resolve() in path.parents:
+                    return path
+        raise ApiError(404, f"no file {rel}")
+
+    # ---- info ----------------------------------------------------------------
+    def info(self) -> dict:
+        try:
+            roles = sorted(json.loads((self.root / "data/pipeline/prompts/vision-checks.json").read_text(encoding="utf-8"))["roles"])
+        except (OSError, ValueError, KeyError):
+            roles = []
+        return {
+            "simulated": self.simulated,
+            "types": list(store.TYPES),
+            "sections": {t: [{"id": s, "skeleton": sk} for s, sk in rows] for t, rows in store.SECTIONS.items()},
+            "commands": COMMANDS,
+            "steps": {t: step_flow.plan(t) for t in store.TYPES},
+            "action_labels": step_flow.ACTION_LABELS,
+            "registry": registry.public(self.simulated),
+            "setting_keys": list(SETTING_KEYS),
+            "roles": roles,
+            "canvas": store.CANVAS,
+            "views": list(VIEWS),
+            "store_root": "data/pipeline/wip/_sim" if self.simulated else "data/pipeline/wip",
+        }
+
+    def prompts(self) -> dict:
+        path = self.root / "data/pipeline/prompts/defaults.json"
+        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+    # ---- subjects ------------------------------------------------------------
+    def list_subjects(self) -> list[dict]:
+        rows = []
+        for row in store.list_subjects(self.root):
+            try:
+                doc = store.load_subject(self.root, row["id"])
+            except ValueError:
+                rows.append({**row, "broken": True})
+                continue
+            rows.append({**row, "hard": len(doc["dirty"]["hard"]), "soft": len(doc["dirty"]["soft"]),
+                         "exported_at": doc.get("exported_at"), "pending": self._pending(doc)})
+        return rows
+
+    def _load(self, subject_id: str) -> dict:
+        try:
+            return store.load_subject(self.root, subject_id)
+        except ValueError as exc:
+            raise ApiError(404, str(exc)) from None
+
+    def _ui(self, doc: dict) -> dict:
+        ui = doc.setdefault(UI_KEY, {})
+        ui.setdefault("schema", "wdb.studio/1")
+        ui.setdefault("stills", [])
+        ui.setdefault("approvals", {})
+        ui.setdefault("history", [])
+        ui.setdefault("steps", {})
+        ui.setdefault("overrides", {})
+        return ui
+
+    def _pending(self, doc: dict) -> int:
+        return sum(1 for s in self.stills(doc) if s["state"] == "pending")
+
+    def show(self, subject_id: str, busy: dict[str, str] | None = None) -> dict:
+        doc = self._load(subject_id)
+        names = {r["id"]: r for r in store.list_subjects(self.root)}
+        links = [{**link, "type": names.get(link["id"], {}).get("type"), "name": names.get(link["id"], {}).get("name"),
+                  "missing": link["id"] not in names} for link in doc["links"]]
+        stills = self.stills(doc)
+        return {"subject": doc, "links": links, "stills": stills, "reviews": self.reviews(doc),
+                "gates": self.gates(doc, stills), "steps": self.step_states(doc, stills, busy),
+                "overrides": (doc.get(UI_KEY) or {}).get("overrides") or {}}
+
+    # ---- steps -----------------------------------------------------------------
+    def step_states(self, doc: dict, stills: list[dict] | None = None, busy: dict | None = None) -> list[dict]:
+        rows = step_flow.states(doc, self.stills(doc) if stills is None else stills, busy)
+        for row in rows:
+            row["not_ready"] = [a for a in row["actions"] if not registry.available(a, doc["type"], row["id"], self.simulated)[0]]
+            row["finish_message"] = finish_message(row) if row.get("finish_blocker") else None
+        return rows
+
+    def _step_row(self, doc: dict, step: str) -> dict:
+        row = next((s for s in self.step_states(doc) if s["id"] == step), None)
+        if row is None:
+            raise ApiError(404, f"no step {step} on a {doc['type']}")
+        return row
+
+    def require_open(self, doc: dict, step: str) -> dict:
+        """A step can change only when every earlier step is Done and it is not Done itself."""
+        row = self._step_row(doc, step)
+        if not row["available"]:
+            raise ApiError(409, f"Finish {row['blocked_by_label']} first.", gate="steps", step=step, blocked_by=row["blocked_by"])
+        if row["status"] == "done":
+            raise ApiError(409, f"{row['label']} is approved. Reopen it to change it.", gate="locked", step=step)
+        return row
+
+    def set_step(self, subject_id: str, step: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        action = body.get("action")
+        row = self._step_row(doc, step)
+        ui = self._ui(doc)
+        mark = ui["steps"].setdefault(step, {})
+        if action == "finish":
+            if step == "export":
+                raise ApiError(400, "Send to the game finishes this step.")
+            self.require_open(doc, step)
+            if row["finish_blocker"]:
+                raise ApiError(409, finish_message(row), gate="finish", reason=row["finish_blocker"], missing=row["finish_missing"], step=step)
+            mark["done_at"] = store._now()
+            mark.pop("reopened_at", None)
+        elif action == "autotune":
+            mark["autotune"] = bool(body.get("on"))
+        elif action == "reopen":
+            if row["status"] != "done":
+                raise ApiError(400, f"{row['label']} is not approved.")
+            if not row["available"]:
+                raise ApiError(409, f"Finish {row['blocked_by_label']} first.", gate="steps", step=step, blocked_by=row["blocked_by"])
+            mark.pop("done_at", None)
+            mark["reopened_at"] = store._now()
+        else:
+            raise ApiError(400, "action is finish, reopen or autotune")
+        store.save_subject(self.root, doc, propagate=False)
+        return {"steps": self.step_states(doc)}
+
+    def set_overrides(self, subject_id: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        step = str(body.get("step") or "")
+        row = self._step_row(doc, step)
+        if not set(row.get("actions") or []) & step_flow.PROMPT_ACTIONS:
+            raise ApiError(400, f"{row['label']} has no prompt settings.")
+        self.require_open(doc, step)
+        ui = self._ui(doc)
+        if body.get("reset"):
+            ui["overrides"].pop(step, None)
+        else:
+            entry: dict = {}
+            for key in ("prompt", "negative"):
+                value = body.get(key)
+                if isinstance(value, str) and value.strip():
+                    entry[key] = value.strip()
+            settings = body.get("settings") or {}
+            if not isinstance(settings, dict):
+                raise ApiError(400, "settings must be an object")
+            clean = {}
+            for key in SETTING_KEYS:
+                value = settings.get(key)
+                if value in (None, ""):
+                    continue
+                try:
+                    clean[key] = float(value) if key == "strength" else int(value)
+                except (TypeError, ValueError):
+                    raise ApiError(400, f"{key} must be a number") from None
+            if clean:
+                entry["settings"] = clean
+            if entry:
+                entry["at"] = store._now()
+                ui["overrides"][step] = entry
+            else:
+                ui["overrides"].pop(step, None)
+        store.save_subject(self.root, doc, propagate=False)
+        return {"overrides": ui["overrides"]}
+
+    def overrides_for(self, subject_id: str, step: str) -> dict:
+        return ((self._load(subject_id).get(UI_KEY) or {}).get("overrides") or {}).get(step) or {}
+
+    def check_overrides(self, cmd: str, subject_id: str, step: str) -> dict:
+        """Real mode: the pipeline does not read per-step settings yet."""
+        over = self.overrides_for(subject_id, step) if cmd in step_flow.PROMPT_ACTIONS else {}
+        if over:
+            raise NotWired("step-overrides", "the pipeline does not read adjusted step settings yet. Reset them to run with the standard settings.")
+        return {}
+
+    def check_step_job(self, cmd: str, subject_id: str, step: str | None) -> str:
+        doc = self._load(subject_id)
+        step = step or ("export" if cmd == "export" else "")
+        if not step:
+            raise ApiError(400, "step is required")
+        row = self.require_open(doc, step)
+        if cmd not in row["actions"]:
+            raise ApiError(400, f"{cmd} is not an action on {row['label']}")
+        ok, seam = registry.available(cmd, doc["type"], step, self.simulated)
+        if not ok:
+            raise NotWired(seam, f"{step_flow.ACTION_LABELS[cmd]} on {row['label']} is not set up yet.")
+        if cmd in ("body", "mesh"):
+            self._require_plate_approvals(subject_id, cmd)
+        return step
+
+    def create(self, body: dict) -> dict:
+        try:
+            return store.create_subject(self.root, str(body.get("type") or ""), str(body.get("name") or ""),
+                                        body.get("id") or None, body.get("template") or None)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from None
+
+    def save_section(self, subject_id: str, section: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        if section not in doc["sections"]:
+            raise ApiError(404, f"no section {section}")
+        self.require_open(doc, section)
+        data = body.get("data")
+        if not isinstance(data, dict):
+            raise ApiError(400, "data must be an object")
+        doc["sections"][section]["data"] = data
+        self._ui(doc).setdefault("edited", {})[section] = store._now()
+        if section == "details" and body.get("name") is not None:
+            if not str(body["name"]).strip():
+                raise ApiError(400, "name is required")
+            doc["name"] = str(body["name"]).strip()
+        return self._save(doc)
+
+    def _exists(self, subject_id: str) -> bool:
+        return any(r["id"] == subject_id for r in store.list_subjects(self.root))
+
+    def _save(self, doc: dict, before: dict | None = None) -> dict:
+        """Local save with dirty propagation. Returns what the save flagged on linked subjects."""
+        try:
+            saved = store.save_subject(self.root, doc)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from None
+        flagged = []
+        for link in saved["links"]:
+            if not self._exists(link["id"]):
+                continue
+            soft = [f for f in store.load_subject(self.root, link["id"])["dirty"]["soft"] if f.get("source") == saved["id"]]
+            if soft:
+                flagged.append({"id": link["id"], "soft": soft})
+        return {"subject": saved, "flagged": flagged}
+
+    def link(self, subject_id: str, body: dict) -> dict:
+        try:
+            return store.link_subjects(self.root, subject_id, str(body.get("rel") or ""), str(body.get("to") or ""))
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from None
+
+    def mark(self, subject_id: str, body: dict) -> dict:
+        reason = str(body.get("reason") or "").strip()
+        if not reason:
+            raise ApiError(400, "reason is required")
+        return store.mark_hard(self.root, subject_id, reason)
+
+    def clear_flag(self, subject_id: str, body: dict) -> dict:
+        raise NotWired("dirty-clear", "clearing a hard or soft flag needs a pipeline command (pipeline mark --clear).")
+
+    # ---- reference -----------------------------------------------------------
+    def set_reference(self, subject_id: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        kind = body.get("kind")
+        ref: dict = {"kind": kind, "at": store._now()}
+        if kind == "upload":
+            name = re.sub(r"[^A-Za-z0-9._-]+", "-", str(body.get("filename") or "reference.png")).strip("-.") or "reference.png"
+            if Path(name).suffix.lower() not in STILL_EXT:
+                raise ApiError(400, "upload a png, jpg or webp")
+            try:
+                raw = base64.b64decode(str(body.get("data") or ""), validate=True)
+            except ValueError:
+                raise ApiError(400, "upload data is not base64") from None
+            if not raw or len(raw) > MAX_UPLOAD:
+                raise ApiError(400, "upload is empty or over 25 MB")
+            dest = self.wip() / "ref" / subject_id / name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(raw)
+            ref["path"] = self.rel(dest)
+        elif kind in ("url", "post"):
+            value = str(body.get("value") or "").strip()
+            url = urlparse(value)
+            if url.scheme not in ("http", "https") or not url.netloc:
+                raise ApiError(400, "enter a full http(s) link")
+            if kind == "post" and (url.netloc.lower() not in POST_HOSTS or "/status/" not in url.path):
+                raise ApiError(400, "a post link looks like https://x.com/NAME/status/ID")
+            ref["url"] = value
+        else:
+            raise ApiError(400, "kind is upload, url or post")
+        ui = self._ui(doc)
+        ui["reference"] = ref
+        store.save_subject(self.root, doc, propagate=False)
+        return ref
+
+    # ---- stills and reviews ----------------------------------------------------
+    def _scan(self, subject_id: str) -> list[Path]:
+        out = []
+        for folder in ("gen", "review", "ref/" + subject_id):
+            base = self.wip() / folder
+            if not base.is_dir():
+                continue
+            for p in base.iterdir():
+                if p.is_file() and p.suffix.lower() in STILL_EXT | MESH_EXT | SOUND_EXT and not hidden(p.name):
+                    if folder.startswith("ref/") or p.name.startswith((subject_id + "-", subject_id + "_")):
+                        out.append(p)
+        return out
+
+    def stills(self, doc: dict) -> list[dict]:
+        ui = doc.get(UI_KEY) or {}
+        approvals = ui.get("approvals") or {}
+        rows: dict[str, dict] = {}
+        for row in ui.get("stills") or []:
+            path = self.root / row.get("path", "")
+            if row.get("path") and path.is_file() and not hidden(path.name):
+                rows[row["path"]] = dict(row)
+        for p in self._scan(doc["id"]):
+            rel = self.rel(p)
+            rows.setdefault(rel, {"path": rel})
+        out = []
+        for rel, row in rows.items():
+            p = self.root / rel
+            suffix = p.suffix.lower()
+            row["kind"] = "mesh" if suffix in MESH_EXT else "sound" if suffix in SOUND_EXT else "clip" if row.get("clip") else "still"
+            row["mtime"] = p.stat().st_mtime
+            row["size"] = p.stat().st_size
+            appr = approvals.get(rel) or {}
+            row["state"] = appr.get("state", "pending")
+            role = (row.get("args") or {}).get("role") if isinstance(row.get("args"), dict) else None
+            row["view"] = normalize_view(appr.get("view")) or infer_view(rel, role)
+            row["view_set"] = bool(normalize_view(appr.get("view")))
+            row["step"] = appr.get("step") or row.get("step") or auto_step(doc["type"], rel, row["kind"], row["view"])
+            row["simulated"] = bool(row.get("simulated"))
+            out.append(row)
+        out.sort(key=lambda r: -r["mtime"])
+        return out
+
+    def reviews(self, doc: dict) -> list[dict]:
+        base = self.wip() / "review"
+        out = []
+        if base.is_dir():
+            for p in sorted(base.glob(f"{doc['id']}*.json"), key=lambda q: -q.stat().st_mtime)[:20]:
+                if hidden(p.name):
+                    continue
+                try:
+                    data = json.loads(p.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                if isinstance(data, dict) and isinstance(data.get("checks"), list):
+                    out.append({"path": self.rel(p), "mtime": p.stat().st_mtime, "verdict": data.get("verdict"),
+                                "role": data.get("role") or p.stem.split("-", 1)[-1], "checks": data["checks"],
+                                "image": data.get("image"), "simulated": bool(data.get("simulated"))})
+        return out
+
+    def set_still_state(self, subject_id: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        rel, state = str(body.get("path") or ""), body.get("state")
+        if state not in ("approved", "rejected", "pending", "hidden"):
+            raise ApiError(400, "state is approved, rejected, pending or hidden")
+        if rel not in {s["path"] for s in self.stills(doc)}:
+            raise ApiError(404, "no such still on this subject")
+        current = next(s for s in self.stills(doc) if s["path"] == rel)
+        step = str(body.get("step") or "") or None
+        if step:
+            target = self._step_row(doc, step)
+            if target["kind"] != "pictures":
+                raise ApiError(400, f"{target['label']} does not hold pictures.")
+            self.require_open(doc, step)
+        if current.get("step"):
+            self.require_open(doc, current["step"])
+        view = normalize_view(body["view"]) if "view" in body and body.get("view") not in (None, "") else None
+        if "view" in body and body.get("view") not in (None, "") and view is None:
+            raise ApiError(400, "view is front, side, back or other")
+        ui = self._ui(doc)
+        entry = {"state": state, "at": store._now()}
+        if view:
+            entry["view"] = view
+        elif (ui["approvals"].get(rel) or {}).get("view"):
+            entry["view"] = ui["approvals"][rel]["view"]
+        if step or (ui["approvals"].get(rel) or {}).get("step"):
+            entry["step"] = step or ui["approvals"][rel]["step"]
+        ui["approvals"][rel] = entry
+        store.save_subject(self.root, doc, propagate=False)
+        return {"path": rel, "state": state, "view": entry.get("view") or infer_view(rel)}
+
+    def register(self, subject_id: str | None, paths: list[Path], job: Job, extra: dict | None = None) -> list[dict]:
+        if not subject_id or not paths or not self._exists(subject_id):
+            return []
+        doc = store.load_subject(self.root, subject_id)
+        ui = self._ui(doc)
+        known = {s["path"] for s in ui["stills"]}
+        added = []
+        for p in paths:
+            rel = self.rel(p)
+            if rel in known or hidden(p.name):
+                continue
+            row = {"path": rel, "cmd": job.cmd, "job": job.id, "args": job.args, "at": store._now(), "simulated": job.simulated,
+                   "step": getattr(job, "step", None), **(extra or {})}
+            ui["stills"].append(row)
+            added.append(row)
+        ui["history"] = (ui["history"] + [{"job": job.id, "cmd": job.cmd, "at": store._now(), "status": "done"}])[-30:]
+        store.save_subject(self.root, doc, propagate=False)
+        return added
+
+    # ---- coverage --------------------------------------------------------------
+    def coverage(self) -> dict:
+        doc = store.coverage(self.root)
+        return self._coverage_view(doc)
+
+    def _coverage_view(self, doc: dict) -> dict:
+        subjects = {r["id"] for r in store.list_subjects(self.root)}
+        slots = []
+        for slot in doc.get("missing", []):
+            src = Path(slot.get("source", ""))
+            try:
+                src_rel = src.resolve().relative_to(self.repo.resolve()).as_posix()
+            except ValueError:
+                src_rel = src.name
+            slots.append({**slot, "source": src_rel, "subject": slot["id"] in subjects})
+        return {"slots": doc["slots"], "open": doc["open"], "missing": slots}
+
+    # ---- jobs --------------------------------------------------------------------
+    def precheck(self, cmd: str, subject_id: str | None, args: dict) -> None:
+        spec = COMMANDS.get(cmd)
+        if spec is None:
+            raise ApiError(400, f"unknown command {cmd}")
+        if spec["id"] == "required" and not subject_id:
+            raise ApiError(400, f"{cmd} needs a subject")
+        if subject_id and (subject_id, cmd) in GUARDED:
+            raise ApiError(403, f"{step_flow.ACTION_LABELS.get(cmd, cmd)} does not run on this subject from the studio.")
+        if subject_id:
+            self._load(subject_id)
+        for f in spec["fields"]:
+            if f["required"] and args.get(f["name"]) in (None, "", []):
+                raise ApiError(400, f"{f['label']} is required")
+        if cmd == "proportion" and not (args.get("image") or args.get("glb")):
+            raise ApiError(400, "proportion needs a still or a mesh")
+        if cmd == "correct" and not (args.get("from") or args.get("image")):
+            raise ApiError(400, "correct needs a review JSON or a still")
+        if cmd in ("body", "mesh") and not subject_id:
+            raise ApiError(400, f"{cmd} needs a subject")
+
+    def clear_soft(self, subject_id: str) -> None:
+        raise NotWired("soft-dirty-clear", "the store has no call that clears a soft flag after it was shown.")
+
+    def _still_view(self, row: dict) -> str | None:
+        return normalize_view(row.get("view")) or infer_view(row.get("path") or "", (row.get("args") or {}).get("role") if isinstance(row.get("args"), dict) else None)
+
+    def _missing_plates(self, stills: list[dict]) -> list[str]:
+        """Views still needed: approved front and side pictures. Rejected or pending do not count."""
+        have: set[str] = set()
+        for row in stills:
+            if row.get("kind") != "still" or row.get("state") != "approved":
+                continue
+            view = self._still_view(row)
+            if view == "front":
+                have.add("front")
+            elif view in SIDE_VIEWS:
+                have.add("side")
+        return [v for v in ("front", "side") if v not in have]
+
+    def _unapproved(self, stills: list[dict]) -> list[dict]:
+        """Current (non-hidden) stills and meshes that are not approved."""
+        out = []
+        for row in stills:
+            if row.get("state") == "approved":
+                continue
+            out.append({"path": row["path"], "state": row.get("state") or "pending", "view": self._still_view(row), "kind": row.get("kind")})
+        return out
+
+    def gates(self, doc: dict, stills: list[dict] | None = None) -> dict:
+        stills = stills if stills is not None else self.stills(doc)
+        plates = self._missing_plates(stills)
+        waiting = self._unapproved(stills)
+        need = {"ok": not plates, "needed": ["front", "side"], "missing": plates}
+        open_steps = [s["label"] for s in step_flow.states(doc, stills) if s["id"] != "export" and s["status"] != "done"]
+        return {"body": dict(need), "mesh": dict(need), "export": {"ok": not open_steps, "missing": open_steps}}
+
+    def _require_plate_approvals(self, subject_id: str, cmd: str) -> None:
+        stills = self.stills(self._load(subject_id))
+        missing = self._missing_plates(stills)
+        if missing:
+            raise ApiError(
+                409,
+                f"Approve a {' and a '.join(missing)} picture first.",
+                gate="approvals", needed=["front", "side"], missing=missing, cmd=cmd,
+            )
+
+    def mark_exported(self, subject_id: str) -> None:
+        doc = self._load(subject_id)
+        self._ui(doc)["steps"].setdefault("export", {})["done_at"] = store._now()
+        store.save_subject(self.root, doc, propagate=False)
+
+    def export_check(self, subject_id: str, args: dict) -> None:
+        doc = self._load(subject_id)
+        if doc["dirty"]["hard"] and not args.get("bypass"):
+            raise ApiError(409, "Something needs a redo. Redo it, or send anyway.", hard=doc["dirty"]["hard"])
+        if doc["dirty"]["hard"] and args.get("bypass") and not self.simulated:
+            raise NotWired("export-bypass", "export has no bypass flag for hard-dirty subjects.")
+        # Export opens when every earlier step is Done. The hard-dirty bypass does not skip that.
+        open_steps = [s["label"] for s in self.step_states(doc) if s["id"] != "export" and s["status"] != "done"]
+        if open_steps:
+            raise ApiError(409, "Approve every step before sending to the game. Still open: " + ", ".join(open_steps) + ".",
+                           gate="steps", missing=open_steps, cmd="export")
+
+    def body_for(self, cmd: str, subject_id: str | None, args: dict):
+        if cmd == "export":
+            return lambda job: self._export(job, subject_id, args)
+        if cmd == "reference":
+            raise NotWired("reference-ingest", "no pipeline command pulls and describes a reference yet.")
+        return lambda job: self._cli(job, cmd, subject_id, args)
+
+    def _export(self, job: Job, subject_id: str, args: dict) -> dict:
+        job.emit("stage", "Writing the export", 30)
+        areas = [a for a in (args.get("areas") or []) if a] or None
+        try:
+            doc = store.export_subject(self.root, subject_id, areas)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from None
+        path = store.export_dir(self.root) / doc["type"] / f"{doc['id']}.json"
+        job.emit("log", f"exported {doc['type']} {doc['id']} areas={len(doc['areas'])}")
+        self.mark_exported(subject_id)
+        return {"ok": True, "export": self.rel(path), "areas": doc["areas"], "exported_at": doc["exported_at"]}
+
+    def _cli(self, job: Job, cmd: str, subject_id: str | None, args: dict) -> dict:
+        argv = [sys.executable, str(self.repo / "tools" / "media.py"), "pipeline", cmd]
+        if subject_id:
+            argv.append(subject_id)
+        argv += ["--root", str(self.root)]
+        for f in COMMANDS[cmd]["fields"]:
+            value = args.get(f["name"])
+            if value in (None, "", False, []):
+                continue
+            argv += [f["flag"], str(value)]
+        started = time.time()
+        job.emit("stage", f"pipeline {cmd}", 2)
+        job.emit("log", "$ " + " ".join(argv[2:]))
+        proc = subprocess.Popen(argv, cwd=self.repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        if COMMANDS[cmd]["gpu"]:
+            job.cancel_hook = None  # safe Comfy/Ollama cancel is a pipeline gap
+        else:
+            job.cancel_hook = proc.terminate
+        last = ""
+        for line in proc.stdout:  # type: ignore[union-attr]
+            line = line.rstrip()
+            if not line:
+                continue
+            last = line if line.startswith("RESULT ") else last
+            job.emit("log", line, min(95.0, job.pct + (95.0 - job.pct) * 0.08))
+        proc.wait()
+        if job.cancel_requested:
+            from .jobs import Cancelled
+            raise Cancelled()
+        result = parse_result(last)
+        result["exit"] = proc.returncode
+        result["ok"] = proc.returncode == 0 and result.get("status") in ("PASS", "INFO", None)
+        inputs = {str(v) for v in args.values() if isinstance(v, str)}
+        fresh = [p for p in self._fresh(started) if (not subject_id or p.name.startswith(subject_id) or "/ref/" in p.as_posix()) and self.rel(p) not in inputs]
+        if not result["ok"]:
+            fresh = [p for p in fresh if p.suffix.lower() not in MESH_EXT]  # a failed mesh is not presented
+        result["added"] = self.register(subject_id, fresh, job)
+        return result
+
+    def _fresh(self, since: float) -> list[Path]:
+        out = []
+        for folder in ("gen", "review"):
+            base = self.wip() / folder
+            if base.is_dir():
+                out += [p for p in base.iterdir() if p.is_file() and p.suffix.lower() in STILL_EXT | MESH_EXT and p.stat().st_mtime >= since]
+        return out
+
+    def cancel(self, job: Job) -> None:
+        if job.cancel_hook is None and not self.simulated:
+            raise NotWired("safe-cancel", f"{job.cmd} talks to Comfy or Ollama; stopping it safely needs stop_comfyui from the pipeline.")
+        job.cancel_requested = True
+        if job.cancel_hook:
+            job.cancel_hook()
+
+
+def parse_result(line: str) -> dict:
+    """`RESULT PASS k=v k2=v2 summary=...` -> {status, k: v}."""
+    if not line.startswith("RESULT "):
+        return {"status": None}
+    parts = line.split()
+    out: dict = {"status": parts[1] if len(parts) > 1 else None}
+    for item in parts[2:]:
+        if "=" in item:
+            k, v = item.split("=", 1)
+            out[k] = v
+    return out

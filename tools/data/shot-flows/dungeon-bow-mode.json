@@ -1,6 +1,6 @@
 {
   "name": "dungeon-bow-mode",
-  "about": "Dungeon floor 1, seed 42, pad scheme, fixed 60 fps, enemies frozen: Bow mode (Settings > Gameplay, scripts/world/player/bow_mode.gd). debug/bow_mode_check.gd: with Bow mode off RT does not shoot and X does; on, RT shoots; holding LT (aim) while walking down keeps the right-stick aim (no turn to the walk), slows the walk and shows the aim line with the setting off (shot); a melee weapon ignores Bow mode. Planted: Bow mode off must make the RT-shoots and aiming checks fail.",
+  "about": "Dungeon floor 1, seed 42, pad scheme, fixed 60 fps, enemies frozen: Bow mode (Settings > Gameplay, scripts/world/bow_mode.gd). debug/bow_mode_check.gd: with Bow mode off RT does not shoot and X does; on, RT shoots; holding LT (aim) while walking down keeps the right-stick aim (no turn to the walk), slows the walk and shows the aim line with the setting off (shot); a melee weapon ignores Bow mode. Planted: Bow mode off must make the RT-shoots and aiming checks fail.",
   "scene": "dungeon",
   "seed": 42,
   "floor": 1,

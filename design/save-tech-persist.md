@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: primary backup wipe, game_ver stamp, isolated AI profiles
+Code: `scripts/data/save_store.gd` (facade) + `scripts/data/save_store/` (`store_def.gd` holds the pref/bank defaults; code map row Save tech; gdhealth group `save_tech`)
 
 ## Save system
 

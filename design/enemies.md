@@ -1,106 +1,15 @@
 ﻿# Enemies
 
-Status: current plan  
+Status: current plan
 Read when: roster, AI, pressure
-Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/enemies.gd`  
+Code: `scripts/combat/enemy.gd` (facade, `class_name EnemyHost`) + `scripts/combat/enemy/`, `scripts/combat/roster.gd` (code map row Enemies; gdhealth group `enemies`)
 
-## Enemy variety
+This file is the door. Open the Job-table sibling only when that row matches.
 
-- A roster of normal enemy types, with a minimum mix on every floor (counts: tunables-world).
-- Enemies MUST have varied attack patterns, movement types (hopping, walking, flying, etc.), and appearances so they feel distinct in combat.
-- Palette swaps and stat swaps between floors are used to increase perceived variety.
-- Enemies should use a variety of classic fantasy representations (slimes, goblins, orcs, etc.).
-- All enemies MUST feel distinct from one another and remain visually consistent with the dungeon style and tone of the game.
+Enemy types, behavior and drops. Hits, cover, projectiles, threat and floating numbers are combat code that enemy code calls; combat code does not call enemy code. Numbers live in the tunables gate (tunables-world, tunables-combat).
 
-## Art and I2V
-
-Enemy frames follow art_pipeline (directional sets with props: its enemy_bible job). There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
-
-## Roles present in demo
-
-The following are suggested starting roles, not a closed or mandatory roster. A new or different role is a design decision: Grok Build asks the User through `ask_user_question` (never picks one), and the role must keep combat readable and meet the floor-variety rules in this section.  
-Suggested starting roles:
-
-- Bruiser (melee)
-- Ranged
-- Tank
-- Mage
-
-Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high health and durability on top of their other stats. They are not required to be melee or close-range; ranged, mage, mixed, or other readable attack styles are allowed. Unique telegraphs are encouraged. Special spawn / door / chest rules already defined still apply. Tank remains only a suggested starting template, not a required boss type.
-
-## Named monsters
-
-- Appear randomly every few floors (named monster rate: tunables-world).
-- Slightly larger variants of their normal counterparts.
-- Name is randomly generated via a syllable-combination and randomization system.
-- Name appears beneath the enemy model in yellow text with a thin black border.
-- Each named monster receives a few stronger variants of the normal enemy’s attacks (example for ranged: three projectiles at the normal rate, or two projectiles at a faster rate).
-- When a “vanquish specific named enemy” quest is active, that exact named monster (name and type locked on quest acceptance) is the only named monster that can appear until the quest is completed.
-
-## Attack telegraphs and feel
-
-- All enemy attacks MUST have clear, readable wind-ups.
-- Melee (Bruiser / Tank): visible wind-up pose → lunge. Direction locks at the start of the wind-up.
-- Ranged: visible draw / charge pose → projectile release. Direction locks on draw.
-- Mage / other non-melee styles: visible charge / cast pose → readable area or projectile. Direction or target locks at the start of the telegraph.
-- All telegraphs respect line-of-sight.
-
-## Combat level and durability
-
-Floor band, rank-multiplier feel, and the floor-1 CL 17 budget: combat. Live keys: the tunables gate.
-
-- Enemy CL is walked from spawn travel distance (`Threat.level_at`).
-- Base HP lives in `enemies.gd` and holds the values. Packs MUST take more than one swing.
-
-## AI behavior
-
-Enemies require line-of-sight to begin attacking or chasing.  
-When LOS is lost they may briefly hunt the last-seen position, then return to idle.  
-Enemies MUST also drop pursuit if the distance to the player exceeds a tunable leash range, even if they still have LOS. After dropping pursuit they return to idle / their post. This exists so a player who is overwhelmed can flee combat instead of being chased indefinitely.  
-Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunable via the secret debug menu.  
-Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
-Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
-
-Reinforcements, ambushes, and pressure spawns use BFS on gen's bake walkable floor. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall, and not in void the ribbon closed. This job reads the bake. It does not retune carve. Placement caps stay with dungeon gen.
-
-## Idle / pressure spawns
-
-If the player remains idle too long outside a safe room, or stops revealing new map area for a tunable duration, additional enemies MUST spawn around the player.
-
-- MUST NOT spawn inside safe rooms (Extraction Gate, ghost shop, puzzle).
-- Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.
-- Wave count is capped per floor (`pressure_waves`) so the CL 17 XP budget in combat stays static.
-- Ambush and pressure kills grant XP. That is why the cap exists.
-- Purpose: the dungeon stays reactive if the player camps or stalls exploration, without becoming an infinite XP farm.
-
-## Death presentation
-
-1. Play death animation.
-2. Drop loot (XP, gold, possible gear / Artifact).
-3. Body disappears cleanly.
-
-No lingering corpses required.
-
-## Loot
-
-- XP and gold amounts scale with floor and role.
-- Gear drop chance and rarity (white / green / blue) are tunable.
-- Walk-over pickups (gold coins, HP orb, mana orb) each roll their own chance per kill, so a kill can drop nothing (`enemy_hit.gd` `roll_drops`, tunables-combat Enemy drops). Bosses always drop gold. `scripts/debug/drop_stage.gd` stages them (flow `dungeon-pickups`) and the P3 smoke prints a 1000-kill `drop_sim`.
-- Floor Guardians and Gate Master always drop the special chest (guaranteed equipment that may include blue rarity + one Artifact) in addition to normal drops.
-
-## Roster
-
-| Id | Family |
-|----|--------|
-| slime, goblin, orc, skeleton, bat, spider, wolf, beetle | melee |
-| archer, wisp | ranged |
-| shaman, imp | mage |
-
-12 normal types. Named names use PRE / MID / SUF syllable arrays.
-
-Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
-
-## Add an enemy type (live files)
-
-One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, dmg, spd, range, def, size, arc; no hp), `scripts/data/balance/enemies.gd` (`IDS` plus the live row, the one source of hp; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through art_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family, or any 13th type even inside an existing family, is the User's call: ask (`ask_user_question`), never add one on your own. The Bot never adds enemy types.
-- Hall travelers: kind `hall`, one enemy spaced along long corridor runs (spacing: tunables-world), placed from the floor seed and skipped on ambush cells. Ambushes stay the surprise trap. Room packs are unchanged.
+| Job | Open |
+|-----|------|
+| monster variety, suggested roles, named monsters, new enemy type | `design/enemies-roster.md` |
+| wind-up telegraphs, leash range, flee reinforcements, idle spawns | `design/enemies-ai.md` |
+| durability, corpse cleanup, kill drops, boss chest | `design/enemies-loot.md` |

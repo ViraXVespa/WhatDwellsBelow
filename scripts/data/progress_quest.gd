@@ -3,7 +3,6 @@ extends Object
 const Roll := preload("res://scripts/data/progress_quest/quest_roll.gd")
 const Prog := preload("res://scripts/data/progress_quest/quest_prog.gd")
 const Meta := preload("res://scripts/data/progress_quest/quest_meta.gd")
-const Restock := preload("res://scripts/data/progress_quest/restock.gd")
 
 static func roll_quests(p: Object, keep_active: bool) -> void:
 	Roll.roll_quests(p, keep_active)
@@ -29,5 +28,3 @@ static func to_meta(p: Object) -> Dictionary:
 static func from_meta(p: Object, d: Dictionary) -> void:
 	Meta.from_meta(p, d)
 
-static func restock(p: Object) -> String:
-	return Restock.restock(p)

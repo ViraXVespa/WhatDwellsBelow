@@ -1,7 +1,7 @@
 extends Object
 
 const ItemNames := preload("res://scripts/data/item_names.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
 const Balance := preload("res://scripts/data/balance.gd")

@@ -1,7 +1,8 @@
 # Graphics ground
 
 Status: current plan
-Read when: hashed field albedo, shared spatial shader, turf quilts, carved planes
+Read when: hashed field albedo, shared spatial shader, turf quilts, carved planes  
+Code: `scripts/graphics/ground_shader.gd`, `scripts/graphics/light_stamp.gd` + `scripts/graphics/light_stamp/`, `scripts/graphics/light_rt/pools.gd`, `scripts/graphics/light_rt/hub_hulls.gd`
 
 One spatial shader on Placeholdia grass pads, packed yard, and dungeon chunk floors.
 

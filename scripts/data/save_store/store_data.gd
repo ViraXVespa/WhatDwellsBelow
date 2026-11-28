@@ -2,53 +2,16 @@ extends RefCounted
 
 ## Collect / apply / fresh-delver save payload.
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
 const Dbg := preload("res://scripts/app/dbg.gd")
-const MenuFade := preload("res://scripts/ui/menu_fade.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
-## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
-const DEF := {
-	"character_type": "male",
-	"character_chosen": false,
-	"last_seen_game_ver": "",
-	"cam_zoom": 1.75,
-	"hud_scale": 1.0,
-	"mini_px": 250.0,
-	"mini_opacity": 1.0,
-	"mini_zoom": 8.0,
-	"mini_zoom_fit": true,
-	"full_map_opacity": true,
-	"map_toggle_adapt": true,
-	"map_rest_mini": true,
-	"vol_master": 1.0,
-	"vol_music": 0.7,
-	"vol_sfx": 0.85,
-	"sprite_filter": 2,
-	"sprite_mip_sharp": false,
-	"sprite_mip_bias": 0.0,
-	"display_mode": "borderless",
-	"display_fs_kind": "borderless",
-	"web_fullscreen": false,
-	"render_scale": 0.0,
-	"aim_line_on": true,
-	"aim_line_opacity": 0.85,
-	"target_lock_pref": false,
-	"danger_gem": true,
-	"red_border_glow": true,
-	"menu_fx": true,
-	"bow_mode": false,
-	"salvage_dupes": false,
-	"salvage_finish": 0.8,
-	"salvage_fortune": 1.0,
-	"bank_gold": 0,
-	"bank_ore": 0,
-	"bank_wood": 0,
-	"bank_root": 0,
-}
+## Pref/bank defaults live in store_def.gd (a leaf, so balance can read them without loading save code).
+const Def := preload("res://scripts/data/save_store/store_def.gd")
+const DEF: Dictionary = Def.DEF
 
 static func apply(data: Dictionary) -> bool:
 	var migrated: bool = false
@@ -79,7 +42,7 @@ static func apply(data: Dictionary) -> bool:
 	App.target_lock_pref = bool(data.get("target_lock_pref", DEF.target_lock_pref))
 	App.danger_gem = bool(data.get("danger_gem", DEF.danger_gem))
 	App.red_border_glow = bool(data.get("red_border_glow", DEF.red_border_glow))
-	MenuFade.enabled = bool(data.get("menu_fx", DEF.menu_fx))
+	App.menu_fx = bool(data.get("menu_fx", DEF.menu_fx))
 	BowMode.enabled = bool(data.get("bow_mode", DEF.bow_mode))
 	App.salvage_dupes = bool(data.get("salvage_dupes", DEF.salvage_dupes))
 	App.salvage_finish = clampf(float(data.get("salvage_finish", DEF.salvage_finish)), 0.5, 1.0)
@@ -156,7 +119,7 @@ static func fresh_delver() -> void:
 	App.target_lock_pref = DEF.target_lock_pref
 	App.danger_gem = DEF.danger_gem
 	App.red_border_glow = DEF.red_border_glow
-	MenuFade.enabled = DEF.menu_fx
+	App.menu_fx = DEF.menu_fx
 	BowMode.enabled = DEF.bow_mode
 	App.salvage_dupes = DEF.salvage_dupes
 	App.salvage_finish = DEF.salvage_finish

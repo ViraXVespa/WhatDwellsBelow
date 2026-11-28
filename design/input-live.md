@@ -1,7 +1,8 @@
 ﻿# Input defaults and web pad
 
 Status: current plan  
-Read when: default binds or web_pad  
+Read when: desktop defaults, navigator gamepads  
+Code: `scripts/input/binds/table.gd`, `scripts/input/binds/defaults.gd`, `scripts/input/binds/letter_fit.gd`, `scripts/input/web_pad.gd`
 
 ## Defaults (`scripts/input/binds/table.gd`)
 
@@ -39,7 +40,7 @@ X is `gear_drop` in the live map. The Animation Browser reuses that action for p
 
 ## Web gamepad (`web_pad.gd`)
 
-Web builds on GitHub Pages do not get a reliable Godot joypad. When `OS.has_feature("web")`, `scripts/web_pad.gd` reads `navigator.getGamepads()` through `JavaScriptBridge`.
+Web builds on GitHub Pages do not get a reliable Godot joypad. When `OS.has_feature("web")`, `scripts/input/web_pad.gd` reads `navigator.getGamepads()` through `JavaScriptBridge`.
 
 - Polls the first connected pad each frame.
 - Standard mapping: axes 0–1 move, 2–3 aim; button 0 A, 1 B; RT/LT (buttons 7/6) Bow fire / Bow aim; Start/Back; stick clicks.

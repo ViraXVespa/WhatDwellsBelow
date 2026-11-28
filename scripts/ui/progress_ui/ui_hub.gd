@@ -2,7 +2,6 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
-const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const ControlsFrame := preload("res://scripts/ui/progress_ui/controls_frame.gd")
 const QuestBoard := preload("res://scripts/ui/progress_ui/quest_board.gd")
@@ -23,7 +22,7 @@ static func rebuild_anvil(ui: CanvasLayer) -> void:
 	Board.build(ui, "anvil")
 
 static func enter(ui) -> void:
-	GearAct.enter(ui)
+	Board.enter(ui)
 
 static func rebuild_quest(ui: CanvasLayer) -> void:
 	QuestBoard.rebuild(ui)

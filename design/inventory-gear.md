@@ -1,14 +1,15 @@
 ﻿# Gear rules and crafting
 
 Status: current plan  
-Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source  
+Read when: item level, duplicate rule, white baseline  
+Code: `scripts/data/gear_roll.gd`, `scripts/data/affixes.gd`, `scripts/data/item_names.gd`, `scripts/data/progress_gear/progress_make.gd` (item make, starters), `scripts/data/gear_rules/rules_kit.gd`  
 
 ## Gear rules
 
 - White, green, and blue rarity appear in the demo.
 - Blue items have improved stats over green items and are obtainable only from bosses (Floor Guardians and Gate Master).
 - Stats take effect immediately.
-- Weapon and tool paper-doll overlays: art_pipeline §19.2.4. Armor and other gear may remain stats-only.
+- Weapon and tool paper-doll overlays sit on the shipped unarmed clips (content_pipeline). New art does not add a paper-doll pass. Armor and other gear may remain stats-only.
 - The player may maintain up to three forged **holds per type per slot**. Great Axe holds do not share a cap with Staff holds. Pickaxe and hatchet are separate.
 - Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.
 - All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.

@@ -1,7 +1,8 @@
 # Hub — guild, quests, banner
 
 Status: current plan  
-Read when: receptionist bust, notice errands, welcome cloth
+Read when: receptionist bust, notice errands, welcome cloth  
+Code: `scripts/data/progress_quest.gd` + `scripts/data/progress_quest/`, `scripts/data/talk_lines.gd`, `scripts/world/camp/banner.gd`
 
 ## Guild / Quest Access
 - One continuous L-shaped guild: main hall + inset east reception wing. Wing back wall is flush with the hall back wall. Wing is slightly smaller than the hall.

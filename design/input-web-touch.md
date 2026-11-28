@@ -1,7 +1,8 @@
 ﻿# Web touch input
 
 Status: current plan  
-Read when: web touch pad / touch HUD input  
+Read when: canvas thumbs, touch-HUD  
+Code: `scripts/input/touch_pad.gd`, `scripts/ui/touch_hud.gd` + `scripts/ui/touch_hud/`
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 

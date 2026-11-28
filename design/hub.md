@@ -2,7 +2,9 @@
 
 Status: current plan  
 Read when: Placeholdia, camp benches
-Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp/layout_spec.gd` (the hub layout data), `scripts/world/camp/layout.gd` (serves it), `scripts/world/camp/warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build/mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build/roof.gd`, `scripts/world/camp/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+Code: `scripts/world/camp.gd` (scene, `@tool` preview) + `scripts/world/camp/` (`scripts/world/camp/layout_spec.gd` the hub layout data, `scripts/world/camp/layout.gd` serves it, `scripts/world/camp/warm.gd` Title → Play GPU frame, `scripts/world/camp/camp_view.gd` fence), `scripts/world/camp_build.gd` + `scripts/world/camp_build/` (ground, guild, roofs, tarp, awning, bake mode `bake_light`) (code map row Hub; gdhealth group `hub`); also `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+
+Reach-in rule: the hub scene places props, actors and lights; nothing it places, and no graphics code, loads hub code. Bake mode (`app_bake.gd`) calls `camp_build.gd` `bake_light`, not the layout scripts. Quest and talk data live in the Progress row (`App.prog`).
 
 ## Required Interactables
 - Floor Crystal (opens loadout / enter-dungeon UI)

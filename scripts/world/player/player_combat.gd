@@ -1,6 +1,6 @@
 extends Object
 
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
 static var _setup_s: GDScript
 

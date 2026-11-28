@@ -72,7 +72,7 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 			load("res://scripts/ui/gear_board.gd")._arm_tip(ui)
 			Sync.refresh(ui)
 			if str(ui.get("gear_mode")) == "extract":
-				load("res://scripts/ui/progress_ui/inv.gd").send_bag(ui, it)
+				ui.call("inv_send_bag", it)
 			else:
 				Act.bag_primary(ui)
 		)

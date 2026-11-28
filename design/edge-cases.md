@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: empty-death toast, full-pack toast, save fallback, confirm accidents
+Code: none of its own (each case is built in its system's door: save fallback `scripts/data/save_store.gd`, bag full `scripts/data/progress_gear/gear_bag.gd`)
 
 ## “Dispel” or death on floor 1 with empty bag
 

@@ -43,9 +43,9 @@ Before writing Findings, output this table. Cite the proving line for each. If t
 | File | What to prove | Failure mode if still true |
 |------|---------------|----------------------------|
 | `scripts/world/player/near_interact.gd` | Fresh path + shared statics re-validate with `is_instance_valid` | Stale/freed node returned |
-| `scripts/data/progress/extract.gd` | UID miss / non-mailable re-adds or surfaces | Silent drop |
+| `scripts/data/progress_gear/extract.gd` | UID miss / non-mailable re-adds or surfaces | Silent drop |
 | `scripts/combat/projectile.gd` | `_flush` → `_resolve` has its own fresh validity test | Freed lock target resolved |
-| `scripts/data/progress_quest/restock.gd` | Potion (and any stack) is top-up, not replace | Overwrite of partial charges |
+| `scripts/data/progress_gear/restock.gd` | Potion (and any stack) is top-up, not replace | Overwrite of partial charges |
 | `scripts/combat/enemy/enemy_present.gd` | Y-pin after slide does not fight hop/fly/lift | Lift cancelled |
 | `scripts/combat/threat.gd` | Distance / travel index is bounds-checked | Crash or wrong CL |
 | animation clip helpers (`player_anim.gd`, `anim_loco.gd`, …) | Empty or missing clip does not blank the sprite; diagonals are not collapsed | Blank or wrong facing |

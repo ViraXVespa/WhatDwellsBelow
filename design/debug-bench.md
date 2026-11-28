@@ -1,8 +1,8 @@
 # Benchmarks: hub bench, dungeon bench, perf sweep
 
 Status: current plan  
-Read when: hub bench, dungeon bench, perf sweep, web perf hook  
-Code: `scripts/debug/playtest_bench/hub_bench.gd`, `dungeon_bench.gd`, `perf_sweep.gd`, `sweep_layers.gd`, `bench_util.gd`, `scripts/debug/hitch_log.gd`, `scripts/debug/web_hook.gd`  
+Read when: scored legs, continuous sweep  
+Code: `scripts/debug/playtest_bench/hub_bench.gd`, `dungeon_bench.gd`, `perf_sweep.gd`, `sweep_layers.gd`, `bench_util.gd`, `scripts/debug/web_hook.gd` (rows: `debug.hitch_log`)  
 
 Split from debug.playtest (`debug-playtest.md`): the AI walker, telemetry, journal, run store, curve and campaign stay there. Runners and scoring: `python tools/perf.py hub|dungeon|sweep|web` (`tools-perf.md`).
 

@@ -1,7 +1,8 @@
 # Localization
 
 Status: current plan  
-Read when: tr(), translation keys, adding a locale, converting a string, item names, plurals  
+Read when: tr(), translation keys, adding a locale  
+Code: `scripts/localization/app_loc.gd`, `scripts/data/locale/en.po`, `scripts/data/item_names.gd` (code map row Localization; gdhealth group `localization`)  
 
 English is the default and only shipped locale. Player-facing strings go through `tr()`; the English text lives in one PO file.
 
@@ -10,7 +11,7 @@ English is the default and only shipped locale. Player-facing strings go through
 1. Code never holds a sentence. It holds a key such as `pause_menu.resume_run` and asks `tr(key)` (or `App.tr(key)` in a `static func`).
 2. `tr()` looks the key up in the active language's PO file. `scripts/data/locale/en.po` pairs each key (`msgid`) with its English text (`msgstr`). Change a sentence by editing the `msgstr`; the key stays.
 3. A key with no entry shows as the raw key, so gaps are easy to spot.
-4. At startup `LocS.setup()` (`app_loc.gd`) loads every code in `LOCALES` and picks one: the `--wdb-locale=xx` flag, else the language saved in the save payload, else `en`.
+4. At startup `LocS.setup(args)` (`app_loc.gd`, called by `app_boot.gd` with `CliArgs.args()`) loads every code in `LOCALES` and picks one: the `--wdb-locale=xx` flag, else the language saved in the save payload, else `en`.
 5. Things that are ids (items, artifacts, skills, slots, boss roles) store the id, not the text. Screens turn the id into text with `tr()` when they draw. Saved items keep a name key (`nk`, for example `["gear.longbow"]`) and a `forged` flag; `ItemNames.name_of()` builds the name from them, and the saved `name` is a cache that `ItemNames.refresh()` rewrites on load and on language change. The description works the same way: `ItemNames.desc_of()` derives it from slot, rarity, tool, `charge_max` or the artifact id (`item.<id>.desc`), and `desc` is a cache rewritten by the same calls. The ghost shop stock holds ids only; the shop screen looks up name and text when it draws.
 6. The Gameplay settings page has a Language row. It cycles `LOCALES`; with one language it changes nothing. The choice is saved as `locale` with the other preferences.
 7. Controls only translate when their text is assigned, so a language change shows after a screen rebuild (the row rebuilds its page).
@@ -20,7 +21,7 @@ English is the default and only shipped locale. Player-facing strings go through
 | Path | Role |
 |------|------|
 | `scripts/data/locale/en.po` | Source strings, sorted by key. Plural entries use `msgid_plural` and `msgstr[n]`. |
-| `scripts/app/app_loc.gd` | `LocS`: `setup`, `set_locale`, `apply_saved`, `next_locale`, `name_of`, `plural(key, n)`, `tr_or(key, fallback)`. |
+| `scripts/localization/app_loc.gd` | `LocS`: `setup`, `set_locale`, `apply_saved`, `next_locale`, `name_of`, `plural(key, n)`, `tr_or(key, fallback)`. |
 | `scripts/data/item_names.gd` | `ItemNames`: `base_nk`, `name_of`, `desc_of`, `rarity_name`, `type_name`, `forge`, `refresh`, `migrate` (old saves). |
 
 Registration: `project.godot` `[internationalization]` lists `en.po`. `setup()` skips locales already registered, so there are no duplicates. The OS locale is ignored on purpose.

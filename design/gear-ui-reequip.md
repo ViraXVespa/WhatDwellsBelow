@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: re-equip lists, submenu chrome  
+Code: `scripts/ui/gear_board/board_sub.gd`, `scripts/ui/gear_board/sub_open.gd`, `scripts/ui/gear_board/opts.gd`, `scripts/ui/gear_board/act_items.gd`  
 
 ## Re-equip and Anvil submenus
 

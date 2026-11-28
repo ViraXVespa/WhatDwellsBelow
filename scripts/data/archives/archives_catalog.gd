@@ -1,6 +1,6 @@
 extends Object
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const PATH := "res://scripts/data/archive_catalog.json"
 const T := preload("res://scripts/data/tunables.gd")
 const NEED: Array[String] = ["classic_2d", "art_experiment", T.ARCHIVE_ID_FULL_3D, "grok_build_w1", "grok_web_w1"]

@@ -1,7 +1,8 @@
 ﻿# UI theme
 
 Status: current plan  
-Read when: playable surface theme tokens  
+Read when: color tokens, playable surfaces  
+Code: `scripts/ui/theme.gd` + `scripts/ui/theme/`, `scripts/ui/ui_tokens.gd`, `scripts/ui/plate_chrome.gd`  
 
 ## UI theme (playable surfaces)
 

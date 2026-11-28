@@ -5,10 +5,11 @@ const WallRects := preload("res://scripts/world/wall_rects.gd")
 const Clip := preload("res://scripts/world/dungeon_geo/stream_clip.gd")
 const Emit := preload("res://scripts/world/dungeon_geo/stream_emit.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const Grid := preload("res://scripts/graphics/chunk_grid.gd")
 
-const RING_IN := 1
-const RING_OUT := 2
-const CHUNK := 32
+const RING_IN := Grid.RING_IN
+const RING_OUT := Grid.RING_OUT
+const CHUNK := Grid.CHUNK
 const PER_FRAME := 3
 
 static func setup(host: Node) -> void:
@@ -29,13 +30,7 @@ static func ensure_meshes() -> void:
 	Emit.ensure_meshes()
 
 static func chunk_origin(c: Vector2i) -> Vector2i:
-	var x := c.x
-	var y := c.y
-	if x < 0:
-		x -= CHUNK - 1
-	if y < 0:
-		y -= CHUNK - 1
-	return Vector2i(int(x / float(CHUNK)) * CHUNK, int(y / float(CHUNK)) * CHUNK)
+	return Grid.chunk_origin(c)
 
 static func chunk_center(origin: Vector2i, w: int, h: int) -> Vector2i:
 	return Vector2i(origin.x + int(mini(CHUNK, w - origin.x) / 2.0), origin.y + int(mini(CHUNK, h - origin.y) / 2.0))

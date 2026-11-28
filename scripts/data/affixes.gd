@@ -1,6 +1,6 @@
 extends Object
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const ItemNames := preload("res://scripts/data/item_names.gd")
 
 const GROUP_COMBAT := "combat"

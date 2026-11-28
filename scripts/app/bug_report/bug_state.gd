@@ -3,9 +3,9 @@ extends Object
 ## The game's own state report for Report Bug: only the relay's STATE_KEYS (tools/relay/src/report.js), no logs,
 ## no names, paths or other user data. Version is the label plus the week-open commit from version.json.
 
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const KEYS: Array = ["version", "platform", "build", "scene", "floor", "seed", "pos", "loadout", "recent", "perf",
 	"settings", "run", "uptime_s"]
 

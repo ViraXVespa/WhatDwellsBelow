@@ -60,14 +60,6 @@ static func landing_cell(host: Node) -> Vector2i:
 		return warp
 	return Vector2i(host.data.spawn)
 
-static func place_floor(host: Node) -> void:
-	var Place: GDScript = load("res://scripts/world/crystal/crystal_place.gd") as GDScript
-	Place.place_entrance(host)
-
-static func place_extras(host: Node) -> void:
-	var Place: GDScript = load("res://scripts/world/crystal/crystal_place.gd") as GDScript
-	Place.place_extras(host)
-
 static func _tree(n: Node) -> SceneTree:
 	if n == null or not is_instance_valid(n):
 		return null
@@ -117,8 +109,8 @@ static func activate(spot: Node) -> void:
 		return
 	var scene: Node = App.Touch.scene_host()
 	if scene:
-		var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
-		Geo.refresh_marks(scene)
+		if scene.has_method("refresh_map_marks"):
+			scene.call("refresh_map_marks")
 		silence_near(scene, cell)
 
 static func blocks_spawn(host: Node, cell: Vector2i) -> bool:
@@ -151,8 +143,7 @@ static func silence_on(host: Node) -> void:
 		silence_near(host, Vector2i(n.get("crystal_cell")))
 
 static func paint(host: Node) -> void:
-	var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
-	Geo.refresh_marks(host)
+	host.call("refresh_map_marks")
 
 static func warp_local(host: Node, cell: Vector2i) -> void:
 	if host.player == null:
@@ -161,8 +152,7 @@ static func warp_local(host: Node, cell: Vector2i) -> void:
 	host.player.velocity = Vector3.ZERO
 	host._reveal_around(cell, int(App.bal.fog_radius) + 2)
 	silence_near(host, cell)
-	var Geo: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
-	Geo.note_player(host, cell)
+	host.call("map_note_player", cell)
 	App.toast(App.tr("net.the_crystal_takes_you_across"))
 
 static func setup_volume(crystal: Node) -> void:

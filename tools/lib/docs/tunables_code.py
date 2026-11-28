@@ -168,7 +168,7 @@ def cmd_set_code(root: Path, args) -> int:
                 src.set_line(bs.TCONST, i, re.sub(r"(=\s*).+?(\s*)$", lambda m: m.group(1) + bs.fmt(v.type, val), ln.rstrip("\r\n")))
                 out.append(f"code={bs.TCONST}:{i + 1} {ref.group(1)}" + (f" (vars_{v.system}.gd reads T.{ref.group(1)})" if v.system != "const" else ""))
             elif v.value is None:
-                raise bs.Fail(f"{args.key} = {v.expr} in {v.path}: not a literal (player prefs live in store_data.gd DEF); edit by hand")
+                raise bs.Fail(f"{args.key} = {v.expr} in {v.path}: not a literal (player prefs live in store_def.gd DEF); edit by hand")
             else:
                 ln = src.lines(v.path)[v.line].rstrip("\r\n")
                 m = bs.VAR_RE.match(ln)

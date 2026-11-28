@@ -4,7 +4,6 @@ extends RefCounted
 ## Pad.aim() must treat eats_aim() as "right stick is not aim."
 
 const T := preload("res://scripts/data/tunables.gd")
-const MapAct := preload("res://scripts/world/dungeon/map_act.gd")
 
 static var mode := false
 static var wheel_step := T.LOOK_WHEEL_STEP
@@ -38,24 +37,32 @@ static func blocked() -> bool:
 		return true
 	return false
 
+## The dungeon map layer is up. The map pan / zoom bodies live on the dungeon scene (map_* methods).
 static func map_open() -> bool:
-	return MapAct.is_open(_dungeon())
+	return _map_up(_dungeon())
+
+static func _map_up(host: Node) -> bool:
+	if host == null:
+		return false
+	var layer: CanvasLayer = host.get("map_layer") as CanvasLayer
+	return layer != null and layer.visible
 
 static func eats_aim() -> bool:
 	if blocked():
 		return false
 	return mode or map_open()
 
-static func tick(delta: float) -> void:
+## pad_look: the look_mode pad button is down this frame (Pad passes it in).
+static func tick(delta: float, pad_look: bool = false) -> void:
 	var lock := blocked()
 	if lock:
 		if not _was_blocked:
 			clear()
 		_was_blocked = true
-		_was_toggle = _toggle_held()
+		_was_toggle = _toggle_held(pad_look)
 		return
 	_was_blocked = false
-	var down := _toggle_held()
+	var down := _toggle_held(pad_look)
 	if down and not _was_toggle:
 		mode = not mode
 	_was_toggle = down
@@ -78,7 +85,7 @@ static func pinch(factor: float, focus: Vector2) -> void:
 		return
 	var gain := pow(factor, pinch_gain)
 	if map_open():
-		MapAct.zoom_at(_dungeon(), gain, focus)
+		_dungeon().map_zoom_at(gain, focus)
 		return
 	var z := App.cam_zoom
 	if gain > 1.0:
@@ -92,7 +99,7 @@ static func _wheel(delta_z: float, focus: Vector2) -> void:
 		var gain := 1.0 + delta_z
 		if gain < 0.2:
 			gain = 0.2
-		MapAct.zoom_at(_dungeon(), gain, focus)
+		_dungeon().map_zoom_at(gain, focus)
 		return
 	App.set_zoom(App.cam_zoom + delta_z)
 
@@ -101,21 +108,19 @@ static func _stick(delta: float) -> void:
 	if v.length() < 0.24:
 		return
 	var host := _dungeon()
-	if MapAct.is_open(host):
+	if _map_up(host):
 		if mode:
-			MapAct.zoom_player(host, -v.y * stick_zoom * delta)
+			host.map_zoom_player(-v.y * stick_zoom * delta)
 		else:
-			MapAct.pan_by(host, v * stick_pan * delta)
+			host.map_pan_by(v * stick_pan * delta)
 		return
 	if not mode:
 		return
 	App.set_hud_scale(App.hud_scale + v.x * stick_hud * delta)
 	App.set_zoom(App.cam_zoom + (-v.y) * stick_zoom * delta)
 
-static func _toggle_held() -> bool:
-	if Input.is_action_pressed("look_mode"):
-		return true
-	return load("res://scripts/input/pad.gd").pad_down("look_mode")
+static func _toggle_held(pad_look: bool) -> bool:
+	return Input.is_action_pressed("look_mode") or pad_look
 
 static func _rs() -> Vector2:
 	var pid := _pad_id()

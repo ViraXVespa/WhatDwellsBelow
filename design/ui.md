@@ -1,14 +1,17 @@
 # UI (door)
 
 Status: current plan  
-Read when: pause panels, fullscreen drape, play-menu
+Read when: pause panels, fullscreen drape, play-menu  
+Code: `scripts/ui/` except the gear board and the archives screen, plus `scripts/data/tutorial_pages.gd` (code map row UI; gdhealth group `ui`)
+
+Reach-in rule: screens open the gear board through `gear_board.gd` entry points and give it host methods (`place_gear_tip`, `inv_*` on ProgressUI); nothing below the screens (input, data, world, gameplay) loads UI code. Map pan and the player cell come from `dungeon.gd` methods; touch button words from `touch_pad.gd`.
 
 | Job | Open |
 |-----|------|
 | color tokens, playable surfaces | `design/ui-theme.md` |
 | title poster, loading bar, fs-gate | `design/ui-title-web.md` |
 | gauntlet strip, pip cluster | `design/ui-hud.md` |
-| inventory tab, skills tab, system page | `design/ui-pause.md` |
+| inventory tab, skills tab, settings page | `design/ui-pause.md` |
 | recap reel, ghost vendor pane, quest pane, banner | `design/ui-run-flow.md` |
 | loadout tray, tooltip shell | `design/ui-gear-entry.md` |
 | restyle, builders, skin hooks, scrollbar hiding | `design/ui-style.md` |

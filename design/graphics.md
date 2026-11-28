@@ -2,7 +2,9 @@
 
 Status: current plan
 Read when: cel-look owner, dual-palette atmosphere
-Code: `scripts/graphics/`
+Code: `scripts/graphics/`, `scripts/world/billboard_spr.gd` (code map row Graphics; gdhealth group `graphics`)
+
+Reach-in rule: graphics sits below the scenes and actors that draw with it and loads none of them. Scenes hand it what it needs: the hub layout node (`crystal_glow_r`), the stream chunk grid from `chunk_grid.gd` (geo_stream.gd re-exports it), the grid cell code as a local `FLOOR`. App warms the sole table through `actor_lit/soles.gd` `warm()` and dynamic resolution through `dyn_res.gd`; both are public entry points.
 
 This file is the door. Open the Job-table sibling only when that row matches.
 

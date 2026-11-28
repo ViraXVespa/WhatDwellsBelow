@@ -257,3 +257,22 @@ def listed_file_paths(rows: list[Row]) -> list[str]:
             seen.add(resolved)
             out.append(resolved)
     return out
+
+def row_owners(rel: str, rows: list[Row]) -> list[str]:
+    """Systems whose row lists rel: a file tick (full, or bare inheriting the last folder) or a folder tick above it."""
+    n = posix(rel)
+    out: list[str] = []
+    for row in rows:
+        dirs = [posix(raw.strip()) for raw in TICK_RE.findall(row.live) if posix(raw.strip()).endswith("/")]
+        if n in listed_file_paths([row]) or any(n.startswith(d) for d in dirs):
+            out.append(row.system)
+    return out
+
+def duplicate_rows(scripts: list[str], rows: list[Row]) -> dict[str, list[str]]:
+    """Scripts listed in more than one row (a file lives in exactly one row). Mention another row's file without backticks."""
+    dup: dict[str, list[str]] = {}
+    for rel in scripts:
+        owners = row_owners(rel, rows)
+        if len(owners) > 1:
+            dup[posix(rel)] = owners
+    return dup
