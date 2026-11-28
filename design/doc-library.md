@@ -35,7 +35,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 ## code_map_lib
 
-Row parser/writer for the code map: `parse_rows`, `find_system`, `add_path`, `remove_path`, `rename_path`, `file_is_mapped`. CLI is `docs.py code-map check|row|patch`, never edit a row by hand.
+Row parser/writer for the code map: `parse_rows`, `find_system`, `add_path`, `remove_path`, `rename_path`, `file_is_mapped`, `duplicate_rows` (check fails when a script sits in two rows). CLI is `docs.py code-map check|row|patch`, never edit a row by hand.
 
 ## Extend or fix
 
