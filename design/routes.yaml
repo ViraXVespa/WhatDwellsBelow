@@ -230,7 +230,10 @@ doors:
   skills:
     file: design/skills.md
     read_when: "XP, forging, formula"
-    jobs: {}
+    jobs:
+      gain: design/skills-gain.md
+      cl: design/skills-cl.md
+      effects: design/skills-effects.md
   inventory:
     file: design/inventory.md
     read_when: "affixes, artifacts, mailing"
@@ -418,6 +421,9 @@ job_read_when:
   player.bow: "Bow mode, LT steer, RT shoots"
   player.anim: "8-way facing, stride start and stop, lead foot, seppuku collapse, lazy loads"
   interactables.gather: "mining nodes, wood nodes, pickaxe rewards"
+  skills.gain: "eleven mandatory ids, permanent fragment, hitpoints stacking"
+  skills.cl: "style averages, highest-style rounding, calibration example"
+  skills.effects: "survivability, smith craft beat, noticeable power"
   interactables.breakables: "pots and barrels, HP orbs, smash sound"
   interactables.puzzles: "pull levers, cracked walls, treasure caches, paired gatework"
   interactables.fixtures: "microwave housing, pawned goods, blessing buff, campfire sit"

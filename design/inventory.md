@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: affixes, artifacts, mailing  
-Code: `scripts/data/progress_gear.gd` (facade) + `gear_bag.gd`, `gear_use.gd`, `gear_req.gd`, `consumable.gd`, `consumable_roll.gd`; `scripts/data/gear_rules/rules_kit.gd` (`Kit`), `scripts/data/gear_rules/rules_norm.gd` (`Norm`); `scripts/data/progress_quest/restock.gd`
+Code: `scripts/data/progress_gear.gd` (facade) + `gear_bag.gd`, `gear_use.gd`, `gear_req.gd`, `consumable.gd`, `consumable_roll.gd`, `food_prof.gd`; `scripts/data/gear_rules/rules_kit.gd` (`Kit`), `scripts/data/gear_rules/rules_norm.gd` (`Norm`); `scripts/data/progress/restock.gd`
 
 | Job | Open |
 |-----|------|
