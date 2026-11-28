@@ -13,6 +13,7 @@ audio_visual = ["scripts/audio/**"]
 camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
 debug         = ["scripts/debug/**"]
+display       = ["scripts/display_mode.gd", "scripts/display_mode/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
 inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
@@ -75,6 +76,12 @@ severity = "critical"
 # App flow is the top of the game; it reaches debug only through the Dbg shim (scripts/app/dbg.gd, lazy loads).
 [[policy.forbidden_dependencies]]
 from     = "app_flow"
+to       = "debug"
+severity = "critical"
+
+# Display is an engine service below the screens that ask it for fullscreen state.
+[[policy.forbidden_dependencies]]
+from     = "display"
 to       = "debug"
 severity = "critical"
 
@@ -191,6 +198,36 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "localization"
 to       = "camera"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "app_flow"
 severity = "warning"
 
 # Interactables are placed by the dungeon and the hub and used by the player; they reach no actor code.
