@@ -88,6 +88,7 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/media/studio_cmd.py` | `media.py studio`: serve or `--selftest`. |
 | `lib/media/studio/__init__.py`, `lib/media/studio/api.py`, `lib/media/studio/jobs.py` | Studio routes and the job registry that survives a page reload. |
 | `lib/media/studio/backend.py` | Real mode: the store and `media.py pipeline` jobs. Seams Build has not wired answer 501. |
+| `lib/media/studio/steps.py` | Step plan per type, actions per step, and step status. |
 | `lib/media/studio/sim.py`, `lib/media/studio/fakes.py` | Simulate mode: canned staged jobs and placeholder stills and glbs. |
 | `lib/media/pipeline/plates.py` | Frame a keyed mannequin view on a black square. The figure's long side is 1/1.1 of the canvas. Specks outside the main mass are dropped. |
 | `lib/media/clip_fx.py` | Clip framing/effects; compose/tracking/promo modules own specs and overlays. The clip guide describes supported recipes. |
