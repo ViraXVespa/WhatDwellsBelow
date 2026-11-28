@@ -1,7 +1,17 @@
 extends Object
 
+const GameVer := preload("res://scripts/data/game_ver.gd")
 const UiBuild := preload("res://scripts/ui/ui_build.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
+
+## Every changelog entry, newest label first.
+static func all_entries() -> Array:
+	var rows: Array = []
+	for e in GameVer.entries():
+		if typeof(e) == TYPE_DICTIONARY:
+			rows.append(e)
+	rows.sort_custom(func(a, b): return GameVer.cmp(str(a.get("label", "")), str(b.get("label", ""))) > 0)
+	return rows
 
 static func esc_bb(t: String) -> String:
 	return t.replace("[", "[lb]")

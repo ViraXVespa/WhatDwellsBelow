@@ -8,7 +8,6 @@ const UiBuild := preload("res://scripts/ui/ui_build.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
-	var Fac = load("res://scripts/title/news.gd")
 	host._news_open = true
 	host._set_title_focus(false)
 	host._news_layer = Control.new()
@@ -61,7 +60,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.add_theme_constant_override("outline_size", 0)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.focus_mode = Control.FOCUS_NONE
-	body.text = Fmt.news_text(Fac.all_entries(), new_labs)
+	body.text = Fmt.news_text(Fmt.all_entries(), new_labs)
 	scroll.add_child(body)
 	var close_btn: Button = host._btn(App.tr("common.close"), host._dismiss_news)
 	box.add_child(close_btn)

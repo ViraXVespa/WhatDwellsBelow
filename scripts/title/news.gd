@@ -3,14 +3,6 @@ extends Object
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const Show := preload("res://scripts/title/news_show.gd")
 
-static func all_entries() -> Array:
-	var rows: Array = []
-	for e in GameVer.entries():
-		if typeof(e) == TYPE_DICTIONARY:
-			rows.append(e)
-	rows.sort_custom(func(a, b): return GameVer.cmp(str(a.get("label", "")), str(b.get("label", ""))) > 0)
-	return rows
-
 static func new_labels(_host: Node) -> Dictionary:
 	var out := {}
 	var info: Dictionary = GameVer.unseen(str(App.last_seen_game_ver))
