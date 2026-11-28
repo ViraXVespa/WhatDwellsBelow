@@ -4,7 +4,15 @@ import sys, subprocess, json, os
 def get_diff():
     status = subprocess.check_output(["git", "status", "--porcelain"], text=True)
     diff_ref = "origin/main"
-    diff_output = subprocess.check_output(["git", "diff", "--name-status", f"{diff_ref}..HEAD"], text=True)
+    # If there are unstaged changes, include them
+    if status.strip():
+        # Unstaged changes
+        unstaged_output = subprocess.check_output(["git", "diff", "--name-status"], text=True)
+        # Staged changes relative to HEAD
+        staged_output = subprocess.check_output(["git", "diff", "--cached", "--name-status"], text=True)
+        diff_output = unstaged_output + "\n" + staged_output
+    else:
+        diff_output = subprocess.check_output(["git", "diff", "--name-status", "origin/main..HEAD"], text=True)
     lines = [ln.strip() for ln in diff_output.splitlines() if ln.strip()]
     diff = [tuple(l.split("\t", 1)) for l in lines]
     # Write to file
