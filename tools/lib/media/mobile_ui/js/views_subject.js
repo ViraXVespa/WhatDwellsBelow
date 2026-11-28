@@ -2,12 +2,12 @@
 // then Send to the game. Each step is Done only when you approve it, in order.
 import { fileUrl, get, post } from "./api.js";
 import * as jobs from "./jobs.js";
-import { fieldsEditor } from "./fields.js";
+import { fieldsEditor, schemaEditor } from "./fields.js";
 import { app, go, loadSubjects } from "./state.js";
 import { closeSheet, errorBox, h, holdable, openSheet, showError, toast, when } from "./ui.js";
 import {
   actionLabel, banners, details, finishStep, gateText, guarded, human, loadSubject, primaryFor, reopenStep,
-  runAction, statusChip, STATUS, techRows, thumb,
+  notReady, runAction, statusChip, STATUS, techRows, thumb,
 } from "./subject_ui.js";
 
 const refresh = () => window.dispatchEvent(new HashChangeEvent("hashchange"));
@@ -30,7 +30,7 @@ function stepRow(sid, s, i) {
   return h("a", { class: "item step-row" + (locked ? " locked" : ""), href: `#/s/${sid}/step/${s.id}` },
     h("span", { class: "num st-" + (locked ? "locked" : s.status) }, s.status === "done" ? "✓" : String(i + 1)),
     h("div", { class: "grow" }, h("b", {}, s.label),
-      h("small", {}, locked ? `Finish ${s.blocked_by_label} first` : s.stale ? "Might need a look" : s.kind === "later" ? "Comes later" : s.pending ? `${s.pending} picture${s.pending === 1 ? "" : "s"} waiting` : "")),
+      h("small", {}, locked ? `Finish ${s.blocked_by_label} first` : s.stale ? "Might need a look" : s.pending ? `${s.pending} picture${s.pending === 1 ? "" : "s"} waiting` : "")),
     s.job ? h("span", { class: "badge running" }, "Working") : statusChip(s));
 }
 
@@ -104,11 +104,11 @@ export async function step({ params }) {
   let body, beforeFinish = null;
   if (s.kind === "start") body = startPanel(data, s);
   else if (s.kind === "export") body = exportPanel(data, s);
-  else if (s.kind === "later") body = h("div", { class: "card" }, h("p", {}, `${s.label} comes later. Approving this step now lets you continue to the next one.`));
-  if (s.kind === "fields" || s.kind === "pictures" || s.kind === "later") {
+  if (s.kind === "fields" || s.kind === "pictures") {
     const ed = sectionEditor(doc, s, readOnly);
     beforeFinish = ed.save;
-    body = [s.kind === "pictures" ? picturesPanel(data, s, readOnly) : null, body, s.kind === "later" ? null : ed.node];
+    body = [s.open_question ? h("div", { class: "note-box small" }, h("b", {}, "Still to decide: "), s.open_question, " Write notes here for now.") : null,
+      s.kind === "pictures" || data.stills.some((x) => x.step === s.id) ? picturesPanel(data, s, readOnly) : null, ed.node];
   }
 
   const primary = primaryFor(data, s, next);
@@ -123,15 +123,16 @@ export async function step({ params }) {
       if (guarded(sid).includes(cmd) || cmd === "export") continue;
       if (primary && primary.label === actionLabel(cmd)) continue;
       const gate = (cmd === "body" || cmd === "mesh") ? data.gates[cmd] : null;
+      const off = notReady(s, cmd);
       more.push(h("a", { class: "item" + (gate && !gate.ok ? " disabled" : ""), href: gate && !gate.ok ? undefined : `#/s/${sid}/step/${s.id}/do/${cmd}` },
-        h("div", { class: "grow" }, h("b", {}, actionLabel(cmd)), gate && !gate.ok ? h("small", {}, gateText(gate)) : null)));
+        h("div", { class: "grow" }, h("b", {}, actionLabel(cmd)), !off && gate && !gate.ok ? h("small", {}, gateText(gate)) : null),
+        off ? h("span", { class: "chip locked" }, "Not set up yet") : null));
     }
-    if (s.kind === "pictures") more.push(h("a", { class: "item", href: `#/s/${sid}/step/${s.id}/adjust` }, h("div", { class: "grow" }, h("b", {}, "Adjust how pictures are made"),
+    if (PROMPTED.some((a) => s.actions.includes(a))) more.push(h("a", { class: "item", href: `#/s/${sid}/step/${s.id}/adjust` }, h("div", { class: "grow" }, h("b", {}, "Adjust how pictures are made"),
       Object.keys(data.overrides[s.id] || {}).length > 1 ? h("small", {}, "Adjusted for this step") : null)));
-    if (s.kind !== "export" && primary?.label !== "Approve this step") {
-      more.push(h("button", { class: "item", onclick: () => finishStep(sid, s, beforeFinish), disabled: s.kind === "pictures" && !s.can_finish },
-        h("div", { class: "grow" }, h("b", {}, "Approve this step"),
-          s.kind === "pictures" && !s.can_finish ? h("small", {}, s.finish_blocker === "pending" ? "Some pictures still need your OK." : "Needs at least one approved picture.") : null)));
+    if (s.kind !== "export" && s.kind !== "start" && primary?.label !== "Approve this step") {
+      more.push(h("button", { class: "item", onclick: () => finishStep(sid, s, beforeFinish), disabled: !s.can_finish && s.finish_blocker !== "fields" && s.finish_blocker !== "empty" },
+        h("div", { class: "grow" }, h("b", {}, "Approve this step"), !s.can_finish && s.finish_message ? h("small", {}, s.finish_message) : null)));
     }
   } else if (s.available) {
     more.push(h("button", { class: "item", onclick: () => reopenStep(sid, s) }, h("div", { class: "grow" }, h("b", {}, s.id === "export" ? "Reopen to send again" : "Reopen this step"),
@@ -142,12 +143,28 @@ export async function step({ params }) {
     banners(doc, s, refresh),
     readOnly ? h("div", { class: "note-box small" }, `Approved ${when(s.done_at)}. Reopen it to change it.`) : null,
     primaryBtn,
+    !readOnly && s.available && TUNABLE.some((a) => s.actions.includes(a)) ? autotuneRow(sid, s) : null,
     more.length ? h("details", { class: "card more" }, h("summary", {}, "More actions"), h("div", { class: "list" }, more)) : null,
     body,
     next ? h("a", { class: "btn ghost full", href: `#/s/${sid}/step/${next.id}`, style: { marginTop: "12px" } }, `Next: ${next.label}`) : null,
-    details("Details", techRows([["step", s.id], ["kind", s.kind], ["actions", s.actions.join(", ") || "-"], ["status", s.status],
+    details("Details", techRows([["step", s.id], ["kind", s.kind], ["actions", s.actions.join(", ") || "-"], ["not set up", (s.not_ready || []).join(", ") || "-"], ["status", s.status],
       ["approved", s.done_at || "-"], ["section data", s.kind === "start" || s.kind === "export" ? "-" : sectionData(doc, s.id)]])));
   return { title: `${doc.name}: ${s.label}`, node, back: `#/s/${sid}`, tab: "home" };
+}
+
+const PROMPTED = ["generate", "tune", "smooth", "body", "edit", "variant", "icon", "tile"];
+const TUNABLE = ["generate", "variant", "icon", "tile"];
+
+function autotuneRow(sid, s) {
+  const box = h("input", { type: "checkbox" });
+  box.checked = !!s.autotune;
+  box.onchange = async () => {
+    const r = await post(`/subjects/${sid}/steps/${s.id}`, { action: "autotune", on: box.checked });
+    if (!r.ok) { box.checked = !box.checked; return showError(r); }
+    toast(box.checked ? "Auto-tune is on for this step" : "Auto-tune is off for this step");
+  };
+  return h("label", { class: "check card" }, box, h("span", {}, h("b", {}, "Auto-tune new pictures"),
+    h("small", { class: "help" }, " Checks each new picture and retries until it passes. Off: pictures come straight to you.")));
 }
 
 function sectionEditor(doc, s, readOnly) {
@@ -176,7 +193,8 @@ function sectionEditor(doc, s, readOnly) {
     if (r.data.flagged && r.data.flagged.length) toast(`Connected things might need a look: ${r.data.flagged.map((f) => f.name || human(f.id)).join(", ")}`, 4000);
     return true;
   }
-  const ed = fieldsEditor(sectionData(doc, s.id), { readOnly, onChange: () => save() });
+  const ed = (s.fields || []).length ? schemaEditor(s.fields, sectionData(doc, s.id), { readOnly, onChange: () => save() })
+    : fieldsEditor(sectionData(doc, s.id), { readOnly, onChange: () => save() });
   if (!readOnly) {
     app.beforeLeave = save;
     const onHide = () => { if (document.hidden) save(); };
@@ -185,11 +203,10 @@ function sectionEditor(doc, s, readOnly) {
     if (s.id === "details") nameIn.addEventListener("change", save);
   }
   const node = h("div", {},
-    s.kind === "pictures" ? h("h3", {}, "Notes") : null,
-    s.skeleton ? h("p", { class: "small muted" }, "Not much goes here yet.") : null,
+    s.kind === "pictures" ? h("h3", {}, "What the game needs") : null,
     s.id === "details" ? h("label", { class: "field" }, h("span", {}, "Name"), nameIn) : null,
     ed.node, err,
-    h("details", { class: "card details" }, h("summary", {}, "Details"), ed.details),
+    h("details", { class: "card details" }, h("summary", {}, "Edit as text"), ed.details),
     readOnly ? null : h("p", { class: "small muted" }, "Changes save on their own."));
   return { node, save };
 }
@@ -199,14 +216,16 @@ function picturesPanel(data, s, readOnly) {
   const mine = data.stills.filter((x) => x.step === s.id);
   const group = (state, title) => {
     const rows = mine.filter((x) => x.state === state);
-    return rows.length ? [h("h3", {}, `${title} (${rows.length})`), h("div", { class: "thumbs" }, rows.map((x) => thumb(x, sid, s.id)))] : null;
+    if (!rows.length) return null;
+    const grid = h("div", { class: "thumbs" }, rows.map((x) => thumb(x, sid, s.id)));
+    return state === "hidden" ? h("details", { class: "card" }, h("summary", {}, `${title} (${rows.length})`), grid) : [h("h3", {}, `${title} (${rows.length})`), grid];
   };
   const checks = data.reviews.filter((r) => mine.some((m) => m.path === r.image || (r.image && m.path.endsWith(r.image))));
   const gate = s.actions.includes("body") ? data.gates.body : null;
   return h("div", {},
     gate && !gate.ok && !readOnly ? h("div", { class: "note-box small" }, "To build the 3D body: " + gateText(gate)) : null,
-    mine.length ? [group("pending", "Waiting for your OK"), group("approved", "Approved"), group("rejected", "Rejected")]
-      : h("p", { class: "muted" }, "No pictures on this step yet."),
+    mine.length ? [group("pending", "Waiting for your OK"), group("approved", "Approved"), group("rejected", "Rejected"), group("hidden", "Hidden")]
+      : h("p", { class: "muted" }, s.needs.includes("clips") ? "No animations on this step yet." : "No pictures on this step yet."),
     checks.length ? h("details", { class: "card" }, h("summary", {}, `Check results (${checks.length})`), checks.map(checkCard)) : null);
 }
 

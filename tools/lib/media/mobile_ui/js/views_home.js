@@ -111,7 +111,43 @@ export async function newSubject({ params, query }) {
   return { title: `New ${human(type).toLowerCase()}`, node: form, tab: "home", back: `#/type/${type}` };
 }
 
+// What Build still has to make: model setups, then each type's steps with actions not set up.
+const SETUP_WORD = { ready: "Ready", partial: "Partly ready", missing: "Not built" };
+
+function leftToBuild() {
+  const reg = app.info.registry;
+  const setups = Object.entries(reg.setups);
+  const off = Object.entries(reg.actions).filter(([, a]) => !a.wired);
+  const types = Object.entries(reg.types).map(([t, spec]) => {
+    const rows = spec.steps.map((st) => ({ st, gaps: st.actions.filter(missing) })).filter((r) => r.gaps.length || r.st.open);
+    return { t, rows };
+  }).filter((x) => x.rows.length);
+  const word = (id) => reg.actions[id].label;
+  // Wired status, not this mode's: practice mode runs everything, but the list is what real mode lacks.
+  function missing(a) { return !a.wired || (a.recipe && !reg.recipes_ready.includes(a.recipe)); }
+  return h("div", {},
+    h("p", { class: "small muted" }, app.info.simulated
+      ? "Practice mode runs all of these with made-up results. In real mode each one says “Not set up yet” until it is built."
+      : "Each of these says “Not set up yet” until it is built. Practice mode runs them with made-up results."),
+    h("h3", {}, `Model setups (${setups.filter(([, s]) => s.status !== "ready").length} to build)`),
+    h("div", { class: "list" }, setups.map(([id, s]) => h("div", { class: "item" },
+      h("div", { class: "grow" }, h("b", {}, s.label), h("small", {}, s.models)),
+      h("span", { class: "badge " + (s.status === "ready" ? "approved" : s.status === "partial" ? "pending" : "rejected") }, SETUP_WORD[s.status])))),
+    h("h3", {}, `Actions not set up (${off.length})`),
+    h("div", { class: "list" }, off.map(([id, a]) => h("details", { class: "item block" }, h("summary", {}, h("b", {}, a.label)),
+      h("p", { class: "small" }, a.inputs ? `Uses: ${a.inputs}` : ""), h("p", { class: "small muted" }, a.setup ? `Setup: ${reg.setups[a.setup].label}` : "No model needed")))),
+    h("h3", {}, "By type"),
+    types.map(({ t, rows }) => h("details", { class: "card" }, h("summary", {}, `${human(t)} (${rows.length} step${rows.length === 1 ? "" : "s"})`),
+      h("ul", { class: "small" }, rows.map(({ st, gaps }) => h("li", {}, h("b", {}, human(st.id)), ": ",
+        gaps.length ? gaps.map((g) => word(g.id) + (g.wired ? " (needs its default recipe)" : "")).join(", ") : "",
+        st.open ? h("span", { class: "muted" }, (gaps.length ? ". " : "") + "Still to decide: " + st.open) : null))))));
+}
+
 export async function coverage({ query }) {
+  const show = query.show === "build" ? "build" : "slots";
+  const seg = h("div", { class: "seg" }, [["slots", "Game slots"], ["build", "Left to build"]].map(([v, l]) =>
+    h("button", { class: v === show ? "on" : "", onclick: () => go(v === "build" ? "#/coverage?show=build" : "#/coverage") }, l)));
+  if (show === "build") return { title: "Coverage", node: h("div", {}, seg, h("div", { style: { height: "8px" } }), leftToBuild()), tab: "coverage" };
   const res = await get("/coverage");
   if (!res.ok) return { title: "Coverage", node: errorBox(res.data), tab: "coverage" };
   const cov = res.data;
@@ -134,7 +170,7 @@ export async function coverage({ query }) {
   }
   drawChips(); draw();
   const done = cov.slots - cov.open;
-  const node = h("div", {},
+  const node = h("div", {}, seg, h("div", { style: { height: "8px" } }),
     h("div", { class: "card" },
       h("div", { class: "row between" }, h("b", {}, `${done} of ${cov.slots} game slots done`), cov.simulated ? h("span", { class: "chip sim" }, "Practice") : null),
       h("div", { class: "bar", style: { marginTop: "8px" } }, h("div", { style: { width: `${cov.slots ? (100 * done) / cov.slots : 0}%` } })),

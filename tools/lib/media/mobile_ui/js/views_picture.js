@@ -6,7 +6,7 @@ import { app, command, go } from "./state.js";
 import { choose, errorBox, h, haptic, showError, toast, when } from "./ui.js";
 import { checkCard } from "./views_subject.js";
 import {
-  actionLabel, details, gateText, guarded, human, loadSubject, PICTURE_STATE, pictureName, techRows, VIEW_WORD,
+  actionLabel, details, gateText, guarded, human, loadSubject, notReady, PICTURE_STATE, pictureName, techRows, VIEW_WORD,
 } from "./subject_ui.js";
 
 const refresh = () => window.dispatchEvent(new HashChangeEvent("hashchange"));
@@ -43,11 +43,13 @@ export async function picture({ params, query }) {
     if (pic.kind === "still" && view) body.view = view;
     const r = await post(`/subjects/${sid}/stills`, body);
     if (!r.ok) return showError(r);
-    haptic(); toast(state === "approved" ? "Approved" : state === "rejected" ? "Rejected" : "Undone");
+    haptic(); toast({ approved: "Approved", rejected: "Rejected", hidden: "Hidden" }[state] || "Undone");
     const nextPending = pics.find((x, i) => i !== idx && x.state === "pending");
     if (state !== "pending" && nextPending) go(picHref(sid, stepId, nextPending.path)); else go(back);
   };
-  const media = pic.kind === "mesh" ? viewer(fileUrl(pic.path, pic.mtime)) : h("img", { class: "big-img", src: fileUrl(pic.path, pic.mtime), alt: "picture" });
+  const media = pic.kind === "mesh" ? viewer(fileUrl(pic.path, pic.mtime))
+    : pic.kind === "sound" ? h("audio", { controls: true, src: fileUrl(pic.path, pic.mtime), style: { width: "100%" } })
+    : h("img", { class: "big-img", src: fileUrl(pic.path, pic.mtime), alt: pic.kind === "clip" ? "animation" : "picture" });
   const nav = (d) => { const x = pics[idx + d]; if (x) go(picHref(sid, stepId, x.path)); };
   const ref = (doc.studio || {}).reference || {};
   const refImg = (ref.ingest && ref.ingest.image) || ref.path;
@@ -57,6 +59,7 @@ export async function picture({ params, query }) {
   const place = h("select", {}, h("option", { value: "" }, "Pick a step"), homes.map((x) => h("option", { value: x.id }, x.label)));
   const node = h("div", { class: "pic-screen" },
     h("div", { class: "row between" }, h("span", { class: "badge " + pic.state }, PICTURE_STATE[pic.state]), h("span", { class: "small muted" }, `${idx + 1} of ${pics.length}`)),
+    pic.clip ? h("p", {}, h("b", {}, "Animation: "), human(pic.clip)) : null,
     h("div", { style: { margin: "8px 0" } }, media),
     !stepId ? h("div", { class: "card" }, h("b", {}, "Put this on a step"), place,
       h("button", { class: "btn primary full", style: { marginTop: "8px" }, onclick: async () => {
@@ -72,7 +75,8 @@ export async function picture({ params, query }) {
         h("button", { class: "btn good", onclick: () => setState("approved") }, "Approve"),
         h("button", { class: "btn bad", onclick: () => setState("rejected") }, "Reject"),
         h("button", { class: "btn primary", onclick: () => regenerate(sid, stepId, pic) }, "Regenerate")),
-      pic.state !== "pending" ? h("button", { class: "btn ghost full", onclick: () => setState("pending") }, "Undo") : null] : null,
+      pic.state === "rejected" ? h("button", { class: "btn full", onclick: () => setState("hidden") }, "Hide it") : null,
+      pic.state !== "pending" ? h("button", { class: "btn ghost full", onclick: () => setState("pending") }, pic.state === "hidden" ? "Show it again" : "Undo") : null] : null,
     h("div", { class: "btn-row" }, h("button", { class: "btn", onclick: () => nav(-1), disabled: idx <= 0 }, "Newer"), h("button", { class: "btn", onclick: () => nav(1), disabled: idx >= pics.length - 1 }, "Older")),
     checks.length ? h("div", { class: "card" }, h("b", {}, "Check results"), checks.map(checkCard)) : null,
     refImg && pic.kind === "still" ? h("details", { class: "card" }, h("summary", {}, "Compare with the reference"), h("div", { class: "compare" }, h("img", { src: fileUrl(pic.path, pic.mtime) }), h("img", { src: fileUrl(refImg) }))) : null,
@@ -85,7 +89,8 @@ async function regenerate(sid, stepId, pic) {
   const how = await choose("Regenerate", "Make a new version with the same settings, or adjust them first.", [
     { label: "Same settings", value: "same", cls: "primary" }, { label: "Adjust first", value: "adjust" }]);
   if (!how) return;
-  const cmd = pic.cmd && command(pic.cmd) ? pic.cmd : pic.kind === "mesh" ? "body" : "tune";
+  const step = (await loadSubject(sid)).data.steps.find((x) => x.id === stepId) || { actions: [] };
+  const cmd = pic.cmd && command(pic.cmd) ? pic.cmd : pic.kind === "mesh" ? "body" : ["generate", "variant", "tile", "tune"].find((c) => step.actions.includes(c)) || "tune";
   if (how === "adjust") return go(`#/s/${sid}/step/${stepId}/adjust?then=${cmd}&from=${encodeURIComponent(pic.path)}`);
   if (pic.cmd && pic.args) {
     const job = await jobs.start(cmd, sid, pic.args, { step: stepId });
@@ -184,7 +189,14 @@ export async function action({ params, query }) {
     const here = onStep.filter((x) => x.kind === want);
     return here.length ? here : data.stills.filter((x) => x.kind === want && x.state !== "rejected");
   };
+  if (notReady(s, cmd)) {
+    return { title: actionLabel(cmd), back, tab: "home", node: h("div", {},
+      h("div", { class: "card locked-card" }, h("b", {}, "Not set up yet"),
+        h("p", { class: "muted" }, `${actionLabel(cmd)} on ${s.label} is not set up yet. It works in practice mode. See Coverage, Left to build.`),
+        h("a", { class: "btn full", href: "#/coverage?show=build" }, "See what is left to build"))) };
+  }
   const from = data.stills.find((x) => x.path === query.from);
+  const clips = (((doc.sections || {})[stepId] || {}).data || {}).clips || [];
   const visible = [], advanced = [], read = {};
   for (const f of spec.fields) {
     if (f.kind === "still" || f.kind === "glb") {
@@ -209,11 +221,21 @@ export async function action({ params, query }) {
     } else if (f.kind === "int") {
       const el = h("input", { type: "number", value: f.default ?? "" });
       read[f.name] = () => (el.value ? Number(el.value) : null);
-      visible.push(h("label", { class: "field" }, h("span", {}, "How many tries"), el));
+      visible.push(h("label", { class: "field" }, h("span", {}, f.name === "turns" ? "How many tries" : f.label), el));
     } else if (f.kind === "text") {
-      const el = h("textarea", { placeholder: "Say what should change" });
+      const change = ["edit", "variant"].includes(cmd);
+      const el = h(change ? "textarea" : "input", { type: "text", placeholder: change ? "Say what should change" : "", value: f.default ?? "" });
       read[f.name] = () => el.value.trim();
-      visible.push(h("label", { class: "field" }, h("span", {}, "What should change?"), el));
+      visible.push(h("label", { class: "field" }, h("span", {}, change ? "What should change?" : f.label + (f.required ? "" : " (optional)")), el));
+    } else if (f.kind === "choice" || f.kind === "clip") {
+      const opts = f.kind === "clip" ? clips : f.options || [];
+      const sel = h("select", {}, h("option", { value: "" }, "Pick one"), opts.map((o) => h("option", { value: o }, human(o))));
+      const firstMissing = f.kind === "clip" ? opts.find((c) => !data.stills.some((x) => x.step === stepId && x.clip === c && x.state === "approved")) : null;
+      if (firstMissing) sel.value = firstMissing;
+      read[f.name] = () => sel.value;
+      visible.push(h("label", { class: "field" }, h("span", {}, f.kind === "clip" ? "Which animation" : f.label), opts.length ? sel : h("p", { class: "muted small" }, "List the clips on this step first.")));
+    } else if (f.name === "workflow" && cmd !== "correct") {
+      // The step's default recipe fills this in; nothing to ask.
     } else if (f.kind === "path" || f.kind === "str") {
       const dflt = f.name === "out" && cmd === "frame" ? `data/pipeline/wip/gen/${sid}-framed-${Date.now().toString(36)}.png` : f.default || "";
       const el = h("input", { type: "text", value: dflt });
@@ -221,7 +243,7 @@ export async function action({ params, query }) {
       advanced.push(h("label", { class: "field" }, h("span", {}, f.label + (f.required ? " (needed)" : "")), el));
     }
   }
-  const needsAdvanced = spec.fields.some((f) => (f.kind === "path" || f.kind === "str") && f.required && !(f.name === "out" && cmd === "frame"));
+  const needsAdvanced = spec.fields.some((f) => (f.kind === "path" || f.kind === "str") && f.required && !(f.name === "out" && cmd === "frame") && !(f.name === "workflow" && cmd !== "correct"));
   const gate = (cmd === "body" || cmd === "mesh") ? data.gates[cmd] : null;
   const blocked = gate && !gate.ok;
   const adjusted = Object.keys((data.overrides || {})[stepId] || {}).length > 1;
@@ -230,8 +252,8 @@ export async function action({ params, query }) {
   run.onclick = async () => {
     const args = {};
     for (const [k, r] of Object.entries(read)) { const v = r(); if (v !== "" && v !== null && v !== false) args[k] = v; }
-    const missing = spec.fields.filter((f) => f.required && !args[f.name]);
-    if (missing.length) return err.replaceChildren(errorBox({ error: missing.some((f) => f.kind === "still" || f.kind === "glb") ? "Pick one first." : missing.some((f) => f.kind === "role") ? "Pick what to check it against." : "Something is missing. Open Details." }));
+    const missing = spec.fields.filter((f) => f.required && !args[f.name] && !(f.name === "workflow" && cmd !== "correct"));
+    if (missing.length) return err.replaceChildren(errorBox({ error: missing.some((f) => ["still", "glb", "choice", "clip"].includes(f.kind)) ? "Pick one first." : missing.some((f) => f.kind === "role") ? "Pick what to check it against." : "Something is missing. Open Details." }));
     run.disabled = true;
     const job = await jobs.start(cmd, sid, args, { step: stepId });
     run.disabled = false;

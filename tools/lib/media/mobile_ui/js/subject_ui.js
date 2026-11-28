@@ -6,7 +6,7 @@ import { app, go } from "./state.js";
 import { basename, choose, h, showError, toast } from "./ui.js";
 
 export const STATUS = { not_started: "Not started", in_progress: "In progress", needs_ok: "Needs your OK", done: "Done" };
-export const PICTURE_STATE = { pending: "Waiting for your OK", approved: "Approved", rejected: "Rejected" };
+export const PICTURE_STATE = { pending: "Waiting for your OK", approved: "Approved", rejected: "Rejected", hidden: "Hidden" };
 export const VIEW_WORD = { front: "Front", side: "Side", back: "Back", other: "Other" };
 const GUARDED = { female: ["edit", "body", "smooth"] };
 
@@ -15,6 +15,7 @@ const UPPER = { ui: "UI", npc: "NPC", vfx: "VFX" };
 export const human = (s) => UPPER[s] || String(s || "").replace(/[-_]+/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 export const subjectName = (id) => ((app.subjects || []).find((s) => s.id === id) || {}).name || human(id);
 export const guarded = (sid) => GUARDED[sid] || [];
+export const notReady = (step, cmd) => (step.not_ready || []).includes(cmd);
 
 export async function loadSubject(id) { return get(`/subjects/${id}`); }
 
@@ -24,13 +25,13 @@ export function statusChip(step) {
 }
 
 export function thumb(still, sid, step) {
-  const inner = still.kind === "mesh"
-    ? [h("div", { class: "glbmark" }, "3D")]
-    : [h("img", { src: fileUrl(still.path, still.mtime), alt: "picture", loading: "lazy" })];
+  const inner = still.kind === "mesh" ? [h("div", { class: "glbmark" }, "3D")]
+    : still.kind === "sound" ? [h("div", { class: "glbmark" }, "Sound")]
+    : [h("img", { src: fileUrl(still.path, still.mtime), alt: still.kind === "clip" ? "animation" : "picture", loading: "lazy" })];
   const where = step ? `#/s/${sid}/step/${step}/pic?path=${encodeURIComponent(still.path)}` : `#/s/${sid}/pic?path=${encodeURIComponent(still.path)}`;
   return h("a", { class: "thumb " + still.state, href: where, "aria-label": PICTURE_STATE[still.state] },
     ...inner,
-    still.view ? h("span", { class: "view-tag" }, VIEW_WORD[still.view] || still.view) : null,
+    still.clip ? h("span", { class: "view-tag" }, human(still.clip)) : still.view ? h("span", { class: "view-tag" }, VIEW_WORD[still.view] || still.view) : null,
     h("span", { class: "tag badge " + still.state }, still.state === "pending" ? "Your OK" : PICTURE_STATE[still.state]));
 }
 
@@ -81,9 +82,12 @@ export function primaryFor(data, step, nextStep) {
     const approvedMesh = mine.some((s) => s.kind === "mesh" && s.state === "approved");
     if (has("body") && data.gates.body.ok && !approvedMesh) return { label: actionLabel("body"), run: () => runAction(sid, step.id, "body", {}) };
     if (step.can_finish) return { label: "Approve this step", run: () => finishStep(sid, step) };
-    if (has("smooth")) return { label: mine.length ? "Make new body pictures" : actionLabel("smooth"), run: () => runAction(sid, step.id, "smooth", {}) };
-    if (has("tune")) return { label: actionLabel("tune"), run: () => go(`#/s/${sid}/step/${step.id}/do/tune`) };
-    return null;
+    const form = (cmd) => ({ label: actionLabel(cmd) + (notReady(step, cmd) ? " (not set up yet)" : ""), run: () => go(`#/s/${sid}/step/${step.id}/do/${cmd}`) });
+    if (step.needs.includes("clips")) return has("animate") ? form("animate") : null;
+    if (has("smooth") && step.needs.includes("mesh") && !notReady(step, "smooth")) return { label: mine.length ? "Make new body pictures" : actionLabel("smooth"), run: () => runAction(sid, step.id, "smooth", {}) };
+    const maker = ["generate", "variant", "tile", "icon", "overlay"].find(has);
+    if (maker) return form(maker);
+    return step.finish_blocker === "fields" || step.finish_blocker === "empty" ? { label: "Approve this step", run: () => finishStep(sid, step) } : null;
   }
   if (step.kind === "export") return null; // the export panel owns its button
   return { label: "Approve this step", run: () => finishStep(sid, step) };
