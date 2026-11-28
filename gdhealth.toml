@@ -8,9 +8,11 @@ include = ["**/*.gd"]
 exclude = ["addons/**", ".godot/**", "reports/**"]
 
 [groups]
+camera  = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
 combat  = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
 debug   = ["scripts/debug/**"]
 enemies = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
+player  = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
 
 # Pinned to the gdhealth 0.3.6 defaults so trend numbers do not move with a tool update.
 [thresholds]
@@ -42,8 +44,40 @@ from     = "enemies"
 to       = "debug"
 severity = "critical"
 
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "debug"
+severity = "critical"
+
 # Combat mechanics (hits, cover, projectiles, feedback) sit below the enemies that use them.
 [[policy.forbidden_dependencies]]
 from     = "combat"
+to       = "enemies"
+severity = "warning"
+
+# The player reaches enemies only through combat (lock, hits).
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "enemies"
+severity = "warning"
+
+# Camera and sprite filtering sit below every actor that uses them.
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
 to       = "enemies"
 severity = "warning"
