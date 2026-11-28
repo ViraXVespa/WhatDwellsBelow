@@ -76,7 +76,8 @@ def ref_text() -> str:
         for sid in ["start", *R.TYPES[t]["steps"], "export"]:
             st = R.step_spec(t, sid)
             acts = [a + ("" if R.available(a, t, sid, False)[0] else " (no)") for a in st["actions"]]
-            lines.append(f"| {sid} | {_cell(_field_names(st['fields'])) or '-'} | {', '.join(acts) or '-'} | {', '.join(st['needs']) or 'fields'} | {st['group'] or '-'} |")
+            name = R.STEP_LABELS.get(sid)
+            lines.append(f"| {sid}{f' ({name})' if name else ''} | {_cell(_field_names(st['fields'])) or '-'} | {', '.join(acts) or '-'} | {', '.join(st['needs']) or 'fields'} | {st['group'] or '-'} |")
         opens = [(sid, st["open"]) for sid, st in R.TYPES[t]["steps"].items() if st["open"]]
         lines += [""] + [f"Open: {sid}: {q}" for sid, q in opens] + ([""] if opens else [])
     lines += ["## Other seams", ""] + [f"- `{s['id']}`: {s['want']} Seam: `{s['seam']}`." for s in R.SEAMS]

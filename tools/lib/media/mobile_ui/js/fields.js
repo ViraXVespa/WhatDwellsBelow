@@ -1,6 +1,7 @@
 // Plain form for a section's data: text, numbers, yes/no, lists and nested groups.
 // Editing as raw text stays behind "Edit as text" in Details.
 import { h, toast } from "./ui.js";
+import { app } from "./state.js";
 import { human } from "./subject_ui.js";
 
 function leaf(key, value, readOnly, onChange) {
@@ -78,6 +79,7 @@ const blank = (f) => (f.default !== undefined && f.default !== null ? JSON.parse
 
 function typed(f, value, readOnly, onChange) {
   const v = value === undefined ? blank(f) : value;
+  const word = (o) => (f.labels || {})[o] || human(o);
   const wrap = (el, cls = "field") => h("div", { class: cls }, h("span", {}, f.label + (f.required ? "" : " (optional)")), f.help ? h("small", { class: "help" }, f.help) : null, el);
   if (f.kind === "bool") {
     const el = h("input", { type: "checkbox", disabled: readOnly, onchange: onChange }); el.checked = !!v;
@@ -89,7 +91,16 @@ function typed(f, value, readOnly, onChange) {
     return { el: wrap(h("div", {}, el, range)), read: () => (el.value === "" ? null : Number(el.value)) };
   }
   if (f.kind === "choice") {
-    const el = h("select", { disabled: readOnly, onchange: onChange }, h("option", { value: "" }, "Pick one"), (f.options || []).map((o) => h("option", { value: o }, human(o))));
+    const el = h("select", { disabled: readOnly, onchange: onChange }, h("option", { value: "" }, "Pick one"), (f.options || []).map((o) => h("option", { value: o }, word(o))));
+    el.value = v ?? "";
+    return { el: wrap(el), read: () => el.value };
+  }
+  if (f.kind === "subject") {
+    // One of the subjects already made, of the types the field allows.
+    const pool = (app.subjects || []).filter((s) => (f.of || []).includes(s.type));
+    const el = h("select", { disabled: readOnly, onchange: onChange }, h("option", { value: "" }, pool.length ? "None" : "None made yet"),
+      pool.map((s) => h("option", { value: s.id }, s.name)),
+      v && !pool.some((s) => s.id === v) ? h("option", { value: v }, v) : null);
     el.value = v ?? "";
     return { el: wrap(el), read: () => el.value };
   }
@@ -99,7 +110,7 @@ function typed(f, value, readOnly, onChange) {
       const b = h("button", { type: "button", class: "chip" + (on.has(o) ? " on" : ""), disabled: readOnly, "aria-pressed": String(on.has(o)), onclick: () => {
         if (on.has(o)) on.delete(o); else on.add(o);
         b.classList.toggle("on", on.has(o)); b.setAttribute("aria-pressed", String(on.has(o))); onChange();
-      } }, human(o));
+      } }, word(o));
       return b;
     }));
     return { el: wrap(box), read: () => (f.options || []).filter((o) => on.has(o)).concat([...on].filter((o) => !(f.options || []).includes(o))) };

@@ -113,6 +113,11 @@ NOTES = f("notes", "Notes", "long")
 SUMMARY = f("summary", "What it is", "long", "One or two sentences.", required=True)
 WEAPONS = ["great_axe", "staff", "longbow"]
 SKILL_IDS = ["axe", "staff", "bow", "str", "mag", "rng", "def", "hp", "mine", "wood", "smith"]
+# Display names exactly as the game shows them (scripts/data/locale/en.po, skill.*).
+SKILL_NAMES = {"axe": "Great Axe", "staff": "Staff", "bow": "Longbow", "str": "Strength", "mag": "Magic", "rng": "Ranged", "def": "Defense",
+               "hp": "Hitpoints", "mine": "Mining", "wood": "Woodcutting", "smith": "Smithing"}
+# Plain step names where the store section id is not the plain word. Ids stay: they are the store and export contract.
+STEP_LABELS = {"recipes": "Gather node", "interior": "Interior", "attach": "Attach points"}
 AFFIXES = ["dmg", "def", "hp", "crit_chance", "crit_dmg", "move_spd", "atk_spd", "atk_range", "hp_on_hit", "hp_on_kill", "gather_spd", "gather_pow", "yield_chance"]
 ROSTER = ["slime", "goblin", "orc", "skeleton", "bat", "spider", "archer", "shaman", "imp", "wolf", "beetle", "wisp"]
 PROPS = ["anvil", "banner", "barrel", "boss_door", "campfire", "chest", "coins", "crack_wall", "crystal", "dumpster", "extract_gate", "fence", "gate",
@@ -231,7 +236,7 @@ TYPES: dict[str, dict] = {
                       f("rarities", "Rarities", "multi", options=["white", "green", "blue"], default=["white", "green", "blue"])]),
         "skin": S([f("look", "Look", "long", required=True), f("carry", "Shown on the character", "bool", "Carry art over the body clips.", default=True)],
                   ["generate", "tune", "review", "frame", "icon", "overlay", "pixel"], ["pictures"]),
-        "skills": S([f("xp", "Skills it trains", "multi", options=SKILL_IDS, required=True), f("basic", "Basic attack", "long"), f("special", "Special", "long"),
+        "skills": S([f("xp", "Skills it trains", "multi", options=SKILL_IDS, labels=SKILL_NAMES, required=True), f("basic", "Basic attack", "long"), f("special", "Special", "long"),
                      f("clips", "Character clips it uses", "multi", options=[c for c in PLAYER_CLIPS if c.startswith(("atk_", "spc_", "gather_"))])], [], [], group="setup"),
         "offsets": S([f("offsets", "Placement per body and facing", "table", "Paper-doll numbers the game reads.",
                         columns=[f("body", "Body", "choice", options=["female", "male"]), f("facing", "Facing", "choice", options=["down", "down_left", "left", "up_left", "up", "up_right", "right", "down_right"]),
@@ -265,14 +270,32 @@ TYPES: dict[str, dict] = {
                       f("states", "States", "list", "e.g. on, off, broken.")]),
         "art": S([f("look", "Look", "long", required=True), SOUNDS], ["generate", "tune", "review", "frame", "variant", "flatanim", "pixel", "sound"], ["pictures"]),
     }},
-    "resource": {"source": "design/interactables.md, design/tunables-combat.md (Gathering), scripts/world/gather/gather_node.gd", "steps": {
-        "details": S([SUMMARY, f("kind", "Kind", "choice", options=["mine", "wood"], required=True),
-                      f("hits", "Hits before it breaks", "number", "Mining 3-5, wood 6-10.", min=1, max=10, step=1, required=True),
-                      f("interval", "Seconds between hits", "number", min=0.2, max=5, step=0.1), f("tool", "Tool", "choice", options=["pickaxe", "hatchet"], required=True),
-                      f("yields", "Gives", "text", "e.g. ore, wood.", required=True)]),
-        "art": S([f("look", "Look", "long", required=True), f("states", "States", "multi", options=["full", "hit", "depleted"], default=["full", "depleted"]), SOUNDS],
-                 ["generate", "tune", "review", "frame", "variant", "pixel", "sound"], ["pictures"]),
-        "recipes": S([NOTES], [], [], open_question="What a recipe holds (forge inputs, food, other) is not in the docs yet."),
+    "resource": {"source": "design/interactables.md, design/tunables-combat.md (Gathering), scripts/world/gather/gather_node.gd, gather/rules.gd, dungeon_props.gd, props_place.gd", "steps": {
+        "details": S([SUMMARY, f("kind", "Kind", "choice", "Ore is mined with a pickaxe, wood is chopped with a hatchet.", options=["mine", "wood"], required=True)]),
+        "art": S([f("look", "Look", "long", "The whole node standing in the world, before anyone has hit it.", required=True),
+                  f("height", "Height (metres)", "number", "Ore is about 1.05, a tree about 1.55.", min=0.3, max=4, step=0.05)],
+                 ["generate", "tune", "review", "frame", "variant", "pixel"], ["pictures"]),
+        "recipes": S([
+            f("tool", "Tool it needs", "choice", "The wrong tool is refused for the whole run.", options=["pickaxe", "hatchet"], required=True),
+            f("skill", "Skill that helps", "choice", "Its level raises the reward chance.", options=["mine", "wood"], labels=SKILL_NAMES, required=True),
+            f("hits", "Hits before it breaks", "number", "Ore takes 3 to 5, wood 6 to 10.", min=3, max=10, step=1, default=4, required=True),
+            f("interval", "Seconds between hits", "number", "A faster tool shortens it. Ore 2.4, wood 1.2.", min=0.3, max=6, step=0.1, required=True),
+            f("chance", "Chance each hit pays out", "number", "Ore 0.65, wood 0.32. Skill, tool and gear add to it; it never goes below 0.05 or above 0.95.", min=0.05, max=1, step=0.01, required=True),
+            f("rewards", "What a hit can give", "table", "Each row rolls on a successful hit.", required=True, columns=[
+                f("item", "Item", "choice", options=["ore", "wood", "gold", "root", "other"]), f("min", "Least", "number", step=1), f("max", "Most", "number", step=1),
+                f("chance", "Chance", "number", min=0, max=1, step=0.01)]),
+            f("xp", "Skill XP per payout", "number", min=0, max=40, step=0.5, default=6, required=True),
+            f("states", "Pictures it needs", "multi", "Made from the node's art. The game flashes a hit and fades a broken node today.", options=["full", "hit", "broken", "rubble"], default=["full", "broken"], required=True),
+            f("after_break", "After it breaks", "choice", "Today a broken node is gone for the rest of the floor.", options=["gone for the floor", "leaves rubble", "grows back"], default="gone for the floor", required=True),
+            f("regrow", "Seconds until it grows back", "number", "Only used when it grows back. The game does not do this yet.", min=0, max=600, step=5),
+            f("per_floor", "Nodes per floor", "number", "Ore 18, wood 14 in the live game.", min=1, max=40, step=1, required=True),
+            f("vein", "Nodes in a vein room", "number", "A vein room is filled with one kind.", min=1, max=12, step=1),
+            f("rooms", "Rooms it can stand in", "multi", "Never near the spawn, and never in safe, boss, gate or puzzle rooms.", options=["normal", "base"], default=["normal", "base"], required=True),
+            f("biomes", "Biomes", "list", "One per line. Empty means the dungeon."),
+            f("hit_vfx", "Effect on each hit", "subject", "A VFX subject.", of=["vfx"]),
+            f("break_vfx", "Effect when it breaks", "subject", "A VFX subject.", of=["vfx"]),
+            f("sounds", "Sounds", "table", "Today one cue per swing: mine or wood.", columns=[f("cue", "Cue"), f("describe", "What it sounds like"), f("recorded", "Recorded", "bool")]),
+        ], ["variant", "flatanim", "pixel", "sound", "review"], ["pictures"]),
     }},
     "ui": {"source": "design/ui-style.md, design/ui-theme.md, assets/ui", "steps": {
         "details": S([SUMMARY, f("kind", "Kind", "choice", options=["panel (stretches)", "button", "icon", "HUD piece", "frame", "background"], required=True),
@@ -302,14 +325,30 @@ TYPES: dict[str, dict] = {
                            fields=[f("w", "Width", "number", step=0.1), f("d", "Depth", "number", step=0.1), f("h", "Height", "number", step=0.1)]),
                          f("roof", "Roof", "bool", default=True), f("door", "Door side", "choice", options=["south", "east", "west", "north", "none"]),
                          f("window_bust", "NPC shown in a window", "text", "Name of the NPC subject, if any.")]),
-        "interior": S([NOTES], [], [], open_question="What an interior holds is not in the docs yet."),
+        "interior": S([
+            f("tiles", "Tile set pieces", "table", "Each is seamless. One tile is one metre, 64 pixels.", required=True, columns=[
+                f("piece", "Piece", "choice", options=["floor", "wall", "path", "roof", "other"]), f("name", "Name"), f("seamless", "Seamless", "bool"),
+                f("tint", "Tint", "color")]),
+            f("decor", "Decor objects", "table", "Things that stand in the interior. Link one to a decoration you already made.", columns=[
+                f("name", "Name"), f("decoration", "Decoration", "subject", of=["decoration"]), f("count", "How many", "number", step=1),
+                f("destructible", "Breaks when hit", "bool"), f("hits", "Hits to break", "number", "Pots and barrels break in one. A cracked wall takes 8.", min=1, max=20, step=1),
+                f("gold_chance", "Chance of gold", "number", min=0, max=1, step=0.05), f("orb_chance", "Chance of a health orb", "number", min=0, max=1, step=0.05),
+                f("opens_chest", "Opens a hidden chest", "bool")]),
+            SOUNDS,
+        ], ["generate", "tune", "review", "frame", "tile", "variant", "pixel", "sound"], ["pictures"]),
     }},
     "vfx": {"source": "design/combat.md (telegraphs, trails, crack), assets/fx", "steps": {
         "details": S([SUMMARY, f("trigger", "Plays on", "choice", options=["hit", "slam crack", "lightning strike", "arrow trail", "smash", "pickup", "level up", "telegraph", "other"], required=True)]),
         "art": S([f("look", "Look", "long", required=True), f("frames", "Frames", "number", min=1, max=24, step=1, default=6), f("fps", "Frames per second", "number", min=1, max=30, step=1, default=12),
                   f("loop", "Loops", "bool"), f("blend", "Blend", "choice", options=["normal", "add"], default="normal"), SOUNDS],
                  ["generate", "tune", "review", "flatanim", "pixel", "sheet", "sound"], ["pictures"]),
-        "attach": S([NOTES], [], [], open_question="Where an effect attaches (feet, hand, weapon tip, target) is not in the docs yet."),
+        "attach": S([
+            f("points", "Attach points", "table", "Where the effect is placed when it plays. Hand and weapon tip are not in the game yet.", required=True, columns=[
+                f("point", "Where", "choice", "Feet: under the player. Aimed point: where the staff is aimed. Projectile tip: travels with an arrow. Target: on the enemy or breakable it hits.",
+                  options=["feet", "aimed point", "projectile tip", "target"]),
+                f("flat", "Lies flat on the ground", "bool"), f("size", "Size (metres)", "number", min=0.2, max=8, step=0.1), f("lift", "Height above the ground", "number", step=0.05),
+                f("fade", "Fade out (seconds)", "number", min=0, max=5, step=0.05), f("follows", "Moves with its parent", "bool")]),
+        ]),
     }},
 }
 
@@ -374,6 +413,6 @@ def public(simulated: bool) -> dict:
                 ok, seam = available(a, t, sid, simulated)
                 acts.append({"id": a, "ok": ok, "seam": seam, "wired": ACTIONS[a]["wired"],
                              "recipe": recipe_key(t, sid) if ACTIONS[a].get("recipe") else None})
-            rows.append({"id": sid, "fields": st["fields"], "actions": acts, "needs": st["needs"], "group": st["group"], "open": st["open"]})
+            rows.append({"id": sid, "label": STEP_LABELS.get(sid) or sid.replace("-", " ").replace("_", " ").capitalize(), "fields": st["fields"], "actions": acts, "needs": st["needs"], "group": st["group"], "open": st["open"]})
         types[t] = {"source": TYPES[t]["source"], "steps": rows}
     return {"setups": SETUPS, "actions": ACTIONS, "types": types, "seams": SEAMS, "recipes_ready": sorted(RECIPES_READY)}

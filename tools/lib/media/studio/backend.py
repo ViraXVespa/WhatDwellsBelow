@@ -429,17 +429,6 @@ class Backend:
             doc["name"] = str(body["name"]).strip()
         return self._save(doc)
 
-    def save_prompts(self, subject_id: str, body: dict) -> dict:
-        doc = self._load(subject_id)
-        steps = body.get("steps") or {}
-        if not isinstance(steps, dict) or not all(isinstance(v, str) for v in steps.values()):
-            raise ApiError(400, "steps must map step names to text")
-        self._ui(doc).setdefault("edited", {})["prompts"] = store._now()
-        doc["prompts"] = {**doc.get("prompts", {}), "detail": str(body.get("detail") or ""), "steps": {k: v for k, v in steps.items() if v.strip()}}
-        if "negative" in body:
-            doc["prompts"]["negative"] = str(body.get("negative") or "")
-        return self._save(doc)
-
     def _exists(self, subject_id: str) -> bool:
         return any(r["id"] == subject_id for r in store.list_subjects(self.root))
 

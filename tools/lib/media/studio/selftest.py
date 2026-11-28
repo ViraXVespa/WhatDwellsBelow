@@ -50,6 +50,8 @@ def sample(fd: dict):
         return fd.get("default") or opts[0]
     if kind == "multi":
         return sorted(set(fd.get("default") or opts[:1]) | set(fd.get("must") or []))
+    if kind == "subject":
+        return ""
     if kind == "bool":
         return True
     if kind == "color":
@@ -201,6 +203,24 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
     plans = info.get("steps") or {}
     if len(plans) != 14 or any(v[0]["id"] != "start" or v[-1]["id"] != "export" for v in plans.values()):
         miss("every type plan is start, sections, export")
+    plan = info["steps"]
+    names = {t: {s["id"]: s["label"] for s in rows} for t, rows in plan.items()}
+    if (names["resource"]["recipes"], names["building"]["interior"], names["vfx"]["attach"]) != ("Gather node", "Interior", "Attach points"):
+        miss(f"plain step names for the renamed steps ({names['resource']}, {names['building']}, {names['vfx']})")
+    reg = info["registry"]["types"]
+    skills = next(fd for s in reg["equipment"]["steps"] if s["id"] == "skills" for fd in s["fields"] if fd["key"] == "xp")
+    if skills["labels"].get("axe") != "Great Axe" or skills["labels"].get("hp") != "Hitpoints" or set(skills["labels"]) != set(skills["options"]):
+        miss("every skill id needs its display name")
+    if any(s["open"] for t in reg.values() for s in t["steps"]):
+        miss("no step should still be an open question")
+    gather = next(s for s in reg["resource"]["steps"] if s["id"] == "recipes")
+    if {"tool", "hits", "chance", "rewards", "after_break", "per_floor", "rooms", "hit_vfx", "sounds"} - {fd["key"] for fd in gather["fields"]}:
+        miss("gather node fields")
+    interior = next(s for s in reg["building"]["steps"] if s["id"] == "interior")
+    if {"tile", "variant"} - {a["id"] for a in interior["actions"]} or {"tiles", "decor"} - {fd["key"] for fd in interior["fields"]}:
+        miss("interior needs tile set, decor and the tile and picture actions")
+    if call(base, "POST", f"/api/studio/subjects/{sid}/prompts", {"detail": "x"})[0] != 404:
+        miss("the old Prompts screen's save route should be gone")
     out = w.run(sid, "body", "body", want=409)
     if out.get("gate") != "steps" or out.get("blocked_by") != "start":
         miss(f"body before Start should say finish Start first ({out})")

@@ -83,6 +83,7 @@ export async function step({ params }) {
   const res = await loadSubject(sid);
   if (!res.ok) return { title: "Not found", node: errorBox(res.data), back: "#/" };
   const data = res.data;
+  if (!app.subjects) await loadSubjects();
   const { subject: doc, steps } = data;
   const idx = steps.findIndex((s) => s.id === stepId);
   if (idx < 0) return { title: doc.name, node: errorBox({ error: "This step is not part of this subject." }), back: `#/s/${sid}` };

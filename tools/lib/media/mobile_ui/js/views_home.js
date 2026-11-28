@@ -138,7 +138,7 @@ function leftToBuild() {
       h("p", { class: "small" }, a.inputs ? `Uses: ${a.inputs}` : ""), h("p", { class: "small muted" }, a.setup ? `Setup: ${reg.setups[a.setup].label}` : "No model needed")))),
     h("h3", {}, "By type"),
     types.map(({ t, rows }) => h("details", { class: "card" }, h("summary", {}, `${human(t)} (${rows.length} step${rows.length === 1 ? "" : "s"})`),
-      h("ul", { class: "small" }, rows.map(({ st, gaps }) => h("li", {}, h("b", {}, human(st.id)), ": ",
+      h("ul", { class: "small" }, rows.map(({ st, gaps }) => h("li", {}, h("b", {}, st.label), ": ",
         gaps.length ? gaps.map((g) => word(g.id) + (g.wired ? " (needs its default recipe)" : "")).join(", ") : "",
         st.open ? h("span", { class: "muted" }, (gaps.length ? ". " : "") + "Still to decide: " + st.open) : null))))));
 }

@@ -27,7 +27,6 @@ class Api:
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/steps/(?P<step>[a-z0-9_-]+)", lambda q, body, sid, step: self.b.set_step(sid, step, body)),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/overrides", lambda q, body, sid: self.b.set_overrides(sid, body)),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/sections/(?P<sec>[a-z0-9_-]+)", lambda q, body, sid, sec: self.b.save_section(sid, sec, body)),
-            ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/prompts", lambda q, body, sid: self.b.save_prompts(sid, body)),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/links", lambda q, body, sid: {"subject": self.b.link(sid, body)}),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/mark", lambda q, body, sid: {"subject": self.b.mark(sid, body)}),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/clear", lambda q, body, sid: {"subject": self.b.clear_flag(sid, body)}),

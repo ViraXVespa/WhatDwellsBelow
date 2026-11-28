@@ -12,7 +12,7 @@ from . import registry
 # Actions that read the step's prompt or settings (what an Adjust override changes).
 PROMPT_ACTIONS = {"generate", "tune", "smooth", "body", "edit", "variant", "icon", "tile"}
 PICTURE_MAKERS = {a for a, s in registry.ACTIONS.items() if s["makes"] in ("still", "mesh", "clip") and a not in ("reference", "preview")}
-LABELS = {"start": "Start", "export": "Send to the game"}
+LABELS = {"start": "Start", "export": "Send to the game", **registry.STEP_LABELS}
 ACTION_LABELS = {a: s["label"] for a, s in registry.ACTIONS.items()}
 EMPTY = (None, "", [], {})
 
