@@ -2,7 +2,7 @@
 
 Status: suggested starts  
 Read when: the work changes a number, formula, or debug default  
-Code: `scripts/data/balance.gd`, `scripts/data/balance/vars.gd` (aggregate) + `vars_main.gd` (this file's keys; `vars_combat|world|economy.gd` match the other tunables files), `access.gd`, `schema.gd`, `enemies.gd`, `scripts/debug/tunable_overrides.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance.gd` (facade), `scripts/data/balance/vars.gd` (aggregate) + `vars_main.gd` (this file's keys; `vars_combat|world|economy.gd` match the other tunables files), `access.gd`, `schema.gd`, `enemies.gd`, `scripts/data/tunables.gd` (code map row Numbers; gdhealth group `numbers`); also `scripts/debug/tunable_overrides.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  

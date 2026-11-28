@@ -2,7 +2,7 @@
 
 Status: current plan
 Read when: monster variety, suggested roles, named monsters, new enemy type
-Code: `scripts/combat/roster.gd`, `scripts/combat/enemy/enemy_setup.gd`, `scripts/data/balance/enemies.gd`
+Code: `scripts/combat/roster.gd`, `scripts/combat/enemy/enemy_setup.gd`, `scripts/data/balance.gd` (`enemy_defaults`)
 
 ## Enemy variety
 
