@@ -19,7 +19,7 @@ if os.path.exists(BULLETS_FILE):
     with open(BULLETS_FILE, 'r', encoding='utf-8') as f:
         bullets = [ln.strip() for ln in f.readlines() if ln.strip()]
 
-print('Bullets loaded:', bullets)
+# print('Bullets loaded:', bullets)
 if not bullets:
     print('No bullets found – aborting patch.')
     sys.exit(1)
