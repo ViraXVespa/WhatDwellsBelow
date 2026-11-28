@@ -1,15 +1,7 @@
-# Save — display, performance, renderer
+# Save — performance, renderer
 
 Status: current plan  
-Read when: borderless exclusive, mip decode ban, Compatibility preferred
-
-## Display apply
-
-- Desktop applies saved `display_mode` at boot via `DisplayMode.apply_saved()`.
-- Web cannot enter fullscreen except from a user gesture. `web_fullscreen` is the preference; the pre-splash gate, Settings → Graphics toggle, and Alt+Enter are the gestures.
-- Esc on web MUST NOT exit fullscreen. Pause → Settings → Graphics and Alt+Enter do.
-- `screen.orientation.lock("landscape")` is attempted from those same enter gestures. iPhone Safari tabs may ignore it; Home Screen / PWA launches use the manifest orientation.
-- Custom feature tag `xbox` hides the Settings Quit / display rows and skips apply / Alt+Enter / the gate.
+Read when: mip decode ban, Compatibility preferred
 
 ## Performance
 

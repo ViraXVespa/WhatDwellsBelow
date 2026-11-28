@@ -326,6 +326,12 @@ doors:
       boot: design/app-flow-boot.md
       legs: design/app-flow-legs.md
       bug_report: design/app-flow-bug-report.md
+  display:
+    file: design/display.md
+    read_when: "quit chord, window apply"
+    jobs:
+      desktop: design/display-desktop.md
+      browser: design/display-web.md
   save_tech:
     file: design/save-tech.md
     read_when: "persistence, wasm headers, autoloads, perf"
@@ -393,6 +399,8 @@ job_read_when:
   app_flow.boot: "startup order, Dbg shim, wdb flags"
   app_flow.legs: "loader handoff, descent, next floor, expedition ending"
   app_flow.bug_report: "relay upload, crash marker, install id, state report"
+  display.desktop: "borderless exclusive, saved kind, windowed"
+  display.browser: "browser gesture, PWA standalone, orientation, Esc swallow"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.bench: "scored legs, continuous sweep"
@@ -421,7 +429,7 @@ job_read_when:
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
-  save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
+  save_tech.runtime: "mip decode ban, Compatibility preferred"
   save_tech.benchmarks: "benchmark records, open_timing, fps_pct, hitch timings"
   archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
   archives.play: "worktree minimize, Godot child restore, slug copyhit"
@@ -480,6 +488,7 @@ smokes:
   debug: "7,9"
   audio_visual: "9"
   app_flow: "1,7"
+  display: "1,7"
   app_flow.bug_report: "1"
   save_tech: "8"
   feel: "2,4"

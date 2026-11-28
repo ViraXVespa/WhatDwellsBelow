@@ -56,6 +56,7 @@ The Build front door is `grok-build.md`; `build-job-cycle.md` owns the work cycl
 | Secret debug, playtest, anim browser | `debug.md` |
 | Music, SFX, art rules, splash | `audio-visual.md` |
 | App autoload, boot, scene legs, Report Bug client | `app-flow.md` |
+| Window modes, web fullscreen, quit chord | `display.md` |
 | Save, web export, perf (door) | `save-tech.md` |
 | Time targets, polish, a11y | `feel.md` |
 | Failure modes | `edge-cases.md` |
