@@ -1,7 +1,8 @@
 # Graphics env
 
 Status: current plan
-Read when: hearth-warm hole-cold Environment, abyss-plinth, caller redirect
+Read when: hearth-warm hole-cold Environment, abyss-plinth, caller redirect  
+Code: `scripts/graphics/env_kit.gd`
 
 `scripts/graphics/env_kit.gd` owns WorldEnvironment plus DirectionalLight3D. Callers: `camp_build.world`, `dungeon_geo.world`, `foundation.gd`.
 

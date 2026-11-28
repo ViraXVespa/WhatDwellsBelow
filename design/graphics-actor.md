@@ -1,7 +1,8 @@
 # Graphics actor
 
 Status: current plan
-Read when: billboard-alpha squash quads, player yard-mannequin foes, source-offset
+Read when: billboard-alpha squash quads, player yard-mannequin foes, source-offset  
+Code: `scripts/graphics/actor_lit.gd` + `scripts/graphics/actor_lit/`, `scripts/world/billboard_spr.gd`
 
 Y-billboard frames stay nearest stickers. A sprite shader samples the light RT once at the actor's feet, with the ground shader's `light_origin` / `light_span` / `textureLod` tap, and multiplies that by the sticker and by `modulate`. Play does not call `LightRt.sample_xz` for actors. Actor stickers are created with `shaded` off (`BillSpr.bare` in `scripts/world/billboard_spr.gd`). The light they take is that multiply. Props and walls stay forward-lit. `App` runs `SpriteFilt.apply_sprite` on every new `Sprite3D`, and that filter only sets the texture filter. Do not turn `shaded` off there.
 

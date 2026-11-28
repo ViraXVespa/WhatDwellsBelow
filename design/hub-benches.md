@@ -1,7 +1,8 @@
 # Hub — Anvil, vendor, dumpster
 
 Status: current plan  
-Read when: ore-for-gold stall, dumpster flavor, plaza_tarp host
+Read when: ore-for-gold stall, dumpster flavor, plaza_tarp host  
+Code: `scripts/data/progress/progress_town.gd`, `scripts/ui/gear_board.gd`
 
 ## Anvil
 - Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.

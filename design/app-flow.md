@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: App singleton, scene swaps, launch arguments  
-Code: `scripts/app.gd` (the `App` autoload facade) + `scripts/app/`, `scripts/boot.gd`, `scripts/title.gd` + `scripts/title/`, `scripts/data/bug_doors.gd` (code map row App flow; gdhealth group `app_flow`)
+Code: `scripts/app.gd` (the `App` autoload facade) + `scripts/app/`, `scripts/boot.gd`, `scripts/title.gd` + `scripts/title/`, `scripts/data/bug_doors.gd`, `scripts/world/foundation.gd` (the combat sandbox / smoke host scene) (code map row App flow; gdhealth group `app_flow`)
 
 | Job | Open |
 |-----|------|

@@ -1,7 +1,8 @@
 # Graphics buffer
 
 Status: current plan
-Read when: four-texel radiance buffer, disc blobs, fine occupancy
+Read when: four-texel radiance buffer, disc blobs, fine occupancy  
+Code: `scripts/graphics/light_rt.gd`, `scripts/graphics/light_rt/lights.gd`, `scripts/graphics/light_rt/publish.gd`, `scripts/graphics/light_rt/cast_grid.gd`, `scripts/graphics/chunk_grid.gd`, `scripts/graphics/torch_bill.gd`
 
 Shared file with hub.bake: `scripts/graphics/light_rt.gd` is this job's light RT, but its `HUB_SUB` and the `scripts/graphics/light_rt/hub_*.gd` helpers belong to hub.bake. A change to the shared stamp or sample path reads both docs.
 
