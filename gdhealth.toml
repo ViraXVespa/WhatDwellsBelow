@@ -13,6 +13,7 @@ combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/comb
 debug         = ["scripts/debug/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
+numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
 player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
 save_tech     = ["scripts/data/save_store.gd", "scripts/data/save_store/**"]
 skills        = ["scripts/data/progress_combat.gd", "scripts/data/progress_combat/**", "scripts/data/progress_forge.gd", "scripts/data/progress_forge/**"]
@@ -72,6 +73,11 @@ from     = "save_tech"
 to       = "debug"
 severity = "critical"
 
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "debug"
+severity = "critical"
+
 # Combat mechanics (hits, cover, projectiles, feedback) sit below the enemies that use them.
 [[policy.forbidden_dependencies]]
 from     = "combat"
@@ -115,4 +121,35 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "skills"
 to       = "save_tech"
+severity = "warning"
+
+# Numbers are a leaf: they read the pref defaults (save_tech) and nothing from the systems they tune.
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "skills"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "camera"
 severity = "warning"
