@@ -116,9 +116,8 @@ func _aim(cell: Vector2i) -> void:
 	var origin: Vector2 = (box - drawn) * 0.5
 	map_rect.position = origin
 	map_rect.size = drawn
-	var MapS: GDScript = load("res://scripts/world/dungeon/minimap.gd") as GDScript
 	var region := Rect2(float(x) / float(w), float(y) / float(h), float(rw) / float(w), float(rh) / float(h))
-	MapS.attach(host, map_rect, region)
+	host.call("map_attach", map_rect, region)
 	Util.place_mark(self, cell, x, y, rw, rh)
 func _pick_local(cell: Vector2i) -> void:
 	if spot and Vector2i(spot.get("crystal_cell")) == cell:

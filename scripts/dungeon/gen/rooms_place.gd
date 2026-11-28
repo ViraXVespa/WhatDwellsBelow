@@ -75,8 +75,7 @@ static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, b
 				halls.append(Vector2i(x, y))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = w * 73856093 + h * 19349663 + halls.size()
-	var Rooms = load("res://scripts/dungeon/gen/rooms.gd")
-	Rooms.shuffle_i(rng, halls)
+	shuffle_i(rng, halls)
 	var spacing := 10
 	var cap := 40
 	if bal:
@@ -142,3 +141,11 @@ static func mark_deadends(grid: PackedByteArray, w: int, h: int, rooms: Array) -
 		if ok:
 			cleaned.append(c)
 	return cleaned
+
+## Fisher-Yates on rng (rooms.gd delegates here so this helper never loads its facade).
+static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
+	for i in arr.size():
+		var j := rng.randi_range(i, arr.size() - 1)
+		var tmp: Variant = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp

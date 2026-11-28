@@ -173,6 +173,10 @@ func ensure_debug() -> void:
 func ensure_anim_browser() -> void:
 	Boot.ensure_anim_browser(self)
 
+## World props open their screen through App so world code never loads UI scripts.
+func open_crystal(spot: Node) -> void:
+	(load("res://scripts/ui/crystal_ui.gd") as GDScript).open(spot)
+
 func _open_debug() -> void:
 	Boot.ensure_debug(self)
 	if debug and debug.has_method("show_menu"):

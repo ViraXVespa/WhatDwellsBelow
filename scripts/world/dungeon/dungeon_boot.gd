@@ -137,7 +137,7 @@ static func spawns(host: Node) -> void:
 	host.stairs.setup("stairs", Vector3(float(st.x) + 0.5, 0.0, float(st.y) + 0.5), not App.boss_dead)
 	host.add_child(host.stairs)
 	Dbg.lt_dmark("spawn_stairs")
-	CrystalNet.place_floor(host)
+	(load("res://scripts/world/crystal/crystal_place.gd") as GDScript).place_entrance(host)
 	Dbg.lt_dmark("spawn_crystals")
 	Dbg.lt_dnote("spawn_jobs", "deferred")
 	Dbg.lt_dmark("spawn_jobs")

@@ -5,9 +5,6 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const Marks := preload("res://scripts/world/dungeon/map_marks.gd")
 
-static func _map() -> GDScript:
-	return load("res://scripts/world/dungeon/minimap.gd") as GDScript
-
 ## Cells of map per cell of view. 1 shows the whole floor. No upper cap; callers clamp.
 static func reveal_zoom(host: Node) -> float:
 	if host == null or host.get("data") == null:
@@ -67,10 +64,9 @@ static func sync_views(host: Node) -> void:
 	if hud != null:
 		map_view = hud.get("mini_map") as TextureRect
 	if map_view != null:
-		var View: GDScript = load("res://scripts/ui/hud/hud_view.gd") as GDScript
-		View.layout(hud)
+		hud.call("layout_view")
 		var region: Rect2 = mini_region(host)
-		_map().attach(host, map_view, region)
+		attach(host, map_view, region)
 		Marks.bind(host, map_view, region)
 		var shell: Control = hud.get("mini_wrap") as Control
 		if shell:
@@ -95,3 +91,19 @@ static func _player_uv(host: Node) -> Vector2:
 	if cell.x < 0:
 		return Vector2(0.5, 0.5)
 	return Vector2((float(cell.x) + 0.5) / w, (float(cell.y) + 0.5) / h)
+
+## Bind the map shader to a rect (minimap.gd and the crystal screen delegate here).
+static func attach(host: Node, rect: TextureRect, region: Rect2) -> void:
+	if rect == null or host.map_shader == null or host.map_mask_tex == null or host.map_mark_tex == null:
+		return
+	var mat: ShaderMaterial = rect.material as ShaderMaterial
+	if mat == null or mat.shader != host.map_shader:
+		mat = ShaderMaterial.new()
+		mat.shader = host.map_shader
+		rect.material = mat
+	mat.set_shader_parameter("base_tex", host.map_tex)
+	mat.set_shader_parameter("mask_tex", host.map_mask_tex)
+	mat.set_shader_parameter("mark_tex", host.map_mark_tex)
+	mat.set_shader_parameter("fog_color", Color(0.02, 0.02, 0.03, 1.0))
+	var uv := Vector4(region.position.x, region.position.y, region.size.x, region.size.y)
+	mat.set_shader_parameter("region", uv)

@@ -40,13 +40,7 @@ static func scatter_rooms(host: Node) -> Array:
 	return out
 
 static func shuffle_rooms(host: Node, rooms: Array) -> Array:
-	var pool: Array = rooms.duplicate()
-	for i in pool.size():
-		var j: int = host.floor_rng.randi_range(i, pool.size() - 1)
-		var tmp: Variant = pool[i]
-		pool[i] = pool[j]
-		pool[j] = tmp
-	return pool
+	return Place.shuffle_rooms(host, rooms)
 
 static func scatter_counts(host: Node, eager: bool = true) -> void:
 	var rooms: Array = scatter_rooms(host)
@@ -57,14 +51,7 @@ static func scatter_counts(host: Node, eager: bool = true) -> void:
 	Place.place_n(host, rooms, int(App.bal.shrine_count), "shrine", eager)
 
 static func puzzle_cells(src: Variant) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	if src is Array:
-		for raw: Variant in src:
-			out.append(Vector2i(raw))
-		return out
-	if src is Vector2i:
-		out.append(src)
-	return out
+	return Place.puzzle_cells(src)
 
 static func place_one(host: Node, kind: String, prefer: Dictionary) -> Vector2i:
 	var cell: Vector2i = host._free_cell_world(prefer)

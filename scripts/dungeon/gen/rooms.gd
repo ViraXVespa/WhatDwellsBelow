@@ -82,11 +82,7 @@ static func cell_dist(dist: PackedInt32Array, w: int, c: Vector2i) -> int:
 	return dist[i]
 
 static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
-	for i in arr.size():
-		var j := rng.randi_range(i, arr.size() - 1)
-		var tmp: Variant = arr[i]
-		arr[i] = arr[j]
-		arr[j] = tmp
+	Place.shuffle_i(rng, arr)
 
 ## Gate rooms need a top-wall slot (GateSlot): gates never hang on side walls.
 static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object, grid: PackedByteArray, w: int, h: int) -> void:

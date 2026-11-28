@@ -5,10 +5,9 @@ const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 
 static func place_n(host: Node, rooms: Array, n: int, what: String, eager: bool = true) -> void:
-	var _fac = load("res://scripts/world/dungeon_props.gd")
 	if n <= 0 or rooms.is_empty():
 		return
-	var pool: Array = _fac.shuffle_rooms(host, rooms)
+	var pool: Array = shuffle_rooms(host, rooms)
 	var placed := 0
 	var attempts := 0
 	var ri := 0
@@ -60,7 +59,6 @@ static func commit_kind(host: Node, what: String, cell: Vector2i) -> void:
 		host.add_child(q)
 
 static func spawn_puzzle(host: Node, r: Dictionary) -> void:
-	var _fac = load("res://scripts/world/dungeon_props.gd")
 	host._note("puzzle")
 	var spots: Array[Vector2i] = _room_spots(host, r)
 	var used: Array[Vector2i] = []
@@ -113,7 +111,7 @@ static func spawn_puzzle(host: Node, r: Dictionary) -> void:
 			host._note("crack")
 	for cell: Vector2i in used:
 		host._mark_cell(cell)
-	for extra: Vector2i in _fac.puzzle_cells(used):
+	for extra: Vector2i in puzzle_cells(used):
 		host._mark_cell(extra)
 
 static func _room_spots(host: Node, r: Dictionary) -> Array[Vector2i]:
@@ -158,3 +156,23 @@ static func _take_adjacent(host: Node, spots: Array[Vector2i], origin: Vector2i)
 
 static func _valid_cell(c: Vector2i) -> bool:
 	return c.x > -900 and c.y > -900
+
+## Room order and puzzle cells live here; dungeon_props.gd delegates (no facade back-load).
+static func shuffle_rooms(host: Node, rooms: Array) -> Array:
+	var pool: Array = rooms.duplicate()
+	for i in pool.size():
+		var j: int = host.floor_rng.randi_range(i, pool.size() - 1)
+		var tmp: Variant = pool[i]
+		pool[i] = pool[j]
+		pool[j] = tmp
+	return pool
+
+static func puzzle_cells(src: Variant) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if src is Array:
+		for raw: Variant in src:
+			out.append(Vector2i(raw))
+		return out
+	if src is Vector2i:
+		out.append(src)
+	return out

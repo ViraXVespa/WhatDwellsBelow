@@ -135,6 +135,16 @@ func map_zoom_player(delta_z: float) -> void:
 func map_pan_by(delta: Vector2) -> void:
 	(load("res://scripts/world/dungeon/map_act.gd") as GDScript).pan_by(self, delta)
 
+## Crystal net and crystal screen reach the map through these (no minimap.gd loads from outside).
+func refresh_map_marks() -> void:
+	DungeonMinimap.refresh_marks(self)
+
+func map_note_player(cell: Vector2i) -> void:
+	DungeonMinimap.note_player(self, cell)
+
+func map_attach(rect: TextureRect, region: Rect2) -> void:
+	MinimapView.attach(self, rect, region)
+
 func sync_map_view() -> void:
 	MinimapView.sync_views(self)
 	if map_layer and map_layer.visible:

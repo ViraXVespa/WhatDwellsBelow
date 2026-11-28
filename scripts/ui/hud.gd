@@ -83,3 +83,7 @@ func refresh(player: Node, dungeon: Node) -> void:
 	_player = player
 	_dungeon = dungeon
 	Act.refresh(self, player, dungeon)
+
+## Map view sync calls this so world code never loads hud_view.gd.
+func layout_view() -> void:
+	View.layout(self)
