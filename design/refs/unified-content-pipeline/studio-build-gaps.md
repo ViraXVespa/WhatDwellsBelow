@@ -38,7 +38,7 @@ The studio page shows the same list under Coverage, Left to build. In real mode 
 | `tile` Make a seamless tile | `pipeline tile ID --kind floor\|wall\|path --json` | description, tile kind | `{stills:[tile png]}` | tile-seamless | no (needs recipe) | 2 |
 | `keyframes` Make reference frames | `pipeline keyframes ID --clip CLIP --json` | clip name, the step prompt | `{clip, frames:[png], picked:[]}` | qwen-still | no (needs recipe) | 4 |
 | `animate` Make the animation | `pipeline animate ID --clip CLIP --dirs N --json` | approved 3D model (or key picture for flat things), clip name, directions, frames | `{clip, dirs, frames:{dir:[png]}, strip}` | motion-8dir | no | 5 |
-| `flatanim` Make the animation | `pipeline frames ID --clip CLIP --frames N --json` | approved key picture, clip name, frame count | `{clip, frames:[png], strip}` | frames-2d | no | 3 |
+| `flatanim` Make flat frames | `pipeline frames ID --clip CLIP --frames N --json` | approved key picture, clip name, frame count | `{clip, frames:[png], strip}` | frames-2d | no | 3 |
 | `pixel` Turn into pixel art | `pipeline pixel ID --image P --size 128 --json` | picture or frames | `{out, palette}` | - | no | 22 |
 | `sheet` Pack the frames for the game | `pipeline sheet ID --json` | approved clips | `{sheets:[png], frames:{clip:{count, columns, w, h, origin}}}` | - | no | 6 |
 | `sound` Make a placeholder sound | `pipeline sound ID --cue CUE --text TEXT --json` | cue name, description | `{sound, cue, placeholder:true}` | stable-audio | no | 13 |

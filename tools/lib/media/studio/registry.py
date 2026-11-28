@@ -66,7 +66,7 @@ ACTIONS: dict[str, dict] = {
                   "inputs": "clip name, the step prompt", "outputs": "{clip, frames:[png], picked:[]}", "setup": "qwen-still", "wired": False, "makes": "still", "recipe": True},
     "animate": {"label": "Make the animation", "command": "pipeline animate ID --clip CLIP --dirs N --json",
                 "inputs": "approved 3D model (or key picture for flat things), clip name, directions, frames", "outputs": "{clip, dirs, frames:{dir:[png]}, strip}", "setup": "motion-8dir", "wired": False, "makes": "clip"},
-    "flatanim": {"label": "Make the animation", "command": "pipeline frames ID --clip CLIP --frames N --json",
+    "flatanim": {"label": "Make flat frames", "command": "pipeline frames ID --clip CLIP --frames N --json",
                  "inputs": "approved key picture, clip name, frame count", "outputs": "{clip, frames:[png], strip}", "setup": "frames-2d", "wired": False, "makes": "clip"},
     "pixel": {"label": "Turn into pixel art", "command": "pipeline pixel ID --image P --size 128 --json",
               "inputs": "picture or frames", "outputs": "{out, palette}", "setup": None, "wired": False, "makes": "still"},

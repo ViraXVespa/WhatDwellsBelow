@@ -289,12 +289,16 @@ class Backend:
                   "missing": link["id"] not in names} for link in doc["links"]]
         stills = self.stills(doc)
         return {"subject": doc, "links": links, "stills": stills, "reviews": self.reviews(doc),
-                "gates": self.gates(doc, stills), "steps": step_flow.states(doc, stills, busy),
+                "gates": self.gates(doc, stills), "steps": self.step_states(doc, stills, busy),
                 "overrides": (doc.get(UI_KEY) or {}).get("overrides") or {}}
 
     # ---- steps -----------------------------------------------------------------
-    def step_states(self, doc: dict) -> list[dict]:
-        return step_flow.states(doc, self.stills(doc))
+    def step_states(self, doc: dict, stills: list[dict] | None = None, busy: dict | None = None) -> list[dict]:
+        rows = step_flow.states(doc, self.stills(doc) if stills is None else stills, busy)
+        for row in rows:
+            row["not_ready"] = [a for a in row["actions"] if not registry.available(a, doc["type"], row["id"], self.simulated)[0]]
+            row["finish_message"] = finish_message(row) if row.get("finish_blocker") else None
+        return rows
 
     def _step_row(self, doc: dict, step: str) -> dict:
         row = next((s for s in self.step_states(doc) if s["id"] == step), None)
