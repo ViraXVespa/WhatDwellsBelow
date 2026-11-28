@@ -7,9 +7,9 @@ Read when: splitting topic `design/*.md` into a door + siblings; Grok Bot doc fa
 
 Cut routing tokens without losing comprehension. Do not change what the docs say. Move existing prose; fix links / README index rows.
 
-## Model (match art-pipeline)
+## Model (match content-pipeline)
 
-- art_pipeline is the template. One **door** (facade) keeps Status, Read when, Code (if any), and a **Job → Open** table; siblings hold the heavy sections tied to one job.
+- content_pipeline is the template. One **door** (facade) keeps Status, Read when, Code (if any), and a **Job → Open** table; siblings hold the heavy sections tied to one job.
 - Callers keep linking the **facade path** unless they need one sibling.
 
 ## Caps

@@ -10,7 +10,7 @@ exclude = ["addons/**", ".godot/**", "reports/**"]
 [groups]
 app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/data/bug_doors.gd", "scripts/world/foundation.gd"]
 archives      = ["scripts/ui/archives_ui.gd", "scripts/ui/archives_ui/**", "scripts/data/archives/**"]
-art_pipeline  = ["scripts/data/content_pack.gd", "scripts/data/content_pack/**"]
+content_pipeline  = ["scripts/data/content_pack.gd", "scripts/data/content_pack/**"]
 audio_visual = ["scripts/audio/**"]
 camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd", "scripts/world/depth.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
@@ -145,7 +145,7 @@ to       = "debug"
 severity = "critical"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "debug"
 severity = "critical"
 
@@ -804,101 +804,101 @@ severity = "warning"
 
 # The content pipeline export reader is a leaf: game code reads exported subjects through it; it reads no game system.
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "app_flow"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "combat"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "enemies"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "player"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "interactables"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "inventory"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "skills"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "progress"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "dungeon"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "hub"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "graphics"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "ui"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "gear_ui"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "archives"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "save_tech"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "input"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "audio_visual"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "camera"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "display"
 severity = "warning"
 
 [[policy.forbidden_dependencies]]
-from     = "art_pipeline"
+from     = "content_pipeline"
 to       = "localization"
 severity = "warning"

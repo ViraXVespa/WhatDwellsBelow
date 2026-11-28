@@ -40,12 +40,12 @@ Then, only if the User named work:
     and design/doc-library.md iff editing docs by script or changing doc_patch / md_format_lib
     and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
 
-Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
+Imagine tool calls use the isolated-media **gate** only. Do not also open content_pipeline to generate.
 Build repo skills live at `.grok/skills/` (Imagine / I2V / pc-offload). They are not the Grok Bot skill library.
 Imagine / I2V skills cite the isolated-media gate only and stay Build-only.
 The pc-offload skill cites the pc-offload catalog for Grok Build on the User PC, and may name the agents file where it tells Build to read it by hand (a worktree session does not always auto-load it).
 Types / warnings / tabs live in `design/gdscript-law.md`, not the agents file.
-New character art uses design/art-pipeline.md then one sibling. Do not start a Bible, a pack, a review tree, or an I2V unit.
+New character art uses design/content-pipeline.md then one sibling. Do not start a Bible, a pack, a review tree, or an I2V unit.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md.
 Path files name recipes. Recipes do not name path files.

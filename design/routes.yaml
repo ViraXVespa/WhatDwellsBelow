@@ -355,11 +355,11 @@ doors:
     file: design/coverage.md
     read_when: "complete-checklist audit, absent-system survey"
     jobs: {}
-  art_pipeline:
-    file: design/art-pipeline.md
+  content_pipeline:
+    file: design/content-pipeline.md
     read_when: "unified content, export contract, asset types"
     jobs:
-      content: design/content-pipeline.md
+      content: design/content-pipeline-subjects.md
       mesh: design/content-pipeline-mesh.md
       studio: design/content-pipeline-ui.md
       legacy: design/content-pipeline-legacy.md
@@ -413,10 +413,10 @@ job_read_when:
   debug.hitch_log: "spike jsonl, localhost"
   debug.dungeon_map: "generation dump, ascii seal fixtures"
   debug.shot_checks: "planted faults, unit probes"
-  art_pipeline.content: "pipeline subjects, proportion bands, clause checks"
-  art_pipeline.mesh: "hunyuan trellis pixal hi3d"
-  art_pipeline.studio: "authoring phone studio"
-  art_pipeline.legacy: "rekey manifests, shipped sprite sheets, retired generators"
+  content_pipeline.content: "pipeline subjects, proportion bands, clause checks"
+  content_pipeline.mesh: "hunyuan trellis pixal hi3d"
+  content_pipeline.studio: "authoring phone studio"
+  content_pipeline.legacy: "rekey manifests, shipped sprite sheets, retired generators"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
@@ -502,7 +502,7 @@ smokes:
   feel: "2,4"
   edge_cases: "7"
   coverage: "1"
-  art_pipeline: "9"
+  content_pipeline: "9"
   archives: "9"
 
 # Build prove: scripted shot flows (tools/data/shot-flows/*.json) per door or door.job. A job maps only to its own key (its door's flows
@@ -635,7 +635,7 @@ conflicts_with:
   interactables:
     - hub
   player:
-    - art_pipeline
+    - content_pipeline
     - combat
   skills:
     - inventory
@@ -647,7 +647,7 @@ conflicts_with:
     - inventory
   enemies:
     - combat
-  art_pipeline:
+  content_pipeline:
     - player
   combat:
     - player

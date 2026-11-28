@@ -95,7 +95,7 @@ A recipe is the workflow and step prompt an action uses for that type and step. 
 
 ### character
 
-Grounded in: design/player.md, design/content-pipeline.md, assets/sprites/player.
+Grounded in: design/player.md, design/content-pipeline-subjects.md, assets/sprites/player.
 
 | Step | Fields | Actions (not set up in real mode) | Needs | Group |
 |---|---|---|---|---|
@@ -146,7 +146,7 @@ Grounded in: scripts/combat/roster.gd, scripts/data/balance/enemies.gd, design/e
 
 ### sub-boss
 
-Grounded in: design/enemies.md (Floor Guardians), design/content-pipeline.md (draw scale 2).
+Grounded in: design/enemies.md (Floor Guardians), design/content-pipeline-subjects.md (draw scale 2).
 
 | Step | Fields | Actions (not set up in real mode) | Needs | Group |
 |---|---|---|---|---|
@@ -163,7 +163,7 @@ Grounded in: design/enemies.md (Floor Guardians), design/content-pipeline.md (dr
 
 ### boss
 
-Grounded in: design/enemies.md (Gate Master), design/content-pipeline.md (draw scale 4).
+Grounded in: design/enemies.md (Gate Master), design/content-pipeline-subjects.md (draw scale 4).
 
 | Step | Fields | Actions (not set up in real mode) | Needs | Group |
 |---|---|---|---|---|

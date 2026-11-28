@@ -26,7 +26,7 @@ COMMANDS = [  # (subcommand, module under tools/lib/, what it does)
     ("pack-loco",        "media/pack_locomotion",        "Pack idle and walk frames from I2V clips"),
     ("pack-oneshot",     "media/pack_oneshot",           "Pack one-shot I2V clips into engine frames"),
     ("pack-turntable",   "media/pack_turntable",         "Pack 8-dir player sheets from turntable clips"),
-    ("pipeline",         "media/pipeline_cmd",           "Art pipeline WIP store and export (local until export)"),
+    ("pipeline",         "media/pipeline_cmd",           "Content pipeline WIP store and export (local until export)"),
     ("studio",           "media/studio_cmd",             "Pipeline studio: phone UI on :8189 (WDB_PIPELINE_SIMULATE=1 fakes long jobs)"),
     ("bible-prompt",     "media/bible_prompt",           "Bible Imagine text (--gender, --enemy ID)"),
     ("bible-normalize",  "media/bible_normalize",        "Squared 3x3 Bible to the live lock sheet"),

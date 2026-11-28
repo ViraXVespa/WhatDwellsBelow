@@ -478,8 +478,8 @@ def selftest(script: list[str]) -> int:
         if code == 0 or "DO NOT LINK" not in out or "mklink" in out:
             bad.append("needs-local must fail loudly and must not link")
         (root / "design" / "tasks" / "art.md").write_text("# Art\n\nid: art\nowner: build\nstatus: open\ndone-when: x\nresume: y\n", encoding="utf-8")
-        code, out = run(root, "--dry-run", "art_pipeline.pack", "--task", "art")
-        if code != 0 or "worktree create wdb-art_pipeline.pack-" not in out or "--cwd" not in out or "--trust" not in out or "slice.py start --job art_pipeline.pack" not in out or "docs.py task show art" not in out or "mklink" in out or "never edit" in out:
+        code, out = run(root, "--dry-run", "content_pipeline.pack", "--task", "art")
+        if code != 0 or "worktree create wdb-content_pipeline.pack-" not in out or "--cwd" not in out or "--trust" not in out or "slice.py start --job content_pipeline.pack" not in out or "docs.py task show art" not in out or "mklink" in out or "never edit" in out:
             bad.append("a task must print the start command and docs.py task show, and must not link _src")
         code, out = run(root, "--dry-run", "player")
         if "worktree create" not in out or "--trust" not in out or "mklink" in out or "link PATH" in out:

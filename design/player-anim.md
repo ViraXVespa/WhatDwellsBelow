@@ -7,13 +7,13 @@ Code: `scripts/world/player/player_anim.gd` (facade for the clip helpers) + `scr
 ## Facing and animation system
 
 - 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Direction names match the Character Bible: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
-- New character art is art_pipeline. Do not start an I2V unit or a pack job.
+- New character art is content_pipeline. Do not start an I2V unit or a pack job.
 - In-game idle is the directional key still for the facing the player is aiming. It is not an I2V breath loop.
 - Required player **body** states at minimum: `idle` (key still), `idle_to_walk`, `walk`, `walk_to_idle`, `attack_great_axe` / `attack_staff` / `attack_longbow`, `special_great_axe` / `special_staff` / `special_longbow`, `gather_pickaxe` / `gather_hatchet`, death, “Dispel”.
 - `idle_to_walk` and `walk_to_idle` MUST exist for every facing. Playback MUST play the start transition when leaving idle into walk and a stop transition when coming to rest, rather than popping between the key still and a mid-stride walk frame.
 - Start and stop are a few frames each, not a third of the clip. Walk is one looping stride cycle (both lead feet).
 - The engine tracks which foot is leading in the walk loop. Stopping on the same lead foot that started the step plays `idle_to_walk` reversed; stopping on the opposite lead foot plays `walk_to_idle`.
-- Those start / cycle / stop clips are the shipped walk per facing. A replacement clip waits on art_pipeline.
+- Those start / cycle / stop clips are the shipped walk per facing. A replacement clip waits on content_pipeline.
 - Attack, special, and gather body clips are unarmed. The live weapon overlay sits on that clip. New art does not add a paper-doll pass.
 - “Dispel” is ritual seppuku: the avatar draws a small knife, kneels, makes one abdominal cut, and collapses. That knife belongs to this clip. It is not an equipped overlay.
 - Death is a hit collapse to a downed hold. Death and “Dispel” both end on a downed body. Neither I2V paints blood.

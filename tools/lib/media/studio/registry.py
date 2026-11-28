@@ -225,7 +225,7 @@ def _foe(kind: str) -> dict:
 
 
 TYPES: dict[str, dict] = {
-    "character": {"source": "design/player.md, design/content-pipeline.md, assets/sprites/player", "steps": {
+    "character": {"source": "design/player.md, design/content-pipeline-subjects.md, assets/sprites/player", "steps": {
         "details": S([SUMMARY, f("body_type", "Body type", "choice", "A new type needs its own locked front and side.", options=["female", "male", "new"], required=True),
                       f("voice", "Voice set", "text", "Each body type needs a full voice set.")]),
         "body": S([MEASURES, SHAPE, BANDS, f("digits", "Hands and feet", "group", fields=[f("fingers", "Fingers", "number", min=0, max=5, step=1),
@@ -265,8 +265,8 @@ TYPES: dict[str, dict] = {
                         f("directions", "Directions", "choice", options=["1", "4", "8"], default="1")], ["animate", "pixel", "sheet", "review"], ["clips"]),
     }},
     "enemy": {"source": "scripts/combat/roster.gd, scripts/data/balance/enemies.gd, design/enemies.md", "steps": _foe("enemy")},
-    "sub-boss": {"source": "design/enemies.md (Floor Guardians), design/content-pipeline.md (draw scale 2)", "steps": _foe("sub-boss")},
-    "boss": {"source": "design/enemies.md (Gate Master), design/content-pipeline.md (draw scale 4)", "steps": _foe("boss")},
+    "sub-boss": {"source": "design/enemies.md (Floor Guardians), design/content-pipeline-subjects.md (draw scale 2)", "steps": _foe("sub-boss")},
+    "boss": {"source": "design/enemies.md (Gate Master), design/content-pipeline-subjects.md (draw scale 4)", "steps": _foe("boss")},
     "equipment": {"source": "scripts/data/gear_roll.gd, affixes.gd, item_names.gd, catalog.gd, design/skills.md, assets/ui/gear", "steps": {
         "details": S([SUMMARY, f("slot", "Slot", "choice", options=["weapon", "tool", "head", "body", "legs", "potion", "food", "artifact"], required=True),
                       f("kind", "Kind", "choice", "Weapon or tool type.", options=WEAPONS + ["pickaxe", "hatchet", "none"]),

@@ -41,7 +41,7 @@ def check(root: Path) -> list[str]:
                        ("design/build-handoff.md", 8000), ("design/build-references.md", 8000)):
         if (root / rel).stat().st_size >= limit:
             bad.append(f"Build guide exceeds {limit} bytes: {rel}")
-    for rel in ("design/isolated-media.md", "design/art-pipeline.md"):
+    for rel in ("design/isolated-media.md", "design/content-pipeline.md"):
         if "exception table" in (root / rel).read_text().lower():
             bad.append("undocumented generation override promised: " + rel)
     references = (root / "design/build-references.md").read_text()

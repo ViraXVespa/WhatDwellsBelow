@@ -14,7 +14,7 @@ Code: `scripts/combat/roster.gd`, `scripts/combat/enemy/enemy_setup.gd`, `script
 
 ## Art and I2V
 
-Enemy frames follow art_pipeline. New enemy art is a subject on that door. Do not start an enemy bible. There is not a second enemy pipeline.
+Enemy frames follow content_pipeline. New enemy art is a subject on that door. Do not start an enemy bible. There is not a second enemy pipeline.
 
 ## Roles present in demo
 
@@ -51,5 +51,5 @@ Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
 
 ## Add an enemy type (live files)
 
-One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, dmg, spd, range, def, size, arc; no hp), `scripts/data/balance/enemies.gd` (`IDS` plus the live row, the one source of hp; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through art_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family, or any 13th type even inside an existing family, is the User's call: ask (`ask_user_question`), never add one on your own. The Bot never adds enemy types.
+One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, dmg, spd, range, def, size, arc; no hp), `scripts/data/balance/enemies.gd` (`IDS` plus the live row, the one source of hp; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through content_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family, or any 13th type even inside an existing family, is the User's call: ask (`ask_user_question`), never add one on your own. The Bot never adds enemy types.
 - Hall travelers: kind `hall`, one enemy spaced along long corridor runs (spacing: tunables-world), placed from the floor seed and skipped on ambush cells. Ambushes stay the surprise trap. Room packs are unchanged.

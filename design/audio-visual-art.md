@@ -13,7 +13,7 @@ Code: `scripts/world/sprite_filter.gd`, `tools/release.py mips`, `.github/workfl
 - Mip blend Sharp / Smooth is a debug Settings toggle (`use_nearest_mipmap_filter`). Default is Smooth.
 - Mip bias is stored for later; Sprite3D has no lod-bias hook yet.
 - All characters use Y-billboard so they remain upright under the orthographic camera.
-- Character art, 8 directions, male/female parity, and the shipped paper-doll overlays: art_pipeline. New frames are that pipeline. Body-state list and idle-still rule: player. Voice-over sets: player and the SFX table above.
+- Character art, 8 directions, male/female parity, and the shipped paper-doll overlays: content_pipeline. New frames are that pipeline. Body-state list and idle-still rule: player. Voice-over sets: player and the SFX table above.
 - Wall height, tile size (128 px per metre), and depth-sorting SHOULD produce correct layering. Arbitrary popping MUST be avoided wherever possible, but it is not a hard failure if a small amount remains after best-effort sorting.
 - Buildings in Placeholdia MUST have actual depth and realistic dimensions.
 - Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors. That contrast is product law. World env, ground shader, wall volume, light RT, and actor shadows belong to the graphics owner.
