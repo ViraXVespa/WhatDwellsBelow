@@ -1,7 +1,8 @@
 # Dungeon — floor crystals
 
 Status: current plan  
-Read when: transport decades, warp silence, spur length
+Read when: transport decades, warp silence, spur length  
+Code: `scripts/world/crystal/net.gd`, `scripts/world/crystal/crystal_place.gd`, `scripts/world/floor_crystal.gd`, `scripts/ui/crystal_ui.gd`
 
 ## Floor crystals
 

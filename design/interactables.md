@@ -2,7 +2,7 @@
 
 Status: current plan
 Read when: gathering swings, shops, shrines, puzzles, extract-wells
-Code: `scripts/world/interact.gd` (facade) + `scripts/world/interact/`, `scripts/world/gather/`, `scripts/world/breakable.gd`, `scripts/world/pickup.gd`, `scripts/world/floor_crystal.gd` (code map row Interactables; gdhealth group `interactables`)
+Code: `scripts/world/interact.gd` (facade) + `scripts/world/interact/`, `scripts/world/gather/`, `scripts/world/breakable.gd`, `scripts/world/pickup.gd` (code map row Interactables; gdhealth group `interactables`)
 
 This file is the door. Open the Job-table sibling only when that row matches.
 

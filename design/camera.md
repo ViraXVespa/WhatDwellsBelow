@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: Camera3D, zoom, renderer, depth sorting
-Code: `scripts/world/camera_rig.gd`, `scripts/world/sprite_filter.gd` (code map row Camera; gdhealth group `camera`); also `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
+Code: `scripts/world/camera_rig.gd`, `scripts/world/sprite_filter.gd`, `scripts/world/depth.gd` (code map row Camera; gdhealth group `camera`); also `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
 
 ## Camera (live 3D path)
 
