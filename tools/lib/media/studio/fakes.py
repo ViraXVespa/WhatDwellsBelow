@@ -148,3 +148,19 @@ def mesh_report(seed: int) -> dict:
     rnd = random.Random(seed)
     return {"verts": rnd.randrange(30000, 60000), "span": round(rnd.uniform(1.85, 1.98), 4), "empty": [], "bands": 12,
             "ok": True, "reason": "", "simulated": True}
+
+
+def silent_wav(dest: Path, seconds: float = 0.3) -> Path:
+    """A short quiet tone so a simulated sound plays."""
+    import math
+    import struct
+    import wave
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    rate = 22050
+    with wave.open(str(dest), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        n = int(rate * seconds)
+        w.writeframes(b"".join(struct.pack("<h", int(1200 * math.sin(2 * math.pi * 440 * i / rate) * (1 - i / n))) for i in range(n)))
+    return dest

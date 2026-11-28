@@ -1,35 +1,20 @@
-"""Step flow per subject type: Start, one step per store section, then Export.
+"""Step flow per subject type: Start, one step per store section, then Send to the game.
 
-Steps run in order. A step opens when every earlier step is approved (Done). Each step owns
-the actions in ACTIONS and the pictures its jobs made. Lock state lives on the record under
-`studio.steps` until the schema adopts it.
+What each step holds and does comes from registry.py. Steps run in order; steps that share a
+group open together and may be approved in any order, and the next step waits for the whole group.
+A step is Done only when the user approves it and its needs are met. Lock state lives on the
+record under `studio.steps` until the schema adopts it.
 """
 from __future__ import annotations
 
-from media.pipeline import store
+from . import registry
 
-PICTURE_ACTIONS = ["tune", "review", "frame", "proportion", "smooth", "body", "mesh", "edit"]
-ART_ACTIONS = ["tune", "review", "frame"]
-ART_SECTIONS = {"art", "portrait", "skin"}
-LATER_SECTIONS = {"animation"}
 # Actions that read the step's prompt or settings (what an Adjust override changes).
-PROMPT_ACTIONS = {"tune", "smooth", "body", "edit"}
-
-LABELS = {
-    "start": "Start", "export": "Send to the game",
-}
-ACTION_LABELS = {
-    "tune": "Auto-tune to the locked look",
-    "review": "Check a picture",
-    "frame": "Center and trim a picture",
-    "proportion": "Measure proportions",
-    "smooth": "Make the four body pictures",
-    "body": "Build the 3D body",
-    "mesh": "Check the 3D model",
-    "edit": "Change something",
-    "reference": "Read the reference picture",
-    "export": "Send to the game",
-}
+PROMPT_ACTIONS = {"generate", "tune", "smooth", "body", "edit", "variant", "icon", "tile"}
+PICTURE_MAKERS = {a for a, s in registry.ACTIONS.items() if s["makes"] in ("still", "mesh", "clip") and a not in ("reference", "preview")}
+LABELS = {"start": "Start", "export": "Send to the game"}
+ACTION_LABELS = {a: s["label"] for a, s in registry.ACTIONS.items()}
+EMPTY = (None, "", [], {})
 
 
 def label(step_id: str) -> str:
@@ -37,18 +22,17 @@ def label(step_id: str) -> str:
 
 
 def plan(subject_type: str) -> list[dict]:
-    rows = [{"id": "start", "label": "Start", "kind": "start", "actions": ["reference"], "skeleton": False}]
-    for sec, skeleton in store.SECTIONS.get(subject_type, ()):
-        if subject_type == "character" and sec in ("body", "model"):
-            kind, actions = "pictures", list(PICTURE_ACTIONS)
-        elif sec in ART_SECTIONS:
-            kind, actions = "pictures", list(ART_ACTIONS)
-        elif sec in LATER_SECTIONS:
-            kind, actions = "later", []
+    rows = []
+    for sid in ["start", *registry.TYPES[subject_type]["steps"], "export"]:
+        spec = registry.step_spec(subject_type, sid)
+        if sid in ("start", "export"):
+            kind = sid
+        elif any(a in PICTURE_MAKERS for a in spec["actions"]):
+            kind = "pictures"
         else:
-            kind, actions = "fields", []
-        rows.append({"id": sec, "label": label(sec), "kind": kind, "actions": actions, "skeleton": bool(skeleton)})
-    rows.append({"id": "export", "label": "Send to the game", "kind": "export", "actions": ["export"], "skeleton": False})
+            kind = "fields"
+        rows.append({"id": sid, "label": label(sid), "kind": kind, "actions": list(spec["actions"]), "needs": list(spec["needs"]),
+                     "group": spec["group"], "open_question": spec["open"], "fields": spec["fields"]})
     return rows
 
 
@@ -56,22 +40,66 @@ def find(subject_type: str, step_id: str) -> dict | None:
     return next((s for s in plan(subject_type) if s["id"] == step_id), None)
 
 
+def missing_fields(fields: list[dict], data: dict) -> list[str]:
+    out = [fd["label"] for fd in fields if fd.get("required") and (data or {}).get(fd["key"]) in EMPTY]
+    for fd in fields:
+        have = (data or {}).get(fd["key"]) or []
+        out += [f"{fd['label']}: {m}" for m in fd.get("must") or [] if isinstance(have, list) and have and m not in have]
+    return out
+
+
+def wanted_clips(row: dict, data: dict) -> list[str]:
+    spec = next((fd for fd in row["fields"] if fd["key"] == "clips"), None)
+    if not spec:
+        return []
+    return [str(c) for c in ((data or {}).get("clips") or [])]
+
+
+def _blocker(row: dict, mine: list[dict], data: dict) -> tuple[str | None, list[str]]:
+    if row["kind"] in ("start", "export"):
+        return None, []
+    live = [s for s in mine if s.get("state") != "hidden"]
+    if any(s.get("state") == "pending" for s in live):
+        return "pending", []
+    if any(s.get("state") == "rejected" for s in live):
+        return "rejected", []
+    gaps = missing_fields(row["fields"], data)
+    if gaps:
+        return "fields", gaps
+    if row["fields"] and not any(v not in EMPTY for v in (data or {}).values()):
+        return "empty", []
+    approved = [s for s in live if s.get("state") == "approved"]
+    if "pictures" in row["needs"] and not any(s.get("kind") == "still" for s in approved):
+        return "no_approved", []
+    if "mesh" in row["needs"] and not any(s.get("kind") == "mesh" for s in approved):
+        return "no_mesh", []
+    if "clips" in row["needs"]:
+        have = {s.get("clip") for s in approved if s.get("kind") == "clip"}
+        lack = [c for c in wanted_clips(row, data) if c not in have]
+        if lack:
+            return "no_clips", lack
+    return None, []
+
+
 def states(doc: dict, stills: list[dict], busy: dict[str, str] | None = None) -> list[dict]:
     """Status of every step. busy maps step id -> running job id."""
     busy = busy or {}
     ui = doc.get("studio") or {}
     marks = ui.get("steps") or {}
+    rows = plan(doc["type"])
     out: list[dict] = []
     blocked_by: str | None = None
-    for row in plan(doc["type"]):
+    group_gate: dict[str, str | None] = {}
+    for i, row in enumerate(rows):
         sid = row["id"]
         mark = marks.get(sid) or {}
         done_at = mark.get("done_at") or ""
         mine = [s for s in stills if s.get("step") == sid]
-        pending = [s for s in mine if s.get("state") == "pending"]
-        approved = [s for s in mine if s.get("state") == "approved"]
+        live = [s for s in mine if s.get("state") != "hidden"]
+        pending = [s for s in live if s.get("state") == "pending"]
+        approved = [s for s in live if s.get("state") == "approved"]
         data = ((doc.get("sections") or {}).get(sid) or {}).get("data") if row["kind"] not in ("start", "export") else None
-        started = bool(mine) or bool(data) or sid in busy or (sid == "start" and bool(ui.get("reference")))
+        started = bool(live) or bool(data) or sid in busy or (sid == "start" and bool(ui.get("reference")))
         if done_at:
             status = "done"
         elif sid in busy:
@@ -82,24 +110,32 @@ def states(doc: dict, stills: list[dict], busy: dict[str, str] | None = None) ->
             status = "in_progress"
         else:
             status = "not_started"
-        blocker = None
-        if not done_at and sid != "export":
-            if pending:
-                blocker = "pending"
-            elif row["kind"] == "pictures" and not approved:
-                blocker = "no_approved"
-        out.append({**row, "status": status, "done_at": done_at or None, "available": blocked_by is None,
-                    "blocked_by": blocked_by, "blocked_by_label": label(blocked_by) if blocked_by else None,
-                    "pictures": len(mine), "pending": len(pending), "approved": len(approved),
-                    "job": busy.get(sid), "can_finish": blocked_by is None and not done_at and blocker is None and sid != "export",
-                    "finish_blocker": blocker, "stale": False, "stale_because": None})
-        if not done_at and blocked_by is None:
+        grp = row["group"]
+        if grp:
+            gate = group_gate.setdefault(grp, blocked_by)
+        else:
+            gate = blocked_by
+        blocker, lack = _blocker(row, mine, data or {}) if not done_at else (None, [])
+        out.append({**row, "status": status, "done_at": done_at or None, "available": gate is None,
+                    "blocked_by": gate, "blocked_by_label": label(gate) if gate else None,
+                    "pictures": len(live), "pending": len(pending), "approved": len(approved),
+                    "job": busy.get(sid), "can_finish": gate is None and not done_at and blocker is None and sid != "export",
+                    "finish_blocker": blocker, "finish_missing": lack, "stale": False, "stale_because": None,
+                    "autotune": bool(mark.get("autotune"))})
+        last_in_group = grp and (i + 1 >= len(rows) or rows[i + 1]["group"] != grp)
+        if grp:
+            if last_in_group and blocked_by is None:
+                first_open = next((s["id"] for s in out if s["group"] == grp and not s["done_at"]), None)
+                blocked_by = first_open
+        elif not done_at and blocked_by is None:
             blocked_by = sid
     # A Done step after an earlier step that is open again, or was approved again later, might need a look.
     for i, st in enumerate(out):
         if st["status"] != "done":
             continue
         for prev in out[:i]:
+            if st["group"] and prev["group"] == st["group"]:
+                continue
             if prev["status"] != "done" or (prev["done_at"] or "") > (st["done_at"] or ""):
                 st["stale"], st["stale_because"] = True, prev["label"]
                 break

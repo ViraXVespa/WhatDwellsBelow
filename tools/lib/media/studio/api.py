@@ -5,7 +5,7 @@ import re
 import threading
 from urllib.parse import parse_qs, urlparse
 
-from .backend import COMMANDS, ApiError, Backend, NotWired
+from .backend import COMMANDS, GUARDED, ApiError, Backend, NotWired
 from .jobs import Job, Registry
 
 PREFIX = "/api/studio"
@@ -88,8 +88,12 @@ class Api:
         args = body.get("args") or {}
         if not isinstance(args, dict):
             raise ApiError(400, "args must be an object")
+        if sid and (sid, cmd) in GUARDED:
+            raise ApiError(403, f"{cmd} does not run on {sid} from the studio.")
+        step = self.b.check_step_job(cmd, sid, body.get("step")) if sid and cmd in COMMANDS else None
+        if step and "workflow" in {f["name"] for f in COMMANDS[cmd]["fields"]}:
+            args.setdefault("workflow", f"data/pipeline/recipes/{self.b._load(sid)['type']}/{step}.json")
         self.b.precheck(cmd, sid, args)
-        step = self.b.check_step_job(cmd, sid, body.get("step")) if sid else None
         adjusted = self.b.check_overrides(cmd, sid, step) if sid and step else {}
         if cmd == "export":
             self.b.export_check(sid, args)

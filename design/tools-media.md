@@ -41,7 +41,7 @@ Entries here: `media.py`; their code: `tools/lib/media/`.
 | `media.py rekey-check` | Compare a full new still set with live/source plates and report per-class counts. Summary: `rekey-check`. | D | `--help` | N |
 | `media.py grok` | Stage an isolated media child by kind. Flags/permissions are defined by the runner and isolated-media guide; `--selftest` mocks Grok. | D | `--help` | N |
 | `media.py comfy-character` | Set up the local Comfy pose page and bible style-lock page. `setup` rebuilds the gitignored cell depths and walk reel. Record Approve or Deny, and mark walk-clip frames Good or Bad before a walk test. This does not replace `media.py grok`. Summary: `comfy-character`. | D | `--help` | N |
-| `media.py studio` | Pipeline studio on port 8189 for a phone on the LAN. `WDB_PIPELINE_SIMULATE=1` fakes every long job in `data/pipeline/wip/_sim`. `--selftest` runs both modes on a temp repo. Summary: `studio`. | D | `--help` | N |
+| `media.py studio` | Pipeline studio on port 8189 for a phone on the LAN. `WDB_PIPELINE_SIMULATE=1` fakes every long job in `data/pipeline/wip/_sim`. `--selftest` runs both modes on a temp repo. `--gaps [--check]` writes the Build gap list. Summary: `studio`. | D | `--help` | N |
 | `media.py sprites` | Existing sprite cleanup, keying and fitting pipeline; image operations remain in imglib. | D | `--help` | N |
 
 ### Image library `tools/lib/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)
@@ -85,10 +85,13 @@ No CLI of their own; new code goes into the owner (`tools.md` rule 6).
 | `lib/media/pipeline/comfy_run.py` | Queue one local Comfy workflow and fetch its saved image. |
 | `lib/media/mobile_ui_server.py` | HTTP server on port 8189. Serves the studio, the old page at `/legacy/`, and the Comfy proxy. |
 | `lib/media/mobile_ui/` | Studio page (`index.html`, `studio.css`, `js/`). `legacy/` is the old character page. |
-| `lib/media/studio_cmd.py` | `media.py studio`: serve or `--selftest`. |
+| `lib/media/studio_cmd.py` | `media.py studio`: serve, `--selftest`, or `--gaps`. |
 | `lib/media/studio/__init__.py`, `lib/media/studio/api.py`, `lib/media/studio/jobs.py` | Studio routes and the job registry that survives a page reload. |
 | `lib/media/studio/backend.py` | Real mode: the store and `media.py pipeline` jobs. Seams Build has not wired answer 501. |
+| `lib/media/studio/registry.py` | Source of truth for every type's steps, fields and actions, the model setups behind them, and what is wired. |
 | `lib/media/studio/steps.py` | Step plan per type, actions per step, and step status. |
+| `lib/media/studio/selftest.py` | `studio --selftest`: real-mode gates and every type walked to export in simulate. |
+| `lib/media/studio/gaps.py` | Writes the Build gap list from the registry (`studio --gaps`). |
 | `lib/media/studio/sim.py`, `lib/media/studio/fakes.py` | Simulate mode: canned staged jobs and placeholder stills and glbs. |
 | `lib/media/pipeline/plates.py` | Frame a keyed mannequin view on a black square. The figure's long side is 1/1.1 of the canvas. Specks outside the main mass are dropped. |
 | `lib/media/clip_fx.py` | Clip framing/effects; compose/tracking/promo modules own specs and overlays. The clip guide describes supported recipes. |

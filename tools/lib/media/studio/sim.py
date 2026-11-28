@@ -241,6 +241,84 @@ class SimBackend(Backend):
         added = self.register(sid, [image], job)
         return {"ok": True, **ingest, "added": added}
 
+    # ---- actions Build has not wired (registry.ACTIONS) -------------------------------
+    def _autotune(self, job: Job, sid: str, made: list[Path]) -> list[Path]:
+        doc = self._load(sid)
+        if not ((doc.get("studio") or {}).get("steps") or {}).get(job.step or "", {}).get("autotune"):
+            return made
+        out = []
+        for i, still in enumerate(made):
+            self._step(job, f"Auto-tune picture {i + 1}: review and regenerate", 70 + 20 * i / max(1, len(made)), 0.5)
+            out.append(self._still(job, sid, "front", f"{job.step}-tuned{i + 1}"))
+        job.emit("log", "[simulated] auto-tune is on for this step")
+        return out
+
+    def _sim_generate(self, job: Job, sid: str, args: dict) -> dict:
+        count = max(1, min(int(args.get("count") or 2), 6))
+        made = []
+        for i in range(count):
+            self._step(job, f"Picture {i + 1} of {count} (Qwen Image)", 10 + 50 * i / count)
+            made.append(self._still(job, sid, "front", f"{job.step}-{i + 1}"))
+        made = self._autotune(job, sid, made)
+        return {"ok": True, "added": self.register(sid, made, job), "tuned": len(made) and "tuned" in made[0].name, "simulated": True}
+
+    def _sim_variant(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, "Changing the picture (Qwen Image edit)", 40)
+        made = self._autotune(job, sid, [self._still(job, sid, "front", f"{job.step}-variant")])
+        return {"ok": True, "added": self.register(sid, made, job), "simulated": True}
+
+    def _sim_icon(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, "Icon at 128 on clear", 50)
+        return {"ok": True, "added": self.register(sid, [self._still(job, sid, "front", f"{job.step}-icon")], job), "simulated": True}
+
+    def _sim_tile(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, f"Seamless {args.get('kind')} tile", 50)
+        return {"ok": True, "added": self.register(sid, [self._still(job, sid, "front", f"{job.step}-tile-{args.get('kind')}")], job), "simulated": True}
+
+    def _sim_overlay(self, job: Job, sid: str, args: dict) -> dict:
+        made = []
+        for i, facing in enumerate(("down", "left", "up", "right")):
+            self._step(job, f"{args.get('body')} {facing}", 10 + i * 20, 0.4)
+            made.append(self._still(job, sid, "front", f"{job.step}-overlay-{args.get('body')}-{facing}"))
+        return {"ok": True, "added": self.register(sid, made, job), "simulated": True}
+
+    def _clip(self, job: Job, sid: str, clip: str, note: str) -> dict:
+        self._step(job, note, 40, 1.2)
+        strip = fakes.still_png(self._gen(f"{sid}-sim-anim-{clip}-{job.id[:6]}.png"), label=f"{sid} {clip}", view="front", seed=self._seed_of(job))
+        added = self.register(sid, [strip], job, {"clip": clip})
+        return {"ok": True, "clip": clip, "added": added, "simulated": True}
+
+    def _sim_keyframes(self, job: Job, sid: str, args: dict) -> dict:
+        made = []
+        for i in range(3):
+            self._step(job, f"{args['clip']}: reference frame {i + 1}", 20 + i * 25, 0.5)
+            made.append(self._still(job, sid, "front", f"{job.step}-key-{args['clip']}-{i + 1}"))
+        return {"ok": True, "clip": args["clip"], "added": self.register(sid, made, job), "simulated": True}
+
+    def _sim_animate(self, job: Job, sid: str, args: dict) -> dict:
+        return self._clip(job, sid, str(args["clip"]), f"{args['clip']}: pose and render each facing")
+
+    def _sim_flatanim(self, job: Job, sid: str, args: dict) -> dict:
+        return self._clip(job, sid, str(args.get("clip") or "play"), f"{args.get('frames') or 6} frames from the key picture")
+
+    def _sim_pixel(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, "Downscale to 128 and keep the palette", 50)
+        return {"ok": True, "added": self.register(sid, [self._still(job, sid, "front", f"{job.step}-pixel")], job), "simulated": True}
+
+    def _sim_sheet(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, "Packing approved clips", 50)
+        clips = sorted({s.get("clip") for s in self.stills(self._load(sid)) if s.get("kind") == "clip" and s["state"] == "approved"})
+        return {"ok": True, "frames": {c: {"count": 8, "columns": 8, "w": 128, "h": 128, "origin": [0, 0]} for c in clips}, "simulated": True}
+
+    def _sim_sound(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, "Stable Audio placeholder", 50)
+        dest = fakes.silent_wav(self._gen(f"{sid}-sim-sound-{args.get('cue')}-{job.id[:6]}.wav"))
+        return {"ok": True, "cue": args.get("cue"), "placeholder": True, "added": self.register(sid, [dest], job), "simulated": True}
+
+    def _sim_preview(self, job: Job, sid: str, args: dict) -> dict:
+        self._step(job, "Temp worktree, pack, launch, capture", 50, 1.5)
+        return {"ok": True, "added": self.register(sid, [self._still(job, sid, "front", "preview")], job), "simulated": True}
+
     def _sim_export(self, job: Job, sid: str, args: dict) -> dict:
         self._step(job, "Collecting sections", 20)
         doc = self._load(sid)

@@ -17,12 +17,14 @@ from urllib.parse import urlparse
 
 from media.pipeline import store
 
+from . import registry
 from . import steps as step_flow
 from .jobs import Job
 
 UI_KEY = "studio"
 STILL_EXT = {".png", ".jpg", ".jpeg", ".webp"}
 MESH_EXT = {".glb"}
+SOUND_EXT = {".wav", ".ogg"}
 MAX_UPLOAD = 25 * 1024 * 1024
 GUARDED = {("female", "edit"), ("female", "body"), ("female", "smooth")}
 HIDDEN_NAMES = {"female-hunyuan-body-digits.glb", "female-edit-head.png"}
@@ -82,8 +84,47 @@ def normalize_view(value: str | None) -> str | None:
 
 
 
-def F(name: str, kind: str, label: str, *, flag: str | None = None, required: bool = False, default: object = None) -> dict:
-    return {"name": name, "kind": kind, "label": label, "flag": flag or f"--{name}", "required": required, "default": default}
+# Where a file with no step goes: by filename, then by view. None leaves it for the user to place.
+PLACE_TOKENS = (
+    (("tpose", "mannequin", "hunyuan", "body"), ("body", "model")),
+    (("model", "mesh"), ("model", "body")),
+    (("portrait", "bust"), ("portrait",)),
+    (("anim", "clip", "walk", "idle", "atk", "spc"), ("animation",)),
+    (("icon", "skin", "overlay"), ("skin", "art")),
+    (("tile", "art", "design", "sheet"), ("art", "description", "overview")),
+)
+
+
+def auto_step(subject_type: str, path: str, kind: str, view: str | None) -> str | None:
+    have = list(registry.TYPES.get(subject_type, {}).get("steps", {}))
+    toks = set(re.split(r"[-_.]+", Path(path).stem.lower()))
+    if kind == "mesh":
+        toks.add("mesh")
+    for keys, targets in PLACE_TOKENS:
+        if toks & set(keys):
+            hit = next((t for t in targets if t in have), None)
+            if hit:
+                return hit
+    if view:
+        return next((t for t in ("body", "description", "art", "overview", "model") if t in have), None)
+    return None
+
+
+def finish_message(row: dict) -> str:
+    lack = ", ".join(row.get("finish_missing") or [])
+    return {
+        "pending": f"Some pictures on {row['label']} still need your OK.",
+        "rejected": "Regenerate or hide the rejected pictures first.",
+        "fields": f"Fill in: {lack}.",
+        "empty": "Fill something in first.",
+        "no_approved": "Approve at least one picture first.",
+        "no_mesh": "Approve the 3D model first.",
+        "no_clips": f"Approve an animation for: {lack}.",
+    }.get(row.get("finish_blocker") or "", "Not ready yet.")
+
+
+def F(name: str, kind: str, label: str, *, flag: str | None = None, required: bool = False, default: object = None, options: list | None = None) -> dict:
+    return {"name": name, "kind": kind, "label": label, "flag": flag or f"--{name}", "required": required, "default": default, "options": options}
 
 
 # Generation and long commands. `gpu` jobs run one at a time. `id`: none | optional | required.
@@ -110,6 +151,28 @@ COMMANDS: dict[str, dict] = {
              "fields": [F("text", "text", "Change", required=True), F("glb", "glb", "Source mesh (optional)"), F("image", "still", "Reference still (optional)"),
                         F("passes", "str", "Hi3D passes", default="512,1024,1536")]},
     "reference": {"label": "Ingest reference", "gpu": True, "id": "required", "about": "Pulls the reference image and describes it for the Character flow.", "fields": []},
+    # Not wired yet (registry.ACTIONS): simulate runs them, real mode answers "not set up yet".
+    "generate": {"label": "Make pictures", "gpu": True, "id": "required", "about": "Pictures from the step's description and settings.",
+                 "fields": [F("count", "int", "How many", default=2)]},
+    "variant": {"label": "Variant", "gpu": True, "id": "required", "about": "A changed copy of an approved picture.",
+                "fields": [F("image", "still", "Start picture", required=True), F("text", "text", "What should differ", required=True)]},
+    "icon": {"label": "Icon", "gpu": True, "id": "required", "about": "The 128 inventory icon.", "fields": [F("image", "still", "From picture (optional)")]},
+    "overlay": {"label": "Overlay", "gpu": True, "id": "required", "about": "Worn or held pictures per facing.",
+                "fields": [F("body", "choice", "Body", required=True, options=["female", "male"])]},
+    "tile": {"label": "Tile", "gpu": True, "id": "required", "about": "A seamless tile.",
+             "fields": [F("kind", "choice", "Tile", required=True, options=["floor", "wall", "path", "roof"])]},
+    "animate": {"label": "Animate", "gpu": True, "id": "required", "about": "One clip from the approved 3D model, per facing.",
+                "fields": [F("clip", "clip", "Clip", required=True)]},
+    "keyframes": {"label": "Keyframes", "gpu": True, "id": "required", "about": "Reference frames for one clip.",
+                  "fields": [F("clip", "clip", "Clip", required=True)]},
+    "flatanim": {"label": "Frames", "gpu": True, "id": "required", "about": "A frame strip from an approved key picture.",
+                 "fields": [F("clip", "text", "Clip name", default="play"), F("frames", "int", "Frames", default=6)]},
+    "pixel": {"label": "Pixel finish", "gpu": False, "id": "required", "about": "Integer downscale to 128 with the subject palette.",
+              "fields": [F("image", "still", "Picture", required=True)]},
+    "sheet": {"label": "Sheet", "gpu": False, "id": "required", "about": "Packs approved clips into sheets and frame rects.", "fields": []},
+    "sound": {"label": "Sound", "gpu": True, "id": "required", "about": "A placeholder sound effect.",
+              "fields": [F("cue", "text", "Cue", required=True), F("text", "text", "What it sounds like")]},
+    "preview": {"label": "Preview", "gpu": False, "id": "required", "about": "Packs a temp worktree and captures the game.", "fields": []},
     "export": {"label": "Export", "gpu": False, "id": "required", "about": "Writes the game contract for the chosen sections.",
                "fields": [F("areas", "areas", "Sections"), F("bypass", "bool", "Export despite hard-dirty flags")]},
 }
@@ -175,6 +238,7 @@ class Backend:
             "commands": COMMANDS,
             "steps": {t: step_flow.plan(t) for t in store.TYPES},
             "action_labels": step_flow.ACTION_LABELS,
+            "registry": registry.public(self.simulated),
             "setting_keys": list(SETTING_KEYS),
             "roles": roles,
             "canvas": store.CANVAS,
@@ -257,12 +321,12 @@ class Backend:
             if step == "export":
                 raise ApiError(400, "Send to the game finishes this step.")
             self.require_open(doc, step)
-            if row["finish_blocker"] == "pending":
-                raise ApiError(409, f"{row['pending']} picture(s) on {row['label']} still need your OK.", gate="approvals", step=step)
-            if row["finish_blocker"] == "no_approved":
-                raise ApiError(409, f"{row['label']} needs at least one approved picture.", gate="approvals", step=step)
+            if row["finish_blocker"]:
+                raise ApiError(409, finish_message(row), gate="finish", reason=row["finish_blocker"], missing=row["finish_missing"], step=step)
             mark["done_at"] = store._now()
             mark.pop("reopened_at", None)
+        elif action == "autotune":
+            mark["autotune"] = bool(body.get("on"))
         elif action == "reopen":
             if row["status"] != "done":
                 raise ApiError(400, f"{row['label']} is not approved.")
@@ -271,7 +335,7 @@ class Backend:
             mark.pop("done_at", None)
             mark["reopened_at"] = store._now()
         else:
-            raise ApiError(400, "action is finish or reopen")
+            raise ApiError(400, "action is finish, reopen or autotune")
         store.save_subject(self.root, doc, propagate=False)
         return {"steps": self.step_states(doc)}
 
@@ -279,8 +343,8 @@ class Backend:
         doc = self._load(subject_id)
         step = str(body.get("step") or "")
         row = self._step_row(doc, step)
-        if row["kind"] != "pictures":
-            raise ApiError(400, f"{row['label']} has no picture settings.")
+        if not set(row.get("actions") or []) & step_flow.PROMPT_ACTIONS:
+            raise ApiError(400, f"{row['label']} has no prompt settings.")
         self.require_open(doc, step)
         ui = self._ui(doc)
         if body.get("reset"):
@@ -331,6 +395,9 @@ class Backend:
         row = self.require_open(doc, step)
         if cmd not in row["actions"]:
             raise ApiError(400, f"{cmd} is not an action on {row['label']}")
+        ok, seam = registry.available(cmd, doc["type"], step, self.simulated)
+        if not ok:
+            raise NotWired(seam, f"{step_flow.ACTION_LABELS[cmd]} on {row['label']} is not set up yet.")
         if cmd in ("body", "mesh"):
             self._require_plate_approvals(subject_id, cmd)
         return step
@@ -444,7 +511,7 @@ class Backend:
             if not base.is_dir():
                 continue
             for p in base.iterdir():
-                if p.is_file() and p.suffix.lower() in STILL_EXT | MESH_EXT and not hidden(p.name):
+                if p.is_file() and p.suffix.lower() in STILL_EXT | MESH_EXT | SOUND_EXT and not hidden(p.name):
                     if folder.startswith("ref/") or p.name.startswith((subject_id + "-", subject_id + "_")):
                         out.append(p)
         return out
@@ -463,7 +530,8 @@ class Backend:
         out = []
         for rel, row in rows.items():
             p = self.root / rel
-            row["kind"] = "mesh" if p.suffix.lower() in MESH_EXT else "still"
+            suffix = p.suffix.lower()
+            row["kind"] = "mesh" if suffix in MESH_EXT else "sound" if suffix in SOUND_EXT else "clip" if row.get("clip") else "still"
             row["mtime"] = p.stat().st_mtime
             row["size"] = p.stat().st_size
             appr = approvals.get(rel) or {}
@@ -471,7 +539,7 @@ class Backend:
             role = (row.get("args") or {}).get("role") if isinstance(row.get("args"), dict) else None
             row["view"] = normalize_view(appr.get("view")) or infer_view(rel, role)
             row["view_set"] = bool(normalize_view(appr.get("view")))
-            row["step"] = appr.get("step") or row.get("step")
+            row["step"] = appr.get("step") or row.get("step") or auto_step(doc["type"], rel, row["kind"], row["view"])
             row["simulated"] = bool(row.get("simulated"))
             out.append(row)
         out.sort(key=lambda r: -r["mtime"])
@@ -497,8 +565,8 @@ class Backend:
     def set_still_state(self, subject_id: str, body: dict) -> dict:
         doc = self._load(subject_id)
         rel, state = str(body.get("path") or ""), body.get("state")
-        if state not in ("approved", "rejected", "pending"):
-            raise ApiError(400, "state is approved, rejected or pending")
+        if state not in ("approved", "rejected", "pending", "hidden"):
+            raise ApiError(400, "state is approved, rejected, pending or hidden")
         if rel not in {s["path"] for s in self.stills(doc)}:
             raise ApiError(404, "no such still on this subject")
         current = next(s for s in self.stills(doc) if s["path"] == rel)
