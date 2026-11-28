@@ -1,7 +1,7 @@
 ﻿# Inventory sets and required slots
 
 Status: current plan  
-Read when: catalog sets or required slots  
+Read when: stat-table listing, required sockets  
 Code: `scripts/data/gear_rules/rules_norm.gd` (`Norm`), `scripts/data/gear_rules/rules_kit.gd` (`Kit`), `scripts/data/catalog.gd`
 
 ## Catalog sets

@@ -1,7 +1,7 @@
 ﻿# Bag and equipment
 
 Status: current plan  
-Read when: bag, equipment slots, food vs potion  
+Read when: pouch tiles, ration versus flask  
 Code: `scripts/data/progress_gear/gear_bag.gd`, `consumable.gd`, `consumable_roll.gd`, `gear_use.gd` (eat, bonus timers), `scripts/data/progress_combat/combat_xp.gd` (`consumable_bonus` in `gear_stat`), `gear_req.gd`
 
 ## Bag

@@ -1,7 +1,7 @@
 # Localization
 
 Status: current plan  
-Read when: tr(), translation keys, adding a locale, converting a string, item names, plurals  
+Read when: tr(), translation keys, adding a locale  
 Code: `scripts/localization/app_loc.gd`, `scripts/data/locale/en.po`, `scripts/data/item_names.gd` (code map row Localization; gdhealth group `localization`)  
 
 English is the default and only shipped locale. Player-facing strings go through `tr()`; the English text lives in one PO file.
