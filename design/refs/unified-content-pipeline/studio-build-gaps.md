@@ -23,29 +23,29 @@ The studio page shows the same list under Coverage, Left to build. In real mode 
 | Action | Command the studio expects | Inputs | Output | Setup | Wired | Steps |
 |---|---|---|---|---|---|---|
 | `reference` Read the reference picture | `pipeline reference ID --path P\|--url U\|--post U --json` | stored reference on the subject | `{image, description, mannequin:[], traits:[], source}` | qwen3-vl | no | 14 |
-| `generate` Make pictures | `pipeline still ID --step STEP --count N --json` | subject prompt layers, the step's adjusted settings, count | `{stills:[path], prompt, seed}` | qwen-still | no (needs recipe) | 28 |
-| `tune` Auto-tune a picture | `pipeline tune --image P --role R --workflow W --turns N` | start picture, checklist role, the step's recipe | `{verdict, turns, review, stills:[path]}` | qwen3-vl | yes (needs recipe) | 23 |
-| `review` Check a picture | `pipeline review --image P --role R` | picture, checklist role | `{verdict, failed:[], review}` | qwen3-vl | yes | 39 |
-| `frame` Center and trim a picture | `pipeline frame --image P --out P` | picture | `{out, height, canvas}` | - | yes | 22 |
+| `generate` Make pictures | `pipeline still ID --step STEP --count N --json` | subject prompt layers, the step's adjusted settings, count | `{stills:[path], prompt, seed}` | qwen-still | no (needs recipe) | 29 |
+| `tune` Auto-tune a picture | `pipeline tune --image P --role R --workflow W --turns N` | start picture, checklist role, the step's recipe | `{verdict, turns, review, stills:[path]}` | qwen3-vl | yes (needs recipe) | 24 |
+| `review` Check a picture | `pipeline review --image P --role R` | picture, checklist role | `{verdict, failed:[], review}` | qwen3-vl | yes | 40 |
+| `frame` Center and trim a picture | `pipeline frame --image P --out P` | picture | `{out, height, canvas}` | - | yes | 23 |
 | `proportion` Measure proportions | `pipeline proportion ID --image P\|--glb G` | picture or 3D model, the subject's measures | `{verdict, measures:{}}` | - | yes | 6 |
 | `smooth` Make the four body pictures | `pipeline smooth ID` | the subject's body measures | `{stills:[front, left, back, right], glb}` | qwen-still | yes | 6 |
 | `body` Build the 3D body | `pipeline body ID` | approved front and side pictures | `{glb, verts}` | hunyuan-3d | yes | 6 |
 | `mesh` Check the 3D model | `pipeline mesh --glb G` | 3D model | `{verdict, pieces, bands}` | - | yes | 6 |
 | `edit` Change something | `pipeline edit ID --text TEXT` | what should change, the kept 3D model | `{still, glb}` | hi3d-refine | yes | 6 |
-| `variant` Make a variant | `pipeline variant ID --from P --text TEXT --json` | approved picture, what should differ | `{stills:[path]}` | qwen-edit | no (needs recipe) | 16 |
+| `variant` Make a variant | `pipeline variant ID --from P --text TEXT --json` | approved picture, what should differ | `{stills:[path]}` | qwen-edit | no (needs recipe) | 17 |
 | `icon` Make the inventory icon | `pipeline icon ID --json` | approved picture or description | `{stills:[icon 128 png]}` | qwen-still | no (needs recipe) | 2 |
 | `overlay` Make the worn pictures | `pipeline overlay ID --body female\|male --json` | approved item picture, character facings, offsets | `{stills:[one per facing]}` | overlay-fit | no | 3 |
-| `tile` Make a seamless tile | `pipeline tile ID --kind floor\|wall\|path --json` | description, tile kind | `{stills:[tile png]}` | tile-seamless | no (needs recipe) | 3 |
+| `tile` Make a seamless tile | `pipeline tile ID --kind floor\|wall\|path --json` | description, tile kind | `{stills:[tile png]}` | tile-seamless | no (needs recipe) | 4 |
 | `keyframes` Make reference frames | `pipeline keyframes ID --clip CLIP --json` | clip name, the step prompt | `{clip, frames:[png], picked:[]}` | qwen-still | no (needs recipe) | 4 |
 | `animate` Make the animation | `pipeline animate ID --clip CLIP --dirs N --json` | approved 3D model (or key picture for flat things), clip name, directions, frames | `{clip, dirs, frames:{dir:[png]}, strip}` | motion-8dir | no | 5 |
 | `flatanim` Make flat frames | `pipeline frames ID --clip CLIP --frames N --json` | approved key picture, clip name, frame count | `{clip, frames:[png], strip}` | frames-2d | no | 4 |
-| `pixel` Turn into pixel art | `pipeline pixel ID --image P --size 128 --json` | picture or frames | `{out, palette}` | - | no | 24 |
+| `pixel` Turn into pixel art | `pipeline pixel ID --image P --size 128 --json` | picture or frames | `{out, palette}` | - | no | 25 |
 | `sheet` Pack the frames for the game | `pipeline sheet ID --json` | approved clips | `{sheets:[png], frames:{clip:{count, columns, w, h, origin}}}` | - | no | 6 |
-| `sound` Make a placeholder sound | `pipeline sound ID --cue CUE --text TEXT --json` | cue name, description | `{sound, cue, placeholder:true}` | stable-audio | no | 14 |
+| `sound` Make a placeholder sound | `pipeline sound ID --cue CUE --text TEXT --json` | cue name, description | `{sound, cue, placeholder:true}` | stable-audio | no | 15 |
 | `preview` Preview in the game | `shots.py / release.py capture of a temp worktree` | exported subject | `{shots:[png]}` | - | no | 14 |
 | `export` Send to the game | `pipeline export ID` | every approved step | `data/pipeline/export/TYPE/ID.json` | - | yes | 14 |
 
-## Default recipes to write (36)
+## Default recipes to write (37)
 
 A recipe is the workflow and step prompt an action uses for that type and step. Real mode needs one before `generate`, `tune`, `variant`, `icon`, `tile` or `keyframes` can run there.
 
@@ -82,6 +82,7 @@ A recipe is the workflow and step prompt an action uses for that type and step. 
 - `biome/overview`: generate
 - `biome/art`: tile, generate
 - `biome/layout`: generate
+- `biome/rooms`: generate, tune, tile, variant
 - `building/art`: generate, tune, tile
 - `building/interior`: generate, tune, tile, variant
 - `vfx/art`: generate, tune
@@ -250,7 +251,7 @@ Grounded in: design/ui-style.md, design/ui-theme.md, assets/ui.
 
 ### biome
 
-Grounded in: design/dungeon.md, design/hub.md, assets/tiles (no biome system in the game yet).
+Grounded in: design/dungeon.md, design/dungeon-gen.md, design/interactables.md, assets/tiles, scripts/world/dungeon_geo.gd, breakable.gd.
 
 | Step | Fields | Actions (not set up in real mode) | Needs | Group |
 |---|---|---|---|---|
@@ -260,6 +261,7 @@ Grounded in: design/dungeon.md, design/hub.md, assets/tiles (no biome system in 
 | features | enemies*, props, resources, traps, ghost_shop | - | fields | - |
 | art | tiles*, palette | tile (no), generate (no), review, pixel (no) | pictures | - |
 | layout | grid, rooms, room_min, room_max, loops, hall_min, hall_max, open_edges, backdrop | generate (no), review | fields | - |
+| rooms (Dungeon rooms) | tiles*[piece, name, seamless, tint], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), variant (no), pixel (no), sound (no) | pictures | - |
 | export | - | export, preview (no) | fields | - |
 
 ### building
@@ -300,3 +302,4 @@ Grounded in: design/combat.md (telegraphs, trails, crack), assets/fx.
 - `review-latest`: `pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`. Seam: `Backend.reviews`.
 - `json-lists`: `--json` on `pipeline list`, `show`, `status`, and `coverage`. Seam: `Backend.list_subjects`.
 - `export-sections`: Export maps section fields into the contract: `stats`, `dialog`, `audio`, `rules`, `paperdoll`, and `frames`/`sheets` from packed clips; today they are written empty and the fields ride under `sections`. Seam: `store.export_subject`.
+- `vfx-attach`: The game places an effect at the chosen attach point (feet, aimed point, projectile tip, target, and planned hand and weapon tip). Today effects spawn at a world position with no attach-point table, and hand and weapon tip have no code path yet. Seam: `scripts/combat/player_hit/hit_atk.gd _spawn_fx`.
