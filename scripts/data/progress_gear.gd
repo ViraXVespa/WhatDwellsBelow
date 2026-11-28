@@ -5,6 +5,10 @@ const Use := preload("res://scripts/data/progress_gear/gear_use.gd")
 const Extract := preload("res://scripts/data/progress_gear/extract.gd")
 const Restock := preload("res://scripts/data/progress_gear/restock.gd")
 
+## Item level for a new drop on the current floor (playtest fixtures read it).
+static func area_ilvl() -> int:
+	return Bag.Make._area_ilvl()
+
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	return Bag.make_weapon(p, wpn, rarity, ilvl)
 

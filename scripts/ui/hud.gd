@@ -85,5 +85,9 @@ func refresh(player: Node, dungeon: Node) -> void:
 	Act.refresh(self, player, dungeon)
 
 ## Map view sync calls this so world code never loads hud_view.gd.
+## Danger gem pulse on/off from App.danger_gem (smokes call this; refresh does it).
+func paint_gem(dungeon: Node) -> void:
+	Act.paint_gem(self, dungeon)
+
 func layout_view() -> void:
 	View.layout(self)

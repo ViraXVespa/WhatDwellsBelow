@@ -4,7 +4,7 @@ extends Object
 ## An explicit directory (the phase-7 fixture) still writes. The game does not link SQLite.
 
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
-const Make := preload("res://scripts/data/progress_gear/progress_make.gd")
+const Gear := preload("res://scripts/data/progress_gear.gd")
 
 const DB_DIR := "user://playtest/db"
 const FIXTURE_DIR := "user://playtest/smoke-curve"
@@ -92,7 +92,7 @@ static func note_weapon_band(row: Dictionary, dir_path: String) -> void:
 	_write_json(path, band)
 
 static func owned_levels() -> Dictionary:
-	var starter: int = Make._area_ilvl()
+	var starter: int = Gear.area_ilvl()
 	var out: Dictionary = {
 		"great_axe": starter,
 		"staff": starter,

@@ -82,6 +82,10 @@ func show_menu() -> void:
 func show_inventory() -> void:
 	Flow.show_inventory(self)
 
+## Index of tab id in TABS (smokes check tab order).
+func tab_index(id: String) -> int:
+	return Flow.tab_index(self, id)
+
 func show_tab(id: String) -> void:
 	Flow.show_tab(self, id)
 

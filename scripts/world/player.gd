@@ -152,6 +152,10 @@ func warm_physics() -> void:
 func warm_frames(each_tex: Callable) -> void:
 	PlayerAnim.warm_frames(self, each_tex)
 
+## Redraw the aim line from aim_dir (smokes call this; tick does it every frame).
+func update_aim_line() -> void:
+	_script_at("res://scripts/world/player/player_combat.gd").update_aim_line(self)
+
 ## Hub warm-up: combat fx built, the lazy scripts loaded, the aim line and shown weapon drawn once.
 func warm_combat() -> void:
 	Setup.ensure_combat_fx(self)
