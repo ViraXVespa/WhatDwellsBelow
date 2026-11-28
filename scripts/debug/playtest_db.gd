@@ -4,7 +4,7 @@ extends Object
 ## An explicit directory (the phase-7 fixture) still writes. The game does not link SQLite.
 
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
-const Make := preload("res://scripts/data/progress/progress_make.gd")
+const Make := preload("res://scripts/data/progress_gear/progress_make.gd")
 
 const DB_DIR := "user://playtest/db"
 const FIXTURE_DIR := "user://playtest/smoke-curve"

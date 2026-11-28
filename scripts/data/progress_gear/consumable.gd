@@ -3,7 +3,7 @@ extends Object
 ## Hub potion holds and food stacks. The equipped slot is a copy of one hold.
 ## Potions are vendor-only (plus the starter). Moldy bread is dumpster-only.
 
-const Make := preload("res://scripts/data/progress/progress_make.gd")
+const Make := preload("res://scripts/data/progress_gear/progress_make.gd")
 
 const Roll := preload("res://scripts/data/progress_gear/consumable_roll.gd")
 const FOOD_IDS: PackedStringArray = ["ration", "trail_bread", "stew"]

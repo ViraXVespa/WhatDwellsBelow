@@ -2,6 +2,8 @@ extends Object
 
 const Bag := preload("res://scripts/data/progress_gear/gear_bag.gd")
 const Use := preload("res://scripts/data/progress_gear/gear_use.gd")
+const Extract := preload("res://scripts/data/progress_gear/extract.gd")
+const Restock := preload("res://scripts/data/progress_gear/restock.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	return Bag.make_weapon(p, wpn, rarity, ilvl)
@@ -71,3 +73,26 @@ static func use_food(p: Object) -> String:
 
 static func tick_food(p: Object, delta: float) -> void:
 	Use.tick_food(p, delta)
+
+## Extraction mailing (inventory.meta): what may be mailed, and the mail itself.
+static func extractable(p: Object, role: String = "") -> Array:
+	return Extract.extractable(p, role)
+
+static func extract_all(p: Object, role: String) -> String:
+	return Extract.extract_all(p, role)
+
+static func extract_one(p: Object, it: Dictionary, role: String) -> String:
+	return Extract.extract_one(p, it, role)
+
+static func stock_extract_shot(p: Object) -> void:
+	Extract.stock_extract_shot(p)
+
+static func bag_mailable(it: Variant) -> bool:
+	return Extract._bag_mailable(it)
+
+static func equipped_mailable(it: Dictionary, slot: String) -> bool:
+	return Extract._equipped_listed(it, slot)
+
+## Guild restock after a run (inventory.meta).
+static func restock(p: Object) -> String:
+	return Restock.restock(p)

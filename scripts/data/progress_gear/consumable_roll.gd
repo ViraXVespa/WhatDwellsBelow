@@ -3,7 +3,7 @@ extends Object
 ## Split from consumable.gd: roll_three, roll_potion, preview_food....
 
 const Affix := preload("res://scripts/data/affixes.gd")
-const Make := preload("res://scripts/data/progress/progress_make.gd")
+const Make := preload("res://scripts/data/progress_gear/progress_make.gd")
 const Food := preload("res://scripts/data/progress_gear/food_prof.gd")
 
 const BREWS: PackedStringArray = ["pale", "green", "amber", "ink", "milk", "red"]

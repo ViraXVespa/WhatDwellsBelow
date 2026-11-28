@@ -3,7 +3,7 @@ extends Object
 ## Guild restock helper for progress (progress_town.restock).
 
 static func restock(p: Object) -> String:
-	var Extract := load("res://scripts/data/progress/extract.gd")
+	var Extract := load("res://scripts/data/progress_gear/extract.gd")
 	Extract.withdraw_bank_consumables(p)
 	var msg: String = ""
 	if App.bank_gold < int(App.bal.restock_gold):

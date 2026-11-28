@@ -1,21 +1,20 @@
 extends Object
 
-const Extract := preload("res://scripts/data/progress/extract.gd")
+const Gear := preload("res://scripts/data/progress_gear.gd")
 const Quest := preload("res://scripts/data/progress_quest.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const Restock := preload("res://scripts/data/progress/restock.gd")
 
 static func extractable(p: Object, role: String = "") -> Array:
-	return Extract.extractable(p, role)
+	return Gear.extractable(p, role)
 
 static func extract_all(p: Object, role: String) -> String:
-	return Extract.extract_all(p, role)
+	return Gear.extract_all(p, role)
 
 static func extract_one(p: Object, it: Dictionary, role: String) -> String:
-	return Extract.extract_one(p, it, role)
+	return Gear.extract_one(p, it, role)
 
 static func stock_extract_shot(p: Object) -> void:
-	Extract.stock_extract_shot(p)
+	Gear.stock_extract_shot(p)
 
 static func analyze_destroy(p: Object, row: Dictionary) -> Dictionary:
 	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
@@ -87,4 +86,4 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 	Quest.from_meta(p, d)
 
 static func restock(p: Object) -> String:
-	return Restock.restock(p)
+	return Gear.restock(p)
