@@ -16,6 +16,7 @@ The studio page shows the same list under Coverage, Left to build. In real mode 
 | `frames-2d` Frames for a flat effect or object | To pick (Wan 2.2 14B stays out) | missing | flatanim | Short frame strips for effects, projectiles and prop states from one key picture. |
 | `overlay-fit` Worn and held pictures per facing | Qwen Image edit on the character's facings, or a 3D fit and render | missing | overlay | One overlay per body type and facing, matched to the paper-doll offsets. |
 | `tile-seamless` Seamless ground and wall tiles | Qwen Image 2.1 int8 with a tiling pass | missing | tile | Floor, wall and path tiles that repeat cleanly. |
+| `wang-tiles` Wang tilesets from two materials | Qwen Image 2.1 int8 edit with a corner or edge mask per tile, seeded from two approved seamless tiles; a Python packer for the sheet and a Godot TileSet | missing | wang | Every tile of the variant matches its neighbours on shared corners or edges. Packs a sheet and, when asked, a Godot TileSet .tres with one terrain set. |
 | `stable-audio` Placeholder sound effect | Stable Audio 3 Small-SFX | missing | sound | Marked placeholder until a recorded sound replaces it. |
 
 ## Actions
@@ -36,6 +37,7 @@ The studio page shows the same list under Coverage, Left to build. In real mode 
 | `icon` Make the inventory icon | `pipeline icon ID --json` | approved picture or description | `{stills:[icon 128 png]}` | qwen-still | no (needs recipe) | 2 |
 | `overlay` Make the worn pictures | `pipeline overlay ID --body female\|male --json` | approved item picture, character facings, offsets | `{stills:[one per facing]}` | overlay-fit | no | 3 |
 | `tile` Make a seamless tile | `pipeline tile ID --kind floor\|wall\|path --json` | description, tile kind | `{stills:[tile png]}` | tile-seamless | no (needs recipe) | 4 |
+| `wang` Make Wang tileset | `pipeline wang ID --kind seamless\|wang-corner-16\|wang-edge-16\|blob-47 --from A --to B --size 64\|128\|256 --layout sheet\|terrain\|both --json` | two approved seamless tiles (or descriptions) for the two materials, the variant, tile size, layout | `{stills:[sheet png, preview png], tileset: .tres with a terrain set when the layout asks, tiles:[{index, mask}]}` | wang-tiles | no (needs recipe) | 4 |
 | `keyframes` Make reference frames | `pipeline keyframes ID --clip CLIP --json` | clip name, the step prompt | `{clip, frames:[png], picked:[]}` | qwen-still | no (needs recipe) | 4 |
 | `animate` Make the animation | `pipeline animate ID --clip CLIP --dirs N --json` | approved 3D model (or key picture for flat things), clip name, directions, frames | `{clip, dirs, frames:{dir:[png]}, strip}` | motion-8dir | no | 5 |
 | `flatanim` Make flat frames | `pipeline frames ID --clip CLIP --frames N --json` | approved key picture, clip name, frame count | `{clip, frames:[png], strip}` | frames-2d | no | 4 |
@@ -80,11 +82,11 @@ A recipe is the workflow and step prompt an action uses for that type and step. 
 - `resource/recipes`: variant
 - `ui/art`: generate, tune
 - `biome/overview`: generate
-- `biome/art`: tile, generate
+- `biome/art`: tile, wang, generate
 - `biome/layout`: generate
-- `biome/rooms`: generate, tune, tile, variant
-- `building/art`: generate, tune, tile
-- `building/interior`: generate, tune, tile, variant
+- `biome/rooms`: generate, tune, tile, wang, variant
+- `building/art`: generate, tune, tile, wang
+- `building/interior`: generate, tune, tile, wang, variant
 - `vfx/art`: generate, tune
 
 ## Steps per type
@@ -259,10 +261,13 @@ Grounded in: design/dungeon.md, design/dungeon-gen.md, design/interactables.md, 
 | details | summary*, where*, floors | - | fields | - |
 | overview | mood*, light, music | generate (no), review | pictures | - |
 | features | enemies*, props, resources, traps, ghost_shop | - | fields | - |
-| art | tiles*, palette | tile (no), generate (no), review, pixel (no) | pictures | - |
+| art | tiles*, palette, wang[name, kind, from, to, size, layout] | tile (no), wang (no), generate (no), review, pixel (no) | pictures | - |
 | layout | grid, rooms, room_min, room_max, loops, hall_min, hall_max, open_edges, backdrop | generate (no), review | fields | - |
-| rooms (Dungeon rooms) | tiles*[piece, name, seamless, tint], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), variant (no), pixel (no), sound (no) | pictures | - |
+| rooms (Dungeon rooms) | tiles*[piece, name, seamless, tint], wang[name, kind, from, to, size, layout], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), wang (no), variant (no), pixel (no), sound (no) | pictures | - |
 | export | - | export, preview (no) | fields | - |
+
+Open: art: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
+Open: rooms: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
 
 ### building
 
@@ -272,10 +277,13 @@ Grounded in: design/hub.md, design/hub-guild.md, scripts/world/camp/layout_spec.
 |---|---|---|---|---|
 | start | - | reference (no) | fields | - |
 | details | summary*, where*, use | - | fields | - |
-| art | look*, faces | generate (no), tune (no), review, frame, tile (no), pixel (no) | pictures | - |
+| art | look*, faces, wang[name, kind, from, to, size, layout] | generate (no), tune (no), review, frame, tile (no), wang (no), pixel (no) | pictures | - |
 | dimensions | size*{w, d, h}, roof, door, window_bust | - | fields | - |
-| interior (Interior) | tiles*[piece, name, seamless, tint], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), variant (no), pixel (no), sound (no) | pictures | - |
+| interior (Interior) | tiles*[piece, name, seamless, tint], wang[name, kind, from, to, size, layout], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), wang (no), variant (no), pixel (no), sound (no) | pictures | - |
 | export | - | export, preview (no) | fields | - |
+
+Open: art: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
+Open: interior: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
 
 ### vfx
 
@@ -302,4 +310,5 @@ Grounded in: design/combat.md (telegraphs, trails, crack), assets/fx.
 - `review-latest`: `pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`. Seam: `Backend.reviews`.
 - `json-lists`: `--json` on `pipeline list`, `show`, `status`, and `coverage`. Seam: `Backend.list_subjects`.
 - `export-sections`: Export maps section fields into the contract: `stats`, `dialog`, `audio`, `rules`, `paperdoll`, and `frames`/`sheets` from packed clips; today they are written empty and the fields ride under `sections`. Seam: `store.export_subject`.
+- `wang-game`: The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a soft shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. Either read the packed sheet in the ground shader by a per-cell mask, or add a TileMap/terrain path for the flat areas. Seam: `scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd`.
 - `vfx-attach`: The game places an effect at the chosen attach point (feet, aimed point, projectile tip, target, and planned hand and weapon tip). Today effects spawn at a world position with no attach-point table, and hand and weapon tip have no code path yet. Seam: `scripts/combat/player_hit/hit_atk.gd _spawn_fx`.
