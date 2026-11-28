@@ -400,7 +400,7 @@ def _gear_slots(repo: Path) -> list[dict]:
     return slots
 
 
-def coverage(repo: Path) -> dict:
+def coverage(repo: Path, *, write: bool = True) -> dict:
     sprites = repo / "assets" / "sprites"
     slots = []
     slots += _slot_dirs(sprites / "player", "character")
@@ -423,5 +423,6 @@ def coverage(repo: Path) -> dict:
         "open": len(open_slots),
         "missing": open_slots,
     }
-    _write(wip_dir(repo) / "coverage.json", doc)
+    if write:
+        _write(wip_dir(repo) / "coverage.json", doc)
     return doc
