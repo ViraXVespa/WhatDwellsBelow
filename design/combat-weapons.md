@@ -29,3 +29,13 @@ Specials for all weapons are activated with A (RMB). A special spends `special_m
 - Breakables do not stop the arrow and do not reduce its damage.
 - Special: fires several arrows in a spread (`bow_special_count`, cone, range tunable). Telegraph is one yellow line per shot, not a filled cone. Each arrow is its own occupancy test and may glance independently.
 - Live occupancy tests only hosts near the arrow tip (tip radius plus sprite span). Far enemies and breakables are skipped. Sprite sample points are reused for the current process frame. The texel mask is packed once per texture under the loader and reused by every sprite that shows that texture. A non-RGBA8 texture still reads `get_pixel`. Packing the mask did not remove the first great-axe slam stall.
+
+## Aim-line indicator
+
+- Simple opaque visual indicator that extends outward from the player in the direction they are facing/aiming.
+- Appearance and length are fully tunable (default style inspired by Heroes of Hammerwatch and similar games; length may optionally scale toward the farthest point the currently equipped weapon can hit).
+- Always visible while the player is inside the dungeon; never visible in Placeholdia.
+- Always draws the full configured distance (does not respect line-of-sight or stop at walls).
+- Toggleable on/off and with an independent opacity slider in Pause → Settings → Graphics.
+- On/off state and opacity are persisted with the player profile.
+- Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required). Touch aim is lock-on while the overlay is active.

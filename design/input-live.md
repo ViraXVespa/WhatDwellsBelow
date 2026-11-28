@@ -1,7 +1,8 @@
 ﻿# Input defaults and web pad
 
 Status: current plan  
-Read when: default binds or web_pad  
+Read when: desktop defaults, navigator gamepads  
+Code: `scripts/input/binds/table.gd`, `scripts/input/binds/defaults.gd`, `scripts/input/binds/letter_fit.gd`, `scripts/web_pad.gd`
 
 ## Defaults (`scripts/input/binds/table.gd`)
 

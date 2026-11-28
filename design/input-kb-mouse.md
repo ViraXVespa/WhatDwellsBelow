@@ -1,7 +1,8 @@
 ﻿# Keyboard / mouse
 
 Status: current plan  
-Read when: keyboard / mouse fallback  
+Read when: WASD walk, LMB, Alt display toggle  
+Code: `scripts/input/pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/binds/table.gd`
 
 ## Input – Keyboard / mouse (fully featured fallback)
 

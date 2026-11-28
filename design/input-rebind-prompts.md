@@ -1,7 +1,8 @@
-﻿# Rebinding, prompts, aim-line
+﻿# Rebinding and prompts
 
 Status: current plan  
-Read when: rebinding, on-screen prompts, or aim-line  
+Read when: rebind prompts, remap grid  
+Code: `scripts/input/binds.gd` + `scripts/input/binds/`, `scripts/input/prompts.gd`, `scripts/ui/binds_page.gd`, `scripts/ui/prompt_view.gd`
 
 ## Rebinding
 
@@ -43,13 +44,3 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions, hint
 Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/media.py glyphs`. Keyboard arrows are stemmed arrows on the key cap, not `UP` / `DN` / empty `<` `>` stamps.
 
 Helpers: `Prompts.texture_for(action)`, `Prompts.texture_for_event`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`, `PromptView.pulse`.
-
-## Aim-line indicator
-
-- Simple opaque visual indicator that extends outward from the player in the direction they are facing/aiming.
-- Appearance and length are fully tunable (default style inspired by Heroes of Hammerwatch and similar games; length may optionally scale toward the farthest point the currently equipped weapon can hit).
-- Always visible while the player is inside the dungeon; never visible in Placeholdia.
-- Always draws the full configured distance (does not respect line-of-sight or stop at walls).
-- Toggleable on/off and with an independent opacity slider in Pause → Settings → Graphics.
-- On/off state and opacity are persisted with the player profile.
-- Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required). Touch aim is lock-on while the overlay is active.
