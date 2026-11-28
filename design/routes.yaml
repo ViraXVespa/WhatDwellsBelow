@@ -215,7 +215,10 @@ doors:
   player:
     file: design/player.md
     read_when: "movement, collision, character select, eight-dir body"
-    jobs: {}
+    jobs:
+      avatar: design/player-avatar.md
+      bow: design/player-bow.md
+      anim: design/player-anim.md
   combat:
     file: design/combat.md
     read_when: "strikes, hit registration, juice"
@@ -406,6 +409,9 @@ job_read_when:
   enemies.roster: "monster variety, suggested roles, named monsters, new enemy type"
   enemies.ai: "wind-up telegraphs, leash range, flee reinforcements, idle spawns"
   enemies.loot: "durability, corpse cleanup, kill drops, boss chest"
+  player.avatar: "male or female pick, matching voiceover, silhouette bounds"
+  player.bow: "Bow mode, LT steer, RT shoots"
+  player.anim: "8-way facing, stride start and stop, lead foot, seppuku collapse, lazy loads"
 
 # Build prove: numbered smoke phases per door or door.job (job key wins over its door). Phase meanings: debug-smokes.
 # Printed by list_route and start_build_slice; gate.py smokes / gate.py bot-smokes take --door / --job instead of --phases.
@@ -481,6 +487,7 @@ shot_flows:
   input.rebind_prompts: "camp-controls"
   input.web_touch: "dungeon-touch-controls"
   player: "dungeon-bow-mode"
+  player.bow: "dungeon-bow-mode"
   combat.weapons: "dungeon-bow-mode"
   enemies.roster: "dungeon-all-enemies"
   enemies.loot: "dungeon-pickups"
@@ -541,6 +548,7 @@ web_perf:
     ui: "camp-pause,camp-shop"
     graphics: "camp-walk,dungeon-walk,dungeon-fight"
     player: "camp-walk,dungeon-walk,dungeon-fight"
+    camera: "camp-walk,dungeon-walk"
     interactables: "camp-shop,dungeon-walk"
     hub: "hub-load,camp-walk"
     dungeon: "dungeon-load,dungeon-walk"
