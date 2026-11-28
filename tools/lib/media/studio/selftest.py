@@ -68,6 +68,7 @@ def sample(fd: dict):
 class Walk:
     def __init__(self, base: str, bad: list[str], tag: str):
         self.base, self.bad, self.tag = base, bad, tag
+        self.actions: set[str] = set()
         self.commands = call(base, "GET", "/api/studio/info")[1]["commands"]
 
     def miss(self, msg: str) -> None:
@@ -110,7 +111,8 @@ class Walk:
             if job.get("status") not in ("queued", "running"):
                 break
             time.sleep(0.05)
-        if job.get("status") != "done" or not (job.get("result") or {}).get("simulated"):
+        res = job.get("result") or {}
+        if (job.get("status") != "done" and not (cmd in ("review", "proportion") and (res.get("verdict") or res.get("reason")))) or not res.get("simulated"):
             self.miss(f"{sid} {cmd} on {step} ended {job.get('status')} {job.get('error')}")
         return job
 
@@ -120,6 +122,42 @@ class Walk:
         if code != 200:
             self.miss(f"{sid} save {step} gave {code} {out.get('error')}")
         return data
+
+    GATED = ("export", "preview", "reference", "body", "mesh", "edit")
+
+    def every(self, sid: str, row: dict, data: dict) -> None:
+        """Run each action the step lists once, with real inputs from the subject; what it makes lands on this step."""
+        step = row["id"]
+        makers = [a for a in ("generate", "tile", "icon", "overlay") if a in row["actions"]]
+        if makers:
+            self.run(sid, makers[0], step)
+        for cmd in row["actions"]:
+            if cmd in self.GATED or cmd in ("animate", "keyframes") and not data.get("clips"):
+                continue
+            stills = [x for x in self.subject(sid)["stills"] if x.get("kind", "still") == "still" and x["path"].endswith(".png")]
+            here = [x for x in stills if x.get("step") == step] or stills
+            args = {}
+            for fd in self.commands[cmd].get("fields", []):
+                k, name = fd["kind"], fd["name"]
+                if k == "still" and here:
+                    args[name] = here[-1]["path"]
+                elif name == "out":
+                    args[name] = f"data/pipeline/wip/gen/{sid}-{step}-framed.png"
+                elif fd.get("required"):
+                    args[name] = (data.get("clips") or ["walk"])[0] if k == "clip" else fd.get("default") or (fd.get("options") or [None])[0] or STAND_IN.get(k, "x")
+            if cmd == "proportion" and "image" not in args:
+                continue
+            job = self.run(sid, cmd, step, args)
+            res = job.get("result") or {}
+            self.actions.add(cmd)
+            wrong = [a["path"] for a in res.get("added") or [] if a.get("step") != step]
+            if wrong:
+                self.miss(f"{sid} {cmd} put pictures off {step}: {wrong}")
+            if cmd == "wang" and (len(res.get("added") or []) != 2 or res.get("tiles") != 16):
+                self.miss(f"{sid} wang on {step} should add a sheet and a preview of 16 tiles ({res})")
+        for x in self.pics(sid, step):
+            if x["state"] == "pending":
+                self.judge(sid, x["path"], "hidden")
 
     def make(self, sid: str, row: dict, data: dict) -> None:
         """Produce what the step needs, approve it all, finish."""
@@ -137,8 +175,8 @@ class Walk:
                 self.judge(sid, s["path"], "approved")
         self.finish(sid, step)
 
-    def through(self, sid: str, order: list[str] | None = None) -> None:
-        """Every step after Start, groups walked back to front, then export."""
+    def through(self, sid: str, order: list[str] | None = None, every: bool = False) -> None:
+        """Every step after Start, groups walked back to front, then export. `every` also runs each listed action."""
         rows = self.subject(sid)["steps"]
         ids = order or [r["id"] for r in rows]
         seen: set[str] = set()
@@ -155,6 +193,8 @@ class Walk:
                         self.miss(f"{sid} export did not finish ({out.get('error')})")
                     continue
                 data = self.fill(sid, m["id"]) if m["fields"] else {}
+                if every:
+                    self.every(sid, self.row(sid, m["id"]), data)
                 self.make(sid, self.row(sid, m["id"]), data)
 
 
@@ -212,8 +252,8 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
     skills = next(fd for s in reg["equipment"]["steps"] if s["id"] == "skills" for fd in s["fields"] if fd["key"] == "xp")
     if skills["labels"].get("axe") != "Great Axe" or skills["labels"].get("hp") != "Hitpoints" or set(skills["labels"]) != set(skills["options"]):
         miss("every skill id needs its display name")
-    if any(s["open"] for t in reg.values() for s in t["steps"]):
-        miss("no step should still be an open question")
+    if any(s["open"] and s["open"] != registry.WANG_OPEN for t in reg.values() for s in t["steps"]):
+        miss("the only open question left is the Wang tileset variant")
     gather = next(s for s in reg["resource"]["steps"] if s["id"] == "recipes")
     if {"tool", "hits", "chance", "rewards", "after_break", "per_floor", "rooms", "hit_vfx", "sounds"} - {fd["key"] for fd in gather["fields"]}:
         miss("gather node fields")
@@ -229,8 +269,15 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
     points = next(c["options"] for fd in attach["fields"] if fd["key"] == "points" for c in fd["columns"] if c["key"] == "point")
     if {"hand", "weapon tip"} - set(points) or "does not support them yet" not in next(c["help"] for fd in attach["fields"] if fd["key"] == "points" for c in fd["columns"] if c["key"] == "point"):
         miss("attach points should list hand and weapon tip as planned options")
-    if "vfx-attach" not in {s["id"] for s in (info.get("registry") or {}).get("seams", [])}:
-        miss("a Build gap should record the game-side attach code path")
+    if {"vfx-attach", "wang-game"} - {s["id"] for s in (info.get("registry") or {}).get("seams", [])}:
+        miss("Build gaps should record the game-side attach and Wang tileset paths")
+    for t, st in (("biome", "art"), ("biome", "rooms"), ("building", "art"), ("building", "interior")):
+        row = next(x for x in reg[t]["steps"] if x["id"] == st)
+        wang = next((fd for fd in row["fields"] if fd["key"] == "wang"), None)
+        if "wang" not in {a["id"] for a in row["actions"]} or not wang or {"kind", "from", "to", "size", "layout"} - {c["key"] for c in wang["columns"]} or not row.get("open"):
+            miss(f"{t}/{st} should offer Make Wang tileset with kind, materials, size and output, and say the variant is undecided")
+    if (info.get("registry") or {}).get("setups", {}).get("wang-tiles", {}).get("status") != "missing":
+        miss("a ComfyUI setup entry for Wang tilesets")
     from media.pipeline import store as store_mod
     if any(sk for rows in store_mod.SECTIONS.values() for _, sk in rows):
         miss("filled steps should not be marked as skeletons")
@@ -332,19 +379,31 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
             miss(f"create {t}")
             continue
         w.finish(tid, "start")
-        w.through(tid)
+        w.through(tid, every=True)
         for row in w.subject(tid)["steps"]:
             if row["status"] != "done":
                 miss(f"{t}/{row['id']} ended {row['status']}")
-    # Every action runs in simulate from a step that lists it.
-    ran = set()
-    for t, spec in registry.TYPES.items():
-        for st in spec["steps"]:
-            for a in registry.step_spec(t, st)["actions"]:
-                ran.add(a)
-    missing = set(registry.ACTIONS) - ran - {"export", "preview", "reference"}
+    # Every action ran in simulate from a step that lists it, and every export reads as the game contract.
+    missing = set(registry.ACTIONS) - w.actions - set(Walk.GATED) - {"smooth"}
     if missing:
-        miss(f"actions no step lists: {sorted(missing)}")
+        miss(f"actions that never ran from a step: {sorted(missing)}")
+    _exports_valid(w, tmp)
+
+
+def _exports_valid(w: Walk, tmp: Path) -> None:
+    import jsonschema
+    from referencing import Registry, Resource
+    sd = tmp / "data/pipeline/schemas/v1"
+    docs = {p.name: json.loads(p.read_text(encoding="utf-8")) for p in sd.glob("*.json")}
+    reg = Registry().with_resources([(d.get("$id", n), Resource.from_contents(d)) for n, d in docs.items()])
+    check = jsonschema.Draft202012Validator(docs["export.schema.json"], registry=reg)
+    files = sorted((tmp / "data/pipeline/wip/_sim/data/pipeline/export").glob("*/*.json"))
+    if len({f.parent.name for f in files}) != 14:
+        w.miss(f"exports for every type ({sorted({f.parent.name for f in files})})")
+    for f in files:
+        errs = [e.message for e in check.iter_errors(json.loads(f.read_text(encoding="utf-8")))]
+        if errs:
+            w.miss(f"{f.parent.name}/{f.name} does not match export.schema.json: {errs[:2]}")
 
 
 def run(real: Path) -> int:
