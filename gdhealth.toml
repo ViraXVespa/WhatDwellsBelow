@@ -8,11 +8,12 @@ include = ["**/*.gd"]
 exclude = ["addons/**", ".godot/**", "reports/**"]
 
 [groups]
-camera  = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
-combat  = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
-debug   = ["scripts/debug/**"]
-enemies = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
-player  = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
+camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
+combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
+debug         = ["scripts/debug/**"]
+enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
+interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
+player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
 
 # Pinned to the gdhealth 0.3.6 defaults so trend numbers do not move with a tool update.
 [thresholds]
@@ -54,6 +55,11 @@ from     = "camera"
 to       = "debug"
 severity = "critical"
 
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "debug"
+severity = "critical"
+
 # Combat mechanics (hits, cover, projectiles, feedback) sit below the enemies that use them.
 [[policy.forbidden_dependencies]]
 from     = "combat"
@@ -79,5 +85,16 @@ severity = "warning"
 
 [[policy.forbidden_dependencies]]
 from     = "camera"
+to       = "enemies"
+severity = "warning"
+
+# Interactables are placed by the dungeon and the hub and used by the player; they reach no actor code.
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
 to       = "enemies"
 severity = "warning"
