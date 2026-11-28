@@ -274,7 +274,12 @@ doors:
   interactables:
     file: design/interactables.md
     read_when: "gathering swings, shops, shrines, puzzles, extract-wells"
-    jobs: {}
+    jobs:
+      gather: design/interactables-gather.md
+      breakables: design/interactables-breakables.md
+      puzzles: design/interactables-puzzles.md
+      fixtures: design/interactables-fixtures.md
+      prompts: design/interactables-prompts.md
   ui:
     file: design/ui.md
     read_when: "pause panels, fullscreen drape, play-menu"
@@ -412,6 +417,11 @@ job_read_when:
   player.avatar: "male or female pick, matching voiceover, silhouette bounds"
   player.bow: "Bow mode, LT steer, RT shoots"
   player.anim: "8-way facing, stride start and stop, lead foot, seppuku collapse, lazy loads"
+  interactables.gather: "mining nodes, wood nodes, pickaxe rewards"
+  interactables.breakables: "pots and barrels, HP orbs, smash sound"
+  interactables.puzzles: "pull levers, cracked walls, treasure caches, paired gatework"
+  interactables.fixtures: "microwave housing, pawned goods, blessing buff, campfire sit"
+  interactables.prompts: "descend glyph, waypoint beacons, clear-area text, readable labels"
 
 # Build prove: numbered smoke phases per door or door.job (job key wins over its door). Phase meanings: debug-smokes.
 # Printed by list_route and start_build_slice; gate.py smokes / gate.py bot-smokes take --door / --job instead of --phases.
@@ -488,6 +498,9 @@ shot_flows:
   input.web_touch: "dungeon-touch-controls"
   player: "dungeon-bow-mode"
   player.bow: "dungeon-bow-mode"
+  interactables.breakables: "dungeon-pickups"
+  interactables.fixtures: "dungeon-gate-popups,dungeon-gate-shop"
+  interactables.prompts: "dungeon-map-crystal"
   combat.weapons: "dungeon-bow-mode"
   enemies.roster: "dungeon-all-enemies"
   enemies.loot: "dungeon-pickups"
