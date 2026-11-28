@@ -8,6 +8,7 @@ include = ["**/*.gd"]
 exclude = ["addons/**", ".godot/**", "reports/**"]
 
 [groups]
+app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/web_pad.gd", "scripts/data/bug_doors.gd"]
 audio_visual = ["scripts/audio/**"]
 camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
@@ -68,6 +69,12 @@ severity = "critical"
 
 [[policy.forbidden_dependencies]]
 from     = "localization"
+to       = "debug"
+severity = "critical"
+
+# App flow is the top of the game; it reaches debug only through the Dbg shim (scripts/app/dbg.gd, lazy loads).
+[[policy.forbidden_dependencies]]
+from     = "app_flow"
 to       = "debug"
 severity = "critical"
 
