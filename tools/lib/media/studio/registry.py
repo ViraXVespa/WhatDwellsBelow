@@ -96,6 +96,7 @@ SEAMS: list[dict] = [
     {"id": "review-latest", "want": "`pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`.", "seam": "Backend.reviews"},
     {"id": "json-lists", "want": "`--json` on `pipeline list`, `show`, `status`, and `coverage`.", "seam": "Backend.list_subjects"},
     {"id": "export-sections", "want": "Export maps section fields into the contract: `stats`, `dialog`, `audio`, `rules`, `paperdoll`, and `frames`/`sheets` from packed clips; today they are written empty and the fields ride under `sections`.", "seam": "store.export_subject"},
+    {"id": "vfx-attach", "want": "The game places an effect at the chosen attach point (feet, aimed point, projectile tip, target, and planned hand and weapon tip). Today effects spawn at a world position with no attach-point table, and hand and weapon tip have no code path yet.", "seam": "scripts/combat/player_hit/hit_atk.gd _spawn_fx"},
 ]
 
 # ---- fields ------------------------------------------------------------------------------------
@@ -117,7 +118,7 @@ SKILL_IDS = ["axe", "staff", "bow", "str", "mag", "rng", "def", "hp", "mine", "w
 SKILL_NAMES = {"axe": "Great Axe", "staff": "Staff", "bow": "Longbow", "str": "Strength", "mag": "Magic", "rng": "Ranged", "def": "Defense",
                "hp": "Hitpoints", "mine": "Mining", "wood": "Woodcutting", "smith": "Smithing"}
 # Plain step names where the store section id is not the plain word. Ids stay: they are the store and export contract.
-STEP_LABELS = {"recipes": "Gather node", "interior": "Interior", "attach": "Attach points"}
+STEP_LABELS = {"recipes": "Gather node", "interior": "Interior", "attach": "Attach points", "rooms": "Dungeon rooms"}
 AFFIXES = ["dmg", "def", "hp", "crit_chance", "crit_dmg", "move_spd", "atk_spd", "atk_range", "hp_on_hit", "hp_on_kill", "gather_spd", "gather_pow", "yield_chance"]
 ROSTER = ["slime", "goblin", "orc", "skeleton", "bat", "spider", "archer", "shaman", "imp", "wolf", "beetle", "wisp"]
 PROPS = ["anvil", "banner", "barrel", "boss_door", "campfire", "chest", "coins", "crack_wall", "crystal", "dumpster", "extract_gate", "fence", "gate",
@@ -136,6 +137,23 @@ SHAPE = f("shape", "Body shape", "long", "Plain description the pictures follow.
 BODY_ACTIONS = ["generate", "tune", "review", "frame", "proportion", "smooth", "body", "mesh", "edit"]
 ART_ACTIONS = ["generate", "tune", "review", "frame", "variant", "pixel"]
 
+
+# Tile set + decor used by a building interior and by a biome's dungeon rooms. Same shape; help differs.
+ROOM_ACTIONS = ["generate", "tune", "review", "frame", "tile", "variant", "pixel", "sound"]
+
+def TILES(help: str = "Each is seamless. One tile is one metre, 64 pixels.") -> dict:
+    return f("tiles", "Tile set pieces", "table", help, required=True, columns=[
+        f("piece", "Piece", "choice", options=["floor", "wall", "path", "roof", "other"]), f("name", "Name"),
+        f("seamless", "Seamless", "bool"), f("tint", "Tint", "color")])
+
+def DECOR(help: str, hits_help: str) -> dict:
+    return f("decor", "Decor objects", "table", help, columns=[
+        f("name", "Name"), f("decoration", "Decoration", "subject", of=["decoration"]), f("count", "How many", "number", step=1),
+        f("destructible", "Breaks when hit", "bool"),
+        f("hits", "Hits to break", "number", hits_help, min=1, max=20, step=1),
+        f("gold_chance", "Chance of gold", "number", min=0, max=1, step=0.05),
+        f("orb_chance", "Chance of a health orb", "number", min=0, max=1, step=0.05),
+        f("opens_chest", "Opens a hidden chest", "bool")])
 
 def S(fields: list[dict], actions: list[str] | None = None, needs: list[str] | None = None, group: str | None = None, open_question: str | None = None) -> dict:
     return {"fields": fields, "actions": actions or [], "needs": needs or [], "group": group, "open": open_question}
@@ -305,7 +323,7 @@ TYPES: dict[str, dict] = {
                   fields=[f("left", "Left", "number", step=1), f("top", "Top", "number", step=1), f("right", "Right", "number", step=1), f("bottom", "Bottom", "number", step=1)]), SOUNDS],
                  ["generate", "tune", "review", "frame", "pixel", "sound"], ["pictures"]),
     }},
-    "biome": {"source": "design/dungeon.md, design/hub.md, assets/tiles (no biome system in the game yet)", "steps": {
+    "biome": {"source": "design/dungeon.md, design/dungeon-gen.md, design/interactables.md, assets/tiles, scripts/world/dungeon_geo.gd, breakable.gd", "steps": {
         "details": S([SUMMARY, f("where", "Used for", "multi", options=["dungeon floors", "hub", "city", "open area"], required=True), f("floors", "Floors", "multi", options=["1", "2", "3", "4", "5"])]),
         "overview": S([f("mood", "Mood", "long", required=True), f("light", "Light", "multi", options=["torches", "crystals", "campfires", "sun"]), f("music", "Music", "text")], ["generate", "review"], ["pictures"]),
         "features": S([f("enemies", "Enemies", "multi", options=ROSTER, required=True), f("props", "Flavour props", "multi", options=PROPS), f("resources", "Resources", "multi", options=["ore", "tree"]),
@@ -316,6 +334,10 @@ TYPES: dict[str, dict] = {
                      f("loops", "Extra loops", "number", min=0, max=40, step=1, default=8), f("hall_min", "Narrowest hall", "number", min=1, max=6, step=1, default=2),
                      f("hall_max", "Widest hall", "number", min=1, max=8, step=1, default=4), f("open_edges", "Open edges instead of walls", "bool"),
                      f("backdrop", "Backdrop in the empty space", "text", "e.g. a city parallax for a Sky City.")], ["generate", "review"], []),
+        "rooms": S([TILES("Floor, wall and other tiles for dungeon rooms. One tile is one metre, 64 pixels."),
+                    DECOR("Things that stand in a dungeon room, like pots, barrels and a cracked wall. Link one to a decoration you already made.",
+                          "Pots and barrels break in one. A cracked wall takes 8."),
+                    SOUNDS], ROOM_ACTIONS, ["pictures"]),
     }},
     "building": {"source": "design/hub.md, design/hub-guild.md, scripts/world/camp/layout_spec.gd", "steps": {
         "details": S([SUMMARY, f("where", "Where", "choice", options=["hub", "city"], required=True), f("use", "What happens there", "text")]),
@@ -325,17 +347,10 @@ TYPES: dict[str, dict] = {
                            fields=[f("w", "Width", "number", step=0.1), f("d", "Depth", "number", step=0.1), f("h", "Height", "number", step=0.1)]),
                          f("roof", "Roof", "bool", default=True), f("door", "Door side", "choice", options=["south", "east", "west", "north", "none"]),
                          f("window_bust", "NPC shown in a window", "text", "Name of the NPC subject, if any.")]),
-        "interior": S([
-            f("tiles", "Tile set pieces", "table", "Each is seamless. One tile is one metre, 64 pixels.", required=True, columns=[
-                f("piece", "Piece", "choice", options=["floor", "wall", "path", "roof", "other"]), f("name", "Name"), f("seamless", "Seamless", "bool"),
-                f("tint", "Tint", "color")]),
-            f("decor", "Decor objects", "table", "Things that stand in the interior. Link one to a decoration you already made.", columns=[
-                f("name", "Name"), f("decoration", "Decoration", "subject", of=["decoration"]), f("count", "How many", "number", step=1),
-                f("destructible", "Breaks when hit", "bool"), f("hits", "Hits to break", "number", "Pots and barrels break in one. A cracked wall takes 8.", min=1, max=20, step=1),
-                f("gold_chance", "Chance of gold", "number", min=0, max=1, step=0.05), f("orb_chance", "Chance of a health orb", "number", min=0, max=1, step=0.05),
-                f("opens_chest", "Opens a hidden chest", "bool")]),
-            SOUNDS,
-        ], ["generate", "tune", "review", "frame", "tile", "variant", "pixel", "sound"], ["pictures"]),
+        "interior": S([TILES(),
+                       DECOR("Things that stand inside a hub or city building: a notice board, anvil, stall goods, a dumpster or a banner. Link one to a decoration you already made.",
+                             "Most of these do not break. Set this only if they do."),
+                       SOUNDS], ROOM_ACTIONS, ["pictures"]),
     }},
     "vfx": {"source": "design/combat.md (telegraphs, trails, crack), assets/fx", "steps": {
         "details": S([SUMMARY, f("trigger", "Plays on", "choice", options=["hit", "slam crack", "lightning strike", "arrow trail", "smash", "pickup", "level up", "telegraph", "other"], required=True)]),
@@ -343,9 +358,9 @@ TYPES: dict[str, dict] = {
                   f("loop", "Loops", "bool"), f("blend", "Blend", "choice", options=["normal", "add"], default="normal"), SOUNDS],
                  ["generate", "tune", "review", "flatanim", "pixel", "sheet", "sound"], ["pictures"]),
         "attach": S([
-            f("points", "Attach points", "table", "Where the effect is placed when it plays. Hand and weapon tip are not in the game yet.", required=True, columns=[
-                f("point", "Where", "choice", "Feet: under the player. Aimed point: where the staff is aimed. Projectile tip: travels with an arrow. Target: on the enemy or breakable it hits.",
-                  options=["feet", "aimed point", "projectile tip", "target"]),
+            f("points", "Attach points", "table", "Where the effect is placed when it plays.", required=True, columns=[
+                f("point", "Where", "choice", "Feet: under the player. Aimed point: where the staff is aimed. Projectile tip: travels with an arrow. Target: on the enemy or breakable it hits. Hand and weapon tip are planned; the game does not support them yet.",
+                  options=["feet", "aimed point", "projectile tip", "target", "hand", "weapon tip"]),
                 f("flat", "Lies flat on the ground", "bool"), f("size", "Size (metres)", "number", min=0.2, max=8, step=0.1), f("lift", "Height above the ground", "number", step=0.05),
                 f("fade", "Fade out (seconds)", "number", min=0, max=5, step=0.05), f("follows", "Moves with its parent", "bool")]),
         ]),

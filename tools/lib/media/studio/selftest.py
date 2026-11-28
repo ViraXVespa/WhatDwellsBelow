@@ -205,8 +205,9 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
         miss("every type plan is start, sections, export")
     plan = info["steps"]
     names = {t: {s["id"]: s["label"] for s in rows} for t, rows in plan.items()}
-    if (names["resource"]["recipes"], names["building"]["interior"], names["vfx"]["attach"]) != ("Gather node", "Interior", "Attach points"):
-        miss(f"plain step names for the renamed steps ({names['resource']}, {names['building']}, {names['vfx']})")
+    want_names = (names["resource"]["recipes"], names["building"]["interior"], names["vfx"]["attach"], names["biome"]["rooms"])
+    if want_names != ("Gather node", "Interior", "Attach points", "Dungeon rooms"):
+        miss(f"plain step names for the renamed steps {want_names}")
     reg = info["registry"]["types"]
     skills = next(fd for s in reg["equipment"]["steps"] if s["id"] == "skills" for fd in s["fields"] if fd["key"] == "xp")
     if skills["labels"].get("axe") != "Great Axe" or skills["labels"].get("hp") != "Hitpoints" or set(skills["labels"]) != set(skills["options"]):
@@ -219,6 +220,20 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
     interior = next(s for s in reg["building"]["steps"] if s["id"] == "interior")
     if {"tile", "variant"} - {a["id"] for a in interior["actions"]} or {"tiles", "decor"} - {fd["key"] for fd in interior["fields"]}:
         miss("interior needs tile set, decor and the tile and picture actions")
+    rooms = next(s for s in reg["biome"]["steps"] if s["id"] == "rooms")
+    if {a["id"] for a in rooms["actions"]} != {a["id"] for a in interior["actions"]} or {"tiles", "decor"} - {fd["key"] for fd in rooms["fields"]}:
+        miss("dungeon rooms should reuse the interior fields and actions")
+    if "pots" not in next(fd for fd in rooms["fields"] if fd["key"] == "decor")["help"] or "notice board" not in next(fd for fd in interior["fields"] if fd["key"] == "decor")["help"]:
+        miss("dungeon rooms keep breakable help; building interior should read as hub or city furniture")
+    attach = next(s for s in reg["vfx"]["steps"] if s["id"] == "attach")
+    points = next(c["options"] for fd in attach["fields"] if fd["key"] == "points" for c in fd["columns"] if c["key"] == "point")
+    if {"hand", "weapon tip"} - set(points) or "does not support them yet" not in next(c["help"] for fd in attach["fields"] if fd["key"] == "points" for c in fd["columns"] if c["key"] == "point"):
+        miss("attach points should list hand and weapon tip as planned options")
+    if "vfx-attach" not in {s["id"] for s in (info.get("registry") or {}).get("seams", [])}:
+        miss("a Build gap should record the game-side attach code path")
+    from media.pipeline import store as store_mod
+    if any(sk for rows in store_mod.SECTIONS.values() for _, sk in rows):
+        miss("filled steps should not be marked as skeletons")
     if call(base, "POST", f"/api/studio/subjects/{sid}/prompts", {"detail": "x"})[0] != 404:
         miss("the old Prompts screen's save route should be gone")
     out = w.run(sid, "body", "body", want=409)

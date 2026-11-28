@@ -21,7 +21,7 @@ TYPES = (
     "projectile", "decoration", "resource", "ui", "biome", "building", "vfx",
 )
 
-# (section id, skeleton). Skeleton sections navigate and stay empty on purpose.
+# (section id, skeleton). A skeleton section navigates and stays empty on purpose; none are marked now.
 SECTIONS: dict[str, tuple[tuple[str, bool], ...]] = {
     "character": (
         ("details", False), ("body", False), ("model", False), ("portrait", False),
@@ -32,16 +32,16 @@ SECTIONS: dict[str, tuple[tuple[str, bool], ...]] = {
     ),
     "enemy": (
         ("details", False), ("description", False), ("model", False), ("portrait", False),
-        ("behavior", False), ("stats", False), ("animation", False), ("items", True),
+        ("behavior", False), ("stats", False), ("animation", False), ("items", False),
         ("alternates", False), ("diversity", False), ("named", False),
     ),
     "sub-boss": (
         ("details", False), ("description", False), ("model", False), ("portrait", False),
-        ("behavior", False), ("stats", False), ("animation", False), ("items", True),
+        ("behavior", False), ("stats", False), ("animation", False), ("items", False),
     ),
     "boss": (
         ("details", False), ("description", False), ("model", False), ("portrait", False),
-        ("behavior", False), ("stats", False), ("animation", False), ("items", True),
+        ("behavior", False), ("stats", False), ("animation", False), ("items", False),
     ),
     "equipment": (
         ("details", False), ("skin", False), ("skills", False), ("offsets", False), ("stats", False), ("hooks", False),
@@ -49,15 +49,15 @@ SECTIONS: dict[str, tuple[tuple[str, bool], ...]] = {
     "item": (("details", False), ("art", False), ("stats", False)),
     "projectile": (("details", False), ("art", False), ("motion", False)),
     "decoration": (("details", False), ("art", False)),
-    "resource": (("details", False), ("art", False), ("recipes", True)),
+    "resource": (("details", False), ("art", False), ("recipes", False)),
     "ui": (("details", False), ("art", False)),
     "biome": (
-        ("details", False), ("overview", False), ("features", False), ("art", False), ("layout", True),
+        ("details", False), ("overview", False), ("features", False), ("art", False), ("layout", False), ("rooms", False),
     ),
     "building": (
-        ("details", False), ("art", False), ("dimensions", False), ("interior", True),
+        ("details", False), ("art", False), ("dimensions", False), ("interior", False),
     ),
-    "vfx": (("details", False), ("art", False), ("attach", True)),
+    "vfx": (("details", False), ("art", False), ("attach", False)),
 }
 
 _ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
