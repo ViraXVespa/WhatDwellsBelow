@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: running a still/I2V/pack/sprite/audio tool (Build / User only)  
 
-Door, rules, the CLI contract and the Surf / A key: `tools.md`. New art flows live on the content pipeline door. Imagine and I2V stay closed for new game art. The Bot reads only the image library section.
+Door, rules, the CLI contract and the Surf / A key: `tools.md`. New art flows live on the content pipeline door. Imagine and I2V stay closed for new game art. The old art-pipeline rows below are legacy: the art_pipeline.legacy job says which are still used for shipped art and where each lands in the unified pipeline. The Bot reads only the image library section.
 
 Entries here: `media.py`; their code: `tools/lib/media/`.
 

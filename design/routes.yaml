@@ -354,11 +354,12 @@ doors:
     jobs: {}
   art_pipeline:
     file: design/art-pipeline.md
-    read_when: "sprite frames, paper plates, sheet harvest"
+    read_when: "unified content, export contract, asset types"
     jobs:
       content: design/content-pipeline.md
       mesh: design/content-pipeline-mesh.md
       studio: design/content-pipeline-ui.md
+      legacy: design/content-pipeline-legacy.md
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
@@ -409,6 +410,7 @@ job_read_when:
   art_pipeline.content: "pipeline subjects, proportion bands, clause checks"
   art_pipeline.mesh: "hunyuan trellis pixal hi3d"
   art_pipeline.studio: "authoring phone studio"
+  art_pipeline.legacy: "rekey manifests, shipped sprite sheets, retired generators"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"

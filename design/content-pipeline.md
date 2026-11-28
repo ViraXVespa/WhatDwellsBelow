@@ -1,8 +1,8 @@
 # Pipeline subjects
 
 Status: current plan
-Read when: subject records, size bands, and the prompt checklist
-Code: `python tools/media.py pipeline`, `data/pipeline/`, `scripts/data/content_pack.gd`
+Read when: pipeline subjects, proportion bands, clause checks
+Code: `python tools/media.py pipeline`, `tools/lib/media/pipeline/`, `data/pipeline/`, `scripts/data/content_pack.gd` + `scripts/data/content_pack/`
 
 WIP under `data/pipeline/wip/` stays local until export. Subject JSON, generations, and meshes stay off Git. Export JSON under `data/pipeline/export/` and the sheets it names are the game contract. Schemas and the tool code are the system. An id missing from the export index stays on today's sprite paths. The export index lists no subjects. `scripts/data/content_pack.gd` reads an exported id. Live sprites stay on their old paths until a caller asks for one.
 

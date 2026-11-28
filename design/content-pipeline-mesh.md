@@ -1,7 +1,7 @@
 # Mesh models
 
 Status: current plan
-Read when: Hunyuan, TRELLIS, Pixal, and Hi3D
+Read when: hunyuan trellis pixal hi3d
 Code: `python tools/media.py pipeline body`, `python tools/media.py pipeline edit ID --text TEXT`
 
 ## On disk
