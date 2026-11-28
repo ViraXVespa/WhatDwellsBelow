@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.14.1",
+			"points": [
+				{
+					"text": "Pages deploy no longer races the upload step. The workflow splits into an export job that builds and uploads the site artifact, then a deploy job that needs it and runs actions/deploy-pages. This avoids the intermittent 'No artifacts named github-pages' failure."
+				}
+			],
+			"summary": "GitHub Pages deploy is reliable again after the export/deploy job split."
+		},
+		{
 			"label": "0.14.0",
 			"points": [
 				{
