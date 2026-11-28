@@ -9,20 +9,23 @@ exclude = ["addons/**", ".godot/**", "reports/**"]
 
 [groups]
 app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/data/bug_doors.gd"]
+archives      = ["scripts/ui/archives_ui.gd", "scripts/ui/archives_ui/**", "scripts/data/archives/**"]
 audio_visual = ["scripts/audio/**"]
 camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
 debug         = ["scripts/debug/**"]
 display       = ["scripts/display_mode.gd", "scripts/display_mode/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
-inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
-input         = ["scripts/input/**", "scripts/web_pad.gd"]
+gear_ui       = ["scripts/ui/gear_board.gd", "scripts/ui/gear_board/**", "scripts/ui/gear_icons.gd"]
+input         = ["scripts/input/**"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
+inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
 localization  = ["scripts/localization/**"]
 numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
 player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
 save_tech     = ["scripts/data/save_store.gd", "scripts/data/save_store/**"]
 skills        = ["scripts/data/progress_combat.gd", "scripts/data/progress_combat/**", "scripts/data/progress_forge.gd", "scripts/data/progress_forge/**"]
+ui            = ["scripts/ui/**", "scripts/data/tutorial_pages.gd", "!scripts/ui/archives_ui.gd", "!scripts/ui/archives_ui/**", "!scripts/ui/gear_board.gd", "!scripts/ui/gear_board/**", "!scripts/ui/gear_icons.gd"]
 
 # Pinned to the gdhealth 0.3.6 defaults so trend numbers do not move with a tool update.
 [thresholds]
@@ -88,6 +91,21 @@ severity = "critical"
 
 [[policy.forbidden_dependencies]]
 from     = "input"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "archives"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "gear_ui"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "ui"
 to       = "debug"
 severity = "critical"
 
@@ -335,4 +353,136 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "inventory"
 to       = "save_tech"
+severity = "warning"
+
+# Screens sit on top of the systems they show: engine services, data and gameplay never load UI or gear-board code
+# (they report through App, signals or host methods). Gear UI and UI may use each other's public faces.
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "display"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "numbers"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "camera"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "player"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "gear_ui"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "interactables"
+to       = "gear_ui"
 severity = "warning"
