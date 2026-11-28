@@ -8,7 +8,7 @@ include = ["**/*.gd"]
 exclude = ["addons/**", ".godot/**", "reports/**"]
 
 [groups]
-app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/web_pad.gd", "scripts/data/bug_doors.gd"]
+app_flow      = ["scripts/app.gd", "scripts/app/**", "scripts/boot.gd", "scripts/title.gd", "scripts/title/**", "scripts/data/bug_doors.gd"]
 audio_visual = ["scripts/audio/**"]
 camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
@@ -16,6 +16,7 @@ debug         = ["scripts/debug/**"]
 display       = ["scripts/display_mode.gd", "scripts/display_mode/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
 inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
+input         = ["scripts/input/**", "scripts/web_pad.gd"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
 localization  = ["scripts/localization/**"]
 numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
@@ -82,6 +83,11 @@ severity = "critical"
 # Display is an engine service below the screens that ask it for fullscreen state.
 [[policy.forbidden_dependencies]]
 from     = "display"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
 to       = "debug"
 severity = "critical"
 
@@ -225,9 +231,36 @@ from     = "display"
 to       = "inventory"
 severity = "warning"
 
+# Input sits below screens and the world: it reports, others react (Pad.mode_changed, dungeon map_* methods).
+# No input/display -> app_flow rule: gdhealth 0.3.7+ counts every `App.` autoload read as an edge to scripts/app.gd.
 [[policy.forbidden_dependencies]]
-from     = "display"
-to       = "app_flow"
+from     = "input"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "input"
+to       = "audio_visual"
 severity = "warning"
 
 # Interactables are placed by the dungeon and the hub and used by the player; they reach no actor code.
