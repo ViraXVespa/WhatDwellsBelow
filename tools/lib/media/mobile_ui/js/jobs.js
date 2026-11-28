@@ -2,6 +2,9 @@
 // and the server registry lists every job, so a reload or a new tab picks running jobs up again.
 import { get, post } from "./api.js";
 import { choose, h, showError, toast } from "./ui.js";
+import { app } from "./state.js";
+
+const label = (cmd) => ((app.info && app.info.action_labels) || {})[cmd] || cmd;
 import * as notify from "./notify.js";
 
 const KEY = "wdb-studio-jobs";
@@ -57,8 +60,8 @@ export async function load(id) {
 }
 
 function finished(job) {
-  const word = job.status === "done" ? "finished" : job.status;
-  toast(`${job.cmd} ${word}${job.subject ? " - " + job.subject : ""}`, 3500);
+  const word = { done: "finished", failed: "did not pass", cancelled: "cancelled" }[job.status] || "stopped";
+  toast(`${label(job.cmd)}: ${word}`, 3500);
   notify.jobFinished(job, `/#/job/${job.id}`);
   emit(job, true);
 }
@@ -83,22 +86,26 @@ async function poll(id) {
 
 // Start a pipeline command. Handles the potentially-dirty prompt, a busy model slot and missing wiring.
 export async function start(cmd, subject, args, opts = {}) {
-  let res = await post("/jobs", { cmd, subject, args, ack_soft: !!opts.ackSoft });
+  const send = (ack) => post("/jobs", { cmd, subject, step: opts.step, args, ack_soft: ack });
+  let res = await send(!!opts.ackSoft);
+  if (res.status === 409 && res.data.gate === "steps" && subject) {
+    const goTo = await choose("Not yet", res.data.error, [{ label: "Go there", value: true, cls: "primary" }]);
+    if (goTo) location.hash = `#/s/${subject}/step/${res.data.blocked_by}`;
+    return null;
+  }
   if (res.status === 409 && res.data.gate === "approvals") {
-    const goQ = await choose("Needs your OK first", res.data.error || "Approve the required stills first.",
-      [{ label: "Open the approval queue", value: true, cls: "primary" }]);
-    if (goQ && subject) location.hash = `#/preview/${subject}`;
+    await choose("Needs your OK first", res.data.error, [{ label: "OK", value: true, cls: "primary" }]);
     return null;
   }
   if (res.status === 409 && res.data.soft) {
-    const list = h("div", { class: "list" }, res.data.soft.map((f) => h("div", { class: "note-box small" }, h("b", {}, f.reason), h("div", { class: "muted" }, `from ${f.source} - ${f.at}`))));
-    const go = await choose("Potentially dirty", h("div", {}, h("p", { class: "muted" }, "Something this subject depends on changed since its last generation. The flags clear once you run this."), list),
-      [{ label: `Run ${cmd} anyway`, value: true, cls: "primary" }]);
-    if (!go) return null;
-    res = await post("/jobs", { cmd, subject, args, ack_soft: true });
+    const list = h("ul", {}, res.data.soft.map((f) => h("li", {}, `${f.source.replace(/[-_]+/g, " ")} changed`)));
+    const ok = await choose("Might need a look", h("div", {}, h("p", { class: "muted" }, "Something this depends on changed since it was last made. Doing this clears the note."), list),
+      [{ label: "Do it anyway", value: true, cls: "primary" }]);
+    if (!ok) return null;
+    res = await send(true);
   }
   if (!res.ok) { showError(res); return null; }
-  if (res.data.soft_note) toast(res.data.soft_note, 4500);
+  if (res.data.soft_note) toast("Cleared the might-need-a-look note.", 3500);
   track(res.data.id);
   const job = merge({ ...res.data, events: [] });
   emit(job, false);

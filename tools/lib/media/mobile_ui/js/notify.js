@@ -1,3 +1,4 @@
+import { app } from "./state.js";
 // Job-finished alerts. The Notification API needs a secure context (https or localhost). On a plain
 // http://<lan-ip>:8189 page Android Chrome hides it, so the fallback flashes the tab title and favicon.
 const BASE_TITLE = "Pipeline Studio";
@@ -33,8 +34,9 @@ export async function enable() {
 
 export async function jobFinished(job, url) {
   if (!document.hidden) return;
-  const title = `${job.cmd} ${job.status === "done" ? "finished" : job.status}`;
-  const body = (job.subject ? job.subject + " - " : "") + (job.stage || "");
+  const label = ((app.info && app.info.action_labels) || {})[job.cmd] || "Work";
+  const title = `${label}: ${job.status === "done" ? "finished" : job.status === "failed" ? "did not pass" : "stopped"}`;
+  const body = job.stage || "";
   const s = support();
   if (s.usable && Notification.permission === "granted") {
     try {

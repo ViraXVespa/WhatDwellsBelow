@@ -53,15 +53,18 @@ export function choose(title, body, options) {
   });
 }
 
+const NOT_WIRED = "That is not connected on the PC yet.";
+
 export function errorBox(data, extra) {
-  const msg = (data && data.error) || "Something went wrong.";
-  return h("div", { class: "error-box" }, h("b", {}, msg), data && data.not_wired ? h("div", { class: "small muted" }, `Pipeline gap: ${data.not_wired}`) : null, extra || null);
+  const wired = data && data.not_wired;
+  const msg = wired ? NOT_WIRED : (data && data.error) || "Something went wrong.";
+  return h("div", { class: "error-box" }, h("b", {}, msg),
+    wired ? h("details", { class: "small" }, h("summary", {}, "Details"), h("div", { class: "mono" }, `${data.not_wired}: ${data.error}`)) : null, extra || null);
 }
 
 export function showError(res) {
   const d = res.data || {};
-  const msg = d.error || `HTTP ${res.status}`;
-  toast(d.not_wired ? msg + " (pipeline gap: " + d.not_wired + ")" : msg, 4200);
+  toast(d.not_wired ? NOT_WIRED : d.error || "Something went wrong.", 4200);
 }
 
 // Hold (500 ms) or right-click runs onHold; a plain tap runs onTap.

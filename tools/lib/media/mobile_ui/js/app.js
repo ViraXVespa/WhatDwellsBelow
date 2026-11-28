@@ -4,23 +4,27 @@ import * as notify from "./notify.js";
 import { app, loadInfo } from "./state.js";
 import { closeSheet, errorBox, h } from "./ui.js";
 import { coverage, home, newSubject, typeList } from "./views_home.js";
-import { exportView, prompts, reference, section, subject } from "./views_subject.js";
-import { genForm, jobView, jobsView, previewQueue, previewSubject, reviewView, stillView } from "./views_media.js";
+import { step, subject } from "./views_subject.js";
+import { action, adjust, picture } from "./views_picture.js";
+import { jobView, jobsView } from "./views_media.js";
+import { actionLabel } from "./subject_ui.js";
+
+const toSubject = ({ params }) => { location.replace(`#/s/${params[0]}`); return { title: "" }; };
+const toHome = () => { location.replace("#/"); return { title: "" }; };
 
 const ROUTES = [
   [/^\/$/, home],
   [/^\/type\/([\w-]+)$/, typeList],
   [/^\/new\/([\w-]+)$/, newSubject],
   [/^\/s\/([\w-]+)$/, subject],
-  [/^\/s\/([\w-]+)\/sec\/([\w-]+)$/, section],
-  [/^\/s\/([\w-]+)\/prompts$/, prompts],
-  [/^\/s\/([\w-]+)\/ref$/, reference],
-  [/^\/s\/([\w-]+)\/export$/, exportView],
-  [/^\/s\/([\w-]+)\/review$/, reviewView],
-  [/^\/s\/([\w-]+)\/gen\/([\w-]+)$/, genForm],
-  [/^\/still\/([\w-]+)$/, stillView],
-  [/^\/preview$/, previewQueue],
-  [/^\/preview\/([\w-]+)$/, previewSubject],
+  [/^\/s\/([\w-]+)\/pic$/, ({ params, query }) => picture({ params: [params[0], null], query })],
+  [/^\/s\/([\w-]+)\/step\/([\w-]+)$/, step],
+  [/^\/s\/([\w-]+)\/step\/([\w-]+)\/pic$/, picture],
+  [/^\/s\/([\w-]+)\/step\/([\w-]+)\/adjust$/, adjust],
+  [/^\/s\/([\w-]+)\/step\/([\w-]+)\/do\/([\w-]+)$/, action],
+  [/^\/s\/([\w-]+)\/(?:sec\/[\w-]+|prompts|ref|export|review|gen\/[\w-]+)$/, toSubject],
+  [/^\/(?:still|preview)\/([\w-]+)$/, toSubject],
+  [/^\/preview$/, toHome],
   [/^\/coverage$/, coverage],
   [/^\/jobs$/, jobsView],
   [/^\/job\/([a-f0-9]+)$/, jobView],
@@ -66,10 +70,8 @@ function badges() {
   const pill = document.getElementById("jobs-pill");
   pill.hidden = !act.length;
   pill.className = "pill spin";
-  pill.textContent = act.length === 1 ? `${act[0].cmd} ${Math.round(act[0].pct)}%` : `${act.length} jobs`;
+  pill.textContent = act.length === 1 ? `${actionLabel(act[0].cmd).split(" ").slice(0, 3).join(" ")} ${Math.round(act[0].pct)}%` : `${act.length} running`;
   pill.onclick = () => { location.hash = act.length === 1 ? `#/job/${act[0].id}` : "#/jobs"; };
-  const tj = document.getElementById("tab-jobs");
-  tj.hidden = !act.length; tj.textContent = act.length;
   const tp = document.getElementById("tab-pending");
   const pending = (app.subjects || []).reduce((n, s) => n + (s.pending || 0), 0);
   tp.hidden = !pending; tp.textContent = pending;
@@ -77,10 +79,10 @@ function badges() {
 
 async function boot() {
   const res = await loadInfo();
-  if (!res.ok) { view.replaceChildren(errorBox(res.data, h("p", { class: "small" }, "Start it on the PC with: python tools/media.py studio"))); return; }
+  if (!res.ok) { view.replaceChildren(errorBox(res.data, h("details", { class: "small" }, h("summary", {}, "Details"), h("p", { class: "mono" }, "python tools/media.py studio")))); return; }
   document.getElementById("sim-banner").hidden = !app.info.simulated;
   await notify.setup();
-  jobs.subscribe((job, finished) => { badges(); if (finished && job && job.subject && [`#/s/${job.subject}`, `#/preview/${job.subject}`].includes(location.hash)) render(); });
+  jobs.subscribe((job, finished) => { badges(); if (finished && job && job.subject && location.hash.startsWith(`#/s/${job.subject}`) && !location.hash.includes("/do/") && !location.hash.includes("/adjust")) render(); });
   window.addEventListener("hashchange", render);
   await render();
   await jobs.refresh();
