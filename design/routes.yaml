@@ -319,6 +319,13 @@ doors:
       music: design/audio-visual-music.md
       art: design/audio-visual-art.md
       splash: design/audio-visual-splash.md
+  app_flow:
+    file: design/app-flow.md
+    read_when: "App singleton, scene swaps, launch arguments"
+    jobs:
+      boot: design/app-flow-boot.md
+      legs: design/app-flow-legs.md
+      bug_report: design/app-flow-bug-report.md
   save_tech:
     file: design/save-tech.md
     read_when: "persistence, wasm headers, autoloads, perf"
@@ -383,6 +390,9 @@ job_read_when:
   audio_visual.music: "Bitter loop point, attribution links, minimum cues"
   audio_visual.art: "nearest filter modes, mipmap bake, upright actors, lighting contrast, world art"
   audio_visual.splash: "credit graffiti, boot handover, Shamelessly line"
+  app_flow.boot: "startup order, Dbg shim, wdb flags"
+  app_flow.legs: "loader handoff, descent, next floor, expedition ending"
+  app_flow.bug_report: "relay upload, crash marker, install id, state report"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.bench: "scored legs, continuous sweep"
@@ -469,6 +479,8 @@ smokes:
   dungeon.gates: "3,5"
   debug: "7,9"
   audio_visual: "9"
+  app_flow: "1,7"
+  app_flow.bug_report: "1"
   save_tech: "8"
   feel: "2,4"
   edge_cases: "7"
@@ -579,6 +591,7 @@ web_perf:
     dungeon: "dungeon-load,dungeon-walk"
     combat: "dungeon-fight"
     enemies: "dungeon-fight"
+    app_flow: "title-idle,hub-load,dungeon-load"
 
 job_parked: []
 
