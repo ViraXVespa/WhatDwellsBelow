@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlparse
 
 from .backend import COMMANDS, GUARDED, ApiError, Backend, NotWired
 from .jobs import Job, Registry
+from . import steps as step_flow
 
 PREFIX = "/api/studio"
 SOFT_CMDS = {"review", "correct", "tune", "frame", "smooth", "body", "edit"}
@@ -88,7 +89,7 @@ class Api:
         if not isinstance(args, dict):
             raise ApiError(400, "args must be an object")
         if sid and (sid, cmd) in GUARDED:
-            raise ApiError(403, f"{cmd} does not run on {sid} from the studio.")
+            raise ApiError(403, f"{step_flow.ACTION_LABELS.get(cmd, cmd)} does not run on this subject from the studio.")
         step = self.b.check_step_job(cmd, sid, body.get("step")) if sid and cmd in COMMANDS else None
         if step and "workflow" in {f["name"] for f in COMMANDS[cmd]["fields"]}:
             args.setdefault("workflow", f"data/pipeline/recipes/{self.b._load(sid)['type']}/{step}.json")
@@ -100,7 +101,7 @@ class Api:
         if sid and cmd in SOFT_CMDS:
             soft = self.b.show(sid)["subject"]["dirty"]["soft"]
             if soft and not body.get("ack_soft"):
-                raise ApiError(409, "This subject has potentially dirty flags.", soft=soft)
+                raise ApiError(409, "Something earlier changed. Check these pictures still fit before making more.", soft=soft)
             if soft:
                 try:
                     self.b.clear_soft(sid)
@@ -121,7 +122,7 @@ class Api:
         with self._start_lock:
             busy = self.jobs.busy_gpu()
             if spec["gpu"] and busy is not None:
-                raise ApiError(409, f"{busy.cmd} is running. One model job at a time.", busy=busy.row())
+                raise ApiError(409, f"{step_flow.ACTION_LABELS.get(busy.cmd, busy.cmd)} is running. One model job runs at a time; try again when it finishes.", busy=busy.row())
             job = Job(cmd, sid, args, gpu=spec["gpu"], simulated=self.b.simulated)
             job.step = step
             job = self.jobs.start(job, run)

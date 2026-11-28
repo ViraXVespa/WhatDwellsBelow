@@ -102,7 +102,7 @@ SEAMS: list[dict] = [
     {"id": "review-latest", "want": "`pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`.", "seam": "Backend.reviews"},
     {"id": "json-lists", "want": "`--json` on `pipeline list`, `show`, `status`, and `coverage`.", "seam": "Backend.list_subjects"},
     {"id": "export-sections", "want": "Export maps section fields into the contract: `stats`, `dialog`, `audio`, `rules`, `paperdoll`, and `frames`/`sheets` from packed clips; today they are written empty and the fields ride under `sections`.", "seam": "store.export_subject"},
-    {"id": "wang-game", "want": "The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a soft shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. Either read the packed sheet in the ground shader by a per-cell mask, or add a TileMap/terrain path for the flat areas.", "seam": "scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd"},
+    {"id": "wang-game", "want": "The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. Either read the packed sheet in the ground shader by a per-cell mask, or add a TileMap/terrain path for the flat areas.", "seam": "scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd"},
     {"id": "vfx-attach", "want": "The game places an effect at the chosen attach point (feet, aimed point, projectile tip, target, and planned hand and weapon tip). Today effects spawn at a world position with no attach-point table, and hand and weapon tip have no code path yet.", "seam": "scripts/combat/player_hit/hit_atk.gd _spawn_fx"},
 ]
 
@@ -158,7 +158,7 @@ def TILES(help: str = TILE_HELP) -> dict:
 def WANG() -> dict:
     return f("wang", "Wang tilesets", "table",
              "Tiles that change where two materials meet, like floor to wall or grass to path. Corner and edge sets are 16 tiles; blob-47 also matches "
-             "inside corners. Today the game blends two grounds with a soft fade and has no tileset, so the game side is still to build.", columns=[
+             "inside corners. Today the game blends two grounds with a short fade and has no tileset, so the game side is still to build.", columns=[
         f("name", "Name"), f("kind", "Kind", "choice", options=WANG_KINDS, default="wang-corner-16",
                              labels={"seamless": "Single seamless tile", "wang-corner-16": "Wang 2-corner (16)", "wang-edge-16": "Wang 2-edge (16)", "blob-47": "Blob (47)"}),
         f("from", "From material"), f("to", "To material"),
@@ -176,7 +176,7 @@ def DECOR(help: str, hits_help: str) -> dict:
         f("opens_chest", "Opens a hidden chest", "bool")])
 
 WANG_OPEN = ("Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. "
-             "The game has no tileset today; floors are one seamless texture with a soft fade between grounds.")
+             "The game has no tileset today; floors are one seamless texture with a short fade between grounds.")
 
 def S(fields: list[dict], actions: list[str] | None = None, needs: list[str] | None = None, group: str | None = None, open_question: str | None = None) -> dict:
     return {"fields": fields, "actions": actions or [], "needs": needs or [], "group": group, "open": open_question}

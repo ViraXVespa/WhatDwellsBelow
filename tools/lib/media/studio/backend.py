@@ -638,7 +638,7 @@ class Backend:
         if spec["id"] == "required" and not subject_id:
             raise ApiError(400, f"{cmd} needs a subject")
         if subject_id and (subject_id, cmd) in GUARDED:
-            raise ApiError(403, f"{cmd} does not run on {subject_id} from the studio.")
+            raise ApiError(403, f"{step_flow.ACTION_LABELS.get(cmd, cmd)} does not run on this subject from the studio.")
         if subject_id:
             self._load(subject_id)
         for f in spec["fields"]:

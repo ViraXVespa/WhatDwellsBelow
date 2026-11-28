@@ -221,7 +221,7 @@ class SimBackend(Backend):
         doc = self._load(sid)
         ref = (doc.get("studio") or {}).get("reference")
         if not ref:
-            raise ApiError(400, "store a reference first")
+            raise ApiError(400, "Add a reference first.")
         self._step(job, "Fetching the reference" if ref.get("url") else "Reading the upload", 15)
         if ref.get("path"):
             image = self.root / ref["path"]
