@@ -16,6 +16,7 @@ static func _ready(host: Node) -> void:
 	host.bal = App.BalanceS.new()
 	host.prog = App.ProgressS.new()
 	App.Binds.register()
+	App.Pad.mode_changed = Callable(App.Boot, "pad_mode_changed")  # plain Callable (ObjectID); a stored lambda crashed at exit
 	host.sfx_node = App.SfxS.new()
 	host.add_child(host.sfx_node)
 	host.tel = App.TelS.new()
@@ -58,6 +59,13 @@ static func _ready(host: Node) -> void:
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		host.call_deferred("_open_debug")
 	Dbg.hitch_begin(host)
+
+## Pad mode flipped: repaint every prompt host when the shown scheme changed (lazy loads, as before).
+static func pad_mode_changed() -> void:
+	var Prompts = load("res://scripts/input/prompts.gd")
+	var PView = load("res://scripts/ui/prompt_view.gd")
+	if Prompts.dirty():
+		PView.pulse()
 
 static func ensure_debug(host: Node) -> void:
 	if host.debug != null:
