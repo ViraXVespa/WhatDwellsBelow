@@ -15,6 +15,7 @@ debug         = ["scripts/debug/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
 inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
+localization  = ["scripts/localization/**"]
 numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
 player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
 save_tech     = ["scripts/data/save_store.gd", "scripts/data/save_store/**"]
@@ -62,6 +63,11 @@ severity = "critical"
 
 [[policy.forbidden_dependencies]]
 from     = "audio_visual"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
 to       = "debug"
 severity = "critical"
 
@@ -142,6 +148,42 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "audio_visual"
 to       = "inventory"
+severity = "warning"
+
+# Localization is an engine service: callers hand it launch args and ids; it reaches no gameplay code.
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "inventory"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "audio_visual"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "localization"
+to       = "camera"
 severity = "warning"
 
 # Interactables are placed by the dungeon and the hub and used by the player; they reach no actor code.
