@@ -1,8 +1,8 @@
 # Smoke tests
 
 Status: current plan  
-Read when: smoke phase coverage / how to run smokes / dedicated smoke CLI  
-Code: `scripts/debug/`  
+Read when: phase assertions, runner summary  
+Code: `scripts/debug/smoke.gd` + `scripts/debug/smoke/`, `scripts/debug/smoke_early.gd` + `scripts/debug/smoke_early/`, `scripts/debug/load_timing.gd`, `scripts/debug/open_timing.gd`  
 
 ## Smoke tests (`smoke.gd`)
 
@@ -13,8 +13,6 @@ Title → Placeholdia load timing is a separate flag, not a numbered phase: `--w
 Placeholdia → Dungeon load timing is a separate flag, not a numbered phase: `--wdb-dungeon-load-timing-smoke`. It `go_camp()`s from boot (skips splash / title / enter overlay), waits until Camp is ready, then runs the live enter path (`save_now`, `_after_enter` / `begin_run` / `go_dungeon`) with seed 42 / floor 1. Prints `LOAD:` marks for enter / gen / travel / geo / spawn slices, then quits. Clock starts at `enter_begin` (hub load is not in `total_ms`). Cover holds until two presented frames are at 16 ms (cap 12), then fade. `dungeon_ready` is RING_IN geo plus the first stamp plus release_enter (cover can drop). The smoke does not wait follow/warm frames before finish. Preferred runner: `python tools/perf.py load --leg dungeon`. Read only `_logs/dungeon-load-timing/<stamp>-dungeon-load-timing.txt`. Helper: `scripts/debug/load_timing.gd` (`dmark` / `dnote`).
 
 Playtester live run is a separate flag, not a numbered phase: `--wdb-playtest-live-smoke` (`playtest/live_smoke.gd`). It boots straight into one live AI run (male, fresh save), prints `PT:` lines (kills / crits / damage / end condition / decision cost / time_scale / stuck) and quits. Args `--wdb-seed=N` (default random), `--wdb-pt-weapon=great_axe|staff|longbow`, `--wdb-pt-sec=S`, `--wdb-pt-scale=X` (only with `--wdb-pt-fast`); add `--fixed-fps 60` before `--` to make a seed replay exactly. `--wdb-pt-campaign` is the same boot on the kept campaign slot: one job, and a time-limit end enqueues the next weapon until Interrupt, a stall, or the watchdog. Phase 7 does not pass it. Details: `debug-playtest.md`.
-
-Dungeon generation map dump is a separate flag, not a numbered phase: `--wdb-dungeon-map-smoke`. It calls `App.begin_run()` from boot (skips splash / title UI), pins `run_seed` / `floor_n` (defaults 42 / 1), dumps the live floor after `dungeon_boot` placement, then quits. Does not `stream_all` — enemy coverage is `spawn_jobs`, not live bodies. Prints `MAP:` lines (counts, rooms, objects, jobs, spec checks, downsampled ASCII). Gate spec `gate_top_wall` fails when any Extraction Gate is not on a top-wall face (3 wall cells behind, 3 floor cells in front; `scripts/debug/dungeon_map/gate_wall.gd`). Bake specs in that postcard: `spans_present`, `solid_size`, `span_on_solid`, `jobs_on_solid`, `rim_closed`. Those read gen data and job cells only. They do not count torches or read the light RT. Optional user args: `--wdb-dungeon-map-seed=N`, `--wdb-dungeon-map-floor=N`, `--wdb-dungeon-map-scale=N` (ASCII cell size, default 8, clamp 4–16). Preferred runner: `python tools/perf.py map` (`--help` lists seed, floor, scale; `--seeds 42,7,9` sweeps; `--fixtures` runs `scripts/debug/dungeon_map/edge_fixture.gd`, hand-written edge keys and seal fragments). Read only `_logs/dungeon-map/<stamp>-dungeon-map.txt`; full dump at `_logs/dungeon-map/dump.txt`. Helper: `scripts/debug/dungeon_map.gd`.
 
 Shot flows (`tools/data/shot-flows/*.json`, `shot-flows.md`) are the UI/menu/NPC counterpart: `python tools/gate.py bot-smokes --door hub --flows` runs the phases mapped for the door plus its `routes.yaml` `shot_flows` headless (`--no-pixels`: scripted input and asserts, no pictures, no display). They are not numbered phases.
 

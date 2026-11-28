@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: secret console, playtest, journal, smoke
-Code: `scripts/debug/` (menu helpers in `scripts/debug/debug_menu/`)
+Code: `scripts/debug/` (code map row Debug; gdhealth group `debug`); live code reaches it only through `scripts/app/dbg.gd` (`Dbg`)
 
 | Job | Open |
 |-----|------|
@@ -11,10 +11,13 @@ Code: `scripts/debug/` (menu helpers in `scripts/debug/debug_menu/`)
 | scored legs, continuous sweep | `design/debug-bench.md` |
 | timeline scrubber, review queue | `design/debug-anim-browser.md` |
 | phase assertions, runner summary | `design/debug-smokes.md` |
+| spike jsonl, localhost | `design/debug-hitch.md` |
+| generation dump, ascii seal fixtures | `design/debug-dungeon-map.md` |
+| planted faults, unit probes | `design/debug-shot-checks.md` |
 
 When running smokes, use the listed runner and read only that runner's `_logs` summary.
 
-Hitch log is `scripts/debug/hitch_log.gd`. On editor, desktop, and localhost web it is on by default. GitHub Pages does not hook it. A frame at least four times the 60 FPS budget appends one JSONL line to `user://hitch/hitch.jsonl`. Newest 256 hitch rows are kept. Session and hitch rows stamp `ver` from `scripts/data/version.json`. Debug chrome can copy or clear the file. On localhost web each row is also POSTed (fire-and-forget) to `/_wdb/hitch`; `tools/perf.py hitch` and `perf.py web` append it to `_logs/web-perf/hitch.jsonl`. Not part of the playtest journal. To log smaller frames in a normal localhost web session, serve a `Web Debug` export with `perf.py hitch` and open `index.html?wdb-hitch-mult=1` (URL args reach `CliArgs`; `HitchLog.begin` reads `--wdb-hitch-mult`). The 256-row cap stays, and outside the bench each row is its own POST.
+Reach-in rule: nothing live loads `scripts/debug/` (gdhealth: every group -> `debug` is critical; a new group gets the same rule). Drivers (smoke phases, playtest, benches, shot tool) call system facades or duck-typed methods on live nodes where one exists. Check scripts (`*_check.gd`, `debug.shot_checks`, the `debug.dungeon_map` specs) are white-box tests: they may preload the helpers of the system they check. Shot tool code is `scripts/debug/shot_tool.gd` + `scripts/debug/shot_tool/` (gate `shot_tool`). Debug menu edits persist through `scripts/debug/tunable_overrides.gd` (`debug.menu`; shared code reaches it via `Dbg.script("tunable_overrides")`).
 
 ## Release vs debug builds
 

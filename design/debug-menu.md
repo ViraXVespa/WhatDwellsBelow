@@ -1,8 +1,8 @@
 ﻿# Secret debug / balance menu
 
 Status: current plan  
-Read when: secret debug menu / balance page  
-Code: `scripts/debug/`  
+Read when: balance sliders, profile banks  
+Code: `scripts/debug/debug_menu.gd` + `scripts/debug/debug_menu/`, `scripts/debug/tunable_overrides.gd` (`user://debug_tunables.json`)  
 
 ## Secret debug / balance menu
 

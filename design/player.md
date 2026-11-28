@@ -6,7 +6,7 @@ Code: `scripts/world/player.gd` (facade) + `scripts/world/player/`, `scripts/wor
 
 This file is the door. Open the Job-table sibling only when that row matches.
 
-Other code calls the facade (`player.gd` methods) or the public files `facing.gd` and `bow_mode.gd`, never a `scripts/world/player/` helper. Dash i-frames and trail VFX: combat.
+Other code calls the facade (`player.gd` methods) or the public files `facing.gd` and `bow_mode.gd`, never a `scripts/world/player/` helper, except `near_interact.gd` (static aim pick on any Node3D host; the P7 smoke probes it). Dash i-frames and trail VFX: combat.
 
 Movement MUST feel responsive and weighty on both gamepad and keyboard.
 

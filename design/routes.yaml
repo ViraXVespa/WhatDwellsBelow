@@ -312,6 +312,9 @@ doors:
       bench: design/debug-bench.md
       anim_browser: design/debug-anim-browser.md
       smokes: design/debug-smokes.md
+      hitch_log: design/debug-hitch.md
+      dungeon_map: design/debug-dungeon-map.md
+      shot_checks: design/debug-shot-checks.md
   audio_visual:
     file: design/audio-visual.md
     read_when: "music, SFX, splash stills, presentation rules"
@@ -407,6 +410,9 @@ job_read_when:
   debug.bench: "scored legs, continuous sweep"
   debug.anim_browser: "timeline scrubber, review queue"
   debug.smokes: "phase assertions, runner summary"
+  debug.hitch_log: "spike jsonl, localhost"
+  debug.dungeon_map: "generation dump, ascii seal fixtures"
+  debug.shot_checks: "planted faults, unit probes"
   art_pipeline.content: "pipeline subjects, proportion bands, clause checks"
   art_pipeline.mesh: "hunyuan trellis pixal hi3d"
   art_pipeline.studio: "authoring phone studio"
@@ -539,6 +545,7 @@ shot_flows:
   combat.weapons: "dungeon-bow-mode"
   enemies.roster: "dungeon-all-enemies"
   enemies.loot: "dungeon-pickups"
+  debug.shot_checks: "camp-prop-shadows,dungeon-torch-pop"
 
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. slice.py start --door D picks the first
 # not done (`--unit-done` marks it done at Complete; a `<door>-units` task keeps the queue), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.

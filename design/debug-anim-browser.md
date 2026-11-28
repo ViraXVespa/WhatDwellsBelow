@@ -1,8 +1,8 @@
 ﻿# Animation Browser
 
 Status: current plan  
-Read when: animation browser debug page  
-Code: `scripts/debug/`  
+Read when: timeline scrubber, review queue  
+Code: `scripts/debug/anim_browser.gd` + `scripts/debug/anim_browser/`, `scripts/debug/anim_review.gd`, `scripts/debug/anim_scan.gd`  
 
 ## Animation Browser (secret debug page)
 
