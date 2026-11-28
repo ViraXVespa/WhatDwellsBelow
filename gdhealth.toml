@@ -8,6 +8,7 @@ include = ["**/*.gd"]
 exclude = ["addons/**", ".godot/**", "reports/**"]
 
 [groups]
+audio_visual = ["scripts/audio/**"]
 camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"]
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
 debug         = ["scripts/debug/**"]
@@ -56,6 +57,11 @@ severity = "critical"
 
 [[policy.forbidden_dependencies]]
 from     = "camera"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
 to       = "debug"
 severity = "critical"
 
@@ -110,6 +116,32 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "camera"
 to       = "enemies"
+severity = "warning"
+
+# Audio is an engine service: it reads settings through App and reaches no gameplay code.
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "audio_visual"
+to       = "inventory"
 severity = "warning"
 
 # Interactables are placed by the dungeon and the hub and used by the player; they reach no actor code.
