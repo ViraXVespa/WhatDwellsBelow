@@ -73,19 +73,28 @@ func play(sfx_id: String) -> void:
 		_play_key(str(LAYERS[sfx_id]), "")
 
 func _play_key(sfx_id: String, alt: String) -> void:
-	var key := sfx_id
+	var key := _pick_key(sfx_id, alt)
+	if _can_play(key):
+		_fire(key)
+	elif _can_play(sfx_id):
+		_fire(sfx_id)
+
+## Voiced cues take the character's variant, a cue with an alt flips a coin onto it, and a missing wood cue falls back to mine.
+func _pick_key(sfx_id: String, alt: String) -> String:
 	if sfx_id == "hurt" or sfx_id == "warcry" or sfx_id == "hurk":
-		key = "%s_%s" % [sfx_id, App.character_type]
-	elif alt != "" and _rng.randf() < 0.5 and players.has(alt) and players[alt].stream:
-		key = alt
-	elif sfx_id == "wood" and (not players.has("wood") or players["wood"].stream == null):
-		key = "mine"
-	if players.has(key) and players[key].stream:
-		_apply_one(players[key])
-		players[key].play()
-	elif players.has(sfx_id) and players[sfx_id].stream:
-		_apply_one(players[sfx_id])
-		players[sfx_id].play()
+		return "%s_%s" % [sfx_id, App.character_type]
+	if alt != "" and _rng.randf() < 0.5 and _can_play(alt):
+		return alt
+	if sfx_id == "wood" and not _can_play("wood"):
+		return "mine"
+	return sfx_id
+
+func _can_play(key: String) -> bool:
+	return players.has(key) and players[key].stream != null
+
+func _fire(key: String) -> void:
+	_apply_one(players[key])
+	players[key].play()
 
 func set_adrenaline(on: bool) -> void:
 	if on == adrenaline_loop:
