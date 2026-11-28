@@ -4,7 +4,7 @@ Status: current plan
 Read when: wiring a new SFX cue, generating a placeholder cue, or asking which events are still silent
 Code: `scripts/audio/sfx.gd`
 
-The required SFX list stays on the audio-visual page.
+The required SFX list is in the audio_visual music job.
 
 ## Where cues come from, and how Build wires one
 - Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `FILES` is the one cue table (id to path; `_ready()` loads each; smoke 9 checks every path exists); a missing file loads silent, so check the path.
