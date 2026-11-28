@@ -30,6 +30,7 @@ notes_exempt:
   - design/tasks/README.md
   - design/refs/README.md
   - design/refs/unified-content-pipeline/system-description.md
+  - design/refs/unified-content-pipeline/studio-build-gaps.md
   - design/benchmarks/frame-time.md
   - design/benchmarks/menu-open.md
   - design/benchmarks/web-perf.md
