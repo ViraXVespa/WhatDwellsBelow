@@ -23,29 +23,29 @@ The studio page shows the same list under Coverage, Left to build. In real mode 
 | Action | Command the studio expects | Inputs | Output | Setup | Wired | Steps |
 |---|---|---|---|---|---|---|
 | `reference` Read the reference picture | `pipeline reference ID --path P\|--url U\|--post U --json` | stored reference on the subject | `{image, description, mannequin:[], traits:[], source}` | qwen3-vl | no | 14 |
-| `generate` Make pictures | `pipeline still ID --step STEP --count N --json` | subject prompt layers, the step's adjusted settings, count | `{stills:[path], prompt, seed}` | qwen-still | no (needs recipe) | 27 |
-| `tune` Auto-tune a picture | `pipeline tune --image P --role R --workflow W --turns N` | start picture, checklist role, the step's recipe | `{verdict, turns, review, stills:[path]}` | qwen3-vl | yes (needs recipe) | 22 |
-| `review` Check a picture | `pipeline review --image P --role R` | picture, checklist role | `{verdict, failed:[], review}` | qwen3-vl | yes | 37 |
-| `frame` Center and trim a picture | `pipeline frame --image P --out P` | picture | `{out, height, canvas}` | - | yes | 21 |
+| `generate` Make pictures | `pipeline still ID --step STEP --count N --json` | subject prompt layers, the step's adjusted settings, count | `{stills:[path], prompt, seed}` | qwen-still | no (needs recipe) | 28 |
+| `tune` Auto-tune a picture | `pipeline tune --image P --role R --workflow W --turns N` | start picture, checklist role, the step's recipe | `{verdict, turns, review, stills:[path]}` | qwen3-vl | yes (needs recipe) | 23 |
+| `review` Check a picture | `pipeline review --image P --role R` | picture, checklist role | `{verdict, failed:[], review}` | qwen3-vl | yes | 39 |
+| `frame` Center and trim a picture | `pipeline frame --image P --out P` | picture | `{out, height, canvas}` | - | yes | 22 |
 | `proportion` Measure proportions | `pipeline proportion ID --image P\|--glb G` | picture or 3D model, the subject's measures | `{verdict, measures:{}}` | - | yes | 6 |
 | `smooth` Make the four body pictures | `pipeline smooth ID` | the subject's body measures | `{stills:[front, left, back, right], glb}` | qwen-still | yes | 6 |
 | `body` Build the 3D body | `pipeline body ID` | approved front and side pictures | `{glb, verts}` | hunyuan-3d | yes | 6 |
 | `mesh` Check the 3D model | `pipeline mesh --glb G` | 3D model | `{verdict, pieces, bands}` | - | yes | 6 |
 | `edit` Change something | `pipeline edit ID --text TEXT` | what should change, the kept 3D model | `{still, glb}` | hi3d-refine | yes | 6 |
-| `variant` Make a variant | `pipeline variant ID --from P --text TEXT --json` | approved picture, what should differ | `{stills:[path]}` | qwen-edit | no (needs recipe) | 14 |
+| `variant` Make a variant | `pipeline variant ID --from P --text TEXT --json` | approved picture, what should differ | `{stills:[path]}` | qwen-edit | no (needs recipe) | 16 |
 | `icon` Make the inventory icon | `pipeline icon ID --json` | approved picture or description | `{stills:[icon 128 png]}` | qwen-still | no (needs recipe) | 2 |
 | `overlay` Make the worn pictures | `pipeline overlay ID --body female\|male --json` | approved item picture, character facings, offsets | `{stills:[one per facing]}` | overlay-fit | no | 3 |
-| `tile` Make a seamless tile | `pipeline tile ID --kind floor\|wall\|path --json` | description, tile kind | `{stills:[tile png]}` | tile-seamless | no (needs recipe) | 2 |
+| `tile` Make a seamless tile | `pipeline tile ID --kind floor\|wall\|path --json` | description, tile kind | `{stills:[tile png]}` | tile-seamless | no (needs recipe) | 3 |
 | `keyframes` Make reference frames | `pipeline keyframes ID --clip CLIP --json` | clip name, the step prompt | `{clip, frames:[png], picked:[]}` | qwen-still | no (needs recipe) | 4 |
 | `animate` Make the animation | `pipeline animate ID --clip CLIP --dirs N --json` | approved 3D model (or key picture for flat things), clip name, directions, frames | `{clip, dirs, frames:{dir:[png]}, strip}` | motion-8dir | no | 5 |
-| `flatanim` Make flat frames | `pipeline frames ID --clip CLIP --frames N --json` | approved key picture, clip name, frame count | `{clip, frames:[png], strip}` | frames-2d | no | 3 |
-| `pixel` Turn into pixel art | `pipeline pixel ID --image P --size 128 --json` | picture or frames | `{out, palette}` | - | no | 22 |
+| `flatanim` Make flat frames | `pipeline frames ID --clip CLIP --frames N --json` | approved key picture, clip name, frame count | `{clip, frames:[png], strip}` | frames-2d | no | 4 |
+| `pixel` Turn into pixel art | `pipeline pixel ID --image P --size 128 --json` | picture or frames | `{out, palette}` | - | no | 24 |
 | `sheet` Pack the frames for the game | `pipeline sheet ID --json` | approved clips | `{sheets:[png], frames:{clip:{count, columns, w, h, origin}}}` | - | no | 6 |
-| `sound` Make a placeholder sound | `pipeline sound ID --cue CUE --text TEXT --json` | cue name, description | `{sound, cue, placeholder:true}` | stable-audio | no | 13 |
+| `sound` Make a placeholder sound | `pipeline sound ID --cue CUE --text TEXT --json` | cue name, description | `{sound, cue, placeholder:true}` | stable-audio | no | 14 |
 | `preview` Preview in the game | `shots.py / release.py capture of a temp worktree` | exported subject | `{shots:[png]}` | - | no | 14 |
 | `export` Send to the game | `pipeline export ID` | every approved step | `data/pipeline/export/TYPE/ID.json` | - | yes | 14 |
 
-## Default recipes to write (34)
+## Default recipes to write (36)
 
 A recipe is the workflow and step prompt an action uses for that type and step. Real mode needs one before `generate`, `tune`, `variant`, `icon`, `tile` or `keyframes` can run there.
 
@@ -77,11 +77,13 @@ A recipe is the workflow and step prompt an action uses for that type and step. 
 - `projectile/art`: generate, tune
 - `decoration/art`: generate, tune, variant
 - `resource/art`: generate, tune, variant
+- `resource/recipes`: variant
 - `ui/art`: generate, tune
 - `biome/overview`: generate
 - `biome/art`: tile, generate
 - `biome/layout`: generate
 - `building/art`: generate, tune, tile
+- `building/interior`: generate, tune, tile, variant
 - `vfx/art`: generate, tune
 
 ## Steps per type
@@ -225,17 +227,15 @@ Grounded in: design/interactables.md, scripts/world/dungeon_props.gd, assets/spr
 
 ### resource
 
-Grounded in: design/interactables.md, design/tunables-combat.md (Gathering), scripts/world/gather/gather_node.gd.
+Grounded in: design/interactables.md, design/tunables-combat.md (Gathering), scripts/world/gather/gather_node.gd, gather/rules.gd, dungeon_props.gd, props_place.gd.
 
 | Step | Fields | Actions (not set up in real mode) | Needs | Group |
 |---|---|---|---|---|
 | start | - | reference (no) | fields | - |
-| details | summary*, kind*, hits*, interval, tool*, yields* | - | fields | - |
-| art | look*, states, sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, variant (no), pixel (no), sound (no) | pictures | - |
-| recipes | notes | - | fields | - |
+| details | summary*, kind* | - | fields | - |
+| art | look*, height | generate (no), tune (no), review, frame, variant (no), pixel (no) | pictures | - |
+| recipes (Gather node) | tool*, skill*, hits*, interval*, chance*, rewards*[item, min, max, chance], xp*, states*, after_break*, regrow, per_floor*, vein, rooms*, biomes, hit_vfx, break_vfx, sounds[cue, describe, recorded] | variant (no), flatanim (no), pixel (no), sound (no), review | pictures | - |
 | export | - | export, preview (no) | fields | - |
-
-Open: recipes: What a recipe holds (forge inputs, food, other) is not in the docs yet.
 
 ### ui
 
@@ -272,10 +272,8 @@ Grounded in: design/hub.md, design/hub-guild.md, scripts/world/camp/layout_spec.
 | details | summary*, where*, use | - | fields | - |
 | art | look*, faces | generate (no), tune (no), review, frame, tile (no), pixel (no) | pictures | - |
 | dimensions | size*{w, d, h}, roof, door, window_bust | - | fields | - |
-| interior | notes | - | fields | - |
+| interior (Interior) | tiles*[piece, name, seamless, tint], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), variant (no), pixel (no), sound (no) | pictures | - |
 | export | - | export, preview (no) | fields | - |
-
-Open: interior: What an interior holds is not in the docs yet.
 
 ### vfx
 
@@ -286,10 +284,8 @@ Grounded in: design/combat.md (telegraphs, trails, crack), assets/fx.
 | start | - | reference (no) | fields | - |
 | details | summary*, trigger* | - | fields | - |
 | art | look*, frames, fps, loop, blend, sounds[cue, describe, recorded] | generate (no), tune (no), review, flatanim (no), pixel (no), sheet (no), sound (no) | pictures | - |
-| attach | notes | - | fields | - |
+| attach (Attach points) | points*[point, flat, size, lift, fade, follows] | - | fields | - |
 | export | - | export, preview (no) | fields | - |
-
-Open: attach: Where an effect attaches (feet, hand, weapon tip, target) is not in the docs yet.
 
 ## Other seams
 
