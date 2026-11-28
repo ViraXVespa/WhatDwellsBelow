@@ -196,7 +196,11 @@ export async function action({ params, query }) {
         h("a", { class: "btn full", href: "#/coverage?show=build" }, "See what is left to build"))) };
   }
   const from = data.stills.find((x) => x.path === query.from);
-  const clips = (((doc.sections || {})[stepId] || {}).data || {}).clips || [];
+  const stepData = ((doc.sections || {})[stepId] || {}).data || {};
+  const clips = stepData.clips || [];
+  // Make Wang tileset starts from the first row of the step's Wang tilesets table.
+  const prefill = (cmd === "wang" && (stepData.wang || [])[0]) || {};
+  const start = (f) => prefill[f.name] ?? f.default ?? "";
   const visible = [], advanced = [], read = {};
   for (const f of spec.fields) {
     if (f.kind === "still" || f.kind === "glb") {
@@ -224,12 +228,13 @@ export async function action({ params, query }) {
       visible.push(h("label", { class: "field" }, h("span", {}, f.name === "turns" ? "How many tries" : f.label), el));
     } else if (f.kind === "text") {
       const change = ["edit", "variant"].includes(cmd);
-      const el = h(change ? "textarea" : "input", { type: "text", placeholder: change ? "Say what should change" : "", value: f.default ?? "" });
+      const el = h(change ? "textarea" : "input", { type: "text", placeholder: change ? "Say what should change" : "", value: start(f) });
       read[f.name] = () => el.value.trim();
       visible.push(h("label", { class: "field" }, h("span", {}, change ? "What should change?" : f.label + (f.required ? "" : " (optional)")), el));
     } else if (f.kind === "choice" || f.kind === "clip") {
       const opts = f.kind === "clip" ? clips : f.options || [];
-      const sel = h("select", {}, h("option", { value: "" }, "Pick one"), opts.map((o) => h("option", { value: o }, human(o))));
+      const sel = h("select", {}, h("option", { value: "" }, "Pick one"), opts.map((o) => h("option", { value: o }, (f.labels || {})[o] || human(o))));
+      if (f.kind === "choice" && opts.includes(String(start(f)))) sel.value = String(start(f));
       const firstMissing = f.kind === "clip" ? opts.find((c) => !data.stills.some((x) => x.step === stepId && x.clip === c && x.state === "approved")) : null;
       if (firstMissing) sel.value = firstMissing;
       read[f.name] = () => sel.value;
@@ -253,7 +258,8 @@ export async function action({ params, query }) {
     const args = {};
     for (const [k, r] of Object.entries(read)) { const v = r(); if (v !== "" && v !== null && v !== false) args[k] = v; }
     const missing = spec.fields.filter((f) => f.required && !args[f.name] && !(f.name === "workflow" && cmd !== "correct"));
-    if (missing.length) return err.replaceChildren(errorBox({ error: missing.some((f) => ["still", "glb", "choice", "clip"].includes(f.kind)) ? "Pick one first." : missing.some((f) => f.kind === "role") ? "Pick what to check it against." : "Something is missing. Open Details." }));
+    if (missing.length) return err.replaceChildren(errorBox({ error: missing.some((f) => ["still", "glb", "choice", "clip"].includes(f.kind)) ? "Pick one first." : missing.some((f) => f.kind === "role") ? "Pick what to check it against."
+      : missing.some((f) => f.kind === "text") ? `Fill in ${missing.filter((f) => f.kind === "text").map((f) => f.label.toLowerCase()).join(" and ")}.` : "Something is missing. Open Details." }));
     run.disabled = true;
     const job = await jobs.start(cmd, sid, args, { step: stepId });
     run.disabled = false;

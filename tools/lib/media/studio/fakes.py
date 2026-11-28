@@ -164,3 +164,93 @@ def silent_wav(dest: Path, seconds: float = 0.3) -> Path:
         n = int(rate * seconds)
         w.writeframes(b"".join(struct.pack("<h", int(1200 * math.sin(2 * math.pi * 440 * i / rate) * (1 - i / n))) for i in range(n)))
     return dest
+
+
+# ---- Wang tilesets (placeholder) ----------------------------------------------------------------
+# Tile count and sheet columns per variant. Corner and edge sets are 16 tiles (every on/off combination of
+# 4 corners or 4 edges); blob-47 is the 47-tile corner-and-edge set Godot's "match corners and sides" terrain uses.
+WANG_LAYOUT = {"seamless": (1, 1), "wang-corner-16": (16, 4), "wang-edge-16": (16, 4), "blob-47": (47, 8)}
+
+
+def _blob_masks() -> list[int]:
+    """The 47 corner-and-edge masks: bits N,E,S,W (1,2,4,8) and NE,SE,SW,NW (16,32,64,128); a corner counts only when both sides do."""
+    out = set()
+    for m in range(256):
+        n, e, s, w = m & 1, m & 2, m & 4, m & 8
+        keep = m & 15
+        keep |= m & 16 if n and e else 0
+        keep |= m & 32 if s and e else 0
+        keep |= m & 64 if s and w else 0
+        keep |= m & 128 if n and w else 0
+        out.add(keep)
+    return sorted(out)
+
+
+def _wang_tile(size: int, kind: str, mask: int, a: tuple, b: tuple) -> Image.Image:
+    img = Image.new("RGBA", (size, size), a)
+    d = ImageDraw.Draw(img)
+    h = size // 2
+    q = size // 3
+    if kind == "wang-corner-16":
+        for bit, box in ((1, (0, 0, h, h)), (2, (h, 0, size, h)), (4, (h, h, size, size)), (8, (0, h, h, size))):
+            if mask & bit:
+                d.rectangle(box, fill=b)
+    elif kind in ("wang-edge-16", "blob-47"):
+        d.rectangle((q, q, size - q, size - q), fill=b if mask else a)
+        for bit, box in ((1, (q, 0, size - q, q)), (2, (size - q, q, size, size - q)), (4, (q, size - q, size - q, size)), (8, (0, q, q, size - q))):
+            if mask & bit:
+                d.rectangle(box, fill=b)
+        if kind == "blob-47":
+            for bit, box in ((16, (size - q, 0, size, q)), (32, (size - q, size - q, size, size)), (64, (0, size - q, q, size)), (128, (0, 0, q, q))):
+                if mask & bit:
+                    d.rectangle(box, fill=b)
+    d.rectangle((0, 0, size - 1, size - 1), outline=(0, 0, 0, 90))
+    return img
+
+
+def wang_sheet(dest: Path, *, kind: str, a: str, b: str, size: int = 128, seed: int = 0) -> tuple[Path, int, int]:
+    """A placeholder sheet for one Wang variant: every tile in order, two flat colours for the two materials."""
+    rnd = random.Random(seed)
+    ca = (rnd.randrange(40, 110), rnd.randrange(40, 110), rnd.randrange(40, 110), 255)
+    cb = (rnd.randrange(140, 230), rnd.randrange(120, 210), rnd.randrange(60, 160), 255)
+    count, cols = WANG_LAYOUT[kind]
+    masks = list(range(16)) if count == 16 else _blob_masks() if count == 47 else [0]
+    rows = (count + cols - 1) // cols
+    cell = max(16, min(size, 128))
+    sheet = Image.new("RGBA", (cols * cell, rows * cell + 24), (0, 0, 0, 0))
+    for i, m in enumerate(masks):
+        sheet.paste(_wang_tile(cell, kind, m, ca, cb), ((i % cols) * cell, (i // cols) * cell + 24))
+    d = ImageDraw.Draw(sheet)
+    d.rectangle((0, 0, sheet.width, 23), fill=(20, 20, 30, 230))
+    d.text((6, 6), f"{SIM_MARK}  {kind}  {a} / {b}  {size}px", fill=(255, 210, 80, 255))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(dest)
+    return dest, count, cols
+
+
+def wang_preview(dest: Path, *, kind: str, seed: int = 0, cells: int = 8, cell: int = 48) -> Path:
+    """A small random map drawn with the variant's matching rule, so seams can be eyeballed."""
+    rnd = random.Random(seed + 7)
+    ca, cb = (70, 80, 90, 255), (190, 170, 110, 255)
+    grid = [[rnd.random() < 0.45 for _ in range(cells + 1)] for _ in range(cells + 1)]
+    img = Image.new("RGBA", (cells * cell, cells * cell + 24), (0, 0, 0, 0))
+    for y in range(cells):
+        for x in range(cells):
+            if kind == "wang-corner-16":
+                m = grid[y][x] * 1 | grid[y][x + 1] * 2 | grid[y + 1][x + 1] * 4 | grid[y + 1][x] * 8
+            elif kind == "seamless":
+                m = 0
+            else:
+                c = grid[y][x]
+                m = 0
+                if c:
+                    n, e, s, w = y > 0 and grid[y - 1][x], x < cells - 1 and grid[y][x + 1], y < cells - 1 and grid[y + 1][x], x > 0 and grid[y][x - 1]
+                    m = (n and 1) | (e and 2) | (s and 4) | (w and 8)
+                    m = m or 0
+            img.paste(_wang_tile(cell, kind, m, ca, cb), (x * cell, y * cell + 24))
+    d = ImageDraw.Draw(img)
+    d.rectangle((0, 0, img.width, 23), fill=(20, 20, 30, 230))
+    d.text((6, 6), f"{SIM_MARK}  preview  {kind}", fill=(255, 210, 80, 255))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest)
+    return dest

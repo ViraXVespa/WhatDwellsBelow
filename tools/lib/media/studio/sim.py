@@ -275,6 +275,20 @@ class SimBackend(Backend):
         self._step(job, f"Seamless {args.get('kind')} tile", 50)
         return {"ok": True, "added": self.register(sid, [self._still(job, sid, "front", f"{job.step}-tile-{args.get('kind')}")], job), "simulated": True}
 
+    def _sim_wang(self, job: Job, sid: str, args: dict) -> dict:
+        kind, a, b = str(args.get("kind") or "wang-corner-16"), str(args.get("from") or "a"), str(args.get("to") or "b")
+        size = int(args.get("size") or 128)
+        self._step(job, f"{kind}: {a} to {b}, every tile", 30, 0.6)
+        tag = f"{sid}-sim-{job.step}-wang-{kind}-{job.id[:6]}"
+        sheet, count, cols = fakes.wang_sheet(self._gen(f"{tag}-sheet.png"), kind=kind, a=a, b=b, size=size, seed=self._seed_of(job))
+        self._step(job, "Preview on a random map", 70, 0.4)
+        preview = fakes.wang_preview(self._gen(f"{tag}-preview.png"), kind=kind, seed=self._seed_of(job))
+        out = {"ok": True, "kind": kind, "tiles": count, "columns": cols, "size": size, "layout": args.get("layout") or "sheet",
+               "added": self.register(sid, [sheet, preview], job), "simulated": True}
+        if args.get("layout") in ("terrain", "both"):
+            out["tileset"] = "not written in simulate"
+        return out
+
     def _sim_overlay(self, job: Job, sid: str, args: dict) -> dict:
         made = []
         for i, facing in enumerate(("down", "left", "up", "right")):

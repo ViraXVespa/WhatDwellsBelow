@@ -123,8 +123,9 @@ def finish_message(row: dict) -> str:
     }.get(row.get("finish_blocker") or "", "Not ready yet.")
 
 
-def F(name: str, kind: str, label: str, *, flag: str | None = None, required: bool = False, default: object = None, options: list | None = None) -> dict:
-    return {"name": name, "kind": kind, "label": label, "flag": flag or f"--{name}", "required": required, "default": default, "options": options}
+def F(name: str, kind: str, label: str, *, flag: str | None = None, required: bool = False, default: object = None, options: list | None = None, labels: dict | None = None) -> dict:
+    out = {"name": name, "kind": kind, "label": label, "flag": flag or f"--{name}", "required": required, "default": default, "options": options}
+    return {**out, "labels": labels} if labels else out
 
 
 # Generation and long commands. `gpu` jobs run one at a time. `id`: none | optional | required.
@@ -161,6 +162,13 @@ COMMANDS: dict[str, dict] = {
                 "fields": [F("body", "choice", "Body", required=True, options=["female", "male"])]},
     "tile": {"label": "Tile", "gpu": True, "id": "required", "about": "A seamless tile.",
              "fields": [F("kind", "choice", "Tile", required=True, options=["floor", "wall", "path", "roof"])]},
+    "wang": {"label": "Wang tileset", "gpu": True, "id": "required", "about": "A tileset that matches where two materials meet.",
+             "fields": [F("kind", "choice", "Kind", required=True, default="wang-corner-16", options=["seamless", "wang-corner-16", "wang-edge-16", "blob-47"],
+                          labels={"seamless": "Single seamless tile", "wang-corner-16": "Wang 2-corner (16)", "wang-edge-16": "Wang 2-edge (16)", "blob-47": "Blob (47)"}),
+                        F("from", "text", "From material", required=True), F("to", "text", "To material", required=True),
+                        F("size", "choice", "Tile size (pixels)", required=True, default="128", options=["64", "128", "256"]),
+                        F("layout", "choice", "Output", required=True, default="sheet", options=["sheet", "terrain", "both"],
+                          labels={"sheet": "Sheet picture", "terrain": "Godot terrain set", "both": "Sheet and Godot terrain set"})]},
     "animate": {"label": "Animate", "gpu": True, "id": "required", "about": "One clip from the approved 3D model, per facing.",
                 "fields": [F("clip", "clip", "Clip", required=True)]},
     "keyframes": {"label": "Keyframes", "gpu": True, "id": "required", "about": "Reference frames for one clip.",

@@ -108,7 +108,7 @@ export async function step({ params }) {
   if (s.kind === "fields" || s.kind === "pictures") {
     const ed = sectionEditor(doc, s, readOnly);
     beforeFinish = ed.save;
-    body = [s.open_question ? h("div", { class: "note-box small" }, h("b", {}, "Still to decide: "), s.open_question, " Write notes here for now.") : null,
+    body = [s.open_question ? h("div", { class: "note-box small" }, h("b", {}, "Still to decide: "), s.open_question) : null,
       s.kind === "pictures" || data.stills.some((x) => x.step === s.id) ? picturesPanel(data, s, readOnly) : null, ed.node];
   }
 
