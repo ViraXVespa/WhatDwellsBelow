@@ -68,4 +68,6 @@ Generates interactive HTML dependency graphs plus machine-readable JSON:
 
 Used by the Pages workflow. Local testing writes to `_out/graphs/` by default.
 
+gdhealth binary: the latest release, cached in `~/.cache/wdb-graphs/`. If the GitHub API is unreachable or rate-limited, the cached binary runs. If the latest release has no binary for this OS/arch, the tool prints a notice and uses the pinned `GDHEALTH_FALLBACK_TAG` (v0.3.7) in `tools/lib/release/graphs.py`.
+
 Game config: `gdhealth.toml` at the repo root (groups, thresholds, allowed self-factory cycles, forbidden dependencies). One group per routes.yaml door, the same files as that door's code map row; a new script joins its door's group in the same change. The game `health.json` `cross_group_dependencies` lists every edge between doors; `policy.json` `forbidden_dependency` findings are wrong-way routes.
