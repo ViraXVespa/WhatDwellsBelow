@@ -266,8 +266,8 @@ Grounded in: design/dungeon.md, design/dungeon-gen.md, design/interactables.md, 
 | rooms (Dungeon rooms) | tiles*[piece, name, seamless, tint], wang[name, kind, from, to, size, layout], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), wang (no), variant (no), pixel (no), sound (no) | pictures | - |
 | export | - | export, preview (no) | fields | - |
 
-Open: art: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
-Open: rooms: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
+Open: art: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a short fade between grounds.
+Open: rooms: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a short fade between grounds.
 
 ### building
 
@@ -282,8 +282,8 @@ Grounded in: design/hub.md, design/hub-guild.md, scripts/world/camp/layout_spec.
 | interior (Interior) | tiles*[piece, name, seamless, tint], wang[name, kind, from, to, size, layout], decor[name, decoration, count, destructible, hits, gold_chance, orb_chance, opens_chest], sounds[cue, describe, recorded] | generate (no), tune (no), review, frame, tile (no), wang (no), variant (no), pixel (no), sound (no) | pictures | - |
 | export | - | export, preview (no) | fields | - |
 
-Open: art: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
-Open: interior: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a soft fade between grounds.
+Open: art: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a short fade between grounds.
+Open: interior: Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. The game has no tileset today; floors are one seamless texture with a short fade between grounds.
 
 ### vfx
 
@@ -310,5 +310,5 @@ Grounded in: design/combat.md (telegraphs, trails, crack), assets/fx.
 - `review-latest`: `pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`. Seam: `Backend.reviews`.
 - `json-lists`: `--json` on `pipeline list`, `show`, `status`, and `coverage`. Seam: `Backend.list_subjects`.
 - `export-sections`: Export maps section fields into the contract: `stats`, `dialog`, `audio`, `rules`, `paperdoll`, and `frames`/`sheets` from packed clips; today they are written empty and the fields ride under `sections`. Seam: `store.export_subject`.
-- `wang-game`: The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a soft shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. Either read the packed sheet in the ground shader by a per-cell mask, or add a TileMap/terrain path for the flat areas. Seam: `scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd`.
+- `wang-game`: The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. Either read the packed sheet in the ground shader by a per-cell mask, or add a TileMap/terrain path for the flat areas. Seam: `scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd`.
 - `vfx-attach`: The game places an effect at the chosen attach point (feet, aimed point, projectile tip, target, and planned hand and weapon tip). Today effects spawn at a world position with no attach-point table, and hand and weapon tip have no code path yet. Seam: `scripts/combat/player_hit/hit_atk.gd _spawn_fx`.
