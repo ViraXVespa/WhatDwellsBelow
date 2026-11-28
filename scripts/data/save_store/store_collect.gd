@@ -5,7 +5,7 @@ extends RefCounted
 const LocS := preload("res://scripts/app/app_loc.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 static func collect() -> Dictionary:
 	return {
 		"v": 1,

@@ -9,7 +9,7 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const ItemNames := preload("res://scripts/data/item_names.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func page_gameplay(host: Node) -> void:

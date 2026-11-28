@@ -10,7 +10,7 @@ extends RefCounted
 
 const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
 const VPS: Array[Vector2] = [Vector2(2340, 1080), Vector2(2400, 1080), Vector2(1920, 1080), Vector2(1440, 1080)]
 const NOTCH := Vector4(130, 0, 130, 60)

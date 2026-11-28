@@ -6,7 +6,7 @@ extends Object
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
 const TouchLayout := preload("res://scripts/ui/touch_hud/hud_layout.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")

@@ -4,6 +4,8 @@ const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
 const Setup := preload("res://scripts/world/player/player_setup.gd")
 const Tick := preload("res://scripts/world/player/player_tick.gd")
 const Act := preload("res://scripts/world/player/player_act.gd")
+## Loaded by warm_combat under the hub loader; the first unlocked tick would load them (~130 ms on web).
+const WARM_LAZY: Array[String] = ["res://scripts/world/player/player_act.gd", "res://scripts/world/player/player_lock.gd", "res://scripts/combat/player_hit.gd"]
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -138,3 +140,22 @@ func _weapon_reach() -> float:
 
 func _apply_facing(delta: float) -> void:
 	PlayerAnim.apply_facing(self, delta)
+
+## Combat reads the lock through here (player_hit special point).
+func lock_valid(n: Node) -> bool:
+	return _script_at("res://scripts/world/player/player_lock.gd").valid_lock(self, n)
+
+## Hub warm-up (flow_hub): one physics step, then every loaded frame drawn (each_tex gets it first).
+func warm_physics() -> void:
+	PlayerAnim.warmup_physics(self)
+
+func warm_frames(each_tex: Callable) -> void:
+	PlayerAnim.warm_frames(self, each_tex)
+
+## Hub warm-up: combat fx built, the lazy scripts loaded, the aim line and shown weapon drawn once.
+func warm_combat() -> void:
+	Setup.ensure_combat_fx(self)
+	for path: String in WARM_LAZY:
+		_script_at(path)
+	_script_at("res://scripts/world/player/player_combat.gd").update_aim_line(self)
+	_script_at("res://scripts/combat/player_hit.gd").warm_shown(self)

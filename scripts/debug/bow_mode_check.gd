@@ -7,7 +7,7 @@ extends RefCounted
 ## show the aim line with the setting off: .aiming. .axe: with a melee weapon Bow mode is inert (.fire_idle).
 ## Planted: Bow mode off makes .fire_shoots and .aiming report a fault (.plant_off).
 
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
 const INPUTS: PackedStringArray = ["fire", "attack", "aim", "aim_right", "move_down"]
 

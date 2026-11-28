@@ -1,7 +1,7 @@
 extends Object
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
 static var _combat_s: GDScript
 

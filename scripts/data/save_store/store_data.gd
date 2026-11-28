@@ -8,7 +8,7 @@ const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
 const Dbg := preload("res://scripts/app/dbg.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
 ## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
 const DEF := {

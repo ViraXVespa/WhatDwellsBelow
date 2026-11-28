@@ -5,25 +5,18 @@ const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Load := preload("res://scripts/world/player/anim_load.gd")
+const Frame := preload("res://scripts/world/player/anim_frame.gd")
 const LOC_IDLE := 0
 const LOC_START := 1
 const LOC_LOOP := 2
 const LOC_STOP := 3
 
-static var _anim_s: GDScript
-
-static func _anim() -> GDScript:
-	if _anim_s == null:
-		_anim_s = load("res://scripts/world/player/player_anim.gd") as GDScript
-	return _anim_s
-
 static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
-	var _fac = _anim()
 	if moving or host.loc_state != LOC_IDLE:
 		Load.ensure_loco(host, key)
-	var start_f: Array = _fac.clip(host.idle_to_walk, key)
-	var loop_f: Array = _fac.clip(host.walk, key)
-	var stop_f: Array = _fac.clip(host.walk_to_idle, key)
+	var start_f: Array = Frame.clip(host.idle_to_walk, key)
+	var loop_f: Array = Frame.clip(host.walk, key)
+	var stop_f: Array = Frame.clip(host.walk_to_idle, key)
 	if moving:
 		if host.loc_state == LOC_IDLE or host.loc_state == LOC_STOP:
 			host.loc_state = LOC_START if not start_f.is_empty() else LOC_LOOP
@@ -53,19 +46,19 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 			return loop_f[li]
 	else:
 		if host.loc_state == LOC_START:
-			# Same foot as the start _fac.clip. Play the already-shown idle_to_walk segment backward.
+			# Same foot as the start clip. Play the already-shown idle_to_walk segment backward.
 			host.loc_rev = true
 			host.loc_state = LOC_STOP
 			Dbg.hitch("loco_idle")
 			host.loc_t = 0.0
 		elif host.loc_state == LOC_LOOP:
 			# First foot -> idle_to_walk backward. Opposite foot -> walk_to_idle forward.
-			# If that _fac.clip is missing, use the other _fac.clip in the direction that ends on idle.
+			# If that clip is missing, use the other clip in the direction that ends on idle.
 			host.loc_rev = host.loc_foot == 0
 			if host.loc_rev:
 				if start_f.is_empty() and not stop_f.is_empty():
 					host.loc_rev = false
-					host.loc_from = _fac._stop_from(host.loc_from, loop_f.size(), stop_f.size())
+					host.loc_from = Frame.stop_from(host.loc_from, loop_f.size(), stop_f.size())
 				else:
 					host.loc_from = maxi(0, start_f.size() - 1)
 			else:
@@ -73,7 +66,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 					host.loc_rev = true
 					host.loc_from = maxi(0, start_f.size() - 1)
 				else:
-					host.loc_from = _fac._stop_from(host.loc_from, loop_f.size(), stop_f.size())
+					host.loc_from = Frame.stop_from(host.loc_from, loop_f.size(), stop_f.size())
 			host.loc_state = LOC_STOP
 			Dbg.hitch("loco_idle")
 			host.loc_t = 0.0
@@ -96,10 +89,9 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 			else:
 				host.loc_state = LOC_IDLE
 		host.walk_t = 0.0
-	return _fac.pose_tex(host, key)
+	return Frame.pose_tex(host, key)
 
 static func apply_facing(host: Node, delta: float) -> void:
-	var _fac = _anim()
 	var prev_face: String = str(host.facing_key)
 	var key: String = Facing.from_aim(host.aim_dir)
 	if prev_face != key:
@@ -107,13 +99,13 @@ static func apply_facing(host: Node, delta: float) -> void:
 	host.facing_key = key
 	var tex: Texture2D = null
 	if host.exiting:
-		var frames: Array = _fac.clip(host.death if host.exit_cond == "death" else host.dispel, key)
+		var frames: Array = Frame.clip(host.death if host.exit_cond == "death" else host.dispel, key)
 		if not frames.is_empty():
 			tex = frames[mini(frames.size() - 1, int(host.exit_t * 8.0))]
 		elif host.idle.has(key):
 			tex = host.idle[key]
 		if tex:
-			_fac.apply_tex(host, tex)
+			Frame.apply_tex(host, tex)
 		return
 	if (
 		host.atk_state == host.ATK_WIND
@@ -124,21 +116,21 @@ static func apply_facing(host: Node, delta: float) -> void:
 	):
 		Load.ensure_attack(host, key)
 	if host.atk_state == host.ATK_WIND or host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_REC:
-		var frames: Array = _fac.clip(host.special, key)
+		var frames: Array = Frame.clip(host.special, key)
 		if frames.is_empty():
-			frames = _fac.clip(host.attack, key)
+			frames = Frame.clip(host.attack, key)
 		if not frames.is_empty():
 			var idx := mini(frames.size() - 1, int(host.atk_t * App.bal.atk_fps))
 			tex = frames[idx]
 	elif host.gathering != null:
-		var frames: Array = _fac.clip(host.gather, key)
+		var frames: Array = Frame.clip(host.gather, key)
 		if frames.is_empty():
-			frames = _fac.clip(host.attack, key)
+			frames = Frame.clip(host.attack, key)
 		if not frames.is_empty():
 			var idx := mini(frames.size() - 1, int(host.gather_t * 6.0) % frames.size())
 			tex = frames[idx]
 	elif host.atk_state == host.ATK_BASIC:
-		var frames: Array = _fac.clip(host.attack, key)
+		var frames: Array = Frame.clip(host.attack, key)
 		if not frames.is_empty():
 			var n: int = frames.size()
 			var dur: float = host._basic_duration()
@@ -152,4 +144,4 @@ static func apply_facing(host: Node, delta: float) -> void:
 	if tex == null:
 		tex = _locomotion(host, key, moving, delta)
 	if tex:
-		_fac.apply_tex(host, tex)
+		Frame.apply_tex(host, tex)

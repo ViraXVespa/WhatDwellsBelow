@@ -1,6 +1,5 @@
 extends RefCounted
 
-const PlayerLock := preload("res://scripts/world/player/player_lock.gd")
 const Atk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 const Fx := preload("res://scripts/combat/player_hit/hit_fx.gd")
 
@@ -21,7 +20,7 @@ static func draw_special_tele(host: Node, _active: bool) -> void:
 	Fx.draw_special_tele(host, _active)
 
 static func special_point(host: Node) -> Vector3:
-	if PlayerLock.valid_lock(host, host.lock_target):
+	if host.lock_valid(host.lock_target):
 		return (host.lock_target as Node3D).global_position
 	var reach: float = App.bal.staff_special_radius + 1.5 + App.gear("atk_range")
 	return host.global_position + Vector3(host.aim_dir.x, 0.0, host.aim_dir.y) * reach

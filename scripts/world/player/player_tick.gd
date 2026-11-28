@@ -4,7 +4,7 @@ extends Object
 
 const Ground := preload("res://scripts/world/player/ground.gd")
 const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
-const BowMode := preload("res://scripts/world/player/bow_mode.gd")
+const BowMode := preload("res://scripts/world/bow_mode.gd")
 
 static var _gd_at: Dictionary = {}
 
