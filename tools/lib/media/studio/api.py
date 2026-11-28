@@ -23,7 +23,9 @@ class Api:
             ("GET", r"/coverage", lambda q, body: self.b.coverage()),
             ("GET", r"/subjects", lambda q, body: {"subjects": self.b.list_subjects()}),
             ("POST", r"/subjects", lambda q, body: {"subject": self.b.create(body)}),
-            ("GET", r"/subjects/(?P<sid>[a-z0-9_-]+)", lambda q, body, sid: self.b.show(sid)),
+            ("GET", r"/subjects/(?P<sid>[a-z0-9_-]+)", lambda q, body, sid: self.show(sid)),
+            ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/steps/(?P<step>[a-z0-9_-]+)", lambda q, body, sid, step: self.b.set_step(sid, step, body)),
+            ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/overrides", lambda q, body, sid: self.b.set_overrides(sid, body)),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/sections/(?P<sec>[a-z0-9_-]+)", lambda q, body, sid, sec: self.b.save_section(sid, sec, body)),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/prompts", lambda q, body, sid: self.b.save_prompts(sid, body)),
             ("POST", r"/subjects/(?P<sid>[a-z0-9_-]+)/links", lambda q, body, sid: {"subject": self.b.link(sid, body)}),
@@ -76,6 +78,10 @@ class Api:
         job.emit("log", "cancel requested")
         return job.row()
 
+    def show(self, sid: str) -> dict:
+        busy = {j.step: j.id for j in self.jobs.jobs.values() if j.subject == sid and j.step and j.status in ("queued", "running")}
+        return self.b.show(sid, busy)
+
     def start_job(self, q: dict, body: dict) -> dict:
         cmd = str(body.get("cmd") or "")
         sid = body.get("subject") or None
@@ -83,6 +89,8 @@ class Api:
         if not isinstance(args, dict):
             raise ApiError(400, "args must be an object")
         self.b.precheck(cmd, sid, args)
+        step = self.b.check_step_job(cmd, sid, body.get("step")) if sid else None
+        adjusted = self.b.check_overrides(cmd, sid, step) if sid and step else {}
         if cmd == "export":
             self.b.export_check(sid, args)
         note = None
@@ -95,13 +103,25 @@ class Api:
                     self.b.clear_soft(sid)
                 except NotWired as exc:
                     note = exc.message
-        run = self.b.body_for(cmd, sid, args)
+        inner = self.b.body_for(cmd, sid, args)
+
+        def run(job: Job) -> dict:
+            if adjusted:
+                keys = [k for k in ("prompt", "negative") if adjusted.get(k)] + sorted((adjusted.get("settings") or {}).keys())
+                job.emit("log", "Using your adjusted settings: " + ", ".join(keys))
+            result = inner(job)
+            if adjusted and isinstance(result, dict):
+                result["adjusted"] = adjusted
+            return result
+
         spec = COMMANDS[cmd]
         with self._start_lock:
             busy = self.jobs.busy_gpu()
             if spec["gpu"] and busy is not None:
                 raise ApiError(409, f"{busy.cmd} is running. One model job at a time.", busy=busy.row())
-            job = self.jobs.start(Job(cmd, sid, args, gpu=spec["gpu"], simulated=self.b.simulated), run)
+            job = Job(cmd, sid, args, gpu=spec["gpu"], simulated=self.b.simulated)
+            job.step = step
+            job = self.jobs.start(job, run)
         out = job.row()
         if note:
             out["soft_note"] = note

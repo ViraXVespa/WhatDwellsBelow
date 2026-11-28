@@ -89,6 +89,10 @@ class SimBackend(Backend):
     def cancel(self, job: Job) -> None:
         job.cancel_requested = True
 
+    def check_overrides(self, cmd: str, subject_id: str, step: str) -> dict:
+        from .steps import PROMPT_ACTIONS
+        return self.overrides_for(subject_id, step) if cmd in PROMPT_ACTIONS else {}
+
     # ---- fake long jobs ------------------------------------------------------------
     def body_for(self, cmd: str, subject_id: str | None, args: dict):
         fn = getattr(self, f"_sim_{cmd}", None)
@@ -254,6 +258,7 @@ class SimBackend(Backend):
                 doc["dirty"]["hard"] = hard
                 store.save_subject(self.root, doc, propagate=False)
         path = store.export_dir(self.root) / exported["type"] / f"{sid}.json"
+        self.mark_exported(sid)
         return {"ok": True, "export": self.rel(path), "areas": exported["areas"], "exported_at": exported["exported_at"],
                 "bypassed": hard if args.get("bypass") else [], "simulated": True}
 

@@ -38,6 +38,7 @@ class Job:
         self.finished: float | None = None
         self.cancel_requested = False
         self.cancel_hook: Callable[[], None] | None = None
+        self.step: str | None = None
         self._lock = threading.Lock()
 
     # Called from the job body.
@@ -68,7 +69,7 @@ class Job:
             return {
                 "id": self.id, "cmd": self.cmd, "subject": self.subject, "args": self.args,
                 "status": self.status, "stage": self.stage, "pct": round(self.pct, 1),
-                "simulated": self.simulated, "gpu": self.gpu,
+                "simulated": self.simulated, "gpu": self.gpu, "step": self.step,
                 "created": self.created, "finished": self.finished,
                 "result": self.result, "error": self.error,
                 "events": [e for e in self.events if e["seq"] > since],
@@ -104,6 +105,7 @@ class Registry:
                 job.status = "lost"
                 job.error = "The studio server stopped while this job ran."
             job.stage = row.get("stage", "")
+            job.step = row.get("step")
             job.pct = float(row.get("pct") or 0)
             job.result = row.get("result")
             job.error = job.error or row.get("error")

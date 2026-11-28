@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 from media.pipeline import store
 
+from . import steps as step_flow
 from .jobs import Job
 
 UI_KEY = "studio"
@@ -29,6 +30,7 @@ HIDDEN_TOKENS = (  # closed prompts (design/content-pipeline-mesh.md): not prese
     "918e696e", "5b5de309", "d3e0b159", "fcc6c199", "004e9412", "ffec9ef8", "a89468e1", "1e889747",
     "07176358", "ef7de895", "75f81c41", "c5f67d50", "2e90b57c", "c855bdf0", "45195711",
 )
+SETTING_KEYS = ("seed", "strength", "steps", "width", "height")
 POST_HOSTS = {"x.com", "www.x.com", "twitter.com", "www.twitter.com", "mobile.twitter.com"}
 
 
@@ -171,6 +173,9 @@ class Backend:
             "types": list(store.TYPES),
             "sections": {t: [{"id": s, "skeleton": sk} for s, sk in rows] for t, rows in store.SECTIONS.items()},
             "commands": COMMANDS,
+            "steps": {t: step_flow.plan(t) for t in store.TYPES},
+            "action_labels": step_flow.ACTION_LABELS,
+            "setting_keys": list(SETTING_KEYS),
             "roles": roles,
             "canvas": store.CANVAS,
             "views": list(VIEWS),
@@ -206,19 +211,129 @@ class Backend:
         ui.setdefault("stills", [])
         ui.setdefault("approvals", {})
         ui.setdefault("history", [])
+        ui.setdefault("steps", {})
+        ui.setdefault("overrides", {})
         return ui
 
     def _pending(self, doc: dict) -> int:
-        return sum(1 for s in self.stills(doc) if s["state"] == "pending" and s["kind"] == "still")
+        return sum(1 for s in self.stills(doc) if s["state"] == "pending")
 
-    def show(self, subject_id: str) -> dict:
+    def show(self, subject_id: str, busy: dict[str, str] | None = None) -> dict:
         doc = self._load(subject_id)
         names = {r["id"]: r for r in store.list_subjects(self.root)}
         links = [{**link, "type": names.get(link["id"], {}).get("type"), "name": names.get(link["id"], {}).get("name"),
                   "missing": link["id"] not in names} for link in doc["links"]]
         stills = self.stills(doc)
         return {"subject": doc, "links": links, "stills": stills, "reviews": self.reviews(doc),
-                "gates": self.gates(doc, stills)}
+                "gates": self.gates(doc, stills), "steps": step_flow.states(doc, stills, busy),
+                "overrides": (doc.get(UI_KEY) or {}).get("overrides") or {}}
+
+    # ---- steps -----------------------------------------------------------------
+    def step_states(self, doc: dict) -> list[dict]:
+        return step_flow.states(doc, self.stills(doc))
+
+    def _step_row(self, doc: dict, step: str) -> dict:
+        row = next((s for s in self.step_states(doc) if s["id"] == step), None)
+        if row is None:
+            raise ApiError(404, f"no step {step} on a {doc['type']}")
+        return row
+
+    def require_open(self, doc: dict, step: str) -> dict:
+        """A step can change only when every earlier step is Done and it is not Done itself."""
+        row = self._step_row(doc, step)
+        if not row["available"]:
+            raise ApiError(409, f"Finish {row['blocked_by_label']} first.", gate="steps", step=step, blocked_by=row["blocked_by"])
+        if row["status"] == "done":
+            raise ApiError(409, f"{row['label']} is approved. Reopen it to change it.", gate="locked", step=step)
+        return row
+
+    def set_step(self, subject_id: str, step: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        action = body.get("action")
+        row = self._step_row(doc, step)
+        ui = self._ui(doc)
+        mark = ui["steps"].setdefault(step, {})
+        if action == "finish":
+            if step == "export":
+                raise ApiError(400, "Send to the game finishes this step.")
+            self.require_open(doc, step)
+            if row["finish_blocker"] == "pending":
+                raise ApiError(409, f"{row['pending']} picture(s) on {row['label']} still need your OK.", gate="approvals", step=step)
+            if row["finish_blocker"] == "no_approved":
+                raise ApiError(409, f"{row['label']} needs at least one approved picture.", gate="approvals", step=step)
+            mark["done_at"] = store._now()
+            mark.pop("reopened_at", None)
+        elif action == "reopen":
+            if row["status"] != "done":
+                raise ApiError(400, f"{row['label']} is not approved.")
+            if not row["available"]:
+                raise ApiError(409, f"Finish {row['blocked_by_label']} first.", gate="steps", step=step, blocked_by=row["blocked_by"])
+            mark.pop("done_at", None)
+            mark["reopened_at"] = store._now()
+        else:
+            raise ApiError(400, "action is finish or reopen")
+        store.save_subject(self.root, doc, propagate=False)
+        return {"steps": self.step_states(doc)}
+
+    def set_overrides(self, subject_id: str, body: dict) -> dict:
+        doc = self._load(subject_id)
+        step = str(body.get("step") or "")
+        row = self._step_row(doc, step)
+        if row["kind"] != "pictures":
+            raise ApiError(400, f"{row['label']} has no picture settings.")
+        self.require_open(doc, step)
+        ui = self._ui(doc)
+        if body.get("reset"):
+            ui["overrides"].pop(step, None)
+        else:
+            entry: dict = {}
+            for key in ("prompt", "negative"):
+                value = body.get(key)
+                if isinstance(value, str) and value.strip():
+                    entry[key] = value.strip()
+            settings = body.get("settings") or {}
+            if not isinstance(settings, dict):
+                raise ApiError(400, "settings must be an object")
+            clean = {}
+            for key in SETTING_KEYS:
+                value = settings.get(key)
+                if value in (None, ""):
+                    continue
+                try:
+                    clean[key] = float(value) if key == "strength" else int(value)
+                except (TypeError, ValueError):
+                    raise ApiError(400, f"{key} must be a number") from None
+            if clean:
+                entry["settings"] = clean
+            if entry:
+                entry["at"] = store._now()
+                ui["overrides"][step] = entry
+            else:
+                ui["overrides"].pop(step, None)
+        store.save_subject(self.root, doc, propagate=False)
+        return {"overrides": ui["overrides"]}
+
+    def overrides_for(self, subject_id: str, step: str) -> dict:
+        return ((self._load(subject_id).get(UI_KEY) or {}).get("overrides") or {}).get(step) or {}
+
+    def check_overrides(self, cmd: str, subject_id: str, step: str) -> dict:
+        """Real mode: the pipeline does not read per-step settings yet."""
+        over = self.overrides_for(subject_id, step) if cmd in step_flow.PROMPT_ACTIONS else {}
+        if over:
+            raise NotWired("step-overrides", "the pipeline does not read adjusted step settings yet. Reset them to run with the standard settings.")
+        return {}
+
+    def check_step_job(self, cmd: str, subject_id: str, step: str | None) -> str:
+        doc = self._load(subject_id)
+        step = step or ("export" if cmd == "export" else "")
+        if not step:
+            raise ApiError(400, "step is required")
+        row = self.require_open(doc, step)
+        if cmd not in row["actions"]:
+            raise ApiError(400, f"{cmd} is not an action on {row['label']}")
+        if cmd in ("body", "mesh"):
+            self._require_plate_approvals(subject_id, cmd)
+        return step
 
     def create(self, body: dict) -> dict:
         try:
@@ -231,6 +346,7 @@ class Backend:
         doc = self._load(subject_id)
         if section not in doc["sections"]:
             raise ApiError(404, f"no section {section}")
+        self.require_open(doc, section)
         data = body.get("data")
         if not isinstance(data, dict):
             raise ApiError(400, "data must be an object")
@@ -355,6 +471,7 @@ class Backend:
             role = (row.get("args") or {}).get("role") if isinstance(row.get("args"), dict) else None
             row["view"] = normalize_view(appr.get("view")) or infer_view(rel, role)
             row["view_set"] = bool(normalize_view(appr.get("view")))
+            row["step"] = appr.get("step") or row.get("step")
             row["simulated"] = bool(row.get("simulated"))
             out.append(row)
         out.sort(key=lambda r: -r["mtime"])
@@ -384,6 +501,15 @@ class Backend:
             raise ApiError(400, "state is approved, rejected or pending")
         if rel not in {s["path"] for s in self.stills(doc)}:
             raise ApiError(404, "no such still on this subject")
+        current = next(s for s in self.stills(doc) if s["path"] == rel)
+        step = str(body.get("step") or "") or None
+        if step:
+            target = self._step_row(doc, step)
+            if target["kind"] != "pictures":
+                raise ApiError(400, f"{target['label']} does not hold pictures.")
+            self.require_open(doc, step)
+        if current.get("step"):
+            self.require_open(doc, current["step"])
         view = normalize_view(body["view"]) if "view" in body and body.get("view") not in (None, "") else None
         if "view" in body and body.get("view") not in (None, "") and view is None:
             raise ApiError(400, "view is front, side, back or other")
@@ -393,6 +519,8 @@ class Backend:
             entry["view"] = view
         elif (ui["approvals"].get(rel) or {}).get("view"):
             entry["view"] = ui["approvals"][rel]["view"]
+        if step or (ui["approvals"].get(rel) or {}).get("step"):
+            entry["step"] = step or ui["approvals"][rel]["step"]
         ui["approvals"][rel] = entry
         store.save_subject(self.root, doc, propagate=False)
         return {"path": rel, "state": state, "view": entry.get("view") or infer_view(rel)}
@@ -408,7 +536,8 @@ class Backend:
             rel = self.rel(p)
             if rel in known or hidden(p.name):
                 continue
-            row = {"path": rel, "cmd": job.cmd, "job": job.id, "args": job.args, "at": store._now(), "simulated": job.simulated, **(extra or {})}
+            row = {"path": rel, "cmd": job.cmd, "job": job.id, "args": job.args, "at": store._now(), "simulated": job.simulated,
+                   "step": getattr(job, "step", None), **(extra or {})}
             ui["stills"].append(row)
             added.append(row)
         ui["history"] = (ui["history"] + [{"job": job.id, "cmd": job.cmd, "at": store._now(), "status": "done"}])[-30:]
@@ -450,10 +579,8 @@ class Backend:
             raise ApiError(400, "proportion needs a still or a mesh")
         if cmd == "correct" and not (args.get("from") or args.get("image")):
             raise ApiError(400, "correct needs a review JSON or a still")
-        if cmd in ("body", "mesh"):
-            if not subject_id:
-                raise ApiError(400, f"{cmd} needs a subject")
-            self._require_plate_approvals(subject_id, cmd)
+        if cmd in ("body", "mesh") and not subject_id:
+            raise ApiError(400, f"{cmd} needs a subject")
 
     def clear_soft(self, subject_id: str) -> None:
         raise NotWired("soft-dirty-clear", "the store has no call that clears a soft flag after it was shown.")
@@ -488,7 +615,8 @@ class Backend:
         plates = self._missing_plates(stills)
         waiting = self._unapproved(stills)
         need = {"ok": not plates, "needed": ["front", "side"], "missing": plates}
-        return {"body": dict(need), "mesh": dict(need), "export": {"ok": not waiting, "missing": waiting}}
+        open_steps = [s["label"] for s in step_flow.states(doc, stills) if s["id"] != "export" and s["status"] != "done"]
+        return {"body": dict(need), "mesh": dict(need), "export": {"ok": not open_steps, "missing": open_steps}}
 
     def _require_plate_approvals(self, subject_id: str, cmd: str) -> None:
         stills = self.stills(self._load(subject_id))
@@ -496,28 +624,26 @@ class Backend:
         if missing:
             raise ApiError(
                 409,
-                f"{cmd} needs an approved front still and an approved side still. Missing: {', '.join(missing)}.",
+                f"Approve a {' and a '.join(missing)} picture first.",
                 gate="approvals", needed=["front", "side"], missing=missing, cmd=cmd,
             )
 
-    def _require_export_approvals(self, subject_id: str) -> None:
-        waiting = self._unapproved(self.stills(self._load(subject_id)))
-        if waiting:
-            n = len(waiting)
-            raise ApiError(
-                409,
-                f"Export needs every current still approved. {n} still {'is' if n == 1 else 'are'} not.",
-                gate="approvals", missing=waiting, cmd="export",
-            )
+    def mark_exported(self, subject_id: str) -> None:
+        doc = self._load(subject_id)
+        self._ui(doc)["steps"].setdefault("export", {})["done_at"] = store._now()
+        store.save_subject(self.root, doc, propagate=False)
 
     def export_check(self, subject_id: str, args: dict) -> None:
         doc = self._load(subject_id)
         if doc["dirty"]["hard"] and not args.get("bypass"):
-            raise ApiError(409, "hard-dirty: resolve or bypass before export", hard=doc["dirty"]["hard"])
+            raise ApiError(409, "Something needs a redo. Redo it, or send anyway.", hard=doc["dirty"]["hard"])
         if doc["dirty"]["hard"] and args.get("bypass") and not self.simulated:
             raise NotWired("export-bypass", "export has no bypass flag for hard-dirty subjects.")
-        # The hard-dirty bypass does not skip the approval gate.
-        self._require_export_approvals(subject_id)
+        # Export opens when every earlier step is Done. The hard-dirty bypass does not skip that.
+        open_steps = [s["label"] for s in self.step_states(doc) if s["id"] != "export" and s["status"] != "done"]
+        if open_steps:
+            raise ApiError(409, "Approve every step before sending to the game. Still open: " + ", ".join(open_steps) + ".",
+                           gate="steps", missing=open_steps, cmd="export")
 
     def body_for(self, cmd: str, subject_id: str | None, args: dict):
         if cmd == "export":
@@ -535,6 +661,7 @@ class Backend:
             raise ApiError(400, str(exc)) from None
         path = store.export_dir(self.root) / doc["type"] / f"{doc['id']}.json"
         job.emit("log", f"exported {doc['type']} {doc['id']} areas={len(doc['areas'])}")
+        self.mark_exported(subject_id)
         return {"ok": True, "export": self.rel(path), "areas": doc["areas"], "exported_at": doc["exported_at"]}
 
     def _cli(self, job: Job, cmd: str, subject_id: str | None, args: dict) -> dict:
