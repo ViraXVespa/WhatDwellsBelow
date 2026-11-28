@@ -1,0 +1,49 @@
+# gdhealth config for `python tools/release.py graphs` (gdhealth reads this file from the repo root).
+# One group per routes.yaml door work area; a group lists the same files as that door's design/code-map.md row.
+# Groups match in alphabetical order, first match wins, so every group carves its neighbours out with "!" globs.
+# A file no group matches reports as "ungrouped": that area is not organized yet.
+
+[discovery]
+include = ["**/*.gd"]
+exclude = ["addons/**", ".godot/**", "reports/**"]
+
+[groups]
+combat  = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
+debug   = ["scripts/debug/**"]
+enemies = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
+
+# Pinned to the gdhealth 0.3.6 defaults so trend numbers do not move with a tool update.
+[thresholds]
+file_lines_warn         = 500
+file_lines_critical     = 1000
+function_lines_warn     = 40
+function_lines_critical = 80
+cyclomatic_warn         = 10
+cyclomatic_critical     = 15
+nesting_warn            = 4
+nesting_critical        = 6
+parameters_warn         = 5
+
+[policy]
+# Only single-file self-factories (a static spawn that does `load(<own path>).new()`), named one by one.
+allow_cycles = [
+	"scripts/combat/float_num.gd",
+	"scripts/combat/hp_bar.gd",
+]
+
+# Live code never depends on debug code.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "enemies"
+to       = "debug"
+severity = "critical"
+
+# Combat mechanics (hits, cover, projectiles, feedback) sit below the enemies that use them.
+[[policy.forbidden_dependencies]]
+from     = "combat"
+to       = "enemies"
+severity = "warning"
