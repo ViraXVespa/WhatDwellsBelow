@@ -12,6 +12,7 @@ camera        = ["scripts/world/camera_rig.gd", "scripts/world/sprite_filter.gd"
 combat        = ["scripts/combat/**", "!scripts/combat/enemy.gd", "!scripts/combat/enemy/**", "!scripts/combat/roster.gd"]
 debug         = ["scripts/debug/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
+inventory     = ["scripts/data/progress_gear.gd", "scripts/data/progress_gear/**", "scripts/data/gear_rules/**", "scripts/data/affixes.gd", "scripts/data/gear_roll.gd", "scripts/data/catalog.gd", "scripts/data/item_names.gd"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
 numbers       = ["scripts/data/balance.gd", "scripts/data/balance/**", "scripts/data/tunables.gd"]
 player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
@@ -75,6 +76,11 @@ severity = "critical"
 
 [[policy.forbidden_dependencies]]
 from     = "numbers"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
 to       = "debug"
 severity = "critical"
 
@@ -152,4 +158,30 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "numbers"
 to       = "camera"
+severity = "warning"
+
+# Item data sits below the systems that use items.
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "player"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "combat"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "enemies"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "interactables"
+severity = "warning"
+
+[[policy.forbidden_dependencies]]
+from     = "inventory"
+to       = "save_tech"
 severity = "warning"
