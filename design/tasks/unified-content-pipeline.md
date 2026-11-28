@@ -235,3 +235,18 @@ The open implementation is the pipeline studio on port 8189. Build that shell fr
 
 ## Next Steps (User Only)
 python tools/slice.py open art_pipeline --task unified-content-pipeline
+
+## UI gaps for Build
+The studio calls these seams in `tools/lib/media/studio/backend.py`. In real mode each one answers 501 with `not_wired=<seam>` until it exists. Simulate mode fakes them.
+
+- `dirty-clear`: clear one hard or soft flag. Want `store.clear_flag(repo, id, kind, reason)` or `pipeline clear ID --hard|--soft REASON --json` returning `{subject}`. Seam: `Backend.clear_flag`.
+- `soft-dirty-clear`: clear the soft flags a regenerate acknowledged. Same call, `--soft --all`. Seam: `Backend.clear_soft`.
+- `export-bypass`: export with hard flags held. Want `store.export_subject(..., bypass_hard=True)` or `pipeline export ID --bypass-hard`, returning `{path, sections, bypassed:[reasons]}`. Seam: `Backend.export_check`.
+- `reference-ingest`: turn an upload, image URL, or X post into a still plus a description. Want `pipeline reference ID --path P|--url U|--post U --json` returning `{image, description, source}`. Seam: `Backend.body_for` (`reference`).
+- `safe-cancel`: stop a model job (review, correct, tune, smooth, body, edit) without killing a pid. Want a cancel file or `pipeline cancel JOB` that ends at a safe point and calls `stop_comfyui`. Seam: `Backend._cli` cancel.
+- Model lock and Comfy start/stop: the studio runs one model job at a time in its own process only. Want `pipeline lock --json` returning `{family, holder, since}` so a CLI run and the studio share it, and a `stop_comfyui` hook the server can call. Seam: `Api.start_job` busy check.
+- Approvals: the studio keeps still approvals under the record key `studio` (`approvals: {path: {state, at}}`). Want a schema field (and an export rule) if approvals should gate export or `tune`. Seam: `Backend.set_still_state`.
+- Artifacts: jobs detect new files by name prefix in `wip/gen` and `wip/review`. Want `RESULT` (or `--json`) to list written paths: `{stills:[], glbs:[], review, report}`. Seam: `Backend._cli`.
+- Latest review: want `pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`, so the page stops scanning `wip/review`. Seam: `Backend.reviews`.
+- JSON lists: want `--json` on `pipeline list`, `show`, `status`, and `coverage` matching their store functions. The studio imports the store until then.
+- Later: MotionBricks, pixel pass, sheet, and in-game capture have no command yet. The page leaves them out.

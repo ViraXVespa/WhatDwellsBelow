@@ -2,17 +2,15 @@
 
 Status: current plan
 Read when: authoring phone studio
-Code: `tools/lib/media/mobile_ui_server.py`, `tools/lib/media/mobile_ui/`, `python tools/media.py pipeline`
+Code: `tools/lib/media/mobile_ui_server.py`, `tools/lib/media/studio/`, `tools/lib/media/mobile_ui/`, `python tools/media.py pipeline`
 
 The game stays gamepad-first and web-exportable. This page is the authoring studio. No mesh, vision model, or Comfy run belongs in the game. Ship frames stay 128.
 
-## Page that is up
+## Run
 
-`tools/lib/media/mobile_ui_server.py` listens on `0.0.0.0:8189` and serves `tools/lib/media/mobile_ui/index.html`, `app.js`, and `style.css`. Open `http://<lan-ip>:8189` on a phone. It proxies `/comfy/*` to `127.0.0.1:8188` and serves `tools/data/comfy-character-workflow.json` at `/workflow.json`.
+`python tools/media.py studio` serves `0.0.0.0:8189` with no login, for the LAN. Open `http://<lan-ip>:8189` on a phone. `WDB_PIPELINE_SIMULATE=1` fakes every long job with staged progress (`WDB_PIPELINE_SIM_DELAY` seconds per stage, default 0.8) in a separate store at `data/pipeline/wip/_sim`, and the page shows a SIMULATED banner. `--selftest` runs both modes on a temp repo. Jobs live on the server (`data/pipeline/wip/_studio/jobs.json`), so a reload or another phone reconnects. The old Character Studio is at `/legacy/`, with its `/api/*`, `/workflow.json`, and `/comfy/*` routes unchanged. The Comfy server still starts this page on its own thread.
 
-Posts: `/api/picks`, `/api/ledger`, `/api/cancel`, `/api/start-comfy`, `/api/build-test`, `/api/queue-walk`. Picks and the ledger are `_src/comfy-character/walk-picks.json` and `_src/comfy-character/ledger.json`. The page title is Character Studio: facing, prompt, generate, Good/Bad, Approve/Deny, and a walk test. That page drives the closed character workflow. New art does not queue it. Keep those controls in the files. They are not the default screen.
-
-Vanilla HTML, JS, and CSS. No framework. The server shells `tools/media.py` for the walk actions. Store actions use that same program.
+Alerts: a finished job raises a browser notification only on a secure origin (https, or localhost). Plain `http://<lan-ip>` is not one, so the phone flashes the tab title and icon instead.
 
 ## Studio to build
 
@@ -27,6 +25,10 @@ A review screen reads a review JSON under `data/pipeline/wip/review/` when one e
 Generation buttons name the command they run: `review`, `correct`, `tune`, `frame`, `proportion`, `mesh`, `smooth`, `body`, and `edit ID --text TEXT`. Auto-tune is `pipeline tune`. Start-from-reference stores an upload path, an image URL, or a post URL on the subject. It does not ingest a post during the shell, and it does not start the X-post proof. Preview shows the subject's stills. An in-game capture button can wait. The shell does not launch the game.
 
 `pipeline check` round-trips a temp store and is the safe check. A UI trial subject comes from `pipeline new`. One model family at a time. The page does not start a second Comfy. Stop Comfy only with `stop_comfyui`. Do not kill a pid. Free Comfy before a review or a tune, then stop `qwen3-vl:8b` when that call ends.
+
+## Status
+
+Built: type picker, new subject (with template), subject record with flags and links, section editor with autosave and save review, prompts, start-from-reference, every generation form, jobs with progress, cancel and reconnect, approve, reject or regenerate per still, compare, review checks, GLB viewer, export with hard-flag hold, coverage. Simulate runs all of it. Real mode answers 501 where Build has not wired the seam; the list is under UI gaps for Build in the task. Visuals are unverified until the User looks.
 
 ## Leave alone
 
