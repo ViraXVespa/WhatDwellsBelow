@@ -1,6 +1,6 @@
 extends Object
 
-const Enemies := preload("res://scripts/data/balance/enemies.gd")
+const Bal := preload("res://scripts/data/balance.gd")
 
 ## Twelve normal enemy types. Floor pools guarantee ≥5 types per floor.
 
@@ -30,7 +30,7 @@ static func def(id: String) -> Dictionary:
 	var all := _all()
 	var d: Dictionary = all[id] if all.has(id) else all["goblin"]
 	d = d.duplicate()
-	d.hp = float((Enemies.defaults()[id if all.has(id) else "goblin"] as Dictionary).hp)
+	d.hp = float((Bal.enemy_defaults()[id if all.has(id) else "goblin"] as Dictionary).hp)
 	if App.bal:
 		var hv := App.bal.getv("e_%s_hp" % id)
 		if hv > 0.0:

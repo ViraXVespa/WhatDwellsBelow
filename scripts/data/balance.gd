@@ -20,6 +20,10 @@ func _init() -> void:
 func _ensure_enemies() -> void:
 	Enemies.fill(enemy_stats)
 
+## Shipped enemy stat rows by id (roster reads these through here, not through balance/enemies.gd).
+static func enemy_defaults() -> Dictionary:
+	return Enemies.defaults()
+
 ## Static reader: `App.bal` value of `key` as float, else `fallback` (no bal yet, or no such tunable).
 static func f(key: String, fallback: float) -> float:
 	if App.bal != null and App.bal.get(key) != null:

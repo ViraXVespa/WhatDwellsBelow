@@ -81,9 +81,6 @@ const BITTER_LOOP_DEFAULT := 15.52
 const TOUCH_TAP_WINDOW := 0.28
 const TOUCH_DEAD := 0.24
 
-static func archive_catalog() -> Array:
-	return load("res://scripts/data/archives/archives_catalog.gd").all()
-
 ## Slider t 0, 0.5, 1 maps to lo, mid, hi. Each half is geometric, so the default sits in the middle.
 static func span_from_t(t: float, lo: float, mid: float, hi: float) -> float:
 	var u: float = clampf(t, 0.0, 1.0)
