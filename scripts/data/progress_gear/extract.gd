@@ -1,6 +1,5 @@
 extends Object
 
-const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Bag := preload("res://scripts/data/progress_gear/gear_bag.gd")
@@ -127,7 +126,7 @@ static func extract_all(p: Object, role: String) -> String:
 		App.bank_ore += App.ore
 		App.bank_wood += App.wood
 		App.bank_root += p.root
-		ProgressQuest.quest_extract_ore(p, App.ore)
+		p.call("note_extract_ore", App.ore)
 		App.ore = 0
 		App.wood = 0
 		p.root = 0
@@ -175,7 +174,7 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 		p.mailed_gold += ng
 		return App.tr("extract.sent_g") % ng
 	if k == "ore" and (_full_mail(role) or role == "gather"):
-		ProgressQuest.quest_extract_ore(p, App.ore)
+		p.call("note_extract_ore", App.ore)
 		App.bank_ore += App.ore
 		var no: int = App.ore
 		App.ore = 0

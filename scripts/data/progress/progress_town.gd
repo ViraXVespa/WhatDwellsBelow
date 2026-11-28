@@ -73,6 +73,9 @@ static func accept_quest(p: Object, i: int) -> String:
 static func abandon_quest(p: Object) -> String:
 	return Quest.abandon_quest(p)
 
+static func note_extract_ore(p: Object, n: int) -> void:
+	Quest.quest_extract_ore(p, n)
+
 static func note_kill(p: Object, type_id: String, named: String) -> void:
 	Quest.note_kill(p, type_id, named)
 

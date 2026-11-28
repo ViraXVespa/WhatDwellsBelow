@@ -14,7 +14,7 @@ static func _ensure_host(host: Node3D) -> Node3D:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return null
-	var script: GDScript = load("res://scripts/graphics/actor_lit.gd") as GDScript
+	var script: GDScript = host.get_script() as GDScript
 	var pool: Node3D = script.new() as Node3D
 	pool.name = "MarkPool"
 	host._pool_host = pool

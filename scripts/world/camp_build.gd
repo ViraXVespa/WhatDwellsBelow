@@ -39,24 +39,6 @@ static func world(host: Node3D) -> void:
 static func ground(host: Node3D) -> void:
 	MeshS.ground(host)
 
-static func outer_grass(host: Node3D) -> void:
-	var lay: Node3D = LayoutS.of(host)
-	var x0: float = lay.aabb_x0()
-	var z0: float = lay.aabb_z0()
-	var x1: float = lay.aabb_x1()
-	var z1: float = lay.aabb_z1()
-	var ix0: float = float(lay.ground_ox)
-	var iz0: float = float(lay.ground_oz)
-	var ix1: float = float(lay.ground_ox + lay.ground_w)
-	var iz1: float = float(lay.ground_oz + lay.ground_d)
-	var y: float = T.FLOOR_Y
-	var tex: String = Spec.SURFACE["grass"][0]
-	var fb: Color = Spec.SURFACE["grass"][1]
-	MeshS.grass_pad(host, Vector3((x0 + x1) * 0.5, y, (z0 + iz0) * 0.5), Vector2(x1 - x0, iz0 - z0), tex, fb)
-	MeshS.grass_pad(host, Vector3((x0 + x1) * 0.5, y, (iz1 + z1) * 0.5), Vector2(x1 - x0, z1 - iz1), tex, fb)
-	MeshS.grass_pad(host, Vector3((x0 + ix0) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(ix0 - x0, iz1 - iz0), tex, fb)
-	MeshS.grass_pad(host, Vector3((ix1 + x1) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(x1 - ix1, iz1 - iz0), tex, fb)
-
 static func buildings(host: Node3D) -> void:
 	hall(host)
 	wing(host)
@@ -168,3 +150,19 @@ static func stamp_actor_blobs(host: Node3D) -> void:
 			continue
 		var at: Vector3 = spr.global_position
 		Util._blob(host, Vector3(at.x, 0.0, at.z))
+
+## Bake mode (app_bake.gd): realize the hub layout on an unscripted camp.tscn and rebake hub_light.png.
+static func bake_light(camp: Node) -> void:
+	var layout = LayoutS.on_camp(camp)
+	layout.ensure_tree()
+	realize_editor(camp, layout)
+	var HubLight = load("res://scripts/graphics/light_rt.gd")
+	HubLight.rebuild_hub(
+		int(layout.aabb_x0()),
+		int(layout.aabb_z0()),
+		int(layout.aabb_x1()),
+		int(layout.aabb_z1()),
+		Vector2(layout.spot_pos("Crystal").x, layout.spot_pos("Crystal").z),
+		layout
+	)
+	HubLight.save_hub_bake()

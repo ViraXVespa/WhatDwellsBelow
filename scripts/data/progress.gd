@@ -329,6 +329,10 @@ func accept_quest(i: int) -> String:
 func abandon_quest() -> String:
 	return Town.abandon_quest(self)
 
+## Extraction (progress_gear/extract.gd) reports banked ore here, so inventory never loads quest code.
+func note_extract_ore(n: int) -> void:
+	Town.note_extract_ore(self, n)
+
 func note_kill(type_id: String, named: String) -> void:
 	Town.note_kill(self, type_id, named)
 

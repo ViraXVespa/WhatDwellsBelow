@@ -15,6 +15,7 @@ var ground_ox: int = Spec.GROUND.position.x
 var ground_oz: int = Spec.GROUND.position.y
 var grass_pad: int = Spec.GRASS_PAD
 var tile_w: float = Spec.TILE_W
+var crystal_glow_r: float = Spec.CRYSTAL_GLOW_R
 var hall_box: Vector3 = Spec.HALL["box"]
 var wing_box: Vector3 = Spec.WING["box"]
 var stall_box: Vector3 = Spec.STALL["box"]

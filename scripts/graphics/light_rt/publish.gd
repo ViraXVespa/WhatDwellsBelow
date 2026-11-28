@@ -7,6 +7,7 @@ const Stamp := preload("res://scripts/graphics/light_stamp.gd")
 const StampJob := preload("res://scripts/graphics/light_stamp/stamp_job.gd")
 const Plan := preload("res://scripts/graphics/torch_plan.gd")
 const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
+const Grid := preload("res://scripts/graphics/chunk_grid.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 ## Walking restamps run in units of at most this many microseconds per frame (step, from process_floor; the first
 ## stamp, under the cover, runs whole).
@@ -135,7 +136,7 @@ static func _commit(job: StampJob) -> void:
 
 static func _ring_rect(host: Node) -> Rect2i:
 	var rt: Variant = load(RT_PATH)
-	var stream: GDScript = load("res://scripts/world/dungeon_geo/geo_stream.gd") as GDScript
+	var stream: GDScript = Grid
 	var pc: Vector2i = Lights._focus(host)
 	var origin_cell: Vector2i = stream.chunk_origin(pc)
 	var mode := ""
@@ -169,7 +170,7 @@ static func _refill(host: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if rt._bill == null:
 		rt._bill = load("res://scripts/graphics/torch_bill.gd") as GDScript
-	var stream: GDScript = load("res://scripts/world/dungeon_geo/geo_stream.gd") as GDScript
+	var stream: GDScript = Grid
 	rt._bill.refill(host, rt._sites, int(stream.CHUNK))
 
 static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> void:

@@ -2,7 +2,8 @@ extends Object
 
 ## Torch plan grid tests: thin cells, ring exits, room touch.
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+## Dungeon grid cell code (scripts/dungeon/gen.gd FLOOR); kept local so lighting never loads the generator.
+const FLOOR := 1
 
 const DIRS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
 const RING: Array[Vector2i] = [
@@ -103,6 +104,6 @@ static func _touches_room_arr(
 		var ni: int = ny * map_w + nx
 		if inside[ni] < 0:
 			continue
-		if grid[ni] == Gen.FLOOR:
+		if grid[ni] == FLOOR:
 			return true
 	return false
