@@ -1,6 +1,6 @@
 extends Object
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Balance := preload("res://scripts/data/balance.gd")

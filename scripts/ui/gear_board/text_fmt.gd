@@ -1,6 +1,6 @@
 # Formatting helpers for gear items
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 static func slot_name(slot: String) -> String:

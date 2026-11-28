@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Collect / apply / fresh-delver save payload.
 
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")

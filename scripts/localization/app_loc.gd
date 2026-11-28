@@ -3,7 +3,6 @@ extends Object
 ## Localization setup. English ("en") is the default locale and the only one shipped (scripts/data/locale/en.po).
 ## Keys are "<file stem>.<slug>" or "common.<slug>". How to add a string or a locale: design/localization.md.
 
-const CliArgs := preload("res://scripts/app/cli_args.gd")
 const DEFAULT := "en"
 const LOCALES: PackedStringArray = ["en"]
 const DIR := "res://scripts/data/locale/"
@@ -11,7 +10,8 @@ const DIR := "res://scripts/data/locale/"
 static var current := DEFAULT
 static var _flag := false
 
-static func setup() -> void:
+## `args` is the launch arguments (`CliArgs.args()`); the caller passes them so this file reaches no app code.
+static func setup(args: PackedStringArray) -> void:
 	for code: String in LOCALES:
 		var have: Translation = TranslationServer.get_translation_object(code)
 		if have != null and have.locale == code:
@@ -19,13 +19,13 @@ static func setup() -> void:
 		var table: Translation = load(DIR + code + ".po") as Translation
 		if table != null:
 			TranslationServer.add_translation(table)
-	var want: String = requested()
+	var want: String = requested(args)
 	_flag = want != ""
 	set_locale(want if _flag else DEFAULT)
 
 ## Locale from `--wdb-locale=xx` (URL `?wdb-locale=xx` on web); empty when the flag is absent.
-static func requested() -> String:
-	for arg: String in CliArgs.args():
+static func requested(args: PackedStringArray) -> String:
+	for arg: String in args:
 		if arg.begins_with("--wdb-locale="):
 			return arg.substr(13)
 	return ""

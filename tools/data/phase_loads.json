@@ -13,7 +13,7 @@
 "scripts/app/app_bake.gd": "123456789",
 "scripts/app/app_boot.gd": "123456789",
 "scripts/app/app_flow.gd": "123456789",
-"scripts/app/app_loc.gd": "123456789",
+"scripts/localization/app_loc.gd": "123456789",
 "scripts/app/app_run.gd": "123456789",
 "scripts/app/app_set.gd": "123456789",
 "scripts/app/cli_args.gd": "123456789",

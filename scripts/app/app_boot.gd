@@ -1,7 +1,8 @@
 extends Object
 
 const Dbg := preload("res://scripts/app/dbg.gd")
-const LocS := preload("res://scripts/app/app_loc.gd")
+const LocS := preload("res://scripts/localization/app_loc.gd")
+const CliArgs := preload("res://scripts/app/cli_args.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
 const LetterFit := preload("res://scripts/input/binds/letter_fit.gd")
@@ -10,7 +11,7 @@ static func _ready(host: Node) -> void:
 	if "--mcp" in OS.get_cmdline_user_args() and ResourceLoader.exists("res://addons/godot_ai/runtime/game_helper.gd"):
 		ProjectSettings.set_setting("autoload/_mcp_game_helper", "*res://addons/godot_ai/runtime/game_helper.gd")
 		ProjectSettings.save()
-	LocS.setup()
+	LocS.setup(CliArgs.args())
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	host.world_action.connect(func(action: String): world_action(host, action))
 	host.bal = App.BalanceS.new()
