@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source  
+Code: `scripts/data/gear_roll.gd`, `scripts/data/affixes.gd`, `scripts/data/item_names.gd`, `scripts/data/progress_gear/progress_make.gd` (item make, starters), `scripts/data/gear_rules/rules_kit.gd`  
 
 ## Gear rules
 
