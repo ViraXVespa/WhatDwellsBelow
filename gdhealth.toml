@@ -14,6 +14,8 @@ debug         = ["scripts/debug/**"]
 enemies       = ["scripts/combat/enemy.gd", "scripts/combat/enemy/**", "scripts/combat/roster.gd"]
 interactables = ["scripts/world/interact.gd", "scripts/world/interact/**", "scripts/world/gather/**", "scripts/world/breakable.gd", "scripts/world/pickup.gd", "scripts/world/floor_crystal.gd"]
 player        = ["scripts/world/player.gd", "scripts/world/player/**", "scripts/world/facing.gd", "scripts/world/bow_mode.gd"]
+save_tech     = ["scripts/data/save_store.gd", "scripts/data/save_store/**"]
+skills        = ["scripts/data/progress_combat.gd", "scripts/data/progress_combat/**", "scripts/data/progress_forge.gd", "scripts/data/progress_forge/**"]
 
 # Pinned to the gdhealth 0.3.6 defaults so trend numbers do not move with a tool update.
 [thresholds]
@@ -60,6 +62,16 @@ from     = "interactables"
 to       = "debug"
 severity = "critical"
 
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "debug"
+severity = "critical"
+
+[[policy.forbidden_dependencies]]
+from     = "save_tech"
+to       = "debug"
+severity = "critical"
+
 # Combat mechanics (hits, cover, projectiles, feedback) sit below the enemies that use them.
 [[policy.forbidden_dependencies]]
 from     = "combat"
@@ -97,4 +109,10 @@ severity = "warning"
 [[policy.forbidden_dependencies]]
 from     = "interactables"
 to       = "enemies"
+severity = "warning"
+
+# Skill math reads progress state; it never loads or writes the save itself.
+[[policy.forbidden_dependencies]]
+from     = "skills"
+to       = "save_tech"
 severity = "warning"
