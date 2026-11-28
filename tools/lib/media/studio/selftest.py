@@ -252,8 +252,8 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
     skills = next(fd for s in reg["equipment"]["steps"] if s["id"] == "skills" for fd in s["fields"] if fd["key"] == "xp")
     if skills["labels"].get("axe") != "Great Axe" or skills["labels"].get("hp") != "Hitpoints" or set(skills["labels"]) != set(skills["options"]):
         miss("every skill id needs its display name")
-    if any(s["open"] and s["open"] != registry.WANG_OPEN for t in reg.values() for s in t["steps"]):
-        miss("the only open question left is the Wang tileset variant")
+    if any(s["open"] for t in reg.values() for s in t["steps"]):
+        miss("no step should still be an open question")
     gather = next(s for s in reg["resource"]["steps"] if s["id"] == "recipes")
     if {"tool", "hits", "chance", "rewards", "after_break", "per_floor", "rooms", "hit_vfx", "sounds"} - {fd["key"] for fd in gather["fields"]}:
         miss("gather node fields")
@@ -265,6 +265,11 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
         miss("dungeon rooms should reuse the interior fields and actions")
     if "pots" not in next(fd for fd in rooms["fields"] if fd["key"] == "decor")["help"] or "notice board" not in next(fd for fd in interior["fields"] if fd["key"] == "decor")["help"]:
         miss("dungeon rooms keep breakable help; building interior should read as hub or city furniture")
+    room_cols = {c["key"] for fd in rooms["fields"] if fd["key"] == "decor" for c in fd["columns"]}
+    in_cols = {c["key"] for fd in interior["fields"] if fd["key"] == "decor" for c in fd["columns"]}
+    loot = {"gold_chance", "orb_chance", "opens_chest"}
+    if loot - room_cols or loot & in_cols:
+        miss("dungeon rooms keep gold, health orb and hidden chest; building interior drops them")
     attach = next(s for s in reg["vfx"]["steps"] if s["id"] == "attach")
     points = next(c["options"] for fd in attach["fields"] if fd["key"] == "points" for c in fd["columns"] if c["key"] == "point")
     if {"hand", "weapon tip"} - set(points) or "does not support them yet" not in next(c["help"] for fd in attach["fields"] if fd["key"] == "points" for c in fd["columns"] if c["key"] == "point"):
@@ -274,8 +279,8 @@ def _sim(w: Walk, tmp: Path, sid: str) -> None:
     for t, st in (("biome", "art"), ("biome", "rooms"), ("building", "art"), ("building", "interior")):
         row = next(x for x in reg[t]["steps"] if x["id"] == st)
         wang = next((fd for fd in row["fields"] if fd["key"] == "wang"), None)
-        if "wang" not in {a["id"] for a in row["actions"]} or not wang or {"kind", "from", "to", "size", "layout"} - {c["key"] for c in wang["columns"]} or not row.get("open"):
-            miss(f"{t}/{st} should offer Make Wang tileset with kind, materials, size and output, and say the variant is undecided")
+        if "wang" not in {a["id"] for a in row["actions"]} or not wang or {"kind", "from", "to", "size", "layout"} - {c["key"] for c in wang["columns"]} or row.get("open"):
+            miss(f"{t}/{st} should offer Make Wang tileset with kind, materials, size and output, with no open question")
     if (info.get("registry") or {}).get("setups", {}).get("wang-tiles", {}).get("status") != "missing":
         miss("a ComfyUI setup entry for Wang tilesets")
     from media.pipeline import store as store_mod

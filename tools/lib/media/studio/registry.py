@@ -102,7 +102,7 @@ SEAMS: list[dict] = [
     {"id": "review-latest", "want": "`pipeline review-latest ID --json` returning `[{path, image, role, verdict, checks}]`.", "seam": "Backend.reviews"},
     {"id": "json-lists", "want": "`--json` on `pipeline list`, `show`, `status`, and `coverage`.", "seam": "Backend.list_subjects"},
     {"id": "export-sections", "want": "Export maps section fields into the contract: `stats`, `dialog`, `audio`, `rules`, `paperdoll`, and `frames`/`sheets` from packed clips; today they are written empty and the fields ride under `sections`.", "seam": "store.export_subject"},
-    {"id": "wang-game", "want": "The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. Either read the packed sheet in the ground shader by a per-cell mask, or add a TileMap/terrain path for the flat areas.", "seam": "scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd"},
+    {"id": "wang-game", "want": "The game draws a Wang tileset where two materials meet. Today floors and walls are one seamless texture each, sampled by world position (ground_shader.gd, wall_shader.gd), and two grounds meet with a shader fade (`GroundShader.feathered`); there is no TileSet or TileMap. How it is drawn is for Build to decide: either the packed sheet is read in the ground shader by a per-cell mask, or a TileMap/terrain path is added for the flat areas.", "seam": "scripts/graphics/ground_shader.gd, scripts/world/dungeon_geo.gd, scripts/world/camp/layout_spec.gd"},
     {"id": "vfx-attach", "want": "The game places an effect at the chosen attach point (feet, aimed point, projectile tip, target, and planned hand and weapon tip). Today effects spawn at a world position with no attach-point table, and hand and weapon tip have no code path yet.", "seam": "scripts/combat/player_hit/hit_atk.gd _spawn_fx"},
 ]
 
@@ -157,8 +157,7 @@ def TILES(help: str = TILE_HELP) -> dict:
 
 def WANG() -> dict:
     return f("wang", "Wang tilesets", "table",
-             "Tiles that change where two materials meet, like floor to wall or grass to path. Corner and edge sets are 16 tiles; blob-47 also matches "
-             "inside corners. Today the game blends two grounds with a short fade and has no tileset, so the game side is still to build.", columns=[
+             "Tiles that change where two materials meet, like floor to wall or grass to path. Kind is chosen per tileset: a corner or edge set is 16 tiles; blob-47 also matches inside corners.", columns=[
         f("name", "Name"), f("kind", "Kind", "choice", options=WANG_KINDS, default="wang-corner-16",
                              labels={"seamless": "Single seamless tile", "wang-corner-16": "Wang 2-corner (16)", "wang-edge-16": "Wang 2-edge (16)", "blob-47": "Blob (47)"}),
         f("from", "From material"), f("to", "To material"),
@@ -166,17 +165,15 @@ def WANG() -> dict:
         f("layout", "Output", "choice", options=["sheet", "terrain", "both"], default="sheet",
           labels={"sheet": "Sheet picture", "terrain": "Godot terrain set", "both": "Sheet and Godot terrain set"})])
 
-def DECOR(help: str, hits_help: str) -> dict:
-    return f("decor", "Decor objects", "table", help, columns=[
-        f("name", "Name"), f("decoration", "Decoration", "subject", of=["decoration"]), f("count", "How many", "number", step=1),
-        f("destructible", "Breaks when hit", "bool"),
-        f("hits", "Hits to break", "number", hits_help, min=1, max=20, step=1),
-        f("gold_chance", "Chance of gold", "number", min=0, max=1, step=0.05),
-        f("orb_chance", "Chance of a health orb", "number", min=0, max=1, step=0.05),
-        f("opens_chest", "Opens a hidden chest", "bool")])
-
-WANG_OPEN = ("Wang tilesets: which variant (2-corner, 2-edge or blob-47) and how the game draws it are not decided. "
-             "The game has no tileset today; floors are one seamless texture with a short fade between grounds.")
+def DECOR(help: str, hits_help: str, *, loot: bool = False) -> dict:
+    cols = [f("name", "Name"), f("decoration", "Decoration", "subject", of=["decoration"]), f("count", "How many", "number", step=1),
+            f("destructible", "Breaks when hit", "bool"),
+            f("hits", "Hits to break", "number", hits_help, min=1, max=20, step=1)]
+    if loot:
+        cols += [f("gold_chance", "Chance of gold", "number", min=0, max=1, step=0.05),
+                 f("orb_chance", "Chance of a health orb", "number", min=0, max=1, step=0.05),
+                 f("opens_chest", "Opens a hidden chest", "bool")]
+    return f("decor", "Decor objects", "table", help, columns=cols)
 
 def S(fields: list[dict], actions: list[str] | None = None, needs: list[str] | None = None, group: str | None = None, open_question: str | None = None) -> dict:
     return {"fields": fields, "actions": actions or [], "needs": needs or [], "group": group, "open": open_question}
@@ -351,8 +348,7 @@ TYPES: dict[str, dict] = {
         "overview": S([f("mood", "Mood", "long", required=True), f("light", "Light", "multi", options=["torches", "crystals", "campfires", "sun"]), f("music", "Music", "text")], ["generate", "review"], ["pictures"]),
         "features": S([f("enemies", "Enemies", "multi", options=ROSTER, required=True), f("props", "Flavour props", "multi", options=PROPS), f("resources", "Resources", "multi", options=["ore", "tree"]),
                        f("traps", "Traps and puzzles", "list"), f("ghost_shop", "Ghost shop chance", "number", min=0, max=1, step=0.01, default=0.33)]),
-        "art": S([f("tiles", "Tiles", "multi", options=["floor", "wall", "path", "roof"], required=True), f("palette", "Palette", "list"), WANG()], ["tile", "wang", "generate", "review", "pixel"], ["pictures"],
-                 open_question=WANG_OPEN),
+        "art": S([f("tiles", "Tiles", "multi", options=["floor", "wall", "path", "roof"], required=True), f("palette", "Palette", "list"), WANG()], ["tile", "wang", "generate", "review", "pixel"], ["pictures"]),
         "layout": S([f("grid", "Floor size (cells)", "number", min=24, max=432, step=8, default=432), f("rooms", "Rooms", "number", min=6, max=200, step=1, default=128),
                      f("room_min", "Smallest room", "number", min=3, max=20, step=1, default=5), f("room_max", "Largest room", "number", min=3, max=30, step=1, default=9),
                      f("loops", "Extra loops", "number", min=0, max=40, step=1, default=8), f("hall_min", "Narrowest hall", "number", min=1, max=6, step=1, default=2),
@@ -360,13 +356,13 @@ TYPES: dict[str, dict] = {
                      f("backdrop", "Backdrop in the empty space", "text", "e.g. a city parallax for a Sky City.")], ["generate", "review"], []),
         "rooms": S([TILES("Floor, wall and other tiles for dungeon rooms. " + TILE_HELP.split(". ", 1)[1]), WANG(),
                     DECOR("Things that stand in a dungeon room, like pots, barrels and a cracked wall. Link one to a decoration you already made.",
-                          "Pots and barrels break in one. A cracked wall takes 8."),
-                    SOUNDS], ROOM_ACTIONS, ["pictures"], open_question=WANG_OPEN),
+                          "Pots and barrels break in one. A cracked wall takes 8.", loot=True),
+                    SOUNDS], ROOM_ACTIONS, ["pictures"]),
     }},
     "building": {"source": "design/hub.md, design/hub-guild.md, scripts/world/camp/layout_spec.gd", "steps": {
         "details": S([SUMMARY, f("where", "Where", "choice", options=["hub", "city"], required=True), f("use", "What happens there", "text")]),
         "art": S([f("look", "Look", "long", required=True), f("faces", "Faces drawn", "multi", options=["front", "side", "roof", "awning"], default=["front"]), WANG()],
-                 ["generate", "tune", "review", "frame", "tile", "wang", "pixel"], ["pictures"], open_question=WANG_OPEN),
+                 ["generate", "tune", "review", "frame", "tile", "wang", "pixel"], ["pictures"]),
         "dimensions": S([f("size", "Size (metres)", "group", "Buildings are real 3D boxes.", required=True,
                            fields=[f("w", "Width", "number", step=0.1), f("d", "Depth", "number", step=0.1), f("h", "Height", "number", step=0.1)]),
                          f("roof", "Roof", "bool", default=True), f("door", "Door side", "choice", options=["south", "east", "west", "north", "none"]),
@@ -374,7 +370,7 @@ TYPES: dict[str, dict] = {
         "interior": S([TILES(), WANG(),
                        DECOR("Things that stand inside a hub or city building: a notice board, anvil, stall goods, a dumpster or a banner. Link one to a decoration you already made.",
                              "Most of these do not break. Set this only if they do."),
-                       SOUNDS], ROOM_ACTIONS, ["pictures"], open_question=WANG_OPEN),
+                       SOUNDS], ROOM_ACTIONS, ["pictures"]),
     }},
     "vfx": {"source": "design/combat.md (telegraphs, trails, crack), assets/fx", "steps": {
         "details": S([SUMMARY, f("trigger", "Plays on", "choice", options=["hit", "slam crack", "lightning strike", "arrow trail", "smash", "pickup", "level up", "telegraph", "other"], required=True)]),
