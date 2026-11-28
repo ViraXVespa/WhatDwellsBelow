@@ -1,7 +1,8 @@
 # Archives — catalog and pins
 
 Status: current plan  
-Read when: classic_2d entry, snapshot tags, week pins, the week-close archive workflow
+Read when: classic_2d entry, snapshot tags, week ritual freeze  
+Code: `scripts/data/archives/archives_catalog.gd`, `scripts/data/archive_catalog.json`, `tools/release.py archives`  
 
 ## Selectable builds
 

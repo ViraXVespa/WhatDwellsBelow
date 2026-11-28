@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: armor columns, plate icons, rarity wash, stepper neighbors  
+Code: `scripts/ui/gear_board/board_build.gd`, `scripts/ui/gear_board/board_host.gd`, `scripts/ui/gear_board/host_build.gd`, `scripts/ui/gear_board/host_sync.gd`, `scripts/ui/gear_board/floor.gd`, `scripts/ui/gear_icons.gd`  
 
 ## Layout
 

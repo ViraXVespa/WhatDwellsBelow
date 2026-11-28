@@ -34,7 +34,7 @@ Specials for all weapons are activated with A (RMB). A special spends `special_m
 
 - Simple opaque visual indicator that extends outward from the player in the direction they are facing/aiming.
 - Appearance and length are fully tunable (default style inspired by Heroes of Hammerwatch and similar games; length may optionally scale toward the farthest point the currently equipped weapon can hit).
-- Always visible while the player is inside the dungeon; never visible in Placeholdia.
+- Visible in both Placeholdia (the hub) and the dungeon.
 - Always draws the full configured distance (does not respect line-of-sight or stop at walls).
 - Toggleable on/off and with an independent opacity slider in Pause → Settings → Graphics.
 - On/off state and opacity are persisted with the player profile.

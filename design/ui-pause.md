@@ -1,7 +1,8 @@
 ﻿# Pause menu
 
 Status: current plan  
-Read when: pause menu layout / tabs / behavior  
+Read when: inventory tab, skills tab, settings page  
+Code: `scripts/ui/pause_menu.gd` + `scripts/ui/pause_menu/`, `scripts/ui/pause_settings.gd` + `scripts/ui/pause_settings/`, `scripts/ui/pause_inv/`, `scripts/ui/pause_skills.gd`, `scripts/ui/binds_page.gd`  
 
 ## Pause menu
 

@@ -1,7 +1,8 @@
 ﻿# HUD and web touch overlay
 
 Status: current plan  
-Read when: gauntlet HUD strip or web touch overlay  
+Read when: gauntlet strip, pip cluster  
+Code: `scripts/ui/hud.gd` + `scripts/ui/hud/`, `scripts/ui/touch_hud.gd` + `scripts/ui/touch_hud/` (map pan through dungeon.gd map_pan_by; button words from touch_pad.gd LABELS)  
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 

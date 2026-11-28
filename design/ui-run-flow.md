@@ -1,7 +1,8 @@
 # Run-flow UI (extract, shop, quest, recap, map, toasts)
 
 Status: current plan  
-Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, toasts  
+Read when: recap reel, ghost vendor pane, quest pane, banner  
+Code: `scripts/ui/progress_ui.gd` + `scripts/ui/progress_ui/`, `scripts/ui/crystal_ui.gd` + `scripts/ui/crystal_ui/`, `scripts/ui/recap.gd` + `scripts/ui/recap/`  
 
 ## Extraction Gate UI
 

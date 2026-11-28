@@ -2,7 +2,7 @@
 
 Status: current plan  
 Read when: device binds, aim  
-Code: `scripts/input/` (`Pad` `pad.gd`, `Binds` `binds.gd` + `binds/`, `prompts.gd`, `look_ctrl.gd`, `touch_pad.gd`), `scripts/web_pad.gd` (code map row Input; gdhealth group `input`)
+Code: `scripts/input/` (`Pad` `pad.gd`, `Binds` `binds.gd` + `binds/`, `prompts.gd`, `look_ctrl.gd`, `touch_pad.gd`), `scripts/input/web_pad.gd` (code map row Input; gdhealth group `input`)
 
 | Job | Open |
 |-----|------|

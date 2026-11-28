@@ -1,7 +1,8 @@
 ﻿# Title, web fullscreen gate, loading
 
 Status: current plan  
-Read when: title / play menu, web fullscreen gate, loader  
+Read when: title poster, loading bar, fs-gate  
+Code: `scripts/ui/fs_gate.gd`, `scripts/ui/loader.gd`, `scripts/ui/loader_weights.gd`, `scripts/ui/splash.gd`, `scripts/ui/present.gd`; the title scene script is `scripts/title.gd` (App flow row)  
 
 ## Title / play menu
 

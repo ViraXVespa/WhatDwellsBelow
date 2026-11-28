@@ -1,7 +1,8 @@
 # Menu transitions
 
 Status: current plan
-Read when: a menu or overlay opens or closes, the fade, Settings > UI > Menu transitions
+Read when: fade, transitions checkbox  
+Code: `scripts/ui/ui_session.gd`, `scripts/ui/menu_fade.gd`  
 
 Playtest (w13): every menu opened as a hard cut, a bright full-screen journal or cream panel in one frame over a dark dungeon ("like a flash bang"). Menus now fade.
 

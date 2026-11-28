@@ -1,7 +1,8 @@
 # Archives — browser UI
 
 Status: current plan  
-Read when: split chevron, Documents reader, dim inactive columnstack
+Read when: split chevron, Documents reader, dim inactive columnstack  
+Code: `scripts/ui/archives_ui.gd` + `scripts/ui/archives_ui/`, `scripts/data/archives/docs.gd`; columns from `scripts/ui/split_menu.gd` (UI row)  
 
 ## Archives browser UI
 

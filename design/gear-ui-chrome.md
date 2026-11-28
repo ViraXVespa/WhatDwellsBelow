@@ -2,6 +2,7 @@
 
 Status: current plan  
 Read when: Analyze Forge bumpers, verbs, deferred teardown, background focus  
+Code: `scripts/ui/gear_board/board_act.gd`, `scripts/ui/gear_board/act_input.gd`, `scripts/ui/gear_board/anvil.gd`, `scripts/ui/gear_board/anvil_view.gd`, `scripts/ui/gear_board/anvil_forge.gd` + `anvil_forge_*.gd`  
 
 ## Anvil tabs
 
