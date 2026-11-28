@@ -218,8 +218,12 @@ doors:
     jobs: {}
   combat:
     file: design/combat.md
-    read_when: "strike detection, dash, lock, juice, crits"
-    jobs: {}
+    read_when: "strikes, hit registration, juice"
+    jobs:
+      weapons: design/combat-weapons.md
+      hits: design/combat-hits.md
+      moves: design/combat-moves.md
+      threat: design/combat-threat.md
   skills:
     file: design/skills.md
     read_when: "XP, forging, formula"
@@ -260,7 +264,10 @@ doors:
   enemies:
     file: design/enemies.md
     read_when: "roster, AI, pressure"
-    jobs: {}
+    jobs:
+      roster: design/enemies-roster.md
+      ai: design/enemies-ai.md
+      loot: design/enemies-loot.md
   interactables:
     file: design/interactables.md
     read_when: "gathering swings, shops, shrines, puzzles, extract-wells"
@@ -392,6 +399,13 @@ job_read_when:
   archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
   archives.play: "worktree minimize, Godot child restore, slug copyhit"
   archives.ui: "split chevron, Documents reader, dim inactive columnstack"
+  combat.weapons: "great axe, lightning staff, longbow arrows, special mana"
+  combat.hits: "opaque coverage, glancing blows, crit roll, damage numbers, diminishing defense"
+  combat.moves: "dash iframes, adrenaline rush, target-lock pointer"
+  combat.threat: "rank multipliers, CL budget, one-shot guard"
+  enemies.roster: "monster variety, suggested roles, named monsters, new enemy type"
+  enemies.ai: "wind-up telegraphs, leash range, flee reinforcements, idle spawns"
+  enemies.loot: "durability, corpse cleanup, kill drops, boss chest"
 
 # Build prove: numbered smoke phases per door or door.job (job key wins over its door). Phase meanings: debug-smokes.
 # Printed by list_route and start_build_slice; gate.py smokes / gate.py bot-smokes take --door / --job instead of --phases.
@@ -467,6 +481,9 @@ shot_flows:
   input.rebind_prompts: "camp-controls"
   input.web_touch: "dungeon-touch-controls"
   player: "dungeon-bow-mode"
+  combat.weapons: "dungeon-bow-mode"
+  enemies.roster: "dungeon-all-enemies"
+  enemies.loot: "dungeon-pickups"
 
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. slice.py start --door D picks the first
 # not done (`--unit-done` marks it done at Complete; a `<door>-units` task keeps the queue), and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
@@ -527,6 +544,8 @@ web_perf:
     interactables: "camp-shop,dungeon-walk"
     hub: "hub-load,camp-walk"
     dungeon: "dungeon-load,dungeon-walk"
+    combat: "dungeon-fight"
+    enemies: "dungeon-fight"
 
 job_parked: []
 

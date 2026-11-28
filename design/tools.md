@@ -67,3 +67,5 @@ Generates interactive HTML dependency graphs plus machine-readable JSON:
 - Tools via py-code-visualizer + a simple import map
 
 Used by the Pages workflow. Local testing writes to `_out/graphs/` by default.
+
+Game config: `gdhealth.toml` at the repo root (groups, thresholds, allowed self-factory cycles, forbidden dependencies). One group per routes.yaml door, the same files as that door's code map row; a new script joins its door's group in the same change. The game `health.json` `cross_group_dependencies` lists every edge between doors; `policy.json` `forbidden_dependency` findings are wrong-way routes.

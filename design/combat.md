@@ -1,90 +1,18 @@
 # Combat
 
 Status: current plan
-Read when: strike detection, dash, lock, juice, crits
-Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`
+Read when: strikes, hit registration, juice
+Code: `scripts/combat/` except the enemy cluster (code map row Combat; gdhealth group `combat`)
 
-## Weapon system
+This file is the door. Open the Job-table sibling only when that row matches.
 
-The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.
-Starting weapon is selected in the loadout. Mid-run weapon changes are performed by equipping from the pause-menu inventory.
-The shipped weapon overlay sits on the unarmed body clip (art_pipeline). New art does not add a paper-doll pass. Attack and special still use a body clip per weapon class with the weapon layered on top.
-Specials for all weapons are activated with A (RMB). A special spends `special_mana` when the windup completes and does not start when mana is short. Mana refills over time (`mana_regen`), from mana orbs, and from potions and food. A new dive starts mana full. After the special active phase, attack/animation recovery lasts one normal attack duration for the equipped weapon. The independent `special_recovery` timer still starts at that phase boundary and gates only another special; normal attacks do not wait for it.
-All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active.
+Player-side combat: weapons, hit registration on opaque sprite texels, crits, dash, adrenaline and the combat-level feel. Enemy roster, AI and drops live with enemies; enemy code calls into combat code, never the reverse.
 
-## Hit coverage
+All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active. Numbers live in the tunables gate (tunables-combat).
 
-Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occupancy against the attack volume (`Cover` in `scripts/combat/cover.gd`).
-
-- Occupancy is the opaque texels of the target `Sprite3D` (player, enemy, dummy, or breakable). Transparent pixels MUST NOT register.
-- Axe and staff basics: the ground fan must overlap those opaque samples on screen. Any opaque overlap is a hit.
-- Damage scale is how *planted* the contact is, not how much of the body was covered. Center / start of the fan is full damage. Falloff exists only toward the far tip of the telegraph (`cover_full`, `cover_edge_mult`).
-- Crits MAY roll only on a planted contact (coverage at the full-damage band). Glancing contacts MUST NOT crit.
-- Floating numbers: integer damage, hold briefly, then fade. Glance numbers are smaller and dimmer. The number and its dark outline MUST sort in front of the target sprite and its health bar.
-- Breakables use the same occupancy test. Any connected hit breaks them.
-- The Placeholdia dummy uses the same occupancy test. It MUST NOT take knockback. At 0 HP it refills instead of despawning.
-
-## Great Axe
-
-- Basic attack: Hold-to-attack (X / LMB). Continues automatically while held. Arc and range are tunable. A single swing can hit multiple enemies inside the fan. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation frame.
-- Special (Slam): Short wind-up and recovery. Higher damage multiplier than a basic attack (exact value tunable). Applies a readable stagger (shorter duration against Floor Guardians and the Gate Master). Produces dedicated ground-crack VFX. Uses circular occupancy around the player.
-
-## Lightning Staff
-
-- Basic attack: Hold-to-attack (X / LMB). Weak melee strikes that continue automatically while held. Range and arc are shorter and lower-damage than the Great Axe (exact values tunable). A single strike can hit multiple enemies inside its fan. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation frame.
-- Special: AoE lightning bolt that strikes a targeted area. Possesses a distinct short wind-up. Damage, radius, and any secondary effects are tunable. MUST clearly telegraph the affected area and show when the bolt is active. Uses circular occupancy at the strike point.
-
-## Longbow
-
-- Idle aim: a single straight translucent yellow line at shoulder height, weapon range. Axe and staff keep the ground aim line. Do not stack a second bow telegraph on the idle line. Do not flash the bow path red.
-- Basic attack: Hold-to-attack (X / LMB) fires one arrow that travels along that path. The projectile MUST face travel, sit on the line, and test occupancy on the arrow **head** as it moves (`Cover.hit_shot`). Damage application MUST be synchronized to the projectile, not a ground cone.
-- Planted bow hits (high coverage) stop the arrow and deal full scaled damage. A glancing hit MAY continue, MAY strike one more enemy, and MUST reduce remaining damage from the first contact’s coverage. After that second body the arrow despawns.
-- Breakables do not stop the arrow and do not reduce its damage.
-- Special: fires several arrows in a spread (`bow_special_count`, cone, range tunable). Telegraph is one yellow line per shot, not a filled cone. Each arrow is its own occupancy test and may glance independently.
-- Live occupancy tests only hosts near the arrow tip (tip radius plus sprite span). Far enemies and breakables are skipped. Sprite sample points are reused for the current process frame. The texel mask is packed once per texture under the loader and reused by every sprite that shows that texture. A non-RGBA8 texture still reads `get_pixel`. Packing the mask did not remove the first great-axe slam stall.
-
-## Critical hits
-
-- Deal double damage.
-- Target receives a white flash.
-- Floating damage number is shown in yellow + magenta (no additional “CRIT!” text).
-- Crits require a planted coverage contact. This is required behavior, not extra juice.
-
-## Dash
-
-- Activated with RB (Space).
-- Full i-frames for the entire duration.
-- Clear trail VFX required.
-
-## Adrenaline Rush
-
-- Triggers after sufficient kills in a short window (exact threshold tunable).
-- Effects while active:
-  - Increased movement speed
-  - Stacking XP bonus (capped; tunables-combat)
-  - Flaming aura on the player
-  - Continuous wooshing / crackling sound
-- Starts with a warcry.
-- No cooldown, but the effect times out if the player stops killing.
-- MUST keep killing to maintain the state.
-- The aura `Sprite3D` stays hidden until adrenaline raises its alpha. It MUST NOT spawn as a default opaque quad.
-
-## Defense
-
-- Uses a diminishing-returns formula (exact formula tunable).
-- Armor pieces contribute defense and may carry minor secondary stats.
-
-## Combat level and threat
-
-- Each floor spans a fixed band of combat levels, and each floor starts where the last ended (band width: tunables-world).
-- Enemy CL walk and pack HP: enemies (`Threat.level_at`).
-- Rank multipliers are shallow (values: tunables-world). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
-- Axe basic damage stays low enough that the player does not outpace the floor-1 HP table (tunables-combat).
-- Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near the floor-1 combat-level target (tunables-world). That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
-- Ambush and pressure kills grant XP. Wave count is capped per floor (`pressure_waves`, `ambush_cap`) so that target stays measurable.
-
-## Target-lock
-
-See input for full behavior.
-
-Floating damage numbers show integer values only, hold, then fade.
+| Job | Open |
+|-----|------|
+| great axe, lightning staff, longbow arrows, special mana | `design/combat-weapons.md` |
+| opaque coverage, glancing blows, crit roll, damage numbers, diminishing defense | `design/combat-hits.md` |
+| dash iframes, adrenaline rush, target-lock pointer | `design/combat-moves.md` |
+| rank multipliers, CL budget, one-shot guard | `design/combat-threat.md` |
