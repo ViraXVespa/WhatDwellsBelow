@@ -5,7 +5,6 @@ const LocS := preload("res://scripts/localization/app_loc.gd")
 const CliArgs := preload("res://scripts/app/cli_args.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 const Crash := preload("res://scripts/app/bug_report/crash_mark.gd")
-const LetterFit := preload("res://scripts/input/binds/letter_fit.gd")
 
 static func _ready(host: Node) -> void:
 	if "--mcp" in OS.get_cmdline_user_args() and ResourceLoader.exists("res://addons/godot_ai/runtime/game_helper.gd"):
@@ -94,7 +93,7 @@ static func _process(host: Node, delta: float) -> void:
 static func _input(host: Node, event: InputEvent) -> void:
 	App.Pad.note_event(event)
 	if event is InputEventKey:
-		LetterFit.learn(event)  # a letter default on a key another action holds (Colemak F on E) falls back
+		App.Binds.learn_letter(event)  # a letter default on a key another action holds (Colemak F on E) falls back
 	if App.Disp.handle_input(event):
 		host.get_viewport().set_input_as_handled()
 		return

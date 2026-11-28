@@ -111,6 +111,10 @@ static func last_other() -> String:
 static func reset_pool(pool: String) -> void:
 	Pool.reset_pool(pool)
 
+## Learns the keyboard layout from a key press (Colemak F on E); true when the binds changed.
+static func learn_letter(event: InputEvent) -> bool:
+	return LetterFit.learn(event)
+
 static func reset() -> void:
 	for a in actions():
 		if InputMap.has_action(a):
