@@ -84,6 +84,12 @@ async function poll(id) {
 // Start a pipeline command. Handles the potentially-dirty prompt, a busy model slot and missing wiring.
 export async function start(cmd, subject, args, opts = {}) {
   let res = await post("/jobs", { cmd, subject, args, ack_soft: !!opts.ackSoft });
+  if (res.status === 409 && res.data.gate === "approvals") {
+    const goQ = await choose("Needs your OK first", res.data.error || "Approve the required stills first.",
+      [{ label: "Open the approval queue", value: true, cls: "primary" }]);
+    if (goQ && subject) location.hash = `#/preview/${subject}`;
+    return null;
+  }
   if (res.status === 409 && res.data.soft) {
     const list = h("div", { class: "list" }, res.data.soft.map((f) => h("div", { class: "note-box small" }, h("b", {}, f.reason), h("div", { class: "muted" }, `from ${f.source} - ${f.at}`))));
     const go = await choose("Potentially dirty", h("div", {}, h("p", { class: "muted" }, "Something this subject depends on changed since its last generation. The flags clear once you run this."), list),

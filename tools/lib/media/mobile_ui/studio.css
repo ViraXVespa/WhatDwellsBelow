@@ -111,3 +111,5 @@ details > summary { cursor: pointer; min-height: 36px; display: flex; align-item
 .seg button { border: 0; background: transparent; border-radius: 8px; min-height: 38px; color: var(--muted); }
 .seg button.on { background: var(--accent); color: #241a00; font-weight: 700; }
 @media (min-width: 700px) { .view { padding: 20px; } }
+
+.thumb .view-tag { position: absolute; right: 4px; top: 4px; font-size: 10px; padding: 2px 6px; border-radius: 6px; background: #0f0d13cc; color: var(--text); text-transform: uppercase; letter-spacing: .04em; }

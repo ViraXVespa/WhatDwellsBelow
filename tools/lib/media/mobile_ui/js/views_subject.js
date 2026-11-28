@@ -18,7 +18,25 @@ export function thumb(still, sid, onTap) {
     ? [h("div", { class: "glbmark" }, "3D")]
     : [h("img", { src: fileUrl(still.path, still.mtime), alt: basename(still.path), loading: "lazy" })];
   return h("div", { class: cls, title: basename(still.path), onclick: onTap || (() => go(`#/still/${sid}?path=${encodeURIComponent(still.path)}`)) },
-    ...inner, h("span", { class: "tag badge " + still.state }, still.simulated ? "sim " + still.state : still.state));
+    ...inner,
+    still.view ? h("span", { class: "view-tag" }, still.view) : null,
+    h("span", { class: "tag badge " + still.state }, still.simulated ? "sim " + still.state : still.state));
+}
+
+export function gateNote(gates, cmd, sid) {
+  const g = gates && gates[cmd];
+  if (!g || g.ok) return null;
+  const missing = g.missing || [];
+  let msg;
+  if (cmd === "export") {
+    const n = missing.length;
+    const sent = missing.filter((m) => m.state === "rejected").length;
+    msg = n === 1 ? "One picture still needs your OK before export." : `${n} pictures still need your OK before export.`;
+    if (sent) msg += " Sent-back pictures need a new version first.";
+  } else {
+    msg = "Needs an approved " + missing.join(" and ") + " picture first.";
+  }
+  return h("p", { class: "note-box small" }, msg, " ", h("a", { href: `#/preview/${sid}` }, "Open the approval queue"));
 }
 
 function flagChips(doc, refresh) {
@@ -61,7 +79,7 @@ export async function subject({ params }) {
   const sid = params[0];
   const res = await loadSubject(sid);
   if (!res.ok) return { title: sid, node: errorBox(res.data), back: "#/" };
-  const { subject: doc, links, stills, reviews } = res.data;
+  const { subject: doc, links, stills, reviews, gates = {} } = res.data;
   const ui = doc.studio || {};
   const refresh = () => window.dispatchEvent(new HashChangeEvent("hashchange"));
   const edited = ui.edited || {};
@@ -99,7 +117,13 @@ export async function subject({ params }) {
     ref ? h("div", { class: "card small" }, h("b", {}, "Reference: "), ref.url || ref.path, ref.ingest ? h("div", { class: "muted" }, ref.ingest.description) : null) : null,
     h("h3", {}, "Generate"),
     h("a", { class: "btn primary full", href: `#/s/${sid}/gen/tune` }, "Auto-tune to the locked artstyle"),
-    h("div", { class: "btn-row" }, GEN_ORDER.filter((c) => c !== "tune" && !guarded.includes(c)).map((c) => h("a", { class: "btn", href: `#/s/${sid}/gen/${c}` }, command(c) ? command(c).label : c))),
+    h("div", { class: "btn-row" }, GEN_ORDER.filter((c) => c !== "tune" && !guarded.includes(c)).map((c) => {
+      const blocked = (c === "body" || c === "mesh") && gates[c] && !gates[c].ok;
+      return blocked
+        ? h("button", { class: "btn", disabled: true, title: "Needs an approved front and side picture first" }, command(c) ? command(c).label : c)
+        : h("a", { class: "btn", href: `#/s/${sid}/gen/${c}` }, command(c) ? command(c).label : c);
+    })),
+    gateNote(gates, "body", sid) || gateNote(gates, "mesh", sid),
     guarded.length ? h("p", { class: "small muted" }, `${guarded.join(", ")} stay off for ${sid} in the studio.`) : null,
     h("div", { class: "row between" }, h("h3", {}, `Stills and meshes (${stills.length})`), h("a", { href: `#/preview/${sid}` }, "Preview all")),
     stills.length ? h("div", { class: "thumbs" }, stills.slice(0, 9).map((s) => thumb(s, sid))) : h("p", { class: "muted" }, "Nothing generated yet."),
@@ -338,11 +362,14 @@ export async function exportView({ params }) {
   const bypass = h("input", { type: "checkbox" });
   const pending = stills.filter((s) => s.state === "pending");
   const rejected = stills.filter((s) => s.state === "rejected");
+  const gates = res.data.gates || {};
+  const heldByApprovals = gates.export && !gates.export.ok;
   const err = h("div");
   const hard = doc.dirty.hard, soft = doc.dirty.soft;
   const run = async () => {
     const areas = boxes.filter(([, c]) => c.checked).map(([s]) => s.id);
     if (!areas.length) return toast("Pick at least one section");
+    if (heldByApprovals) return err.replaceChildren(errorBox({ error: "Every current still needs your OK before export. The dirty-flag bypass does not skip that." }));
     if (hard.length && !bypass.checked) return err.replaceChildren(errorBox({ error: "Hard flags hold this export. Resolve them or tick bypass." }));
     const job = await jobs.start("export", sid, { areas, bypass: bypass.checked });
     if (job) go(`#/job/${job.id}`);
@@ -356,11 +383,10 @@ export async function exportView({ params }) {
     hard.length ? h("div", { class: "error-box" }, h("b", {}, "Needs regeneration (hard)"), h("div", { class: "row", style: { marginTop: "6px" } }, flagChips({ ...doc, dirty: { hard, soft: [] } }, () => window.dispatchEvent(new HashChangeEvent("hashchange")))),
       h("label", { class: "check" }, bypass, h("span", {}, "Bypass: export anyway"))) : null,
     soft.length ? h("div", { class: "note-box" }, h("b", {}, "Potentially dirty"), h("div", { class: "row", style: { marginTop: "6px" } }, flagChips({ ...doc, dirty: { hard: [], soft } }, () => window.dispatchEvent(new HashChangeEvent("hashchange"))))) : null,
-    pending.length ? h("div", { class: "note-box" }, `${pending.length} still(s) wait for approval. `, h("a", { href: `#/preview/${sid}` }, "Review them")) : null,
-    rejected.length ? h("p", { class: "small muted" }, `${rejected.length} rejected still(s) are not exported.`) : null,
-    !hard.length && !soft.length && !pending.length ? h("span", { class: "chip ok" }, "Nothing holds this export") : null,
+    heldByApprovals ? h("div", { class: "error-box" }, gateNote(gates, "export", sid)) : null,
+    !hard.length && !soft.length && !heldByApprovals ? h("span", { class: "chip ok" }, "Nothing holds this export") : null,
     h("h3", {}, "3. Run"),
-    err, h("button", { class: "btn primary full", onclick: run }, "Export to the game"),
+    err, h("button", { class: "btn primary full", onclick: run, disabled: heldByApprovals, title: heldByApprovals ? "Approve every current still first" : "" }, "Export to the game"),
     h("p", { class: "small muted" }, app.info.simulated ? "Simulated: the export goes to the _sim store, not data/pipeline/export." : "Writes data/pipeline/export/<type>/<id>.json and the export index."));
   return { title: `${doc.name}: export`, node, back: `#/s/${sid}` };
 }

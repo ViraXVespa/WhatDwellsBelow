@@ -6,7 +6,7 @@ import * as jobs from "./jobs.js";
 import * as notify from "./notify.js";
 import { app, command, go, loadSubjects } from "./state.js";
 import { basename, cap, choose, errorBox, h, haptic, showError, toast, when } from "./ui.js";
-import { jobRow, loadSubject, thumb } from "./views_subject.js";
+import { gateNote, jobRow, loadSubject, thumb } from "./views_subject.js";
 
 const refresh = () => window.dispatchEvent(new HashChangeEvent("hashchange"));
 
@@ -79,8 +79,19 @@ export async function stillView({ params, query }) {
   const idx = stills.findIndex((s) => s.path === path);
   const still = stills[idx];
   if (!still) return { title: basename(path), node: errorBox({ error: "This file is not on the subject (or is not presented)." }), back: `#/preview/${sid}` };
+  let view = still.view || "";
+  const viewSeg = h("div", { class: "seg" });
+  const drawView = () => viewSeg.replaceChildren(...["front", "side", "back", "other"].map((v) => h("button", { class: v === view ? "on" : "", onclick: () => { view = v; drawView(); } }, cap(v))));
+  drawView();
   const setState = async (state) => {
-    const r = await post(`/subjects/${sid}/stills`, { path, state });
+    if (state === "approved" && still.kind === "still" && !view) {
+      toast("Pick a view first: front, side, back, or other.");
+      return;
+    }
+    const body = { path, state };
+    if (state === "approved" && still.kind === "still" && view && view !== "other") body.view = view;
+    if (state === "approved" && still.kind === "still" && view === "other") body.view = "other";
+    const r = await post(`/subjects/${sid}/stills`, body);
     if (!r.ok) return showError(r);
     haptic(); toast(state === "approved" ? "Approved" : state === "rejected" ? "Rejected" : "Back to pending");
     const nextPending = stills.find((s, i) => i !== idx && s.state === "pending");
@@ -92,9 +103,10 @@ export async function stillView({ params, query }) {
   const nav = (d) => { const s = stills[idx + d]; if (s) go(`#/still/${sid}?path=${encodeURIComponent(s.path)}`); };
   const quick = still.kind === "mesh" ? ["mesh", "proportion"] : ["review", "frame", "proportion"];
   const node = h("div", {},
-    h("div", { class: "row between" }, h("span", { class: "badge " + still.state }, still.state), still.simulated ? h("span", { class: "chip sim" }, "SIMULATED") : null,
+    h("div", { class: "row between" }, h("span", { class: "badge " + still.state }, still.state), still.view ? h("span", { class: "chip" }, still.view) : null, still.simulated ? h("span", { class: "chip sim" }, "SIMULATED") : null,
       h("span", { class: "small muted" }, `${idx + 1} / ${stills.length}`)),
     h("div", { style: { margin: "8px 0" } }, media),
+    still.kind === "still" ? h("div", {}, h("p", { class: "small muted" }, still.view_set || still.view ? "View (change it if the name got it wrong):" : "This file name does not say which view it is. Tag it when you approve."), viewSeg) : null,
     h("div", { class: "btn-row" },
       h("button", { class: "btn good", onclick: () => setState("approved") }, "Approve"),
       h("button", { class: "btn bad", onclick: () => setState("rejected") }, "Reject"),
@@ -168,9 +180,12 @@ export async function genForm({ params, query }) {
     return { f, read, el: h("label", { class: "field" }, h("span", {}, f.label + (f.required ? " *" : "")), el) };
   });
   for (const fe of fieldEls) inputs[fe.f.name] = fe.read;
+  const gates = res.data.gates || {};
+  const blocked = (cmd === "body" || cmd === "mesh") && gates[cmd] && !gates[cmd].ok;
   const err = h("div");
-  const run = h("button", { class: "btn primary full" }, `Run ${spec.label}`);
+  const run = h("button", { class: "btn primary full", disabled: blocked }, `Run ${spec.label}`);
   run.onclick = async () => {
+    if (blocked) return;
     const args = {};
     for (const [k, read] of Object.entries(inputs)) { const v = read(); if (v !== "" && v !== null && v !== false) args[k] = v; }
     const missing = spec.fields.filter((f) => f.required && !args[f.name]);
@@ -182,7 +197,7 @@ export async function genForm({ params, query }) {
   };
   const node = h("div", {},
     h("div", { class: "card small" }, h("b", {}, `pipeline ${cmd}`), h("p", { class: "muted" }, spec.about), spec.gpu ? h("span", { class: "badge" }, "model job: one at a time") : h("span", { class: "badge" }, "cpu job")),
-    fieldEls.map((x) => x.el), err, run,
+    fieldEls.map((x) => x.el), blocked ? gateNote(gates, cmd, sid) : null, err, run,
     app.info.simulated ? h("p", { class: "small muted" }, "Simulated: returns canned results after staged delays.") : null);
   return { title: `${doc.name}: ${spec.label}`, node, back: `#/s/${sid}` };
 }
