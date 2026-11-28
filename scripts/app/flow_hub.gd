@@ -8,8 +8,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const PlayerSetup := preload("res://scripts/world/player/player_setup.gd")
 const PlayerTick := preload("res://scripts/world/player/player_tick.gd")
-const CoverHit := preload("res://scripts/combat/cover/cover_hit.gd")
-const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
+const Cover := preload("res://scripts/combat/cover.gd")
 ## Loader milestones: each step's share is its expected time on this platform / machine (loader_weights.gd).
 const LoadW := preload("res://scripts/ui/loader_weights.gd")
 const PLAYER_LAZY: Array[String] = ["res://scripts/world/player/player_act.gd", "res://scripts/world/player/player_lock.gd", "res://scripts/combat/player_hit.gd"]
@@ -54,7 +53,7 @@ static func _warmup_hub(host: Node) -> void:
 		for tex in texs:
 			Anim.apply_tex(p, tex)
 			if tex is Texture2D:
-				CoverHit.warm_texture(tex)
+				Cover.warm_texture(tex)
 			RenderingServer.force_draw()
 		var down: Texture2D = Anim.pose_tex(p, "down")
 		if down:
@@ -68,8 +67,8 @@ static func _warmup_hub(host: Node) -> void:
 			PlayerTick._gd(path)
 		(load("res://scripts/world/interact.gd") as GDScript).warm()  # first interact compiles interact_act.gd (~8 ms)
 		(load("res://scripts/world/player/player_combat.gd") as GDScript).update_aim_line(p)
-		HitAtk.warm_shown(p)
-		CoverHit.warm_known()
+		(load("res://scripts/combat/player_hit.gd") as GDScript).warm_shown(p)  # loaded by PLAYER_LAZY above
+		(load("res://scripts/combat/roster.gd") as GDScript).warm_cover()
 		p.set_physics_process(true)
 	LoadW.done(&"warm_ui")
 	if host.loader:

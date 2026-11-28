@@ -1,10 +1,10 @@
 extends Object
 
 const Hit := preload("res://scripts/combat/cover/cover_hit.gd")
+const Shape := preload("res://scripts/combat/cover/cover_shape.gd")
 
 static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: float, host: Node3D) -> bool:
-	var _fac = load("res://scripts/combat/cover.gd")
-	var cam: Camera3D = _fac._cam(host)
+	var cam: Camera3D = Shape._cam(host)
 	var pts := Hit._sprite_pts(host)
 	if pts.is_empty():
 		return false
@@ -26,35 +26,12 @@ static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: fl
 		var d := Vector2(aim.x * cos(a) - aim.y * sin(a), aim.x * sin(a) + aim.y * cos(a))
 		poly.append(cam.unproject_position(origin + Vector3(d.x, 0.0, d.y) * rng))
 	for p in pts:
-		if _fac._in_poly(cam.unproject_position(p), poly):
+		if Shape._in_poly(cam.unproject_position(p), poly):
 			return true
 	return false
 
-static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: Vector3, up: Vector3) -> Array[Vector3]:
-	var cells: PackedByteArray = pack["cells"]
-	var cols: int = pack["cols"]
-	var rows: int = pack["rows"]
-	if cells.is_empty() or cols <= 0 or rows <= 0:
-		return []
-	var w: float = pack["width"]
-	var h: float = pack["height"]
-	var pts: Array[Vector3] = []
-	for i in cols:
-		var u := (float(i) + 0.5) / float(cols)
-		var along := (u - 0.5) * w
-		if spr.flip_h:
-			along = -along
-		for r in rows:
-			if cells[r * cols + i] == 0:
-				continue
-			var v := (float(r) + 0.5) / float(rows)
-			var lift := (0.5 - v) * h
-			pts.append(c + rx * along + up * lift)
-	return pts
-
 static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> bool:
-	var _fac = load("res://scripts/combat/cover.gd")
-	var cam: Camera3D = _fac._cam(host)
+	var cam: Camera3D = Shape._cam(host)
 	var pts := Hit._sprite_pts(host)
 	if pts.is_empty():
 		return false
@@ -70,6 +47,6 @@ static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> b
 		var a := TAU * float(i) / float(segs)
 		poly.append(cam.unproject_position(origin + Vector3(cos(a) * radius, 0.0, sin(a) * radius)))
 	for p in pts:
-		if _fac._in_poly(cam.unproject_position(p), poly):
+		if Shape._in_poly(cam.unproject_position(p), poly):
 			return true
 	return false

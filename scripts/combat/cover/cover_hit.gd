@@ -1,5 +1,7 @@
 extends Object
 
+const Shape := preload("res://scripts/combat/cover/cover_shape.gd")
+
 ## Texel cells, once per texture. A slam used to scan every sprite in the circle with get_pixel.
 
 static var _cells: Dictionary = {}
@@ -13,26 +15,6 @@ static func warm_sprite(spr: Sprite3D) -> void:
 	if spr == null or spr.texture == null:
 		return
 	_mask_pack(spr)
-
-static func warm_known() -> void:
-	var roster: GDScript = load("res://scripts/combat/roster.gd") as GDScript
-	var seen: Dictionary = {}
-	for pool in roster.POOLS:
-		for type_id in pool:
-			var id: String = str(type_id)
-			if seen.has(id):
-				continue
-			seen[id] = true
-			_warm_path("res://assets/sprites/enemies/%s/idle_down.png" % id)
-	_warm_path("res://assets/sprites/enemies/guardian/idle_down.png")
-	_warm_path("res://assets/sprites/enemies/gate_master/idle_down.png")
-	_warm_path("res://assets/fx/dummy.png")
-
-static func _warm_path(path: String) -> void:
-	if not ResourceLoader.exists(path):
-		return
-	var tex: Texture2D = load(path) as Texture2D
-	warm_texture(tex)
 
 static func _grid() -> Vector3:
 	var cols: float = 28.0
@@ -108,7 +90,6 @@ static func _locals(cells: PackedByteArray, cols: int, rows: int, w: float, h: f
 	return locals
 
 static func _mask_pack(spr: Sprite3D) -> Dictionary:
-	var _fac = load("res://scripts/combat/cover.gd")
 	if spr.texture == null:
 		return {"cells": PackedByteArray(), "cols": 0, "rows": 0, "width": 0.0, "height": 0.0, "locals": PackedVector3Array(), "tex": 0}
 	var tex_id: int = spr.texture.get_instance_id()
@@ -120,8 +101,8 @@ static func _mask_pack(spr: Sprite3D) -> Dictionary:
 	var cells: PackedByteArray = _cells_for(spr.texture)
 	if cells.is_empty() and not _cells.has(_cell_key(spr.texture)):
 		return {"cells": PackedByteArray(), "cols": 0, "rows": 0, "width": 0.0, "height": 0.0, "locals": PackedVector3Array(), "tex": tex_id}
-	var w: float = _fac._world_w(spr)
-	var h: float = _fac._world_h(spr)
+	var w: float = Shape._world_w(spr)
+	var h: float = Shape._world_h(spr)
 	var pack: Dictionary = {
 		"cells": cells,
 		"cols": int(g.x),
@@ -135,15 +116,14 @@ static func _mask_pack(spr: Sprite3D) -> Dictionary:
 	return pack
 
 static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D) -> float:
-	var _fac = load("res://scripts/combat/cover.gd")
 	if host == null or not is_instance_valid(host) or radius <= 0.001:
 		return 0.0
-	if not _fac._near_host(origin, radius, host):
+	if not Shape._near_host(origin, radius, host):
 		return 0.0
 	var pts := _sprite_pts(host)
 	if pts.is_empty():
 		return 0.0
-	var cam: Camera3D = _fac._cam(host)
+	var cam: Camera3D = Shape._cam(host)
 	var aim := dir.normalized() if dir.length_squared() > 0.0001 else Vector2.ZERO
 	var depth := maxf(radius * 3.2, 0.45)
 	if cam == null:
@@ -152,7 +132,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 		for i in tot:
 			var u := (float(i) + 0.5) / float(tot)
 			var p := Vector2(origin.x, origin.z) + aim * (depth * u)
-			if _fac._near_pts(p, radius, pts):
+			if Shape._near_pts(p, radius, pts):
 				hit += 1
 		return 0.0 if hit <= 0 else clampf(float(hit) / float(tot), 0.0, 1.0)
 	var screens: Array[Vector2] = []
@@ -165,7 +145,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	var c := Vector2.ZERO
 	for s in screens:
 		c += s
-		if _fac._seg_dist(s, a, b) <= slop:
+		if Shape._seg_dist(s, a, b) <= slop:
 			near = true
 	if not near:
 		return 0.0
@@ -173,7 +153,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	var span := 1.0
 	for s in screens:
 		span = maxf(span, s.distance_to(c))
-	var d: float = _fac._seg_dist(c, a, b)
+	var d: float = Shape._seg_dist(c, a, b)
 	var inner := span * 0.28
 	if d <= inner:
 		return 1.0
@@ -182,8 +162,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	return lerpf(1.0, 0.35, (d - inner) / maxf(0.001, span - inner))
 
 static func _sprite_pts(host: Node3D) -> Array[Vector3]:
-	var _fac = load("res://scripts/combat/cover.gd")
-	var spr: Sprite3D = _fac._spr_of(host)
+	var spr: Sprite3D = Shape._spr_of(host)
 	if spr == null or spr.texture == null:
 		return [host.global_position + Vector3(0.0, 0.5, 0.0)]
 	var frame: int = Engine.get_process_frames()
@@ -210,7 +189,29 @@ static func _sprite_pts(host: Node3D) -> Array[Vector3]:
 				along = -along
 			pts.append(c + rx * along + up * off.y)
 	else:
-		pts = load("res://scripts/combat/cover/geom.gd")._sprite_pts_cells(spr, pack, c, rx, up)
+		pts = _sprite_pts_cells(spr, pack, c, rx, up)
 	spr.set_meta("cover_pts_f", frame)
 	spr.set_meta("cover_pts", pts)
+	return pts
+
+static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: Vector3, up: Vector3) -> Array[Vector3]:
+	var cells: PackedByteArray = pack["cells"]
+	var cols: int = pack["cols"]
+	var rows: int = pack["rows"]
+	if cells.is_empty() or cols <= 0 or rows <= 0:
+		return []
+	var w: float = pack["width"]
+	var h: float = pack["height"]
+	var pts: Array[Vector3] = []
+	for i in cols:
+		var u := (float(i) + 0.5) / float(cols)
+		var along := (u - 0.5) * w
+		if spr.flip_h:
+			along = -along
+		for r in rows:
+			if cells[r * cols + i] == 0:
+				continue
+			var v := (float(r) + 0.5) / float(rows)
+			var lift := (0.5 - v) * h
+			pts.append(c + rx * along + up * lift)
 	return pts

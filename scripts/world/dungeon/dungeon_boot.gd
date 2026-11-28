@@ -9,7 +9,6 @@ const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
 const MapMarks := preload("res://scripts/world/dungeon/map_marks.gd")
-const HitAtk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 const MenuFade := preload("res://scripts/ui/menu_fade.gd")
 
 static var _first_tick: bool = true
@@ -79,7 +78,7 @@ static func ready_floor(host: Node) -> void:
 	LightRtS.maintain(host)
 	(load("res://scripts/graphics/torch_bill.gd") as GDScript).warm(host)
 	if host.player and is_instance_valid(host.player) and host.player.is_inside_tree():
-		HitAtk.warm_shown(host.player)
+		(load("res://scripts/combat/player_hit.gd") as GDScript).warm_shown(host.player)
 	Dbg.hitch("dungeon_light")
 	Dbg.lt_dmark("light")
 	if App:

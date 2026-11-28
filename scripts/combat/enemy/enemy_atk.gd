@@ -4,6 +4,7 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
+const Move := preload("res://scripts/combat/enemy/enemy_move.gd")
 
 static func begin_windup(host: EnemyHost) -> void:
 	host.state = host.ST_WIND
@@ -38,7 +39,7 @@ static func do_attack(host: EnemyHost, delta: float) -> void:
 		return
 	if host.state == host.ST_STRIKE:
 		if host.role == "melee":
-			load("res://scripts/combat/enemy/enemy_ai.gd").move_dir(host, host.locked_aim, 2.35, delta)
+			Move.move_dir(host, host.locked_aim, 2.35, delta)
 		else:
 			host.velocity = Vector3.ZERO
 		host.wind_t += delta
