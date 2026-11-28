@@ -1,7 +1,7 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Split := preload("res://scripts/ui/split_menu.gd")
+const Rows := preload("res://scripts/ui/split_menu/split_rows.gd")
 const Chrome := preload("res://scripts/ui/split_menu/chrome.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
@@ -89,10 +89,10 @@ static func rebuild_list(host: Node) -> void:
 		c.queue_free()
 	host.list_btns.clear()
 	host.back_btn = null
-	var list: Array = Split.rows(host)
+	var list: Array = Rows.rows(host)
 	var n: int = list.size()
 	for i: int in n:
-		var row: Dictionary = Split.row_at(host, i)
+		var row: Dictionary = Rows.row_at(host, i)
 		var ii: int = i
 		var role: String = str(row.get("role", "secondary"))
 		var b: Button = ThemeS.btn(str(row.get("label", row.get("id", ""))), func() -> void: host._on_list_pressed(ii), true, role)
@@ -105,7 +105,7 @@ static func rebuild_list(host: Node) -> void:
 	if host.has_method("split_back_label"):
 		back_lab = str(host.split_back_label())
 	if back_lab != "":
-		host.back_btn = ThemeS.btn(back_lab, func() -> void: Split.back(host))
+		host.back_btn = ThemeS.btn(back_lab, func() -> void: back(host))
 		host.list_box.add_child(host.back_btn)
 	paint_list(host)
 	var chain: Array = []
@@ -162,7 +162,7 @@ static func apply_col(host: Node) -> void:
 	if not _live(host):
 		return
 	var col: String = str(host.get("col"))
-	var leaf: bool = Split.is_leaf(Split.current(host))
+	var leaf: bool = Rows.is_leaf(Rows.current(host))
 	if host._list_root:
 		host._list_root.modulate = COL_LIVE if col == "list" else COL_DIM
 	if host._info_root:
@@ -260,9 +260,24 @@ static func path_text(host: Node) -> void:
 	if host.has_method("split_path_text"):
 		host._path.text = str(host.split_path_text())
 		return
-	var row: Dictionary = Split.current(host)
+	var row: Dictionary = Rows.current(host)
 	var lab: String = str(row.get("label", ""))
 	if str(host.get("col")) == "list" or lab == "":
 		host._path.text = ""
 		return
 	host._path.text = lab
+
+## List column again (also the facade's enter_list).
+static func enter_list(host: Node) -> void:
+	host.col = "list"
+	apply_col(host)
+	focus_col(host)
+
+## Detail -> list, else close the menu (also the facade's back).
+static func back(host: Node) -> bool:
+	if str(host.get("col")) == "detail":
+		enter_list(host)
+		return true
+	if host.has_method("split_close"):
+		host.split_close()
+	return false

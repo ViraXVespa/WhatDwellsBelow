@@ -47,7 +47,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, Array(Affix.ARMOR_SLOTS), false))
 		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
 		if mode == "extract":
-			load("res://scripts/ui/progress_ui/inv.gd").add_resource_row(ui)
+			ui.call("inv_add_resource_row")
 		else:
 			row.add_child(Build.build_stats_card(ui))
 	if ui.focus_btn == null:
@@ -62,7 +62,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	else:
 		_fac.bag_grid(ui)
 	if mode == "extract":
-		load("res://scripts/ui/progress_ui/inv.gd").add_send_all(ui)
+		ui.call("inv_add_send_all")
 	load("res://scripts/ui/gear_board.gd")._paint_hint(ui)
 	Sync.refresh(ui)
 	var tree := ui.get_tree()

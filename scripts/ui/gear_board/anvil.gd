@@ -1,6 +1,5 @@
 extends Object
 
-const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const View := preload("res://scripts/ui/gear_board/anvil_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
@@ -81,7 +80,7 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	_commit_analyze(ui, slot, row)
 
 static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
-	var taken: Dictionary = Town.analyze_destroy(App.prog, row)
+	var taken: Dictionary = App.prog.analyze_destroy(row)
 	if taken.is_empty():
 		var Act = load("res://scripts/ui/gear_board/board_act.gd")
 		Act.st(ui, App.tr("common.can_t_analyze_that"))

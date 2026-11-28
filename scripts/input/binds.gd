@@ -123,3 +123,13 @@ static func reset() -> void:
 
 static func register() -> void:
 	Defaults.register()
+
+## Rebind page reads (binds_page.gd calls these, not binds/table.gd).
+static func row(id: String) -> Dictionary:
+	return Table.row(id)
+
+static func rebindable() -> Array:
+	return Table.rebindable()
+
+static func can_rebind(id: String, pool: String) -> bool:
+	return Table.can_rebind(id, pool)

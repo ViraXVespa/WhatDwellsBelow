@@ -6,7 +6,6 @@ const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
 const Shop := preload("res://scripts/ui/progress_ui/shop.gd")
 const Hub := preload("res://scripts/ui/progress_ui/ui_hub.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Flow := preload("res://scripts/ui/progress_ui/ui_flow.gd")
@@ -99,7 +98,7 @@ func _drop_sub() -> void:
 		old.name = "gear_sub_dead"
 		old.queue_free()
 		old = get_node_or_null("gear_sub_panel")
-	ForgeUI.reset_job(self)
+	Board.forge_reset(self)
 
 func _sub_up() -> bool:
 	if gear_sub:
@@ -222,6 +221,22 @@ func _rebuild_inv() -> void:
 
 func _rebuild_extract() -> void:
 	Inv.rebuild_extract(self)
+
+## Gear-board hooks (gear_ui calls these on its host instead of loading progress_ui helpers or back into gear_board).
+func place_gear_tip() -> void:
+	Board.place_tip(self)
+
+func inv_send_bag(it: Dictionary) -> void:
+	Inv.send_bag(self, it)
+
+func inv_send_slot(slot: String) -> void:
+	Inv.send_slot(self, slot)
+
+func inv_add_resource_row() -> void:
+	Inv.add_resource_row(self)
+
+func inv_add_send_all() -> void:
+	Inv.add_send_all(self)
 
 func _do_send_all() -> void:
 	_st(App.prog.extract_all(extract_role))

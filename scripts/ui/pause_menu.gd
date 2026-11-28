@@ -152,3 +152,7 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	Flow._unhandled_input(self, event)
+
+## tip_place.gd calls this after placing a popup while a gear tip is up.
+func place_gear_tip() -> void:
+	load("res://scripts/ui/gear_board.gd").place_tip(self)

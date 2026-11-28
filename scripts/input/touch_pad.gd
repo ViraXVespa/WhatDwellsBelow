@@ -2,13 +2,16 @@ extends RefCounted
 
 ## Web-only virtual pad state. TouchHud writes sticks/buttons; Pad reads them.
 
-const WebPad := preload("res://scripts/web_pad.gd")
+const WebPad := preload("res://scripts/input/web_pad.gd")
 const T := preload("res://scripts/data/tunables.gd")
 
 const ACTIONS: PackedStringArray = [
 	"attack", "special", "dash", "interact", "pause",
 	"map_view", "potion", "food", "target_lock", "aim", "fire",
 ]
+## Touch button words (locale keys keep their hud_draw prefix). The HUD draws them; Prompts shows them in chips.
+const LABELS := {"attack": "hud_draw.attack", "special": "hud_draw.special", "dash": "hud_draw.dash",
+	"interact": "hud_draw.use", "map_view": "hud_draw.map", "pause": "hud_draw.pause"}
 
 static var mobile_ua := false
 static var ua_ready := false

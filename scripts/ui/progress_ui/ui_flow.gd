@@ -2,10 +2,7 @@ extends Object
 
 const Dbg := preload("res://scripts/app/dbg.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
-const Anvil := preload("res://scripts/ui/gear_board/anvil.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
@@ -111,7 +108,7 @@ static func _process(host: CanvasLayer, delta: float) -> void:
 	if host.open:
 		MenuPad.web_back()
 	if host.open and host._gear_busy():
-		GearAct.tick_x(host, delta)
+		Board.tick_x(host, delta)
 	if host.forge_t <= 0.0:
 		return
 	host.forge_t = maxf(0.0, host.forge_t - delta)
@@ -120,9 +117,9 @@ static func _process(host: CanvasLayer, delta: float) -> void:
 		host.status.text = App.tr("ui_flow.forging_of_s") % [mini(done, maxi(1, host.forge_need)), maxi(1, host.forge_need), host.forge_t]
 	if host.forge_t > 0.0:
 		if host.gear_sub:
-			ForgeUI.refresh_bar(host)
+			Board.forge_refresh_bar(host)
 		return
-	ForgeUI.finish(host)
+	Board.forge_finish(host)
 static func _input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open or not host._gear_busy():
 		return
@@ -131,10 +128,10 @@ static func _input(host: CanvasLayer, event: InputEvent) -> void:
 	if host.mode == "anvil":
 		var td := MenuPad.tab_delta(event)
 		if td != 0:
-			Anvil.cycle_tab(host, td)
+			Board.anvil_cycle_tab(host, td)
 			host.get_viewport().set_input_as_handled()
 			return
-	if GearAct.handle_event(host, event):
+	if Board.handle_event(host, event):
 		host.get_viewport().set_input_as_handled()
 
 static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
@@ -145,28 +142,28 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 	if host.mode == "anvil":
 		var td := MenuPad.tab_delta(event)
 		if td != 0:
-			Anvil.cycle_tab(host, td)
+			Board.anvil_cycle_tab(host, td)
 			host.get_viewport().set_input_as_handled()
 			return
-	if host._gear_busy() and GearAct.handle_event(host, event):
+	if host._gear_busy() and Board.handle_event(host, event):
 		host.get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
-		if host._sub_up() or GearAct.swallowing():
-			if host._sub_up() and not GearAct.swallowing():
+		if host._sub_up() or Board.swallowing():
+			if host._sub_up() and not Board.swallowing():
 				if host.forge_phase == "work":
-					ForgeUI.cancel_job(host)
+					Board.forge_cancel(host)
 				elif host.forge_phase == "pick":
-					ForgeUI.keep_old(host)
+					Board.forge_keep_old(host)
 				else:
-					GearAct.close_sub(host)
+					Board.close_sub(host)
 			host.get_viewport().set_input_as_handled()
 			return
 		if Confirm.is_open(host):
 			Confirm.close(host)
 			App.sfx("ui_cancel")
 		elif host.forge_t > 0.0:
-			ForgeUI.cancel_job(host)
+			Board.forge_cancel(host)
 			App.sfx("ui_cancel")
 			host._st(App.tr("common.forge_cancelled_materials_stay_s"))
 		else:

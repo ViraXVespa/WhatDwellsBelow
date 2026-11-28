@@ -3,7 +3,6 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const WipeChildren := preload("res://scripts/ui/wipe_children.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu/menu_util.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
@@ -250,7 +249,7 @@ static func _back(host: CanvasLayer) -> void:
 		Confirm.close(host)
 		return
 	if host.gear_sub:
-		GearAct.close_sub(host)
+		Board.close_sub(host)
 		return
 	if host.tab == host.TAB_SETTINGS:
 		var sh: Node = host._settings_host()
@@ -265,7 +264,7 @@ static func _process(host: CanvasLayer, delta: float) -> void:
 		else:
 			host._back()
 	if host.open and host.tab == host.TAB_INV:
-		GearAct.tick_x(host, delta)
+		Board.tick_x(host, delta)
 
 static func _input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:
@@ -291,6 +290,6 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:
 		return
 	if host.tab == host.TAB_INV:
-		if GearAct.input_tick(host, event):
+		if Board.input_tick(host, event):
 			host.get_viewport().set_input_as_handled()
 			return

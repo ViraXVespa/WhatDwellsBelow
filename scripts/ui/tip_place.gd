@@ -30,5 +30,5 @@ static func near(panel: Control, src: Control, gap: float = 12.0) -> void:
 			x = src_r.position.x - sz.x - gap
 		panel.global_position = clamp_pos(Vector2(x, src_r.position.y), sz, view)
 		var ui: Node = panel.get_parent()
-		if ui != null and ui.has_method("get") and ui.get("gear_tip_host") != null:
-			load("res://scripts/ui/gear_board/tip.gd").place_tip(ui))
+		if ui != null and ui.has_method("place_gear_tip") and ui.get("gear_tip_host") != null:
+			ui.call("place_gear_tip"))

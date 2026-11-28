@@ -13,7 +13,12 @@ const NODE := "menu_fade"
 const TWEEN := "menu_fade_tween"
 const GHOST := "menu_fade_pm"
 
-static var enabled: bool = true
+## The menu_fx pref lives on App (saved with the other prefs); this proxies it for menu code.
+static var enabled: bool:
+	get:
+		return bool(App.menu_fx)
+	set(v):
+		App.menu_fx = v
 
 static func fade_in(layer: CanvasLayer) -> void:
 	var from: float = 0.0

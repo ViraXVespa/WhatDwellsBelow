@@ -154,6 +154,10 @@ func _note_verge() -> void:
 		if hp / mx <= 0.3:
 			App.boss_low = true
 
+## Player grid cell (HUD threat gem reads it here, not dungeon_cells.gd).
+func player_cell() -> Vector2i:
+	return DungeonCells.player_cell(self)
+
 func _player_cell() -> Vector2i:
 	return DungeonCells.player_cell(self)
 

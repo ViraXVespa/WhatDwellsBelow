@@ -4,7 +4,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
-const Table := preload("res://scripts/input/binds/table.gd")
 const LocS := preload("res://scripts/localization/app_loc.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
@@ -50,15 +49,15 @@ func rebuild() -> void:
 		, Callable(), "danger")
 	, true, "danger")
 	View.add_page_btn(host, reset)
-	for row: Dictionary in Table.rebindable():
-		if Table.can_rebind(str(row.id), pool):
+	for row: Dictionary in Binds.rebindable():
+		if Binds.can_rebind(str(row.id), pool):
 			_bind_row(str(row.id), _label(str(row.id)))
 	View.wire_vert(host.info_btns)
 	if host.has_method("split_hint"):
 		host.split_hint()
 
 func _label(id: String) -> String:
-	return LocS.tr_or("controls." + id, str(Table.row(id).get("label", id)))
+	return LocS.tr_or("controls." + id, str(Binds.row(id).get("label", id)))
 
 func _sel_row() -> void:
 	var lab: String = App.tr("binds_page.keyboard_cycle") if pool == "kb" else App.tr("binds_page.gamepad_cycle")

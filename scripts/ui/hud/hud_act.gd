@@ -8,7 +8,6 @@ const Look := preload("res://scripts/input/look_ctrl.gd")
 const View := preload("res://scripts/ui/hud/hud_view.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
-const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	var lay_key: Vector3 = Vector3(App.hud_scale * View.UiText.play_scale(), host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y)
@@ -211,7 +210,7 @@ static func gem_color(dungeon: Node) -> Color:
 	var clv: int = App.prog.combat_lv()
 	var threat: int = clv
 	if dungeon != null and dungeon.get("data") != null and dungeon.get("travel_dist") != null:
-		var cell: Vector2i = Cells.player_cell(dungeon)
+		var cell: Vector2i = dungeon.call("player_cell")
 		var dist: PackedInt32Array = dungeon.travel_dist
 		var grid_w: int = int(dungeon.data.w)
 		var cap: int = int(dungeon.travel_cap)

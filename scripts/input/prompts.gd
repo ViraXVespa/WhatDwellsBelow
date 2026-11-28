@@ -2,7 +2,6 @@ extends Object
 
 const Pad := preload("res://scripts/input/pad.gd")
 const TouchPad := preload("res://scripts/input/touch_pad.gd")
-const TOUCH_HUD := "res://scripts/ui/touch_hud/hud_draw.gd"
 
 const DIR := "res://assets/ui/prompts/"
 const DEBOUNCE := 0.12
@@ -108,7 +107,7 @@ static func path_for_event(e: InputEvent, pool: String = "") -> String:
 static func touch_word(action: String) -> String:
 	if not TouchPad.wants_show():
 		return ""
-	var labels: Dictionary = load(TOUCH_HUD).LABELS
+	var labels: Dictionary = TouchPad.LABELS
 	return App.tr(labels[action]) if labels.has(action) else ""
 
 ## A prompt chip's word label: in touch play a touch-button action gets the button's ring (hud_draw.gd look).

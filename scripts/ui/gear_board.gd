@@ -4,6 +4,8 @@ const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Tip := preload("res://scripts/ui/gear_board/tip.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Host := preload("res://scripts/ui/gear_board/board_host.gd")
+const Act := preload("res://scripts/ui/gear_board/board_act.gd")
+const Forge := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 
 static var pending_kit: Dictionary = {}
 
@@ -76,3 +78,41 @@ static func clear_sub(ui: CanvasLayer) -> void:
 		old.name = "gear_sub_dead"
 		old.queue_free()
 		old = ui.get_node_or_null("gear_sub_panel")
+
+# Public entry points for screens outside gear_board/ (progress_ui, pause menu): they call these, not the helpers.
+
+static func enter(ui: CanvasLayer) -> void:
+	Act.enter(ui)
+
+static func close_sub(ui: CanvasLayer) -> void:
+	Act.close_sub(ui)
+
+static func swallowing() -> bool:
+	return Act.swallowing()
+
+static func tick_x(ui: CanvasLayer, delta: float) -> void:
+	Act.tick_x(ui, delta)
+
+static func input_tick(ui: CanvasLayer, event: InputEvent) -> bool:
+	return Act.input_tick(ui, event)
+
+static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
+	return Act.handle_event(ui, event)
+
+static func anvil_cycle_tab(ui: CanvasLayer, dir: int) -> void:
+	load("res://scripts/ui/gear_board/anvil.gd").cycle_tab(ui, dir)
+
+static func forge_reset(ui: CanvasLayer) -> void:
+	Forge.reset_job(ui)
+
+static func forge_finish(ui: CanvasLayer) -> void:
+	Forge.finish(ui)
+
+static func forge_cancel(ui: CanvasLayer) -> void:
+	Forge.cancel_job(ui)
+
+static func forge_keep_old(ui: CanvasLayer) -> void:
+	Forge.keep_old(ui)
+
+static func forge_refresh_bar(ui: CanvasLayer) -> void:
+	Forge.refresh_bar(ui)

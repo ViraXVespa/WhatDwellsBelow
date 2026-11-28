@@ -289,6 +289,10 @@ func set_bonus_text(set_id: String) -> String:
 func _sync_artifacts() -> void:
 	CombatP.sync_artifacts(self)
 
+## Anvil Analyze: what destroying this piece returns (gear UI calls this, not progress_town.gd).
+func analyze_destroy(row: Dictionary) -> Dictionary:
+	return Town.analyze_destroy(self, row)
+
 func extractable(role := "") -> Array:
 	return Town.extractable(self, role)
 
