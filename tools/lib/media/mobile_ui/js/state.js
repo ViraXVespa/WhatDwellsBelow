@@ -21,5 +21,4 @@ export async function loadSubjects() {
 }
 
 export const go = (hash) => { location.hash = hash; };
-export const sectionsOf = (type) => (app.info && app.info.sections[type]) || [];
 export const command = (cmd) => (app.info && app.info.commands[cmd]) || null;

@@ -53,7 +53,7 @@ async function render() {
       break;
     }
   }
-  if (!out) out = { title: "Not found", node: errorBox({ error: `No screen for ${path}` }) };
+  if (!out) out = { title: "Not found", node: h("div", {}, errorBox({ error: "That page is not here any more." }), h("a", { class: "btn full", href: "#/" }, "Go home")) };
   if (seq !== renderSeq) return;
   title.textContent = out.title || "Pipeline Studio";
   view.replaceChildren(out.node);

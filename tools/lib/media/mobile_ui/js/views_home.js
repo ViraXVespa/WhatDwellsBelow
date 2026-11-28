@@ -9,9 +9,9 @@ const TYPE_NOTE = {
   npc: "Town people, portraits, dialog",
   enemy: "Equipped design, behavior, stats, variants",
   "sub-boss": "Enemy rules at a 2x source", boss: "Enemy rules at a 4x source",
-  equipment: "Skins, skills, offsets, stats", item: "Art and stats", projectile: "Art and motion",
-  decoration: "Props", resource: "Nodes and piles", ui: "Plates and icons", biome: "Overview, features, art, layout",
-  building: "Art and dimensions", vfx: "Effect bursts",
+  equipment: "Skins, skills, offsets, stats, hooks", item: "Art and stats", projectile: "Art and motion",
+  decoration: "Props", resource: "Art and gather nodes", ui: "Plates and icons", biome: "Overview, features, art, layout, dungeon rooms",
+  building: "Art, dimensions, interior", vfx: "Effect bursts and where they attach",
 };
 
 function subjectRow(s) {

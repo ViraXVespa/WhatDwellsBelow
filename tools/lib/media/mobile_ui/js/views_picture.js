@@ -33,14 +33,17 @@ export async function picture({ params, query }) {
   if (!pic) return { title: doc.name, node: errorBox({ error: "That picture is not here any more." }), back };
   const s = steps.find((x) => x.id === stepId);
   const open = s ? s.available && s.status !== "done" : true;
+  // Which side a picture shows matters only where front and side pictures feed a 3D model (that step and the ones before it).
+  const meshAt = steps.findIndex((x) => x.actions.some((a) => ["body", "smooth", "mesh"].includes(a)));
+  const asksView = pic.kind === "still" && meshAt >= 0 && (!s || steps.indexOf(s) <= meshAt);
   let view = pic.view || "";
   const viewSeg = h("div", { class: "seg" });
   const drawView = () => viewSeg.replaceChildren(...["front", "side", "back", "other"].map((v) => h("button", { class: v === view ? "on" : "", disabled: !open, onclick: () => { view = v; drawView(); } }, VIEW_WORD[v])));
   drawView();
   const setState = async (state) => {
-    if (state === "approved" && pic.kind === "still" && !view) return toast("First say which side this picture shows.");
+    if (state === "approved" && asksView && !view) return toast("First say which side this picture shows.");
     const body = { path, state };
-    if (pic.kind === "still" && view) body.view = view;
+    if (asksView && view) body.view = view;
     const r = await post(`/subjects/${sid}/stills`, body);
     if (!r.ok) return showError(r);
     haptic(); toast({ approved: "Approved", rejected: "Rejected", hidden: "Hidden" }[state] || "Undone");
@@ -69,7 +72,7 @@ export async function picture({ params, query }) {
         toast("Moved"); go(picHref(sid, place.value, path));
       } }, "Move it")) : null,
     stepId && !open ? h("div", { class: "note-box small" }, s.status === "done" ? "This step is approved. Reopen it to change its pictures." : `Finish ${s.blocked_by_label} first.`) : null,
-    pic.kind === "still" ? h("div", {}, h("p", { class: "small muted" }, "Which side does it show?"), viewSeg) : null,
+    asksView ? h("div", {}, h("p", { class: "small muted" }, "Which side does it show?"), viewSeg) : null,
     stepId && open ? [
       h("div", { class: "btn-row" },
         h("button", { class: "btn good", onclick: () => setState("approved") }, "Approve"),

@@ -95,4 +95,3 @@ export function when(ts) {
 }
 
 export function basename(p) { return String(p || "").split("/").pop(); }
-export function cap(s) { return String(s || "").replace(/(^|[-_ ])(\w)/g, (m, a, b) => (a ? " " : "") + b.toUpperCase()); }
